@@ -449,6 +449,12 @@ Create RAM dump B.
 
 Avoid vague requests such as "test whether it works."
 
+### Automatic commits
+
+Automatically commit completed, verified work for the current request without asking for separate commit approval, unless the user explicitly asks to leave it uncommitted. Inspect the final diff and run applicable checks before committing. If a required check fails or cannot run, report the blocker and leave the work uncommitted.
+
+Stage only changes belonging to the request. Keep unrelated user changes, secrets, game files, RAM dumps, and savestates out of the commit. Split independent changes into separate commits and use concise Conventional Commit messages. Automatic commits do not authorize pushing, publishing, or rewriting existing commits.
+
 ## Progress notes
 
 Keep a `docs/research.md` file.
