@@ -1,0 +1,13 @@
+{
+  "profile_id": "re1_ntsc_u",
+  "game": "Resident Evil 1",
+  "region": "NTSC-U",
+  "serial": "TODO: exact disc serial, e.g. SLUS-00170",
+  "revision": "TODO: disc revision",
+  "executable_identity": "TODO",
+  "duckstation_version_tested": "TODO",
+  "address_space": "PS1 virtual address, little-endian",
+  "stage_address_ps1": null,
+  "room_address_ps1": null,
+  "notes": "Candidate only. No validated addresses yet. Do not use until room A vs B experiments confirm."
+}

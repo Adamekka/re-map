@@ -1,0 +1,7 @@
+*.bin
+*.sav
+*.bak
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+/tmp/
