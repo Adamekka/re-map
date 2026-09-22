@@ -6,10 +6,12 @@ Build an exploration and room-clear tracker for the original PlayStation version
 
 The target behavior is similar to the map in Resident Evil Remake:
 
-- Unvisited room: unknown/unvisited state
+- Unvisited room: no visit recorded for the tracked playthrough
 - Visited room with collectible items remaining: incomplete state
 - Visited room with all relevant collectible items taken: cleared state
 - Current room should be visually distinguishable
+
+Keep visit history separate from completion knowledge. A visited room can have unknown item state, and being the current room does not imply that it is cleared.
 
 The first target is **Resident Evil 1 on PS1 running in DuckStation**. Do not try to support all three games at once.
 
@@ -43,7 +45,9 @@ Do not spend time polishing the UI until room identification and item-state dete
 
 ## Definition of "cleared"
 
-A room is cleared when all normal collectible items assigned to that room have been collected.
+A visited room is cleared when its relevant item list and conditions are fully understood and no normal collectible item is currently available and uncollected. An item that is confirmed absent in this scenario or unavailable until a later story event does not block clearing.
+
+One confirmed available, uncollected item is enough to mark a visited room incomplete. If none is known to remain but item coverage or a relevant condition is unresolved, report `Unknown`. Detecting one collected item does not prove that the whole room is cleared.
 
 Do not require these unless game data proves otherwise:
 
@@ -56,6 +60,8 @@ Do not require these unless game data proves otherwise:
 
 Story-dependent or conditional item spawns must be handled carefully. A room must not be marked incomplete because of an item that is not currently available.
 
+Reevaluate completion when game state changes. A cleared room can become incomplete when a new item becomes available or an earlier save or savestate is loaded.
+
 If the game stores an "item acquired" bit or equivalent persistent flag, prefer that flag over heuristics.
 
 ## Scope order
@@ -67,7 +73,7 @@ Work in this order:
 3. RE1 support for additional revisions if practical
 4. RE2 PS1
 5. RE3 PS1
-6. Optional DuckStation integration
+6. Optional integration inside DuckStation beyond the external memory access required for RE1
 7. Optional native modification of the in-game map
 
 Do not begin RE2 or RE3 until RE1 has a repeatable solution.
@@ -84,6 +90,8 @@ Before adding memory addresses, identify and record:
 - Serial number
 - Executable identity if available
 - DuckStation version used during testing
+
+For each address, record its address space, such as PS1 RAM offset, PS1 virtual address, or host-process address, plus the value width, byte order, and any bit mask. Do not interchange these address spaces. Research leads with missing revision information may be recorded as candidates, but must not be treated as validated profile addresses.
 
 Keep addresses and game-specific logic in a profile instead of scattering constants through the code.
 
@@ -180,7 +188,7 @@ Do not accept an address because it works in only two rooms.
 The final room identity may require multiple values, such as:
 
 ```text
-stage + room + scenario
+stage + room + character or scenario, if the tested revision requires it
 ```
 
 ### Finding item-collected flags
@@ -198,12 +206,14 @@ Use controlled before/after comparisons:
 
 Prefer persistent game flags over scanning the active room object list.
 
-Validate that candidate flags survive:
+Validate candidate flags against the expected game state after:
 
 - Leaving and re-entering the room
 - Saving and loading normally
 - A DuckStation savestate reload
 - Story progression where applicable
+
+Test loads from both before and after a pickup. Loading an earlier save or savestate must restore the earlier acquisition state. A savestate restoring a value proves restore behavior, not that the value is a persistent acquisition flag; verify persistence through normal in-game saving/loading and room transitions too.
 
 ### Mapping items to rooms
 
@@ -217,7 +227,7 @@ First investigate whether room files or runtime room structures expose:
 - Spawn condition
 - Room identifier
 
-For RE2 and RE3, investigate existing RDT reverse-engineering documentation before doing the work from scratch.
+Investigate existing RE1 room-format documentation before doing the work from scratch. Apply the same approach to RE2 and RE3 when they enter scope.
 
 If static room data can be parsed, generate the room/item database from game data rather than maintaining it by hand.
 
@@ -355,6 +365,8 @@ External save data must include enough game identity to avoid mixing:
 
 Avoid storing a second copy of data that can be reconstructed from game RAM.
 
+After a game, save, or savestate change, reread game-derived state before presenting completion. Do not carry cached completion into the new state. Define and document whether external visit history follows the loaded save or records all tracker-observed visits in the playthrough before implementing persistence.
+
 ## Testing
 
 Every discovered address or rule needs a reproducible test.
@@ -398,11 +410,15 @@ notes
 
 Do not call a memory address "known" until it has been tested in multiple independent situations.
 
-Label findings as one of:
+Label each finding with one of these validation states:
 
 - Candidate
 - Confirmed for this revision
 - Confirmed across listed revisions
+- Rejected, with the contradicting evidence
+- Superseded, with a link to the replacement finding
+
+Confirmation requires reproducible observations on the named game revision under the relevant checks above. Source inspection, model agreement, and model identity alone do not confirm runtime behavior. Record exactly which situations were tested and which remain untested; confirmation must not imply broader coverage.
 
 Never generalize an address from one region/revision to another without testing.
 
@@ -446,24 +462,44 @@ Record:
 - How each claim was verified
 - Failed hypotheses
 - Useful external references
+- Research attribution and validation labels defined below
 
 Example:
 
 ```text
-## RE1 NTSC-U
+## <finding ID>: <specific claim>
 
-Current room candidate
-Address: 0xXXXXXXXX
-Status: confirmed for tested revision
-
-Evidence:
-- Dining room -> value 0x04
-- Main hall -> value 0x00
-- East hallway -> value 0x07
-- Stable across reloads
+Status: Candidate
+Scope: <game, region, serial, revision, executable identity, character/scenario>
+Environment: <DuckStation version and relevant setup>
+Authored: <YYYY-MM-DD>; <agent/tool>; model: <exact exposed model ID or unknown>
+Basis: <runtime observation, source inspection, or inference; list all that apply>
+Claim: <address and interpretation, or rule being investigated>
+Evidence: <reproduction steps, observed results, source permalinks or local artifact references>
+Limits: <untested situations, missing identity details, unresolved conditions>
+History:
+- <date>; <actor and model ID or unknown>; <authored/reviewed/tested/revised>; <contribution and evidence>
 ```
 
+This is a template, not a finding. Do not copy placeholders or illustrative values into profiles or mark them confirmed.
+
 Do not rely on chat history as the only record of reverse-engineering findings.
+
+### Research attribution
+
+Give each independently verifiable claim a stable ID, such as `RE1-ROOM-001`. Reference that ID from related tests, profile documentation, and later findings so readers can trace a rule to its evidence.
+
+For every new finding or substantive revision:
+
+- Record the authoring agent/tool and exact model identifier when the runtime exposes it. Record reasoning effort only when explicitly known. Use `unknown` for unavailable identity details; never infer a model from writing style, the app name, or a requested model selection alone.
+- Keep original authorship and append dated contributions to the history. Distinguish writing, reviewing, running an experiment, and changing a conclusion. Record human contributions as human, and identify an external source separately from the model summarizing it.
+- Attribute reviews to the models that actually returned them and state what each review checked. A model reviewing prose has not reproduced the experiment. Record failed or unavailable reviews as such, never as endorsements.
+- Attach evidence to each claim. For source inspection, include the URL and commit or version plus the relevant location. For experiments, include steps, expected and observed results, environment, and artifact references or hashes where available. Keep restricted artifacts out of Git under the repository hygiene rules below.
+- Preserve rejected hypotheses and conflicting observations with their attribution. Mark superseded claims explicitly and link their replacements rather than silently overwriting their history. Split entries when their claims have different authors, evidence, or validation states.
+
+Model labels describe provenance, not a quality ranking. Later agents must judge findings by reproducibility, direct evidence, revision coverage, and unresolved limitations. A more capable model must still verify a claim before promoting its validation state.
+
+For existing notes without attribution, record `unknown` unless authorship can be established from reliable records. Do not retroactively claim authorship or verification.
 
 ## Code quality
 
@@ -517,7 +553,8 @@ For one exact RE1 PS1 revision in DuckStation:
 4. Display:
    - Current room
    - Item collected/not collected
-   - Incomplete/cleared state
+   - Incomplete, cleared, or unknown state under the completion rules above
+   - Whether the room's full relevant item list has been established
 5. Document how the addresses were discovered.
 6. Verify the result after leaving and re-entering the room.
 
