@@ -181,6 +181,38 @@ History:
 - No EmuHook run and no macOS port of it.
 - No exhaustive proof that scripting or HTTP support is absent.
 
+## Local baseline 2026-09-22
+
+Status: Candidate
+Scope: macOS arm64 host only, no game revision yet
+Environment: DuckStation 0.1-11752-g5fd366809 at /Applications/DuckStation.app, Python 3.14.7, settings.ini shows Debug/EnableGDBServer=false and GDBServerPort=2345
+Authored: 2026-09-22; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of installed app and config, no game running
+Claim: host has DuckStation with GDB server present but disabled, so the first live test is enabling that flag and reading 16 bytes at 0x80000000.
+Evidence: Info.plist CFBundleShortVersionString 0.1-11752-g5fd366809, settings.ini Debug section, savestates folder contains non-RE1 serials such as SLUS-00551 and SLUS-00707.
+Limits: no RE1 disc pinned, no room or item address, no live read yet.
+History:
+- 2026-09-22; opencode with model opencode/muse-spark-1.3-contributor-free; authored; local inspection only.
+
+## RE1-RDT-001: static room and item data is parseable, pickup flag mapping is not
+
+Status: Candidate
+Scope: RE1 PS1 retail file formats, no specific revision pinned
+Environment: source inspection on 2026-09-22, no local run
+Authored: 2026-09-22; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: source inspection of reevengi, biohazard-utils, OpenResident, plus EmuHook and R3-Auto-Map-Gen as pattern leads
+Claim: room identity is stage plus room plus camera, files are psx/stageN/roomNxx0.rdt, header carries nItem with a 19 entry offset table, placements come from SCD Item_set 0x0D with id and type fields. Which bit means acquired and how GlobalId maps to save flags is unknown.
+Evidence:
+- https://github.com/pmandin/reevengi src/g_re1/rdt.h, rdt.c, game_re1_ps1.c, scd1.xml
+- https://github.com/biorand/biohazard-utils src/IntelOrca.Biohazard/Room/Rdt1.cs, Script/Opcodes/ItemAotSetOpcode.cs
+- https://github.com/XProger/OpenResident src/room.h, src/script.h
+- https://github.com/elModo7/EmuHook README demo entries for RE1 real-time map with no published addresses, verified closed core
+- https://github.com/themitosan/R3-Auto-Map-Gen node graph approach for PC Classic REbirth, no PS1 addresses
+Limits: zero published PS1 RAM addresses with revision info found. No runtime confirmation. Tapatalk RDT thread unread, RetroAchievements pages blocked, EmuHook other_demos scripts not inspected.
+History:
+- 2026-09-22; opencode with model unknown; reviewed; source inspection of file formats, no runtime test.
+- 2026-09-22; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized review into this entry, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
