@@ -302,6 +302,32 @@ Limits: one room observed, Art Room per the table. No room A versus B walk yet, 
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; live GDB reads plus offline extraction, still Candidate.
 
+## RE1-PICKUP-001: Art Room map bit differs between backup and slot saves
+
+Status: Candidate
+Scope: SLUS-00551 Training Jill, Art Room Main 00 Sub 07, three local states
+Environment: offline RAM extracts 2026-09-25, no new gameplay
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of existing save files
+Claim: offset 0xC86ED reads 0xFF in the .bak state and 0xBF in slot and resume, so bit 6 cleared between backup and slot. The user map labels 0x0c86ed Bit6 as Map on Art Room, the room the player stands in. Offset 0xC871C reads 0x00 in bak and 0x08 in slot and resume, and the map labels Bit3 as Mansion 1F map owned. Coherent story is taking the map item clears one bit and sets the other, but bit polarity is unproven and 205120 bytes differ between bak and slot, so this is a lead, not proof.
+Evidence: /tmp/ram_slot.bin, /tmp/ram_resume.bin, /tmp/ram_bak.bin from tools/extract_sav_ram.py, 14 Item Collected bytes and 8 Map Visited bytes compared, only these two differ.
+Limits: no controlled before and after pickup, no leave and re-enter test, no save and load round trip on this bit, polarity unknown.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; save diff only, still Candidate.
+
+## RE1-STATIC-002: 335 RDT files listed from SLUS-00551 without extraction
+
+Status: Candidate
+Scope: SLUS-00551 disc layout metadata only
+Environment: local listing 2026-09-25 with tools/list_psx_files.py, no file contents read
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of local disc directory layout
+Claim: the image holds 335 .RDT files under PSX/STAGE paths with LBA and size per file, for example PSX/STAGE1/ROOM1000.RDT lba 161395 size 339752. Room enumeration needs no gameplay. Next step is reading RDT headers for nItem counts as integers, still without committing any game bytes.
+Evidence: full listing reproducible with python3 tools/list_psx_files.py cue path --filter RDT.
+Limits: no header parsed yet, no item table built, naming of room versus camera digits unconfirmed.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; listing only, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
