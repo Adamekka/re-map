@@ -1,0 +1,25 @@
+{
+  "profile_id": "re1_ntsc_u_slus00170",
+  "game": "Resident Evil 1",
+  "region": "NTSC-U",
+  "serial": "SLUS-00170",
+  "revision": "TODO: disc revision string",
+  "executable_identity": "TODO",
+  "duckstation_version_tested": "TODO",
+  "address_space": "PS1 virtual address, little-endian, KSEG0. Offset + 0x80000000.",
+  "source": "docs/re1_ram_map_user_provided.md, status Candidate, original author unknown",
+  "stage_address_ps1": "0x800C8660",
+  "room_address_ps1": "0x800C8661",
+  "camera_address_ps1": "0x800C8662",
+  "previous_location_ps1": "0x800C8663",
+  "demo_first_pickup": {
+    "room_main": 0,
+    "room_sub": 0,
+    "room_name": "Mansion 1F - Mansion Save Room",
+    "flag_address_ps1": "0x800C86DD",
+    "flag_mask": 2,
+    "flag_bit": 1,
+    "label": "Mansion Save Room Ink Ribbon (Jill)"
+  },
+  "notes": "Candidate only from user paste. Requires live GDB reads on SLUS-00170 before any promotion. Do not reuse for SLUS-00551 without testing."
+}

@@ -28,7 +28,7 @@ def main() -> int:
     args = ap.parse_args()
 
     profile = Re1Profile.load(args.profile)
-    if profile.stage_address is None or profile.room_address is None:
+    if not profile.has_room_addresses():
         print(f"profile {profile.profile_id} has no validated room addresses; refusing to guess")
         print("Run room A vs B diffs first, then fill profiles/*.json with evidence.")
         return 2
@@ -39,11 +39,16 @@ def main() -> int:
     if err:
         print(err, file=sys.stderr)
         return 1
+    assert profile.stage_address is not None and profile.room_address is not None, (
+        "room addresses checked above"
+    )
+    stage_addr = profile.stage_address
+    room_addr = profile.room_address
     try:
         period = 1.0 / max(1.0, min(args.hz, 30.0))
         while True:
-            stage = gdb.read_u8(profile.stage_address)
-            room = gdb.read_u8(profile.room_address)
+            stage = gdb.read_u8(stage_addr)
+            room = gdb.read_u8(room_addr)
             if not stage.ok or not room.ok:
                 print(f"read failed: {stage.error} {room.error}", file=sys.stderr)
                 time.sleep(period)
