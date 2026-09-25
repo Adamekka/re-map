@@ -213,6 +213,68 @@ History:
 - 2026-09-22; opencode with model unknown; reviewed; source inspection of file formats, no runtime test.
 - 2026-09-22; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized review into this entry, still Candidate.
 
+## RE1-DISC-001: local Director's Cut disc identity
+
+Status: Candidate
+Scope: Resident Evil Director's Cut USA, SLUS-00551, local .bin/.cue only
+Environment: macOS local inspection 2026-09-25, DuckStation 0.1-11752-g5fd366809, no boot yet
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of local files
+Claim: local image is MODE2/2352 single track, 707027664 bytes, sha1 d926cec7ac6a1665cc00039ab92dee6a6bebe824, serial SLUS_00551 found in binary, matching existing savestates SLUS-00551_1.sav 1631421 bytes and SLUS-00551_resume.sav 1629173 bytes with DUCC magic. This is the revision to pin for milestone 1, not SLUS-00170.
+Evidence: .cue shows TRACK 01 MODE2/2352, bin strings contain SLUS_00551 and SLUS_005.51, savestate headers start with DUCCS.
+Limits: no disc revision string, no SYSTEM.CNF BOOT line extracted yet, no executable hash yet, no live boot yet.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; file inspection only.
+
+## RE1-CHEAT-001: third-party anchors, no room or pickup flag
+
+Status: Candidate
+Scope: SLUS-00551 primary, SLUS-00170 fallback, all unconfirmed at runtime
+Environment: source inspection 2026-09-25, no local run
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: source inspection of cheat DBs and code lists
+Claim: health anchor 0x800C51AC appears for both SLUS-00551 and SLUS-00170 as 16-bit. Ammo anchors differ by revision, 0x800418F8 on 00551 versus 0x8003F574 on 00170. Inventory and chest ranges around 0x800C8724 to 0x800C878E are useful anchors for item experiments. No room, stage, or acquired-flag address was found in any accessible source. Location Modifiers on GameHacking and RetroAchievements logic are blocked with 403 and remain the top manual follow-up.
+Evidence:
+- https://www.psxdatacenter.com/games/U/R/SLUS-00551.html health and ammo codes for 00551
+- https://raw.githubusercontent.com/duckstation/chtdb/master/cheats/SLUS-00551.cht thin patch file with Quick Turn, invincibility, rocket hits
+- https://raw.githubusercontent.com/duckstation/chtdb/master/cheats/SLUS-00170.cht full health, timer, ammo, maps, doors, chest ranges
+- https://raw.githubusercontent.com/duckstation/chtdb/master/cheats/SLUS-00747.cht mirrors 00170 anchors, 00551 file does not repeat them
+Limits: GameShark 80 means 16-bit LE write, 30 means 8-bit, D0 and E0 are conditionals not state, 50 is slide modifier, 90 and A6 and A7 are patches not state cells. Never generalize 00170 to 00551 without a runtime test.
+History:
+- 2026-09-25; opencode with model unknown; reviewed; fetched cheat files, recorded blocked pages.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized into this entry, still Candidate.
+
+## RE1-STATIC-001: RDT enumeration without booting is feasible
+
+Status: Candidate
+Scope: SLUS-00551 file formats, no boot
+Environment: source inspection 2026-09-25, no extraction run yet
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: source inspection of biorand, reevengi, OpenResident
+Claim: rooms and per-room pickup candidates can be listed from extracted RDTs using biorand Rdt1.cs plus ItemAotSet opcode 0x18 length 26 with Id, Type, Amount, GlobalId. Opcode 0x0D is generic AOT length 18 and must not be counted as collectible. Pickup-flag to save-flag mapping is not in any inspected source and needs runtime. Use RdtId colon ItemId keys from RtdItemId.cs.
+Evidence:
+- https://github.com/biorand/biohazard-utils src/IntelOrca.Biohazard/Room/Rdt1.cs, Script/Opcodes/ItemAotSetOpcode.cs, Script/OpcodeV1.cs, RdtId.cs
+- https://github.com/pmandin/reevengi src/g_re1/game_re1_ps1.c, rdt.h, scd1.xml, reevengi -dumpscript path
+- https://github.com/XProger/OpenResident src/room.h skip 21 TODO for item AOT
+Limits: no extraction run, dumpsxiso and bchunk missing locally, isoinfo and 7z present. No save layout docs found. GlobalId is a runtime table index, not a save bit.
+History:
+- 2026-09-25; opencode with model unknown; reviewed; file format assessment, no runtime test.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized into this entry, still Candidate.
+
+## RE1-AUTO-001: automated boot and GDB without manual play is feasible
+
+Status: Candidate
+Scope: DuckStation macOS 0.1-11894 dev binary flags plus local 0.1-11752 install, no RE1 boot yet
+Environment: source and CLI inspection 2026-09-25, no game running
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: source inspection and --help output
+Claim: DuckStation can relaunch per room with -nogui -statefile path, no disc path needed. GDB on 127.0.0.1 port 2345 pauses on connect, resumes on c, pauses on 0x03 interrupt, reads with m packets up to 8192 bytes. Safe loop is connect, c to run, 0x03 to pause, burst m reads, c to resume. No TAS, movie, Lua, or scripted input channel was found. Movement needs OS-level key or pad injection, or prepared savestates per room.
+Evidence: qthost.cpp ParseCommandLineParametersAndInitializeConfig, -batch, -nogui, -statefile, -state index, -resume, src/core/gdb_server.cpp ClientSocket OnConnected PauseSystem, PollUntil per frame, local settings.ini Debug section.
+Limits: m while running is unverified for safety, -nogui display needs on macOS unverified, no virtual pad test, no RE1 boot or GDB read yet.
+History:
+- 2026-09-25; opencode with model unknown; reviewed; CLI and source inspection, no runtime test.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized into this entry, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.

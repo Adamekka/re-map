@@ -1,6 +1,13 @@
 *.bin
 *.sav
 *.bak
+*.cue
+*.iso
+*.img
+*.RDT
+*.rdt
+*.BSS
+*.bss
 __pycache__/
 .mypy_cache/
 .pytest_cache/

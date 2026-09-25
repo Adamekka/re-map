@@ -1,0 +1,17 @@
+{
+  "profile_id": "re1_directors_cut_slus00551",
+  "game": "Resident Evil Director's Cut",
+  "region": "NTSC-U",
+  "serial": "SLUS-00551",
+  "revision": "TODO: disc revision string",
+  "executable_identity": "SLUS_005.51 TODO: hash",
+  "duckstation_version_tested": "TODO",
+  "address_space": "PS1 virtual address, little-endian",
+  "stage_address_ps1": null,
+  "room_address_ps1": null,
+  "candidate_anchors_unconfirmed": {
+    "health_16bit": "0x800C51AC",
+    "ammo_16bit": "0x800418F8"
+  },
+  "notes": "Candidate only. Anchors from cheat lists, not runtime. Do not use until GDB reads confirm on this exact disc."
+}
