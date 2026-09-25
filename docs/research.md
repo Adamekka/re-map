@@ -275,6 +275,20 @@ History:
 - 2026-09-25; opencode with model unknown; reviewed; CLI and source inspection, no runtime test.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized into this entry, still Candidate.
 
+## RE1-USERMAP-001: user-provided RAM table with room and pickup candidates
+
+Status: Candidate
+Scope: appears to be original RE1 USA SLUS-00170 plus EU, FR, GER variants. Not SLUS-00551.
+Environment: received 2026-09-25, no runtime test by this project
+Authored: unknown original author; provided by human user on 2026-09-25; filed by opencode with model opencode/muse-spark-1.3-contributor-free
+Basis: third-party documentation, unverified
+Claim: RAM offsets around 0x0c8660 Main Location, 0x0c8661 SubLocation, 0x0c8662 Camera, and 0x0c8663 Previous Location form the room identity. Offsets 0x0c86dc onward are Item Collected bitfields. Offsets 0x0c8710 onward are Map Visited bits. Full table is filed at docs/re1_ram_map_user_provided.md. Add 0x80000000 for GDB virtual addresses.
+Evidence: local file docs/re1_ram_map_user_provided.md transcribed from user paste. Health offset 0x0c51ac matches the independent cheat anchor 0x800C51AC from RE1-CHEAT-001, which raises confidence but does not confirm.
+Limits: original source unknown, no revision string, no DuckStation version, no widths for every row, no proof these apply to SLUS-00551 Director's Cut. Requires live GDB reads on both revisions before any promotion.
+History:
+- 2026-09-25; human user; provided; raw table paste, source unknown.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; filed; saved verbatim to docs/re1_ram_map_user_provided.md, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
