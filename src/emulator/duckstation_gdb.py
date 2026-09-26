@@ -104,6 +104,44 @@ class DuckStationGdb:
     def __exit__(self, *args: object) -> None:
         self.close()
 
+    def resume(self) -> str:
+        """Send continue. Game runs again. Empty string on success."""
+        if self._sock is None:
+            return "not connected"
+        try:
+            self._sock.sendall(_encode_packet(b"c"))
+            self._sock.settimeout(0.3)
+            try:
+                self._sock.recv(4096)
+            except (socket.timeout, OSError):
+                pass
+            try:
+                self._sock.sendall(b"+")
+            except OSError:
+                pass
+        except OSError as exc:
+            return str(exc)
+        return ""
+
+    def interrupt(self) -> str:
+        """Send 0x03 to pause. Reads are stable afterwards."""
+        if self._sock is None:
+            return "not connected"
+        try:
+            self._sock.sendall(b"\x03")
+            self._sock.settimeout(3.0)
+            try:
+                self._sock.recv(4096)
+            except (socket.timeout, OSError):
+                pass
+            try:
+                self._sock.sendall(b"+")
+            except OSError:
+                pass
+        except OSError as exc:
+            return str(exc)
+        return ""
+
     def read_memory(self, address: int, length: int) -> MemRead:
         # Keep reads small: DuckStation caps packets at 16384 bytes,
         # so max read per packet is 8192 bytes. Stay well under that.
