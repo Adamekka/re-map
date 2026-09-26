@@ -469,6 +469,19 @@ Limits: side by side is not association. Only the Art Room ink, the Winding herb
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static join only, still Candidate.
 
+## RE1-VISIT-001: game visited bits decode into room lists
+
+Status: Candidate
+Scope: SLUS-00551 Map Visited bytes 0xC8710 through 0xC8717 per RA notes
+Environment: offline decode 2026-09-25 with tools/map_visited.py, no gameplay
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of save files against RA labels
+Claim: each visited byte decodes one room per bit. The slot save reads 6 visited rooms: Art Room Secret Room, Bar, Art Room, Main Hall, Dining Room, Tea Room. That matches real progress including Main Hall before the live walk, so set means visited. The tracker will read these as game-derived visited state, reread on every load, kept separate from its own observation history per the persistence rules. A line-join bug that bled Files rows into the 0x8717 group is fixed by stopping continuation at any new dash entry.
+Evidence: tools/map_visited.py output on /tmp/ram_slot.bin, 6 VISITED lines.
+Limits: set means visited is inferred from consistency, not from watching a bit flip on entry. Unvisited rooms in this save are untested.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; save decode only, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.

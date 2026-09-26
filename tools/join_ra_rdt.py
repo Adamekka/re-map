@@ -54,12 +54,17 @@ def parse_rooms(text: str) -> dict[str, tuple[int, int]]:
     rooms: dict[str, tuple[int, int]] = {}
     mains = {"mansion1f": 0, "mansion2f": 1, "courtyardunderground": 2,
              "guardhouse": 3, "laboratory": 4}
-    # Room lists wrap across lines. Join continuation lines first.
+    # Room lists wrap across lines. Join continuation lines first, stopping
+    # at any new dash entry so later sections never bleed in.
     joined: list[str] = []
+    in_group = False
     for line in text.splitlines():
         if re.match(r"\s+- [^:]+: 0x", line):
             joined.append(line.strip())
-        elif joined and re.match(r"\s+0x[0-9a-fA-F]+ ", line):
+            in_group = True
+        elif line.strip().startswith("- "):
+            in_group = False
+        elif in_group and re.match(r"\s+0x[0-9a-fA-F]+ ", line):
             joined[-1] += " " + line.strip()
     for line in joined:
         m = re.match(r"- ([^:]+): (0x[0-9a-fA-F]+ .*)$", line)
