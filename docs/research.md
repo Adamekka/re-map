@@ -380,6 +380,20 @@ Limits: static consistency plus 2 runtime rooms is not confirmation. Flag knowle
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static check plus offline runs, still Candidate.
 
+## RE1-ROOM-001: room change Art Room to Main Hall observed live
+
+Status: Candidate
+Scope: SLUS-00551 Training Jill, DuckStation 0.1-11894 dev, GDB reads
+Environment: live play by human user on 2026-09-25, agent read over GDB
+Authored: 2026-09-25; human user walked, opencode with model opencode/muse-spark-1.3-contributor-free recorded
+Basis: runtime observation, two rooms
+Claim: Main 0x800C8660 plus Sub 0x800C8661 identify the room on SLUS-00551. Art Room reads 00 07 with prev 06. After the user walked through the door, Main Hall reads 00 06 with prev 07. Prev and Sub cross-link both ways. Item flags are stable across the transition: ink 0xC86E3 stays 0xFE, map bit 0xC86ED stays 0xBF, maps 0xC871C stays 0x08, health stays 0x96. Filename rule resolves 00-06 to ROOM1060.RDT, which holds 3 placed 0x18 pickups including ink x3 gid 32. Full RAM dumped to /tmp/ram_mainhall.bin, 2097152 bytes, kept out of git.
+Evidence: GDB m reads before and after, /tmp/ram_mainhall.bin, track_offline run printing Current room 00-06 with 3 unknown items and State UNKNOWN.
+Limits: two rooms only. Leave and re-enter not yet shown. Flag knowledge still covers only the Art Room ink.
+History:
+- 2026-09-25; human user; walked; Art Room to Main Hall through gameplay.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; GDB reads plus dump, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
