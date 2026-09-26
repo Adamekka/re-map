@@ -1,0 +1,197 @@
+cheats = 56
+
+cheat0_desc = "1st Position Modifier"
+cheat0_code = "800A4BE4 FF01"
+cheat0_enable = false
+
+cheat1_desc = "2nd Position Modifier"
+cheat1_code = "800A4BE8 FF00"
+cheat1_enable = false
+
+cheat2_desc = "3rd Position Modifier"
+cheat2_code = "800A4BEC FF00"
+cheat2_enable = false
+
+cheat3_desc = "4th Position Modifier"
+cheat3_code = "800A4BF0 FF00"
+cheat3_enable = false
+
+cheat4_desc = "5th Position Modifier"
+cheat4_code = "800A4BF4 FF00"
+cheat4_enable = false
+
+cheat5_desc = "6th Position Modifier"
+cheat5_code = "800A4BF8 FF00"
+cheat5_enable = false
+
+cheat6_desc = "Alternate Death Sequences"
+cheat6_code = "300C8675 0000"
+cheat6_enable = false
+
+cheat7_desc = "Change box item: [L2]/[R2]"
+cheat7_code = "E00C8457 0004+E00B7FF4 0000+D00CF848 0002+200C8724 0001+E00C8457 0004+E00B7FF4 0000+D00CF848 0001+210C8724 0001+E00C8724 00FF+300C8724 004B+E40C8724 004B+300C8724 0000"
+cheat7_enable = false
+
+cheat8_desc = "Change inventory item amount: [L1]/[R1]"
+cheat8_code = "30000000 0000+50000000 00F3+51830000 C877D+50000001 0000+D00CF848 0008+50000100 0001+D00CF848 0004+50000100 00FF+00000000 FFFF"
+cheat8_enable = false
+
+cheat9_desc = "Character Posed Position"
+cheat9_code = "300C51E2 0000"
+cheat9_enable = false
+
+cheat10_desc = "Dark House Mode"
+cheat10_code = "3002A008 0099"
+cheat10_enable = false
+
+cheat11_desc = "Disable Auto Aim"
+cheat11_code = "8003EB36 1000"
+cheat11_enable = false
+
+cheat12_desc = "Enable Infinite Rocket Launcher & Magnum"
+cheat12_code = "300C870C 0022"
+cheat12_enable = false
+
+cheat13_desc = "Faster Door Sequence"
+cheat13_code = "8001A64E 1000"
+cheat13_enable = false
+
+cheat14_desc = "First Vs Sneak Cannot  Attack You"
+cheat14_code = "80116DCC 0000+80116DE8 0000+80116E8C 0000"
+cheat14_enable = false
+
+cheat15_desc = "First Zombie Has Infinite Health"
+cheat15_code = "300C532C 0054"
+cheat15_enable = false
+
+cheat16_desc = "Freeze save count"
+cheat16_code = "E00C8456 0003+E0018A8C 0001+210C8688 0001+E00C8456 0003+30018A8C 0000+E00C8456 0004+E0018A8C 0000+200C8688 0001+E00C8456 0004+30018A8C 0001"
+cheat16_enable = false
+
+cheat17_desc = "Freeze Zombie (Only Work in House and Floor 1)"
+cheat17_code = "80106068 1024"
+cheat17_enable = false
+
+cheat18_desc = "Hit Anywhere"
+cheat18_code = "800122EE 2400+8003EB36 1000"
+cheat18_enable = false
+
+cheat19_desc = "Infinite Ammo All Weapons Except Flame Thrower"
+cheat19_code = "8003F574 2400"
+cheat19_enable = false
+
+cheat20_desc = "Infinite Health"
+cheat20_code = "800A1C92 00B9"
+cheat20_enable = false
+
+cheat21_desc = "Infinite health"
+cheat21_code = "300C51AC 008C"
+cheat21_enable = false
+
+cheat22_desc = "Item chest anywhere: [L1]+[Triangle]"
+cheat22_code = "D00C8680 8800+E00C8457 0000+300C8457 0003"
+cheat22_enable = false
+
+cheat23_desc = "One Hit Kill (Guns...etc)"
+cheat23_code = "80012484 0000"
+cheat23_enable = false
+
+cheat24_desc = "One Hit Kill Enemies"
+cheat24_code = "80012506 0000"
+cheat24_enable = false
+
+cheat25_desc = "Player Direct Push Zombie Away (Only Work in House and Floor 1)"
+cheat25_code = "30109D6E 0004"
+cheat25_enable = false
+
+cheat26_desc = "Quick Turn (Down + Square)"
+cheat26_code = "E00CF845 0040+E00CF848 0080+100C5198 03E8"
+cheat26_enable = false
+
+cheat27_desc = "S Key In 1st Position"
+cheat27_code = "800A4BE4 FF3F"
+cheat27_enable = false
+
+cheat28_desc = "Save anywhere: [L1]+[Square]"
+cheat28_code = "D0090518 85FC+80090518 B040+D00C8680 0A00+80090518 85FC"
+cheat28_enable = false
+
+cheat29_desc = "Save count 0"
+cheat29_code = "300C8688 0000"
+cheat29_enable = false
+
+cheat30_desc = "Save without ribbons: [L1]"
+cheat30_code = "E00C8681 0008+30038664 0001+E0038664 0001+300189E6 0008+E00C8456 0004+30038664 0009+E0038664 0009+300189E6 0000"
+cheat30_enable = false
+
+cheat31_desc = "Start With Custom Handgun In Crate"
+cheat31_code = "D0084CF4 0E00+800A4C34 FF04"
+cheat31_enable = false
+
+cheat32_desc = "Start With D Key In Crate"
+cheat32_code = "D0084CF4 0E00+800A4C14 0141"
+cheat32_enable = false
+
+cheat33_desc = "Start With Desk Key In Crate"
+cheat33_code = "D0084CF4 0E00+800A4C10 0142"
+cheat33_enable = false
+
+cheat34_desc = "Start With L Key In Crate"
+cheat34_code = "D0084CF4 0E00+800A4C18 0140"
+cheat34_enable = false
+
+cheat35_desc = "Start With Machine Gun In Crate"
+cheat35_code = "D0084CF4 0E00+800A4C18 0140"
+cheat35_enable = false
+
+cheat36_desc = "Start With S Key In Crate"
+cheat36_code = "D0084CF4 0E00+800A4C1C 013F"
+cheat36_enable = false
+
+cheat37_desc = "Sub Machine Gun In 1st Position"
+cheat37_code = "800A4BE4 FF0F"
+cheat37_enable = false
+
+cheat38_desc = "Switch Bazooka to Acid [L3]"
+cheat38_code = "30000000 0000+D0000000 0200+30000000 0000+30000000 0000+50000000 00F3+51830000 C877C+50000000 0008+00000000 FFFF"
+cheat38_enable = false
+
+cheat39_desc = "Switch Bazooka to Explosive [Select]"
+cheat39_code = "30000000 0000+D0000000 0100+30000000 0000+30000000 0000+50000000 00F3+51830000 C877C+50000000 0007+00000000 FFFF"
+cheat39_enable = false
+
+cheat40_desc = "Switch Bazooka to Flame [R3]"
+cheat40_code = "30000000 0000+D0000000 0400+30000000 0000+30000000 0000+50000000 00F3+51830000 C877C+50000000 0009+00000000 FFFF"
+cheat40_enable = false
+
+cheat41_desc = "Total-Time / [00:00'00]"
+cheat41_code = "800C8684 0000+800C8686 0000"
+cheat41_enable = false
+
+cheat42_desc = "Total-Time / [19884:06'28]"
+cheat42_code = "800C8684 FFFF+800C8686 FFFF"
+cheat42_enable = false
+
+cheat43_desc = "Turbo Mode During Cutscenes"
+cheat43_code = "8007BAF6 2400+D00C3002 8080+8007BAF6 0044"
+cheat43_enable = false
+
+cheat44_desc = "Turbo Mode During Cutscenes"
+cheat44_code = "8007BAF6 2400+D00C3002 8000+8007BAF6 0044"
+cheat44_enable = false
+
+cheat45_desc = "When Zombie Catch You After Leave You He Will Dead (Only Work in House and Floor 1)"
+cheat45_code = "80109FE6 1061"
+cheat45_enable = false
+
+cheat46_desc = "Zombie Cannot Follow You (Only In House Floor 1)"
+cheat46_code = "801095AE 1041+801095B6 3C01"
+cheat46_enable = false
+
+cheat47_desc = "Zombie Catch Player Until To Dead (Only Work in House and Floor 1)"
+cheat47_code = "30109D60 0015"
+cheat47_enable = false
+
+cheat48_desc = "Zombie Health (House)"
+cheat48_code = "800C532C 0000"
+cheat48_enable = false
