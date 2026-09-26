@@ -394,6 +394,20 @@ History:
 - 2026-09-25; human user; walked; Art Room to Main Hall through gameplay.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; GDB reads plus dump, still Candidate.
 
+## RE1-MILESTONE-001: first milestone complete on SLUS-00551 Art Room
+
+Status: Candidate
+Scope: SLUS-00551 Training Jill, Art Room and Main Hall 1F
+Environment: live GDB plus offline extracts on 2026-09-25
+Authored: 2026-09-25; human user walked both directions, opencode with model opencode/muse-spark-1.3-contributor-free recorded
+Basis: runtime observation, three room reads across two transitions
+Claim: all six milestone checks hold as Candidate. Current room reads Main plus Sub over GDB, Art Room 00 07 and Main Hall 00 06 with prev cross-linking both ways. Pickup flags read live: ink 0xC86E3 bit 0 and map 0xC86ED bit 6, polarity 1 present 0 taken fits every observation. The ink associates to its room through ROOM1070.RDT 0x18 id 131 type 0x2F amount 3 gid 24 at real coordinates. tools/track.py and tools/track_offline.py print current room, visited, items, collected, state, and list completeness. Leave and re-enter verified: Art Room to Main Hall and back reads 00 07 again with camera 00, ink still 0xFE, map still 0xBF, health still 0x96.
+Evidence: RE1-ROOM-001 reads, /tmp/ram_mainhall.bin, return-trip reads above, offline runs on three saves.
+Limits: two rooms, one associated pickup, polarity unproven by a controlled take, no save and load round trip on these bytes yet, event chunks unparsed, 8 rooms walk truncated.
+History:
+- 2026-09-25; human user; walked; round trip Art Room to Main Hall and back.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; milestone checks observed, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
