@@ -711,6 +711,21 @@ History:
 - 2026-09-26; Codex subagent `/root/object_ram_crosscheck` with model GPT-6 Sol; independently compared controlled and Main Hall records against the loaded RDT rows without new gameplay.
 - 2026-09-26; Codex with model GPT-6 Sol; verified the script-span matches and object bytes in the saved RAM, and recorded the limits on availability inference.
 
+## RE1-AOT-002: interaction scans use a dynamic item-object bound
+
+Status: Confirmed for this revision
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; controlled Jill Herb and Chemical captures, plus Art Room and Main Hall captures
+Environment: pinned executable disassembly, generated item table, and saved PS1 RAM, 2026-09-27
+Authored: 2026-09-27; Codex with model GPT-6 Sol; subagent `/root/aot_interaction_scope` with model GPT-6 Sol traced the interaction loops
+Basis: executable reset, initializer, and interaction code checked against saved object records
+Claim: room reset clears the state byte in 24 twelve-byte AOT records starting at PS1 VA `0x800B8160`. A 32-bit little-endian pointer at PS1 VA `0x800B7ED8` tracks the highest initialized record. The two inspected player-interaction loops scan twelve-byte records from the base through that pointer, dispatching eligible records by their state byte. In the controlled Winding Passage after-Herb capture, this bound reaches id 5, ids 0–4 are doors, and id 5 has state 0; no other normal item handler is active within that bound. This describes the captured state, not a complete room item list.
+Evidence: reset code at `0x80044C20–0x80044C50` loops 24 times, clears record byte 0, and resets the bound to `0x800B8160`; item initializer `0x8004602C–0x80046044` raises the bound. The interaction loops at `0x80038910–0x800389D0` and `0x80038AB4–0x80038B78` advance by 12 bytes, compare against the bound, and dispatch through the state table at `0x80090404`. Controlled RAM reads at offset `0xB7ED8` give inclusive bounds `0x800B819C` for both Herb states and `0x800B8190` for both Chemical states; the Art Room captures give `0x800B822C`. The Herb-before capture has one active normal item handler, id 5 state 4 with pointer `0x8013E65E`; the after capture has id 5 state 0 and no other state-4, state-13, or state-15 record through the bound. Across the current generated table's 645 opcode-`0x18` rows, every `id & 0x7F` is at most 23.
+Limits: the 24-record reset and current table IDs do not enforce a universal maximum on the opcode's seven-bit ID field. Interaction eligibility also depends on record mode bits and geometry; an active handler alone is not proof that the item is collectible at that moment. Map and other special handlers can follow event-driven paths. A later script may replace an AOT slot or instantiate another item, and a native item grant might bypass these loops. One endpoint without an active item cannot prove full collectible coverage. The tracker must keep Winding Passage completion `UNKNOWN` after the Herb under the current evidence.
+History:
+- 2026-09-27; Codex subagent `/root/aot_interaction_scope` with model GPT-6 Sol; traced reset, high-water updates, interaction loops, handler classes, and mode/geometry filters without a gameplay experiment.
+- 2026-09-27; Codex subagent `/root/clear_rule_audit` with model GPT-6 Sol; assessed whether these observations justify Cleared, without reproducing gameplay; concluded that the coverage condition remains unmet.
+- 2026-09-27; Codex with model GPT-6 Sol; independently checked reset and loop disassembly, counted current table IDs, and compared high-water and handler bytes across saved RAM captures.
+
 ## RE1-SCD-002: an apparent Winding Passage item follows script termination
 
 Status: Confirmed for this revision
