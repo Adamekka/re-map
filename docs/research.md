@@ -341,6 +341,19 @@ Limits: GlobalId 24 to flag 0xC86E3 bit 0 is association by label and coordinate
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse plus save evidence, still Candidate.
 
+## RE1-TABLE-001: full disc item table, 327 of 335 rooms walk clean
+
+Status: Candidate
+Scope: SLUS-00551 all stages, init and main chunks, metadata only
+Environment: local build 2026-09-25 with tools/build_item_table.py, no gameplay
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of disc bytes
+Claim: 335 RDTs yield 647 0x18 entries, 535 with nonzero coordinates. Type bytes match the chest item ID table, for example 0x44 Green Herb 107 times, 0x0B Clip 51 times, 0x2F Ink Ribbon 41 times, 0x0C Shells 30 times, which confirms the Type field split. Zero-coordinate entries read as model preloads, not pickups. Eight rooms in stages 3 and 4 stop at undocumented bytes above 0x50 such as 0xD0 and 0xE0, plus ROOM2000.RDT which is a dummy file with zero offsets. Variable opcodes 0x33 and 0x17 are handled per scd1.xml. Event chunks stay unparsed. Full table is committed at data/item_table_slus00551.json, paths plus integers only.
+Evidence: data/item_table_slus00551.json 305076 bytes, per-room walk stats inside it, ROOM1000.RDT now clean at 115 ops with 3 entries after the 0x33 fix.
+Limits: GlobalId to save flag mapping is still open for every entry. ROOM1000.RDT holds Sword Key plus two 1x1 Serum shaped entries and no ink, so the save room file identity is unconfirmed and the profile demo pickup stays a 00170 side claim.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse only, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.

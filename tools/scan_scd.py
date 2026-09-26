@@ -40,9 +40,23 @@ def walk(code: bytes, base: int) -> tuple[list[tuple[int, int, bytes]], str]:
     pos = 0
     while pos < len(code):
         op = code[pos]
-        size = SIZES.get(op)
-        if size is None:
-            return ops, f"unknown/variable opcode 0x{op:02x} at +{pos}"
+        if op == 0x33:
+            # Variable: opcode + type + u0 + u1, then type-dependent tail.
+            if pos + 4 > len(code):
+                return ops, f"truncated opcode 0x33 at +{pos}"
+            typ = code[pos + 1]
+            extra = 2 if typ in (0, 4, 6, 7) else 4 if typ in (1, 3, 5, 8, 9, 10) else 0
+            size = 4 + extra
+        elif op == 0x17:
+            # Variable: opcode + u0 + u16 + type u16, then 2 more u16 if type==0.
+            if pos + 6 > len(code):
+                return ops, f"truncated opcode 0x17 at +{pos}"
+            typ = struct.unpack_from("<H", code, pos + 4)[0]
+            size = 10 if typ == 0 else 6
+        else:
+            size = SIZES.get(op)
+            if size is None:
+                return ops, f"unknown/variable opcode 0x{op:02x} at +{pos}"
         if pos + size > len(code):
             return ops, f"truncated opcode 0x{op:02x} at +{pos}"
         ops.append((base + pos, op, code[pos : pos + size]))
