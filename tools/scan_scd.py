@@ -1,8 +1,8 @@
 """Scan RE1 RDT script chunks for item opcodes using reevengi scd1.xml sizes.
 
 Local helper only. Prints 0x0D/0x12/0x13/0x18 entries with raw fields.
-Bytecode walking uses fixed opcode sizes. Variable opcodes
-(0x17, 0x28, 0x33) stop the walk with a warning.
+Bytecode walking follows both sides of IF blocks and stops at procedure
+termination. Unknown opcodes stop the walk with a warning.
 
 Usage:
   python3 tools/scan_scd.py /tmp/room1070.rdt
@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import struct
-import sys
 from pathlib import Path
 
 # Fixed sizes from reevengi src/g_re1/scd1.xml. 1+opcodes absent below are
@@ -35,34 +34,114 @@ SIZES = {
 ITEM_OPS = {0x0D, 0x12, 0x13, 0x18}
 
 
+def _opcode_size(code: bytes, pos: int) -> tuple[int, str]:
+    op = code[pos]
+    if op == 0x33:
+        # Variable: opcode + type + u0 + u1, then type-dependent tail.
+        if pos + 4 > len(code):
+            return 0, f"truncated opcode 0x33 at +{pos}"
+        typ = code[pos + 1]
+        extra = 2 if typ in (0, 4, 6, 7) else 4 if typ in (1, 3, 5, 8, 9, 10) else 0
+        size = 4 + extra
+    elif op == 0x17:
+        # Variable: opcode + u0 + u16 + type u16, then 2 more u16 if type==0.
+        if pos + 6 > len(code):
+            return 0, f"truncated opcode 0x17 at +{pos}"
+        typ = struct.unpack_from("<H", code, pos + 4)[0]
+        size = 10 if typ == 0 else 6
+    else:
+        size = SIZES.get(op)
+        if size is None:
+            return 0, f"unknown/variable opcode 0x{op:02x} at +{pos}"
+    if pos + size > len(code):
+        return 0, f"truncated opcode 0x{op:02x} at +{pos}"
+    return size, "clean"
+
+
 def walk(code: bytes, base: int) -> tuple[list[tuple[int, int, bytes]], str]:
-    """Walk bytecode. Returns (op list, status)."""
+    """Return opcodes reachable through either side of each IF."""
+    decoded: dict[int, tuple[int, int, bytes]] = {}
+    pending = [0]
+    issues: list[str] = []
+    while pending:
+        pos = pending.pop()
+        if pos == len(code) or pos in decoded:
+            continue
+        if pos < 0 or pos > len(code):
+            issues.append(f"branch outside procedure at +{pos}")
+            continue
+        op = code[pos]
+        size, status = _opcode_size(code, pos)
+        if status != "clean":
+            issues.append(status)
+            continue
+        decoded[pos] = (base + pos, op, code[pos : pos + size])
+        if op == 0x00:
+            # The pinned executable clears IF depth and ends this procedure.
+            continue
+        if op == 0x01:
+            # A failed IF condition resumes at this block's exit; scan both
+            # paths because static RDT data does not establish live flags.
+            pending.append(pos + 2 + code[pos + 1])
+        elif op == 0x02:
+            # ELSE jumps over its alternate branch when the IF body ran.
+            skip = code[pos + 1]
+            if skip < size:
+                issues.append(f"ELSE target inside opcode at +{pos}")
+                continue
+            pending.append(pos + skip)
+            continue
+        pending.append(pos + size)
+    ordered = sorted(decoded.items())
+    max_end = 0
+    for offset, row in ordered:
+        if offset < max_end:
+            issues.append(f"overlapping branch target at +{offset}")
+        max_end = max(max_end, offset + len(row[2]))
+    status = "clean" if not issues else f"partial: {issues[0]} ({len(issues)} issues)"
+    return [row for _, row in ordered], status
+
+
+def walk_linear(code: bytes, base: int) -> list[tuple[int, int, bytes]]:
+    """Keep raw candidates beyond opcode 0 when control flow is unresolved."""
     ops: list[tuple[int, int, bytes]] = []
     pos = 0
     while pos < len(code):
-        op = code[pos]
-        if op == 0x33:
-            # Variable: opcode + type + u0 + u1, then type-dependent tail.
-            if pos + 4 > len(code):
-                return ops, f"truncated opcode 0x33 at +{pos}"
-            typ = code[pos + 1]
-            extra = 2 if typ in (0, 4, 6, 7) else 4 if typ in (1, 3, 5, 8, 9, 10) else 0
-            size = 4 + extra
-        elif op == 0x17:
-            # Variable: opcode + u0 + u16 + type u16, then 2 more u16 if type==0.
-            if pos + 6 > len(code):
-                return ops, f"truncated opcode 0x17 at +{pos}"
-            typ = struct.unpack_from("<H", code, pos + 4)[0]
-            size = 10 if typ == 0 else 6
-        else:
-            size = SIZES.get(op)
-            if size is None:
-                return ops, f"unknown/variable opcode 0x{op:02x} at +{pos}"
-        if pos + size > len(code):
-            return ops, f"truncated opcode 0x{op:02x} at +{pos}"
-        ops.append((base + pos, op, code[pos : pos + size]))
+        size, status = _opcode_size(code, pos)
+        if status != "clean":
+            break
+        ops.append((base + pos, code[pos], code[pos : pos + size]))
         pos += size
-    return ops, "clean"
+    return ops
+
+
+def walk_procedures(span: bytes, base: int) -> tuple[list[tuple[int, int, bytes]], str]:
+    """Walk length-prefixed procedures up to their zero-length sentinel."""
+    ops: list[tuple[int, int, bytes]] = []
+    pos = 0
+    issues: list[str] = []
+    while pos + 2 <= len(span):
+        (length,) = struct.unpack_from("<H", span, pos)
+        if length == 0:
+            status = (
+                "clean"
+                if not issues
+                else f"partial: {issues[0]} ({len(issues)} procedures)"
+            )
+            return sorted(ops), status
+        if length < 2 or pos + length > len(span):
+            return sorted(ops), f"partial: bad procedure length at +{pos}"
+        code = span[pos + 2 : pos + length]
+        found, status = walk(code, base + pos + 2)
+        if status != "clean":
+            # A malformed branch can decode payload bytes as phantom opcodes.
+            # Keep only the prior linear candidates until this path is resolved.
+            ops.extend(walk_linear(code, base + pos + 2))
+            issues.append(f"{status.removeprefix('partial: ')} in procedure +{pos}")
+        else:
+            ops.extend(found)
+        pos += length
+    return sorted(ops), f"partial: missing procedure sentinel at +{pos}"
 
 
 def main() -> int:
@@ -76,16 +155,15 @@ def main() -> int:
         start = offs[idx]
         end = offs[idx + 1]
         print(f"--- chunk {name} file 0x{start:x}..0x{end:x} len {end - start}")
-        # Chunk is u16 length prefixed procedures. Try whole span as code
-        # after one u16, else raw span.
         span = d[start:end]
-        (length,) = struct.unpack_from("<H", span, 0)
-        cands = []
-        if length + 2 <= len(span):
-            cands.append(("len-prefix", span[2 : 2 + length]))
-        cands.append(("raw", span))
-        for label, code in cands:
-            ops, status = walk(code, start + (2 if label == "len-prefix" else 0))
+        if name == "event":
+            # Event entry points are not mapped; preserve raw candidates.
+            scans = [
+                ("raw", walk_linear(span, start), "partial: event entry points unresolved")
+            ]
+        else:
+            scans = [("procedures", *walk_procedures(span, start))]
+        for label, ops, status in scans:
             items = [(a, o, b) for a, o, b in ops if o in ITEM_OPS]
             print(f"  [{label}] ops={len(ops)} status={status} item_ops={len(items)}")
             for addr, op, raw in items:
@@ -99,8 +177,6 @@ def main() -> int:
                     print(f"    0x18 @0x{addr:x} id={_id} x={x} y={y} w={w} h={h} type=0x{typ:02x} amt={amt} gid={gid} raw={raw.hex()}")
                 else:
                     print(f"    0x{op:02x} @0x{addr:x} id={raw[1]} raw={raw.hex()}")
-            if status == "clean":
-                break
     return 0
 
 

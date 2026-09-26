@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from list_psx_files import _read_dir, _sector_data  # noqa: E402
-from scan_scd import SIZES, walk  # noqa: E402
+from scan_scd import walk_procedures  # noqa: E402
 
 import re
 
@@ -60,9 +60,7 @@ def _scan_rdt(d: bytes) -> dict:
             stats[name] = "bad-range"
             continue
         span = d[start:end]
-        (length,) = struct.unpack_from("<H", span, 0)
-        code = span[2 : 2 + length] if length + 2 <= len(span) else span
-        ops, status = walk(code, start + 2)
+        ops, status = walk_procedures(span, start)
         stats[name] = f"{status}/{len(ops)}"
         for addr, op, raw in ops:
             if op == 0x18:

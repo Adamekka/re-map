@@ -13,15 +13,15 @@ sys.path.insert(0, str(REPO / "tools"))
 def test_item_global_id_uses_opcode_byte_22(tmp_path: Path):
     from build_item_table import _scan_rdt
 
-    rdt = bytearray(0x100 + 2 + 26 + 4)
+    rdt = bytearray(0x100 + 2 + 26 + 2 + 4)
     offsets = [0] * 19
     offsets[6] = 0x100
-    offsets[7] = 0x100 + 2 + 26
+    offsets[7] = 0x100 + 2 + 26 + 2
     offsets[8] = offsets[7] + 2
     offsets[9] = len(rdt)
     struct.pack_into("<19I", rdt, 0x48, *offsets)
-    struct.pack_into("<H", rdt, 0x100, 26)
-    item = memoryview(rdt)[0x102 : offsets[7]]
+    struct.pack_into("<H", rdt, 0x100, 28)
+    item = memoryview(rdt)[0x102 : 0x102 + 26]
     item[0] = 0x18
     item[1] = 5
     struct.pack_into("<4h", item, 2, 100, 200, 10, 10)
