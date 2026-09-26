@@ -27,13 +27,17 @@ def render(
         )
     assert record is not None, "render needs a RoomRecord when room is known"
     visited = "yes" if record.visited else "no"
+    # Zero with an incomplete list means no item coverage, not an empty room.
+    items_known = record.total_items > 0 or record.list_complete
+    items = str(record.total_items) if items_known else "unknown"
+    collected = str(record.collected_items) if items_known else "unknown"
     return "\n".join(
         [
             f"Profile: {profile_id}",
             f"Current room: {room}",
             f"Visited: {visited}",
-            f"Items: {record.total_items}",
-            f"Collected: {record.collected_items}",
+            f"Items: {items}",
+            f"Collected: {collected}",
             f"State: {record.completion.value}",
             f"List complete: {'yes' if record.list_complete else 'no'}",
         ]

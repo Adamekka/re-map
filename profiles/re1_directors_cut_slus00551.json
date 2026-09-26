@@ -3,15 +3,42 @@
   "game": "Resident Evil Director's Cut",
   "region": "NTSC-U",
   "serial": "SLUS-00551",
-  "revision": "TODO: disc revision string",
-  "executable_identity": "SLUS_005.51 TODO: hash",
-  "duckstation_version_tested": "TODO",
+  "revision": "disc revision not printed; pinned by executable SHA256",
+  "executable_identity": "SLUS_005.51 SHA256 0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6",
+  "duckstation_version_tested": "0.1-11894-gc66b2694d",
   "address_space": "PS1 virtual address, little-endian",
-  "stage_address_ps1": null,
-  "room_address_ps1": null,
-  "candidate_anchors_unconfirmed": {
-    "health_16bit": "0x800C51AC",
-    "ammo_16bit": "0x800418F8"
+  "stage_address_ps1": "0x800C8660",
+  "room_address_ps1": "0x800C8661",
+  "camera_address_ps1": "0x800C8662",
+  "runtime_signature": {
+    "address_space": "PS1 virtual address",
+    "window_width_bytes": 32,
+    "window_addresses_ps1": [
+      "0x8004484C",
+      "0x80045F28",
+      "0x8004897C",
+      "0x800489A8",
+      "0x80091168"
+    ],
+    "concatenated_sha256": "23311956abca97ba2522be37f6d45457f4ebbda529ede887a9d0a6d6a2a56958"
   },
-  "notes": "Candidate only. Anchors from cheat lists, not runtime. Do not use until GDB reads confirm on this exact disc."
+  "pilot_item": {
+    "room_main": 0,
+    "room_sub": 9,
+    "character_address_ps1": "0x800C8669",
+    "character_value": 1,
+    "variant_word_address_ps1": "0x800C3000",
+    "variant_mask": "0x00800000",
+    "source_rdt": "PSX/STAGE1/ROOM1091.RDT",
+    "label": "Green Herb",
+    "global_id": 111,
+    "flag_address_ps1": "0x800C86EA",
+    "flag_mask": 1,
+    "aot_record_address_ps1": "0x800B819C",
+    "aot_record_width_bytes": 12,
+    "active_handler": 4,
+    "pointer_offset_bytes": 8,
+    "expected_opcode_pointer_ps1": "0x8013E65E"
+  },
+  "notes": "Runtime signature windows match seven saved RAM captures but are not a whole executable attestation. Herb availability rule is limited to the controlled Jill Winding Passage state; room item coverage remains incomplete."
 }
