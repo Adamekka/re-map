@@ -1,10 +1,17 @@
-# RE1 RAM map, user-provided candidate
+# RE1 RAM map, RetroAchievements code notes
 
-Provenance: pasted by user in chat on 2026-09-25. Original author unknown.
-Status: Candidate. Nothing here is runtime confirmed by this project.
-Scope: appears to describe original RE1 USA SLUS-00170 plus EU, FR, GER
-variants, based on Region Serial and Current Frame rows. Do not apply to
-SLUS-00551 Director's Cut without a live GDB test.
+Provenance: RetroAchievements code notes for Resident Evil PS1, pasted by
+the user in chat on 2026-09-25. The user confirmed on 2026-09-25 that this
+table comes from RetroAchievements.
+Status: Candidate as a whole. Individual bits graduate to Confirmed for a
+revision only through runtime observation on that revision, per the
+validation standard. Two bits are already there through controlled pairs:
+0xC86EA bit 0 in RE1-PICKUP-002 and 0xC86DE bit 2 in RE1-PICKUP-003.
+Scope: table names USA SLUS-00170 plus EU, FR, GER variants. Runtime reads
+on local SLUS-00551 Director's Cut match the room bytes and the two
+confirmed pickup bits, so the notes apply to 00551 at least where checked.
+Each address still needs its own check before promotion, never a blanket
+transfer across revisions.
 Address space: values look like PS1 RAM offsets. Add 0x80000000 for the
 KSEG0 virtual address used by the GDB server, for example offset 0x0c51ac
 means virtual 0x800c51ac. Widths follow the Note column. BE marks
