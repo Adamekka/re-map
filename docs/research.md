@@ -646,6 +646,21 @@ History:
 - 2026-09-26; human user; tested; saved to the isolated memory card, reset, loaded through the in-game menu, and reported completion.
 - 2026-09-26; Codex with model GPT-6 Sol; tested and authored; compared the live GDB read with both controlled fixtures and inspected the isolated memory card, promoting only this normal-load behavior to Confirmed for this revision.
 
+## RE1-SAVE-002: the normal-save payload includes the Herb acquisition byte
+
+Status: Confirmed for this revision
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; one Training Jill Chemical-after normal save whose prior game state already had the Winding Passage Herb taken
+Environment: pinned PS1 executable disassembly, controlled Chemical-after RAM capture, and the isolated DuckStation 0.1-11894-gc66b2694d memory card from RE1-SAVE-001, 2026-09-27
+Authored: 2026-09-27; Codex with model GPT-6 Sol; subagent `/root/save_flag_serialization` with model GPT-6 Sol traced the copy path
+Basis: executable save/load byte-copy instructions and a byte comparison of the normal-save card against controlled PS1 RAM
+Claim: this normal-save path copies the 32 acquisition-flag bytes at PS1 virtual addresses `0x800C86DC..0x800C86FB` into the save payload. The Chemical-after card contains the full block, including Chemical byte `0xFB` at `0x800C86DE` and Herb byte `0xFE` at `0x800C86EA`. The executable also has a reverse card-buffer-to-RAM copy covering both bytes. This supports the Herb flag's inclusion in normal saves; a dedicated normal in-game Herb load has not been observed.
+Evidence: the save branch at PS1 VA `0x80018988–0x800189B0` passes source `0x800C8660` and length `0x13C` to byte-copy routine `0x80057A64`, placing the flag block at relative offsets `0x7C..0x9B`, Chemical at `0x7E`, and Herb at `0x8A`. The branch then calls `0x80019DE8`, whose write path reaches BIOS B0 at `0x80019F0C`. The reverse branch at `0x80018ADC–0x80018B08` copies `0x240` bytes from the card buffer to `0x800C8660`, followed by state adjustment at `0x80019638`. In the isolated memory card with SHA256 `7323a3259f9d77e11a3ebae3f1985fff07f80a3aab8c0ff39bfb8ecaeeaa1c87`, file offset `0x2200` maps to the saved room bytes at RAM offset `0xC8660`, and the unique 32-byte match for the Chemical-after flag block starts at card offset `0x227C`. Card offset `0x228A` holds Herb byte `0xFE`. Of the `0x13C` copied bytes, 297 match the earlier Chemical-after RAM fixture; the other 19 differ between that capture and the later save, including camera and Ink Ribbon count.
+Limits: the user-operated normal load in RE1-SAVE-001 directly checked Chemical byte `0xFB`, not the Herb byte. The title-screen Load Game caller into the reverse-copy branch was not fully traced. The reverse-copy instructions make Herb restoration the expected behavior for this path, but no separate Herb normal-load or earlier-save reversal test confirms it. The card is an isolated scratch artifact outside Git. No other executable revision was checked, and serialization says nothing about item availability or room completion.
+History:
+- 2026-09-26; human user; saved the Chemical-after state to the isolated memory card and loaded it through the game's menu (RE1-SAVE-001).
+- 2026-09-27; Codex subagent `/root/save_flag_serialization` with model GPT-6 Sol; traced the save and reverse-copy routines in the pinned executable without a new gameplay test.
+- 2026-09-27; Codex with model GPT-6 Sol; matched the card's flag block and byte positions against the controlled Chemical-after RAM and independently checked the copy routine and call sites.
+
 ## RE1-VARIANT-001: two runtime rooms load suffix-1 RDT files
 
 Status: Confirmed for this revision
