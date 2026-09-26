@@ -376,11 +376,12 @@ Scope: SLUS-00551 all stages, init and main chunks
 Environment: local parse 2026-09-25 with extended tools/build_item_table.py, no gameplay
 Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
 Basis: runtime observation of disc bytes
-Claim: Door_set 0x0C byte 15 splits into next stage bits 7-5 and next room bits 4-0 per scd1.xml, giving 782 directed edges across the disc. Filename rule ROOM plus stage plus two digit room plus camera links files to runtime Main and Sub: ROOM1070.RDT holds the Art Room ink matching runtime Sub 07 and its doors point at rooms 6 and 8, flanking 7. ROOM1000.RDT doors point at room 1, fitting Sub 00 Mansion Save Room next to Sub 01 West Stairway. STAGE1 doors target stages 0, 2, and 3, so the file folder number is not the runtime stage value and stays unresolved.
+Claim: Door_set 0x0C byte 15 splits into next stage bits 7-5 and next room bits 4-0 per scd1.xml, giving 782 directed edges across the disc. The original filename inference used ROOM plus stage plus two digit room plus camera to link files to runtime Main and Sub: ROOM1070.RDT holds the Art Room ink matching runtime Sub 07 and its doors point at rooms 6 and 8, flanking 7. ROOM1000.RDT doors point at room 1, fitting Sub 00 Mansion Save Room next to Sub 01 West Stairway. STAGE1 doors target stages 0, 2, and 3, so the file folder number is not the runtime stage value and stays unresolved. RE1-VARIANT-001 rejects a direct camera-to-suffix rule for one captured Main Hall state.
 Evidence: data/item_table_slus00551.json now 399936 bytes with doors arrays, per-room stats unchanged at 327 clean.
-Limits: filename rule rests on two rooms. No runtime walk through a door yet. Folder to Main mapping open. Event chunks still unparsed.
+Limits: the file number tracks a candidate room number, but the trailing variant cannot be assumed to be 0. RE1-VARIANT-001 directly identifies loaded suffix-1 files in two runtime captures. The historical 782-edge count is a static parse, not a runtime variant selector. Folder to Main mapping remains open; event chunks remain unparsed.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse only, still Candidate.
+- 2026-09-26; Codex with model GPT-6 Sol; revised the filename-rule limit after matching two runtime RAM captures to suffix-1 RDT scripts in RE1-VARIANT-001.
 
 ## RE1-LINK-001: filename rule holds for 87 of 90 stage 0 doors
 
@@ -391,10 +392,11 @@ Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contr
 Basis: runtime observation of disc bytes
 Claim: for STAGE1 doors with next stage 0, target file PSX/STAGE1/ROOM1 plus two digit hex room plus 0 exists in 87 of 90 cases. The 3 misses point at rooms 0x10 and 0x19, whose files are absent, likely special transitions such as stairs or elevators. Duplicate 0x18 rows identical in id, type, amount, gid, and box are character or mode variants of one pickup. tools/track_offline.py now resolves any Main 0 room through this rule, dedups variants, checks only observed flags, and reports UNKNOWN while coverage is open. Other Main values refuse instead of guessing.
 Evidence: door invariant script output 87 resolving and 3 missing. Historical offline runs with a candidate Art Room flag link printed Items 1 Collected 1 State UNKNOWN; with that untested link removed, the same slot RAM prints Items 1 Collected 0 State UNKNOWN.
-Limits: static consistency plus 2 runtime rooms is not confirmation. The Art Room ink flag association remains untested; controlled item flags now cover the Winding Passage herb and Mansion Storeroom Chemical. Input injection was blocked in the original test environment because Pad1 bound only to an SDL gamepad.
+Limits: static consistency plus 2 runtime rooms is not confirmation. The suffix-0 resolution in `tools/track_offline.py` is contradicted for the captured Main Hall and Winding Passage states by RE1-VARIANT-001; its item list and count for those states must not be treated as current-room truth. The Art Room ink flag association remains untested; controlled item flags now cover the Winding Passage herb and Mansion Storeroom Chemical. Input injection was blocked in the original test environment because Pad1 bound only to an SDL gamepad.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static check plus offline runs, still Candidate.
 - 2026-09-26; Codex with model GPT-6 Sol; updated the current offline output and flag-coverage limit after removing the untested Art Room link.
+- 2026-09-26; Codex with model GPT-6 Sol; rejected universal suffix-0 runtime linkage after direct loaded-script comparisons in RE1-VARIANT-001; the historical 87/90 file-existence count remains a static observation.
 
 ## RE1-ROOM-001: room change Art Room to Main Hall observed live
 
@@ -403,13 +405,14 @@ Scope: SLUS-00551 Training Jill, DuckStation 0.1-11894 dev, GDB reads
 Environment: live play by human user on 2026-09-25, agent read over GDB
 Authored: 2026-09-25; human user walked, opencode with model opencode/muse-spark-1.3-contributor-free recorded
 Basis: runtime observation, two rooms
-Claim: Main 0x800C8660 plus Sub 0x800C8661 identify the room on SLUS-00551. Art Room reads 00 07 with prev 06. After the user walked through the door, Main Hall reads 00 06 with prev 07. Prev and Sub cross-link both ways. Item flags are stable across the transition: ink 0xC86E3 stays 0xFE, map bit 0xC86ED stays 0xBF, maps 0xC871C stays 0x08, health stays 0x96. Filename rule resolves 00-06 to ROOM1060.RDT, which holds 3 placed 0x18 pickups including ink x3 gid 52. Full RAM dumped to /tmp/ram_mainhall.bin, 2097152 bytes, kept out of git.
-Evidence: GDB m reads before and after, /tmp/ram_mainhall.bin, track_offline run printing Current room 00-06 with 3 unknown items and State UNKNOWN.
-Limits: two rooms only for this finding. Leave and re-enter was later shown in RE1-MILESTONE-001. The Art Room ink association remains Candidate; controlled pickup flags are in RE1-PICKUP-002 and RE1-PICKUP-003.
+Claim: Main 0x800C8660 plus Sub 0x800C8661 identify the room on SLUS-00551. Art Room reads 00 07 with prev 06. After the user walked through the door, Main Hall reads 00 06 with prev 07. Prev and Sub cross-link both ways. Item flags are stable across the transition: ink 0xC86E3 stays 0xFE, map bit 0xC86ED stays 0xBF, maps 0xC871C stays 0x08, health stays 0x96. The original filename inference selected `ROOM1060.RDT`; RE1-VARIANT-001 rejects that selection for this capture and identifies `ROOM1061.RDT` instead. Full RAM dumped to /tmp/ram_mainhall.bin, 2097152 bytes, kept out of git.
+Evidence: GDB m reads before and after, /tmp/ram_mainhall.bin, and the historical `track_offline` output of three unknown items and State UNKNOWN. The three-item count came from the wrong RDT variant and is invalid for this capture.
+Limits: two rooms only for this finding. Leave and re-enter was later shown in RE1-MILESTONE-001. The Art Room ink association remains Candidate; controlled pickup flags are in RE1-PICKUP-002 and RE1-PICKUP-003. The selector for the RDT trailing variant is unresolved.
 History:
 - 2026-09-25; human user; walked; Art Room to Main Hall through gameplay.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; GDB reads plus dump, still Candidate.
 - 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 Main Hall ink GlobalId 32 with 52 from RE1-RDT-002; room-transition evidence is unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; rejected the original `ROOM1060.RDT` inference using the byte-for-byte loaded-script comparison in RE1-VARIANT-001; room-transition evidence is unchanged.
 
 ## RE1-MILESTONE-001: first milestone complete on SLUS-00551 Art Room
 
@@ -433,13 +436,14 @@ Scope: SLUS-00551 Training Jill, Winding Passage Main 00 Sub 09, DuckStation 0.1
 Environment: before and after savestates on 2026-09-25, offline extracts, no emulator boot
 Authored: 2026-09-25; human user played the single pickup, opencode with model opencode/muse-spark-1.3-contributor-free analyzed
 Basis: runtime observation, controlled before and after with one item taken
-Claim: taking the Winding Passage Green Herb clears exactly one bit: 0xC86EA bit 0 goes 1 to 0, 0xFF to 0xFE, while the other 13 known Item Collected bytes stay identical. Room bytes are unchanged, Main 00 Sub 09 cam 01, and inventory slot 5 gains 0x44 times 1. ROOM1090.RDT holds exactly one placed pickup, 0x18 id 5 type 0x44 amount 1 gid 111 at real coordinates. Bit polarity 1 means present and 0 means taken is confirmed for this revision. Fixtures are committed at tests/fixtures/slus00551_green_herb_before.sav sha1 9adcac31dac8725219f5672bce9152fa487b5ee9 and slus00551_green_herb_after.sav sha1 1eaf8be8360025d25589255ef244584df84cef53, donated by the user as evidence.
+Claim: taking the Winding Passage Green Herb clears exactly one bit: 0xC86EA bit 0 goes 1 to 0, 0xFF to 0xFE, while the other 13 known Item Collected bytes stay identical. Room bytes are unchanged, Main 00 Sub 09 cam 01, and inventory slot 5 gains 0x44 times 1. The loaded `ROOM1091.RDT` has the Herb row, 0x18 id 5 type 0x44 amount 1 gid 111 at real coordinates, plus another placed opcode row with gid 35. The original `ROOM1090.RDT` one-item inference does not describe these captures. Bit polarity 1 means present and 0 means taken is confirmed for the Herb on this revision. Fixtures are committed at tests/fixtures/slus00551_green_herb_before.sav sha1 9adcac31dac8725219f5672bce9152fa487b5ee9 and slus00551_green_herb_after.sav sha1 1eaf8be8360025d25589255ef244584df84cef53, donated by the user as evidence.
 Evidence: tools/extract_sav_ram.py both fixtures, targeted compare of 14 Item Collected bytes with a single-bit diff, track_offline prints INCOMPLETE before and UNKNOWN after.
-Limits: save and normal load round trip on this bit untested, re-enter from another room untested for this flag, other flags still Candidate.
+Limits: save and normal load round trip on this bit untested, re-enter from another room untested for this flag, other flags still Candidate. The gid 35 row's current availability is unknown; the Herb pickup does not prove the room is cleared.
 History:
 - 2026-09-25; human user; played; stood before the herb, saved, took it, saved.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; analyzed; single-bit diff plus inventory plus RDT row, promoting to Confirmed for this revision.
 - 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 RDT GlobalId 0 with 111 from RE1-RDT-002; the controlled pickup flag result is unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; corrected the runtime file identity to `ROOM1091.RDT` and retracted the one-item list after the loaded-script comparison in RE1-VARIANT-001; controlled Herb evidence is unchanged.
 
 ## RE1-PICKUP-003: controlled chemical take confirms second flag
 
@@ -618,6 +622,38 @@ Limits: the GDB read was taken after the user's report of a normal load, not dur
 History:
 - 2026-09-26; human user; tested; saved to the isolated memory card, reset, loaded through the in-game menu, and reported completion.
 - 2026-09-26; Codex with model GPT-6 Sol; tested and authored; compared the live GDB read with both controlled fixtures and inspected the isolated memory card, promoting only this normal-load behavior to Confirmed for this revision.
+
+## RE1-VARIANT-001: two runtime rooms load suffix-1 RDT files
+
+Status: Confirmed for this revision
+Scope: Resident Evil Director's Cut USA SLUS-00551, Training Jill Main/Sub 00-06 and 00-09 captures; executable identity in RE1-FLAG-001
+Environment: DuckStation 0.1-11894 dev RAM captures from 2026-09-25, compared with RDTs extracted from the named disc on 2026-09-26
+Authored: 2026-09-26; Codex with model GPT-6 Sol; subagent `/root/object_ram_crosscheck` with model GPT-6 Sol independently checked Main Hall item records
+Basis: byte-for-byte runtime RAM versus disc script comparison, static RDT item rows, and saved runtime object records
+Claim: Main/Sub 00-06 in `/tmp/ram_mainhall.bin` loads `ROOM1061.RDT`, and Main/Sub 00-09 in `/tmp/ram_herb_before.bin` loads `ROOM1091.RDT`. The trailing filename digit is not universally 0. The hardcoded suffix-0 rule in `tools/track_offline.py` selects the wrong item list for both captures. The loaded Main Hall variant has Ink gid 52 and zero-coordinate rows gid 14 and 9, whereas `ROOM1060.RDT` also has a placed gid 26 pickup absent from `ROOM1061.RDT`. The loaded Herb variant contains the controlled Herb gid 111 and a second placed row gid 35; `ROOM1090.RDT` has only the Herb row. The current-room item list and any derived completion result cannot rely on the suffix-0 rule.
+Evidence: script sections use RDT header offsets 6 through 8 and load at PS1 RAM base `0x121C00`. Main Hall RAM SHA256 `8432db90eb1b15076d53ba1fc8b59627194030858b6b4b644e8d94b29f586a75` matches `ROOM1061.RDT` init+main across 1116/1116 bytes, versus 174/712 bytes matching `ROOM1060.RDT`. Herb-before RAM SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4` matches `ROOM1091.RDT` across 252/252 bytes, versus 193/200 for `ROOM1090.RDT`. Extracted suffix-1 RDT SHA256 values are `4bb6e58451df65a2ac13f7bf13ce2c914e82753e551c460255af89a1cc858738` and `aafa97fb8a08d628a9cc34fc4b74fd4cf15783596c98b95733d7643e1ecfcf09`. In Main Hall, AOT id 5 at PS1 VA `0x800B819C` points to `0x80151810`, the loaded `ROOM1061.RDT` Ink opcode at file `0x2FC0E` plus two. The capture's camera byte is 2, so the suffix is not simply the current camera number.
+Limits: these comparisons identify the loaded file in two saved states, not the general variant-selection rule. Static rows are not proof that their pickup objects are currently available. This finding does not determine whether the gid 35 Herb-room row or Main Hall's zero-coordinate rows can be collected in these states. RDT and RAM artifacts remain outside Git. RE1-ROOM-001 and RE1-PICKUP-002 preserve the original room and pickup observations while retracting their suffix-0 item-list inferences.
+History:
+- 2026-09-25; human user; played; produced the Main Hall and controlled Herb states used in the captures.
+- 2026-09-26; Codex subagent `/root/object_ram_crosscheck` with model GPT-6 Sol; independently matched the Main Hall script bytes and Ink object pointer, and compared Main Hall item rows without new gameplay.
+- 2026-09-26; Codex with model GPT-6 Sol; independently compared both RDT script spans against RAM, verified hashes and item rows, and authored this limited file-identity correction.
+
+## RE1-AOT-001: item object state is a handler index, not an availability bit
+
+Status: Confirmed for this revision
+Scope: Resident Evil Director's Cut USA SLUS-00551 executable identity in RE1-FLAG-001; controlled Training Jill Herb and Chemical pairs; uncontrolled Art Room and Main Hall captures
+Environment: pinned executable disassembly and saved PS1 RAM reads, 2026-09-26
+Authored: 2026-09-26; Codex with model GPT-6 Sol; subagent `/root/object_state_code` with model GPT-6 Sol traced the executable handlers
+Basis: executable disassembly and runtime object records; only Herb and Chemical have controlled pickup pairs
+Claim: opcode 0x18 indexes 12-byte AOT records at PS1 VA `0x800B8160 + 12*(id & 0x7F)`. Record byte 0 selects an interaction handler rather than directly expressing current collectibility. When the acquisition bit is set, the opcode initializes an ordinary item type below `0x4E` to handler `0x04`, a Map type `0x4E..0x53` to `0x0F`, and types at least `0x54` to `0x0D`; a cleared acquisition bit instead gives state 0. The controlled Herb id 5 and Chemical id 1 records both change `0x04` to 0 when taken, while their acquisition bits clear. A current script-row pointer plus the handler state can show that an object was instantiated, but a nonzero state alone does not prove the player can collect it now. A stale pointer alone is insufficient because room reset clears state byte 0 without clearing the saved pointer bytes.
+Evidence: opcode 0x18 handler at `0x80045F48–0x80045FD4` writes the state, with dispatch table at `0x80090404`; reset at `0x80044C20–0x80044C50` clears state byte 0 for the first 24 records. In `/tmp/ram_herb_before.bin` versus `/tmp/ram_herb_after.bin`, id 5 at RAM `0xB819C` changes state `04→00` with pointer `0x8013E65E`, matching the loaded `ROOM1091.RDT` Herb row. In `/tmp/ram_chem_before.bin` versus `/tmp/ram_chem_after.bin`, id 1 at `0xB816C` changes `04→00` with pointer `0x80121E94`, matching `ROOM1180.RDT` Chemical. Main Hall id 6 at `0xB81A8` has state 0 and pointer `0x80156472`, matching none of the loaded `ROOM1061.RDT` id 6 opcode-plus-two addresses `0x8015185C`, `0x801518A8`, or `0x801518FE`, even though their gid 14 and gid 9 acquisition bits are set. This demonstrates that a set acquisition bit does not imply a matching active item object in that captured room state. The reasons for the absent matches remain unresolved.
+Map limit: Art Room id 2 changes state `0x0F→0` across the uncontrolled backup-to-slot interval. Its record byte 1 is 0, while the ordinary interaction scans at `0x80038910–0x800389B4` and `0x80038AB4–0x80038B54` require matching mode bits and geometry. The state-15 handler at `0x80038578–0x800385E8` clears the acquisition bit and calls `0x80033D48` to set a Map-owned bit. For type `0x4E`, this predicts `0xC871C` bit 3, observed changing 0 to 1 between the Art captures. The Art event bytes at `ROOM1070.RDT` file `0x34A88` include a command targeting id 2 and handler 15, but its runtime trigger has not been observed; treat the event-path interpretation as Candidate.
+Limits: no universal item availability or room-clear rule follows from these captures. An AOT slot may be overwritten by later script commands. Main Hall id 6 has no matching current item pointer, but this does not explain whether branches skipped the items or later code replaced the record. The Map comparison is not a controlled pickup test. The Herb-room gid 35 row's availability is unresolved. The tracker must keep room completion Unknown until variant selection and relevant conditions are validated.
+History:
+- 2026-09-26; human user; supplied the controlled Herb and Chemical fixtures and earlier Art Room states.
+- 2026-09-26; Codex subagent `/root/object_state_code` with model GPT-6 Sol; traced opcode 0x18, reset, interaction dispatch, and Map handlers in the pinned executable without new gameplay.
+- 2026-09-26; Codex subagent `/root/object_ram_crosscheck` with model GPT-6 Sol; independently compared controlled and Main Hall records against the loaded RDT rows without new gameplay.
+- 2026-09-26; Codex with model GPT-6 Sol; verified the script-span matches and object bytes in the saved RAM, and recorded the limits on availability inference.
 
 ## Suggested next experiments
 
