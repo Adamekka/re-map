@@ -1132,7 +1132,7 @@
    },
    "stats": {
     "init": "clean/83",
-    "main": "clean/139"
+    "main": "clean/141"
    },
    "items": [
     {
@@ -2138,7 +2138,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/48",
     "main": "clean/15"
    },
    "items": [
@@ -2242,7 +2242,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/48",
     "main": "clean/15"
    },
    "items": [
@@ -2779,7 +2779,7 @@
     ]
    },
    "stats": {
-    "init": "clean/45",
+    "init": "clean/46",
     "main": "clean/18"
    },
    "items": [
@@ -2975,7 +2975,7 @@
     ]
    },
    "stats": {
-    "init": "clean/29",
+    "init": "clean/30",
     "main": "clean/0"
    },
    "items": [],
@@ -3974,7 +3974,7 @@
    },
    "stats": {
     "init": "clean/13",
-    "main": "unknown/variable opcode 0xac at +42/9"
+    "main": "clean/40"
    },
    "items": [],
    "doors": [
@@ -4045,7 +4045,7 @@
    },
    "stats": {
     "init": "clean/14",
-    "main": "unknown/variable opcode 0xac at +42/9"
+    "main": "clean/40"
    },
    "items": [],
    "doors": [
@@ -5168,7 +5168,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xd4 at +328/39",
+    "init": "clean/50",
     "main": "clean/6"
    },
    "items": [],
@@ -5655,7 +5655,7 @@
     ]
    },
    "stats": {
-    "init": "clean/44",
+    "init": "clean/45",
     "main": "clean/0"
    },
    "items": [
@@ -5711,7 +5711,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xc4 at +678/71",
+    "init": "clean/89",
     "main": "clean/61"
    },
    "items": [
@@ -5865,7 +5865,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xc4 at +678/71",
+    "init": "clean/89",
     "main": "clean/61"
    },
    "items": [
@@ -6020,7 +6020,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xc2 at +506/60",
-    "main": "unknown/variable opcode 0xda at +90/16"
+    "main": "unknown/variable opcode 0xda at +90/17"
    },
    "items": [],
    "doors": [
@@ -6070,7 +6070,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xc2 at +506/60",
-    "main": "unknown/variable opcode 0xda at +90/16"
+    "main": "unknown/variable opcode 0xda at +90/17"
    },
    "items": [],
    "doors": [
@@ -6119,7 +6119,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0x6e at +526/50",
+    "init": "clean/95",
     "main": "clean/155"
    },
    "items": [],
@@ -6184,7 +6184,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xd0 at +294/20",
-    "main": "unknown/variable opcode 0xe0 at +276/84"
+    "main": "clean/198"
    },
    "items": [
     {
@@ -7006,7 +7006,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0x90 at +110/9",
+    "init": "clean/49",
     "main": "clean/0"
    },
    "items": [],
@@ -7228,7 +7228,7 @@
    },
    "stats": {
     "init": "clean/36",
-    "main": "unknown/variable opcode 0xe0 at +38/8"
+    "main": "unknown/variable opcode 0x28 at +44/7"
    },
    "items": [
     {
@@ -7412,7 +7412,7 @@
    },
    "stats": {
     "init": "clean/73",
-    "main": "truncated opcode 0x40 at +452/108"
+    "main": "unknown/variable opcode 0x28 at +256/75"
    },
    "items": [
     {
@@ -7506,7 +7506,7 @@
    },
    "stats": {
     "init": "clean/73",
-    "main": "truncated opcode 0x40 at +452/108"
+    "main": "unknown/variable opcode 0x28 at +256/75"
    },
    "items": [
     {
@@ -7882,7 +7882,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xa2 at +184/8",
-    "main": "clean/165"
+    "main": "clean/167"
    },
    "items": [
     {
@@ -7964,7 +7964,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xa2 at +184/8",
-    "main": "clean/165"
+    "main": "clean/167"
    },
    "items": [
     {
@@ -8473,7 +8473,7 @@
     ]
    },
    "stats": {
-    "init": "clean/26",
+    "init": "clean/27",
     "main": "clean/27"
    },
    "items": [
@@ -10160,7 +10160,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xfa at +336/24",
-    "main": "unknown/variable opcode 0xdc at +34/7"
+    "main": "unknown/variable opcode 0x28 at +54/7"
    },
    "items": [],
    "doors": [
@@ -11992,7 +11992,7 @@
     ]
    },
    "stats": {
-    "init": "clean/33",
+    "init": "clean/35",
     "main": "clean/14"
    },
    "items": [],
@@ -12063,7 +12063,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xc4 at +402/38",
+    "init": "clean/42",
     "main": "clean/14"
    },
    "items": [],
@@ -12134,7 +12134,7 @@
     ]
    },
    "stats": {
-    "init": "clean/10",
+    "init": "clean/11",
     "main": "clean/0"
    },
    "items": [],
@@ -12835,7 +12835,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xd0 at +94/12",
+    "init": "clean/24",
     "main": "clean/0"
    },
    "items": [],
@@ -12885,7 +12885,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xd0 at +112/13",
+    "init": "clean/27",
     "main": "clean/0"
    },
    "items": [],
@@ -14106,7 +14106,7 @@
    },
    "stats": {
     "init": "clean/83",
-    "main": "clean/139"
+    "main": "clean/141"
    },
    "items": [
     {
@@ -15340,7 +15340,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/48",
     "main": "clean/9"
    },
    "items": [
@@ -15444,7 +15444,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/48",
     "main": "clean/9"
    },
    "items": [
@@ -15994,7 +15994,7 @@
     ]
    },
    "stats": {
-    "init": "clean/45",
+    "init": "clean/46",
     "main": "clean/18"
    },
    "items": [
@@ -16190,7 +16190,7 @@
     ]
    },
    "stats": {
-    "init": "clean/29",
+    "init": "clean/30",
     "main": "clean/0"
    },
    "items": [],
@@ -17095,7 +17095,7 @@
     ]
    },
    "stats": {
-    "init": "clean/10",
+    "init": "clean/11",
     "main": "clean/0"
    },
    "items": [],
@@ -17515,7 +17515,7 @@
    },
    "stats": {
     "init": "clean/16",
-    "main": "unknown/variable opcode 0xac at +42/9"
+    "main": "clean/46"
    },
    "items": [],
    "doors": [
@@ -17586,7 +17586,7 @@
    },
    "stats": {
     "init": "clean/13",
-    "main": "clean/38"
+    "main": "clean/37"
    },
    "items": [],
    "doors": [
@@ -19969,7 +19969,7 @@
     ]
    },
    "stats": {
-    "init": "clean/33",
+    "init": "unknown/variable opcode 0xd0 at +364/26",
     "main": "clean/37"
    },
    "items": [
@@ -20037,7 +20037,7 @@
     ]
    },
    "stats": {
-    "init": "clean/33",
+    "init": "unknown/variable opcode 0xd0 at +364/26",
     "main": "clean/37"
    },
    "items": [
@@ -20471,7 +20471,7 @@
     ]
    },
    "stats": {
-    "init": "clean/34",
+    "init": "unknown/variable opcode 0x28 at +334/23",
     "main": "clean/10"
    },
    "items": [
@@ -20541,7 +20541,7 @@
     ]
    },
    "stats": {
-    "init": "clean/33",
+    "init": "unknown/variable opcode 0x28 at +308/22",
     "main": "clean/10"
    },
    "items": [],
@@ -21243,7 +21243,7 @@
     ]
    },
    "stats": {
-    "init": "clean/63",
+    "init": "clean/64",
     "main": "unknown/variable opcode 0x28 at +68/22"
    },
    "items": [
@@ -21815,7 +21815,7 @@
    },
    "stats": {
     "init": "clean/14",
-    "main": "unknown/variable opcode 0x94 at +34/6"
+    "main": "clean/43"
    },
    "items": [],
    "doors": [
@@ -21886,7 +21886,7 @@
    },
    "stats": {
     "init": "clean/15",
-    "main": "unknown/variable opcode 0x94 at +34/6"
+    "main": "clean/43"
    },
    "items": [],
    "doors": [
@@ -22024,7 +22024,7 @@
     ]
    },
    "stats": {
-    "init": "clean/32",
+    "init": "clean/33",
     "main": "clean/0"
    },
    "items": [
@@ -22092,7 +22092,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xc4 at +818/80",
+    "init": "clean/98",
     "main": "clean/61"
    },
    "items": [
@@ -22246,7 +22246,7 @@
     ]
    },
    "stats": {
-    "init": "unknown/variable opcode 0xc4 at +818/80",
+    "init": "clean/98",
     "main": "clean/61"
    },
    "items": [
@@ -22401,7 +22401,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xa2 at +184/8",
-    "main": "clean/165"
+    "main": "clean/167"
    },
    "items": [
     {
@@ -22483,7 +22483,7 @@
    },
    "stats": {
     "init": "unknown/variable opcode 0xa2 at +184/8",
-    "main": "clean/165"
+    "main": "clean/167"
    },
    "items": [
     {
@@ -24404,7 +24404,7 @@
     ]
    },
    "stats": {
-    "init": "clean/63",
+    "init": "clean/64",
     "main": "unknown/variable opcode 0x28 at +68/22"
    },
    "items": [
@@ -24484,7 +24484,7 @@
     ]
    },
    "stats": {
-    "init": "clean/63",
+    "init": "clean/64",
     "main": "unknown/variable opcode 0x28 at +68/22"
    },
    "items": [
@@ -25133,7 +25133,7 @@
    },
    "stats": {
     "init": "clean/17",
-    "main": "unknown/variable opcode 0xac at +42/9"
+    "main": "clean/49"
    },
    "items": [],
    "doors": [
@@ -25204,7 +25204,7 @@
    },
    "stats": {
     "init": "clean/15",
-    "main": "unknown/variable opcode 0xac at +42/9"
+    "main": "clean/43"
    },
    "items": [],
    "doors": [
@@ -25342,7 +25342,7 @@
     ]
    },
    "stats": {
-    "init": "clean/32",
+    "init": "clean/33",
     "main": "clean/0"
    },
    "items": [
