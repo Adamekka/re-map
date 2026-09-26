@@ -52,6 +52,7 @@ def _scan_rdt(d: bytes) -> dict:
         "offsets": [hex(o) for o in offs],
     }
     items = []
+    doors = []
     stats = {}
     for idx, name in ((6, "init"), (7, "main")):
         start, end = offs[idx], offs[idx + 1]
@@ -64,17 +65,24 @@ def _scan_rdt(d: bytes) -> dict:
         ops, status = walk(code, start + 2)
         stats[name] = f"{status}/{len(ops)}"
         for addr, op, raw in ops:
-            if op != 0x18:
-                continue
-            _id = raw[1]
-            x, y, w, h = struct.unpack_from("<4h", raw, 2)
-            items.append({
-                "scd": name, "addr": hex(addr), "id": _id,
-                "x": x, "y": y, "w": w, "h": h,
-                "type": f"0x{raw[10]:02x}", "amount": raw[11],
-                "gid": raw[16],
-            })
-    return {"header": header, "stats": stats, "items": items}
+            if op == 0x18:
+                _id = raw[1]
+                x, y, w, h = struct.unpack_from("<4h", raw, 2)
+                items.append({
+                    "scd": name, "addr": hex(addr), "id": _id,
+                    "x": x, "y": y, "w": w, "h": h,
+                    "type": f"0x{raw[10]:02x}", "amount": raw[11],
+                    "gid": raw[16],
+                })
+            elif op == 0x0C:
+                # Door_set per scd1.xml: next_stage_and_room at byte 15,
+                # bits 7-5 stage, 4-0 room.
+                nsr = raw[15]
+                doors.append({
+                    "scd": name, "addr": hex(addr), "id": raw[1],
+                    "next_stage": (nsr >> 5) & 7, "next_room": nsr & 0x1F,
+                })
+    return {"header": header, "stats": stats, "items": items, "doors": doors}
 
 
 def main() -> int:

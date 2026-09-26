@@ -354,6 +354,19 @@ Limits: GlobalId to save flag mapping is still open for every entry. ROOM1000.RD
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse only, still Candidate.
 
+## RE1-DOORS-001: 782 door edges plus filename rule for runtime linkage
+
+Status: Candidate
+Scope: SLUS-00551 all stages, init and main chunks
+Environment: local parse 2026-09-25 with extended tools/build_item_table.py, no gameplay
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of disc bytes
+Claim: Door_set 0x0C byte 15 splits into next stage bits 7-5 and next room bits 4-0 per scd1.xml, giving 782 directed edges across the disc. Filename rule ROOM plus stage plus two digit room plus camera links files to runtime Main and Sub: ROOM1070.RDT holds the Art Room ink matching runtime Sub 07 and its doors point at rooms 6 and 8, flanking 7. ROOM1000.RDT doors point at room 1, fitting Sub 00 Mansion Save Room next to Sub 01 West Stairway. STAGE1 doors target stages 0, 2, and 3, so the file folder number is not the runtime stage value and stays unresolved.
+Evidence: data/item_table_slus00551.json now 399936 bytes with doors arrays, per-room stats unchanged at 327 clean.
+Limits: filename rule rests on two rooms. No runtime walk through a door yet. Folder to Main mapping open. Event chunks still unparsed.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse only, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
