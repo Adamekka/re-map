@@ -1,0 +1,38 @@
+{
+  "profile_id": "re1_directors_cut_slus00551",
+  "status": "Candidate",
+  "source_rdt": "PSX/STAGE1/ROOM1070.RDT lba=164531 size=559204 sha256=TODO",
+  "rooms": [
+    {
+      "main": 0,
+      "sub": 7,
+      "name": "Mansion 1F - Art Room",
+      "items": [
+        {
+          "scd": "init",
+          "opcode": "0x18",
+          "id": 131,
+          "type": "0x2f",
+          "type_name": "Ink Ribbon",
+          "amount": 3,
+          "global_id": 24,
+          "candidate_flag_offset": "0xC86E3",
+          "candidate_flag_mask": 1,
+          "runtime_note": "slot.sav reads 0xFE, bit clear, player carries 0x2F x6. Polarity 1=present 0=taken fits but is unproven."
+        }
+      ],
+      "excluded": [
+        {
+          "opcode": "0x18",
+          "id": 2,
+          "type": "0x4e",
+          "reason": "zero x/y/w/h coordinates, likely model preload rather than world pickup"
+        }
+      ],
+      "unresolved": [
+        "Map pickup behind 0xC86ED bit6 has no 0x18 entry here. Probably a 0x0D interactable or event-driven spawn."
+      ],
+      "list_complete": false
+    }
+  ]
+}

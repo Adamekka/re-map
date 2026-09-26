@@ -328,6 +328,19 @@ Limits: no header parsed yet, no item table built, naming of room versus camera 
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; listing only, still Candidate.
 
+## RE1-ROW-001: first room to item row for Art Room with offline end to end run
+
+Status: Candidate
+Scope: SLUS-00551 Art Room Main 00 Sub 07, file PSX/STAGE1/ROOM1070.RDT
+Environment: local parse and offline run 2026-09-25, no gameplay
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of disc bytes and save files
+Claim: the init script chunk holds a 0x18 pickup with id 131, type 0x2F Ink Ribbon, amount 3, gid 24 at real coordinates, matching the Art Room Ink Ribbon behind flag 0xC86E3 bit 0. A second 0x18 entry with id 2, type 0x4E, zero coordinates is excluded as model preload, not a world pickup. The map pickup behind 0xC86ED bit 6 has no 0x18 entry and stays unresolved. Polarity 1 means present and 0 means taken fits the ink in inventory, 0x2F times 6, with flag 0xFE, and the map transition between bak and slot, but is still unproven. tools/track_offline.py reads extracted RAM through the Tracker and prints the milestone 1 view, reporting UNKNOWN because the list is incomplete.
+Evidence: tools/scan_scd.py walk of init chunk is clean at 40 ops, main chunk clean at 45 ops, event chunk unparsed. data/room_items_slus00551.json holds the row. Offline runs on slot and bak both print Current room 00-07, Ink Ribbon taken, State UNKNOWN.
+Limits: GlobalId 24 to flag 0xC86E3 bit 0 is association by label and coordinates, not by code path. Event chunk parsing is open. One room only.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse plus save evidence, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
