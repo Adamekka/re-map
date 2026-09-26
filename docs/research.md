@@ -437,10 +437,11 @@ Authored: 2026-09-25; human user played the single pickup, opencode with model o
 Basis: runtime observation, controlled before and after with one item taken
 Claim: taking the Chemical clears exactly one bit: 0xC86DE bit 2 goes 1 to 0, 0xFF to 0xFB, while the other 13 known Item Collected bytes stay identical. Room bytes are unchanged, Main 00 Sub 18 cam 01, and inventory slot 6 gains 0x26 times 1. ROOM1180.RDT holds the pickup at 0x18 id 1 type 0x26 amount 1 gid 0 at real coordinates. The same id and spot also carry type 0x1C Broken Shotgun, which reads as the Chris variant of one pickup spot, so the tracker groups rows by id and box. Third room linked through the filename rule. Fixtures are committed at tests/fixtures/slus00551_chemical_before.sav sha1 58eeb4f0f628a81d6d6bea2ab3def480ece4d0cf and slus00551_chemical_after.sav sha1 e5799cd941ed0ca4c7025f0c2df6e3edddf9b15d, donated by the user as evidence.
 Evidence: targeted compare of 14 Item Collected bytes with a single-bit diff, track_offline prints INCOMPLETE before and taken with UNKNOWN after.
-Limits: save and normal load round trip on this bit untested, character variant mapping inferred from one spot only.
+Limits: one normal in-game save and load after the pickup is covered by RE1-SAVE-001. Loading an earlier normal save to restore the untaken bit is untested. Character variant mapping is inferred from one spot only. The table's gid 0 is based on a parser field-offset error; the RDT byte at offset 22 reads 13, pending a separately approved parser correction.
 History:
 - 2026-09-25; human user; played; stood in the safe room, saved, took the chemical, saved.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; analyzed; single-bit diff plus inventory plus RDT row, promoting to Confirmed for this revision.
+- 2026-09-26; Codex with model unknown; revised limits after the normal save/load observation in RE1-SAVE-001 and identified the RDT field-offset error by source and local byte inspection. The original pickup evidence and authorship remain unchanged.
 
 ## RE1-CHEAT-002: GameHacking Director's Cut set has no room codes
 
@@ -507,6 +508,20 @@ Evidence: tools/door_map.py output, data/mansion1f.dot, bidirectional spot check
 Limits: topology only, no geometry or draw order. Camera variant files fold into base rooms by number. Other stages unmapped pending folder to Main linkage.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static build only, still Candidate.
+
+## RE1-SAVE-001: Chemical acquisition survives a normal in-game save and load
+
+Status: Confirmed for this revision
+Scope: Resident Evil Director's Cut USA, serial SLUS-00551, Training Jill, Chemical pickup in Mansion Storeroom Main 00 Sub 18
+Environment: DuckStation 0.1-11894-gc66b2694d on macOS arm64, 2026-09-26; isolated portable copy with its own memory card and GDB server on port 2345. Disc executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`.
+Authored: 2026-09-26; human user performed the in-game save and load; Codex with model unknown read GDB and recorded the result
+Basis: runtime observation of a normal in-game save/load, live GDB reads, and inspection of the isolated memory card
+Claim: after the Chemical was taken, saving at the room's typewriter, resetting, and loading through the game's Load Game menu preserved the collected state at PS1 virtual address `0x800C86DE` bit 2. The byte read `0xFB` after loading, matching the controlled after-pickup state, and inventory slot 6 still held item `0x26` (Chemical), quantity 1. The room read Main 00 Sub 18, camera 00, previous 1F. This confirms persistence through one normal in-game save/load for this flag on this revision; it does not establish full room item coverage or a cleared state.
+Evidence: the controlled before-pickup fixture extracts to flag `0xFF`, inventory slot 6 `00 00`, room `00 18 01 0B`; the after-pickup fixture extracts to flag `0xFB`, inventory slot 6 `26 01`, room `00 18 01 0B` (RE1-PICKUP-003). The isolated DuckStation copy booted the after-pickup fixture. The human user saved at the typewriter, reset, loaded through Load Game, and reported control restored. A subsequent GDB read returned room `00 18 00 1F`, flag `0xFB`, and inventory bytes at `0x800C878E` `26 01`; the Ink Ribbon count changed from 6 in the fixture to 5 after the save. The new 131072-byte isolated memory card contained `BASLUS-005510` and had SHA256 `7323a3259f9d77e11a3ebae3f1985fff07f80a3aab8c0ff39bfb8ecaeeaa1c87`. The user's original `SLUS-00551_resume.sav` retained its prior modification time. The memory card and game files are outside Git.
+Limits: the GDB read was taken after the user's report of a normal load, not during the game's save or load screens. The earlier normal-save case that should restore `0xFF` remains untested. The result confirms this flag's persistence, not that all RDT items use the same rule, that room completion can be inferred from one flag, or that another game revision shares this address.
+History:
+- 2026-09-26; human user; tested; saved to the isolated memory card, reset, loaded through the in-game menu, and reported completion.
+- 2026-09-26; Codex with model unknown; tested and authored; compared the live GDB read with both controlled fixtures and inspected the isolated memory card, promoting only this normal-load behavior to Confirmed for this revision.
 
 ## Suggested next experiments
 
