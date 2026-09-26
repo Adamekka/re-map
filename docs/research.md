@@ -495,6 +495,19 @@ Limits: axis signs and facing units uncalibrated, door lock state unknown, no co
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; live driving only, still Candidate.
 
+## RE1-MAP-001: Mansion 1F topology from doors, mutually consistent
+
+Status: Candidate
+Scope: SLUS-00551 STAGE1 files with stage 0 door targets
+Environment: static build 2026-09-25 with tools/door_map.py, no gameplay
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: source inspection of disc bytes against RA labels
+Claim: 27 nodes and 54 edges form the Mansion 1F graph, committed as ASCII through tools/door_map.py and as data/mansion1f.dot. Edges run both directions everywhere checked, for example save room to stairway to vacant room and back, dining room to main hall to art room to L-passage to winding passage. Three independent sources agree: door bytes give the edges, filenames give the numbers, RA notes give the names. Room 0x10 Elevator Stairway is a target with no file, matching the earlier join misses, so it stays numeric rather than guessed.
+Evidence: tools/door_map.py output, data/mansion1f.dot, bidirectional spot checks above.
+Limits: topology only, no geometry or draw order. Camera variant files fold into base rooms by number. Other stages unmapped pending folder to Main linkage.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static build only, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
