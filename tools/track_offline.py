@@ -30,6 +30,7 @@ MAIN_TO_STAGE = {0: "STAGE1"}
 KNOWN_FLAGS = {
     (0, 7, "0x2f", 24): (0xC86E3, 0x01),
     (0, 9, "0x44", 0): (0xC86EA, 0x01),
+    (0, 0x18, "0x26", 0): (0xC86DE, 0x04),
 }
 
 
@@ -84,35 +85,49 @@ def main() -> int:
         return 0
 
     placed = [i for i in row.get("items", []) if i["x"] or i["y"]]
-    # Duplicate 0x18 rows with identical id, type, amount, gid, and box
-    # are character or mode variants of one pickup, not two pickups.
-    seen: set[tuple] = set()
-    unique = []
+    # Group by pickup spot. Rows identical in id and box are character or
+    # mode variants of one pickup, for example Jill gets Chemical while
+    # Chris gets the Broken Shotgun at the same spot and id.
+    spots: dict[tuple, list] = {}
     for it in placed:
-        key = (it["id"], it["type"], it["amount"], it["gid"],
-               it["x"], it["y"], it["w"], it["h"])
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(it)
-    placed = unique
-    total = len(placed)
+        key = (it["id"], it["x"], it["y"], it["w"], it["h"])
+        spots.setdefault(key, []).append(it)
+    total = len(spots)
     collected = 0
     unknown = 0
     present_known = 0
-    for it in placed:
-        key = (main_loc, sub_loc, it["type"], it["gid"])
-        flag = KNOWN_FLAGS.get(key)
-        if flag is None:
-            unknown += 1
-            print(f"- type {it['type']} x{it['amount']} gid={it['gid']}: unknown (no flag observed)")
+    for (pid, x, y, w, h), variants in sorted(spots.items()):
+        if len(variants) == 1:
+            it = variants[0]
+            key = (main_loc, sub_loc, it["type"], it["gid"])
+            flag = KNOWN_FLAGS.get(key)
+            if flag is None:
+                unknown += 1
+                print(f"- type {it['type']} x{it['amount']} gid={it['gid']}: unknown (no flag observed)")
+                continue
+            off, mask = flag
+            taken = not Re1Profile.is_bit_set(ram[off], mask)
+            collected += taken
+            present_known += not taken
+            state = "taken" if taken else "PRESENT"
+            print(f"- type {it['type']} x{it['amount']} gid={it['gid']}: {state} (flag 0x{off:X}:{mask:#x}, Candidate)")
             continue
-        off, mask = flag
-        taken = not Re1Profile.is_bit_set(ram[off], mask)
-        collected += taken
-        present_known += not taken
-        state = "taken" if taken else "PRESENT"
-        print(f"- type {it['type']} x{it['amount']} gid={it['gid']}: {state} (flag 0x{off:X}:{mask:#x}, Candidate)")
+        vdesc = ",".join(f"{v['type']}x{v['amount']}" for v in variants)
+        known = [(v, KNOWN_FLAGS[(main_loc, sub_loc, v["type"], v["gid"])])
+                 for v in variants
+                 if (main_loc, sub_loc, v["type"], v["gid"]) in KNOWN_FLAGS]
+        if not known:
+            unknown += 1
+            print(f"- spot id={pid} variants {vdesc}: unknown (no flag observed)")
+            continue
+        taken_any = False
+        for v, (off, mask) in known:
+            taken = not Re1Profile.is_bit_set(ram[off], mask)
+            taken_any = taken_any or taken
+            state = "taken" if taken else "PRESENT"
+            print(f"- spot id={pid} {v['type']} x{v['amount']}: {state} (flag 0x{off:X}:{mask:#x}, Candidate)")
+        collected += taken_any
+        present_known += not taken_any
     tracker.update_room_items(
         rid,
         total=total,
