@@ -8,6 +8,8 @@
 *.rdt
 *.BSS
 *.bss
+# Exception: user-donated test fixtures, explicitly approved for evidence.
+!tests/fixtures/*.sav
 __pycache__/
 .mypy_cache/
 .pytest_cache/

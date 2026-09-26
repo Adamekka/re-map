@@ -408,6 +408,20 @@ History:
 - 2026-09-25; human user; walked; round trip Art Room to Main Hall and back.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; milestone checks observed, still Candidate.
 
+## RE1-PICKUP-002: controlled green herb take confirms polarity and flag
+
+Status: Confirmed for this revision
+Scope: SLUS-00551 Training Jill, Winding Passage Main 00 Sub 09, DuckStation 0.1-11894 dev
+Environment: before and after savestates on 2026-09-25, offline extracts, no emulator boot
+Authored: 2026-09-25; human user played the single pickup, opencode with model opencode/muse-spark-1.3-contributor-free analyzed
+Basis: runtime observation, controlled before and after with one item taken
+Claim: taking the Winding Passage Green Herb clears exactly one bit: 0xC86EA bit 0 goes 1 to 0, 0xFF to 0xFE, while the other 13 known Item Collected bytes stay identical. Room bytes are unchanged, Main 00 Sub 09 cam 01, and inventory slot 5 gains 0x44 times 1. ROOM1090.RDT holds exactly one placed pickup, 0x18 id 5 type 0x44 amount 1 gid 0 at real coordinates. Bit polarity 1 means present and 0 means taken is confirmed for this revision. Fixtures are committed at tests/fixtures/slus00551_green_herb_before.sav sha1 9adcac31dac8725219f5672bce9152fa487b5ee9 and slus00551_green_herb_after.sav sha1 1eaf8be8360025d25589255ef244584df84cef53, donated by the user as evidence.
+Evidence: tools/extract_sav_ram.py both fixtures, targeted compare of 14 Item Collected bytes with a single-bit diff, track_offline prints INCOMPLETE before and UNKNOWN after.
+Limits: save and normal load round trip on this bit untested, re-enter from another room untested for this flag, other flags still Candidate.
+History:
+- 2026-09-25; human user; played; stood before the herb, saved, took it, saved.
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; analyzed; single-bit diff plus inventory plus RDT row, promoting to Confirmed for this revision.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.

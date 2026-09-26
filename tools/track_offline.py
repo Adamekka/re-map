@@ -29,6 +29,7 @@ MAIN_TO_STAGE = {0: "STAGE1"}
 # Only Art Room entries below are observed. Everything else is unknown.
 KNOWN_FLAGS = {
     (0, 7, "0x2f", 24): (0xC86E3, 0x01),
+    (0, 9, "0x44", 0): (0xC86EA, 0x01),
 }
 
 
@@ -98,6 +99,7 @@ def main() -> int:
     total = len(placed)
     collected = 0
     unknown = 0
+    present_known = 0
     for it in placed:
         key = (main_loc, sub_loc, it["type"], it["gid"])
         flag = KNOWN_FLAGS.get(key)
@@ -108,14 +110,15 @@ def main() -> int:
         off, mask = flag
         taken = not Re1Profile.is_bit_set(ram[off], mask)
         collected += taken
-        state = "taken" if taken else "present?"
+        present_known += not taken
+        state = "taken" if taken else "PRESENT"
         print(f"- type {it['type']} x{it['amount']} gid={it['gid']}: {state} (flag 0x{off:X}:{mask:#x}, Candidate)")
     tracker.update_room_items(
         rid,
         total=total,
         collected=collected,
         list_complete=False,
-        any_available_uncollected=False,
+        any_available_uncollected=present_known > 0,
         any_unknown=True,
     )
     rec = tracker.room_state(rid)
