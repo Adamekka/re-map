@@ -367,6 +367,19 @@ Limits: filename rule rests on two rooms. No runtime walk through a door yet. Fo
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse only, still Candidate.
 
+## RE1-LINK-001: filename rule holds for 87 of 90 stage 0 doors
+
+Status: Candidate
+Scope: SLUS-00551 STAGE1 doors targeting stage 0
+Environment: static check 2026-09-25 over data/item_table_slus00551.json
+Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: runtime observation of disc bytes
+Claim: for STAGE1 doors with next stage 0, target file PSX/STAGE1/ROOM1 plus two digit hex room plus 0 exists in 87 of 90 cases. The 3 misses point at rooms 0x10 and 0x19, whose files are absent, likely special transitions such as stairs or elevators. Duplicate 0x18 rows identical in id, type, amount, gid, and box are character or mode variants of one pickup. tools/track_offline.py now resolves any Main 0 room through this rule, dedups variants, checks only observed flags, and reports UNKNOWN while coverage is open. Other Main values refuse instead of guessing.
+Evidence: door invariant script output 87 resolving and 3 missing, offline runs on slot and bak print Current room 00-07 with Items 1 Collected 1 State UNKNOWN.
+Limits: static consistency plus 2 runtime rooms is not confirmation. Flag knowledge covers only the Art Room ink. Input injection is blocked because Pad1 binds to SDL gamepad with no keyboard fallback, so walking through a door needs a visible window plus a virtual pad or manual play.
+History:
+- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static check plus offline runs, still Candidate.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.
