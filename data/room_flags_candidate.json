@@ -1,0 +1,455 @@
+{
+ "flags": [
+  {
+   "offset": "0xc86dc",
+   "mask": 1,
+   "label": "Star Crest",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86dc",
+   "mask": 16,
+   "label": "Armor Key",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86dd",
+   "mask": 2,
+   "label": "Mansion Save Room Ink Ribbon (Jill)",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 0
+   },
+   "file_guess": "PSX/STAGE1/ROOM1000.RDT",
+   "rdt_placed": [
+    {
+     "id": 4,
+     "type": "0x33",
+     "amount": 3,
+     "gid": 94
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86dd",
+   "mask": 16,
+   "label": "L Passage Clips",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 8
+   },
+   "file_guess": "PSX/STAGE1/ROOM1080.RDT",
+   "rdt_placed": [
+    {
+     "id": 3,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 0
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86de",
+   "mask": 2,
+   "label": "Acid Rounds from Barry",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86df",
+   "mask": 1,
+   "label": "Music Notes",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86df",
+   "mask": 2,
+   "label": "Bazooka",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86df",
+   "mask": 4,
+   "label": "Keeper Room Shells",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 14
+   },
+   "file_guess": "PSX/STAGE1/ROOM10E0.RDT",
+   "rdt_placed": [
+    {
+     "id": 1,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 168
+    },
+    {
+     "id": 2,
+     "type": "0x0c",
+     "amount": 7,
+     "gid": 0
+    },
+    {
+     "id": 3,
+     "type": "0x61",
+     "amount": 1,
+     "gid": 15
+    },
+    {
+     "id": 2,
+     "type": "0x0c",
+     "amount": 7,
+     "gid": 0
+    },
+    {
+     "id": 3,
+     "type": "0x61",
+     "amount": 1,
+     "gid": 15
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86e1",
+   "mask": 32,
+   "label": "Vacant Room Clips",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 2
+   },
+   "file_guess": "PSX/STAGE1/ROOM1020.RDT",
+   "rdt_placed": [
+    {
+     "id": 1,
+     "type": "0x1c",
+     "amount": 1,
+     "gid": 54
+    },
+    {
+     "id": 1,
+     "type": "0x05",
+     "amount": 6,
+     "gid": 86
+    },
+    {
+     "id": 3,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 204
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86e1",
+   "mask": 64,
+   "label": "Vacant Room Shells",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 2
+   },
+   "file_guess": "PSX/STAGE1/ROOM1020.RDT",
+   "rdt_placed": [
+    {
+     "id": 1,
+     "type": "0x1c",
+     "amount": 1,
+     "gid": 54
+    },
+    {
+     "id": 1,
+     "type": "0x05",
+     "amount": 6,
+     "gid": 86
+    },
+    {
+     "id": 3,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 204
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86e1",
+   "mask": 128,
+   "label": "Broken Shotgun",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86e2",
+   "mask": 64,
+   "label": "Tea Room Clips",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 4
+   },
+   "file_guess": "PSX/STAGE1/ROOM1040.RDT",
+   "rdt_placed": [
+    {
+     "id": 5,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 0
+    },
+    {
+     "id": 9,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 0
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86e3",
+   "mask": 1,
+   "label": "Art Room Ink Ribbon",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 7
+   },
+   "file_guess": "PSX/STAGE1/ROOM1070.RDT",
+   "rdt_placed": [
+    {
+     "id": 131,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 24
+    },
+    {
+     "id": 131,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 24
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86ea",
+   "mask": 1,
+   "label": "Winding Passage Green Herb",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 9
+   },
+   "file_guess": "PSX/STAGE1/ROOM1090.RDT",
+   "rdt_placed": [
+    {
+     "id": 5,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 0
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86ea",
+   "mask": 2,
+   "label": "East Stairway 1F Green Herb",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 11
+   },
+   "file_guess": "PSX/STAGE1/ROOM10B0.RDT",
+   "rdt_placed": [
+    {
+     "id": 4,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 0
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86eb",
+   "mask": 64,
+   "label": "Bathroom Clips",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 19
+   },
+   "file_guess": "PSX/STAGE1/ROOM1130.RDT",
+   "rdt_placed": [
+    {
+     "id": 1,
+     "type": "0x3d",
+     "amount": 1,
+     "gid": 0
+    },
+    {
+     "id": 1,
+     "type": "0x3d",
+     "amount": 1,
+     "gid": 186
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86eb",
+   "mask": 128,
+   "label": "Dressing Room Clips",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 17
+   },
+   "file_guess": "PSX/STAGE1/ROOM1110.RDT",
+   "rdt_placed": [
+    {
+     "id": 4,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 120
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86ed",
+   "mask": 32,
+   "label": "Keeper Bedroom Clips",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86ed",
+   "mask": 64,
+   "label": "Map on Art Room",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 7
+   },
+   "file_guess": "PSX/STAGE1/ROOM1070.RDT",
+   "rdt_placed": [
+    {
+     "id": 131,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 24
+    },
+    {
+     "id": 131,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 24
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86ee",
+   "mask": 3,
+   "label": "Wardrobe Green Herbs",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 18
+   },
+   "file_guess": "PSX/STAGE1/ROOM1120.RDT",
+   "rdt_placed": [
+    {
+     "id": 2,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 0
+    },
+    {
+     "id": 3,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 0
+    },
+    {
+     "id": 4,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 24
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86f2",
+   "mask": 1,
+   "label": "Colt Python",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86f2",
+   "mask": 8,
+   "label": "??? Almost since the start",
+   "source": "RA notes, Candidate",
+   "room": null
+  },
+  {
+   "offset": "0xc86f5",
+   "mask": 8,
+   "label": "Wardrobe Ink Ribbon",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 0,
+    "sub": 18
+   },
+   "file_guess": "PSX/STAGE1/ROOM1120.RDT",
+   "rdt_placed": [
+    {
+     "id": 2,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 0
+    },
+    {
+     "id": 3,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 0
+    },
+    {
+     "id": 4,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 24
+    }
+   ],
+   "association": "unproven"
+  },
+  {
+   "offset": "0xc86f9",
+   "mask": 1,
+   "label": "Small Library Botany Book",
+   "source": "RA notes, Candidate",
+   "room": {
+    "main": 1,
+    "sub": 6
+   },
+   "file_guess": null,
+   "association": "unproven"
+  }
+ ]
+}
