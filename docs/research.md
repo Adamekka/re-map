@@ -212,7 +212,7 @@ Limits: zero published PS1 RAM addresses with revision info found. No runtime co
 History:
 - 2026-09-22; opencode with model unknown; reviewed; source inspection of file formats, no runtime test.
 - 2026-09-22; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized review into this entry, still Candidate.
-- 2026-09-26; Codex with model unknown; marked the early 0x0D item and unknown-flag hypotheses superseded by RE1-STATIC-001 and RE1-FLAG-001, preserving the original survey provenance.
+- 2026-09-26; Codex with model GPT-6 Sol; marked the early 0x0D item and unknown-flag hypotheses superseded by RE1-STATIC-001 and RE1-FLAG-001, preserving the original survey provenance.
 
 ## RE1-DISC-001: local Director's Cut disc identity
 
@@ -261,7 +261,7 @@ Limits: this was source inspection before extraction. The earlier interpretation
 History:
 - 2026-09-25; opencode with model unknown; reviewed; file format assessment, no runtime test.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; summarized into this entry, still Candidate.
-- 2026-09-26; Codex with model unknown; revised the GlobalId limit after verifying the pinned PS1 executable in RE1-FLAG-001; original source-inspection authorship remains.
+- 2026-09-26; Codex with model GPT-6 Sol; revised the GlobalId limit after verifying the pinned PS1 executable in RE1-FLAG-001; original source-inspection authorship remains.
 
 ## RE1-AUTO-001: automated boot and GDB without manual play is feasible
 
@@ -348,9 +348,9 @@ Evidence: tools/scan_scd.py decodes 40 init operations before stopping on an unr
 Limits: RE1-FLAG-001 confirms the GlobalId-to-bit code path, but does not prove the Art Room rows are currently available in either saved scenario. Event chunk parsing is open. One room only.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse plus save evidence, still Candidate.
-- 2026-09-26; Codex with model unknown; superseded the byte-16 GlobalId 24 with 39 from RE1-RDT-002 and removed the untested Art Room flag link from the offline tracker; original runtime evidence and Candidate status remain.
-- 2026-09-26; Codex with model unknown; superseded the zero-coordinate preload exclusion and missing-map-opcode conclusions after gid 145 and the direct flag code path in RE1-FLAG-001; item availability remains Candidate.
-- 2026-09-26; Codex with model unknown; corrected the init walk status and linked the conditional runtime object evidence in RE1-SPAWN-001; the original row extraction and Candidate availability status remain.
+- 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 GlobalId 24 with 39 from RE1-RDT-002 and removed the untested Art Room flag link from the offline tracker; original runtime evidence and Candidate status remain.
+- 2026-09-26; Codex with model GPT-6 Sol; superseded the zero-coordinate preload exclusion and missing-map-opcode conclusions after gid 145 and the direct flag code path in RE1-FLAG-001; item availability remains Candidate.
+- 2026-09-26; Codex with model GPT-6 Sol; corrected the init walk status and linked the conditional runtime object evidence in RE1-SPAWN-001; the original row extraction and Candidate availability status remain.
 
 ## RE1-TABLE-001: partial init/main item scan across 335 RDTs
 
@@ -364,9 +364,9 @@ Evidence: data/item_table_slus00551.json 305076 bytes, per-room walk stats insid
 Limits: RE1-FLAG-001 confirms the opcode 0x18 GlobalId-to-bit calculation on this executable, while actual pickup availability and room membership remain untested for most entries. RE1-SCD-001 confirms two scanner opcode widths are wrong, and RE1-EVENT-001 leaves event-created item coverage unresolved; 647 is a count of decoded rows, not a complete item count. An in-memory width correction left all 647 item rows unchanged but altered 53 room scan statistics. ROOM1000.RDT holds Sword Key plus two 1x1 Serum shaped entries and no ink, so the save room file identity is unconfirmed and the profile demo pickup stays a 00170 side claim.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; disc parse only, still Candidate.
-- 2026-09-26; Codex with model unknown; regenerated the item table after RE1-RDT-002 and revised the mapping limit; 647 item entries remain.
-- 2026-09-26; Codex with model unknown; revised the zero-coordinate and flag-mapping conclusions after the direct executable evidence and counterexamples in RE1-FLAG-001; entry counts and original extraction evidence are unchanged.
-- 2026-09-26; Codex with model unknown; narrowed the table's completeness claim after RE1-SCD-001 and RE1-EVENT-001; the committed rows themselves were unchanged in an in-memory width comparison.
+- 2026-09-26; Codex with model GPT-6 Sol; regenerated the item table after RE1-RDT-002 and revised the mapping limit; 647 item entries remain.
+- 2026-09-26; Codex with model GPT-6 Sol; revised the zero-coordinate and flag-mapping conclusions after the direct executable evidence and counterexamples in RE1-FLAG-001; entry counts and original extraction evidence are unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; narrowed the table's completeness claim after RE1-SCD-001 and RE1-EVENT-001; the committed rows themselves were unchanged in an in-memory width comparison.
 
 ## RE1-DOORS-001: 782 door edges plus filename rule for runtime linkage
 
@@ -393,7 +393,7 @@ Evidence: door invariant script output 87 resolving and 3 missing. Historical of
 Limits: static consistency plus 2 runtime rooms is not confirmation. The Art Room ink flag association remains untested; controlled item flags now cover the Winding Passage herb and Mansion Storeroom Chemical. Input injection was blocked in the original test environment because Pad1 bound only to an SDL gamepad.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static check plus offline runs, still Candidate.
-- 2026-09-26; Codex with model unknown; updated the current offline output and flag-coverage limit after removing the untested Art Room link.
+- 2026-09-26; Codex with model GPT-6 Sol; updated the current offline output and flag-coverage limit after removing the untested Art Room link.
 
 ## RE1-ROOM-001: room change Art Room to Main Hall observed live
 
@@ -408,7 +408,7 @@ Limits: two rooms only for this finding. Leave and re-enter was later shown in R
 History:
 - 2026-09-25; human user; walked; Art Room to Main Hall through gameplay.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; GDB reads plus dump, still Candidate.
-- 2026-09-26; Codex with model unknown; superseded the byte-16 Main Hall ink GlobalId 32 with 52 from RE1-RDT-002; room-transition evidence is unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 Main Hall ink GlobalId 32 with 52 from RE1-RDT-002; room-transition evidence is unchanged.
 
 ## RE1-MILESTONE-001: first milestone complete on SLUS-00551 Art Room
 
@@ -423,7 +423,7 @@ Limits: two rooms, one associated pickup, polarity unproven by a controlled take
 History:
 - 2026-09-25; human user; walked; round trip Art Room to Main Hall and back.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; recorded; milestone checks observed, still Candidate.
-- 2026-09-26; Codex with model unknown; superseded the byte-16 Art Room ink GlobalId 24 with 39 from RE1-RDT-002; milestone runtime observations are unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 Art Room ink GlobalId 24 with 39 from RE1-RDT-002; milestone runtime observations are unchanged.
 
 ## RE1-PICKUP-002: controlled green herb take confirms polarity and flag
 
@@ -438,7 +438,7 @@ Limits: save and normal load round trip on this bit untested, re-enter from anot
 History:
 - 2026-09-25; human user; played; stood before the herb, saved, took it, saved.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; analyzed; single-bit diff plus inventory plus RDT row, promoting to Confirmed for this revision.
-- 2026-09-26; Codex with model unknown; superseded the byte-16 RDT GlobalId 0 with 111 from RE1-RDT-002; the controlled pickup flag result is unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 RDT GlobalId 0 with 111 from RE1-RDT-002; the controlled pickup flag result is unchanged.
 
 ## RE1-PICKUP-003: controlled chemical take confirms second flag
 
@@ -453,8 +453,8 @@ Limits: one normal in-game save and load after the pickup is covered by RE1-SAVE
 History:
 - 2026-09-25; human user; played; stood in the safe room, saved, took the chemical, saved.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; analyzed; single-bit diff plus inventory plus RDT row, promoting to Confirmed for this revision.
-- 2026-09-26; Codex with model unknown; revised limits after the normal save/load observation in RE1-SAVE-001 and identified the RDT field-offset error by source and local byte inspection. The original pickup evidence and authorship remain unchanged.
-- 2026-09-26; Codex with model unknown; superseded the byte-16 Chemical GlobalId 0 with 13 and revised the Broken Shotgun row to 48 from RE1-RDT-002; controlled pickup and normal-load observations are unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; revised limits after the normal save/load observation in RE1-SAVE-001 and identified the RDT field-offset error by source and local byte inspection. The original pickup evidence and authorship remain unchanged.
+- 2026-09-26; Codex with model GPT-6 Sol; superseded the byte-16 Chemical GlobalId 0 with 13 and revised the Broken Shotgun row to 48 from RE1-RDT-002; controlled pickup and normal-load observations are unchanged.
 
 ## RE1-CHEAT-002: GameHacking Director's Cut set has no room codes
 
@@ -482,7 +482,7 @@ Evidence: tools/join_ra_rdt.py output 15 matched and 9 unmatched, data/room_flag
 Limits: side by side is not association. The Winding Passage herb and Mansion Storeroom Chemical have controlled pickup observations; the Art Room ink link remains Candidate. Keeper Bedroom alias unproven.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static join only, still Candidate.
-- 2026-09-26; Codex with model unknown; regenerated the side-by-side RDT identifiers after RE1-RDT-002; 15 room matches and 9 unmatched labels remain, with associations still unproven.
+- 2026-09-26; Codex with model GPT-6 Sol; regenerated the side-by-side RDT identifiers after RE1-RDT-002; 15 room matches and 9 unmatched labels remain, with associations still unproven.
 
 ## RE1-VISIT-001: game visited bits decode into room lists
 
@@ -528,24 +528,24 @@ History:
 Status: Confirmed for this revision
 Scope: Resident Evil Director's Cut USA, serial SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; opcode `0x18` in the named RDT files; Training Jill herb and Chemical pickup scenarios tested, Chris variant static only
 Environment: local disc read and controlled savestate evidence, 2026-09-26; DuckStation 0.1-11894-gc66b2694d for the pickup experiments in RE1-PICKUP-002 and RE1-PICKUP-003
-Authored: 2026-09-26; Codex with model unknown
+Authored: 2026-09-26; Codex with model GPT-6 Sol
 Basis: source inspection of an independently implemented RE1 RDT parser, direct disc-byte inspection, and comparison with two controlled pickup flags
 Claim: opcode `0x18` is 26 bytes long and its one-byte GlobalId field is at byte 22 from the opcode start. The old parser read byte 16, which belongs to an eight-byte field preceding GlobalId. Corrected values are 39 for Art Room Ink Ribbon, 111 for Winding Passage Green Herb, 13 for Mansion Storeroom Chemical, 48 for its Broken Shotgun variant, and 52 for Main Hall Ink Ribbon. The table now reads byte 22 for all 647 item entries; 642 values changed. The parser correction alone did not prove save-flag mapping or room completion; RE1-FLAG-001 establishes the flag calculation for this executable.
 Evidence: [biorand's `ItemAotSetOpcode.Read` at commit 5d0d523, lines 37-67](https://github.com/biorand/biohazard-utils/blob/5d0d523cc0e228b5c9eea269149853cda5f266bd/src/IntelOrca.Biohazard/Script/Opcodes/ItemAotSetOpcode.cs#L37-L67) reads opcode, ID, four 16-bit coordinates, type, amount, eight unknown bytes, two more unknown bytes, then GlobalId. Direct reads of the named disc gave byte 16 / byte 22 pairs: `ROOM1070.RDT` opcode `0x3481C` 24/39, `ROOM1090.RDT` `0x1CA5C` 0/111, `ROOM1180.RDT` `0x292` 0/13 and `0x2AE` 0/48. RE1-PICKUP-002 and RE1-PICKUP-003 independently observed the herb and Chemical flag changes in those rooms. A complete rebuild produced 335 rooms and 647 item entries; aside from GlobalId, all item and door fields stayed identical. Script-operation counts changed in eight rooms (12 init/main counts) because a prior opcode-size fix in `tools/scan_scd.py` had not been reflected in the committed table; all eight still walk cleanly.
 Limits: RE1-FLAG-001 confirms the pinned PS1 executable reads opcode byte 22 for its item flag checks and pickups. Art Room, Main Hall, and Chris variant items have not had controlled pickup tests. Script event chunks and conditional availability remain unresolved, so room list completeness and completion remain Unknown.
 History:
-- 2026-09-26; Codex with model unknown; authored and tested; compared the pinned source layout, four disc opcode offsets, two controlled pickup fixtures, and full generated-table fields. This supersedes the byte-16 GlobalId readings in RE1-ROW-001, RE1-ROOM-001, RE1-MILESTONE-001, RE1-PICKUP-002, and RE1-PICKUP-003 without changing their original runtime observations.
+- 2026-09-26; Codex with model GPT-6 Sol; authored and tested; compared the pinned source layout, four disc opcode offsets, two controlled pickup fixtures, and full generated-table fields. This supersedes the byte-16 GlobalId readings in RE1-ROW-001, RE1-ROOM-001, RE1-MILESTONE-001, RE1-PICKUP-002, and RE1-PICKUP-003 without changing their original runtime observations.
 - 2026-09-26; Claude Opus 4.6 (Thinking) via agy; reviewed the supplied code diff, test, and finding prose, without running an experiment; identified an ambiguous layout comment and missing table-to-tracker coherence test, both addressed. Suggested a short-opcode guard, rejected after checking that the bytecode walker only returns complete 26-byte opcode `0x18` records.
 - 2026-09-26; Gemini 3.1 Pro (High) via agy; reviewed the same supplied material, without running an experiment; identified the untested Art Room mapping and missing scanner coverage, both addressed. Its short-opcode concern was rejected for the same walker invariant.
 - 2026-09-26; Gemini 3.8 Flash (High) via agy; reviewed the same supplied material, without running an experiment; independently identified the untested Art Room mapping and ambiguous comment, both addressed. Its claims of omitted generated files and missing rows were rejected by the actual working-tree diff and data-file structure.
-- 2026-09-26; Codex with model unknown; promoted only the byte-22 field interpretation to Confirmed for this revision after independently verifying the opcode dispatcher, flag test, and pickup clear path in the named PS1 executable (RE1-FLAG-001). Conditional item availability remains unconfirmed.
+- 2026-09-26; Codex with model GPT-6 Sol; promoted only the byte-22 field interpretation to Confirmed for this revision after independently verifying the opcode dispatcher, flag test, and pickup clear path in the named PS1 executable (RE1-FLAG-001). Conditional item availability remains unconfirmed.
 
 ## RE1-FLAG-001: opcode 0x18 GlobalId selects an item flag bit
 
 Status: Confirmed for this revision
 Scope: Resident Evil Director's Cut USA, serial SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; opcode 0x18 item flag calculation; Training Jill Winding Passage Green Herb and Mansion Storeroom Chemical runtime pickups
 Environment: DuckStation 0.1-11894-gc66b2694d controlled savestates and normal Chemical-after load; macOS arm64, 2026-09-26; static PS-X EXE disassembly with Homebrew LLVM `llvm-objdump` 23.1.2
-Authored: 2026-09-26; Codex with model unknown; read-only subagents `/root/ps1_flag_code` and `/root/flag_crosscheck`, models unknown, contributed focused investigations
+Authored: 2026-09-26; Codex with model GPT-6 Sol; read-only subagents `/root/ps1_flag_code` and `/root/flag_crosscheck`, models GPT-6 Sol, contributed focused investigations
 Basis: direct disassembly of the pinned PS1 executable, independent disc/RDT and flag-note cross-checks, two controlled pickup pairs, and one normal Chemical-after in-game save/load
 Claim: the opcode 0x18 item handler reads the one-byte GlobalId at opcode offset 22. For GlobalId `g`, it tests a 32-bit word at PS1 virtual address `0x800C86DC + 4 * (g // 32)` with mask `0x80000000 >> (g % 32)`; the pickup path clears that same bit. In little-endian PS1 RAM byte reads, the equivalent offset is `0xC86DC + 4 * (g // 32) + 3 - ((g % 32) // 8)` with byte mask `0x80 >> (g % 8)`. This predicts herb gid 111 at RAM offset `0xC86EA` bit 0 and Chemical gid 13 at `0xC86DE` bit 2, exactly the bits changed in their controlled pickups. The formula identifies the item's flag bit; a set bit alone does not establish that an item is currently available or that its room is incomplete.
 Evidence: `python3 tools/extract_psx_file.py <pinned CUE> SLUS_005.51 /tmp/re-map-slus00551.exe` reproduces the SHA256 above. The PS-X EXE header loads `0x9E800` text bytes at `0x80010000`; a temporary ELF wrapper outside Git has a byte-identical `.text` section for `llvm-objdump -d` inspection. Original file offset is `0x800 + (virtual address - 0x80010000)`. The dispatcher at `0x80025FF4–0x80026010` indexes the opcode table; entry `0x18` at `0x80091168` (file `0x81968`) points to handler `0x80045F28`. That handler reads `lbu $5, 0x16($5)` at `0x80045F7C` and calls test helper `0x800489A8` with base `0x800C86DC`. It stores the opcode-plus-two pointer in the item object at `0x80046020–0x80046024`. The pickup path at `0x8002CDF4–0x8002CE04` reads `lbu $5, 0x14($2)` from that pointer, again original opcode byte 22, and calls clear helper `0x8004897C` with the same base. The helpers shift `g` by 5 for a four-byte word index and shift `0x80000000` by `g & 31` for the bit. The herb fixture changes only `0xC86EA` `0xFF→0xFE`, and the Chemical fixture changes only `0xC86DE` `0xFF→0xFB`, within the 32-byte flag range. RE1-SAVE-001 shows the Chemical-after bit persists through one normal in-game save/load.
@@ -553,16 +553,16 @@ Cross-check: inverse-mapping the 25 bits in 24 user-provided item flag labels gi
 Limits: only the herb and Chemical pickup flags were tested by controlled PS1 runtime comparisons; only Chemical-after has a normal in-game save/load check. The code path does not prove when conditional items spawn, whether zero-coordinate rows are collectible in the current scenario, whether event chunks add items, or whether any room's relevant item list is complete. Do not promote derived per-item availability or room completion from this finding. Do not generalize the address or formula to another executable revision without testing.
 History:
 - 2026-09-26; human user; played; supplied the controlled herb and Chemical before/after savestates and performed the Chemical-after normal save/load in RE1-PICKUP-002, RE1-PICKUP-003, and RE1-SAVE-001.
-- 2026-09-26; Codex subagent `/root/ps1_flag_code` with model unknown; inspected the pinned executable and identified the dispatcher, handler, flag helpers, and pickup path by read-only disassembly; no runtime experiment or repository edit.
-- 2026-09-26; Codex subagent `/root/flag_crosscheck` with model unknown; independently derived the bit formula and tested the static RA/RDT concordance and two fixture pairs; no new gameplay or repository edit.
-- 2026-09-26; Codex with model unknown; independently verified executable SHA256, byte-identical ELF text, instruction sequences, opcode table entry, address conversion, and both controlled 32-byte flag-window diffs; authored this finding and limited confirmation to this revision's opcode 0x18 calculation.
+- 2026-09-26; Codex subagent `/root/ps1_flag_code` with model GPT-6 Sol; inspected the pinned executable and identified the dispatcher, handler, flag helpers, and pickup path by read-only disassembly; no runtime experiment or repository edit.
+- 2026-09-26; Codex subagent `/root/flag_crosscheck` with model GPT-6 Sol; independently derived the bit formula and tested the static RA/RDT concordance and two fixture pairs; no new gameplay or repository edit.
+- 2026-09-26; Codex with model GPT-6 Sol; independently verified executable SHA256, byte-identical ELF text, instruction sequences, opcode table entry, address conversion, and both controlled 32-byte flag-window diffs; authored this finding and limited confirmation to this revision's opcode 0x18 calculation.
 
 ## RE1-SPAWN-001: room scripts conditionally create item objects
 
 Status: Confirmed for this revision
 Scope: Resident Evil Director's Cut USA SLUS-00551, executable identity in RE1-FLAG-001; controlled Training Jill Mansion Storeroom and existing Art Room states only
 Environment: DuckStation 0.1-11894-gc66b2694d for controlled Chemical fixtures; offline PS1 RAM and pinned RDT/executable inspection, 2026-09-26
-Authored: 2026-09-26; Codex with model unknown; read-only subagents `/root/script_conditions`, `/root/runtime_availability`, and `/root/item_cases` with models unknown contributed separate script, code, and case inspections
+Authored: 2026-09-26; Codex with model GPT-6 Sol; read-only subagents `/root/script_conditions`, `/root/runtime_availability`, and `/root/item_cases` with models GPT-6 Sol contributed separate script, code, and case inspections
 Basis: direct executable disassembly, RDT script bytes, and saved PS1 RAM object records; Art Room pickup interpretation remains an inference from uncontrolled states
 Claim: an opcode 0x18 row creates its runtime item object only when room script control flow reaches it. In `ROOM1180.RDT`, IF at file `0x28C` tests `04 05 2E 01` at `0x28E`, then chooses Chemical gid 13 at `0x292`; ELSE at `0x2AC` chooses Broken Shotgun gid 48 at `0x2AE`, using the same object ID and rectangle. The opcode 0x04 handler maps flag group 5 to PS1 virtual base `0x800C3000`; index `0x2E` is RAM byte `0xC3006` bit 1, and expected value 1 tests for a clear bit. It is clear in both controlled Chemical fixtures (`0xC3006=0x04`). Their object ID 1 record at PS1 virtual `0x800B816C` points to `0x80121E94`, exactly Chemical opcode `0x292` plus two in the loaded RDT, and its state byte changes `0x04→0x00` on pickup. Its acquisition flag changes `0xC86DE: 0xFF→0xFB`. The alternate branch and the broader meaning of group-5 bit 46 were not tested in gameplay.
 Art Room cross-check: `ROOM1070.RDT` has zero-coordinate Map gid 145 rows at `0x347A4` and `0x347DE` in alternate branches. The branch selection tests player byte `0xC8669` against 3 and tests the Map item bit with `04 07 91 00`. Existing Art Room RAM has player value 1 and object ID 2 pointer `0x801563E0`, matching the second Map opcode `0x347DE` plus two in the loaded RDT. Object state byte is `0x0F` with flag `0xC86ED=0xFF` in the earlier backup, then `0x00` with flag `0xBF` in the later slot. Thus a zero-coordinate opcode row did execute and produce an object record; the backup/slot comparison is not a controlled Map pickup test, and the accompanying generic interaction opcode's role is unresolved.
@@ -570,50 +570,50 @@ Evidence: `ROOM1180.RDT` SHA256 `7a3b57eb01a2b3ac445090128555feb21ba39a38680d338
 Limits: only the named Chemical branch was tested in a controlled pickup pair. Object state values for other item types and the zero-coordinate Map interaction are not yet validated as universal availability rules. `ROOM1020.RDT` and alternate Bathroom RDTs contain further group-5 gated items, but no corresponding controlled runtime scenario was tested. A set acquisition bit or static RDT row alone cannot establish that the room script executes that item in the current game state.
 History:
 - 2026-09-26; human user; supplied controlled Chemical pickup fixtures and earlier Art Room savestates.
-- 2026-09-26; Codex subagents `/root/script_conditions`, `/root/runtime_availability`, and `/root/item_cases`, models unknown; reviewed separate script, executable, and anomalous-item evidence without repository edits or new gameplay.
-- 2026-09-26; Codex with model unknown; independently checked IF/ELSE and flag-test instructions, RDT offsets, fixture flag values, runtime object pointers and state bytes, and loaded RDT byte equality; authored this finding with the alternate branch and Map interaction limits.
+- 2026-09-26; Codex subagents `/root/script_conditions`, `/root/runtime_availability`, and `/root/item_cases`, models GPT-6 Sol; reviewed separate script, executable, and anomalous-item evidence without repository edits or new gameplay.
+- 2026-09-26; Codex with model GPT-6 Sol; independently checked IF/ELSE and flag-test instructions, RDT offsets, fixture flag values, runtime object pointers and state bytes, and loaded RDT byte equality; authored this finding with the alternate branch and Map interaction limits.
 
 ## RE1-SCD-001: two scanner opcode widths disagree with the executable
 
 Status: Confirmed for this revision
 Scope: SLUS-00551 executable identity in RE1-FLAG-001; opcode 0x20 and 0x21 lengths in RDT script scanning
 Environment: static executable disassembly and in-memory disc table rebuild, 2026-09-26
-Authored: 2026-09-26; Codex with model unknown; subagent `/root/script_conditions` with model unknown first identified the mismatch
+Authored: 2026-09-26; Codex with model GPT-6 Sol; subagent `/root/script_conditions` with model GPT-6 Sol first identified the mismatch
 Basis: direct PS1 instruction sequence and regenerated table comparison, without code changes
 Claim: opcode 0x20 and 0x21 handlers advance the script pointer by 14 bytes, while `tools/scan_scd.py` currently assigns 16 and 18 bytes. Correcting only these two widths in memory changes scan status or operation counts in 53 of 335 rooms, including several previously stopped chunks that become clean. The same in-memory rebuild still records exactly the same 647 item rows and door rows as `data/item_table_slus00551.json`; this does not make the table complete because other opcode and event parsing gaps remain.
 Evidence: opcode dispatch table entries `0x80091188` and `0x8009118C` point to handlers `0x80046C2C` and `0x80046CD4`. Their script pointer increments are `addiu $3, $3, 0xE` at `0x80046CAC` and `addiu $2, $3, 0xE` at `0x80046CE4`. A temporary run set `scan_scd.SIZES[0x20]=14` and `[0x21]=14` before calling `build_item_table.main()` on the pinned CUE; comparison of the resulting JSON with the committed table found 53 changed `stats` fields and zero changed `items` or `doors` fields. The generated comparison file remains outside Git.
 Limits: the scanner source and committed table have not yet been corrected; only these two opcode widths were checked in this experiment. Other unknown or variable opcodes still stop scans. This finding is a parser defect and a coverage limit, not evidence that any newly discovered item exists.
 History:
-- 2026-09-26; Codex subagent `/root/script_conditions` with model unknown; found the mismatch while tracing event scripts, verified an in-memory rebuild, and reported no changed item rows.
-- 2026-09-26; Codex with model unknown; independently verified both dispatch entries and pointer increments and repeated the in-memory rebuild comparison across all 335 rooms.
+- 2026-09-26; Codex subagent `/root/script_conditions` with model GPT-6 Sol; found the mismatch while tracing event scripts, verified an in-memory rebuild, and reported no changed item rows.
+- 2026-09-26; Codex with model GPT-6 Sol; independently verified both dispatch entries and pointer increments and repeated the in-memory rebuild comparison across all 335 rooms.
 
 ## RE1-EVENT-001: event scripts remain outside the committed item scan
 
 Status: Candidate
 Scope: SLUS-00551 RDT event sections, especially `ROOM1070.RDT`; completeness of the RE1 item list
 Environment: static disc inspection with experimental event decoder, 2026-09-26; no event-trigger gameplay test
-Authored: 2026-09-26; Codex subagent `/root/script_conditions` with model unknown
+Authored: 2026-09-26; Codex subagent `/root/script_conditions` with model GPT-6 Sol
 Basis: RDT bytes and exploratory event decoding, with PC format documentation used only as a lead
 Claim: the committed item table scans RDT init and main script sections, not event sections. The Art Room event section at file `0x34A58–0x34AA0` begins with relative 32-bit offsets `0x0C, 0x30, 0` and contains two indexed event scripts. The event decoder encountered embedded SCD commands, so event paths may add item behavior outside the current table. An exploratory sweep found no opcode 0x18 item creation in event blocks that decoded cleanly, but it cannot establish absence of event-created items across the disc.
 Evidence: `ROOM1070.RDT` hash is recorded in RE1-SPAWN-001. Of 335 RDTs, 257 have event sections longer than four bytes by the committed header offsets. A temporary event sweep indexed 2,192 scripts, observed 4,545 direct embedded SCD calls and 2,592 embedded SCD blocks, and decoded 2,441 blocks cleanly with the corrected opcode 0x20/0x21 lengths. The remaining 151 blocks stopped on unknown or variable commands, and two RDTs did not fit the assumed offset table. Four apparent event item rows from the old 0x20 width disappear with the executable's 14-byte width and are rejected as misaligned operands. This sweep was exploratory and its negative result was not independently replayed.
 Limits: event branching/calls were not followed, some event opcodes are unresolved, and the decoder is not committed. Do not infer full item coverage or room clearing from this negative sweep. [The PC event disassembler](https://github.com/ecruells/resident-evil-pc-decomp/blob/f7b2dee05e3ce420a95de9cb8300b6ec7b0dc8f5/tools/evt_disasm.py) is a format lead, not PS1 runtime confirmation.
 History:
-- 2026-09-26; Codex subagent `/root/script_conditions` with model unknown; performed the read-only Art Room event inspection and exploratory whole-disc sweep, noting parse gaps and rejecting false positives after the opcode width correction.
-- 2026-09-26; Codex with model unknown; independently checked the 257 nontrivial section count and Art Room event offset bytes, then recorded the sweep as a Candidate with its unresolved paths.
+- 2026-09-26; Codex subagent `/root/script_conditions` with model GPT-6 Sol; performed the read-only Art Room event inspection and exploratory whole-disc sweep, noting parse gaps and rejecting false positives after the opcode width correction.
+- 2026-09-26; Codex with model GPT-6 Sol; independently checked the 257 nontrivial section count and Art Room event offset bytes, then recorded the sweep as a Candidate with its unresolved paths.
 
 ## RE1-SAVE-001: Chemical acquisition survives a normal in-game save and load
 
 Status: Confirmed for this revision
 Scope: Resident Evil Director's Cut USA, serial SLUS-00551, Training Jill, Chemical pickup in Mansion Storeroom Main 00 Sub 18
 Environment: DuckStation 0.1-11894-gc66b2694d on macOS arm64, 2026-09-26; isolated portable copy with its own memory card and GDB server on port 2345. Disc executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`.
-Authored: 2026-09-26; human user performed the in-game save and load; Codex with model unknown read GDB and recorded the result
+Authored: 2026-09-26; human user performed the in-game save and load; Codex with model GPT-6 Sol read GDB and recorded the result
 Basis: runtime observation of a normal in-game save/load, live GDB reads, and inspection of the isolated memory card
 Claim: after the Chemical was taken, saving at the room's typewriter, resetting, and loading through the game's Load Game menu preserved the collected state at PS1 virtual address `0x800C86DE` bit 2. The byte read `0xFB` after loading, matching the controlled after-pickup state, and inventory slot 6 still held item `0x26` (Chemical), quantity 1. The room read Main 00 Sub 18, camera 00, previous 1F. This confirms persistence through one normal in-game save/load for this flag on this revision; it does not establish full room item coverage or a cleared state.
 Evidence: the controlled before-pickup fixture extracts to flag `0xFF`, inventory slot 6 `00 00`, room `00 18 01 0B`; the after-pickup fixture extracts to flag `0xFB`, inventory slot 6 `26 01`, room `00 18 01 0B` (RE1-PICKUP-003). The isolated DuckStation copy booted the after-pickup fixture. The human user saved at the typewriter, reset, loaded through Load Game, and reported control restored. A subsequent GDB read returned room `00 18 00 1F`, flag `0xFB`, and inventory bytes at `0x800C878E` `26 01`; the Ink Ribbon count changed from 6 in the fixture to 5 after the save. The new 131072-byte isolated memory card contained `BASLUS-005510` and had SHA256 `7323a3259f9d77e11a3ebae3f1985fff07f80a3aab8c0ff39bfb8ecaeeaa1c87`. The user's original `SLUS-00551_resume.sav` retained its prior modification time. The memory card and game files are outside Git.
 Limits: the GDB read was taken after the user's report of a normal load, not during the game's save or load screens. The earlier normal-save case that should restore `0xFF` remains untested. The result confirms this flag's persistence, not that all RDT items use the same rule, that room completion can be inferred from one flag, or that another game revision shares this address.
 History:
 - 2026-09-26; human user; tested; saved to the isolated memory card, reset, loaded through the in-game menu, and reported completion.
-- 2026-09-26; Codex with model unknown; tested and authored; compared the live GDB read with both controlled fixtures and inspected the isolated memory card, promoting only this normal-load behavior to Confirmed for this revision.
+- 2026-09-26; Codex with model GPT-6 Sol; tested and authored; compared the live GDB read with both controlled fixtures and inspected the isolated memory card, promoting only this normal-load behavior to Confirmed for this revision.
 
 ## Suggested next experiments
 

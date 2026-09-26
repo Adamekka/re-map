@@ -455,6 +455,8 @@ Automatically commit completed, verified work for the current request without as
 
 Stage only changes belonging to the request. Keep unrelated user changes, secrets, game files, RAM dumps, and savestates out of the commit. Split independent changes into separate commits and use concise Conventional Commit messages. Automatic commits do not authorize pushing, publishing, or rewriting existing commits.
 
+Put the authoring model on its own line in every agent-authored commit body, for example `Model: GPT-6 Sol`. Use the model identity exposed by the runtime or explicitly confirmed by the user for the current session. Never write `Model: unknown`; if the model identity is unavailable, ask the user before committing or writing research attribution. Do not attribute another agent's contribution to the current model unless its identity is established.
+
 ## Progress notes
 
 Keep a `docs/research.md` file.
@@ -478,13 +480,13 @@ Example:
 Status: Candidate
 Scope: <game, region, serial, revision, executable identity, character/scenario>
 Environment: <DuckStation version and relevant setup>
-Authored: <YYYY-MM-DD>; <agent/tool>; model: <exact exposed model ID or unknown>
+Authored: <YYYY-MM-DD>; <agent/tool>; model: <confirmed model name>
 Basis: <runtime observation, source inspection, or inference; list all that apply>
 Claim: <address and interpretation, or rule being investigated>
 Evidence: <reproduction steps, observed results, source permalinks or local artifact references>
 Limits: <untested situations, missing identity details, unresolved conditions>
 History:
-- <date>; <actor and model ID or unknown>; <authored/reviewed/tested/revised>; <contribution and evidence>
+- <date>; <actor and confirmed model name>; <authored/reviewed/tested/revised>; <contribution and evidence>
 ```
 
 This is a template, not a finding. Do not copy placeholders or illustrative values into profiles or mark them confirmed.
@@ -497,7 +499,7 @@ Give each independently verifiable claim a stable ID, such as `RE1-ROOM-001`. Re
 
 For every new finding or substantive revision:
 
-- Record the authoring agent/tool and exact model identifier when the runtime exposes it. Record reasoning effort only when explicitly known. Use `unknown` for unavailable identity details; never infer a model from writing style, the app name, or a requested model selection alone.
+- Record the authoring agent/tool and exact model identifier when the runtime exposes it or the user explicitly confirms it for the current session. Record reasoning effort only when explicitly known. Never write `model unknown`; ask the user if the identity is unavailable. Do not infer a model from writing style, the app name, or a requested model selection alone.
 - Keep original authorship and append dated contributions to the history. Distinguish writing, reviewing, running an experiment, and changing a conclusion. Record human contributions as human, and identify an external source separately from the model summarizing it.
 - Attribute reviews to the models that actually returned them and state what each review checked. A model reviewing prose has not reproduced the experiment. Record failed or unavailable reviews as such, never as endorsements.
 - Attach evidence to each claim. For source inspection, include the URL and commit or version plus the relevant location. For experiments, include steps, expected and observed results, environment, and artifact references or hashes where available. Keep restricted artifacts out of Git under the repository hygiene rules below.
@@ -505,7 +507,7 @@ For every new finding or substantive revision:
 
 Model labels describe provenance, not a quality ranking. Later agents must judge findings by reproducibility, direct evidence, revision coverage, and unresolved limitations. A more capable model must still verify a claim before promoting its validation state.
 
-For existing notes without attribution, record `unknown` unless authorship can be established from reliable records. Do not retroactively claim authorship or verification.
+For existing notes without verified attribution, preserve the recorded provenance and ask the user before adding a model label. Do not retroactively claim authorship or verification.
 
 ## Code quality
 
