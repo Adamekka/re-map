@@ -72,7 +72,9 @@ def _scan_rdt(d: bytes) -> dict:
                     "scd": name, "addr": hex(addr), "id": _id,
                     "x": x, "y": y, "w": w, "h": h,
                     "type": f"0x{raw[10]:02x}", "amount": raw[11],
-                    "gid": raw[16],
+                    # RE1's 0x18 layout puts GlobalId after the 8-byte
+                    # unknown field and two more bytes, at opcode byte 22.
+                    "gid": raw[22],
                 })
             elif op == 0x0C:
                 # Door_set per scd1.xml: next_stage_and_room at byte 15,

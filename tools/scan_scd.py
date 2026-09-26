@@ -89,12 +89,12 @@ def main() -> int:
             print(f"  [{label}] ops={len(ops)} status={status} item_ops={len(items)}")
             for addr, op, raw in items:
                 if op == 0x18:
-                    # biorand RE1 split: id u8, x/y/w/h s16, type u8, amount u8,
-                    # unk8, unk2, globalid u8, ...
+                    # RE1 layout: id u8, x/y/w/h s16, type u8, amount u8,
+                    # unknown bytes 12-21, then globalid u8 at byte 22.
                     _id = raw[1]
                     x, y, w, h = struct.unpack_from("<4h", raw, 2)
                     typ, amt = raw[10], raw[11]
-                    gid = raw[16]
+                    gid = raw[22]
                     print(f"    0x18 @0x{addr:x} id={_id} x={x} y={y} w={w} h={h} type=0x{typ:02x} amt={amt} gid={gid} raw={raw.hex()}")
                 else:
                     print(f"    0x{op:02x} @0x{addr:x} id={raw[1]} raw={raw.hex()}")

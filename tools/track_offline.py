@@ -26,11 +26,10 @@ from ui.debug_view import render
 # Main 0 -> STAGE1. Other values refuse instead of guessing.
 MAIN_TO_STAGE = {0: "STAGE1"}
 # Candidate flag knowledge: (main, sub, type, gid) -> (offset, mask).
-# Only Art Room entries below are observed. Everything else is unknown.
+# Only controlled pickup spots are linked here; other mappings are unknown.
 KNOWN_FLAGS = {
-    (0, 7, "0x2f", 24): (0xC86E3, 0x01),
-    (0, 9, "0x44", 0): (0xC86EA, 0x01),
-    (0, 0x18, "0x26", 0): (0xC86DE, 0x04),
+    (0, 9, "0x44", 111): (0xC86EA, 0x01),
+    (0, 0x18, "0x26", 13): (0xC86DE, 0x04),
 }
 
 
