@@ -7,12 +7,14 @@ with a clear diagnostic instead of guessing.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from threading import Thread
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -20,6 +22,7 @@ from emulator.duckstation_gdb import DuckStationGdb
 from games.re1.re1_profile import MemoryResult, PilotItemState, Re1Profile
 from tracker.exploration_state import Tracker
 from ui.debug_view import render
+from ui.map_view import MAP_PROFILE_ID, MapServer, mansion_graph, map_state
 
 
 class PollStatus(Enum):
@@ -117,7 +120,11 @@ def main() -> int:
     ap.add_argument("--port", type=int, default=2345)
     ap.add_argument("--hz", type=float, default=10.0)
     ap.add_argument("--once", action="store_true", help="read one snapshot and exit")
+    ap.add_argument("--map", action="store_true", help="serve the live Mansion 1F map on localhost:8765")
     args = ap.parse_args()
+    if args.map and args.once:
+        print("the live map needs continuous tracking; omit --once", file=sys.stderr)
+        return 2
 
     profile = Re1Profile.load(args.profile)
     if not profile.has_room_addresses():
@@ -131,6 +138,9 @@ def main() -> int:
             f"profile {profile.profile_id} has no runtime identity check; refusing live reads"
         )
         return 2
+    if args.map and profile.profile_id != MAP_PROFILE_ID:
+        print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
+        return 2
 
     tracker = Tracker()
     gdb = DuckStationGdb(args.host, args.port)
@@ -143,17 +153,41 @@ def main() -> int:
         gdb.close()
         print(f"resume failed: {err}", file=sys.stderr)
         return 1
+    map_server = None
+    map_thread = None
+    item_labels = {item.room: item.label for item in profile.pilot_items}
     try:
+        if args.map:
+            try:
+                map_server = MapServer(8765, mansion_graph())
+            except (OSError, ValueError) as exc:
+                print(f"map unavailable: {exc}", file=sys.stderr)
+                return 1
+            map_thread = Thread(target=map_server.serve_forever, daemon=True)
+            try:
+                map_thread.start()
+            except RuntimeError as exc:
+                print(f"map unavailable: {exc}", file=sys.stderr)
+                return 1
+            print("Room map: http://127.0.0.1:8765")
         period = 1.0 / max(1.0, min(args.hz, 30.0))
+        map_line = "\nRoom map: http://127.0.0.1:8765" if map_server is not None else ""
         last_wait_reason = ""
         while True:
             result = poll_once(profile, tracker, gdb.read_memory)
+            if map_server is not None:
+                snapshot = (
+                    map_state(tracker, item_labels)
+                    if result.status == PollStatus.Display
+                    else {"status": "waiting", "current": None, "rooms": []}
+                )
+                map_server.snapshot = json.dumps(snapshot).encode("utf-8")
             if result.status == PollStatus.WrongGame:
                 if args.once:
                     print(result.text, file=sys.stderr)
                     return 2
                 if result.text != last_wait_reason:
-                    print("\x1b[2J\x1b[H" + result.text + "; waiting for game")
+                    print("\x1b[2J\x1b[H" + result.text + "; waiting for game" + map_line)
                     last_wait_reason = result.text
                 time.sleep(period)
                 continue
@@ -168,19 +202,28 @@ def main() -> int:
                     print(result.text, file=sys.stderr)
                     return 1
                 if result.text != last_wait_reason:
-                    print("\x1b[2J\x1b[H" + result.text, file=sys.stderr)
+                    print("\x1b[2J\x1b[H" + result.text + map_line, file=sys.stderr)
                     last_wait_reason = result.text
                 time.sleep(period)
                 continue
             last_wait_reason = ""
-            print(("" if args.once else "\x1b[2J\x1b[H") + result.text)
+            print(("" if args.once else "\x1b[2J\x1b[H") + result.text + map_line)
             if args.once:
                 return 0
             time.sleep(period)
     except KeyboardInterrupt:
         return 0
     finally:
-        gdb.close()
+        try:
+            if map_server is not None:
+                try:
+                    if map_thread is not None and map_thread.is_alive():
+                        map_server.shutdown()
+                        map_thread.join(timeout=2)
+                finally:
+                    map_server.server_close()
+        finally:
+            gdb.close()
 
 
 if __name__ == "__main__":

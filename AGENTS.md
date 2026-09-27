@@ -350,6 +350,8 @@ Current room
 Unknown
 ```
 
+Reveal a room on the tracker map only after the player enters it. Do not reveal the whole area at startup or when an in-game map is collected.
+
 Do not copy Resident Evil Remake assets. Create original map visuals or derive simple geometry from legally accessible game data.
 
 ## Persistence

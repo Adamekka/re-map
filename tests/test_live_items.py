@@ -16,6 +16,7 @@ from track import PollStatus, poll_once
 from emulator.duckstation_gdb import MemRead
 from games.re1.re1_profile import Re1Profile
 from tracker.exploration_state import Tracker
+from ui.map_view import map_state
 
 
 class RamReader:
@@ -169,6 +170,42 @@ def test_unmapped_room_stays_unknown_and_visit_history_accumulates(tmp_path: Pat
     assert "Green Herb: available" in returned.text
     assert "State: INCOMPLETE" in returned.text
     assert len(tracker.rooms) == 2
+
+
+def test_map_reveals_entered_rooms_without_cached_completion(tmp_path: Path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    tracker = Tracker()
+    labels = {item.room: item.label for item in profile.pilot_items}
+
+    assert poll_once(profile, tracker, RamReader(ram).read_memory).status == PollStatus.Display
+    first = map_state(tracker, labels)
+    assert first["rooms"] == [{"id": "09", "state": "INCOMPLETE"}]
+    assert first["known_item"] == "Green Herb"
+
+    ram[0xC8661] = 8
+    assert poll_once(profile, tracker, RamReader(ram).read_memory).status == PollStatus.Display
+    expanded = map_state(tracker, labels)
+    assert expanded["rooms"] == [
+        {"id": "08", "state": "UNKNOWN"},
+        {"id": "09", "state": "VISITED"},
+    ]
+    assert expanded["known_item"] is None
+
+    ram[0xC8660] = 2
+    assert poll_once(profile, tracker, RamReader(ram).read_memory).status == PollStatus.Display
+    elsewhere = map_state(tracker, labels)
+    assert elsewhere["current"] == "02-08"
+    assert elsewhere["rooms"] == []
+
+    after = fixture_ram("slus00551_green_herb_after.sav", tmp_path)
+    assert poll_once(profile, tracker, RamReader(after).read_memory).status == PollStatus.Display
+    restored = map_state(tracker, labels)
+    assert restored["rooms"] == [
+        {"id": "08", "state": "VISITED"},
+        {"id": "09", "state": "UNKNOWN"},
+    ]
+    assert restored["known_item"] == "Green Herb"
 
 
 def test_pilot_item_matches_generated_room_row():
