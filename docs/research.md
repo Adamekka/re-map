@@ -527,9 +527,24 @@ Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contr
 Basis: source inspection of disc bytes against RA labels
 Claim: 27 nodes and 54 edges form the Mansion 1F graph, committed as ASCII through tools/door_map.py and as data/mansion1f.dot. Edges run both directions everywhere checked, for example save room to stairway to vacant room and back, dining room to main hall to art room to L-passage to winding passage. Three independent sources agree: door bytes give the edges, filenames give the numbers, RA notes give the names. Room 0x10 Elevator Stairway is a target with no file, matching the earlier join misses, so it stays numeric rather than guessed.
 Evidence: tools/door_map.py output, data/mansion1f.dot, bidirectional spot checks above.
-Limits: topology only, no geometry or draw order. Camera variant files fold into base rooms by number. Other stages unmapped pending folder to Main linkage.
+Limits: topology only, no geometry or draw order. Camera variant files fold into base rooms by number. Other stages were unmapped in this finding; RE1-STAGE-001 later adds a source-derived candidate folder link without gameplay validation.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; static build only, still Candidate.
+- 2026-09-27; Codex with model GPT-6 Sol; linked the later candidate folder-selection finding RE1-STAGE-001 without changing this Mansion 1F topology claim.
+
+## RE1-STAGE-001: room-file folder selector for base and alternate areas
+
+Status: Candidate for unplayed areas; executable rule checked for the named revision
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; runtime Main 0–6, room-file folders STAGE1–E
+Environment: pinned PS-X executable disassembly and generated SLUS-00551 RDT table, 2026-09-27; only runtime Main 0 has loaded-room file matches in RE1-VARIANT-002
+Authored: 2026-09-27; Codex with model GPT-6 Sol; subagent `/root/topology_audit` with model GPT-6 Sol found the selector and catalog correspondence
+Basis: executable disassembly and static disc-file/door metadata; no new gameplay outside Main 0
+Claim: the room-file selector at PS1 VA `0x80043FB4..0x80044134` reads runtime Main byte `0x800C8660`. It normally returns that value, 0–6. When word `0x800C3004` has mask `0x00020000` set, it compares Sub byte `0x800C8661` against nine whitelist slots for that Main copied from PS1 VA `0x80010670`; a match returns Main+7. Caller `0x80044870` uses the returned index for its room-file ID and variant tables at `0x80090BC8` and `0x80090F48`. The seven whitelist sets exactly match the Sub IDs present in the sparse STAGE8–E folders, paired with base STAGE1–7. The mask is the same byte `0x800C3006` bit `0x02` that selects the alternate Storeroom item row in RE1-BRANCH-001. This establishes an executable-level reason that folder number alone cannot identify a runtime room; the branch flag can select an alternate file while Main/Sub remain the same.
+Evidence: the PS-X executable header loads at `0x80010000`, so whitelist VA `0x80010670` is file offset `0xE70`. Its seven nine-byte rows contain 8, 5, 2, 3, 4, 9, and 7 non-`0xFF` room IDs; each row equals the collapsed Sub set in its paired STAGE8–E folder in `data/item_table_slus00551.json`. Instructions `0x800440A4..0x80044130` test the flag, index the nine-byte rows, compare Sub, and return Main or Main+7. The loader call and table indexing are at `0x80044870..0x8004489C`. Independently recounting the generated table yields 335 RDT files but 160 base `(Main,Sub)` candidates after suffix variants collapse; all sparse-folder Sub IDs overlay base-room IDs. Treating door target-stage zero as same Main and nonzero 1–7 as target Main 0–6 gives 343 distinct directed links from base folders. The 96 distinct sparse-folder links add no new logical edge. Eight base links target seven `(Main,Sub)` IDs without a corresponding RDT file, so those targets remain unresolved.
+Limits: gameplay has matched loaded RDT files to runtime Main 0 only. The selector's executable rule does not validate room traversal, door availability, labels, geometry, or completion for Main 1–6. Door target-stage normalization and the 160-room graph are static candidate interpretations; script decoding is incomplete in some RDTs. The alternate branch has no natural gameplay capture in this environment, and file suffix selection has separate rules in RE1-VARIANT-002. Do not promote a full-game live map solely from these counts.
+History:
+- 2026-09-27; Codex subagent `/root/topology_audit` with model GPT-6 Sol; traced the selector and compared all seven whitelist rows with sparse room folders, without editing files or testing gameplay.
+- 2026-09-27; Codex with model GPT-6 Sol; independently checked the executable hash, selector and caller disassembly, whitelist bytes at file offset `0xE70`, seven exact folder-set matches, and base/alternate node and edge counts.
 
 ## RE1-RDT-002: RE1 item opcode stores GlobalId at byte 22
 
