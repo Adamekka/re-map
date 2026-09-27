@@ -55,8 +55,9 @@ def poll_once(
     if not current.ok or current.room is None:
         return PollResult(PollStatus.ReadFailure, current.error)
     rid = current.room
-    item = profile.observe_pilot_item(rid, read_memory)
-    if item.state == PilotItemState.ReadFailure:
+    pilot = next((pilot for pilot in profile.pilot_items if pilot.room == rid), None)
+    item = profile.observe_pilot_item(pilot, read_memory) if pilot is not None else None
+    if item is not None and item.state == PilotItemState.ReadFailure:
         return PollResult(PollStatus.ReadFailure, f"item read failed: {item.reason}")
     current_again = profile.read_current_room(read_memory)
     if not current_again.ok or current_again.room is None:
@@ -69,35 +70,33 @@ def poll_once(
 
     tracker.mark_current(rid)
     details = []
-    if item.state in (
+    if item is not None and item.state in (
         PilotItemState.Available,
         PilotItemState.Taken,
         PilotItemState.AvailabilityUnknown,
     ):
-        assert profile.pilot_item is not None
-        details.append(f"Room data: {Path(profile.pilot_item.source_rdt).name}")
-    if item.state == PilotItemState.Available:
+        assert pilot is not None
+        details.append(f"Room data: {Path(pilot.source_rdt).name}")
+    if item is not None and item.state == PilotItemState.Available:
         tracker.update_room_items(rid, 1, 0, False, True, True)
-        assert profile.pilot_item is not None
+        assert pilot is not None
         details.append(
-            f"{profile.pilot_item.label}: available (validated active item object)"
+            f"{pilot.label}: available (validated active item object)"
         )
-    elif item.state == PilotItemState.Taken:
+    elif item is not None and item.state == PilotItemState.Taken:
         tracker.update_room_items(rid, 1, 1, False, False, True)
-        assert profile.pilot_item is not None
-        details.append(f"{profile.pilot_item.label}: taken (pickup flag cleared)")
-    elif item.state == PilotItemState.AvailabilityUnknown:
+        assert pilot is not None
+        details.append(f"{pilot.label}: taken (pickup flag cleared)")
+    elif item is not None and item.state == PilotItemState.AvailabilityUnknown:
         tracker.update_room_items(rid, 1, 0, False, False, True)
-        assert profile.pilot_item is not None
+        assert pilot is not None
         details.append(
-            f"{profile.pilot_item.label}: availability unknown ({item.reason})"
+            f"{pilot.label}: availability unknown ({item.reason})"
         )
     else:
         tracker.update_room_items(rid, 0, 0, False, False, True)
-        if item.state == PilotItemState.UnsupportedVariant:
-            details.append(
-                f"Items for this character/room variant: unknown ({item.reason})"
-            )
+        if item is not None and item.state == PilotItemState.UnsupportedState:
+            details.append(f"Items for this room state: unknown ({item.reason})")
     rec = tracker.room_state(rid)
     details.append("Visited scope: this tracker session")
     return PollResult(

@@ -812,6 +812,23 @@ History:
 - 2026-09-26; Codex subagent `/root/mainhall_rows` with model GPT-6 Sol; traced three script IF blocks and evaluated their predicates against saved RAM without new gameplay.
 - 2026-09-26; Codex with model GPT-6 Sol; independently checked the five referenced flag masks and saved word values, then authored this Candidate availability conclusion.
 
+## RE1-PILOT-002: live debug view names the conditional Chemical
+
+Status: Confirmed for the tested SLUS-00551 Jill Chemical states
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Mansion Storeroom Main/Sub 00-18, `ROOM1180.RDT`, Chemical gid 13
+Environment: isolated portable DuckStation 0.1-11894-gc66b2694d on macOS arm64, GDB port 2345, 2026-09-27; controlled before and after Chemical savestates
+Authored: 2026-09-27; Codex with model GPT-6 Sol
+Basis: controlled savestate pair, prior script/flag/object findings RE1-SPAWN-001, RE1-FLAG-001 and RE1-AOT-001, fixture-backed polling tests, and live GDB reads from both isolated emulator boots
+Claim: for the tested Jill room variant, the live tracker names the Chemical only when group-5 branch byte at PS1 VA `0x800C3006` has mask `0x02` clear. With the acquisition bit at `0x800C86DE` mask `0x04` set and AOT id 1 at `0x800B816C` holding handler `0x04` and opcode-plus-two pointer `0x80121E94`, the before-pickup boot displayed Chemical available, Items 1, Collected 0, and `INCOMPLETE`. The after-pickup boot displayed Chemical taken, Items 1, Collected 1, and `UNKNOWN`. The item list is explicitly incomplete in both states. When the branch bit is set, the tracker leaves item identity and completion unknown because the same room script can select Broken Shotgun instead.
+Evidence: isolated `./DuckStation -nogui -statefile /private/tmp/re-map-duckstation-eyr2yxx9/chemical_before.sav` followed by `python3 tools/track.py --once` returned the before view above. Repeating with `chemical_after.sav` returned the after view. The copied savestates correspond to committed `tests/fixtures/slus00551_chemical_before.sav` SHA256 `5eeef607419e49ab3b36be49363c601d63523410a68755dabef0a15dcf178f2b` and `tests/fixtures/slus00551_chemical_after.sav` SHA256 `b5de7d17f76a6f2812c3761008f118d0d35e165d655dd24d737fb104e344085b`. Fixture tests additionally flip the branch bit in both states, suppressing the Chemical name and counts; test an inactive object, a failed branch read, and confirm the existing Herb pilot and room-transition behavior. The full Python suite passed, 36 tests, with one pre-existing fake-GDB-server thread warning. RE1-SAVE-001 separately records Chemical-after normal save/load persistence.
+Limits: only the Chemical branch has a controlled pickup pair and live boot check; the Broken Shotgun branch was not played or classified. Flipping a bit in a fixture tests the tracker's conservative response, not the game's alternate spawn. The active object check is specific to this row and does not prove general availability. Full relevant item coverage and future story changes remain unresolved, so the room cannot be marked cleared. The runtime signature checks five code windows rather than the whole executable. No map UI or save-linked visit persistence is implemented.
+History:
+- 2026-09-26; human user; played and supplied the controlled before and after Chemical savestates and performed the normal Chemical-after save/load described in RE1-SAVE-001.
+- 2026-09-27; Codex with model GPT-6 Sol; added the profile branch predicate and named live pilot, ran fixture-backed tests and both isolated live boots, and recorded the boundaries of the result.
+- 2026-09-27; Claude Opus 4.6 (Thinking); reviewed the supplied code diff for branch checks and test isolation without running gameplay. Its confounded read-failure test finding was addressed.
+- 2026-09-27; Gemini 3.1 Pro (High); reviewed the supplied code diff for profile parsing and debug wording without running gameplay. Its silent legacy-key and misleading branch-message findings were addressed.
+- 2026-09-27; Gemini 3.8 Flash (High); reviewed the supplied code diff for profile parsing, scenario selection, and tests without running gameplay. Its decimal-versus-hex room ID and confounded test findings were addressed.
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.

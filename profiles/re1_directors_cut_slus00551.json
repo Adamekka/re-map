@@ -22,13 +22,14 @@
     ],
     "concatenated_sha256": "23311956abca97ba2522be37f6d45457f4ebbda529ede887a9d0a6d6a2a56958"
   },
-  "pilot_item": {
-    "room_main": 0,
-    "room_sub": 9,
+  "pilot_items": [{
+    "room_main": "0x00",
+    "room_sub": "0x09",
     "character_address_ps1": "0x800C8669",
     "character_value": 1,
     "variant_word_address_ps1": "0x800C3000",
     "variant_mask": "0x00800000",
+    "conditions": [],
     "source_rdt": "PSX/STAGE1/ROOM1091.RDT",
     "label": "Green Herb",
     "global_id": 111,
@@ -39,6 +40,28 @@
     "active_handler": 4,
     "pointer_offset_bytes": 8,
     "expected_opcode_pointer_ps1": "0x8013E65E"
-  },
-  "notes": "Runtime signature windows match seven saved RAM captures but are not a whole executable attestation. Herb availability rule is limited to the controlled Jill Winding Passage state; room item coverage remains incomplete."
+  }, {
+    "room_main": "0x00",
+    "room_sub": "0x18",
+    "character_address_ps1": "0x800C8669",
+    "character_value": 1,
+    "variant_word_address_ps1": "0x800C3000",
+    "variant_mask": "0x00800000",
+    "conditions": [{
+      "address_ps1": "0x800C3006",
+      "mask": "0x02",
+      "expected_masked_value": "0x00"
+    }],
+    "source_rdt": "PSX/STAGE1/ROOM1180.RDT",
+    "label": "Chemical",
+    "global_id": 13,
+    "flag_address_ps1": "0x800C86DE",
+    "flag_mask": "0x04",
+    "aot_record_address_ps1": "0x800B816C",
+    "aot_record_width_bytes": 12,
+    "active_handler": 4,
+    "pointer_offset_bytes": 8,
+    "expected_opcode_pointer_ps1": "0x80121E94"
+  }],
+  "notes": "Runtime signature windows match seven saved RAM captures but are not a whole executable attestation. Herb and Chemical availability rules are limited to their controlled Jill room states; room item coverage remains incomplete."
 }

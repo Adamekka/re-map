@@ -19,8 +19,7 @@ class MemoryResult(Protocol):
 
 
 class PilotItemState(Enum):
-    OutsideRoom = "outside-room"
-    UnsupportedVariant = "unsupported-variant"
+    UnsupportedState = "unsupported-state"
     Available = "available"
     Taken = "taken"
     AvailabilityUnknown = "availability-unknown"
@@ -41,12 +40,20 @@ class RuntimeSignature:
 
 
 @dataclass(frozen=True)
+class PilotCondition:
+    address: int
+    mask: int
+    expected: int
+
+
+@dataclass(frozen=True)
 class PilotItem:
     room: RoomId
     character_address: int
     character_value: int
     variant_word_address: int
     variant_mask: int
+    conditions: tuple[PilotCondition, ...]
     source_rdt: str
     label: str
     global_id: int
@@ -70,7 +77,7 @@ class Re1Profile:
     camera_address: int | None = None
     revision: str = "unknown"
     runtime_signature: RuntimeSignature | None = None
-    pilot_item: PilotItem | None = None
+    pilot_items: tuple[PilotItem, ...] = ()
 
     @staticmethod
     def load(path: Path) -> Re1Profile:
@@ -89,6 +96,14 @@ class Re1Profile:
                 return None
             return _number(v)
 
+        def _room_number(v: str) -> int:
+            if not isinstance(v, str) or not v.startswith("0x"):
+                raise ValueError("pilot room IDs must be 0x-prefixed strings")
+            value = _number(v)
+            if not 0 <= value <= 0xFF:
+                raise ValueError("pilot room IDs must fit one byte")
+            return value
+
         signature_raw = raw.get("runtime_signature")
         signature = None
         if signature_raw is not None:
@@ -106,18 +121,35 @@ class Re1Profile:
             ):
                 raise ValueError("runtime signature SHA256 must be 64 lowercase hex digits")
 
-        pilot_raw = raw.get("pilot_item")
-        pilot = None
-        if pilot_raw is not None:
+        if "pilot_item" in raw:
+            raise ValueError("pilot_item was renamed to pilot_items; update the profile")
+        pilots = []
+        for pilot_raw in raw.get("pilot_items", []):
+            if "conditions" not in pilot_raw:
+                raise ValueError("pilot item requires an explicit conditions list")
+            conditions = tuple(
+                PilotCondition(
+                    address=_number(condition["address_ps1"]),
+                    mask=_number(condition["mask"]),
+                    expected=_number(condition["expected_masked_value"]),
+                )
+                for condition in pilot_raw["conditions"]
+            )
+            for condition in conditions:
+                if not 0 < condition.mask <= 0xFF or (
+                    condition.expected & ~condition.mask
+                ) != 0:
+                    raise ValueError("pilot condition expected value must fit its one-byte mask")
             pilot = PilotItem(
                 room=RoomId(
-                    stage=_number(pilot_raw["room_main"]),
-                    room=_number(pilot_raw["room_sub"]),
+                    stage=_room_number(pilot_raw["room_main"]),
+                    room=_room_number(pilot_raw["room_sub"]),
                 ),
                 character_address=_number(pilot_raw["character_address_ps1"]),
                 character_value=_number(pilot_raw["character_value"]),
                 variant_word_address=_number(pilot_raw["variant_word_address_ps1"]),
                 variant_mask=_number(pilot_raw["variant_mask"]),
+                conditions=conditions,
                 source_rdt=str(pilot_raw["source_rdt"]),
                 label=str(pilot_raw["label"]),
                 global_id=_number(pilot_raw["global_id"]),
@@ -137,6 +169,9 @@ class Re1Profile:
                 pilot.pointer_offset + 4 <= pilot.aot_record_width <= 4096
             ):
                 raise ValueError("pilot item opcode pointer must fit its AOT record")
+            if any(existing.room == pilot.room for existing in pilots):
+                raise ValueError(f"duplicate pilot item room: {pilot.room}")
+            pilots.append(pilot)
 
         return Re1Profile(
             profile_id=str(raw.get("profile_id", path.stem)),
@@ -145,7 +180,7 @@ class Re1Profile:
             camera_address=_addr("camera_address_ps1"),
             revision=str(raw.get("revision", "unknown")),
             runtime_signature=signature,
-            pilot_item=pilot,
+            pilot_items=tuple(pilots),
         )
 
     def has_room_addresses(self) -> bool:
@@ -199,12 +234,8 @@ class Re1Profile:
         return RoomQuery(ok=True, room=RoomId(stage.data[0], room.data[0]))
 
     def observe_pilot_item(
-        self, room: RoomId, read_memory: Callable[[int, int], MemoryResult]
+        self, pilot: PilotItem, read_memory: Callable[[int, int], MemoryResult]
     ) -> PilotItemObservation:
-        pilot = self.pilot_item
-        if pilot is None or room != pilot.room:
-            return PilotItemObservation(PilotItemState.OutsideRoom)
-
         reads = (
             ("character", pilot.character_address, 1),
             ("variant", pilot.variant_word_address, 4),
@@ -224,12 +255,21 @@ class Re1Profile:
         character, variant = values
         if character[0] != pilot.character_value:
             return PilotItemObservation(
-                PilotItemState.UnsupportedVariant, "character not supported in pilot"
+                PilotItemState.UnsupportedState, "character not supported in pilot"
             )
         if not int.from_bytes(variant, "little") & pilot.variant_mask:
             return PilotItemObservation(
-                PilotItemState.UnsupportedVariant, "Jill room variant not selected"
+                PilotItemState.UnsupportedState, "Jill room variant not selected"
             )
+        for condition in pilot.conditions:
+            result = read_memory(condition.address, 1)
+            if not result.ok or len(result.data) != 1:
+                reason = result.error if not result.ok else "short read"
+                return PilotItemObservation(PilotItemState.ReadFailure, f"branch flag: {reason}")
+            if (result.data[0] & condition.mask) != condition.expected:
+                return PilotItemObservation(
+                    PilotItemState.UnsupportedState, "validated item branch not selected"
+                )
         flag_result = read_memory(pilot.flag_address, 1)
         if not flag_result.ok or len(flag_result.data) != 1:
             reason = flag_result.error if not flag_result.ok else "short read"

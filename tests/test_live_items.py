@@ -1,4 +1,4 @@
-"""Live-poll regression using the controlled SLUS-00551 Herb states."""
+"""Live-poll regressions using controlled SLUS-00551 item states."""
 
 import json
 import subprocess
@@ -173,30 +173,117 @@ def test_unmapped_room_stays_unknown_and_visit_history_accumulates(tmp_path: Pat
 
 def test_pilot_item_matches_generated_room_row():
     profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    pilot = profile.pilot_item
-    assert pilot is not None
+    herb, chemical = profile.pilot_items
     rooms = json.loads((REPO / "data/item_table_slus00551.json").read_text())["rooms"]
-    room = next(row for row in rooms if row["file"] == pilot.source_rdt)
+    room = next(row for row in rooms if row["file"] == herb.source_rdt)
     assert room["stats"]["init"].startswith("clean/")
     assert [(item["id"], item["gid"], item["addr"]) for item in room["items"]] == [
-        (5, pilot.global_id, "0x1ca5c")
+        (5, herb.global_id, "0x1ca5c")
     ]
+    room = next(row for row in rooms if row["file"] == chemical.source_rdt)
+    assert room["stats"]["init"].startswith("clean/")
+    assert (1, chemical.global_id, "0x292") in [
+        (item["id"], item["gid"], item["addr"]) for item in room["items"]
+    ]
+
+
+def test_chemical_pilot_respects_branch_before_and_after_pickup(tmp_path: Path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    herb = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    before = fixture_ram("slus00551_chemical_before.sav", tmp_path)
+    after = fixture_ram("slus00551_chemical_after.sav", tmp_path)
+    tracker = Tracker()
+
+    assert "Green Herb: available" in poll_once(
+        profile, tracker, RamReader(herb).read_memory
+    ).text
+    available = poll_once(profile, tracker, RamReader(before).read_memory)
+    assert available.status == PollStatus.Display
+    assert "Current room: 00-18" in available.text
+    assert "Chemical: available" in available.text
+    assert "Items: 1\nCollected: 0\nState: INCOMPLETE\nList complete: no" in available.text
+    assert len(tracker.rooms) == 2
+
+    taken = poll_once(profile, tracker, RamReader(after).read_memory)
+    assert taken.status == PollStatus.Display
+    assert "Chemical: taken" in taken.text
+    assert "Items: 1\nCollected: 1\nState: UNKNOWN\nList complete: no" in taken.text
+
+    for ram in (before, after):
+        ram[0xC3006] |= 0x02
+        alternate = poll_once(profile, tracker, RamReader(ram).read_memory)
+        assert alternate.status == PollStatus.Display
+        assert "Items: unknown\nCollected: unknown\nState: UNKNOWN" in alternate.text
+        assert "validated item branch not selected" in alternate.text
+        assert "Chemical:" not in alternate.text
+
+        ram[0xC3006] &= ~0x02
+        restored = poll_once(profile, tracker, RamReader(ram).read_memory)
+        expected = "Chemical: available" if ram is before else "Chemical: taken"
+        assert expected in restored.text
+
+
+def test_chemical_pilot_requires_active_object_and_readable_branch(tmp_path: Path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_chemical_before.sav", tmp_path)
+    tracker = Tracker()
+
+    ram[0xB816C] = 0
+    inactive = poll_once(profile, tracker, RamReader(ram).read_memory)
+    assert inactive.status == PollStatus.Display
+    assert "Chemical: availability unknown" in inactive.text
+    assert "State: UNKNOWN" in inactive.text
+
+    ram[0xB816C] = 4
+    reader = RamReader(ram)
+    reader.fail_address = 0x800C3006
+    failure = poll_once(profile, tracker, reader.read_memory)
+    assert failure.status == PollStatus.ReadFailure
+    assert "branch flag: injected read failure" in failure.text
 
 
 def test_profile_rejects_ambiguous_or_invalid_identity_config(tmp_path: Path):
     raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
-    raw["pilot_item"]["flag_mask"] = "0x01"
+    raw["pilot_items"][0]["flag_mask"] = "0x01"
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(json.dumps(raw))
-    assert Re1Profile.load(profile_path).pilot_item.flag_mask == 1
+    assert Re1Profile.load(profile_path).pilot_items[0].flag_mask == 1
 
-    raw["pilot_item"]["flag_mask"] = "01"
+    raw["pilot_items"][0]["flag_mask"] = "01"
     profile_path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="0x prefix"):
         Re1Profile.load(profile_path)
 
-    raw["pilot_item"]["flag_mask"] = 1
+    raw["pilot_items"][0]["flag_mask"] = 1
     raw["runtime_signature"]["concatenated_sha256"] = "A" * 64
     profile_path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="lowercase hex"):
+        Re1Profile.load(profile_path)
+
+    raw["runtime_signature"]["concatenated_sha256"] = "0" * 64
+    raw["pilot_items"][1]["room_sub"] = "0x09"
+    profile_path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="duplicate pilot item room"):
+        Re1Profile.load(profile_path)
+
+    raw["pilot_items"][1]["room_sub"] = 18
+    profile_path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="0x-prefixed"):
+        Re1Profile.load(profile_path)
+
+    raw["pilot_items"][1]["room_sub"] = "0x18"
+    del raw["pilot_items"][0]["conditions"]
+    profile_path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="explicit conditions list"):
+        Re1Profile.load(profile_path)
+
+    raw["pilot_items"][0]["conditions"] = []
+    raw["pilot_items"][1]["conditions"][0]["expected_masked_value"] = "0x04"
+    profile_path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="expected value must fit"):
+        Re1Profile.load(profile_path)
+
+    raw["pilot_item"] = raw.pop("pilot_items")[0]
+    profile_path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="renamed to pilot_items"):
         Re1Profile.load(profile_path)
