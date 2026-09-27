@@ -336,6 +336,8 @@ Show:
 - Calculated room completion state
 - Unresolved/unknown conditions
 
+Prefer showing the specific item when its identity is supported by game data. When only item presence is known, a generic remaining-item indicator is acceptable. Do not guess an item name from an unresolved spawn condition.
+
 After the memory model is reliable, add a map.
 
 The eventual map should make these states visually distinct:
