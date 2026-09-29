@@ -1,6 +1,7 @@
 """Live-poll regressions using controlled SLUS-00551 item states."""
 
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +12,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "tools"))
 
+import track
 from track import PollStatus, poll_once
 
 from emulator.duckstation_gdb import MemRead
@@ -69,6 +71,59 @@ def test_live_poll_rechecks_herb_after_state_load(tmp_path: Path):
     assert restored.status == PollStatus.Display
     assert "Green Herb: available" in restored.text
     assert "Items: 1\nCollected: 0\nState: INCOMPLETE" in restored.text
+
+
+def test_live_log_records_item_changes_and_read_failures(tmp_path: Path, monkeypatch):
+    before = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    after = fixture_ram("slus00551_green_herb_after.sav", tmp_path)
+
+    class LoggedReader(RamReader):
+        def connect(self):
+            return ""
+
+        def resume(self):
+            return ""
+
+        def close(self):
+            # This in-memory reader owns no socket to close.
+            pass
+
+    reader = LoggedReader(before)
+    log = tmp_path / "tracker.log"
+    monkeypatch.setattr(track, "DuckStationGdb", lambda host, port: reader)
+    monkeypatch.setattr(sys, "argv", ["track.py", "--log-file", str(log)])
+    sleeps = 0
+
+    def advance_state(period):
+        nonlocal sleeps
+        sleeps += 1
+        if sleeps == 1:
+            reader.ram = after
+        elif sleeps == 2:
+            reader.fail_address = 0x800C86EA
+        else:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(track.time, "sleep", advance_state)
+    root = logging.getLogger()
+    handlers, level = root.handlers[:], root.level
+    root.handlers = []
+    try:
+        assert track.main() == 0
+        contents = log.read_text()
+    finally:
+        # CLI logging owns its handler; restore pytest's capture handlers after exercising it.
+        for handler in root.handlers:
+            handler.close()
+        root.handlers = handlers
+        root.setLevel(level)
+    assert "Green Herb: available" in contents
+    assert "Green Herb: taken" in contents
+    assert "Poll read-failure" in contents
+    assert "0x800c86ea length=1 received=0 error='injected read failure'" in contents
+    assert "length=32 received=32 sha256=" in contents
+    assert "Tracker stopped by user" in contents
+    assert "GDB closed" in contents
 
 
 def test_live_poll_requires_valid_variant_and_active_object(tmp_path: Path):

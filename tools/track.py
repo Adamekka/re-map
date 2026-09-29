@@ -7,12 +7,15 @@ with a clear diagnostic instead of guessing.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import logging
 import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from threading import Thread
 
@@ -23,6 +26,8 @@ from games.re1.re1_profile import MemoryResult, PilotItemState, Re1Profile
 from tracker.exploration_state import Tracker
 from ui.debug_view import render
 from ui.map_view import MAP_PROFILE_ID, MapServer, mansion_graph, map_state
+
+logger = logging.getLogger(__name__)
 
 
 class PollStatus(Enum):
@@ -121,38 +126,86 @@ def main() -> int:
     ap.add_argument("--hz", type=float, default=10.0)
     ap.add_argument("--once", action="store_true", help="read one snapshot and exit")
     ap.add_argument("--map", action="store_true", help="serve the live Mansion 1F map on localhost:8765")
+    ap.add_argument(
+        "--log-file",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "logs/tracker.log",
+        help="diagnostic log path (default: logs/tracker.log in the repository)",
+    )
     args = ap.parse_args()
+    log_path = args.log_file.expanduser().resolve()
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        # Continuous polling must not grow diagnostics without a limit.
+        handler = RotatingFileHandler(
+            log_path, maxBytes=2 * 1024 * 1024, backupCount=3, encoding="utf-8"
+        )
+    except OSError as exc:
+        print(f"cannot open log file {log_path}: {exc}", file=sys.stderr)
+        return 2
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[handler],
+        force=True,
+    )
+    print(f"Log file: {log_path}", flush=True)
+    logger.info(
+        "Tracker started: python=%s profile=%s gdb=%s:%s hz=%s map=%s once=%s",
+        sys.version.split()[0],
+        args.profile,
+        args.host,
+        args.port,
+        args.hz,
+        args.map,
+        args.once,
+    )
     if args.map and args.once:
+        logger.error("The live map needs continuous tracking; omit --once")
         print("the live map needs continuous tracking; omit --once", file=sys.stderr)
         return 2
 
     profile = Re1Profile.load(args.profile)
+    logger.info(
+        "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision
+    )
     if not profile.has_room_addresses():
+        logger.error("Profile %s has no validated room addresses", profile.profile_id)
         print(
             f"profile {profile.profile_id} has no validated room addresses; refusing to guess"
         )
         print("Run room A vs B diffs first, then fill profiles/*.json with evidence.")
         return 2
     if profile.runtime_signature is None:
+        logger.error("Profile %s has no runtime identity check", profile.profile_id)
         print(
             f"profile {profile.profile_id} has no runtime identity check; refusing live reads"
         )
         return 2
     if args.map and profile.profile_id != MAP_PROFILE_ID:
+        logger.error("Map unavailable for profile %s", profile.profile_id)
         print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
         return 2
+    logger.info(
+        "Expected runtime signature SHA256: %s",
+        profile.runtime_signature.concatenated_sha256,
+    )
 
     tracker = Tracker()
     gdb = DuckStationGdb(args.host, args.port)
     err = gdb.connect()
     if err:
+        logger.error("GDB connection failed: %s", err)
         print(err, file=sys.stderr)
         return 1
+    logger.info("GDB connected")
     err = gdb.resume()
     if err:
         gdb.close()
+        logger.error("GDB resume failed: %s", err)
         print(f"resume failed: {err}", file=sys.stderr)
         return 1
+    logger.info("GDB resume sent")
     map_server = None
     map_thread = None
     item_labels = {item.room: item.label for item in profile.pilot_items}
@@ -161,20 +214,51 @@ def main() -> int:
             try:
                 map_server = MapServer(8765, mansion_graph())
             except (OSError, ValueError) as exc:
+                logger.exception("Map startup failed")
                 print(f"map unavailable: {exc}", file=sys.stderr)
                 return 1
-            map_thread = Thread(target=map_server.serve_forever, daemon=True)
+
+            def serve_map() -> None:
+                try:
+                    map_server.serve_forever()
+                except Exception:
+                    logger.exception("Map server thread failed")
+                    raise
+
+            map_thread = Thread(target=serve_map, daemon=True)
             try:
                 map_thread.start()
             except RuntimeError as exc:
+                logger.exception("Map thread startup failed")
                 print(f"map unavailable: {exc}", file=sys.stderr)
                 return 1
             print("Room map: http://127.0.0.1:8765")
+            logger.info("Map listening at http://127.0.0.1:8765")
         period = 1.0 / max(1.0, min(args.hz, 30.0))
         map_line = "\nRoom map: http://127.0.0.1:8765" if map_server is not None else ""
+        map_line += f"\nLog file: {log_path}"
         last_wait_reason = ""
+        last_logged_result = None
+        next_log_at = 0.0
+        reads: list[str] = []
+
+        def read_for_log(address: int, length: int) -> MemoryResult:
+            result = gdb.read_memory(address, length)
+            if not result.ok:
+                detail = f"error={result.error!r}"
+            elif length >= 32:
+                # Signature windows contain game code; retain hashes rather than dump it.
+                detail = f"sha256={hashlib.sha256(result.data).hexdigest()}"
+            else:
+                detail = f"hex={result.data.hex()}"
+            reads.append(
+                f"{address:#010x} length={length} received={len(result.data)} {detail}"
+            )
+            return result
+
         while True:
-            result = poll_once(profile, tracker, gdb.read_memory)
+            reads.clear()
+            result = poll_once(profile, tracker, read_for_log)
             if map_server is not None:
                 snapshot = (
                     map_state(tracker, item_labels)
@@ -182,12 +266,35 @@ def main() -> int:
                     else {"status": "waiting", "current": None, "rooms": []}
                 )
                 map_server.snapshot = json.dumps(snapshot).encode("utf-8")
+            now = time.monotonic()
+            # Log changes immediately and unchanged state every 30s so stalls remain visible.
+            if result != last_logged_result or now >= next_log_at:
+                level = (
+                    logging.ERROR
+                    if result.status == PollStatus.ReadFailure
+                    else logging.WARNING
+                    if result.status == PollStatus.WrongGame
+                    else logging.INFO
+                )
+                logger.log(
+                    level,
+                    "Poll %s\n%s\nReads: %s",
+                    result.status.value,
+                    result.text,
+                    "; ".join(reads),
+                )
+                if map_server is not None:
+                    logger.info("Map state: %s", map_server.snapshot.decode("utf-8"))
+                last_logged_result = result
+                next_log_at = now + 30.0
             if result.status == PollStatus.WrongGame:
                 if args.once:
                     print(result.text, file=sys.stderr)
                     return 2
                 if result.text != last_wait_reason:
-                    print("\x1b[2J\x1b[H" + result.text + "; waiting for game" + map_line)
+                    print(
+                        "\x1b[2J\x1b[H" + result.text + "; waiting for game" + map_line
+                    )
                     last_wait_reason = result.text
                 time.sleep(period)
                 continue
@@ -212,6 +319,7 @@ def main() -> int:
                 return 0
             time.sleep(period)
     except KeyboardInterrupt:
+        logger.info("Tracker stopped by user")
         return 0
     finally:
         try:
@@ -224,7 +332,12 @@ def main() -> int:
                     map_server.server_close()
         finally:
             gdb.close()
+            logger.info("GDB closed")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except Exception:
+        logger.exception("Tracker failed unexpectedly")
+        raise

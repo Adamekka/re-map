@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -13,6 +14,7 @@ from tracker.exploration_state import Tracker
 
 REPO = Path(__file__).resolve().parents[2]
 MAP_PROFILE_ID = "re1_directors_cut_slus00551"
+logger = logging.getLogger(__name__)
 
 
 def mansion_graph() -> dict:
@@ -114,9 +116,51 @@ class MapRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_POST(self) -> None:
+        if self.path != "/client-error":
+            self.send_error(404)
+            return
+        if self.headers.get_content_type() != "application/json":
+            self.send_error(415)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", ""))
+        except ValueError:
+            self.send_error(400)
+            return
+        if length <= 0:
+            self.send_error(400)
+            return
+        if length > 8192:
+            self.send_error(413)
+            return
+        # Browser diagnostics are small; bound reads so a partial request cannot wait forever.
+        self.connection.settimeout(2)
+        try:
+            error = json.loads(self.rfile.read(length))
+        except (ValueError, UnicodeDecodeError, RecursionError, OSError):
+            self.send_error(400)
+            return
+        if (
+            not isinstance(error, dict)
+            or set(error) != {"source", "message", "stack"}
+            or not all(isinstance(value, str) for value in error.values())
+        ):
+            self.send_error(400)
+            return
+        # JSON escaping keeps arbitrary browser messages from impersonating log entries.
+        logger.error("Browser error: %s", json.dumps(error))
+        self.send_response(204)
+        self.end_headers()
+
+    def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
+        # Successful /state polls are frequent; retain only failed HTTP requests.
+        if isinstance(code, int) and code < 400:
+            return
+        super().log_request(code, size)
+
     def log_message(self, format: str, *args: object) -> None:
-        # The browser polls /state frequently; access logs would bury tracker output.
-        pass
+        logger.warning("HTTP %s: %s", self.client_address[0], format % args)
 
 
 class MapServer(ThreadingHTTPServer):
@@ -124,6 +168,9 @@ class MapServer(ThreadingHTTPServer):
         super().__init__(("127.0.0.1", port), MapRequestHandler)
         self.document = map_page(graph)
         self.snapshot = b'{"status":"waiting","current":null,"rooms":[]}'
+
+    def handle_error(self, request: object, client_address: tuple) -> None:
+        logger.exception("Map request failed for %s", client_address)
 
 
 _PAGE = """<!doctype html>
@@ -172,6 +219,34 @@ _PAGE = """<!doctype html>
     const byId = new Map(graph.rooms.map(room => [room.id, room]));
     const svg = document.getElementById('map');
     const ns = 'http://www.w3.org/2000/svg';
+    let lastReportedError = '';
+    function reportError(source, error) {
+      const details = {
+        source,
+        message: (error instanceof Error ? error.message : String(error)).slice(0, 500),
+        stack: (error instanceof Error && typeof error.stack === 'string' ? error.stack : '').slice(0, 2000),
+      };
+      const body = JSON.stringify(details);
+      // Stack traces can vary between polls of the same failure.
+      const key = JSON.stringify([source, details.message]);
+      if (key === lastReportedError) return;
+      lastReportedError = key;
+      console.error('Room map error', details);
+      fetch('/client-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+        .then(response => {
+          if (!response.ok) {
+            lastReportedError = '';
+            console.error('Could not record room map error:', response.status);
+          }
+        })
+        .catch(error => {
+          // A failed send must allow the next occurrence to retry.
+          lastReportedError = '';
+          console.error('Could not record room map error:', error);
+        });
+    }
+    window.addEventListener('error', event => reportError('window', event.error instanceof Error ? event.error : event.message));
+    window.addEventListener('unhandledrejection', event => reportError('promise', event.reason));
     function element(tag, attrs) {
       const node = document.createElementNS(ns, tag);
       for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
@@ -236,9 +311,11 @@ _PAGE = """<!doctype html>
     async function refresh() {
       try {
         const response = await fetch('/state', { cache: 'no-store' });
-        if (!response.ok) throw new Error('map state request failed');
+        if (!response.ok) throw new Error('map state request failed: HTTP ' + response.status);
         draw(await response.json());
-      } catch {
+        lastReportedError = '';
+      } catch (error) {
+        reportError('refresh', error);
         svg.replaceChildren();
         document.getElementById('details').textContent = '';
         document.getElementById('status').textContent = 'Map connection interrupted.';
