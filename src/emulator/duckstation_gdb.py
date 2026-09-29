@@ -90,6 +90,10 @@ class DuckStationGdb:
         self._port = port
         self._sock: socket.socket | None = None
 
+    @property
+    def connected(self) -> bool:
+        return self._sock is not None
+
     def connect(self) -> str:
         """Connect to the GDB server. Returns empty string on success, else reason."""
         try:

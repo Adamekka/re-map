@@ -1,0 +1,370 @@
+"""Build source signatures and conservative cache dependencies for SLUS-00551.
+
+Usage: python3 tools/build_cache_metadata.py CUE OUT.JSON PROFILE.JSON
+Only hashes, offsets, flag masks, and diagnostic metadata are written.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import struct
+from pathlib import Path
+
+from build_item_table import _iter_files, _read_file
+from list_psx_files import _sector_data
+from scan_events import scan_event_commands
+from scan_scd import walk_procedures
+
+
+def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
+    """Capture item-manifest guards and audit door reuse separately."""
+    bases = [int(value, 0) for value in profile["script_flag_bases"]]
+    if len(bases) != 10 or any(base % 4 for base in bases):
+        raise ValueError("script_flag_bases must contain ten aligned PS1 addresses")
+    match = re.fullmatch(r"ROOM1([0-9A-F]{2})([01])\.RDT", Path(source_rdt).name)
+    if match is None:
+        raise ValueError(f"not a Mansion RDT filename: {source_rdt}")
+    offsets = struct.unpack_from("<19I", data, 0x48)
+    row = {
+        "room_main": 0,
+        "room_sub": int(match[1], 16),
+        "source_rdt": source_rdt,
+        "variant": int(match[2]),
+        "source_sha256": hashlib.sha256(data).hexdigest(),
+    }
+    dependencies: dict[int, int] = {}
+    for dependency in profile["cache_context_dependencies"]:
+        address = int(dependency["address_ps1"], 0)
+        width = dependency["width"]
+        mask = int(dependency["mask"], 0)
+        if width not in (1, 2, 4) or not 0 < mask < 1 << (8 * width):
+            raise ValueError("cache context dependency has invalid width or mask")
+        for index in range(width):
+            byte_mask = (mask >> (8 * index)) & 255
+            if byte_mask:
+                dependencies[address + index] = (
+                    dependencies.get(address + index, 0) | byte_mask
+                )
+
+    operations = []
+    issues = []
+    source_issues = []
+    stats = {}
+    flag_tests = []
+    for index, section in ((6, "init"), (7, "main")):
+        start, end = offsets[index : index + 2]
+        if not 0 < start < end <= len(data):
+            source_issues.append(f"{section}: bad range")
+            stats[section] = "bad-range"
+            continue
+        span = data[start:end]
+        row.update(
+            {
+                section + "_offset": start,
+                section + "_size": len(span),
+                section + "_sha256": hashlib.sha256(span).hexdigest(),
+            }
+        )
+        found, status = walk_procedures(span, start)
+        operations.extend((section, address, op, raw) for address, op, raw in found)
+        stats[section] = status
+        if status != "clean":
+            source_issues.append(f"{section}: {status}")
+
+    event_start, event_end = offsets[8:10]
+    found, status = scan_event_commands(data, event_start, event_end)
+    operations.extend(("events", address, op, raw) for address, op, raw in found)
+    stats["events"] = status
+    if status != "clean":
+        source_issues.append(f"indexed event scripts: {status}")
+    event_count = 0
+    if 0 < event_start < event_end <= len(data):
+        for address in range(event_start, event_end - 3, 4):
+            if struct.unpack_from("<I", data, address)[0] == 0:
+                break
+            event_count += 1
+    for _, address, op, raw in operations:
+        if op == 0x14 and raw[3] >= event_count:
+            source_issues.append(f"event creation index outside table at 0x{address:x}")
+    issues.extend(source_issues)
+    door_issues = list(source_issues)
+    item_ids = {
+        raw[1] & 127
+        for _, _, op, raw in operations
+        if op == 0x18 and 0 < raw[10] < 0x54
+    }
+    writers = [
+        (section, address)
+        for section, address, op, raw in operations
+        if op == 0x18
+        and raw[1] & 127 in item_ids
+        or op in (0x0C, 0x0D, 0x12, 0x13)
+        and raw[1] in item_ids
+    ]
+    direct_writers = tuple(writers)
+    door_ids = {
+        raw[1]
+        for _, _, op, raw in operations
+        if op == 0x0C or op == 0x0D and raw[10] == 1
+    }
+    door_writers = [
+        (section, address)
+        for section, address, op, raw in operations
+        if op in (0x0C, 0x0D, 0x12, 0x13)
+        and raw[1] in door_ids
+        or op in (0x24, 0x2D)
+        and raw[1] in door_ids
+        or op == 0x4C
+        and raw[2] in door_ids
+    ]
+    if any(section == "events" for section, _ in writers):
+        # Starting an event can enable a later manifest write. Its creation guard belongs to the dependency set too.
+        writers.extend(
+            (section, address) for section, address, op, _ in operations if op == 0x14
+        )
+    for section, address in door_writers:
+        if section != "init":
+            door_issues.append(f"door interaction update outside init at 0x{address:x}")
+    predicates = {4, 6, 7, 0x10, 0x11, 0x1A, 0x1D, 0x22, 0x36, 0x38, 0x3C, 0x3F, 0x50}
+    guarded = set()
+    door_guarded = set()
+    guarded_writes = set()
+    # Room-local tests only invalidate item knowledge when they guard an item manifest writer.
+    # Other tests can animate a camera, NPC, or door without changing an observed item list.
+    by_address = {address: (op, raw) for _, address, op, raw in operations}
+    for section, begin, op, raw in operations:
+        if op != 1:
+            continue
+        finish = begin + 2 + raw[1]
+        alternate = by_address.get(finish - 2)
+        if alternate is not None and alternate[0] == 2:
+            finish = finish - 2 + alternate[1][1]
+        for targets, destination in ((writers, guarded), (door_writers, door_guarded)):
+            affected = [
+                address
+                for writer_section, address in targets
+                if writer_section == section and begin < address < finish
+            ]
+            if affected:
+                if destination is guarded:
+                    guarded_writes.update(
+                        (section, writer)
+                        for writer in affected
+                        if any(
+                            predicate_section == section
+                            and predicate in predicates
+                            and begin < predicate_address < writer
+                            for predicate_section, predicate_address, predicate, _ in operations
+                        )
+                    )
+                destination.update(
+                    address
+                    for predicate_section, address, predicate, _ in operations
+                    if predicate_section == section
+                    and predicate in predicates
+                    and begin < address < max(affected)
+                )
+    for section, address in direct_writers:
+        # A mutation without a captured guard could change a departed room's manifest while context stayed equal.
+        if section != "init" and (section, address) not in guarded_writes:
+            issues.append(
+                f"unguarded item interaction update outside init at 0x{address:x}"
+            )
+
+    for section, address, op, raw in operations:
+        if op == 4:
+            group, index, expected = raw[1:]
+            test = {
+                "section": section,
+                "offset": address,
+                "group": group,
+                "index": index,
+                "expected": expected,
+            }
+            if group < len(bases):
+                # RE1 numbers bits from each little-endian word's MSB.
+                byte = bases[group] + 4 * (index // 32) + 3 - (index % 32) // 8
+                mask = 128 >> (index % 8)
+                if address in guarded or address in door_guarded:
+                    dependencies[byte] = dependencies.get(byte, 0) | mask
+                test.update(address_ps1=hex(byte), width=1, mask=mask)
+            else:
+                if address in guarded:
+                    issues.append(f"unknown flag group {group} at 0x{address:x}")
+                if address in door_guarded:
+                    door_issues.append(f"unknown flag group {group} at 0x{address:x}")
+            if expected not in (0, 1):
+                if address in guarded:
+                    issues.append(f"unclassified flag comparison at 0x{address:x}")
+                if address in door_guarded:
+                    door_issues.append(f"unclassified flag comparison at 0x{address:x}")
+            flag_tests.append(test)
+        if op == 6 and address in guarded:
+            index, comparison, _ = raw[1:]
+            # Stage/room can be reconstructed and character is captured.
+            # Camera and interaction bytes belong to the active room only.
+            if index not in (0, 1, 9):
+                issues.append(f"room-local comparison field {index} at 0x{address:x}")
+            if comparison > 5:
+                issues.append(f"unclassified byte comparison at 0x{address:x}")
+        if op == 6 and address in door_guarded:
+            index, comparison, _ = raw[1:]
+            if index not in (0, 1, 9):
+                door_issues.append(
+                    f"room-local door comparison field {index} at 0x{address:x}"
+                )
+            if comparison > 5:
+                door_issues.append(
+                    f"unclassified door byte comparison at 0x{address:x}"
+                )
+        if op in predicates - {4, 6} and address in guarded:
+            issues.append(f"non-bit comparison 0x{op:02x} at 0x{address:x}")
+        if op in predicates - {4, 6} and address in door_guarded:
+            door_issues.append(f"non-bit door comparison 0x{op:02x} at 0x{address:x}")
+    # Item initialization also tests its acquisition bit implicitly. A room
+    # entered after pickup may have no active descriptor for that item; a
+    # later rewind must still invalidate that cached empty manifest.
+    item_global_ids = sorted(
+        {raw[22] for _, _, op, raw in operations if op == 0x18 and 0 < raw[10] < 0x54}
+    )
+    quantity_slots = {
+        raw[2] for _, _, op, raw in operations if op == 0x4C and raw[1] in (1, 2)
+    }
+    mutable_fields = []
+    for section, address, op, raw in operations:
+        if section not in ("init", "main"):
+            continue
+        section_offset = row[section + "_offset"]
+        if op == 0x18:
+            # The item initializer clears every flag except bit zero in its own source packet.
+            mutable_fields.append(
+                {
+                    "section": section,
+                    "offset": address + 24 - section_offset,
+                    "width": 2,
+                    "kind": "item-parameter-mask",
+                    "original": struct.unpack_from("<H", raw, 24)[0],
+                }
+            )
+        if op in (0x0C, 0x0D, 0x18) and raw[1] & 127 in quantity_slots:
+            # Transfer modes 1/2 write through AOT source+9, i.e. this initializer's byte 11.
+            mutable_fields.append(
+                {
+                    "section": section,
+                    "offset": address + 11 - section_offset,
+                    "width": 1,
+                    "kind": "item-quantity",
+                    "original": raw[11],
+                }
+            )
+    for section, address, op, raw in operations:
+        if op == 0x0D and raw[10] in (3, 4, 15):
+            issues.append(
+                f"unclassified generic AOT handler {raw[10]} at 0x{address:x}"
+            )
+        if op in (0x24, 0x2D) and raw[2] in (4, 15) and raw[1] not in item_ids:
+            issues.append(f"award has no item initializer at 0x{address:x}")
+        if op == 0x4C and raw[2] in item_ids:
+            issues.append(
+                f"item quantity transfer requires live refresh at 0x{address:x}"
+            )
+
+    row.update(
+        dependencies=[
+            {"address_ps1": hex(address), "width": 1, "mask": mask}
+            for address, mask in sorted(dependencies.items())
+        ],
+        cache_complete=not issues,
+        door_cache_complete=not door_issues,
+        door_cache_reason="; ".join(door_issues)
+        if door_issues
+        else "door definitions initialized only; source and initialization guards covered",
+        reason="; ".join(issues)
+        if issues
+        else "init/main/indexed events covered; item manifest guards captured",
+        stats=stats,
+        flag_tests=flag_tests,
+        item_aot_ids=sorted(item_ids),
+        item_global_ids=item_global_ids,
+        mutable_fields=mutable_fields,
+    )
+    for audit in profile["cache_audits"]:
+        if audit["source_rdt"] != source_rdt:
+            continue
+        # A hand-audited event program can close a conservative scanner gap,
+        # but its authorization must be bound to the exact owned source bytes.
+        if audit["source_sha256"] != row["source_sha256"]:
+            raise ValueError("cache audit source hash mismatch")
+        if not audit["research_ids"] or not audit["reason"]:
+            raise ValueError("cache audit requires evidence references and a reason")
+        row["cache_complete"] = True
+        row["reason"] = audit["reason"]
+        row["cache_audit_references"] = audit["research_ids"]
+    return row
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("cue", type=Path)
+    parser.add_argument("out", type=Path)
+    parser.add_argument("profile", type=Path)
+    arguments = parser.parse_args()
+    try:
+        profile = json.loads(arguments.profile.read_text())
+        if profile["serial"] != "SLUS-00551":
+            raise ValueError(
+                "cache inspection supports only the pinned SLUS-00551 profile"
+            )
+        expected_identity = profile["executable_identity"]
+        cue = arguments.cue.read_text()
+        image_match = re.search(r'FILE\s+"([^"]+)"', cue)
+        if image_match is None:
+            raise ValueError("CUE has no quoted FILE entry")
+        image = arguments.cue.parent / image_match[1]
+        rooms = []
+        executable_identity = ""
+        with image.open("rb") as file:
+            descriptor = _sector_data(file, 16)
+            root, root_size = (
+                struct.unpack_from("<I", descriptor, 158)[0],
+                struct.unpack_from("<I", descriptor, 166)[0],
+            )
+            for name, extent, size in _iter_files(file, root, root_size):
+                if Path(name).name == "SLUS_005.51":
+                    digest = hashlib.sha256(_read_file(file, extent, size)).hexdigest()
+                    executable_identity = "SLUS_005.51 SHA256 " + digest
+                if "/STAGE1/" in "/" + name and name.endswith(".RDT"):
+                    rooms.append(
+                        scan_cache_rdt(_read_file(file, extent, size), name, profile)
+                    )
+        if executable_identity != expected_identity:
+            raise ValueError(
+                "disc executable does not match the required profile identity"
+            )
+        if not rooms:
+            raise ValueError("disc contains no Mansion RDT files")
+        arguments.out.write_text(
+            json.dumps(
+                {
+                    "profile_id": profile["profile_id"],
+                    "executable_identity": executable_identity,
+                    "research_ids": ["RE1-CACHE-001", "RE1-CACHE-002"],
+                    "validation": "Candidate: pinned executable and static source inspection",
+                    "rooms": rooms,
+                },
+                indent=2,
+            )
+        )
+    except (KeyError, OSError, TypeError, ValueError, struct.error) as error:
+        parser.error(str(error))
+    print(
+        f"rooms={len(rooms)} cache_candidates={sum(row['cache_complete'] for row in rooms)} -> {arguments.out}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

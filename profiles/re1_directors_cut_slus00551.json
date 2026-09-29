@@ -22,46 +22,422 @@
     ],
     "concatenated_sha256": "23311956abca97ba2522be37f6d45457f4ebbda529ede887a9d0a6d6a2a56958"
   },
-  "pilot_items": [{
-    "room_main": "0x00",
-    "room_sub": "0x09",
-    "character_address_ps1": "0x800C8669",
-    "character_value": 1,
-    "variant_word_address_ps1": "0x800C3000",
-    "variant_mask": "0x00800000",
-    "conditions": [],
-    "source_rdt": "PSX/STAGE1/ROOM1091.RDT",
-    "label": "Green Herb",
-    "global_id": 111,
-    "flag_address_ps1": "0x800C86EA",
-    "flag_mask": 1,
-    "aot_record_address_ps1": "0x800B819C",
-    "aot_record_width_bytes": 12,
-    "active_handler": 4,
-    "pointer_offset_bytes": 8,
-    "expected_opcode_pointer_ps1": "0x8013E65E"
-  }, {
-    "room_main": "0x00",
-    "room_sub": "0x18",
-    "character_address_ps1": "0x800C8669",
-    "character_value": 1,
-    "variant_word_address_ps1": "0x800C3000",
-    "variant_mask": "0x00800000",
-    "conditions": [{
-      "address_ps1": "0x800C3006",
-      "mask": "0x02",
-      "expected_masked_value": "0x00"
-    }],
-    "source_rdt": "PSX/STAGE1/ROOM1180.RDT",
-    "label": "Chemical",
-    "global_id": 13,
-    "flag_address_ps1": "0x800C86DE",
-    "flag_mask": "0x04",
-    "aot_record_address_ps1": "0x800B816C",
-    "aot_record_width_bytes": 12,
-    "active_handler": 4,
-    "pointer_offset_bytes": 8,
-    "expected_opcode_pointer_ps1": "0x80121E94"
-  }],
-  "notes": "Runtime signature windows match seven saved RAM captures but are not a whole executable attestation. Herb and Chemical availability rules are limited to their controlled Jill room states; room item coverage remains incomplete."
+  "pilot_items": [
+    {
+      "room_main": "0x00",
+      "room_sub": "0x09",
+      "character_address_ps1": "0x800C8669",
+      "character_value": 1,
+      "variant_word_address_ps1": "0x800C3000",
+      "variant_mask": "0x00800000",
+      "conditions": [],
+      "source_rdt": "PSX/STAGE1/ROOM1091.RDT",
+      "label": "Green Herb",
+      "global_id": 111,
+      "flag_address_ps1": "0x800C86EA",
+      "flag_mask": 1,
+      "aot_record_address_ps1": "0x800B819C",
+      "aot_record_width_bytes": 12,
+      "active_handler": 4,
+      "pointer_offset_bytes": 8,
+      "expected_opcode_pointer_ps1": "0x8013E65E"
+    },
+    {
+      "room_main": "0x00",
+      "room_sub": "0x18",
+      "character_address_ps1": "0x800C8669",
+      "character_value": 1,
+      "variant_word_address_ps1": "0x800C3000",
+      "variant_mask": "0x00800000",
+      "conditions": [
+        {
+          "address_ps1": "0x800C3006",
+          "mask": "0x02",
+          "expected_masked_value": "0x00"
+        }
+      ],
+      "source_rdt": "PSX/STAGE1/ROOM1180.RDT",
+      "label": "Chemical",
+      "global_id": 13,
+      "flag_address_ps1": "0x800C86DE",
+      "flag_mask": "0x04",
+      "aot_record_address_ps1": "0x800B816C",
+      "aot_record_width_bytes": 12,
+      "active_handler": 4,
+      "pointer_offset_bytes": 8,
+      "expected_opcode_pointer_ps1": "0x80121E94"
+    }
+  ],
+  "runtime_room_layout": {
+    "aot_base": "0x800B8160",
+    "aot_bound_address": "0x800B7ED8",
+    "aot_capacity": 24,
+    "loaded_rdt_pointer_address": "0x800CAB10",
+    "acquisition_flags_address": "0x800C86DC",
+    "acquisition_flags_width": 32,
+    "ram_base": "0x80000000",
+    "ram_size": "0x200000",
+    "pending_action_pointer_address": "0x800B7DCC",
+    "main_flags_address": "0x800C3000",
+    "pending_item_mask": "0x00000C00",
+    "item_labels": [
+      [
+        "0x01",
+        "Combat Knife"
+      ],
+      [
+        "0x02",
+        "Beretta"
+      ],
+      [
+        "0x03",
+        "Shotgun"
+      ],
+      [
+        "0x04",
+        "Dum Dum Colt"
+      ],
+      [
+        "0x05",
+        "Colt Python"
+      ],
+      [
+        "0x06",
+        "Flame Thrower"
+      ],
+      [
+        "0x07",
+        "Bazooka Acid"
+      ],
+      [
+        "0x08",
+        "Bazooka Explosive"
+      ],
+      [
+        "0x09",
+        "Bazooka Flame"
+      ],
+      [
+        "0x0A",
+        "Rocket Launcher"
+      ],
+      [
+        "0x0B",
+        "Handgun ammo"
+      ],
+      [
+        "0x0C",
+        "Shotgun shells"
+      ],
+      [
+        "0x0D",
+        "Dum Dum Rounds"
+      ],
+      [
+        "0x0E",
+        "Magnum Rounds"
+      ],
+      [
+        "0x0F",
+        "Flame Thrower Fuel"
+      ],
+      [
+        "0x10",
+        "Explosive Rounds"
+      ],
+      [
+        "0x11",
+        "Acid Rounds"
+      ],
+      [
+        "0x12",
+        "Flame Rounds"
+      ],
+      [
+        "0x13",
+        "Empty Bottle"
+      ],
+      [
+        "0x14",
+        "Water"
+      ],
+      [
+        "0x15",
+        "Umb No2"
+      ],
+      [
+        "0x16",
+        "Umb No4"
+      ],
+      [
+        "0x17",
+        "Umb No7"
+      ],
+      [
+        "0x18",
+        "Umb No13"
+      ],
+      [
+        "0x19",
+        "Yellow6"
+      ],
+      [
+        "0x1A",
+        "NP003"
+      ],
+      [
+        "0x1B",
+        "VJolt"
+      ],
+      [
+        "0x1C",
+        "Broken Shotgun"
+      ],
+      [
+        "0x1D",
+        "Square Crank"
+      ],
+      [
+        "0x1E",
+        "Hex Crank"
+      ],
+      [
+        "0x1F",
+        "Wood Emblem"
+      ],
+      [
+        "0x20",
+        "Gold Emblem"
+      ],
+      [
+        "0x21",
+        "Blue Jewel"
+      ],
+      [
+        "0x22",
+        "Red Jewel"
+      ],
+      [
+        "0x23",
+        "Music Notes"
+      ],
+      [
+        "0x24",
+        "Wolf Medal"
+      ],
+      [
+        "0x25",
+        "Eagle Medal"
+      ],
+      [
+        "0x26",
+        "Chemical"
+      ],
+      [
+        "0x27",
+        "Battery"
+      ],
+      [
+        "0x28",
+        "MODisk"
+      ],
+      [
+        "0x29",
+        "Wind Crest"
+      ],
+      [
+        "0x2A",
+        "Flare"
+      ],
+      [
+        "0x2B",
+        "Slides"
+      ],
+      [
+        "0x2C",
+        "Moon Crest"
+      ],
+      [
+        "0x2D",
+        "Star Crest"
+      ],
+      [
+        "0x2E",
+        "Sun Crest"
+      ],
+      [
+        "0x2F",
+        "Ink Ribbon"
+      ],
+      [
+        "0x30",
+        "Lighter"
+      ],
+      [
+        "0x31",
+        "Lock Pick"
+      ],
+      [
+        "0x32",
+        "Can Of Oil"
+      ],
+      [
+        "0x33",
+        "Sword Key"
+      ],
+      [
+        "0x34",
+        "Armor Key"
+      ],
+      [
+        "0x35",
+        "Shield Key"
+      ],
+      [
+        "0x36",
+        "Helmet Key"
+      ],
+      [
+        "0x37",
+        "Master Key"
+      ],
+      [
+        "0x38",
+        "Special Key"
+      ],
+      [
+        "0x39",
+        "Dorm Key 002"
+      ],
+      [
+        "0x3A",
+        "Dorm Key 003"
+      ],
+      [
+        "0x3B",
+        "Control Room Key"
+      ],
+      [
+        "0x3C",
+        "Power Room Key"
+      ],
+      [
+        "0x3D",
+        "Small Key"
+      ],
+      [
+        "0x3E",
+        "Red Book"
+      ],
+      [
+        "0x3F",
+        "Doom Book2"
+      ],
+      [
+        "0x40",
+        "Doom Book1"
+      ],
+      [
+        "0x41",
+        "First Aid Spray"
+      ],
+      [
+        "0x42",
+        "Serum"
+      ],
+      [
+        "0x43",
+        "Red Herb"
+      ],
+      [
+        "0x44",
+        "Green Herb"
+      ],
+      [
+        "0x45",
+        "Blue Herb"
+      ],
+      [
+        "0x46",
+        "Mixed Herbs"
+      ],
+      [
+        "0x47",
+        "Mixed Herbs"
+      ],
+      [
+        "0x48",
+        "Mixed Herbs"
+      ],
+      [
+        "0x49",
+        "Mixed Herbs"
+      ],
+      [
+        "0x4A",
+        "Mixed Herbs"
+      ],
+      [
+        "0x4B",
+        "Mixed Herbs"
+      ],
+      [
+        "0x4E",
+        "Map"
+      ],
+      [
+        "0x4F",
+        "Map"
+      ],
+      [
+        "0x50",
+        "Map"
+      ],
+      [
+        "0x51",
+        "Map"
+      ],
+      [
+        "0x52",
+        "Map"
+      ],
+      [
+        "0x53",
+        "Map"
+      ]
+    ]
+  },
+  "door_state_layout": {
+    "unlock_flags_address": "0x800C86B4",
+    "unlock_flags_width": 8,
+    "player_state_address": "0x800C5125",
+    "special_flag_address": "0x800C870C"
+  },
+  "script_flag_bases": [
+    "0x800C8700",
+    "0x800C8694",
+    "0x800C86B4",
+    "0x800C86BC",
+    "0x800C3008",
+    "0x800C3000",
+    "0x800CAB00",
+    "0x800C86DC",
+    "0x800C8710",
+    "0x800B8348"
+  ],
+  "cache_context_dependencies": [
+    {
+      "address_ps1": "0x800C8669",
+      "width": 1,
+      "mask": "0xFF"
+    },
+    {
+      "address_ps1": "0x800C3000",
+      "width": 4,
+      "mask": "0x00800000"
+    }
+  ],
+  "room_manifest_path": "../data/room_manifest_slus00551.json",
+  "cache_audits": [],
+  "notes": "Pinned runtime identity. Registered item interpretation: RE1-COVER-002. Door flag decoding: RE1-DOORS-002. Runtime and story validation limits remain in those findings."
 }

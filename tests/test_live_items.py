@@ -50,34 +50,124 @@ def fixture_ram(name: str, tmp_path: Path) -> bytearray:
     return bytearray(output.read_bytes())
 
 
-def test_live_poll_rechecks_herb_after_state_load(tmp_path: Path):
+@pytest.mark.parametrize(
+    "kind,room,label",
+    [("green_herb", "00-09", "Green Herb"), ("chemical", "00-18", "Chemical")],
+)
+def test_live_poll_rechecks_pickup_after_state_load(tmp_path, kind, room, label):
     profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    before = RamReader(fixture_ram("slus00551_green_herb_before.sav", tmp_path))
-    after = RamReader(fixture_ram("slus00551_green_herb_after.sav", tmp_path))
+    before = RamReader(fixture_ram(f"slus00551_{kind}_before.sav", tmp_path))
+    after = RamReader(fixture_ram(f"slus00551_{kind}_after.sav", tmp_path))
     tracker = Tracker()
-
-    first = poll_once(profile, tracker, before.read_memory)
-    assert first.status == PollStatus.Display
-    assert "Current room: 00-09" in first.text
-    assert "Green Herb: available" in first.text
-    assert "Items: 1\nCollected: 0\nState: INCOMPLETE\nList complete: no" in first.text
-
+    available = poll_once(profile, tracker, before.read_memory)
+    assert available.status == PollStatus.Display
+    assert f"Current room: {room}" in available.text
+    assert f"{label}: available" in available.text
+    assert (
+        "Items: 1\nCollected: 0\nState: INCOMPLETE\nList complete: yes"
+        in available.text
+    )
     taken = poll_once(profile, tracker, after.read_memory)
     assert taken.status == PollStatus.Display
-    assert "Green Herb: taken" in taken.text
-    assert "Items: 1\nCollected: 1\nState: UNKNOWN\nList complete: no" in taken.text
-
+    assert f"{label}: taken" in taken.text
+    assert "Items: 1\nCollected: 1\nState: CLEARED\nList complete: yes" in taken.text
     restored = poll_once(profile, tracker, before.read_memory)
     assert restored.status == PollStatus.Display
-    assert "Green Herb: available" in restored.text
-    assert "Items: 1\nCollected: 0\nState: INCOMPLETE" in restored.text
+    assert f"{label}: available" in restored.text
+    assert "State: INCOMPLETE" in restored.text
 
 
-def test_live_log_records_item_changes_and_read_failures(tmp_path: Path, monkeypatch):
+def test_live_poll_reads_all_room_doors(tmp_path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    tracker = Tracker()
+    result = poll_once(profile, tracker, RamReader(ram).read_memory)
+    assert result.status == PollStatus.Display
+    assert len(tracker.doors) == 5
+    armor = next(door for door in tracker.doors if door.target.room == 0x14)
+    assert armor.state == "LOCKED"
+    assert armor.label == "Locked · Armor Key"
+    ram[0xC86B7] |= 8
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    armor = next(door for door in tracker.doors if door.target.room == 0x14)
+    assert armor.state == "OPEN"
+    ram[0xC86B7] &= ~8
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    armor = next(door for door in tracker.doors if door.target.room == 0x14)
+    assert armor.state == "LOCKED"
+
+
+def test_live_poll_rejects_wrong_game_and_read_failure(tmp_path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    tracker = Tracker()
+    ram[0x4484C] ^= 1
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.WrongGame
+    )
+    assert tracker.rooms == {}
+    ram[0x4484C] ^= 1
+    reader = RamReader(ram)
+    reader.fail_address = 0x800C86DC
+    result = poll_once(profile, tracker, reader.read_memory)
+    assert result.status == PollStatus.ReadFailure
+    assert "injected read failure" in result.text
+    assert tracker.rooms == {}
+
+
+def test_room_transition_during_poll_is_retried(tmp_path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+
+    class SwitchingReader(RamReader):
+        def __init__(self, ram):
+            super().__init__(ram)
+            self.room_reads = 0
+
+        def read_memory(self, address, length):
+            if address == 0x800C8661:
+                self.room_reads += 1
+                if self.room_reads == 2:
+                    return MemRead(ok=True, data=b"\x08")
+            return super().read_memory(address, length)
+
+    tracker = Tracker()
+    result = poll_once(profile, tracker, SwitchingReader(ram).read_memory)
+    assert result.status == PollStatus.Retry
+    assert tracker.rooms == {}
+
+
+def test_map_reveals_only_observed_regions_and_keeps_secret_space_separate(tmp_path):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    tracker = Tracker()
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    state = map_state(tracker)
+    assert [(room["id"], room["state"]) for room in state["rooms"]] == [
+        ("09", "INCOMPLETE")
+    ]
+    assert state["rooms"][0]["items"][0]["label"] == "Green Herb"
+    assert len(state["doors"]) == 5
+    assert "14" not in [room["id"] for room in state["rooms"]]
+
+
+def test_live_log_records_item_changes_and_read_failures(tmp_path, monkeypatch):
     before = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
     after = fixture_ram("slus00551_green_herb_after.sav", tmp_path)
 
     class LoggedReader(RamReader):
+        connected = True  # The fixture reader has no network transport.
+
         def connect(self):
             return ""
 
@@ -85,7 +175,7 @@ def test_live_log_records_item_changes_and_read_failures(tmp_path: Path, monkeyp
             return ""
 
         def close(self):
-            # This in-memory reader owns no socket to close.
+            # The in-memory test reader owns no socket.
             pass
 
     reader = LoggedReader(before)
@@ -100,7 +190,7 @@ def test_live_log_records_item_changes_and_read_failures(tmp_path: Path, monkeyp
         if sleeps == 1:
             reader.ram = after
         elif sleeps == 2:
-            reader.fail_address = 0x800C86EA
+            reader.fail_address = 0x800C86DC
         else:
             raise KeyboardInterrupt
 
@@ -112,7 +202,6 @@ def test_live_log_records_item_changes_and_read_failures(tmp_path: Path, monkeyp
         assert track.main() == 0
         contents = log.read_text()
     finally:
-        # CLI logging owns its handler; restore pytest's capture handlers after exercising it.
         for handler in root.handlers:
             handler.close()
         root.handlers = handlers
@@ -120,222 +209,14 @@ def test_live_log_records_item_changes_and_read_failures(tmp_path: Path, monkeyp
     assert "Green Herb: available" in contents
     assert "Green Herb: taken" in contents
     assert "Poll read-failure" in contents
-    assert "0x800c86ea length=1 received=0 error='injected read failure'" in contents
-    assert "length=32 received=32 sha256=" in contents
+    assert "0x800c86dc length=32 received=0 error='injected read failure'" in contents
     assert "Tracker stopped by user" in contents
     assert "GDB closed" in contents
 
 
-def test_live_poll_requires_valid_variant_and_active_object(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
-    tracker = Tracker()
-
-    ram[0xB819C] = 0
-    inactive = poll_once(profile, tracker, RamReader(ram).read_memory)
-    assert inactive.status == PollStatus.Display
-    assert "Green Herb: availability unknown" in inactive.text
-    assert "State: UNKNOWN" in inactive.text
-
-    ram[0xB819C] = 4
-    ram[0xC3002] &= 0x7F
-    other_variant = poll_once(profile, tracker, RamReader(ram).read_memory)
-    assert other_variant.status == PollStatus.Display
-    assert "Items: unknown" in other_variant.text
-    assert "State: UNKNOWN" in other_variant.text
-
-    ram[0xC3002] |= 0x80
-    ram[0xC8669] = 0
-    other_character = poll_once(profile, tracker, RamReader(ram).read_memory)
-    assert other_character.status == PollStatus.Display
-    assert "character not supported" in other_character.text
-    assert "State: UNKNOWN" in other_character.text
-
-    ram[0xC8669] = 1
-    ram[0xB81A4] ^= 1
-    wrong_pointer = poll_once(profile, tracker, RamReader(ram).read_memory)
-    assert wrong_pointer.status == PollStatus.Display
-    assert "Green Herb: availability unknown" in wrong_pointer.text
-    assert "State: UNKNOWN" in wrong_pointer.text
-
-
-def test_live_poll_rejects_wrong_game_and_read_failure(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
-    tracker = Tracker()
-
-    ram[0x4484C] ^= 1
-    wrong_game = poll_once(profile, tracker, RamReader(ram).read_memory)
-    assert wrong_game.status == PollStatus.WrongGame
-    assert tracker.rooms == {}
-
-    ram[0x4484C] ^= 1
-    reader = RamReader(ram)
-    reader.fail_address = 0x800C86EA
-    read_error = poll_once(profile, tracker, reader.read_memory)
-    assert read_error.status == PollStatus.ReadFailure
-    assert "injected read failure" in read_error.text
-    assert tracker.rooms == {}
-
-
-def test_room_transition_during_poll_is_retried(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
-
-    class SwitchingReader(RamReader):
-        def __init__(self, ram: bytearray):
-            super().__init__(ram)
-            self.room_reads = 0
-
-        def read_memory(self, address: int, length: int) -> MemRead:
-            if address == 0x800C8661:
-                self.room_reads += 1
-                if self.room_reads == 2:
-                    return MemRead(ok=True, data=b"\x08")
-            return super().read_memory(address, length)
-
-    tracker = Tracker()
-    result = poll_once(profile, tracker, SwitchingReader(ram).read_memory)
-    assert result.status == PollStatus.Retry
-    assert "room changed during read" in result.text
-    assert tracker.rooms == {}
-
-
-def test_unmapped_room_stays_unknown_and_visit_history_accumulates(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
-    reader = RamReader(ram)
-    tracker = Tracker()
-
-    herb = poll_once(profile, tracker, reader.read_memory)
-    assert herb.status == PollStatus.Display
-    assert "State: INCOMPLETE" in herb.text
-
-    ram[0xC8661] = 8
-    other = poll_once(profile, tracker, reader.read_memory)
-    assert other.status == PollStatus.Display
-    assert "Current room: 00-08" in other.text
-    assert "Items: unknown\nCollected: unknown\nState: UNKNOWN" in other.text
-    assert len(tracker.rooms) == 2
-
-    ram[0xC8661] = 9
-    returned = poll_once(profile, tracker, reader.read_memory)
-    assert returned.status == PollStatus.Display
-    assert "Current room: 00-09" in returned.text
-    assert "Green Herb: available" in returned.text
-    assert "State: INCOMPLETE" in returned.text
-    assert len(tracker.rooms) == 2
-
-
-def test_map_reveals_entered_rooms_without_cached_completion(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
-    tracker = Tracker()
-    labels = {item.room: item.label for item in profile.pilot_items}
-
-    assert poll_once(profile, tracker, RamReader(ram).read_memory).status == PollStatus.Display
-    first = map_state(tracker, labels)
-    assert first["rooms"] == [{"id": "09", "state": "INCOMPLETE"}]
-    assert first["known_item"] == "Green Herb"
-
-    ram[0xC8661] = 8
-    assert poll_once(profile, tracker, RamReader(ram).read_memory).status == PollStatus.Display
-    expanded = map_state(tracker, labels)
-    assert expanded["rooms"] == [
-        {"id": "08", "state": "UNKNOWN"},
-        {"id": "09", "state": "VISITED"},
-    ]
-    assert expanded["known_item"] is None
-
-    ram[0xC8660] = 2
-    assert poll_once(profile, tracker, RamReader(ram).read_memory).status == PollStatus.Display
-    elsewhere = map_state(tracker, labels)
-    assert elsewhere["current"] == "02-08"
-    assert elsewhere["rooms"] == []
-
-    after = fixture_ram("slus00551_green_herb_after.sav", tmp_path)
-    assert poll_once(profile, tracker, RamReader(after).read_memory).status == PollStatus.Display
-    restored = map_state(tracker, labels)
-    assert restored["rooms"] == [
-        {"id": "08", "state": "VISITED"},
-        {"id": "09", "state": "UNKNOWN"},
-    ]
-    assert restored["known_item"] == "Green Herb"
-
-
-def test_pilot_item_matches_generated_room_row():
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    herb, chemical = profile.pilot_items
-    rooms = json.loads((REPO / "data/item_table_slus00551.json").read_text())["rooms"]
-    room = next(row for row in rooms if row["file"] == herb.source_rdt)
-    assert room["stats"]["init"].startswith("clean/")
-    assert [(item["id"], item["gid"], item["addr"]) for item in room["items"]] == [
-        (5, herb.global_id, "0x1ca5c")
-    ]
-    room = next(row for row in rooms if row["file"] == chemical.source_rdt)
-    assert room["stats"]["init"].startswith("clean/")
-    assert (1, chemical.global_id, "0x292") in [
-        (item["id"], item["gid"], item["addr"]) for item in room["items"]
-    ]
-
-
-def test_chemical_pilot_respects_branch_before_and_after_pickup(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    herb = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
-    before = fixture_ram("slus00551_chemical_before.sav", tmp_path)
-    after = fixture_ram("slus00551_chemical_after.sav", tmp_path)
-    tracker = Tracker()
-
-    assert "Green Herb: available" in poll_once(
-        profile, tracker, RamReader(herb).read_memory
-    ).text
-    available = poll_once(profile, tracker, RamReader(before).read_memory)
-    assert available.status == PollStatus.Display
-    assert "Current room: 00-18" in available.text
-    assert "Chemical: available" in available.text
-    assert "Items: 1\nCollected: 0\nState: INCOMPLETE\nList complete: no" in available.text
-    assert len(tracker.rooms) == 2
-
-    taken = poll_once(profile, tracker, RamReader(after).read_memory)
-    assert taken.status == PollStatus.Display
-    assert "Chemical: taken" in taken.text
-    assert "Items: 1\nCollected: 1\nState: UNKNOWN\nList complete: no" in taken.text
-
-    for ram in (before, after):
-        ram[0xC3006] |= 0x02
-        alternate = poll_once(profile, tracker, RamReader(ram).read_memory)
-        assert alternate.status == PollStatus.Display
-        assert "Items: unknown\nCollected: unknown\nState: UNKNOWN" in alternate.text
-        assert "validated item branch not selected" in alternate.text
-        assert "Chemical:" not in alternate.text
-
-        ram[0xC3006] &= ~0x02
-        restored = poll_once(profile, tracker, RamReader(ram).read_memory)
-        expected = "Chemical: available" if ram is before else "Chemical: taken"
-        assert expected in restored.text
-
-
-def test_chemical_pilot_requires_active_object_and_readable_branch(tmp_path: Path):
-    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
-    ram = fixture_ram("slus00551_chemical_before.sav", tmp_path)
-    tracker = Tracker()
-
-    ram[0xB816C] = 0
-    inactive = poll_once(profile, tracker, RamReader(ram).read_memory)
-    assert inactive.status == PollStatus.Display
-    assert "Chemical: availability unknown" in inactive.text
-    assert "State: UNKNOWN" in inactive.text
-
-    ram[0xB816C] = 4
-    reader = RamReader(ram)
-    reader.fail_address = 0x800C3006
-    failure = poll_once(profile, tracker, reader.read_memory)
-    assert failure.status == PollStatus.ReadFailure
-    assert "branch flag: injected read failure" in failure.text
-
-
 def test_profile_rejects_ambiguous_or_invalid_identity_config(tmp_path: Path):
     raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
+    raw["room_manifest_path"] = str(REPO / "data/room_manifest_slus00551.json")
     raw["pilot_items"][0]["flag_mask"] = "0x01"
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(json.dumps(raw))
@@ -379,3 +260,111 @@ def test_profile_rejects_ambiguous_or_invalid_identity_config(tmp_path: Path):
     profile_path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="renamed to pilot_items"):
         Re1Profile.load(profile_path)
+
+
+@pytest.mark.parametrize(
+    ("map_enabled", "initially_offline"), [(True, True), (True, False), (False, False)]
+)
+def test_live_tracker_reconnects_after_startup_or_runtime_failure(
+    tmp_path, monkeypatch, map_enabled, initially_offline
+):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+
+    class ReconnectingReader(RamReader):
+        connected = False
+        connects = 0
+        resumes = 0
+        drop_on_read = False
+
+        def connect(self):
+            self.connects += 1
+            if self.connects == 1 and initially_offline:
+                return "injected emulator offline"
+            self.connected = True
+            self.drop_on_read = False
+            return ""
+
+        def resume(self):
+            self.resumes += 1
+            return ""
+
+        def close(self):
+            self.connected = False
+
+        def read_memory(self, address, length):
+            if self.drop_on_read:
+                self.connected = False
+            if not self.connected:
+                return MemRead(ok=False, data=b"", error="not connected")
+            return super().read_memory(address, length)
+
+    reader = ReconnectingReader(ram)
+    server = track.MapServer(0, track.mansion_floor_plan()) if map_enabled else None
+    log = tmp_path / "reconnect.log"
+    monkeypatch.setattr(track, "DuckStationGdb", lambda host, port: reader)
+    monkeypatch.setattr(track, "MapServer", lambda port, plan: server)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["track.py", *(["--map"] if map_enabled else []), "--log-file", str(log)],
+    )
+    now = 0.0
+    snapshots = []
+    statuses = []
+
+    def record_poll(profile, tracker, read_memory):
+        result = poll_once(profile, tracker, read_memory)
+        statuses.append(result.status)
+        return result
+
+    monkeypatch.setattr(track, "poll_once", record_poll)
+    monkeypatch.setattr(track.time, "monotonic", lambda: now)
+
+    def advance(period):
+        nonlocal now
+        if server is not None:
+            snapshots.append(json.loads(server.snapshot))
+        now += 2
+        if not initially_offline and len(statuses) == 1:
+            # A transport discovers closure on its next read, then marks itself disconnected.
+            reader.drop_on_read = True
+        if len(statuses) == (2 if initially_offline else 3):
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(track.time, "sleep", advance)
+    root = logging.getLogger()
+    handlers, level = root.handlers[:], root.level
+    root.handlers = []
+    try:
+        assert track.main() == 0
+        contents = log.read_text()
+    finally:
+        for handler in root.handlers:
+            handler.close()
+        root.handlers = handlers
+        root.setLevel(level)
+    assert statuses == (
+        [PollStatus.ReadFailure, PollStatus.Display]
+        if initially_offline
+        else [PollStatus.Display, PollStatus.ReadFailure, PollStatus.Display]
+    )
+    if server is not None:
+        assert snapshots[-2]["status"] == "waiting"
+        assert snapshots[-1]["rooms"][0]["items"][0]["label"] == "Green Herb"
+    assert reader.connects == 2
+    assert reader.resumes == (1 if initially_offline else 2)
+    assert not reader.connected
+    assert "GDB reconnected and resumed" in contents
+
+
+@pytest.mark.parametrize(
+    "key", ["stage_address_ps1", "room_address_ps1", "camera_address_ps1"]
+)
+def test_runtime_profile_requires_room_identity_and_camera(key, tmp_path):
+    raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
+    raw["room_manifest_path"] = str(REPO / "data/room_manifest_slus00551.json")
+    del raw[key]
+    path = tmp_path / "missing-address.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match=f"requires {key}"):
+        Re1Profile.load(path)

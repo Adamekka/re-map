@@ -3,6 +3,7 @@
 A visited room can have unknown item state. Being current never implies
 cleared. When in doubt the tracker reports Unknown.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -18,6 +19,21 @@ class RoomCompletion(Enum):
     Unknown = "UNKNOWN"
 
 
+@dataclass(frozen=True)
+class ItemDetail:
+    label: str
+    state: str
+    quantity: int
+
+
+@dataclass(frozen=True)
+class DoorDetail:
+    source: RoomId
+    target: RoomId
+    state: str
+    label: str
+
+
 @dataclass
 class RoomRecord:
     visited: bool = False
@@ -25,12 +41,17 @@ class RoomRecord:
     collected_items: int = 0
     list_complete: bool = False
     completion: RoomCompletion = RoomCompletion.Unvisited
+    items: tuple[ItemDetail, ...] = ()
+    reason: str = ""
 
 
 @dataclass
 class Tracker:
     rooms: dict[str, RoomRecord] = field(default_factory=dict)
     current: RoomId | None = None
+    region_visits: dict[str, str] = field(default_factory=dict)
+    current_region: str = ""
+    doors: tuple[DoorDetail, ...] = ()
 
     def _key(self, room: RoomId) -> str:
         return str(room)

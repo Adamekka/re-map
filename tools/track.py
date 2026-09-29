@@ -22,10 +22,18 @@ from threading import Thread
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import DuckStationGdb
-from games.re1.re1_profile import MemoryResult, PilotItemState, Re1Profile
-from tracker.exploration_state import Tracker
+from games.re1.door_state import parse_door
+from games.re1.re1_profile import MemoryResult, Re1Profile
+from games.re1.room_cache import (
+    CachedRoomObservation,
+    match_room_source,
+    read_cache_context,
+    refresh_cached_items,
+)
+from games.re1.room_items import RuntimeItemState, observe_room_items
+from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from ui.debug_view import render
-from ui.map_view import MAP_PROFILE_ID, MapServer, mansion_graph, map_state
+from ui.map_view import MAP_PROFILE_ID, MapServer, mansion_floor_plan, map_state
 
 logger = logging.getLogger(__name__)
 
@@ -63,53 +71,189 @@ def poll_once(
     if not current.ok or current.room is None:
         return PollResult(PollStatus.ReadFailure, current.error)
     rid = current.room
-    pilot = next((pilot for pilot in profile.pilot_items if pilot.room == rid), None)
-    item = profile.observe_pilot_item(pilot, read_memory) if pilot is not None else None
-    if item is not None and item.state == PilotItemState.ReadFailure:
-        return PollResult(PollStatus.ReadFailure, f"item read failed: {item.reason}")
+    layout, doors_layout = profile.runtime_room_layout, profile.door_state_layout
+    if layout is None or doors_layout is None:
+        return PollResult(
+            PollStatus.ReadFailure,
+            "runtime room interpretation unavailable for this profile",
+        )
+    source_query = match_room_source(layout, profile.room_sources, rid, read_memory)
+    if not source_query.ok:
+        return PollResult(
+            PollStatus.Retry if source_query.retry else PollStatus.ReadFailure,
+            source_query.error,
+        )
+    observation = observe_room_items(layout, rid, read_memory)
+    if not observation.ok:
+        return PollResult(
+            PollStatus.Retry if observation.retry else PollStatus.ReadFailure,
+            observation.error,
+        )
+    door_values = []
+    for address, width in (
+        (doors_layout.unlock_flags_address, doors_layout.unlock_flags_width),
+        (doors_layout.player_state_address, 1),
+        (doors_layout.special_flag_address, 1),
+        (layout.acquisition_flags_address, layout.acquisition_flags_width),
+    ):
+        result = read_memory(address, width)
+        if not result.ok or len(result.data) != width:
+            return PollResult(
+                PollStatus.ReadFailure,
+                f"state read failed: {result.error or 'short read'}",
+            )
+        door_values.append(result.data)
+    flags = door_values[3]
+
+    def remaining(gid: int) -> bool:
+        index = 4 * (gid // 32) + 3 - (gid % 32) // 8
+        assert 0 <= index < len(flags), (
+            "validated GlobalId must fit the acquisition block"
+        )
+        return bool(flags[index] & (0x80 >> (gid % 8)))
+
+    if any(
+        item.state != RuntimeItemState.Unavailable
+        and (item.state == RuntimeItemState.Available) != remaining(item.global_id)
+        for item in observation.items
+    ):
+        return PollResult(PollStatus.Retry, "pickup changed during room read")
+    context, error = read_cache_context(source_query.sources, read_memory)
+    if error:
+        return PollResult(PollStatus.ReadFailure, error)
+    represented = {
+        item.global_id
+        for item in observation.items
+        if item.state != RuntimeItemState.Unavailable
+    }
+    absent_gids = {
+        gid
+        for source in source_query.sources
+        for gid in source.item_global_ids
+        if gid not in represented
+    }
+    current_cached = CachedRoomObservation(
+        observation,
+        source_query.sources,
+        context,
+        tuple((gid, remaining(gid)) for gid in sorted(absent_gids)),
+    )
+    refreshed = {rid: observation}
+    past_contexts = {}
+    for room, cached in profile.room_observations.items():
+        if room == rid or str(room) not in tracker.rooms:
+            continue
+        past_context, error = read_cache_context(cached.sources, read_memory)
+        if error:
+            return PollResult(PollStatus.ReadFailure, error)
+        past_contexts[room] = past_context
+        refreshed[room] = refresh_cached_items(cached, past_context, flags)
+    decoded_doors = []
+    raw_sources = dict(profile.door_observations)
+    raw_sources[rid] = observation.active_doors
+    for source, raw_doors in raw_sources.items():
+        if source != rid:
+            if source not in past_contexts:
+                # A reused profile may retain observations from another tracker session.
+                continue
+            cached = profile.room_observations[source]
+            if (
+                not cached.sources
+                or not all(script.door_cache_complete for script in cached.sources)
+                or past_contexts[source] != cached.context
+            ):
+                # Item coverage and door definitions have separate script audits.
+                # A later interaction can replace a door without changing items.
+                continue
+        for slot, raw in raw_doors:
+            try:
+                door = parse_door(
+                    slot,
+                    raw,
+                    source,
+                    door_values[0],
+                    door_values[1][0],
+                    door_values[2][0],
+                )
+            except ValueError as exc:
+                return PollResult(
+                    PollStatus.ReadFailure, f"door interpretation failed: {exc}"
+                )
+            label = door.reason
+            key_name = dict(layout.item_labels).get(door.lock_type)
+            if (
+                door.state.value == "locked"
+                and door.reason == "Requires a key"
+                and key_name
+            ):
+                label = "Locked · " + key_name
+            decoded_doors.append(
+                DoorDetail(source, door.target, door.state.name, label)
+            )
+    camera = (
+        read_memory(profile.camera_address, 1)
+        if profile.camera_address is not None
+        else None
+    )
+    if camera is None or not camera.ok or len(camera.data) != 1:
+        return PollResult(PollStatus.ReadFailure, "camera read failed")
     current_again = profile.read_current_room(read_memory)
     if not current_again.ok or current_again.room is None:
         return PollResult(
             PollStatus.ReadFailure, f"room recheck failed: {current_again.error}"
         )
     if current_again.room != rid:
-        # A door transition between reads must not combine two room states.
+        # Publish nothing until every memory read belongs to the same room.
         return PollResult(PollStatus.Retry, "room changed during read; retry")
-
     tracker.mark_current(rid)
-    details = []
-    if item is not None and item.state in (
-        PilotItemState.Available,
-        PilotItemState.Taken,
-        PilotItemState.AvailabilityUnknown,
-    ):
-        assert pilot is not None
-        details.append(f"Room data: {Path(pilot.source_rdt).name}")
-    if item is not None and item.state == PilotItemState.Available:
-        tracker.update_room_items(rid, 1, 0, False, True, True)
-        assert pilot is not None
-        details.append(
-            f"{pilot.label}: available (validated active item object)"
+    # Only source-bound Mansion rooms have a confirmed ordinary floor-plan region.
+    region = (
+        f"mansion1f:{rid.room:02X}" if rid.stage == 0 and source_query.sources else ""
+    )
+    # The original map separates secret spaces inside one RDT room by camera.
+    if region and rid.room == 7 and 3 <= camera.data[0] <= 6:
+        region = "mansion1f:1D"
+    elif region and rid.room == 15 and camera.data[0] in (3, 4):
+        region = "mansion1f:1E"
+    elif region and rid.room == 16 and camera.data[0] == 0:
+        region = ""
+    tracker.current_region = region
+    if region:
+        tracker.region_visits[region] = str(rid)
+    profile.room_observations[rid] = current_cached
+    profile.door_observations[rid] = observation.active_doors
+    for room, result in refreshed.items():
+        normal_items = tuple(
+            item for item in result.items if item.state != RuntimeItemState.Unavailable
         )
-    elif item is not None and item.state == PilotItemState.Taken:
-        tracker.update_room_items(rid, 1, 1, False, False, True)
-        assert pilot is not None
-        details.append(f"{pilot.label}: taken (pickup flag cleared)")
-    elif item is not None and item.state == PilotItemState.AvailabilityUnknown:
-        tracker.update_room_items(rid, 1, 0, False, False, True)
-        assert pilot is not None
-        details.append(
-            f"{pilot.label}: availability unknown ({item.reason})"
+        tracker.update_room_items(
+            room,
+            len(normal_items),
+            sum(item.state == RuntimeItemState.Taken for item in normal_items),
+            result.list_complete,
+            any(item.state == RuntimeItemState.Available for item in normal_items),
+            not result.list_complete,
         )
-    else:
-        tracker.update_room_items(rid, 0, 0, False, False, True)
-        if item is not None and item.state == PilotItemState.UnsupportedState:
-            details.append(f"Items for this room state: unknown ({item.reason})")
-    rec = tracker.room_state(rid)
+        record = tracker.room_state(room)
+        record.items = tuple(
+            ItemDetail(item.label or "Collectible item", item.state.value, item.amount)
+            for item in normal_items
+        )
+        record.reason = (
+            "" if result.list_complete else "Re-enter this room to refresh its items."
+        )
+    tracker.doors = tuple(decoded_doors)
+    record = tracker.room_state(rid)
+    details = [f"{item.label}: {item.state}" for item in record.items]
+    details.extend(
+        f"Door to {door.target}: {door.label}"
+        for door in tracker.doors
+        if door.source == rid
+    )
     details.append("Visited scope: this tracker session")
     return PollResult(
         PollStatus.Display,
-        render(rid, rec, profile.profile_id) + "\n" + "\n".join(details),
+        render(rid, record, profile.profile_id) + "\n" + "\n".join(details),
     )
 
 
@@ -125,7 +269,11 @@ def main() -> int:
     ap.add_argument("--port", type=int, default=2345)
     ap.add_argument("--hz", type=float, default=10.0)
     ap.add_argument("--once", action="store_true", help="read one snapshot and exit")
-    ap.add_argument("--map", action="store_true", help="serve the live Mansion 1F map on localhost:8765")
+    ap.add_argument(
+        "--map",
+        action="store_true",
+        help="serve the live Mansion 1F map on localhost:8765",
+    )
     ap.add_argument(
         "--log-file",
         type=Path,
@@ -182,6 +330,12 @@ def main() -> int:
             f"profile {profile.profile_id} has no runtime identity check; refusing live reads"
         )
         return 2
+    if profile.runtime_room_layout is None or profile.door_state_layout is None:
+        print(
+            f"profile {profile.profile_id} has no runtime room/door layout",
+            file=sys.stderr,
+        )
+        return 2
     if args.map and profile.profile_id != MAP_PROFILE_ID:
         logger.error("Map unavailable for profile %s", profile.profile_id)
         print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
@@ -197,22 +351,25 @@ def main() -> int:
     if err:
         logger.error("GDB connection failed: %s", err)
         print(err, file=sys.stderr)
-        return 1
-    logger.info("GDB connected")
-    err = gdb.resume()
-    if err:
-        gdb.close()
-        logger.error("GDB resume failed: %s", err)
-        print(f"resume failed: {err}", file=sys.stderr)
-        return 1
-    logger.info("GDB resume sent")
+        if not args.map:
+            return 1
+    else:
+        logger.info("GDB connected")
+        err = gdb.resume()
+        if err:
+            gdb.close()
+            logger.error("GDB resume failed: %s", err)
+            print(f"resume failed: {err}", file=sys.stderr)
+            if not args.map:
+                return 1
+        else:
+            logger.info("GDB resume sent")
     map_server = None
     map_thread = None
-    item_labels = {item.room: item.label for item in profile.pilot_items}
     try:
         if args.map:
             try:
-                map_server = MapServer(8765, mansion_graph())
+                map_server = MapServer(8765, mansion_floor_plan())
             except (OSError, ValueError) as exc:
                 logger.exception("Map startup failed")
                 print(f"map unavailable: {exc}", file=sys.stderr)
@@ -240,6 +397,7 @@ def main() -> int:
         last_wait_reason = ""
         last_logged_result = None
         next_log_at = 0.0
+        next_reconnect_at = time.monotonic() + 1.0
         reads: list[str] = []
 
         def read_for_log(address: int, length: int) -> MemoryResult:
@@ -257,13 +415,36 @@ def main() -> int:
             return result
 
         while True:
+            if not gdb.connected and time.monotonic() >= next_reconnect_at:
+                # A closed emulator should not require restarting the live tracker.
+                error = gdb.connect()
+                if not error:
+                    error = gdb.resume()
+                    if error:
+                        gdb.close()
+                    else:
+                        logger.info("GDB reconnected and resumed")
+                if error:
+                    logger.warning("GDB reconnect failed: %s", error)
+                next_reconnect_at = time.monotonic() + 1.0
             reads.clear()
             result = poll_once(profile, tracker, read_for_log)
             if map_server is not None:
                 snapshot = (
-                    map_state(tracker, item_labels)
+                    map_state(tracker)
                     if result.status == PollStatus.Display
-                    else {"status": "waiting", "current": None, "rooms": []}
+                    else {
+                        "status": "waiting",
+                        "current": None,
+                        "rooms": [],
+                        "error": (
+                            "Changing rooms..."
+                            if result.status == PollStatus.Retry
+                            else "Waiting for Resident Evil Director's Cut."
+                            if result.status == PollStatus.WrongGame
+                            else "Game connection interrupted. Check DuckStation and its GDB server."
+                        ),
+                    }
                 )
                 map_server.snapshot = json.dumps(snapshot).encode("utf-8")
             now = time.monotonic()

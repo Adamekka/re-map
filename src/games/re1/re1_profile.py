@@ -1,15 +1,23 @@
 """RE1 memory interpretation; addresses come from profiles/*.json."""
+
 from __future__ import annotations
 
 import hashlib
 import json
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Protocol
 
 from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQuery
+from games.re1.room_cache import (
+    CachedRoomObservation,
+    RoomDependency,
+    RoomMutableField,
+    RoomScriptSource,
+)
+from games.re1.room_items import RuntimeRoomLayout
 
 
 class MemoryResult(Protocol):
@@ -66,6 +74,18 @@ class PilotItem:
     expected_opcode_pointer: int
 
 
+@dataclass(frozen=True)
+class DoorStateLayout:
+    unlock_flags_address: int
+    unlock_flags_width: int
+    player_state_address: int
+    special_flag_address: int
+
+    def __post_init__(self) -> None:
+        if self.unlock_flags_width != 8:
+            raise ValueError("door unlock flags require eight bytes")
+
+
 @dataclass
 class Re1Profile:
     profile_id: str
@@ -78,6 +98,13 @@ class Re1Profile:
     revision: str = "unknown"
     runtime_signature: RuntimeSignature | None = None
     pilot_items: tuple[PilotItem, ...] = ()
+    runtime_room_layout: RuntimeRoomLayout | None = None
+    door_state_layout: DoorStateLayout | None = None
+    room_sources: tuple[RoomScriptSource, ...] = ()
+    room_observations: dict[RoomId, CachedRoomObservation] = field(default_factory=dict)
+    door_observations: dict[RoomId, tuple[tuple[int, bytes], ...]] = field(
+        default_factory=dict
+    )
 
     @staticmethod
     def load(path: Path) -> Re1Profile:
@@ -114,15 +141,22 @@ class Re1Profile:
                 window_width=_number(signature_raw["window_width_bytes"]),
                 concatenated_sha256=str(signature_raw["concatenated_sha256"]),
             )
-            if not signature.window_addresses or not 1 <= signature.window_width <= 4096:
+            if (
+                not signature.window_addresses
+                or not 1 <= signature.window_width <= 4096
+            ):
                 raise ValueError("runtime signature needs windows with width 1..4096")
             if len(signature.concatenated_sha256) != 64 or any(
                 c not in "0123456789abcdef" for c in signature.concatenated_sha256
             ):
-                raise ValueError("runtime signature SHA256 must be 64 lowercase hex digits")
+                raise ValueError(
+                    "runtime signature SHA256 must be 64 lowercase hex digits"
+                )
 
         if "pilot_item" in raw:
-            raise ValueError("pilot_item was renamed to pilot_items; update the profile")
+            raise ValueError(
+                "pilot_item was renamed to pilot_items; update the profile"
+            )
         pilots = []
         for pilot_raw in raw.get("pilot_items", []):
             if "conditions" not in pilot_raw:
@@ -136,10 +170,13 @@ class Re1Profile:
                 for condition in pilot_raw["conditions"]
             )
             for condition in conditions:
-                if not 0 < condition.mask <= 0xFF or (
-                    condition.expected & ~condition.mask
-                ) != 0:
-                    raise ValueError("pilot condition expected value must fit its one-byte mask")
+                if (
+                    not 0 < condition.mask <= 0xFF
+                    or (condition.expected & ~condition.mask) != 0
+                ):
+                    raise ValueError(
+                        "pilot condition expected value must fit its one-byte mask"
+                    )
             pilot = PilotItem(
                 room=RoomId(
                     stage=_room_number(pilot_raw["room_main"]),
@@ -173,6 +210,129 @@ class Re1Profile:
                 raise ValueError(f"duplicate pilot item room: {pilot.room}")
             pilots.append(pilot)
 
+        runtime_raw = raw.get("runtime_room_layout")
+        runtime_layout = None
+        if runtime_raw is not None:
+            runtime_layout = RuntimeRoomLayout(
+                **{
+                    key: tuple(
+                        (_number(item_type), str(label)) for item_type, label in value
+                    )
+                    if key == "item_labels"
+                    else _number(value)
+                    for key, value in runtime_raw.items()
+                }
+            )
+            for key in ("stage_address_ps1", "room_address_ps1", "camera_address_ps1"):
+                address = _addr(key)
+                if address is None:
+                    raise ValueError(f"runtime room profile requires {key}")
+                if (
+                    not runtime_layout.ram_base
+                    <= address
+                    < runtime_layout.ram_base + runtime_layout.ram_size
+                ):
+                    raise ValueError(f"{key} is outside configured PS1 RAM")
+        door_raw = raw.get("door_state_layout")
+        door_layout = None
+        if door_raw is not None:
+            door_layout = DoorStateLayout(
+                **{key: _number(value) for key, value in door_raw.items()}
+            )
+            if runtime_layout is None:
+                raise ValueError("door layout requires a runtime room layout")
+            for address, width in (
+                (door_layout.unlock_flags_address, door_layout.unlock_flags_width),
+                (door_layout.player_state_address, 1),
+                (door_layout.special_flag_address, 1),
+            ):
+                if (
+                    not runtime_layout.ram_base
+                    <= address
+                    < address + width
+                    <= runtime_layout.ram_base + runtime_layout.ram_size
+                ):
+                    raise ValueError("door state address is outside configured PS1 RAM")
+
+        room_sources = []
+        if runtime_layout is not None:
+            manifest_path = path.parent / raw["room_manifest_path"]
+            manifest = json.loads(manifest_path.read_text())
+            if manifest["profile_id"] != raw["profile_id"]:
+                raise ValueError("room manifest does not match profile ID")
+            if manifest["executable_identity"] != raw["executable_identity"]:
+                raise ValueError("room manifest does not match profile executable")
+            for row in manifest["rooms"]:
+                dependencies = tuple(
+                    RoomDependency(
+                        _number(dep["address_ps1"]),
+                        _number(dep["width"]),
+                        _number(dep["mask"]),
+                    )
+                    for dep in row["dependencies"]
+                )
+                for dep in dependencies:
+                    if not (
+                        1 <= dep.width <= 4
+                        and 0 < dep.mask < (1 << (8 * dep.width))
+                        and runtime_layout.ram_base
+                        <= dep.address
+                        < dep.address + dep.width
+                        <= runtime_layout.ram_base + runtime_layout.ram_size
+                    ):
+                        raise ValueError("invalid room manifest dependency")
+                gids = tuple(_number(gid) for gid in row["item_global_ids"])
+                if any(
+                    not 0 <= gid < runtime_layout.acquisition_flags_width * 8
+                    for gid in gids
+                ):
+                    raise ValueError("room manifest item ID exceeds acquisition flags")
+                for section in ("init", "main"):
+                    offset, size, digest = (
+                        row[section + "_offset"],
+                        row[section + "_size"],
+                        row[section + "_sha256"],
+                    )
+                    if not (
+                        0x94 <= offset <= offset + size < runtime_layout.ram_size
+                        and len(digest) == 64
+                        and all(c in "0123456789abcdef" for c in digest)
+                    ):
+                        raise ValueError("invalid room manifest script range/hash")
+                if (
+                    type(row["cache_complete"]) is not bool
+                    or type(row["door_cache_complete"]) is not bool
+                ):
+                    raise ValueError("room manifest requires explicit cache policy")
+                room_sources.append(
+                    RoomScriptSource(
+                        room=RoomId(row["room_main"], row["room_sub"]),
+                        source_rdt=row["source_rdt"],
+                        init_offset=row["init_offset"],
+                        init_size=row["init_size"],
+                        init_sha256=row["init_sha256"],
+                        main_offset=row["main_offset"],
+                        main_size=row["main_size"],
+                        main_sha256=row["main_sha256"],
+                        dependencies=dependencies,
+                        item_global_ids=gids,
+                        cache_complete=row["cache_complete"],
+                        door_cache_complete=row["door_cache_complete"],
+                        mutable_fields=tuple(
+                            RoomMutableField(
+                                section=field["section"],
+                                offset=field["offset"],
+                                width=field["width"],
+                                kind=field["kind"],
+                                original=field["original"],
+                            )
+                            for field in row["mutable_fields"]
+                        ),
+                    )
+                )
+            if not room_sources:
+                raise ValueError("runtime room manifest must not be empty")
+
         return Re1Profile(
             profile_id=str(raw.get("profile_id", path.stem)),
             stage_address=_addr("stage_address_ps1"),
@@ -181,6 +341,9 @@ class Re1Profile:
             revision=str(raw.get("revision", "unknown")),
             runtime_signature=signature,
             pilot_items=tuple(pilots),
+            runtime_room_layout=runtime_layout,
+            door_state_layout=door_layout,
+            room_sources=tuple(room_sources),
         )
 
     def has_room_addresses(self) -> bool:
@@ -228,7 +391,9 @@ class Re1Profile:
         stage = read_memory(self.stage_address, 1)
         room = read_memory(self.room_address, 1)
         if not stage.ok or not room.ok:
-            return RoomQuery(ok=False, error=f"room read failed: {stage.error} {room.error}")
+            return RoomQuery(
+                ok=False, error=f"room read failed: {stage.error} {room.error}"
+            )
         if len(stage.data) != 1 or len(room.data) != 1:
             return RoomQuery(ok=False, error="room read failed: short reply")
         return RoomQuery(ok=True, room=RoomId(stage.data[0], room.data[0]))
@@ -265,22 +430,29 @@ class Re1Profile:
             result = read_memory(condition.address, 1)
             if not result.ok or len(result.data) != 1:
                 reason = result.error if not result.ok else "short read"
-                return PilotItemObservation(PilotItemState.ReadFailure, f"branch flag: {reason}")
+                return PilotItemObservation(
+                    PilotItemState.ReadFailure, f"branch flag: {reason}"
+                )
             if (result.data[0] & condition.mask) != condition.expected:
                 return PilotItemObservation(
-                    PilotItemState.UnsupportedState, "validated item branch not selected"
+                    PilotItemState.UnsupportedState,
+                    "validated item branch not selected",
                 )
         flag_result = read_memory(pilot.flag_address, 1)
         if not flag_result.ok or len(flag_result.data) != 1:
             reason = flag_result.error if not flag_result.ok else "short read"
-            return PilotItemObservation(PilotItemState.ReadFailure, f"pickup flag: {reason}")
+            return PilotItemObservation(
+                PilotItemState.ReadFailure, f"pickup flag: {reason}"
+            )
         flag = flag_result.data
         if not self.is_bit_set(flag[0], pilot.flag_mask):
             return PilotItemObservation(PilotItemState.Taken)
         aot_result = read_memory(pilot.aot_record_address, pilot.aot_record_width)
         if not aot_result.ok or len(aot_result.data) != pilot.aot_record_width:
             reason = aot_result.error if not aot_result.ok else "short read"
-            return PilotItemObservation(PilotItemState.ReadFailure, f"item object: {reason}")
+            return PilotItemObservation(
+                PilotItemState.ReadFailure, f"item object: {reason}"
+            )
         aot = aot_result.data
         pointer = int.from_bytes(
             aot[pilot.pointer_offset : pilot.pointer_offset + 4], "little"
@@ -293,14 +465,18 @@ class Re1Profile:
         )
 
     def detect_game(self) -> ItemQuery:
-        return ItemQuery(ok=False, value=False, error="no game identity check implemented")
+        return ItemQuery(
+            ok=False, value=False, error="no game identity check implemented"
+        )
 
     def current_room(self) -> RoomQuery:
         if self.stage_address is None or self.room_address is None:
             return RoomQuery(ok=False, error="room addresses unknown for this revision")
         # Real read happens in the tracker loop once addresses validate.
         # This assert marks programmer error if wiring calls us with no reader.
-        raise AssertionError("Re1Profile.current_room needs a memory reader; not wired yet")
+        raise AssertionError(
+            "Re1Profile.current_room needs a memory reader; not wired yet"
+        )
 
     def enumerate_current_room_items(self, room: RoomId) -> ItemListQuery:
         return ItemListQuery(ok=True, items=(), complete_list_known=False)
@@ -308,8 +484,14 @@ class Re1Profile:
     def is_item_collected(self, item: RoomItem) -> ItemQuery:
         if item.acquired_flag_address is None:
             return ItemQuery(ok=False, value=False, error="acquired flag unknown")
-        raise AssertionError("Re1Profile.is_item_collected needs a memory reader; not wired yet")
+        raise AssertionError(
+            "Re1Profile.is_item_collected needs a memory reader; not wired yet"
+        )
 
     def is_item_currently_available(self, item: RoomItem) -> ItemQuery:
         # Unknown until spawn conditions are understood per item.
-        return ItemQuery(ok=False, value=False, error=f"spawn condition unresolved: {item.spawn_condition}")
+        return ItemQuery(
+            ok=False,
+            value=False,
+            error=f"spawn condition unresolved: {item.spawn_condition}",
+        )
