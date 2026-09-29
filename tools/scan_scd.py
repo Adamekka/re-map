@@ -16,12 +16,14 @@ from pathlib import Path
 # Fixed sizes from reevengi src/g_re1/scd1.xml. 1+opcodes absent below are
 # variable length (0x17, 0x28, 0x33) or undefined.
 # SLUS-00551's opcode 0x20 and 0x21 handlers each advance the script by 0xE.
+# Its 0x1F handler advances by 0x1C; 30 consumed the next opcode and could
+# interpret an object's payload as a procedure terminator (RE1-SCD-004).
 SIZES = {
     0x00: 2, 0x01: 2, 0x02: 2, 0x03: 2, 0x04: 4, 0x05: 4, 0x06: 4,
     0x07: 6, 0x08: 4, 0x09: 2, 0x0A: 2, 0x0B: 4, 0x0C: 26, 0x0D: 18,
     0x0E: 2, 0x0F: 8, 0x10: 2, 0x11: 2, 0x12: 10, 0x13: 4, 0x14: 4,
     0x15: 2, 0x16: 2, 0x18: 26, 0x19: 4, 0x1A: 2, 0x1B: 22,
-    0x1C: 6, 0x1D: 2, 0x1E: 4, 0x1F: 30, 0x20: 14, 0x21: 14,
+    0x1C: 6, 0x1D: 2, 0x1E: 4, 0x1F: 28, 0x20: 14, 0x21: 14,
     0x22: 4, 0x23: 2, 0x24: 4, 0x25: 4, 0x26: 1, 0x27: 2, 0x29: 2,
     0x2A: 12, 0x2B: 4, 0x2C: 2, 0x2D: 4, 0x2E: 1, 0x2F: 4,
     0x30: 12, 0x31: 4, 0x32: 4, 0x34: 8, 0x35: 4, 0x36: 4,
@@ -36,19 +38,33 @@ ITEM_OPS = {0x0D, 0x12, 0x13, 0x18}
 
 def _opcode_size(code: bytes, pos: int) -> tuple[int, str]:
     op = code[pos]
+    if op == 0x00 and pos + 1 == len(code):
+        # The pinned block-end handler reads no operands; a final single zero is legal.
+        return 1, "clean"
     if op == 0x33:
-        # Variable: opcode + type + u0 + u1, then type-dependent tail.
-        if pos + 4 > len(code):
+        if pos + 2 > len(code):
             return 0, f"truncated opcode 0x33 at +{pos}"
         typ = code[pos + 1]
-        extra = 2 if typ in (0, 4, 6, 7) else 4 if typ in (1, 3, 5, 8, 9, 10) else 0
-        size = 4 + extra
+        # PS1 player-property subcommands advance by two or four bytes; the PC-format guess doubled them.
+        size = {0: 2, 1: 4, 3: 4, 4: 2, 5: 4, 6: 2, 7: 2, 8: 4, 9: 4, 10: 4}.get(typ)
+        if size is None:
+            return 0, f"unsupported opcode 0x33 subcommand {typ} at +{pos}"
     elif op == 0x17:
-        # Variable: opcode + u0 + u16 + type u16, then 2 more u16 if type==0.
         if pos + 6 > len(code):
             return 0, f"truncated opcode 0x17 at +{pos}"
         typ = struct.unpack_from("<H", code, pos + 4)[0]
-        size = 10 if typ == 0 else 6
+        # Every implemented sound source 0..3 consumes the trailing coordinate words, even when unused.
+        if typ & 255 not in (0, 1, 2, 3):
+            return 0, f"unsupported opcode 0x17 source {typ & 255} at +{pos}"
+        size = 10
+    elif op == 0x28:
+        if pos + 4 > len(code):
+            return 0, f"truncated opcode 0x28 at +{pos}"
+        # The pinned enemy-property setter advances by its subcommand, not a fixed six-byte packet.
+        subtype = code[pos + 3]
+        size = {0: 6, 1: 8, 2: 6, 3: 6, 5: 6, 6: 4, 8: 4, 9: 6, 10: 6}.get(subtype)
+        if size is None:
+            return 0, f"unsupported opcode 0x28 subcommand {subtype} at +{pos}"
     else:
         size = SIZES.get(op)
         if size is None:

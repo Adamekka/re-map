@@ -21,6 +21,34 @@ def test_opcodes_20_and_21_leave_following_item_aligned():
         assert ops[1][2][22] == 111
 
 
+def test_object_set_keeps_entity_and_both_item_branches_aligned():
+    object_set = bytearray(28)
+    object_set[0:4] = bytes((0x1F, 0, 0, 0xFF))
+    # A real entity initializer starts with opcode 0x1B and an id byte.
+    # The former 30-byte object width skipped those, then mistook this
+    # zero-filled entity payload for an unconditional procedure end.
+    entity_set = bytes((0x1B, 0)) + bytes(20)
+    item = bytearray(26)
+    item[0] = 0x18
+    item[22] = 111
+    branch = bytes((0x01, 0x1C)) + item + bytes((0x02, 0x1E))
+    branch += item + bytes((0x03, 0, 0, 0))
+    code = object_set + entity_set + branch
+    span = (len(code) + 2).to_bytes(2, "little") + code + bytes(2)
+
+    ops, status = walk_procedures(span, 0x100)
+
+    assert status == "clean"
+    assert [(addr, op) for addr, op, _ in ops[:2]] == [
+        (0x102, 0x1F),
+        (0x11E, 0x1B),
+    ]
+    assert [(addr, raw[22]) for addr, op, raw in ops if op == 0x18] == [
+        (0x136, 111),
+        (0x152, 111),
+    ]
+
+
 def test_unconditional_end_excludes_trailing_item():
     item = bytes([0x18]) + bytes(25)
     code = bytes([0x00, 0xFF]) + item
@@ -122,7 +150,9 @@ def test_generated_table_excludes_dead_tails_but_keeps_branch_reachable_items():
         Path(row["file"]).name: row for row in json.loads(table.read_text())["rooms"]
     }
     assert {item["gid"] for item in rooms["ROOM1091.RDT"]["items"]} == {111}
-    assert 120 not in {item["gid"] for item in rooms["ROOM40A0.RDT"]["items"]}
+    # RE1-SCD-004 corrected object width: the old apparent terminator in
+    # ROOM40A0 was payload, so this candidate is reachable after all.
+    assert 120 in {item["gid"] for item in rooms["ROOM40A0.RDT"]["items"]}
     assert {item["addr"] for item in rooms["ROOM10E0.RDT"]["items"]} >= {
         "0x22b74",
         "0x22b98",

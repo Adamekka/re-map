@@ -29,7 +29,7 @@
     ]
    },
    "stats": {
-    "init": "clean/114",
+    "init": "clean/116",
     "main": "clean/0"
    },
    "items": [
@@ -109,7 +109,7 @@
     ]
    },
    "stats": {
-    "init": "clean/9",
+    "init": "clean/45",
     "main": "clean/7"
    },
    "items": [
@@ -729,7 +729,7 @@
     ]
    },
    "stats": {
-    "init": "clean/41",
+    "init": "clean/78",
     "main": "clean/88"
    },
    "items": [
@@ -876,7 +876,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x88 at +668 (1 issues) in procedure +0 (1 procedures)/46",
+    "init": "clean/120",
     "main": "clean/115"
    },
    "items": [
@@ -1244,7 +1244,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -1343,7 +1343,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x65 at +110 (1 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/26",
     "main": "clean/57"
    },
    "items": [
@@ -1406,7 +1406,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x65 at +110 (1 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/26",
     "main": "clean/57"
    },
    "items": [
@@ -1469,7 +1469,7 @@
     ]
    },
    "stats": {
-    "init": "clean/7",
+    "init": "clean/8",
     "main": "clean/1"
    },
    "items": [
@@ -1553,7 +1553,7 @@
     ]
    },
    "stats": {
-    "init": "clean/8",
+    "init": "clean/19",
     "main": "clean/1"
    },
    "items": [
@@ -1778,7 +1778,7 @@
     ]
    },
    "stats": {
-    "init": "clean/19",
+    "init": "clean/43",
     "main": "clean/35"
    },
    "items": [
@@ -1918,7 +1918,7 @@
     ]
    },
    "stats": {
-    "init": "clean/19",
+    "init": "clean/43",
     "main": "clean/35"
    },
    "items": [
@@ -2058,7 +2058,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x82 at +156 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/38",
     "main": "clean/82"
    },
    "items": [
@@ -2126,7 +2126,7 @@
     ]
    },
    "stats": {
-    "init": "clean/34",
+    "init": "clean/37",
     "main": "clean/14"
    },
    "items": [
@@ -2230,7 +2230,7 @@
     ]
    },
    "stats": {
-    "init": "clean/34",
+    "init": "clean/37",
     "main": "clean/14"
    },
    "items": [
@@ -2334,7 +2334,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xf2 at +386 (2 issues) in procedure +0 (1 procedures)/22",
+    "init": "clean/46",
     "main": "clean/91"
    },
    "items": [
@@ -2426,7 +2426,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xf2 at +368 (2 issues) in procedure +0 (1 procedures)/21",
+    "init": "clean/28",
     "main": "clean/66"
    },
    "items": [
@@ -2767,7 +2767,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +403 (1 issues) in procedure +0 (1 procedures)/45",
+    "init": "clean/39",
     "main": "clean/17"
    },
    "items": [
@@ -2963,7 +2963,7 @@
     ]
    },
    "stats": {
-    "init": "clean/5",
+    "init": "clean/20",
     "main": "clean/0"
    },
    "items": [],
@@ -3013,7 +3013,7 @@
     ]
    },
    "stats": {
-    "init": "clean/5",
+    "init": "clean/44",
     "main": "clean/0"
    },
    "items": [],
@@ -3063,7 +3063,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5c at +112 (1 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/38",
     "main": "clean/48"
    },
    "items": [
@@ -3131,7 +3131,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc8 at +318 (1 issues) in procedure +0 (1 procedures)/24",
+    "init": "clean/39",
     "main": "clean/0"
    },
    "items": [
@@ -3199,7 +3199,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc8 at +314 (1 issues) in procedure +0 (1 procedures)/23",
+    "init": "clean/39",
     "main": "clean/0"
    },
    "items": [
@@ -3267,7 +3267,7 @@
     ]
    },
    "stats": {
-    "init": "clean/10",
+    "init": "clean/11",
     "main": "clean/14"
    },
    "items": [
@@ -3335,7 +3335,7 @@
     ]
    },
    "stats": {
-    "init": "clean/13",
+    "init": "clean/65",
     "main": "clean/42"
    },
    "items": [],
@@ -3385,7 +3385,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x60 at +166 (1 issues) in procedure +0 (1 procedures)/10",
+    "init": "clean/13",
     "main": "clean/23"
    },
    "items": [
@@ -3460,7 +3460,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x60 at +166 (1 issues) in procedure +0 (1 procedures)/10",
+    "init": "clean/13",
     "main": "clean/23"
    },
    "items": [
@@ -3535,7 +3535,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x6c at +56 (1 issues) in procedure +0 (1 procedures)/2",
+    "init": "clean/12",
     "main": "clean/0"
    },
    "items": [],
@@ -3578,7 +3578,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x6c at +56 (1 issues) in procedure +0 (1 procedures)/2",
+    "init": "clean/12",
     "main": "clean/0"
    },
    "items": [],
@@ -3720,7 +3720,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/41",
     "main": "clean/28"
    },
    "items": [],
@@ -3770,7 +3770,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/41",
     "main": "clean/28"
    },
    "items": [],
@@ -4103,8 +4103,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5b at +262 (2 issues) in procedure +0 (1 procedures)/16",
-    "main": "partial: overlapping branch target at +266 (1 issues) in procedure +0 (1 procedures)/98"
+    "init": "clean/46",
+    "main": "clean/100"
    },
    "items": [
     {
@@ -4171,8 +4171,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5b at +262 (2 issues) in procedure +0 (1 procedures)/16",
-    "main": "partial: overlapping branch target at +266 (1 issues) in procedure +0 (1 procedures)/98"
+    "init": "clean/46",
+    "main": "clean/100"
    },
    "items": [
     {
@@ -4239,7 +4239,7 @@
     ]
    },
    "stats": {
-    "init": "clean/17",
+    "init": "clean/18",
     "main": "clean/0"
    },
    "items": [
@@ -4302,7 +4302,7 @@
     ]
    },
    "stats": {
-    "init": "clean/17",
+    "init": "clean/18",
     "main": "clean/0"
    },
    "items": [
@@ -4699,7 +4699,7 @@
     ]
    },
    "stats": {
-    "init": "clean/39",
+    "init": "clean/44",
     "main": "clean/253"
    },
    "items": [
@@ -4803,7 +4803,7 @@
     ]
    },
    "stats": {
-    "init": "clean/51",
+    "init": "clean/56",
     "main": "clean/253"
    },
    "items": [
@@ -4919,7 +4919,7 @@
     ]
    },
    "stats": {
-    "init": "clean/27",
+    "init": "clean/32",
     "main": "clean/8"
    },
    "items": [
@@ -5284,7 +5284,7 @@
     ]
    },
    "stats": {
-    "init": "clean/14",
+    "init": "partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)/34",
     "main": "clean/29"
    },
    "items": [
@@ -5364,7 +5364,7 @@
     ]
    },
    "stats": {
-    "init": "clean/11",
+    "init": "partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)/23",
     "main": "clean/29"
    },
    "items": [
@@ -5699,7 +5699,7 @@
     ]
    },
    "stats": {
-    "init": "clean/66",
+    "init": "clean/68",
     "main": "clean/60"
    },
    "items": [
@@ -5853,7 +5853,7 @@
     ]
    },
    "stats": {
-    "init": "clean/66",
+    "init": "clean/68",
     "main": "clean/60"
    },
    "items": [
@@ -6007,7 +6007,7 @@
     ]
    },
    "stats": {
-    "init": "clean/20",
+    "init": "partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)/46",
     "main": "clean/254"
    },
    "items": [],
@@ -6057,7 +6057,7 @@
     ]
    },
    "stats": {
-    "init": "clean/20",
+    "init": "partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)/46",
     "main": "clean/254"
    },
    "items": [],
@@ -6107,7 +6107,7 @@
     ]
    },
    "stats": {
-    "init": "clean/93",
+    "init": "clean/98",
     "main": "clean/154"
    },
    "items": [],
@@ -6171,7 +6171,7 @@
     ]
    },
    "stats": {
-    "init": "clean/19",
+    "init": "clean/39",
     "main": "clean/118"
    },
    "items": [
@@ -6449,8 +6449,8 @@
     ]
    },
    "stats": {
-    "init": "clean/20",
-    "main": "clean/94"
+    "init": "clean/84",
+    "main": "clean/96"
    },
    "items": [
     {
@@ -6555,8 +6555,8 @@
     ]
    },
    "stats": {
-    "init": "clean/20",
-    "main": "clean/94"
+    "init": "clean/84",
+    "main": "clean/96"
    },
    "items": [
     {
@@ -6661,7 +6661,7 @@
     ]
    },
    "stats": {
-    "init": "partial: ELSE target inside opcode at +264 (1 issues) in procedure +0 (1 procedures)/24",
+    "init": "clean/25",
     "main": "clean/57"
    },
    "items": [
@@ -6729,7 +6729,7 @@
     ]
    },
    "stats": {
-    "init": "partial: ELSE target inside opcode at +264 (1 issues) in procedure +0 (1 procedures)/24",
+    "init": "clean/25",
     "main": "clean/57"
    },
    "items": [
@@ -6797,7 +6797,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x58 at +118 (2 issues) in procedure +0 (1 procedures)/7",
+    "init": "clean/41",
     "main": "clean/5"
    },
    "items": [],
@@ -6854,7 +6854,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x58 at +144 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/40",
     "main": "clean/5"
    },
    "items": [
@@ -6924,7 +6924,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc4 at +138 (1 issues) in procedure +0 (1 procedures)/6",
+    "init": "clean/36",
     "main": "clean/13"
    },
    "items": [
@@ -7216,7 +7216,7 @@
    },
    "stats": {
     "init": "clean/35",
-    "main": "partial: unknown/variable opcode 0x28 at +44 (1 issues) in procedure +0 (1 procedures)/7"
+    "main": "clean/12"
    },
    "items": [
     {
@@ -7399,8 +7399,8 @@
     ]
    },
    "stats": {
-    "init": "clean/72",
-    "main": "partial: unknown/variable opcode 0x28 at +256 (32 issues) in procedure +0 (1 procedures)/75"
+    "init": "clean/74",
+    "main": "clean/122"
    },
    "items": [
     {
@@ -7493,8 +7493,8 @@
     ]
    },
    "stats": {
-    "init": "clean/72",
-    "main": "partial: unknown/variable opcode 0x28 at +256 (32 issues) in procedure +0 (1 procedures)/75"
+    "init": "clean/74",
+    "main": "clean/122"
    },
    "items": [
     {
@@ -7662,7 +7662,7 @@
     ]
    },
    "stats": {
-    "init": "clean/37",
+    "init": "clean/38",
     "main": "clean/43"
    },
    "items": [
@@ -7789,7 +7789,7 @@
     ]
    },
    "stats": {
-    "init": "clean/11",
+    "init": "clean/12",
     "main": "clean/0"
    },
    "items": [
@@ -7869,8 +7869,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xa2 at +184 (1 issues) in procedure +0 (1 procedures)/8",
-    "main": "partial: overlapping branch target at +288 (25 issues) in procedure +0 (1 procedures)/166"
+    "init": "clean/55",
+    "main": "clean/178"
    },
    "items": [
     {
@@ -7951,8 +7951,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xa2 at +184 (1 issues) in procedure +0 (1 procedures)/8",
-    "main": "partial: overlapping branch target at +288 (25 issues) in procedure +0 (1 procedures)/166"
+    "init": "clean/55",
+    "main": "clean/178"
    },
    "items": [
     {
@@ -8033,7 +8033,7 @@
     ]
    },
    "stats": {
-    "init": "clean/8",
+    "init": "clean/11",
     "main": "clean/0"
    },
    "items": [],
@@ -8083,8 +8083,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5f at +278 (1 issues) in procedure +0 (1 procedures)/13",
-    "main": "partial: unknown/variable opcode 0x28 at +40 (2 issues) in procedure +0 (1 procedures)/12"
+    "init": "clean/35",
+    "main": "clean/26"
    },
    "items": [
     {
@@ -8191,8 +8191,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5f at +278 (1 issues) in procedure +0 (1 procedures)/13",
-    "main": "partial: unknown/variable opcode 0x28 at +40 (2 issues) in procedure +0 (1 procedures)/12"
+    "init": "clean/39",
+    "main": "clean/26"
    },
    "items": [
     {
@@ -8461,7 +8461,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +353 (1 issues) in procedure +0 (1 procedures)/26",
+    "init": "clean/20",
     "main": "clean/26"
    },
    "items": [
@@ -8517,7 +8517,7 @@
     ]
    },
    "stats": {
-    "init": "clean/14",
+    "init": "clean/15",
     "main": "clean/0"
    },
    "items": [
@@ -8597,7 +8597,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x7a at +270 (7 issues) in procedure +0 (1 procedures)/21",
+    "init": "clean/38",
     "main": "clean/0"
    },
    "items": [
@@ -8865,7 +8865,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc0 at +258 (2 issues) in procedure +0 (1 procedures)/15",
+    "init": "clean/30",
     "main": "clean/0"
    },
    "items": [
@@ -8959,7 +8959,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc0 at +258 (2 issues) in procedure +0 (1 procedures)/15",
+    "init": "clean/51",
     "main": "clean/0"
    },
    "items": [
@@ -9591,7 +9591,7 @@
     ]
    },
    "stats": {
-    "init": "clean/12",
+    "init": "clean/32",
     "main": "clean/46"
    },
    "items": [
@@ -9618,6 +9618,18 @@
      "type": "0x3e",
      "amount": 1,
      "gid": 255
+    },
+    {
+     "scd": "init",
+     "addr": "0x392a6",
+     "id": 8,
+     "x": 0,
+     "y": 0,
+     "w": 1,
+     "h": 1,
+     "type": "0x2f",
+     "amount": 3,
+     "gid": 120
     }
    ],
    "doors": [
@@ -9921,8 +9933,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xd8 at +248 (5 issues) in procedure +0 (1 procedures)/17",
-    "main": "clean/17"
+    "init": "clean/58",
+    "main": "clean/19"
    },
    "items": [
     {
@@ -9996,8 +10008,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xd8 at +248 (5 issues) in procedure +0 (1 procedures)/17",
-    "main": "clean/17"
+    "init": "clean/58",
+    "main": "clean/19"
    },
    "items": [
     {
@@ -10071,7 +10083,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xfa at +268 (1 issues) in procedure +0 (1 procedures)/16",
+    "init": "clean/27",
     "main": "clean/0"
    },
    "items": [],
@@ -10135,8 +10147,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xfa at +336 (1 issues) in procedure +0 (1 procedures)/24",
-    "main": "partial: unknown/variable opcode 0x28 at +54 (2 issues) in procedure +0 (1 procedures)/7"
+    "init": "clean/44",
+    "main": "clean/30"
    },
    "items": [],
    "doors": [
@@ -10199,7 +10211,7 @@
     ]
    },
    "stats": {
-    "init": "clean/47",
+    "init": "clean/48",
     "main": "clean/12"
    },
    "items": [
@@ -10255,7 +10267,7 @@
     ]
    },
    "stats": {
-    "init": "clean/43",
+    "init": "clean/44",
     "main": "clean/11"
    },
    "items": [
@@ -10427,7 +10439,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xa4 at +60 (1 issues) in procedure +0 (1 procedures)/3",
+    "init": "clean/16",
     "main": "clean/27"
    },
    "items": [],
@@ -10470,7 +10482,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xa4 at +60 (1 issues) in procedure +0 (1 procedures)/3",
+    "init": "clean/16",
     "main": "clean/27"
    },
    "items": [],
@@ -10720,7 +10732,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x80 at +86 (1 issues) in procedure +0 (1 procedures)/4",
+    "init": "clean/20",
     "main": "clean/0"
    },
    "items": [],
@@ -10770,7 +10782,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x80 at +112 (1 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/62",
     "main": "clean/0"
    },
    "items": [
@@ -11045,7 +11057,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x52 at +190 (2 issues) in procedure +0 (1 procedures)/14",
+    "init": "clean/40",
     "main": "clean/21"
    },
    "items": [
@@ -11268,7 +11280,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +517 (1 issues) in procedure +0 (1 procedures)/45",
+    "init": "clean/34",
     "main": "clean/0"
    },
    "items": [
@@ -11336,7 +11348,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc2 at +400 (1 issues) in procedure +0 (1 procedures)/30",
+    "init": "clean/32",
     "main": "clean/122"
    },
    "items": [
@@ -11435,7 +11447,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc2 at +400 (1 issues) in procedure +0 (1 procedures)/30",
+    "init": "clean/32",
     "main": "clean/122"
    },
    "items": [
@@ -11742,7 +11754,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x58 at +86 (1 issues) in procedure +0 (1 procedures)/4",
+    "init": "clean/20",
     "main": "clean/29"
    },
    "items": [
@@ -11757,6 +11769,42 @@
      "type": "0x68",
      "amount": 1,
      "gid": 81
+    },
+    {
+     "scd": "init",
+     "addr": "0x28e36",
+     "id": 6,
+     "x": 4500,
+     "y": 9700,
+     "w": 1400,
+     "h": 1700,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 163
+    },
+    {
+     "scd": "init",
+     "addr": "0x28e50",
+     "id": 7,
+     "x": 4500,
+     "y": 9700,
+     "w": 1400,
+     "h": 1700,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 229
+    },
+    {
+     "scd": "init",
+     "addr": "0x28e6a",
+     "id": 8,
+     "x": 2100,
+     "y": 4200,
+     "w": 1000,
+     "h": 600,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 164
     }
    ],
    "doors": [
@@ -11798,7 +11846,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x58 at +86 (1 issues) in procedure +0 (1 procedures)/4",
+    "init": "clean/20",
     "main": "clean/29"
    },
    "items": [
@@ -11813,6 +11861,42 @@
      "type": "0x68",
      "amount": 1,
      "gid": 81
+    },
+    {
+     "scd": "init",
+     "addr": "0x28e36",
+     "id": 6,
+     "x": 4500,
+     "y": 9700,
+     "w": 1400,
+     "h": 1700,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 163
+    },
+    {
+     "scd": "init",
+     "addr": "0x28e50",
+     "id": 7,
+     "x": 4500,
+     "y": 9700,
+     "w": 1400,
+     "h": 1700,
+     "type": "0x0b",
+     "amount": 15,
+     "gid": 229
+    },
+    {
+     "scd": "init",
+     "addr": "0x28e6a",
+     "id": 8,
+     "x": 2100,
+     "y": 4200,
+     "w": 1000,
+     "h": 600,
+     "type": "0x44",
+     "amount": 1,
+     "gid": 164
     }
    ],
    "doors": [
@@ -12160,7 +12244,7 @@
     ]
    },
    "stats": {
-    "init": "clean/12",
+    "init": "clean/13",
     "main": "clean/0"
    },
    "items": [
@@ -12513,7 +12597,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x28 at +76 (1 issues) in procedure +0 (1 procedures)/10",
+    "init": "clean/20",
     "main": "clean/0"
    },
    "items": [],
@@ -12599,7 +12683,7 @@
     ]
    },
    "stats": {
-    "init": "clean/21",
+    "init": "clean/63",
     "main": "clean/305"
    },
    "items": [
@@ -12655,7 +12739,7 @@
     ]
    },
    "stats": {
-    "init": "clean/32",
+    "init": "clean/99",
     "main": "clean/320"
    },
    "items": [
@@ -12711,7 +12795,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x28 at +156 (1 issues) in procedure +0 (1 procedures)/17",
+    "init": "clean/23",
     "main": "clean/0"
    },
    "items": [],
@@ -12911,7 +12995,7 @@
     ]
    },
    "stats": {
-    "init": "clean/11",
+    "init": "clean/41",
     "main": "clean/0"
    },
    "items": [
@@ -12991,7 +13075,7 @@
     ]
    },
    "stats": {
-    "init": "clean/9",
+    "init": "clean/10",
     "main": "clean/0"
    },
    "items": [
@@ -13360,7 +13444,7 @@
    },
    "stats": {
     "init": "clean/55",
-    "main": "partial: unknown/variable opcode 0x28 at +20 (2 issues) in procedure +0 (1 procedures)/6"
+    "main": "clean/16"
    },
    "items": [],
    "doors": [
@@ -13431,7 +13515,7 @@
    },
    "stats": {
     "init": "clean/55",
-    "main": "partial: unknown/variable opcode 0x28 at +20 (2 issues) in procedure +0 (1 procedures)/6"
+    "main": "clean/16"
    },
    "items": [],
    "doors": [
@@ -13679,7 +13763,7 @@
     ]
    },
    "stats": {
-    "init": "clean/41",
+    "init": "clean/78",
     "main": "clean/88"
    },
    "items": [
@@ -13826,7 +13910,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x88 at +668 (1 issues) in procedure +0 (1 procedures)/46",
+    "init": "clean/120",
     "main": "clean/115"
    },
    "items": [
@@ -14194,7 +14278,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -14293,7 +14377,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -14392,7 +14476,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x65 at +110 (2 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/14",
     "main": "clean/0"
    },
    "items": [
@@ -14455,7 +14539,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x65 at +110 (2 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/14",
     "main": "clean/0"
    },
    "items": [
@@ -14518,8 +14602,8 @@
     ]
    },
    "stats": {
-    "init": "clean/48",
-    "main": "partial: unknown/variable opcode 0x28 at +20 (2 issues) in procedure +0 (1 procedures)/6"
+    "init": "clean/69",
+    "main": "clean/16"
    },
    "items": [
     {
@@ -14602,8 +14686,8 @@
     ]
    },
    "stats": {
-    "init": "clean/30",
-    "main": "partial: unknown/variable opcode 0x28 at +20 (2 issues) in procedure +0 (1 procedures)/6"
+    "init": "clean/51",
+    "main": "clean/16"
    },
    "items": [
     {
@@ -14828,7 +14912,7 @@
     ]
    },
    "stats": {
-    "init": "clean/7",
+    "init": "clean/36",
     "main": "clean/0"
    },
    "items": [
@@ -14898,7 +14982,7 @@
     ]
    },
    "stats": {
-    "init": "clean/7",
+    "init": "clean/36",
     "main": "clean/0"
    },
    "items": [
@@ -14968,7 +15052,7 @@
     ]
    },
    "stats": {
-    "init": "clean/19",
+    "init": "clean/43",
     "main": "clean/35"
    },
    "items": [
@@ -15108,7 +15192,7 @@
     ]
    },
    "stats": {
-    "init": "clean/19",
+    "init": "clean/43",
     "main": "clean/35"
    },
    "items": [
@@ -15248,7 +15332,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x82 at +156 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/38",
     "main": "clean/82"
    },
    "items": [
@@ -15316,7 +15400,7 @@
     ]
    },
    "stats": {
-    "init": "clean/34",
+    "init": "clean/37",
     "main": "clean/8"
    },
    "items": [
@@ -15420,7 +15504,7 @@
     ]
    },
    "stats": {
-    "init": "clean/34",
+    "init": "clean/37",
     "main": "clean/8"
    },
    "items": [
@@ -15524,7 +15608,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xf2 at +386 (2 issues) in procedure +0 (1 procedures)/22",
+    "init": "clean/46",
     "main": "clean/91"
    },
    "items": [
@@ -15616,7 +15700,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xf2 at +368 (2 issues) in procedure +0 (1 procedures)/21",
+    "init": "clean/28",
     "main": "clean/66"
    },
    "items": [
@@ -15970,7 +16054,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +403 (1 issues) in procedure +0 (1 procedures)/45",
+    "init": "clean/39",
     "main": "clean/17"
    },
    "items": [
@@ -16166,7 +16250,7 @@
     ]
    },
    "stats": {
-    "init": "clean/5",
+    "init": "clean/20",
     "main": "clean/0"
    },
    "items": [],
@@ -16216,7 +16300,7 @@
     ]
    },
    "stats": {
-    "init": "clean/5",
+    "init": "clean/44",
     "main": "clean/0"
    },
    "items": [],
@@ -16266,7 +16350,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5c at +112 (1 issues) in procedure +0 (1 procedures)/5",
+    "init": "clean/38",
     "main": "clean/48"
    },
    "items": [
@@ -16334,7 +16418,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc8 at +318 (1 issues) in procedure +0 (1 procedures)/24",
+    "init": "clean/39",
     "main": "clean/0"
    },
    "items": [
@@ -16402,7 +16486,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc8 at +314 (1 issues) in procedure +0 (1 procedures)/23",
+    "init": "clean/39",
     "main": "clean/0"
    },
    "items": [
@@ -16470,7 +16554,7 @@
     ]
    },
    "stats": {
-    "init": "clean/12",
+    "init": "clean/13",
     "main": "clean/0"
    },
    "items": [
@@ -16722,7 +16806,7 @@
     ]
    },
    "stats": {
-    "init": "clean/15",
+    "init": "clean/47",
     "main": "clean/10"
    },
    "items": [
@@ -16785,7 +16869,7 @@
     ]
    },
    "stats": {
-    "init": "clean/5",
+    "init": "clean/16",
     "main": "clean/0"
    },
    "items": [],
@@ -16835,7 +16919,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x60 at +166 (1 issues) in procedure +0 (1 procedures)/10",
+    "init": "clean/13",
     "main": "clean/23"
    },
    "items": [
@@ -16910,7 +16994,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x60 at +166 (1 issues) in procedure +0 (1 procedures)/10",
+    "init": "clean/13",
     "main": "clean/23"
    },
    "items": [
@@ -16985,7 +17069,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x6c at +56 (1 issues) in procedure +0 (1 procedures)/2",
+    "init": "clean/12",
     "main": "clean/0"
    },
    "items": [],
@@ -17028,7 +17112,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x6c at +56 (1 issues) in procedure +0 (1 procedures)/2",
+    "init": "clean/12",
     "main": "clean/0"
    },
    "items": [],
@@ -17249,7 +17333,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/41",
     "main": "clean/28"
    },
    "items": [],
@@ -17299,7 +17383,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/41",
     "main": "clean/28"
    },
    "items": [],
@@ -17632,8 +17716,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5b at +262 (2 issues) in procedure +0 (1 procedures)/16",
-    "main": "partial: overlapping branch target at +266 (1 issues) in procedure +0 (1 procedures)/98"
+    "init": "clean/46",
+    "main": "clean/100"
    },
    "items": [
     {
@@ -17700,8 +17784,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x5b at +262 (2 issues) in procedure +0 (1 procedures)/16",
-    "main": "partial: overlapping branch target at +266 (1 issues) in procedure +0 (1 procedures)/98"
+    "init": "clean/46",
+    "main": "clean/100"
    },
    "items": [
     {
@@ -17768,7 +17852,7 @@
     ]
    },
    "stats": {
-    "init": "clean/55",
+    "init": "clean/57",
     "main": "clean/33"
    },
    "items": [
@@ -17831,7 +17915,7 @@
     ]
    },
    "stats": {
-    "init": "clean/17",
+    "init": "clean/18",
     "main": "clean/0"
    },
    "items": [
@@ -18228,7 +18312,7 @@
     ]
    },
    "stats": {
-    "init": "clean/39",
+    "init": "clean/44",
     "main": "clean/253"
    },
    "items": [
@@ -18332,7 +18416,7 @@
     ]
    },
    "stats": {
-    "init": "clean/51",
+    "init": "clean/56",
     "main": "clean/253"
    },
    "items": [
@@ -18448,7 +18532,7 @@
     ]
    },
    "stats": {
-    "init": "clean/27",
+    "init": "clean/32",
     "main": "clean/8"
    },
    "items": [
@@ -18511,7 +18595,7 @@
     ]
    },
    "stats": {
-    "init": "clean/41",
+    "init": "clean/42",
     "main": "clean/58"
    },
    "items": [],
@@ -18561,7 +18645,7 @@
     ]
    },
    "stats": {
-    "init": "clean/68",
+    "init": "clean/69",
     "main": "clean/78"
    },
    "items": [
@@ -18938,7 +19022,7 @@
     ]
    },
    "stats": {
-    "init": "clean/14",
+    "init": "partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)/34",
     "main": "clean/29"
    },
    "items": [
@@ -19018,7 +19102,7 @@
     ]
    },
    "stats": {
-    "init": "clean/11",
+    "init": "partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)/23",
     "main": "clean/29"
    },
    "items": [
@@ -19430,7 +19514,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x28 at +268 (1 issues) in procedure +0 (1 procedures)/16",
+    "init": "clean/19",
     "main": "clean/7"
    },
    "items": [
@@ -19510,7 +19594,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x28 at +310 (1 issues) in procedure +0 (1 procedures)/22",
+    "init": "clean/25",
     "main": "clean/7"
    },
    "items": [
@@ -19597,7 +19681,7 @@
     ]
    },
    "stats": {
-    "init": "clean/20",
+    "init": "clean/25",
     "main": "clean/28"
    },
    "items": [
@@ -19689,7 +19773,7 @@
     ]
    },
    "stats": {
-    "init": "clean/20",
+    "init": "clean/25",
     "main": "clean/28"
    },
    "items": [
@@ -19781,7 +19865,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xb0 at +202 (1 issues) in procedure +0 (1 procedures)/11",
+    "init": "clean/28",
     "main": "clean/7"
    },
    "items": [
@@ -19863,7 +19947,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xb0 at +202 (1 issues) in procedure +0 (1 procedures)/11",
+    "init": "clean/28",
     "main": "clean/7"
    },
    "items": [
@@ -19945,7 +20029,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xd0 at +364 (2 issues) in procedure +0 (1 procedures)/26",
+    "init": "clean/31",
     "main": "clean/36"
    },
    "items": [
@@ -20013,7 +20097,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xd0 at +364 (2 issues) in procedure +0 (1 procedures)/26",
+    "init": "clean/31",
     "main": "clean/36"
    },
    "items": [
@@ -20447,7 +20531,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x28 at +334 (1 issues) in procedure +0 (1 procedures)/23",
+    "init": "clean/33",
     "main": "clean/9"
    },
    "items": [
@@ -20517,7 +20601,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x28 at +308 (1 issues) in procedure +0 (1 procedures)/22",
+    "init": "clean/32",
     "main": "clean/9"
    },
    "items": [],
@@ -20702,7 +20786,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -20801,7 +20885,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -21040,7 +21124,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x82 at +202 (1 issues) in procedure +0 (1 procedures)/9",
+    "init": "clean/43",
     "main": "clean/115"
    },
    "items": [
@@ -21219,8 +21303,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +403 (1 issues) in procedure +0 (1 procedures)/63",
-    "main": "partial: unknown/variable opcode 0x28 at +68 (1 issues) in procedure +0 (1 procedures)/22"
+    "init": "clean/57",
+    "main": "clean/33"
    },
    "items": [
     {
@@ -21299,7 +21383,7 @@
     ]
    },
    "stats": {
-    "init": "clean/13",
+    "init": "clean/65",
     "main": "clean/42"
    },
    "items": [],
@@ -21349,7 +21433,7 @@
     ]
    },
    "stats": {
-    "init": "clean/13",
+    "init": "clean/65",
     "main": "clean/42"
    },
    "items": [],
@@ -21399,7 +21483,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x94 at +56 (1 issues) in procedure +0 (1 procedures)/2",
+    "init": "clean/20",
     "main": "clean/45"
    },
    "items": [],
@@ -21442,7 +21526,7 @@
     ]
    },
    "stats": {
-    "init": "clean/6",
+    "init": "clean/22",
     "main": "clean/48"
    },
    "items": [],
@@ -21549,7 +21633,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/37",
     "main": "clean/28"
    },
    "items": [],
@@ -21599,7 +21683,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/37",
     "main": "clean/28"
    },
    "items": [],
@@ -22068,7 +22152,7 @@
     ]
    },
    "stats": {
-    "init": "clean/75",
+    "init": "clean/77",
     "main": "clean/60"
    },
    "items": [
@@ -22222,7 +22306,7 @@
     ]
    },
    "stats": {
-    "init": "clean/75",
+    "init": "clean/77",
     "main": "clean/60"
    },
    "items": [
@@ -22376,8 +22460,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xa2 at +184 (1 issues) in procedure +0 (1 procedures)/8",
-    "main": "partial: overlapping branch target at +288 (25 issues) in procedure +0 (1 procedures)/166"
+    "init": "clean/55",
+    "main": "clean/178"
    },
    "items": [
     {
@@ -22458,8 +22542,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xa2 at +184 (1 issues) in procedure +0 (1 procedures)/8",
-    "main": "partial: overlapping branch target at +288 (25 issues) in procedure +0 (1 procedures)/166"
+    "init": "clean/55",
+    "main": "clean/178"
    },
    "items": [
     {
@@ -22540,8 +22624,8 @@
     ]
    },
    "stats": {
-    "init": "clean/67",
-    "main": "partial: unknown/variable opcode 0x28 at +72 (6 issues) in procedure +0 (1 procedures)/22"
+    "init": "clean/71",
+    "main": "clean/68"
    },
    "items": [
     {
@@ -22648,8 +22732,8 @@
     ]
    },
    "stats": {
-    "init": "clean/71",
-    "main": "partial: unknown/variable opcode 0x28 at +72 (6 issues) in procedure +0 (1 procedures)/22"
+    "init": "clean/75",
+    "main": "clean/68"
    },
    "items": [
     {
@@ -22756,7 +22840,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xf8 at +268 (7 issues) in procedure +0 (1 procedures)/20",
+    "init": "clean/38",
     "main": "clean/0"
    },
    "items": [
@@ -23024,7 +23108,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x52 at +184 (2 issues) in procedure +0 (1 procedures)/13",
+    "init": "clean/39",
     "main": "clean/21"
    },
    "items": [
@@ -23247,7 +23331,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xfa at +400 (1 issues) in procedure +0 (1 procedures)/30",
+    "init": "clean/37",
     "main": "clean/122"
    },
    "items": [
@@ -23346,7 +23430,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xfa at +400 (1 issues) in procedure +0 (1 procedures)/30",
+    "init": "clean/37",
     "main": "clean/122"
    },
    "items": [
@@ -23863,7 +23947,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -23962,7 +24046,7 @@
     ]
    },
    "stats": {
-    "init": "partial: branch outside procedure at +769 (1 issues) in procedure +0 (1 procedures)/40",
+    "init": "clean/51",
     "main": "clean/44"
    },
    "items": [
@@ -24061,7 +24145,7 @@
     ]
    },
    "stats": {
-    "init": "clean/7",
+    "init": "clean/37",
     "main": "clean/0"
    },
    "items": [
@@ -24131,7 +24215,7 @@
     ]
    },
    "stats": {
-    "init": "clean/7",
+    "init": "clean/37",
     "main": "clean/0"
    },
    "items": [
@@ -24201,7 +24285,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x82 at +202 (1 issues) in procedure +0 (1 procedures)/9",
+    "init": "clean/43",
     "main": "clean/115"
    },
    "items": [
@@ -24380,8 +24464,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +403 (1 issues) in procedure +0 (1 procedures)/63",
-    "main": "partial: unknown/variable opcode 0x28 at +68 (1 issues) in procedure +0 (1 procedures)/22"
+    "init": "clean/57",
+    "main": "clean/33"
    },
    "items": [
     {
@@ -24460,8 +24544,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +403 (1 issues) in procedure +0 (1 procedures)/63",
-    "main": "partial: unknown/variable opcode 0x28 at +68 (1 issues) in procedure +0 (1 procedures)/22"
+    "init": "clean/57",
+    "main": "clean/33"
    },
    "items": [
     {
@@ -24540,7 +24624,7 @@
     ]
    },
    "stats": {
-    "init": "clean/11",
+    "init": "clean/42",
     "main": "clean/10"
    },
    "items": [
@@ -24603,7 +24687,7 @@
     ]
    },
    "stats": {
-    "init": "clean/5",
+    "init": "clean/20",
     "main": "clean/0"
    },
    "items": [],
@@ -24653,7 +24737,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0x94 at +56 (1 issues) in procedure +0 (1 procedures)/2",
+    "init": "clean/20",
     "main": "clean/45"
    },
    "items": [],
@@ -24696,7 +24780,7 @@
     ]
    },
    "stats": {
-    "init": "clean/6",
+    "init": "clean/22",
     "main": "clean/48"
    },
    "items": [],
@@ -24867,7 +24951,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/37",
     "main": "clean/28"
    },
    "items": [],
@@ -24917,7 +25001,7 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xdf at +124 (1 issues) in procedure +0 (1 procedures)/8",
+    "init": "clean/37",
     "main": "clean/28"
    },
    "items": [],
