@@ -10,7 +10,7 @@ python3 tools/track.py --map
 
 Open http://127.0.0.1:8765 and leave the terminal running. Stop with Ctrl+C.
 
-The Mansion 1F schematic reveals rooms as the tracker observes entry. Visit history belongs to this tracker session and resets on restart. Other areas show the room ID.
+The Mansion 1F floor plan reveals rooms only when the tracker observes entry. Collecting an in-game map does not reveal extra rooms. Red rooms have available items remaining, blue rooms are cleared, and the white outline marks the current room. Select an explored room to see its items and directional door locks. Visit history belongs to this tracker session and resets on restart. Other areas show the room ID. Some puzzle rooms need reentry after their conditions change; an incomplete item check stays visible until the tracker can verify it.
 
 # Diagnosing failures
 
@@ -32,4 +32,4 @@ python3 tools/track.py --map --log-file /tmp/re-map-tracker.log
 
 Reproduce the problem, then report what you did and when it happened so the corresponding entries can be inspected. If the tracker has exited, restart it before reproducing the problem.
 
-Pausing DuckStation may produce a logged GDB stop notification; tracking continues after that notification. A timed-out or damaged debugger reply closes the connection to prevent later memory reads from using stale replies. If the log then reports `not connected`, stop the tracker with Ctrl+C and rerun the command above.
+Pausing DuckStation may produce a logged GDB stop notification; tracking continues after that notification. A timed-out or damaged debugger reply closes the connection to prevent later memory reads from using stale replies. The map keeps running and retries the GDB connection once per second. It clears completion colors and live item and door details until the game can be read again. Terminal-only tracking also reconnects after a dropped connection; it requires a connection at startup.
