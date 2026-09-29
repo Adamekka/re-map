@@ -323,6 +323,13 @@ When unsure, report `Unknown` during development rather than inventing a rule.
 
 ## UI
 
+The player-facing map should match the useful behavior of RE2 Remake where practical, with RE1 Remake's room-clear map as the minimum:
+
+- Draw spatial floor plans with room outlines, corridors, and door markers on walls. A graph of room nodes and connecting lines does not satisfy the map requirement.
+- Track door access from game state, including locked and unlocked doors, and distinguish observed passage when useful.
+- Show specific remaining items when their identity is established; otherwise a reliable remaining-item indication is acceptable.
+- Resolve unknown room and door states as unfinished detection work. Do not accept pervasive unknown states as the finished product or replace them with guessed clearance.
+
 Start with a developer/debug UI.
 
 Show:
