@@ -31,3 +31,5 @@ python3 tools/track.py --map --log-file /tmp/re-map-tracker.log
 ```
 
 Reproduce the problem, then report what you did and when it happened so the corresponding entries can be inspected. If the tracker has exited, restart it before reproducing the problem.
+
+Pausing DuckStation may produce a logged GDB stop notification; tracking continues after that notification. A timed-out or damaged debugger reply closes the connection to prevent later memory reads from using stale replies. If the log then reports `not connected`, stop the tracker with Ctrl+C and rerun the command above.

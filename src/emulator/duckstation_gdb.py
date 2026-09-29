@@ -3,12 +3,17 @@
 Only implements what the tracker needs: connect, read memory, close.
 All reads return an explicit result, never a silent default.
 Address space must be a PS1 virtual address such as 0x80000000.
-See docs/research.md RE1-EMU-001, status Candidate.
+See docs/research.md RE1-EMU-001 for access and RE1-EMU-007 for reply handling.
 """
+
 from __future__ import annotations
 
+import logging
 import socket
+import time
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -27,35 +32,54 @@ def _encode_packet(payload: bytes) -> bytes:
     return b"$" + payload + b"#" + _checksum(payload)
 
 
-def _read_packet(sock: socket.socket, timeout_s: float = 2.0) -> bytes:
-    sock.settimeout(timeout_s)
+def _is_stop_reply(payload: bytes) -> bool:
+    return (
+        len(payload) >= 3
+        and payload[:1] in (b"S", b"T")
+        and all(c in b"0123456789abcdefABCDEF" for c in payload[1:3])
+        and (payload[:1] == b"T" or len(payload) == 3)
+    )
+
+
+def _read_packet(sock: socket.socket, deadline: float) -> bytes:
+    def receive(width: int) -> bytes:
+        received = bytearray()
+        while len(received) < width:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("timed out waiting for GDB reply")
+            sock.settimeout(remaining)
+            chunk = sock.recv(width - len(received))
+            if not chunk:
+                raise ConnectionError("gdb server closed connection")
+            received.extend(chunk)
+        return bytes(received)
+
     buf = bytearray()
-    # Wait for start marker.
     while True:
-        chunk = sock.recv(1)
-        if not chunk:
-            raise ConnectionError("gdb server closed connection")
+        chunk = receive(1)
         if chunk == b"$":
             break
-        # Ignore '+'/'-' acks and noise before a packet.
-        continue
-    # Read until '#' then two checksum chars.
+        if chunk == b"+":
+            continue
+        if chunk == b"-":
+            raise ConnectionError("gdb server rejected command checksum")
+        raise ConnectionError(f"unexpected byte before GDB packet: {chunk!r}")
     while True:
-        chunk = sock.recv(1)
-        if not chunk:
-            raise ConnectionError("gdb server closed mid-packet")
-        buf.extend(chunk)
+        chunk = receive(1)
         if chunk == b"#":
             break
-    csum = sock.recv(2)
-    if len(csum) < 2:
-        raise ConnectionError("gdb server sent short checksum")
-    # Ack receipt so server keeps serving reads.
-    try:
-        sock.sendall(b"+")
-    except OSError:
-        pass
-    return bytes(buf[:-1])
+        # DuckStation's declared packet limit bounds malformed or unterminated replies.
+        if len(buf) >= 16384:
+            raise ConnectionError("gdb reply exceeds packet limit")
+        buf.extend(chunk)
+    # TCP may split even the two checksum digits into separate reads.
+    csum = receive(2)
+    payload = bytes(buf)
+    if csum.lower() != _checksum(payload):
+        raise ConnectionError("gdb reply checksum mismatch")
+    sock.sendall(b"+")
+    return payload
 
 
 class DuckStationGdb:
@@ -73,13 +97,7 @@ class DuckStationGdb:
         except OSError as exc:
             return f"connect failed: {exc}"
         self._sock = sock
-        # GDB servers may send an initial stop packet; drain it without blocking long.
-        try:
-            sock.settimeout(0.2)
-            sock.recv(4096)
-        except (socket.timeout, OSError):
-            pass
-        # Ack to put session in a known state.
+        # Leave initial stop notifications for the framed reader; raw drains can split packets.
         try:
             sock.sendall(b"+")
         except OSError as exc:
@@ -110,16 +128,9 @@ class DuckStationGdb:
             return "not connected"
         try:
             self._sock.sendall(_encode_packet(b"c"))
-            self._sock.settimeout(0.3)
-            try:
-                self._sock.recv(4096)
-            except (socket.timeout, OSError):
-                pass
-            try:
-                self._sock.sendall(b"+")
-            except OSError:
-                pass
+            # Continue has no data reply; its ACK and later stops belong to the packet reader.
         except OSError as exc:
+            self.close()
             return str(exc)
         return ""
 
@@ -128,17 +139,14 @@ class DuckStationGdb:
         if self._sock is None:
             return "not connected"
         try:
-            self._sock.sendall(b"\x03")
-            self._sock.settimeout(3.0)
-            try:
-                self._sock.recv(4096)
-            except (socket.timeout, OSError):
-                pass
-            try:
-                self._sock.sendall(b"+")
-            except OSError:
-                pass
+            # An already paused DuckStation sends no new interrupt notification.
+            # Query its stop reason after the interrupt so both states have a reply.
+            self._sock.sendall(b"\x03" + _encode_packet(b"?"))
+            reply = _read_packet(self._sock, time.monotonic() + 3.0)
+            if not _is_stop_reply(reply):
+                raise ConnectionError(f"unexpected GDB interrupt reply: {reply[:32]!r}")
         except OSError as exc:
+            self.close()
             return str(exc)
         return ""
 
@@ -154,16 +162,29 @@ class DuckStationGdb:
         payload = f"m{address:x},{length:x}".encode("ascii")
         try:
             self._sock.sendall(_encode_packet(payload))
-            resp = _read_packet(self._sock)
+            deadline = time.monotonic() + 2.0
+            while True:
+                resp = _read_packet(self._sock, deadline)
+                if _is_stop_reply(resp):
+                    # A pause notification does not finish the outstanding memory request.
+                    logger.info("GDB stop notification during memory read: %r", resp)
+                    continue
+                break
         except (OSError, ConnectionError) as exc:
+            # A late reply after failure cannot safely be assigned to a later request.
+            self.close()
             return MemRead(ok=False, data=b"", error=str(exc))
         if resp.startswith(b"E"):
             return MemRead(ok=False, data=b"", error=f"gdb error: {resp[:16]!r}")
         if len(resp) != length * 2:
-            return MemRead(ok=False, data=b"", error=f"short reply: {len(resp)//2} of {length}")
+            self.close()
+            return MemRead(
+                ok=False, data=b"", error=f"short reply: {len(resp) // 2} of {length}"
+            )
         try:
             return MemRead(ok=True, data=bytes.fromhex(resp.decode("ascii")))
         except ValueError:
+            self.close()
             return MemRead(ok=False, data=b"", error="non-hex reply")
 
     def read_u8(self, address: int) -> MemRead:
