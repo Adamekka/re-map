@@ -103,6 +103,7 @@ class RuntimeRoomItems:
     active_doors: tuple[tuple[int, bytes], ...] = ()
     error: str = ""
     retry: bool = False
+    memory_markers: tuple[tuple[int, bytes], ...] = ()
 
 
 def observe_room_items(
@@ -370,4 +371,8 @@ def observe_room_items(
         list_complete=True,
         coverage_reason=f"{room}: registered item, map, and pending award descriptors classified",
         active_doors=tuple(doors),
+        memory_markers=(
+            (layout.aot_bound_address, values[0]),
+            (layout.aot_base, records.data),
+        ),
     )

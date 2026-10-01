@@ -43,6 +43,8 @@ class RoomRecord:
     completion: RoomCompletion = RoomCompletion.Unvisited
     items: tuple[ItemDetail, ...] = ()
     reason: str = ""
+    doors_complete: bool = False
+    door_reason: str = ""
 
 
 @dataclass

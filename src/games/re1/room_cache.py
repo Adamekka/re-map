@@ -33,13 +33,21 @@ class RoomMutableField:
 
     def __post_init__(self) -> None:
         if (
-            self.section not in ("init", "main")
+            self.section not in ("init", "main", "events")
             or (self.kind, self.width)
-            not in (("item-parameter-mask", 2), ("item-quantity", 1))
+            not in (
+                ("item-parameter-mask", 2),
+                ("item-quantity", 1),
+                ("event-pointer", 4),
+            )
             or self.offset < 0
             or not 0 <= self.original < 1 << (8 * self.width)
         ):
             raise ValueError("invalid room manifest mutable field")
+        if self.kind == "event-pointer" and (
+            self.section != "events" or self.offset % 4
+        ):
+            raise ValueError("invalid room manifest event pointer")
 
 
 @dataclass(frozen=True)
@@ -52,6 +60,9 @@ class RoomScriptSource:
     main_offset: int
     main_size: int
     main_sha256: str
+    events_offset: int
+    events_size: int
+    events_sha256: str
     dependencies: tuple[RoomDependency, ...]
     item_global_ids: tuple[int, ...]
     cache_complete: bool
@@ -61,7 +72,11 @@ class RoomScriptSource:
     def __post_init__(self) -> None:
         occupied = set()
         for field in self.mutable_fields:
-            size = self.init_size if field.section == "init" else self.main_size
+            size = {
+                "init": self.init_size,
+                "main": self.main_size,
+                "events": self.events_size,
+            }[field.section]
             if field.offset + field.width > size:
                 raise ValueError("room manifest mutable field exceeds its script")
             for offset in range(field.offset, field.offset + field.width):
@@ -77,6 +92,7 @@ class RoomSourceQuery:
     sources: tuple[RoomScriptSource, ...] = ()
     error: str = ""
     retry: bool = False
+    memory_markers: tuple[tuple[int, bytes], ...] = ()
 
 
 def match_room_source(
@@ -87,7 +103,7 @@ def match_room_source(
 ) -> RoomSourceQuery:
     candidates = tuple(source for source in sources if source.room == room)
     if not candidates:
-        # Other areas retain room-ID tracking; this manifest covers Mansion 1F.
+        # A disc source with unusable ranges has no trusted program to bind.
         return RoomSourceQuery(ok=True)
     pointer = read_memory(layout.loaded_rdt_pointer_address, 4)
     if not pointer.ok or len(pointer.data) != 4:
@@ -102,24 +118,45 @@ def match_room_source(
         return RoomSourceQuery(
             ok=False, error=f"room script header: {header.error or 'short read'}"
         )
-    init, main, events, _ = struct.unpack("<4I", header.data)
-    if not base + 0x94 <= init <= main <= events <= layout.ram_base + layout.ram_size:
+    init, main, events, end = struct.unpack("<4I", header.data)
+    if (
+        not base + 0x94
+        <= init
+        < main
+        < events
+        < end
+        <= layout.ram_base + layout.ram_size
+    ):
         return RoomSourceQuery(ok=False, error="room script ranges are outside PS1 RAM")
     matching_ranges = tuple(
         source
         for source in candidates
-        if (source.init_offset, source.init_size, source.main_offset, source.main_size)
-        == (init - base, main - init, main - base, events - main)
+        if (
+            source.init_offset,
+            source.init_size,
+            source.main_offset,
+            source.main_size,
+            source.events_offset,
+            source.events_size,
+        )
+        == (
+            init - base,
+            main - init,
+            main - base,
+            events - main,
+            events - base,
+            end - events,
+        )
     )
     if not matching_ranges:
         return RoomSourceQuery(
             ok=False, retry=True, error="room ID and loaded script ranges disagree"
         )
     scripts = []
-    for start, end in ((init, main), (main, events)):
+    for start, section_end in ((init, main), (main, events), (events, end)):
         script = bytearray()
-        for address in range(start, end, 4096):
-            width = min(4096, end - address)
+        for address in range(start, section_end, 4096):
+            width = min(4096, section_end - address)
             result = read_memory(address, width)
             if not result.ok or len(result.data) != width:
                 return RoomSourceQuery(
@@ -132,7 +169,7 @@ def match_room_source(
         normalized = [bytearray(script) for script in scripts]
         valid = True
         for field in source.mutable_fields:
-            script = normalized[0 if field.section == "init" else 1]
+            script = normalized[{"init": 0, "main": 1, "events": 2}[field.section]]
             value = int.from_bytes(
                 script[field.offset : field.offset + field.width], "little"
             )
@@ -140,6 +177,14 @@ def match_room_source(
                 field.original,
                 field.original & 1,
             ):
+                valid = False
+                break
+            if (
+                field.kind == "event-pointer"
+                and value != base + source.events_offset + field.original
+            ):
+                # The pinned loader relocates every nonzero indexed event entry.
+                # An unrelocated table means that this source is not ready yet.
                 valid = False
                 break
             # The engine masks opcode 18's parameter in place and transfers
@@ -153,6 +198,7 @@ def match_room_source(
         ) == (
             source.init_sha256,
             source.main_sha256,
+            source.events_sha256,
         ):
             matches.append(source)
     if not matches:
@@ -169,7 +215,14 @@ def match_room_source(
         )
     # Variants may have identical item programs. Preserve every matching source,
     # so caching requires agreement rather than choosing an arbitrary variant.
-    return RoomSourceQuery(ok=True, sources=tuple(matches))
+    return RoomSourceQuery(
+        ok=True,
+        sources=tuple(matches),
+        memory_markers=(
+            (layout.loaded_rdt_pointer_address, pointer.data),
+            (base + 0x60, header.data),
+        ),
+    )
 
 
 @dataclass(frozen=True)
@@ -178,6 +231,8 @@ class CachedRoomObservation:
     sources: tuple[RoomScriptSource, ...]
     context: tuple[int, ...]
     absent_flags: tuple[tuple[int, bool], ...]
+    source_selection: tuple[int, ...]
+    doors_complete: bool
 
 
 def read_cache_context(

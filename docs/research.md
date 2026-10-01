@@ -1136,6 +1136,7 @@ Limits: this author did not run a live mutation experiment. Dynamic quantity in 
 History:
 - 2026-09-30; Codex subagent `/root/remake_items`, GPT-6.1 Sol; traced source stores, enumerated concrete Mansion targets, and generated exact mutable-field metadata. Root integration and runtime matching tests are separate contributions.
 - 2026-09-30; Codex root, GPT-6.1 Sol; independently verified stores at `0x80045FF4`, `0x800486C0`, and `0x80048758`. Added mandatory mutable-field construction checks, per-source normalization and identity hashing. Regression tests accept only original or original&1 parameter values, accept the audited quantity byte, and reject a third parameter value, adjacent opcode corruption, overlapping fields and out-of-range declarations. No new live source-mutation experiment was performed.
+- 2026-10-01; Codex root, GPT-6.1 Sol; RE1-SOURCE-002 extends exact source identity to indexed-event bytes and their loader relocation. The original item-mutation claims and attribution above are unchanged.
 
 
 ## RE1-CACHE-002: indexed event analysis permits guarded Mansion item-cache reuse
@@ -1168,6 +1169,7 @@ History:
 - 2026-09-30; Gemini 3.8 Flash High via agy; reviewed the supplied cache/event/source-binding integration. Its fresh-tracker cached-door KeyError finding was reproduced and corrected with a regression test. Its GlobalId assertion candidate was rejected because the mandatory observer validates the index before returning items. Direct pinned opcode12/13 stores use the complete slot byte without an item-initializer mask; state-0 event08 reinitializes the current event at `0x80027150..0x80027180` and has no sequential continuation. Quantity-transfer stores write selected AOT source+9 regardless of creator opcode, so the source normalization covers every possible matching initializer pointer. Those review suggestions did not change these verified rules. Claude Opus 4.6 Thinking and Gemini 3.1 Pro High final cache reviews timed out after five minutes without a usable review; they are not endorsements. The earlier usable Gemini Pro integration review and its verified reconnect correction remain recorded above.
 - 2026-10-01; Codex root, GPT-6.1 Sol; RE1-SCD-006 resolves ROOM1051's two padded-zero event-decoding failures. The regenerated manifest now reports its indexed events as clean, but retains its unresolved item predicates and door updates as cache blockers. Eligibility counts and all item/door payloads remain unchanged; the new manifest hash is recorded in RE1-SCD-006. This is source-derived scanner validation, not a new runtime cache experiment.
 - 2026-10-01; Codex root, GPT-6.1 Sol; RE1-CACHE-003 supersedes the range-only predicate relevance calculation above. Nested checks are now bounded by their own branch lifetime, with transitive dependencies and procedure-ending paths retained. The regenerated source eligibility counts remain unchanged; this correction does not establish new gameplay coverage.
+- 2026-10-01; Codex root, GPT-6.1 Sol; RE1-ENGINE-001 adds shared reconstruction when an observed manifest's supported global conditions change. Stable observations still use this cache audit, with additional rejection of temporary-bank context. Reentry remains necessary where conditions or asynchronous effects cannot be reconstructed.
 
 
 ## RE1-CACHE-003: nested predicate lifetimes and transitive source guards
@@ -1210,6 +1212,81 @@ Evidence: every scanned Mansion source has an unconditional door AOT0 as its fir
 Limits: no ready gate was implemented or runtime-tested. A guaranteed high-water slot alone may be registered before lower-slot items and is not a complete readiness proof. No invented timer or artificial state flag is authorized by this finding.
 History:
 - 2026-09-30; Codex subagent `/root/remake_items`, GPT-6.1 Sol; inspected the loader and initializer; reported the bounded lifecycle candidate without changing production readiness behavior.
+
+## RE1-ENGINE-001: shared reconstruction of entered rooms from scripts and fresh flags
+
+Status: Candidate; pinned source inspection, synthetic regressions and comparison with donated RAM captures
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; 334 bounded RDT sources for 159 logical Main/Sub pairs
+Environment: Python 3.14.7, pytest 9.1.1 and Capstone 5.0.9; owned-disc extraction and existing Herb/Chemical captures from DuckStation `0.1-11894-gc66b2694d`; no new emulator session
+Authored: 2026-10-01; Codex root; model: GPT-6.1 Sol
+Basis: primary executable inspection, generated semantic rules, synthetic branch experiments and existing controlled RAM comparisons
+Claim: one RE1 engine can refresh entered rooms from their source-defined interactions and fresh acquisition/story flags. It keeps trusted live descriptors only while their audited global conditions and source selection remain valid. When those conditions change, it reconstructs supported item and door initializers rather than requiring an item-specific rule or carrying the old completion state forward.
+
+Evidence:
+
+- The compiler retains semantic operands and command boundaries from bounded initialization procedures. It models IF/ELSE/ENDIF, global flag tests and local shadow writes, Main/Sub/character byte comparisons, item and door creators, and AOT handler changes. RE1-CACHE-003 identifies the pinned stack handlers and runner; RE1-FLAG-001 identifies acquisition-bit numbering. No raw script bytes enter the generated program.
+- The ten required flag banks remain profile data. Groups 0, 1, 2, 3, 7 and 8 lie in the saved RAM block inspected in RE1-SAVE-002. Only separately audited group-5 bits 8 and 46 are supported outside that block. Character is the byte at PS1 VA `0x800C8669`. Room-local banks 4, 6 and 9, other group-5 bits, and unresolved byte comparisons cannot establish an earlier room's condition from the current room's temporary state. Coincident equal cache bytes do not authorize that reuse.
+- Shadow flag writes use physical address and mask because native bank ranges overlap. They never write game RAM. A synthetic cross-bank alias test verifies this invariant. An audit of all 334 initialization programs found no existing write/read alias pair crossing different banks, so this is a preventive interpreter correction, not a reproduced game defect.
+- An unresolved predicate explores both native failure and continuation. The engine publishes each slot only when all resulting paths agree. Per-procedure limits of 4096 analysis states and 16 IF frames bound work; exceeding either rejects completeness. These are analyzer budgets, not claims about native stack capacities.
+- Any decoded main/event AOT mutation, quantity transfer, or forced handler-1/4/15 dispatch blocks reconstruction for its affected slot. The engine does not replay asynchronous events. Unclassified generic pickup creators or awards without a descriptor reject coverage. A live current-room descriptor can resolve a slot whose initializer condition is unresolved, but absence of that descriptor cannot prove clearance. Expected available items missing from a partially populated live registry also prevent clearance.
+- `tests/test_tracking_rules.py` compares reconstructed types, GlobalIds and acquisition states with the donated Herb and Chemical before/after captures. It exercises six GlobalIds across word/byte boundaries, multiple-item clearance, earlier acquisition restoration, absent future items, supported story alternatives, source changes, door replacement, unsupported predicates, failed reads and malformed metadata. The story flag substitutions and earlier-load simulations are synthetic. In the Storeroom test, toggling `0x800C3006 & 0x02` selects Chemical versus Broken Shotgun inside `ROOM1180.RDT`; it does not select a different Storeroom file.
+- Polling rechecks the rule bytes, masked source context, acquisition/door flags, loaded-source pointer/header, AOT bound/registry and finally Main/Sub before publication. Regressions change a save-related flag, room, registry or source pointer late in a poll and require Retry without publishing. This reduces mixed snapshots but does not make separate GDB reads atomic.
+- Door coverage has its own explicit state and reason in the tracker/map. An unresolved door does not turn an item-cleared room into an item-incomplete room. Source inference refreshes entered rooms only; map reveal still follows observed entry, and collecting a game map does not reveal additional rooms.
+- The generation audit reports 334 sources, 159 logical rooms and 298 clean bytecode-coverage candidates. The older conservative cache audit reports 255 candidates, subject to the engine's additional global-context checks. These counts measure static coverage, not confirmed cleared rooms. `ROOM2000.RDT` remains excluded with bad init/main/event ranges. All 43 original Mansion rows retain their source signatures, item IDs, decoder statuses and cache-eligibility booleans. Audit artifact `/tmp/tasks/re-map/shared-engine/generation-audit.json` stays outside Git.
+
+Limits: this is bounded initialization reconstruction, not a complete RE1 VM. Unmodeled commands contribute uncertain return paths; native callback side effects and asynchronous changes do not receive invented rules. Clean bytecode decoding alone does not confirm every condition, native callback, pickup or door. No new natural story event, normal save/load, walked transition or other character/revision was tested. The map still has Mansion 1F geometry only. Visit history still belongs to the tracker session; the engine rereads game-derived state without persisting another copy.
+History:
+
+- 2026-10-01; Codex root, GPT-6.1 Sol; generated the semantic rules, implemented shared evaluation and integration, compared donated captures, and inspected the final source/data changes. Validation results are appended below after the final checks.
+- 2026-10-01; Gemini 3.8 Flash High via agy; reviewed supplied source and tests without gameplay. Root verified and corrected late poll publication checks, missing door uncertainty, omitted changed door handlers and delayed builder slot validation. Targeted regressions cover each correction and the analyzer budgets.
+- 2026-10-01; Gemini 3.1 Pro High via agy; reviewed the same supplied source and tests without gameplay. Root added unresolved-opcode divergence and present/absent live-slot reconciliation cases. Its proposed FC/FD event continuation change was rejected after direct pinned instruction inspection: `0x80026044..0x80026064` decrements the event stack and advances the current event PC by one on the zero-return exit; it does not resume after the saved deferred SCD. Existing repeat/exit scanner tests cover that native behavior.
+- 2026-10-01; Claude Opus 4.6 Thinking via agy; final review unavailable because its eligibility request returned service error 503. It supplied no usable review or endorsement. Root verified the returned Gemini candidates and performed the final review.
+- 2026-10-01; Codex root, GPT-6.1 Sol; final suite passed 259 tests in 11.99 seconds. Scoped Ruff lint and formatting checks passed for all 13 changed Python files, and `git diff --check` passed. The project has no configured formatter or linter; these Ruff runs were explicit manual checks. No new runtime/save files or raw game sources enter the feature commit.
+
+
+## RE1-SOURCE-002: indexed-event relocation belongs in loaded source identity
+
+Status: Candidate; pinned relocation instructions and existing RAM comparisons
+Scope: the SLUS-00551 executable identity in RE1-ENGINE-001; loaded init/main/indexed-event sections
+Environment: read-only pinned executable, owned RDTs and donated Herb/Chemical RAM; no new GDB experiment
+Authored: 2026-10-01; Codex root; model: GPT-6.1 Sol
+Basis: primary executable inspection, exact source comparison and synthetic corruption tests
+Claim: source binding must include the indexed-event section, normalizing only its proven pointer relocation and the audited item fields in RE1-SOURCE-001. Each original nonzero event-table u32 becomes `loaded_rdt_base + events_offset + original_relative_pointer`. Other event bytes remain exact except the separately declared item parameter/quantity mutations.
+
+Evidence:
+
+- Loader instructions `0x80044BA4..0x80044BD8` read each nonzero event-table entry, add the event-section base, store it back, and advance by four bytes until the zero sentinel. The matcher requires this exact relocated value, then restores the original integer for hashing. It does not accept an unrelocated nonzero pointer as initialized source identity.
+- The existing Herb capture differs from its owned event source in 40 pointer bytes, all accounted for by these declared relocations. Its event payload matches after normalization. The Chemical source has an empty event table and matches exactly. These compare existing captures, not a newly observed loader execution.
+- `tests/test_tracking_rules.py` and `tests/test_room_cache.py` reject a corrupted relocated pointer, an unrelated changed event byte, malformed section bounds, overlapping mutable fields and invalid pointer declarations. Exact init/main matching and rejection of unsupported item parameter values remain intact.
+
+Limits: normalization authorizes source identity, not event execution or item completeness. Quantity-changing slots still require live observation. Unknown or malformed event flow remains unresolved. The evidence covers the named captures and source instructions, not every loaded room or revision.
+History:
+
+- 2026-10-01; Codex root, GPT-6.1 Sol; extended source metadata/matching to indexed events, inspected relocation stores and added exact corruption regressions. RE1-SOURCE-001 retains its original authorship and item-mutation evidence.
+
+
+## RE1-SELECT-001: complete source choices for supported logical rooms
+
+Status: Candidate for unplayed areas; pinned loader rule and owned-disc catalog audit
+Scope: the SLUS-00551 executable identity in RE1-ENGINE-001; Main 0 through 6 and supported Sub IDs
+Environment: read-only executable and owned-disc catalog; existing Mansion captures only
+Authored: 2026-10-01; Codex root; model: GPT-6.1 Sol
+Basis: primary loader instructions, catalog correspondence and synthetic selector tests
+Claim: the tracker can generate and validate all four variant/alternate source choices for each supported logical room from the pinned loader tables. A story or mode change therefore selects the appropriate semantic program for an already-entered room without guessing its filename.
+
+Evidence:
+
+- RE1-STAGE-001 establishes the nine-entry-per-Main whitelist at PS1 VA `0x80010670` and the alternate flag, PS1 VA `0x800C3006` mask `0x02`. Only a matching Sub selects Main+7. The loader reads a u16 file ID at `0x80090BC8 + stage*64 + Sub*2` and a selector byte at `0x80090F48 + stage*32 + Sub`.
+- Instructions `0x800448AC..0x800449A4` use the base file ID directly for selected stages 5, 6, 12 and 13; other stages use base+1. If the selector byte is zero, they also add word `0x800C3000` bit 23, equivalent to byte `0x800C3002` mask `0x80`. The ISO catalog correspondence is file ID+3 as inspected in RE1-VARIANT-002. All addresses are PS1 virtual addresses; table IDs and semantic room IDs are separate values.
+- Generation checks all 636 choices for 159 supported logical rooms against the disc catalog, verifies the logical filename prefix and requires a generated source. Startup requires unique choices and all four cases for every supported room. The executable hash must match before metadata is written.
+- The room `00-12` regression checks the fixed alternate source `ROOM8120.RDT`. Storeroom `00-18` is not in the alternate-file whitelist and retains `ROOM1180.RDT`; its internal item branch is separate. The original Mansion source hashes/IDs remain unchanged. Generated manifest SHA256 is `c181ef221d9fc2837141c1bf7bf68b6d998895ab3e917247612a204eab4d280a`.
+- Reproduction: run `tools/build_cache_metadata.py` with the owned SLUS-00551 CUE, `data/room_manifest_slus00551.json` output and `profiles/re1_directors_cut_slus00551.json`. The compiler verifies executable identity and validates each semantic program before writing the source choices. No disc, executable or raw script bytes enter Git.
+
+Limits: correspondence for every table choice is a source audit, not natural gameplay validation of other areas or character/scenario changes. `ROOM2000.RDT` has unusable script ranges and receives no supported choices. This does not provide geometry, room names or complete native-event coverage outside Mansion 1F. RE1-VARIANT-002 and RE1-STAGE-001 retain their original runtime limits.
+History:
+
+- 2026-10-01; Codex root, GPT-6.1 Sol; independently checked both fixed-base branches in the pinned loader, generated every supported choice, audited the original Mansion rows and added source-selection regressions. No gameplay was performed outside the existing captures.
+
 
 ## Suggested next experiments
 

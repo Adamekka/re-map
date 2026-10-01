@@ -46,6 +46,8 @@ def map_state(tracker: Tracker) -> dict:
                         for item in record.items
                     ],
                     "reason": record.reason,
+                    "doors_complete": record.doors_complete,
+                    "door_reason": record.door_reason,
                 }
             )
     return {
@@ -312,7 +314,7 @@ function draw(state) {
     name.textContent=visible.has(door.target) && byId.has(door.target)?byId.get(door.target).name:'Unexplored room';
     detail.textContent=door.label;row.append(name,detail);doors.append(row);
   }
-  document.getElementById('note').textContent=visit.reason || '';
+  document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');
 }
 async function refresh() {
   try {

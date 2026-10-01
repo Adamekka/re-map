@@ -1,7 +1,7 @@
-"""Build source signatures and conservative cache dependencies for SLUS-00551.
+"""Build source signatures, tracking rules and loader choices for SLUS-00551.
 
 Usage: python3 tools/build_cache_metadata.py CUE OUT.JSON PROFILE.JSON
-Only hashes, offsets, flag masks, and diagnostic metadata are written.
+Only semantic operands, hashes, offsets, flag masks and diagnostics are written.
 """
 
 from __future__ import annotations
@@ -14,6 +14,8 @@ import struct
 from pathlib import Path
 
 from build_item_table import _iter_files, _read_file
+from build_source_choices import build_source_choices
+from build_tracking_program import build_tracking_program
 from list_psx_files import _sector_data
 from scan_events import scan_event_commands
 from scan_scd import walk_procedures
@@ -24,15 +26,18 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
     bases = [int(value, 0) for value in profile["script_flag_bases"]]
     if len(bases) != 10 or any(base % 4 for base in bases):
         raise ValueError("script_flag_bases must contain ten aligned PS1 addresses")
-    match = re.fullmatch(r"ROOM1([0-9A-F]{2})([01])\.RDT", Path(source_rdt).name)
+    match = re.fullmatch(
+        r"ROOM([1-9A-E])([0-9A-F]{2})([01])\.RDT", Path(source_rdt).name
+    )
     if match is None:
-        raise ValueError(f"not a Mansion RDT filename: {source_rdt}")
+        raise ValueError(f"not a RE1 RDT filename: {source_rdt}")
     offsets = struct.unpack_from("<19I", data, 0x48)
     row = {
-        "room_main": 0,
-        "room_sub": int(match[1], 16),
+        # RE1-STAGE-001: sparse STAGE8-E files overlay the corresponding base Main.
+        "room_main": (int(match[1], 16) - 1) % 7,
+        "room_sub": int(match[2], 16),
         "source_rdt": source_rdt,
-        "variant": int(match[2]),
+        "variant": int(match[3]),
         "source_sha256": hashlib.sha256(data).hexdigest(),
     }
     dependencies: dict[int, int] = {}
@@ -75,6 +80,12 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
             source_issues.append(f"{section}: {status}")
 
     event_start, event_end = offsets[8:10]
+    if 0 < event_start < event_end <= len(data):
+        row.update(
+            events_offset=event_start,
+            events_size=event_end - event_start,
+            events_sha256=hashlib.sha256(data[event_start:event_end]).hexdigest(),
+        )
     found, status = scan_event_commands(data, event_start, event_end)
     operations.extend(("events", address, op, raw) for address, op, raw in found)
     stats["events"] = status
@@ -286,9 +297,20 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
         raw[2] for _, _, op, raw in operations if op == 0x4C and raw[1] in (1, 2)
     }
     mutable_fields = []
+    if "events_offset" in row:
+        for index in range(event_count):
+            mutable_fields.append(
+                {
+                    "section": "events",
+                    "offset": 4 * index,
+                    "width": 4,
+                    "kind": "event-pointer",
+                    "original": struct.unpack_from("<I", data, event_start + 4 * index)[
+                        0
+                    ],
+                }
+            )
     for section, address, op, raw in operations:
-        if section not in ("init", "main"):
-            continue
         section_offset = row[section + "_offset"]
         if op == 0x18:
             # The item initializer clears every flag except bit zero in its own source packet.
@@ -343,6 +365,8 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
         item_global_ids=item_global_ids,
         mutable_fields=mutable_fields,
     )
+    if all(section + "_offset" in row for section in ("init", "main", "events")):
+        row["tracking_program"] = build_tracking_program(data, row, operations)
     for audit in profile["cache_audits"]:
         if audit["source_rdt"] != source_rdt:
             continue
@@ -377,7 +401,10 @@ def main() -> int:
             raise ValueError("CUE has no quoted FILE entry")
         image = arguments.cue.parent / image_match[1]
         rooms = []
+        excluded = []
         executable_identity = ""
+        executable = b""
+        catalog = []
         with image.open("rb") as file:
             descriptor = _sector_data(file, 16)
             root, root_size = (
@@ -385,27 +412,42 @@ def main() -> int:
                 struct.unpack_from("<I", descriptor, 166)[0],
             )
             for name, extent, size in _iter_files(file, root, root_size):
+                catalog.append(name)
                 if Path(name).name == "SLUS_005.51":
-                    digest = hashlib.sha256(_read_file(file, extent, size)).hexdigest()
+                    executable = _read_file(file, extent, size)
+                    digest = hashlib.sha256(executable).hexdigest()
                     executable_identity = "SLUS_005.51 SHA256 " + digest
-                if "/STAGE1/" in "/" + name and name.endswith(".RDT"):
-                    rooms.append(
-                        scan_cache_rdt(_read_file(file, extent, size), name, profile)
-                    )
+                if name.endswith(".RDT"):
+                    row = scan_cache_rdt(_read_file(file, extent, size), name, profile)
+                    if "tracking_program" in row:
+                        rooms.append(row)
+                    else:
+                        excluded.append({"source_rdt": name, "reason": row["reason"]})
         if executable_identity != expected_identity:
             raise ValueError(
                 "disc executable does not match the required profile identity"
             )
         if not rooms:
-            raise ValueError("disc contains no Mansion RDT files")
+            raise ValueError("disc contains no RE1 RDT files with bounded scripts")
         arguments.out.write_text(
             json.dumps(
                 {
                     "profile_id": profile["profile_id"],
                     "executable_identity": executable_identity,
-                    "research_ids": ["RE1-CACHE-001", "RE1-CACHE-002", "RE1-CACHE-003"],
+                    "research_ids": [
+                        "RE1-CACHE-001",
+                        "RE1-CACHE-002",
+                        "RE1-CACHE-003",
+                        "RE1-ENGINE-001",
+                        "RE1-SOURCE-002",
+                        "RE1-SELECT-001",
+                    ],
                     "validation": "Candidate: pinned executable and static source inspection",
                     "rooms": rooms,
+                    "excluded_sources": excluded,
+                    "source_choices": build_source_choices(
+                        executable, catalog, rooms, profile
+                    ),
                 },
                 indent=2,
             )

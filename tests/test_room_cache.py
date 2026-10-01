@@ -76,7 +76,7 @@ def test_prior_herb_room_rereads_acquisition_flags_after_a_load(tmp_path):
     assert tracker.room_state(RoomId(0, 9)).completion == RoomCompletion.Incomplete
 
 
-def test_a_rewind_cannot_reuse_an_empty_past_room_manifest(tmp_path):
+def test_a_rewind_reconstructs_an_absent_pickup_from_its_room_program(tmp_path):
     profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
     herb = fixture_ram("slus00551_green_herb_after.sav", tmp_path)
     herb[0xB81A4:0xB81A8] = bytes(4)
@@ -93,14 +93,14 @@ def test_a_rewind_cannot_reuse_an_empty_past_room_manifest(tmp_path):
         poll_once(profile, tracker, RamReader(chemical).read_memory).status
         == PollStatus.Display
     )
-    assert tracker.room_state(RoomId(0, 9)).completion == RoomCompletion.Unknown
-    assert (
-        tracker.room_state(RoomId(0, 9)).reason
-        == "Re-enter this room to refresh its items."
-    )
+    room = tracker.room_state(RoomId(0, 9))
+    assert room.completion == RoomCompletion.Incomplete
+    assert room.items[0].label == "Green Herb"
+    assert room.items[0].state == "available"
+    assert room.list_complete
 
 
-def test_changed_story_branch_invalidates_prior_chemical_completion(tmp_path):
+def test_changed_story_branch_reconstructs_the_selected_room_and_reverses(tmp_path):
     profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
     chemical = fixture_ram("slus00551_chemical_after.sav", tmp_path)
     herb = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
@@ -114,7 +114,36 @@ def test_changed_story_branch_invalidates_prior_chemical_completion(tmp_path):
         poll_once(profile, tracker, RamReader(herb).read_memory).status
         == PollStatus.Display
     )
-    assert tracker.room_state(RoomId(0, 24)).completion == RoomCompletion.Unknown
+    record = tracker.room_state(RoomId(0, 24))
+    assert record.completion == RoomCompletion.Incomplete
+    assert record.items[0].label == "Broken Shotgun"
+    assert record.items[0].state == "available"
+    assert record.list_complete
+    herb[0xC3006] &= ~2
+    assert (
+        poll_once(profile, tracker, RamReader(herb).read_memory).status
+        == PollStatus.Display
+    )
+    record = tracker.room_state(RoomId(0, 24))
+    assert record.completion == RoomCompletion.Incomplete
+    assert record.items[0].label == "Chemical"
+    assert record.items[0].state == "available"
+    # Copy the actual post-pickup flag byte, then restore the earlier game's value.
+    before_flag = herb[0xC86DE]
+    herb[0xC86DE] = chemical[0xC86DE]
+    assert (
+        poll_once(profile, tracker, RamReader(herb).read_memory).status
+        == PollStatus.Display
+    )
+    record = tracker.room_state(RoomId(0, 24))
+    assert record.completion == RoomCompletion.Cleared
+    assert record.items[0].state == "taken"
+    herb[0xC86DE] = before_flag
+    assert (
+        poll_once(profile, tracker, RamReader(herb).read_memory).status
+        == PollStatus.Display
+    )
+    assert tracker.room_state(RoomId(0, 24)).completion == RoomCompletion.Incomplete
 
 
 @pytest.mark.parametrize("pointer", [0, 0x7FFFFFFF, 0x801FFFA0, 0x80200000])
@@ -172,6 +201,9 @@ def test_source_identity_accepts_only_audited_runtime_mutations(
         main_offset=0x11A,
         main_size=4,
         main_sha256=hashlib.sha256(bytes(4)).hexdigest(),
+        events_offset=0x11E,
+        events_size=4,
+        events_sha256=hashlib.sha256(bytes(4)).hexdigest(),
         dependencies=(),
         item_global_ids=(),
         cache_complete=False,
@@ -205,7 +237,12 @@ def test_mutable_field_invariants_are_enforced_at_construction(invalid):
         elif invalid == "overlap":
             replace(source, mutable_fields=(field, field))
         else:
-            replace(source, mutable_fields=(replace(field, offset=source.init_size),))
+            size = {
+                "init": source.init_size,
+                "main": source.main_size,
+                "events": source.events_size,
+            }[field.section]
+            replace(source, mutable_fields=(replace(field, offset=size),))
 
 
 def test_item_cache_does_not_authorize_reusing_a_mutable_door_definition(tmp_path):
@@ -213,6 +250,15 @@ def test_item_cache_does_not_authorize_reusing_a_mutable_door_definition(tmp_pat
     profile.room_sources = tuple(
         replace(source, door_cache_complete=False) for source in profile.room_sources
     )
+    profile.room_programs = {
+        name: replace(
+            program,
+            mutable_slots=tuple(
+                sorted(set(program.mutable_slots) | set(program.door_slots))
+            ),
+        )
+        for name, program in profile.room_programs.items()
+    }
     tracker = Tracker()
     herb = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
     chemical = fixture_ram("slus00551_chemical_before.sav", tmp_path)

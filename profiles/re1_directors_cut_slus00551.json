@@ -435,9 +435,64 @@
       "address_ps1": "0x800C3000",
       "width": 4,
       "mask": "0x00800000"
+    },
+    {
+      "address_ps1": "0x800C3004",
+      "width": 4,
+      "mask": "0x00020000"
     }
   ],
   "room_manifest_path": "../data/room_manifest_slus00551.json",
   "cache_audits": [],
-  "notes": "Pinned runtime identity. Registered item interpretation: RE1-COVER-002. Door flag decoding: RE1-DOORS-002. Runtime and story validation limits remain in those findings."
+  "notes": "Pinned runtime identity. Registered items: RE1-COVER-002. Doors: RE1-DOORS-002. Shared rules: RE1-ENGINE-001. Event source binding: RE1-SOURCE-002. Loader choices: RE1-SELECT-001. Runtime and story validation limits remain in those findings.",
+  "tracking_rule_layout": {
+    "persistent_flag_groups": [
+      0,
+      1,
+      2,
+      3,
+      7,
+      8
+    ],
+    "persistent_flag_bits": [
+      [
+        5,
+        8
+      ],
+      [
+        5,
+        46
+      ]
+    ],
+    "character_address_ps1": "0x800C8669",
+    "source_selection_masks": [
+      {
+        "address_ps1": "0x800C8669",
+        "mask": "0xFF"
+      },
+      {
+        "address_ps1": "0x800C3002",
+        "mask": "0x80"
+      },
+      {
+        "address_ps1": "0x800C3006",
+        "mask": "0x02"
+      }
+    ],
+    "variant_address_ps1": "0x800C3002",
+    "variant_mask": "0x80",
+    "alternate_address_ps1": "0x800C3006",
+    "alternate_mask": "0x02"
+  },
+  "room_source_selector": {
+    "file_id_table_address_ps1": "0x80090BC8",
+    "variant_table_address_ps1": "0x80090F48",
+    "alternate_whitelist_address_ps1": "0x80010670",
+    "direct_base_file_stages": [
+      5,
+      6,
+      12,
+      13
+    ]
+  }
 }

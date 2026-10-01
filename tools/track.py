@@ -28,9 +28,10 @@ from games.re1.room_cache import (
     CachedRoomObservation,
     match_room_source,
     read_cache_context,
-    refresh_cached_items,
 )
 from games.re1.room_items import RuntimeItemState, observe_room_items
+from games.re1.tracking_engine import refresh_visited_room, validate_current_room
+from games.re1.tracking_rules import read_rule_snapshot
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from ui.debug_view import render
 from ui.map_view import MAP_PROFILE_ID, MapServer, mansion_floor_plan, map_state
@@ -72,7 +73,8 @@ def poll_once(
         return PollResult(PollStatus.ReadFailure, current.error)
     rid = current.room
     layout, doors_layout = profile.runtime_room_layout, profile.door_state_layout
-    if layout is None or doors_layout is None:
+    rule_layout = profile.tracking_rule_layout
+    if layout is None or doors_layout is None or rule_layout is None:
         return PollResult(
             PollStatus.ReadFailure,
             "runtime room interpretation unavailable for this profile",
@@ -121,6 +123,28 @@ def poll_once(
     context, error = read_cache_context(source_query.sources, read_memory)
     if error:
         return PollResult(PollStatus.ReadFailure, error)
+    visited_rooms = {
+        room
+        for room in profile.room_observations
+        if room != rid and str(room) in tracker.rooms
+    }
+    # The loader can select another file after a story or character change.
+    # Capture every possible source for visited rooms before selecting its rules.
+    visited_sources = {
+        source.source_rdt
+        for source in profile.room_sources
+        if source.room in visited_rooms
+    }
+    visited_sources.update(source.source_rdt for source in source_query.sources)
+    programs = tuple(profile.room_programs[name] for name in sorted(visited_sources))
+    rule_snapshot = read_rule_snapshot(rule_layout, programs, read_memory)
+    if rule_snapshot.error:
+        return PollResult(PollStatus.ReadFailure, rule_snapshot.error)
+    rule_values = dict(rule_snapshot.values)
+    current_evaluation = validate_current_room(
+        profile, observation, source_query.sources, rule_snapshot, flags
+    )
+    observation = current_evaluation.items
     represented = {
         item.global_id
         for item in observation.items
@@ -137,9 +161,18 @@ def poll_once(
         source_query.sources,
         context,
         tuple((gid, remaining(gid)) for gid in sorted(absent_gids)),
+        tuple(
+            rule_values[address] & mask
+            for address, mask in rule_layout.source_selection_masks
+        ),
+        current_evaluation.doors_complete,
     )
     refreshed = {rid: observation}
+    door_coverage = {
+        rid: (current_evaluation.doors_complete, current_evaluation.door_reason)
+    }
     past_contexts = {}
+    raw_sources = {rid: observation.active_doors}
     for room, cached in profile.room_observations.items():
         if room == rid or str(room) not in tracker.rooms:
             continue
@@ -147,24 +180,14 @@ def poll_once(
         if error:
             return PollResult(PollStatus.ReadFailure, error)
         past_contexts[room] = past_context
-        refreshed[room] = refresh_cached_items(cached, past_context, flags)
+        evaluated = refresh_visited_room(
+            profile, cached, past_context, rule_snapshot, flags
+        )
+        refreshed[room] = evaluated.items
+        raw_sources[room] = evaluated.doors
+        door_coverage[room] = evaluated.doors_complete, evaluated.door_reason
     decoded_doors = []
-    raw_sources = dict(profile.door_observations)
-    raw_sources[rid] = observation.active_doors
     for source, raw_doors in raw_sources.items():
-        if source != rid:
-            if source not in past_contexts:
-                # A reused profile may retain observations from another tracker session.
-                continue
-            cached = profile.room_observations[source]
-            if (
-                not cached.sources
-                or not all(script.door_cache_complete for script in cached.sources)
-                or past_contexts[source] != cached.context
-            ):
-                # Item coverage and door definitions have separate script audits.
-                # A later interaction can replace a door without changing items.
-                continue
         for slot, raw in raw_doors:
             try:
                 door = parse_door(
@@ -205,6 +228,62 @@ def poll_once(
     if current_again.room != rid:
         # Publish nothing until every memory read belongs to the same room.
         return PollResult(PollStatus.Retry, "room changed during read; retry")
+    # Rules, cached contexts and acquisition/door flags must refer to one state.
+    # A save load can change all of them without changing Main/Sub.
+    rule_recheck = read_rule_snapshot(rule_layout, programs, read_memory)
+    if rule_recheck.error:
+        return PollResult(PollStatus.ReadFailure, rule_recheck.error)
+    if rule_recheck.values != rule_snapshot.values:
+        return PollResult(PollStatus.Retry, "room rules changed during read; retry")
+    for sources, expected in [(source_query.sources, context)] + [
+        (profile.room_observations[room].sources, expected)
+        for room, expected in past_contexts.items()
+    ]:
+        actual, error = read_cache_context(sources, read_memory)
+        if error:
+            return PollResult(PollStatus.ReadFailure, error)
+        if actual != expected:
+            return PollResult(
+                PollStatus.Retry, "room conditions changed during read; retry"
+            )
+    for (address, width), expected in zip(
+        (
+            (doors_layout.unlock_flags_address, doors_layout.unlock_flags_width),
+            (doors_layout.player_state_address, 1),
+            (doors_layout.special_flag_address, 1),
+            (layout.acquisition_flags_address, layout.acquisition_flags_width),
+        ),
+        door_values,
+        strict=True,
+    ):
+        result = read_memory(address, width)
+        if not result.ok or len(result.data) != width:
+            return PollResult(
+                PollStatus.ReadFailure,
+                f"state recheck failed: {result.error or 'short read'}",
+            )
+        if result.data != expected:
+            return PollResult(
+                PollStatus.Retry, "item or door state changed during read; retry"
+            )
+    for address, expected in source_query.memory_markers + observation.memory_markers:
+        result = read_memory(address, len(expected))
+        if not result.ok or len(result.data) != len(expected):
+            return PollResult(
+                PollStatus.ReadFailure,
+                f"room snapshot recheck failed: {result.error or 'short read'}",
+            )
+        if result.data != expected:
+            return PollResult(
+                PollStatus.Retry, "room source or registry changed during read; retry"
+            )
+    final_room = profile.read_current_room(read_memory)
+    if not final_room.ok or final_room.room is None:
+        return PollResult(
+            PollStatus.ReadFailure, f"room recheck failed: {final_room.error}"
+        )
+    if final_room.room != rid:
+        return PollResult(PollStatus.Retry, "room changed during final read; retry")
     tracker.mark_current(rid)
     # Only source-bound Mansion rooms have a confirmed ordinary floor-plan region.
     region = (
@@ -221,7 +300,6 @@ def poll_once(
     if region:
         tracker.region_visits[region] = str(rid)
     profile.room_observations[rid] = current_cached
-    profile.door_observations[rid] = observation.active_doors
     for room, result in refreshed.items():
         normal_items = tuple(
             item for item in result.items if item.state != RuntimeItemState.Unavailable
@@ -239,9 +317,8 @@ def poll_once(
             ItemDetail(item.label or "Collectible item", item.state.value, item.amount)
             for item in normal_items
         )
-        record.reason = (
-            "" if result.list_complete else "Re-enter this room to refresh its items."
-        )
+        record.reason = "" if result.list_complete else result.coverage_reason
+        record.doors_complete, record.door_reason = door_coverage[room]
     tracker.doors = tuple(decoded_doors)
     record = tracker.room_state(rid)
     details = [f"{item.label}: {item.state}" for item in record.items]
@@ -251,6 +328,8 @@ def poll_once(
         if door.source == rid
     )
     details.append("Visited scope: this tracker session")
+    if record.door_reason:
+        details.append(record.door_reason)
     return PollResult(
         PollStatus.Display,
         render(rid, record, profile.profile_id) + "\n" + "\n".join(details),

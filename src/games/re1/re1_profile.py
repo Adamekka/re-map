@@ -18,6 +18,7 @@ from games.re1.room_cache import (
     RoomScriptSource,
 )
 from games.re1.room_items import RuntimeRoomLayout
+from games.re1.tracking_rules import RoomProgram, TrackingRuleLayout
 
 
 class MemoryResult(Protocol):
@@ -101,10 +102,12 @@ class Re1Profile:
     runtime_room_layout: RuntimeRoomLayout | None = None
     door_state_layout: DoorStateLayout | None = None
     room_sources: tuple[RoomScriptSource, ...] = ()
-    room_observations: dict[RoomId, CachedRoomObservation] = field(default_factory=dict)
-    door_observations: dict[RoomId, tuple[tuple[int, bytes], ...]] = field(
+    room_programs: dict[str, RoomProgram] = field(default_factory=dict)
+    room_source_choices: dict[tuple[RoomId, int, int], str] = field(
         default_factory=dict
     )
+    tracking_rule_layout: TrackingRuleLayout | None = None
+    room_observations: dict[RoomId, CachedRoomObservation] = field(default_factory=dict)
 
     @staticmethod
     def load(path: Path) -> Re1Profile:
@@ -255,7 +258,25 @@ class Re1Profile:
                     raise ValueError("door state address is outside configured PS1 RAM")
 
         room_sources = []
+        room_programs = {}
+        source_choices = {}
+        rule_layout = None
         if runtime_layout is not None:
+            rule_raw = raw["tracking_rule_layout"]
+            rule_layout = TrackingRuleLayout(
+                tuple(_number(value) for value in raw["script_flag_bases"]),
+                tuple(rule_raw["persistent_flag_groups"]),
+                tuple(tuple(bit) for bit in rule_raw["persistent_flag_bits"]),
+                _number(rule_raw["character_address_ps1"]),
+                tuple(
+                    (_number(mask["address_ps1"]), _number(mask["mask"]))
+                    for mask in rule_raw["source_selection_masks"]
+                ),
+                _number(rule_raw["variant_address_ps1"]),
+                _number(rule_raw["variant_mask"]),
+                _number(rule_raw["alternate_address_ps1"]),
+                _number(rule_raw["alternate_mask"]),
+            )
             manifest_path = path.parent / raw["room_manifest_path"]
             manifest = json.loads(manifest_path.read_text())
             if manifest["profile_id"] != raw["profile_id"]:
@@ -263,6 +284,32 @@ class Re1Profile:
             if manifest["executable_identity"] != raw["executable_identity"]:
                 raise ValueError("room manifest does not match profile executable")
             for row in manifest["rooms"]:
+                if (
+                    type(row["room_main"]) is not int
+                    or type(row["room_sub"]) is not int
+                    or not 0 <= row["room_main"] < 7
+                    or not 0 <= row["room_sub"] < 32
+                ):
+                    raise ValueError("invalid tracking source room")
+                program = RoomProgram.load(row["tracking_program"])
+                if row["source_rdt"] in room_programs:
+                    raise ValueError("duplicate tracking source")
+                if any(
+                    not row["init_offset"]
+                    <= procedure.start
+                    < procedure.end
+                    <= row["init_offset"] + row["init_size"]
+                    for procedure in program.procedures
+                ):
+                    raise ValueError("tracking procedure outside source init")
+                if any(
+                    command.kind == "item"
+                    and command.args[3] >= runtime_layout.acquisition_flags_width * 8
+                    for procedure in program.procedures
+                    for command in procedure.commands
+                ):
+                    raise ValueError("tracking item ID exceeds acquisition flags")
+                room_programs[row["source_rdt"]] = program
                 dependencies = tuple(
                     RoomDependency(
                         _number(dep["address_ps1"]),
@@ -287,7 +334,7 @@ class Re1Profile:
                     for gid in gids
                 ):
                     raise ValueError("room manifest item ID exceeds acquisition flags")
-                for section in ("init", "main"):
+                for section in ("init", "main", "events"):
                     offset, size, digest = (
                         row[section + "_offset"],
                         row[section + "_size"],
@@ -314,6 +361,9 @@ class Re1Profile:
                         main_offset=row["main_offset"],
                         main_size=row["main_size"],
                         main_sha256=row["main_sha256"],
+                        events_offset=row["events_offset"],
+                        events_size=row["events_size"],
+                        events_sha256=row["events_sha256"],
                         dependencies=dependencies,
                         item_global_ids=gids,
                         cache_complete=row["cache_complete"],
@@ -332,6 +382,34 @@ class Re1Profile:
                 )
             if not room_sources:
                 raise ValueError("runtime room manifest must not be empty")
+            for choice in manifest["source_choices"]:
+                room = RoomId(choice["room_main"], choice["room_sub"])
+                variant, alternate = choice["variant"], choice["alternate"]
+                key = (room, variant, alternate)
+                if (
+                    type(variant) is not int
+                    or type(alternate) is not int
+                    or variant not in (0, 1)
+                    or alternate not in (0, 1)
+                    or key in source_choices
+                ):
+                    raise ValueError("invalid or duplicate room source choice")
+                if not any(
+                    source.room == room and source.source_rdt == choice["source_rdt"]
+                    for source in room_sources
+                ):
+                    raise ValueError("room source choice has no matching program")
+                source_choices[key] = choice["source_rdt"]
+            expected_choices = {
+                (source.room, variant, alternate)
+                for source in room_sources
+                for variant in (0, 1)
+                for alternate in (0, 1)
+            }
+            if set(source_choices) != expected_choices:
+                raise ValueError(
+                    "room source choices must cover every supported selector"
+                )
 
         return Re1Profile(
             profile_id=str(raw.get("profile_id", path.stem)),
@@ -344,6 +422,9 @@ class Re1Profile:
             runtime_room_layout=runtime_layout,
             door_state_layout=door_layout,
             room_sources=tuple(room_sources),
+            room_programs=room_programs,
+            room_source_choices=source_choices,
+            tracking_rule_layout=rule_layout,
         )
 
     def has_room_addresses(self) -> bool:
