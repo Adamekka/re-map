@@ -18,8 +18,10 @@ from pathlib import Path
 # SLUS-00551's opcode 0x20 and 0x21 handlers each advance the script by 0xE.
 # Its 0x1F handler advances by 0x1C; 30 consumed the next opcode and could
 # interpret an object's payload as a procedure terminator (RE1-SCD-004).
+# Opcode 00 reads no operands. Counting its usual padding as an operand
+# falsely rejects a branch to that next byte (RE1-SCD-006).
 SIZES = {
-    0x00: 2, 0x01: 2, 0x02: 2, 0x03: 2, 0x04: 4, 0x05: 4, 0x06: 4,
+    0x00: 1, 0x01: 2, 0x02: 2, 0x03: 2, 0x04: 4, 0x05: 4, 0x06: 4,
     0x07: 6, 0x08: 4, 0x09: 2, 0x0A: 2, 0x0B: 4, 0x0C: 26, 0x0D: 18,
     0x0E: 2, 0x0F: 8, 0x10: 2, 0x11: 2, 0x12: 10, 0x13: 4, 0x14: 4,
     0x15: 2, 0x16: 2, 0x18: 26, 0x19: 4, 0x1A: 2, 0x1B: 22,
@@ -38,9 +40,6 @@ ITEM_OPS = {0x0D, 0x12, 0x13, 0x18}
 
 def _opcode_size(code: bytes, pos: int) -> tuple[int, str]:
     op = code[pos]
-    if op == 0x00 and pos + 1 == len(code):
-        # The pinned block-end handler reads no operands; a final single zero is legal.
-        return 1, "clean"
     if op == 0x33:
         if pos + 2 > len(code):
             return 0, f"truncated opcode 0x33 at +{pos}"
@@ -126,6 +125,10 @@ def walk_linear(code: bytes, base: int) -> list[tuple[int, int, bytes]]:
         size, status = _opcode_size(code, pos)
         if status != "clean":
             break
+        if code[pos] == 0x00 and pos + 1 < len(code):
+            # This candidate-only fallback retains nominal two-byte end/padding
+            # packets. Its partial results do not establish instruction reachability.
+            size = 2
         ops.append((base + pos, code[pos], code[pos : pos + size]))
         pos += size
     return ops

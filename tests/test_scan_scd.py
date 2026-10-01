@@ -133,8 +133,25 @@ def test_malformed_procedure_bounds_are_partial():
         "partial: bad procedure length at +0",
     )
     assert walk_procedures(bytes([0x04, 0x00, 0x00, 0xFF]), 0x100) == (
-        [(0x102, 0x00, bytes([0x00, 0xFF]))],
+        [(0x102, 0x00, bytes([0x00]))],
         "partial: missing procedure sentinel at +4",
+    )
+
+
+def test_branch_to_zero_after_a_terminator_is_a_separate_valid_instruction():
+    ops, status = walk(bytes((1, 1, 0, 0)), 0x100)
+    assert status == "clean"
+    assert ops == [
+        (0x100, 1, bytes((1, 1))),
+        (0x102, 0, bytes((0,))),
+        (0x103, 0, bytes((0,))),
+    ]
+
+
+def test_operand_free_end_does_not_replace_the_two_byte_procedure_sentinel():
+    assert walk_procedures(bytes((3, 0, 0, 0)), 0x100) == (
+        [(0x102, 0, bytes((0,)))],
+        "partial: missing procedure sentinel at +3",
     )
 
 

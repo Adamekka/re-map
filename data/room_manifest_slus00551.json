@@ -1816,12 +1816,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x286ac: partial: overlapping branch target at +13 (1 issues) in procedure +0 (1 procedures); embedded SCD at 0x286d2: partial: overlapping branch target at +13 (1 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x28e2c; door interaction update outside init at 0x28e36; door interaction update outside init at 0x291ca; door interaction update outside init at 0x291d4",
-      "reason": "indexed event scripts: embedded SCD at 0x286ac: partial: overlapping branch target at +13 (1 issues) in procedure +0 (1 procedures); embedded SCD at 0x286d2: partial: overlapping branch target at +13 (1 issues) in procedure +0 (1 procedures); non-bit comparison 0x11 at 0x284d2; non-bit comparison 0x10 at 0x284dc; non-bit comparison 0x10 at 0x284fe; room-local comparison field 2 at 0x28520; room-local comparison field 2 at 0x2852c; room-local comparison field 2 at 0x28538; room-local comparison field 2 at 0x28544; room-local comparison field 2 at 0x28550; room-local comparison field 2 at 0x2855c; room-local comparison field 2 at 0x28568",
+      "door_cache_reason": "door interaction update outside init at 0x28e2c; door interaction update outside init at 0x28e36; door interaction update outside init at 0x291ca; door interaction update outside init at 0x291d4",
+      "reason": "non-bit comparison 0x11 at 0x284d2; non-bit comparison 0x10 at 0x284dc; non-bit comparison 0x10 at 0x284fe; room-local comparison field 2 at 0x28520; room-local comparison field 2 at 0x2852c; room-local comparison field 2 at 0x28538; room-local comparison field 2 at 0x28544; room-local comparison field 2 at 0x28550; room-local comparison field 2 at 0x2855c; room-local comparison field 2 at 0x28568",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x286ac: partial: overlapping branch target at +13 (1 issues) in procedure +0 (1 procedures); embedded SCD at 0x286d2: partial: overlapping branch target at +13 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {

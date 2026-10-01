@@ -50,6 +50,12 @@ def test_single_dispatch_reads_operands_beyond_vm_advance_width():
     assert ops == [(0x2A, 0x12, code[2:12])]
 
 
+def test_single_dispatch_end_does_not_consume_the_following_vm_terminator():
+    ops, status = scan(bytes((7, 3, 0, 0xFF)))
+    assert status == "clean"
+    assert ops == [(0x2A, 0, bytes(1))]
+
+
 def test_odd_block_width_keeps_zero_sentinel_in_following_vm_noop():
     # The wrapper excludes one sentinel byte, which the runner reads from the following VM no-op.
     block = bytes((3, 0, 0, 0, 0))
@@ -57,6 +63,25 @@ def test_odd_block_width_keeps_zero_sentinel_in_following_vm_noop():
     ops, status = scan(code)
     assert status == "clean"
     assert ops == [(0x2C, 0, bytes((0,)))]
+
+
+@pytest.mark.parametrize(("camera", "flag"), [(1, 2), (2, 4)])
+def test_dining_room_camera_branch_can_end_at_either_adjacent_zero(camera, flag):
+    # RE1-SCD-006: both Dining Room event branches land on the second zero.
+    # Each zero is operand-free; their length-prefixed procedure still has a two-byte sentinel.
+    procedure = bytes((1, 11, 6, 2, 0, camera, 5, 4, flag, 0, 3, 0, 0, 0))
+    block = (len(procedure) + 2).to_bytes(2, "little") + procedure + bytes(2)
+    ops, status = scan(bytes((6, 19)) + block + bytes((0xFF,)))
+    assert status == "clean"
+    assert [(address, opcode) for address, opcode, _ in ops] == [
+        (0x2C, 1),
+        (0x2E, 6),
+        (0x32, 5),
+        (0x36, 3),
+        (0x38, 0),
+        (0x39, 0),
+    ]
+    assert [raw for _, opcode, raw in ops if opcode == 0] == [bytes(1), bytes(1)]
 
 
 def test_reinitialization_follows_table_entry_without_duplicate_commands():
