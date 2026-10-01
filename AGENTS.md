@@ -148,6 +148,12 @@ Tracker
 
 Names and implementation details may differ.
 
+## Tracking strategy
+
+Build shared tracking systems for RE1 collectibles, doors, and puzzle/story availability conditions. Apply supported rules across rooms instead of implementing support as one item or puzzle at a time. Prefer extending common interpretation of game scripts and runtime state over adding named-item exceptions.
+
+Use individual pickups, puzzles, and doors as validation cases for the shared system.
+
 ## Preferred implementation strategy
 
 Start outside DuckStation.
