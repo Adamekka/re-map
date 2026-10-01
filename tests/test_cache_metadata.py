@@ -1,4 +1,4 @@
-"""RE1-CACHE-002: complete source paths and relevant guards are mandatory."""
+"""RE1-CACHE-002/003: complete source paths and relevant nested guards are mandatory."""
 
 import hashlib
 import struct
@@ -136,6 +136,202 @@ def test_unrelated_camera_or_entity_conditions_do_not_invalidate_items(profile):
     assert row["cache_complete"]
     assert row["item_global_ids"] == [111]
     assert len(row["dependencies"]) == 2
+
+
+@pytest.mark.parametrize("section", ["main", "events"])
+def test_closed_nested_camera_branch_does_not_guard_a_later_item_update(
+    profile, section
+):
+    # RE1-CACHE-003: a failed camera test exits only the inner IF, before this update.
+    camera = bytes((1, 10, 6, 2, 0, 0, 0x2F, 1, 2, 3, 3, 0))
+    body = bytes((4, 1, 0, 1)) + camera + bytes((0x13, 5, 4, 0x81))
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    block = (len(code) + 2).to_bytes(2, "little") + code + bytes(2)
+    event = indexed_event(bytes((6, len(block) + 2)) + block + bytes((0xFF,)))
+    row = scan_cache_rdt(
+        source(
+            pickup(5, 0x15, 111) + bytes((0,)),
+            code if section == "main" else bytes((0,)),
+            event if section == "events" else bytes(4),
+        ),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["stats"] == {"init": "clean", "main": "clean", "events": "clean"}
+    assert row["cache_complete"]
+    assert row["dependencies"] == [
+        {"address_ps1": "0x80000102", "width": 1, "mask": 128},
+        {"address_ps1": "0x80000209", "width": 1, "mask": 255},
+        {"address_ps1": "0x80001103", "width": 1, "mask": 128},
+    ]
+
+
+def test_closed_nested_camera_branch_does_not_guard_a_later_door_initializer(profile):
+    camera = bytes((1, 10, 6, 2, 0, 0, 0x2F, 1, 2, 3, 3, 0))
+    door = bytes((0x0C, 0)) + bytes(24)
+    body = bytes((4, 1, 0, 1)) + camera + door
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(code, bytes((0,)), bytes(4)), "PSX/STAGE1/ROOM1091.RDT", profile
+    )
+    assert row["cache_complete"] and row["door_cache_complete"]
+    assert {"address_ps1": "0x80001103", "width": 1, "mask": 128} in row["dependencies"]
+
+
+def test_closed_nested_flag_branch_does_not_add_an_unrelated_dependency(profile):
+    nested = bytes((1, 10, 4, 2, 40, 1, 0x2F, 1, 2, 3, 3, 0))
+    body = bytes((4, 1, 0, 1)) + nested + bytes((0x13, 5, 4, 0x81))
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["cache_complete"]
+    assert {"address_ps1": "0x80001103", "width": 1, "mask": 128} in row["dependencies"]
+    assert {"address_ps1": "0x80001206", "width": 1, "mask": 128} not in row[
+        "dependencies"
+    ]
+
+
+def test_item_update_retains_all_active_parent_and_nested_flag_guards(profile):
+    camera = bytes((1, 10, 6, 2, 0, 0, 0x2F, 1, 2, 3, 3, 0))
+    child_body = bytes((4, 2, 40, 1)) + camera + bytes((0x13, 5, 4, 0x81))
+    child = bytes((1, len(child_body) + 2)) + child_body + bytes((3, 0))
+    body = bytes((4, 1, 0, 1)) + child
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["cache_complete"]
+    assert row["dependencies"] == [
+        {"address_ps1": "0x80000102", "width": 1, "mask": 128},
+        {"address_ps1": "0x80000209", "width": 1, "mask": 255},
+        {"address_ps1": "0x80001103", "width": 1, "mask": 128},
+        {"address_ps1": "0x80001206", "width": 1, "mask": 128},
+    ]
+
+
+def test_nested_procedure_end_keeps_its_condition_for_a_later_item_update(profile):
+    # True ends the whole procedure; false pops only the inner IF and reaches the update.
+    nested = bytes((1, 6, 4, 2, 40, 1, 0, 0))
+    body = bytes((4, 1, 0, 1)) + nested + bytes((0x13, 5, 4, 0x81))
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["stats"] == {"init": "clean", "main": "clean", "events": "clean"}
+    assert row["cache_complete"]
+    assert {"address_ps1": "0x80001206", "width": 1, "mask": 128} in row["dependencies"]
+
+
+@pytest.mark.parametrize("alternate", [False, True])
+def test_nested_camera_condition_still_blocks_items_in_either_arm(profile, alternate):
+    update = bytes((0x13, 5, 4, 0x81))
+    yes = bytes((6, 2, 0, 0)) + (bytes((0x2F, 1, 2, 3)) if alternate else update)
+    no = update if alternate else bytes((0x2F, 1, 2, 3))
+    nested = bytes((1, len(yes) + 2)) + yes + bytes((2, len(no) + 2)) + no
+    body = bytes((4, 1, 0, 1)) + nested
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert not row["cache_complete"]
+    assert "room-local comparison field 2" in row["reason"]
+
+
+def test_condition_in_nested_else_keeps_the_parent_skip_target(profile):
+    # ELSE/failing THEN pops the inner IF. A failing test in ELSE exits the parent IF.
+    yes = bytes((4, 2, 40, 1, 0x2F, 1, 2, 3))
+    no = bytes((6, 2, 0, 0, 0x2F, 1, 2, 3))
+    nested = bytes((1, len(yes) + 2)) + yes + bytes((2, len(no) + 2)) + no
+    body = bytes((4, 1, 0, 1)) + nested + bytes((0x13, 5, 4, 0x81))
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert not row["cache_complete"]
+    assert "room-local comparison field 2" in row["reason"]
+    assert {"address_ps1": "0x80001206", "width": 1, "mask": 128} in row["dependencies"]
+
+
+@pytest.mark.parametrize("door", [False, True])
+def test_top_level_else_condition_can_block_a_later_initializer(profile, door):
+    yes = bytes((4, 1, 0, 1, 0x2F, 1, 2, 3))
+    no = bytes((6, 2, 0, 0, 0x2F, 1, 2, 3))
+    branch = bytes((1, len(yes) + 2)) + yes + bytes((2, len(no) + 2)) + no
+    initializer = bytes((0x0C, 0)) + bytes(24) if door else pickup(5, 0x15, 111)
+    row = scan_cache_rdt(
+        source(branch + initializer + bytes((0,)), bytes((0,)), bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["stats"] == {"init": "clean", "main": "clean", "events": "clean"}
+    assert not row["door_cache_complete" if door else "cache_complete"]
+    assert "room-local" in row["door_cache_reason" if door else "reason"]
+    assert {"address_ps1": "0x80001103", "width": 1, "mask": 128} in row["dependencies"]
+
+
+@pytest.mark.parametrize("door", [False, True])
+def test_else_condition_keeps_an_initializer_in_its_own_arm_unresolved(profile, door):
+    yes = bytes((4, 1, 0, 1, 0x2F, 1, 2, 3))
+    initializer = bytes((0x0C, 0)) + bytes(24) if door else pickup(5, 0x15, 111)
+    no = bytes((6, 2, 0, 0)) + initializer
+    branch = bytes((1, len(yes) + 2)) + yes + bytes((2, len(no) + 2)) + no
+    row = scan_cache_rdt(
+        source(branch + bytes((0,)), bytes((0,)), bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["stats"] == {"init": "clean", "main": "clean", "events": "clean"}
+    assert not row["door_cache_complete" if door else "cache_complete"]
+    assert "room-local" in row["door_cache_reason" if door else "reason"]
+
+
+def test_nested_else_test_can_select_the_parent_else_item_update(profile):
+    nested_yes = bytes((4, 2, 40, 1, 0x2F, 1, 2, 3))
+    nested_no = bytes((6, 2, 0, 0, 0x2F, 1, 2, 3))
+    nested = (
+        bytes((1, len(nested_yes) + 2))
+        + nested_yes
+        + bytes((2, len(nested_no) + 2))
+        + nested_no
+    )
+    yes = bytes((4, 1, 0, 1)) + nested
+    no = bytes((0x13, 5, 4, 0x81))
+    code = bytes((1, len(yes) + 2)) + yes + bytes((2, len(no) + 2)) + no + bytes((0,))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert row["stats"] == {"init": "clean", "main": "clean", "events": "clean"}
+    assert not row["cache_complete"]
+    assert "room-local comparison field 2" in row["reason"]
+    assert {"address_ps1": "0x80001103", "width": 1, "mask": 128} in row["dependencies"]
+    assert {"address_ps1": "0x80001206", "width": 1, "mask": 128} in row["dependencies"]
+
+
+def test_closed_nested_condition_does_not_disguise_an_unguarded_item_update(profile):
+    camera = bytes((1, 10, 6, 2, 0, 0, 0x2F, 1, 2, 3, 3, 0))
+    body = camera + bytes((0x13, 5, 4, 0x81))
+    code = bytes((1, len(body) + 2)) + body + bytes((3, 0, 0))
+    row = scan_cache_rdt(
+        source(pickup(5, 0x15, 111) + bytes((0,)), code, bytes(4)),
+        "PSX/STAGE1/ROOM1091.RDT",
+        profile,
+    )
+    assert not row["cache_complete"]
+    assert "unguarded item interaction update" in row["reason"]
+    assert "room-local comparison" not in row["reason"]
 
 
 def test_event_manifest_guard_and_creation_guard_are_dependencies(profile):

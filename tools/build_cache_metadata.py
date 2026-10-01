@@ -135,38 +135,90 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
     # Room-local tests only invalidate item knowledge when they guard an item manifest writer.
     # Other tests can animate a camera, NPC, or door without changing an observed item list.
     by_address = {address: (op, raw) for _, address, op, raw in operations}
+    branches = []
     for section, begin, op, raw in operations:
         if op != 1:
             continue
-        finish = begin + 2 + raw[1]
-        alternate = by_address.get(finish - 2)
+        false_target = begin + 2 + raw[1]
+        finish = false_target
+        alternate = by_address.get(false_target - 2)
         if alternate is not None and alternate[0] == 2:
-            finish = finish - 2 + alternate[1][1]
-        for targets, destination in ((writers, guarded), (door_writers, door_guarded)):
-            affected = [
-                address
-                for writer_section, address in targets
-                if writer_section == section and begin < address < finish
+            finish = false_target - 2 + alternate[1][1]
+        branches.append((section, begin, false_target, finish))
+
+    predicate_limits = {}
+    unbounded_predicates = set()
+    for section, address, op, _ in operations:
+        if op not in predicates:
+            continue
+        active = [
+            (begin, finish)
+            for branch_section, begin, false_target, finish in branches
+            if branch_section == section and begin < address < false_target
+        ]
+        if active:
+            # RE1-CACHE-003: failure pops the innermost IF. Its condition can select either
+            # arm, but cannot skip a later sibling after both arms have ended.
+            # ELSE has already popped that IF, so its tests use the parent.
+            begin, finish = max(active)
+            if not any(
+                operation_section == section
+                and begin < operation_address < finish
+                and operation == 0
+                for operation_section, operation_address, operation, _ in operations
+            ):
+                predicate_limits[address] = finish
+            else:
+                unbounded_predicates.add(address)
+            # A reachable procedure end prevents reconvergence. Its branch
+            # conditions can still decide whether a later sibling runs.
+        elif any(
+            branch_section == section and false_target <= address < finish
+            for branch_section, _, false_target, finish in branches
+        ):
+            # An ELSE test without a parent IF ends the procedure on failure.
+            # Keep it relevant to later source writes; flat event output does
+            # not prove which procedure bounds would safely narrow that extent.
+            unbounded_predicates.add(address)
+        # Without an active IF, retain the conservative existing branch audit;
+        # no captured stack owner proves a narrower predicate extent.
+
+    for targets, destination in ((writers, guarded), (door_writers, door_guarded)):
+        pending = list(targets)
+        inspected = set()
+        while pending:
+            section, target = pending.pop()
+            if (section, target) in inspected:
+                continue
+            inspected.add((section, target))
+            containing = [
+                begin
+                for branch_section, begin, _, finish in branches
+                if branch_section == section and begin < target < finish
             ]
-            if affected:
-                if destination is guarded:
-                    guarded_writes.update(
-                        (section, writer)
-                        for writer in affected
-                        if any(
-                            predicate_section == section
-                            and predicate in predicates
-                            and begin < predicate_address < writer
-                            for predicate_section, predicate_address, predicate, _ in operations
-                        )
-                    )
-                destination.update(
-                    address
-                    for predicate_section, address, predicate, _ in operations
-                    if predicate_section == section
-                    and predicate in predicates
-                    and begin < address < max(affected)
-                )
+            for predicate_section, address, op, _ in operations:
+                if (
+                    predicate_section != section
+                    or op not in predicates
+                    or address >= target
+                    or address not in unbounded_predicates
+                    and not any(begin < address for begin in containing)
+                    or address in predicate_limits
+                    and target >= predicate_limits[address]
+                ):
+                    continue
+                if (
+                    destination is guarded
+                    and (section, target) in direct_writers
+                    and any(begin < address for begin in containing)
+                ):
+                    # A conservative lifetime alone does not prove that an
+                    # asynchronous item write has a captured initialization guard.
+                    guarded_writes.add((section, target))
+                destination.add(address)
+                # A nested condition can choose whether another relevant
+                # condition runs, including an ELSE test that exits its parent.
+                pending.append((section, address))
     for section, address in direct_writers:
         # A mutation without a captured guard could change a departed room's manifest while context stayed equal.
         if section != "init" and (section, address) not in guarded_writes:
@@ -351,7 +403,7 @@ def main() -> int:
                 {
                     "profile_id": profile["profile_id"],
                     "executable_identity": executable_identity,
-                    "research_ids": ["RE1-CACHE-001", "RE1-CACHE-002"],
+                    "research_ids": ["RE1-CACHE-001", "RE1-CACHE-002", "RE1-CACHE-003"],
                     "validation": "Candidate: pinned executable and static source inspection",
                     "rooms": rooms,
                 },

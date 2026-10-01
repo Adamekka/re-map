@@ -3,7 +3,8 @@
   "executable_identity": "SLUS_005.51 SHA256 0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6",
   "research_ids": [
     "RE1-CACHE-001",
-    "RE1-CACHE-002"
+    "RE1-CACHE-002",
+    "RE1-CACHE-003"
   ],
   "validation": "Candidate: pinned executable and static source inspection",
   "rooms": [
@@ -1479,7 +1480,7 @@
         {
           "address_ps1": "0x800c300f",
           "width": 1,
-          "mask": 192
+          "mask": 64
         },
         {
           "address_ps1": "0x800c8669",
@@ -1510,7 +1511,7 @@
       "cache_complete": false,
       "door_cache_complete": true,
       "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
-      "reason": "non-bit comparison 0x11 at 0x2836a; non-bit comparison 0x10 at 0x28374; non-bit comparison 0x10 at 0x28396; room-local comparison field 2 at 0x283b4; room-local comparison field 2 at 0x283c0; room-local comparison field 2 at 0x283cc; room-local comparison field 2 at 0x283d8; room-local comparison field 2 at 0x283e4; room-local comparison field 2 at 0x283f0; room-local comparison field 2 at 0x283fc",
+      "reason": "non-bit comparison 0x10 at 0x28374",
       "stats": {
         "init": "clean",
         "main": "clean",
@@ -1786,7 +1787,7 @@
         {
           "address_ps1": "0x800c300f",
           "width": 1,
-          "mask": 48
+          "mask": 16
         },
         {
           "address_ps1": "0x800c8669",
@@ -1806,7 +1807,7 @@
         {
           "address_ps1": "0x800c86ab",
           "width": 1,
-          "mask": 224
+          "mask": 64
         },
         {
           "address_ps1": "0x800c8702",
@@ -1816,8 +1817,8 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "door interaction update outside init at 0x28e2c; door interaction update outside init at 0x28e36; door interaction update outside init at 0x291ca; door interaction update outside init at 0x291d4",
-      "reason": "non-bit comparison 0x11 at 0x284d2; non-bit comparison 0x10 at 0x284dc; non-bit comparison 0x10 at 0x284fe; room-local comparison field 2 at 0x28520; room-local comparison field 2 at 0x2852c; room-local comparison field 2 at 0x28538; room-local comparison field 2 at 0x28544; room-local comparison field 2 at 0x28550; room-local comparison field 2 at 0x2855c; room-local comparison field 2 at 0x28568",
+      "door_cache_reason": "door interaction update outside init at 0x28e2c; door interaction update outside init at 0x28e36; door interaction update outside init at 0x291ca; door interaction update outside init at 0x291d4; room-local door comparison field 2 at 0x286b2; room-local door comparison field 2 at 0x286d8",
+      "reason": "non-bit comparison 0x10 at 0x284dc",
       "stats": {
         "init": "clean",
         "main": "clean",
@@ -6015,7 +6016,7 @@
       "cache_complete": false,
       "door_cache_complete": true,
       "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
-      "reason": "room-local comparison field 19 at 0x26e4; room-local comparison field 19 at 0x270c; room-local comparison field 16 at 0x2734; room-local comparison field 18 at 0x2740; room-local comparison field 16 at 0x2782; room-local comparison field 18 at 0x278e",
+      "reason": "room-local comparison field 18 at 0x2740; room-local comparison field 18 at 0x278e",
       "stats": {
         "init": "clean",
         "main": "clean",
@@ -6661,12 +6662,12 @@
         {
           "address_ps1": "0x800c86ab",
           "width": 1,
-          "mask": 248
+          "mask": 232
         }
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: event path leaves section at 0x31f1c; door interaction update outside init at 0x30c66; door interaction update outside init at 0x31826; door interaction update outside init at 0x31964; non-bit door comparison 0x11 at 0x30c44; non-bit door comparison 0x10 at 0x30c52",
+      "door_cache_reason": "indexed event scripts: event path leaves section at 0x31f1c; door interaction update outside init at 0x30c66; door interaction update outside init at 0x31826; door interaction update outside init at 0x31964; non-bit door comparison 0x10 at 0x30c52",
       "reason": "indexed event scripts: event path leaves section at 0x31f1c; unguarded item interaction update outside init at 0x31964; non-bit comparison 0x10 at 0x30be4; non-bit comparison 0x11 at 0x30c44; non-bit comparison 0x10 at 0x30c52; non-bit comparison 0x10 at 0x30c78; room-local comparison field 5 at 0x31268; room-local comparison field 5 at 0x31702",
       "stats": {
         "init": "clean",
@@ -7217,13 +7218,13 @@
         {
           "address_ps1": "0x800c86ab",
           "width": 1,
-          "mask": 3
+          "mask": 1
         }
       ],
       "cache_complete": false,
       "door_cache_complete": true,
       "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
-      "reason": "non-bit comparison 0x11 at 0x30bb8; non-bit comparison 0x10 at 0x30bc6; non-bit comparison 0x10 at 0x30bec",
+      "reason": "non-bit comparison 0x10 at 0x30bc6; non-bit comparison 0x10 at 0x30bec",
       "stats": {
         "init": "clean",
         "main": "clean",
