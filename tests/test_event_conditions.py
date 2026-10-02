@@ -1,4 +1,4 @@
-"""RE1-EVENT-002: synthetic ordered blocks, not natural event validation."""
+"""RE1-EVENT-004: synthetic ordered blocks, not natural event validation."""
 
 from dataclasses import replace
 

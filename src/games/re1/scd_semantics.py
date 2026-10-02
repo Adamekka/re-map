@@ -51,7 +51,7 @@ CONTINUING_OPCODES = frozenset(
     }
 )
 
-# RE1-EVENT-001: these handlers also return nonzero. This return contract
+# RE1-EVENT-003: these handlers also return nonzero. This return contract
 # controls FD repetition only; it does not authorize ignoring their effects.
 NONZERO_RETURN_OPCODES = CONTINUING_OPCODES | frozenset(
     {

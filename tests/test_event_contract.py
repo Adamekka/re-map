@@ -1,4 +1,4 @@
-"""RE1-EVENT-001: synthetic native event-flow and bounds regressions."""
+"""RE1-EVENT-003: synthetic native event-flow and bounds regressions."""
 
 import pytest
 from test_cache_metadata import indexed_event, pickup

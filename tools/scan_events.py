@@ -2,7 +2,7 @@
 
 This decoder follows every indexed entry in VM state 0, including FA/FB loops
 and FC/FD deferred SCD dispatch. Widths and transitions come from the named
-SLUS-00551 interpreter in RE1-CACHE-002 and RE1-EVENT-001. Malformed paths reject
+SLUS-00551 interpreter in RE1-CACHE-002 and RE1-EVENT-003. Malformed paths reject
 coverage; payload bytes are never scanned as free-standing commands.
 """
 
