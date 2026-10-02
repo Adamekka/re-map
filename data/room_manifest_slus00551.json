@@ -9,6 +9,12 @@
     "RE1-ENGINE-002",
     "RE1-SCD-007",
     "RE1-SCD-008",
+    "RE1-SCD-009",
+    "RE1-SCD-010",
+    "RE1-SCD-011",
+    "RE1-SCD-012",
+    "RE1-SCD-013",
+    "RE1-SCD-014",
     "RE1-EVENT-001",
     "RE1-VARS-001",
     "RE1-SOURCE-002",
@@ -61459,8 +61465,10 @@
               {
                 "offset": 168484,
                 "next": 168486,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "inventory-remove",
+                "args": [
+                  66
+                ]
               },
               {
                 "offset": 168486,
@@ -63198,8 +63206,10 @@
               {
                 "offset": 168332,
                 "next": 168334,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "inventory-remove",
+                "args": [
+                  66
+                ]
               },
               {
                 "offset": 168334,
@@ -65511,8 +65521,10 @@
               {
                 "offset": 256792,
                 "next": 256836,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256836,
@@ -65651,8 +65663,10 @@
               {
                 "offset": 256920,
                 "next": 256964,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256964,
@@ -66160,8 +66174,10 @@
               {
                 "offset": 256748,
                 "next": 256792,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256792,
@@ -66300,8 +66316,10 @@
               {
                 "offset": 256876,
                 "next": 256920,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256920,
@@ -83838,8 +83856,12 @@
               {
                 "offset": 70336,
                 "next": 70338,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "local-flag-clear",
+                "args": [
+                  4,
+                  240,
+                  16
+                ]
               },
               {
                 "offset": 70338,
@@ -145984,8 +146006,12 @@
               {
                 "offset": 105112,
                 "next": 105116,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "aot-callback",
+                "args": [
+                  14,
+                  13,
+                  1
+                ]
               },
               {
                 "offset": 105116,
@@ -148064,8 +148090,12 @@
               {
                 "offset": 105112,
                 "next": 105116,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "aot-callback",
+                "args": [
+                  14,
+                  13,
+                  1
+                ]
               },
               {
                 "offset": 105116,
@@ -217431,8 +217461,12 @@
               {
                 "offset": 40468,
                 "next": 40472,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  14,
+                  0
+                ]
               },
               {
                 "offset": 40472,
@@ -235000,8 +235034,10 @@
               {
                 "offset": 38830,
                 "next": 38874,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 38874,
@@ -236796,8 +236832,10 @@
               {
                 "offset": 38952,
                 "next": 38996,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 38996,
@@ -239046,8 +239084,10 @@
               {
                 "offset": 256792,
                 "next": 256836,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256836,
@@ -239186,8 +239226,10 @@
               {
                 "offset": 256920,
                 "next": 256964,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256964,
@@ -239695,8 +239737,10 @@
               {
                 "offset": 256748,
                 "next": 256792,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256792,
@@ -239835,8 +239879,10 @@
               {
                 "offset": 256876,
                 "next": 256920,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 256920,
@@ -243121,8 +243167,10 @@
               {
                 "offset": 112206,
                 "next": 112250,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 112250,
@@ -243937,8 +243985,10 @@
               {
                 "offset": 112206,
                 "next": 112250,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 112250,
@@ -289035,8 +289085,12 @@
               {
                 "offset": 140040,
                 "next": 140044,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "aot-callback",
+                "args": [
+                  14,
+                  13,
+                  1
+                ]
               },
               {
                 "offset": 140044,
@@ -291175,8 +291229,12 @@
               {
                 "offset": 140040,
                 "next": 140044,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "aot-callback",
+                "args": [
+                  14,
+                  13,
+                  1
+                ]
               },
               {
                 "offset": 140044,
@@ -309687,8 +309745,12 @@
               {
                 "offset": 200266,
                 "next": 200270,
-                "kind": "unsupported-effect",
-                "args": []
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  14,
+                  0
+                ]
               },
               {
                 "offset": 200270,

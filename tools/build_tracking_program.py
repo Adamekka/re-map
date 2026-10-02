@@ -70,6 +70,16 @@ def build_tracking_program(
                 kind, args = "constant-test", [1]
         elif op == 0x0F:
             kind, args = "player-control", [raw[1]]
+        elif op == 0x1E:
+            # Movie setup's helpers change CD/audio state; the caller always
+            # sets C3000 bit 17 afterward, including the native default mode.
+            kind, args = "flag-write", [5, 14, 0]
+        elif op == 0x2C:
+            kind, args = "inventory-remove", [raw[1]]
+        elif op == 0x48:
+            # Clearing the pool zeros its first record's two header bytes.
+            # Only those bytes overlap a script flag bank, at C3024/C3025.
+            kind, args = "local-flag-clear", [4, 240, 16]
         elif op == 0x18:
             kind = "item"
             args = [raw[1] & 127, raw[10], raw[11], raw[22], raw[23]]
@@ -94,6 +104,8 @@ def build_tracking_program(
             ]
         elif op in (0x24, 0x2D) and raw[2] in (4, 15):
             kind, args = "award", [raw[1], raw[2], int(op == 0x24)]
+        elif op in (0x24, 0x2D) and raw[2] == 13:
+            kind, args = "aot-callback", [raw[1], raw[2], int(op == 0x24)]
         elif op in CONTINUING_OPCODES:
             kind, args = "constant-test", [1]
             if op in LOCAL_FLAG_WRITES:

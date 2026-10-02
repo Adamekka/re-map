@@ -1394,6 +1394,8 @@ History:
 - 2026-10-02; Codex root, GPT-6.1 Sol; all 335 tests passed in 13.48 seconds with `/tmp/re-map-check/bin/python -m pytest -q`. The seven changed Python files passed manually scoped Ruff lint and formatting checks; the project has no configured formatter or linter. `git diff --check` passed. These checks cover implementation and existing captures, not new gameplay validation.
 - 2026-10-02; Codex root, GPT-6.1 Sol; RE1-SCD-008 subsequently corrects opcode `47`'s decoding advance and the malformed synthetic `3D` packet in this feature's local-effect test. It adds an assertion that the test's source coverage is complete before accepting its unknown flag result. Original native-effect evidence and author provenance remain unchanged.
 
+- 2026-10-02; Codex root, GPT-6.1 Sol; RE1-SCD-009 through RE1-SCD-014 replace the remaining-effect classifications with audited lighting/movie/pool rules, conservative inventory returns and supported callback effects. The original 21-unsupported count remains the historical result of RE1-SCD-007. No additional gameplay confirmation is implied.
+
 
 ## RE1-VARS-001: byte and word commands share physical shadow bits
 
@@ -1607,3 +1609,67 @@ History:
 2. Move between two known RE1 rooms and poll a small candidate window at 10 Hz. Save the log with game revision and DuckStation version.
 3. Take `.sav` files before and after one pickup, decompress with the header logic above, and diff for stable changed bytes.
 4. Only if GDB polling fails, prototype Mach `vm_read` against the DuckStation PID for the same addresses and compare maintainability.
+
+## Shared command-effect audit, RE1-SCD-009 through RE1-SCD-014
+
+The six findings below share this provenance:
+
+Status: Candidate; pinned native source inspection and synthetic regressions
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`
+Environment: Python 3.14.8, pytest 9.1.1, Capstone 5.0.9; the original owned executable/disc and existing donated captures from DuckStation `0.1-11894-gc66b2694d`; no new emulator or GDB experiment
+Authored: 2026-10-02; Codex root; model: GPT-6.1 Sol
+Basis: primary executable inspection, generated semantic programs, synthetic tests and existing capture regressions
+Limits: these source contracts do not establish gameplay coverage, natural event scheduling, ordinary save/load behavior or another revision. Native CD/audio work, graphics and inventory mutations are not replayed into emulator memory. Temporary state, unaudited callbacks, quantity writes and incomplete sources can still prevent clearance.
+
+### RE1-SCD-009: light setup continues without changing tracked state
+
+Claim: opcode `46` advances 44 bytes and returns one. It modifies the loaded room's light data, without changing modeled descriptors, flag banks or scalar variables.
+Evidence: `0x800483EC..0x80048520` writes three 20-byte light records at loaded-room offsets `0x0C..0x47`, plus color halfwords at offsets 6/8/10. Loader `0x80044860..0x80044874` places that room pointer at PS1 VA `0x800CAB10`; the command only reads the pointer. Helper `0x80068030..0x80068054` calls `0x8006C77C..0x8006C798`, which writes GTE control registers, not RAM. `tests/test_remaining_effects.py` checks multiple items and a door after lighting, and preservation of an earlier flag shadow that aliases the pointer's storage.
+History:
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected the command, loader and graphics helper, added the common continuation rule and synthetic regression. No gameplay reproduction.
+
+### RE1-SCD-010: particle clear zeros only the overlapping header halfword
+
+Claim: opcode `48` advances two bytes, clears both header bytes of all 64 particle records and returns one. Only record zero's header overlaps a script flag bank: PS1 VAs `0x800C3024/0x800C3025`, bank 4 indices 240..255. The upper halfword at `0x800C3026/0x800C3027` remains unchanged.
+Evidence: `0x800478D4..0x8004794C` initializes the index at `0x800CF62E` to zero, writes byte offsets 0/1 at `0x800C3024 + 132*index`, and loops through index 63. The new `local-flag-clear` rule uses physical shadow bits, sharing state with variable writes and comparisons. Synthetic tests cover both bytes, preservation of the upper halfword, an overlapping word comparison, malformed metadata and deferred repetition.
+History:
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected the clear loop, added bounded flag clearing and verified synthetic cases. No live particle event was observed.
+
+### RE1-SCD-011: movie setup establishes control-word bit 17
+
+Claim: opcode `1E` advances four bytes, invokes the movie/audio helper, sets bit 17 of the little-endian u32 at PS1 VA `0x800C3000` and returns one. The script alias is bank 5 index 14. This final set occurs for modes 1/2 and the helper's default modes.
+Evidence: `0x80046730..0x8004679C` calls `0x80014C58` and then ORs `0x00020000` into the control word. Helper `0x80014C58..0x80014D10` handles modes 1/2 and returns directly for others. Its setup chain `0x800152A4..0x800154A8`, volume path `0x800154C0..0x80015544` and CD wrapper `0x80015B5C..0x80015C24` change CD/audio buffers and work fields outside the modeled banks. Mode 2 can clear bit 17 internally before the caller sets it again. Synthetic tests cover modes 0/1/2/255, a preceding clear, an unrelated flag and the nonzero deferred result.
+History:
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected the native caller/helper chain and implemented its final flag effect. No movie or CD timing was tested in-game.
+
+### RE1-SCD-012: inventory removal has two outcomes and can invalidate scalar aliases
+
+Claim: opcode `2C` advances two bytes, searches for its item-type operand, returns zero if absent, or removes one matching inventory entry, compacts inventory and returns one. It does not reset the world pickup acquisition bit.
+Evidence: `0x80047A78..0x80047ADC` calls inventory search `0x8002CCB8..0x8002CD2C` and conditional compaction `0x8002CA0C..0x8002CB78`. Compaction can write count byte `0x800C8667` and selection byte `0x800C8689`, byte-variable indices 7 and 41. It also changes inventory entries at the array selected by `0x800BA008` and inventory-menu work data outside the flag banks. The common interpreter retains both results and forgets count/selection shadows conservatively on either outcome. Synthetic tests cover IF divergence, unguarded procedure termination, both scalar aliases, acquisition reversal and preservation of independent pickups.
+History:
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected search/removal/compaction and implemented conservative return/effect handling. No past-room inventory is inferred from the player's current inventory, and no natural removal was played.
+
+### RE1-SCD-013: forced document callbacks conditionally set pending bit 8
+
+Claim: callback 13 sets control-word bit 8 at PS1 VA `0x800C3000`, bank 5 index 23, only when the u16 registry parameter at record offset 2 is zero. It leaves handler, mode, parameter and source pointer unchanged. With an unmodeled parameter, the interpreter preserves a prior true pending bit and otherwise records uncertainty.
+Evidence: callback table at `0x80090404` selects `0x80038138..0x80038168` for handler 13. The routine stores the selected AOT pointer at `0x800B7DCC`, branches on its parameter and sets the control word only on the zero path. Synthetic tests cover both command returns, preservation of item/door state, a previously set bit and uncertainty after a prior clear. Callback 12 at `0x800380C0..0x80038134` performs the adjacent parameter toggle; it remains unsupported.
+History:
+- 2026-10-02; Codex root, GPT-6.1 Sol; rejected an initial unconditional-set/parameter-toggle interpretation after distinguishing callback 12 from callback 13; corrected the rule and added parameter-dependent uncertainty regressions. No callback was activated in-game.
+
+### RE1-SCD-014: forced callback command returns and pending flags are independent
+
+Claim: opcode `24` returns one after callback dispatch. Opcode `2D` dispatches through `24`, sets control-word bit 10, toggles bit 11 and returns zero. This zero can exit a deferred `FD` call and skips a native IF body; it cannot repeat that call.
+Evidence: `0x800470B8..0x80047120` advances four bytes, selects the AOT slot and callback table index, then returns one. `0x80047AE0..0x80047B14` applies `(word | 0x400) ^ 0x800` at `0x800C3000` and returns zero. Inventory callback 4 at `0x80037B80..0x80037BB0` conditionally sets bit 11 based on its parameter. Map callback 15 at `0x80038578..0x800385F8` disables its handler, clears the selected acquisition bit and writes item type into byte-variable 19, `0x800C8673`. Helper `0x80033D48..0x80033D6C` sets bank 8's map ownership index, `124 + item_type - 0x4E`. The interpreter requires supported map descriptors before using their flag targets and discards preceding shadows only at those targets. Fresh acquisition flags remain authoritative; it does not grant a synthetic map. Other callback IDs remain explicitly unsupported. Tests exercise known zero/nonzero deferred returns, pending-bit ordering, parameter-dependent uncertainty, invalid map types and untouched ownership bits.
+History:
+- 2026-10-02; Codex root, GPT-6.1 Sol; rechecked return paths already recorded in RE1-ENGINE-002, extended the common pending/alias effects and the indexed scanner's zero-return contract. No callback was activated in gameplay.
+
+### Shared command-effect generation and regression audit
+
+- The same 334 bounded sources and 636 loader choices were regenerated from the owned CUE. Compared with `c31bb4f`, all source hashes/ranges, decoder status, cache eligibility, event effects, item/door identities, acquisition IDs, mutable-source declarations and program coverage flags are unchanged. Seventeen programs change only their init/main semantic command classification.
+- All 21 previous unsupported init/main effects are classified: 12 light continuations, two movie flag writes, two uncertain inventory removals, one pool clear and four parameter-dependent callback-13 effects. This does not prove that every room is resolved; unsupported effects can still arise in a newly decoded source or an unaudited callback, and independent conditions remain unresolved.
+- Manifest SHA256 is `6514c3c7e7b37ecdabd45e66565b76f2719d4f954b46caed21cddcb514f237bb`. Detailed generation and projection audits are `/tmp/tasks/re-map/remaining-effects/generation-audit.json` and `projection-audit.json`, outside Git. Reproduction uses `tools/build_cache_metadata.py` with the pinned profile and owned CUE, then compares with `c31bb4f`.
+- Both generated command sets evaluated by the current engine under the existing Herb-before flags produce complete item-source coverage of 254 before and 255 after. Unresolved item slots change from 141 to 135, doors from 186 to 180. `ROOM70C0.RDT` is the one newly complete item-source variant. Other variants can resolve individual slots while retaining other uncertainty. The dual evaluation took about 0.34 seconds here, an offline probe rather than live polling latency or gameplay validation.
+- `tests/test_remaining_effects.py` uses synthetic packets and flag substitutions. Existing Herb/Chemical capture regressions retain their original authorship and scope. The project has no configured formatter/linter; scoped Ruff formatting and linting are used for these Python changes.
+- 2026-10-02; Gemini 3.1 Pro High via agy; reviewed the supplied source, diff, synthetic tests and native instruction excerpts without gameplay. Root verified its callback-4 precision finding against `0x80037B80..0x80037BB0`: a conditional OR preserves an already true bit. The common rule now preserves that fact, with opcode-24 preservation and opcode-2D toggle regressions. Its missing-test finding covered the same transition. Root rejected removing global `FF` handling: the dispatcher selects `F6..FF` at `0x80025D60..0x80025D84` before checking VM state at `0x80026078`; `FF` clears activity at `0x80026068..0x80026074`. Explicit actor/motion termination regressions retain that native contract from RE1-EVENT-001.
+- 2026-10-02; Claude Opus 4.6 Thinking via agy; review timed out after five minutes with no usable output. Gemini 3.8 Flash High via agy produced no review because its headless session attempted a command that was auto-denied. Neither result supplies findings or an endorsement. No permissions were broadened, and the timed-out model was not retried.
+- 2026-10-02; Codex root, GPT-6.1 Sol; final review checked every external candidate against the pinned instructions and actual rules. All 529 tests passed in 13.82 seconds. The six changed Python files passed scoped Ruff lint/format checks; no project formatter/linter is configured. Independent regeneration was byte-identical, the final offline projection retained the counts above, and `git diff --check` passed. These checks establish implementation/source consistency, not additional runtime confirmation.

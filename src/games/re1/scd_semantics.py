@@ -1,4 +1,4 @@
-"""Pinned SLUS-00551 command returns audited in RE1-SCD-007.
+"""Pinned SLUS-00551 command returns audited in RE1-SCD-007 and 009 through 014.
 
 These handlers return one after their visual, audio, enemy or event work.
 They do not directly write the modeled item/door descriptors or persistent flags.
@@ -43,6 +43,7 @@ CONTINUING_OPCODES = frozenset(
         0x43,
         0x44,
         0x45,
+        0x46,
         0x47,
         0x49,
         0x4A,
@@ -68,14 +69,20 @@ NONZERO_RETURN_OPCODES = CONTINUING_OPCODES | frozenset(
         0x13,
         0x18,
         0x1C,
+        0x1E,
         0x23,
+        0x24,
         0x31,
         0x40,
-        0x46,
+        0x48,
         0x4C,
         0x4D,
     }
 )
+
+# RE1-SCD-014: 2D ignores its callback result and returns zero after updating
+# pending bits. Unlike a predicate, it cannot repeat an FD deferred call.
+ZERO_RETURN_OPCODES = frozenset({0x00, 0x2D})
 
 # Each predicate only reads its condition and advances the script pointer.
 # Inventory, buttons, geometry and enemy state have no supported past-room

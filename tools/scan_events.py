@@ -16,7 +16,7 @@ from scan_scd import _opcode_size, walk_procedures
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from games.re1.scd_semantics import NONZERO_RETURN_OPCODES
+from games.re1.scd_semantics import NONZERO_RETURN_OPCODES, ZERO_RETURN_OPCODES
 
 
 def scan_event_commands(
@@ -147,9 +147,9 @@ def scan_event_commands(
                 issues.append(f"deferred SCD at 0x{command:x}: {status}")
                 continue
             record((command, data[command], data[command : command + size]))
-            # FD repeats only on nonzero. Native SCD 00 returns zero, while
-            # audited nonzero handlers cannot expose a later exit path.
-            if data[command] != 0:
+            # FD repeats only on nonzero. Audited zero returns cannot repeat,
+            # while audited nonzero handlers cannot expose a later exit path.
+            if data[command] not in ZERO_RETURN_OPCODES:
                 pending.append((repeat, state, stack))
             if data[command] in NONZERO_RETURN_OPCODES:
                 continue

@@ -48,11 +48,14 @@ class RuleCommand:
             "aot-create": 3,
             "aot-handler": 3,
             "award": 3,
+            "aot-callback": 3,
+            "inventory-remove": 1,
             "uncertain-test": 0,
         }
         if (
             self.kind not in counts
-            and self.kind not in ("variable-write", "local-flag-forget")
+            and self.kind
+            not in ("variable-write", "local-flag-forget", "local-flag-clear")
             or self.kind in counts
             and len(self.args) != counts[self.kind]
             or not 0 <= self.offset < self.next
@@ -88,7 +91,7 @@ class RuleCommand:
             )
         ):
             raise ValueError("invalid variable writes")
-        if self.kind == "local-flag-forget" and (
+        if self.kind in ("local-flag-forget", "local-flag-clear") and (
             not self.args
             or len(self.args) % 3
             or any(
@@ -106,7 +109,8 @@ class RuleCommand:
         ):
             raise ValueError("invalid quantity transfer")
         if (
-            self.kind in ("item", "aot-create", "aot-handler", "door", "award")
+            self.kind
+            in ("item", "aot-create", "aot-handler", "door", "award", "aot-callback")
             and not 0 <= self.args[0] < 24
         ):
             raise ValueError("tracking rule slot exceeds the pinned AOT registry")
@@ -132,6 +136,12 @@ class RuleCommand:
             self.args[1] not in (4, 15) or self.args[2] not in (0, 1)
         ):
             raise ValueError("invalid tracking award handler")
+        if self.kind == "aot-callback" and (
+            self.args[1] != 13 or self.args[2] not in (0, 1)
+        ):
+            raise ValueError("invalid tracking callback handler")
+        if self.kind == "inventory-remove" and not 0 <= self.args[0] <= 255:
+            raise ValueError("invalid inventory removal type")
 
 
 @dataclass(frozen=True)
@@ -471,15 +481,29 @@ def evaluate_room_program(
                 break
             elif kind == "constant-test":
                 predicate = bool(args[0])
-            elif kind == "local-flag-forget":
+            elif kind in ("local-flag-forget", "local-flag-clear"):
                 changed = dict(writes)
                 for group, first, count in zip(
                     args[::3], args[1::3], args[2::3], strict=True
                 ):
                     for index in range(first, first + count):
-                        # These native writes have unresolved values. Keep an
-                        # explicit unknown even if a prior command set this bit.
-                        changed[layout.flag(group, index)] = None
+                        # Forget unresolved native values even after a shadow
+                        # write; a proven clear instead establishes false.
+                        changed[layout.flag(group, index)] = (
+                            False if kind == "local-flag-clear" else None
+                        )
+                writes = tuple(sorted(changed.items()))
+            elif kind == "inventory-remove":
+                # A prior room's inventory is unavailable. Native removal
+                # returns zero if absent and one if found, then compacts it.
+                # Compaction can change count byte 7 and selection byte 41.
+                # Forgetting both on either outcome conservatively covers that
+                # conditional write without inventing past inventory contents.
+                predicate = None
+                changed = dict(writes)
+                for index in (7, 41):
+                    for bit in range(8):
+                        changed[layout.byte_variables_base + index, 1 << bit] = None
                 writes = tuple(sorted(changed.items()))
             elif kind == "player-control":
                 changed = dict(writes)
@@ -622,11 +646,56 @@ def evaluate_room_program(
                     for descriptor in changed.get(args[0], frozenset({None}))
                 )
                 slots = tuple(sorted(changed.items()))
-            elif kind == "award":
+            elif kind in ("award", "aot-callback"):
                 # Completed inventory/map awards clear the acquisition bit.
                 # Read the completed result from RAM; do not grant an item by replaying a script.
                 # Opcode 24 returns one, while 2D returns zero to the IF runner.
                 predicate = bool(args[2])
+                changed = dict(writes)
+                if args[1] == 13:
+                    # Callback 13 sets C3000 bit 8 only for a zero registry
+                    # parameter. That field is not modeled; a prior true bit
+                    # remains true, otherwise either result is possible.
+                    address = layout.flag(5, 23)
+                    changed[address] = True if changed.get(address) is True else None
+                elif args[1] == 4:
+                    # The pending bit depends on the registry parameter, which
+                    # setters can change independently of mode. A conditional
+                    # OR cannot erase an already established true bit.
+                    address = layout.flag(5, 20)
+                    changed[address] = True if changed.get(address) is True else None
+                else:
+                    assert args[1] == 15
+                    # The immediate map callback changes byte variable 19.
+                    # Its acquisition result still comes from the fresh flags.
+                    for bit in range(8):
+                        changed[layout.byte_variables_base + 19, 1 << bit] = None
+                    # The forced callback uses its source even if the current
+                    # handler is disabled. Require supported map descriptors
+                    # before interpreting any source-dependent writes.
+                    for descriptor in dict(slots).get(args[0], frozenset({None})):
+                        if (
+                            descriptor is None
+                            or descriptor[0] != "item"
+                            or not 0x4E <= descriptor[1][1] < 0x54
+                        ):
+                            bounded = False
+                            break
+                        _, item_type, _, gid, _ = descriptor[1]
+                        # Read actual acquisition/ownership from fresh RAM;
+                        # discard older shadows only at the possible targets.
+                        changed[layout.flag(7, gid)] = None
+                        changed[layout.flag(8, item_type - 0x4E + 124)] = None
+                    if not bounded:
+                        break
+                if not predicate:
+                    # 2D sets pending bit 10 and toggles bit 11 after dispatch,
+                    # even when its zero return skips the surrounding IF body.
+                    changed[layout.flag(5, 21)] = True
+                    address = layout.flag(5, 20)
+                    old = changed.get(address)
+                    changed[address] = None if old is None else not old
+                writes = tuple(sorted(changed.items()))
             if predicate is not True:
                 if stack:
                     pending.append((stack[-1], stack[:-1], slots, writes))
