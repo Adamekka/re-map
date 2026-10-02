@@ -1319,6 +1319,105 @@ History:
 - 2026-10-02; Codex root, GPT-6.1 Sol; final verification: all 279 tests passed in 13.31 seconds using `/tmp/re-map-check/bin/python -m pytest -q`. The nine changed Python files passed manually scoped Ruff lint and formatting checks; no project formatter or linter is configured. `git diff --check` passed, and the final manifest hash matched the generation audit above. These checks validate the implementation and existing capture regressions, not new gameplay behavior.
 
 
+## RE1-SCD-007: native command results and effects govern shared reconstruction
+
+Status: Candidate; pinned executable inspection and synthetic regression tests
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; init/main programs for 334 bounded source variants
+Environment: Python 3.14.8, pytest 9.1.1 and Capstone 5.0.9; owned executable/disc and existing Herb/Chemical captures from DuckStation `0.1-11894-gc66b2694d`; no new emulator or GDB experiment
+Authored: 2026-10-02; Codex root; model: GPT-6.1 Sol
+Basis: primary executable inspection, source-derived semantic metadata, synthetic tests and an offline projection using existing capture flags
+Claim: commands with an audited nonzero result can continue through the shared item/door interpreter. Native predicates retain their supported result or both unresolved outcomes. Reached unsupported effects reject reconstruction. Relevant variable/flag changes require explicit rules; visual/audio effects are not replayed.
+
+Evidence:
+
+- The native dispatch table is at PS1 VA `0x80091108`. The runner at `0x800489CC..0x80048AEC` calls the selected handler at `0x80048A40..0x80048A6C`. A nonzero result continues; zero leaves the current IF block or ends the procedure. Treating every previously unclassified setup command as a possible zero result therefore introduced impossible branches. All instruction addresses below are PS1 virtual addresses in the executable named above.
+- The following 37 handlers return one for their decoded supported forms. Their native setup work is separate from the modeled item/door descriptors. Event activation by `14` remains represented by RE1-ENGINE-002's possible event effects. Local flag aliases listed below are explicitly forgotten rather than retained from an earlier shadow write.
+
+| Opcode | Native handler entry |
+| --- | --- |
+| `0B` | `0x800452F4` |
+| `0E` | `0x80045160` |
+| `14` | `0x80045C88` |
+| `15` | `0x800453A4` |
+| `16` | `0x8004574C` |
+| `17` | `0x800458F4` |
+| `19` | `0x80045B10` |
+| `1B` | `0x80046420` |
+| `1F` | `0x800467A0` |
+| `20` | `0x80046C2C` |
+| `21` | `0x80046CD4` |
+| `25` | `0x80046AF8` |
+| `27` | `0x8004582C` |
+| `28` | `0x80047124` |
+| `2A` | `0x800475FC` |
+| `2B` | `0x80047A10` |
+| `2F` | `0x800456B4` |
+| `30` | `0x80047B18` |
+| `32` | `0x80047BE0` |
+| `33` | `0x80047324` |
+| `34` | `0x80047C60` |
+| `35` | `0x80047D68` |
+| `37` | `0x8004534C` |
+| `39` | `0x80047F9C` |
+| `3A` | `0x80047FF0` |
+| `3B` | `0x80048054` |
+| `3D` | `0x80047700` |
+| `3E` | `0x80047834` |
+| `41` | `0x80048334` |
+| `42` | `0x80047884` |
+| `43` | `0x8004587C` |
+| `44` | `0x80045CE4` |
+| `45` | `0x800483B0` |
+| `47` | `0x80046DE4` |
+| `49` | `0x800485D4` |
+| `4A` | `0x8004541C` |
+| `4B` | `0x8004555C` |
+
+- Indirect writes matter even when the return is one. Message helper `0x80035278..0x8003538C` can mask the little-endian halfword at `0x800CAB00`, so opcode `0B` forgets bank 6 indices 16 through 31. Enemy setup `1B`, including helper `0x80025B18..0x80025C18`, changes the pointer at `0x800CAB14` and counter byte at `0x800C3022`; their bank 6 indices 160 through 191 and bank 4 indices 200 through 207 become unknown. Particle helpers `0x80021FD8..0x8002241C` can replace the u32 record header at `0x800C3024`, so `2A/3D/3E/42` forget bank 4 indices 224 through 255. These are local alias invalidations, not new persistent acquisition flags.
+- Camera setters `09/0A`, at `0x80045180..0x800452F4`, set/clear u32 `0x800C3000` mask `0x00100000`. Camera control `23`, at `0x80047044..0x800470B8`, sets it for a nonzero operand and clears it for zero. This is native bank 5 index 11, not a byte-numbered index. The camera rebuild calls scene helpers through `0x80017B28..0x80017B9C`; the analyzer discards earlier shadows in local banks 4/6/9 because those helpers' local results are not reconstructed. Camera predicates remain unresolved.
+- Player control `0F`, at `0x80045D38..0x80045E00`, clears the lowest two bits of u32 `0x800C3000`, then ORs its byte operand into that word. Higher bits with zero operands preserve their preceding state. Graphics copy/allocation calls through `0x80030378..0x800305E8` can change local pointers at `0x800CAB14..0x800CAB1F`; their bank 6 indices 160 through 255 become unknown. Tests check both low-bit replacement and a high operand bit.
+- Quantity transfer `4C`, at `0x80048634..0x8004878C`, always returns one and advances four bytes. Mode 0 reads the AOT source quantity into a byte variable. Mode 1 writes that variable into the source quantity. Mode 2 reads the source's item type, searches inventory with `0x8002CCB8`, then copies the found quantity into both the byte variable and source. Thus byte 2 is an AOT slot in all three modes, not an inventory item ID. Modes 1/2 retain a live-quantity barrier; mode 0 does not mutate the descriptor. Modes 0/2 forget the destination variable because its live input is unavailable to past-room reconstruction. If mode 2 finds no inventory match, the native value is unchanged; unconditional forgetting is deliberately conservative. Other mode bytes follow a native no-op return path and compile to an explicit constant result.
+- Read-only predicates `10/11/1A/1D/22/36/38/3C/3F` retain both outcomes. Their handlers are respectively `0x80045ADC`, `0x80045AA8`, `0x80045B54`, `0x80045A60`, `0x80046E90`, `0x80047DEC`, `0x80047F40`, `0x80048120` and `0x8004824C`. Past-room inventory, selected item, camera, actor, geometry and input state are not inferred from the current room. Supported variable comparisons are separately scoped in RE1-VARS-001.
+- Unclassified side effects now stop reconstruction when reached instead of behaving like predicates. The 21 remaining init/main occurrences are inventory removal `2C`, light setup `46`, movie `1E`, unaudited callbacks `24/2D` and particle-pool clear `48`. An unreachable unsupported branch does not invalidate a supported path. This classification does not authorize a scanner-width correction or claim support for those commands. Native stubs `26/2E`, which leave the script pointer/result unchanged, are also excluded from the continuing set.
+- Source audit failures are mandatory input to program coverage. Clean instruction decoding alone does not validate opcode `14`'s event index. Invalid event targets now prevent clearance even if a normal pickup follows. This corrects overclaimed source coverage for `ROOM6031`, `ROOM60B1` and `ROOMD0B1`. The `ROOM70C0` rejection instead follows its reached unsupported `46` command.
+- `tests/test_command_semantics.py` checks multiple pickups and a door after setup, acquisition rewind, true predicate divergence, reached/unreachable unsupported effects, invalid event targets, scalar/physical flag aliases, local-effect invalidation, camera/player flags, all supported word comparisons, quantity modes/default, and mandatory metadata bounds. These byte packets and RAM replacements are synthetic. Existing capture regressions retain their original provenance.
+- Regeneration covers the same 334 sources and all 636 loader choices. Against commit `4d2e50b`, every existing source signature, range, decoder status, item ID, mutable-source declaration and cache-eligibility field is unchanged. The 5,105 former uncertain commands become 3,123 constant results, 1,380 local invalidations, 60 additional flag writes, 64 variable-write commands, 42 camera changes, 16 player-control commands, six quantity transfers, 231 word predicates, 162 unresolved predicates and 21 unsupported effects. Manifest SHA256 is `d58fa42e9d1edc99774ac9b1fe0bce201dc69e8db7934f887fee1f0bf5dc0da9`.
+- An offline projection under the existing Herb-before flag snapshot changes complete-item source coverage from 233 to 248 variants. Nineteen gain coverage and four reject earlier overclaims; unresolved item slots fall from 184 to 145, and unresolved door slots from 204 to 203. Both generated command sets run through the current evaluator with source stage digit minus one modulo seven and source room digits as the logical room ID. This comparison is not a replay of the previous engine or gameplay in every source. Both evaluations took 0.267 seconds on this host, not a live polling-latency measurement. The script and report are `/tmp/tasks/re-map/command-semantics/audit.py` and `generation-audit.json`, outside Git. Regenerate with `tools/build_cache_metadata.py`, the owned SLUS-00551 CUE and committed profile; compare all fields outside `tracking_program` and the complete source-choice list against `4d2e50b`.
+
+Limits: no new natural story event, door unlock, normal save/load, savestate sequence, alternate character or other-area gameplay was performed. This audits native instruction paths and analyzer behavior; it does not promote commands or variable addresses to confirmed runtime coverage. Unresolved local conditions, dynamic quantities, unsupported effects and incomplete source decoding still prevent clearance. Room visit/reveal behavior and map geometry are unchanged. No other revision is covered.
+History:
+
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected the pinned dispatch table, handler returns and relevant direct/indirect writes; implemented shared semantics, regenerated source metadata and added regressions. Primary instruction excerpts remain outside Git at `/tmp/tasks/re-map/command-semantics/native-handlers.txt`; the executable hash and instruction locations above identify the reproducible evidence.
+- 2026-10-02; Gemini 3.8 Flash High via agy; reviewed supplied source and tests without tools or gameplay. Root verified its mode-0 quantity barrier finding against `0x800486C4..0x800486F8` and removed that barrier. Root also added explicit native default-mode compilation, semantic mode validation and quantity/high-control-bit regressions. Its proposed mode-2 item-ID interpretation was rejected by descriptor lookup `0x80048704..0x80048718` and source quantity store `0x80048758`. Retaining initializer scalar shadows into recurring main evaluation would assert stale state; they remain discarded under RE1-VARS-001's history limit. Camera writes are unconditional set/clear and need no prior RAM value; later persistent flag predicates already contribute their own snapshot reads. Word-operator regressions were added during primary inspection before the review returned.
+- 2026-10-02; Claude Opus 4.6 Thinking via agy; review unavailable with quota error 429. Gemini 3.1 Pro High via agy timed out after five minutes without usable output. Neither supplied findings or an endorsement. Root checked the available review candidates against the pinned executable and performed the final inspection.
+- 2026-10-02; Codex root, GPT-6.1 Sol; all 335 tests passed in 13.48 seconds with `/tmp/re-map-check/bin/python -m pytest -q`. The seven changed Python files passed manually scoped Ruff lint and formatting checks; the project has no configured formatter or linter. `git diff --check` passed. These checks cover implementation and existing captures, not new gameplay validation.
+
+
+## RE1-VARS-001: byte and word commands share physical shadow bits
+
+Status: Candidate; pinned address/operand inspection and synthetic alias tests
+Scope: the SLUS-00551 executable identity in RE1-SCD-007; commands `06/07/08/1C/31/4C`
+Environment: read-only pinned executable and synthetic tests; existing DuckStation captures retain RE1-SCD-007's environment and original attribution
+Authored: 2026-10-02; Codex root; model: GPT-6.1 Sol
+Basis: primary executable inspection and synthetic comparisons
+Claim: native byte variables start at PS1 VA `0x800C8660` with one-byte indexing; word variables start at PS1 VA `0x800C8674` with two-byte indexing and little-endian u16 values. The interpreter can reconstruct supported same-pass writes and comparisons in a physical-bit shadow without writing emulator RAM or treating another room's local scalar values as persistent facts.
+
+Evidence:
+
+- Byte setter `08`, at `0x800450EC..0x80045120`, consumes four bytes, uses byte 1 as its index and stores only the low byte of the u16 at packet+2 into `0x800C8660 + index`. Word setter `31`, at `0x80045124..0x8004515C`, consumes four bytes and stores packet+2's u16 into `0x800C8674 + 2*index`. Both return one. The profile requires both bases explicitly and validates their full u8-index address ranges inside PS1 RAM; word alignment and character offset 9 are mandatory.
+- Word predicate `07`, at `0x80045048..0x800450E8`, consumes six bytes, ignores packet byte 1, uses byte 2 as the index, byte 3 as the comparison and packet+4's little-endian u16 as the expected value. It loads the actual word with `lhu`. Comparison codes 0 through 5 are equality, greater-than, greater-or-equal, less-than, less-or-equal and inequality. Both operands are nonnegative halfwords, so high-bit values compare unsigned. Tests use `0xFFFF` and `0x8000`, nonzero padding and all six operators. Other comparison codes remain unresolved rather than copying an incidental native register result.
+- Counter setup `1C`, at `0x80046B68..0x80046C28`, consumes six bytes and returns one. It writes byte index 8 from packet byte 1 and word index 2 from packet+2's u16. A nonzero signed counter also sets word index 1 to `0x7FFF` for negative or zero for positive. A zero counter preserves that earlier word. Packet+4 also controls bytes at PS1 VAs `0x800C845D..0x800C845F`, outside the modeled variable/flag banks; their results are not used to claim item or door state.
+- Flag and variable shadows use the same physical address/mask keys. For example, word index 16 is PS1 VA `0x800C8694`, also the beginning of persistent flag bank 1. A later flag clear overrides a preceding word write through that alias. Each supported word value occupies 16 individual little-endian physical bits. Neither setter changes emulator memory.
+- Byte predicates use the established logical Main/Sub and fresh character byte only for indices 0/1/9, with same-pass shadow changes applied afterward. Other byte predicates remain unresolved. Word predicates are resolved only for indices below 16 and only when all 16 bits were written in the current analysis pass. Higher indices overlap other saved structures and are not promoted to scalar predicates by this feature. No new whole variable-bank read is added to polling.
+- At the init-to-recurring-main boundary, initializer flag and variable shadows are discarded. Current persistent flag tests use the fresh snapshot; scalar state is unknown until current main commands write it. Earlier main/event ticks can change a scalar after initialization, and historical descriptor reconstruction does not reconstruct those scalar histories. Carrying the initializer value forward would therefore permit false availability conclusions. Regressions verify both same-pass resolution and rejection of stale initializer/current-other-room values.
+- Quantity copies `4C` modes 0/2 explicitly replace the destination byte shadow with unknown, so a preceding known character write cannot authorize a later comparison after a live quantity read. Native quantity and default-mode behavior is documented in RE1-SCD-007.
+
+Limits: these addresses and effects are Candidate source findings for the pinned executable. There is no new controlled variable dump or natural puzzle test. Same-pass reconstruction does not establish persistent variable lifetimes, earlier event timing or higher-index scalar semantics. RE1-SCD-005 retains its original command-width provenance.
+History:
+
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected native byte/word loads/stores and counter direction writes, added required profile fields, physical-bit shadow effects, comparison and history regressions. The final implementation checks and external-review scope are recorded in RE1-SCD-007.
+
+
 ## Suggested next experiments
 
 1. Enable `Debug/EnableGDBServer` with port 2345, connect with a small Python GDB client, and read 16 bytes at `0x80000000` while the game idles. Record whether the game keeps running.

@@ -276,6 +276,8 @@ class Re1Profile:
                 _number(rule_raw["variant_mask"]),
                 _number(rule_raw["alternate_address_ps1"]),
                 _number(rule_raw["alternate_mask"]),
+                _number(rule_raw["byte_variables_base_ps1"]),
+                _number(rule_raw["word_variables_base_ps1"]),
             )
             manifest_path = path.parent / raw["room_manifest_path"]
             manifest = json.loads(manifest_path.read_text())

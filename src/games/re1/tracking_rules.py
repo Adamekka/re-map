@@ -37,6 +37,12 @@ class RuleCommand:
             "flag-test": 3,
             "flag-write": 3,
             "byte-test": 3,
+            "word-test": 3,
+            "constant-test": 1,
+            "unsupported-effect": 0,
+            "quantity-transfer": 3,
+            "camera-change": 1,
+            "player-control": 1,
             "item": 5,
             "door": 10,
             "aot-create": 3,
@@ -46,7 +52,9 @@ class RuleCommand:
         }
         if (
             self.kind not in counts
-            or len(self.args) != counts[self.kind]
+            and self.kind not in ("variable-write", "local-flag-forget")
+            or self.kind in counts
+            and len(self.args) != counts[self.kind]
             or not 0 <= self.offset < self.next
         ):
             raise ValueError("invalid tracking rule command")
@@ -56,6 +64,47 @@ class RuleCommand:
             not 0 <= value <= 255 for value in self.args
         ):
             raise ValueError("tracking rule operand exceeds one byte")
+        if self.kind == "constant-test" and self.args[0] not in (0, 1):
+            raise ValueError("invalid constant command result")
+        if self.kind == "camera-change" and self.args[0] not in (0, 1):
+            raise ValueError("invalid camera change")
+        if self.kind == "player-control" and not 0 <= self.args[0] <= 255:
+            raise ValueError("invalid player control")
+        if self.kind == "word-test" and (
+            not all(0 <= value <= 255 for value in self.args[:2])
+            or not 0 <= self.args[2] <= 65535
+        ):
+            raise ValueError("invalid word predicate")
+        if self.kind == "variable-write" and (
+            not self.args
+            or len(self.args) % 3
+            or any(
+                width not in (1, 2)
+                or not 0 <= index <= 255
+                or not 0 <= value < 1 << (8 * width)
+                for width, index, value in zip(
+                    self.args[::3], self.args[1::3], self.args[2::3]
+                )
+            )
+        ):
+            raise ValueError("invalid variable writes")
+        if self.kind == "local-flag-forget" and (
+            not self.args
+            or len(self.args) % 3
+            or any(
+                group not in (4, 6, 9) or not 0 <= first < first + count <= 256
+                for group, first, count in zip(
+                    self.args[::3], self.args[1::3], self.args[2::3]
+                )
+            )
+        ):
+            raise ValueError("invalid local flag effects")
+        if self.kind == "quantity-transfer" and (
+            any(not 0 <= value <= 255 for value in self.args)
+            or self.args[0] not in (0, 1, 2)
+            or self.args[1] >= 24
+        ):
+            raise ValueError("invalid quantity transfer")
         if (
             self.kind in ("item", "aot-create", "aot-handler", "door", "award")
             and not 0 <= self.args[0] < 24
@@ -207,8 +256,19 @@ class TrackingRuleLayout:
     variant_mask: int
     alternate_address: int
     alternate_mask: int
+    byte_variables_base: int
+    word_variables_base: int
 
     def __post_init__(self) -> None:
+        if (
+            not 0x80000000 <= self.byte_variables_base <= 0x801FFF00
+            or not 0x80000000 <= self.word_variables_base <= 0x801FFE00
+            or self.word_variables_base % 2
+            or self.character_address != self.byte_variables_base + 9
+        ):
+            raise ValueError(
+                "tracking variables require bounded PS1 banks and character offset"
+            )
         if len(self.flag_bases) != 10 or any(
             base % 4 or not 0x80000000 <= base <= 0x801FFFE0 for base in self.flag_bases
         ):
@@ -337,6 +397,8 @@ def evaluate_room_program(
         if index == len(program.procedures):
             # Current RAM already reflects completed initialization. Main tests
             # must use that snapshot rather than repeat init's shadow flag writes.
+            # Scalar variables can also change during prior main/event ticks;
+            # their initializer shadows are not proof of their current values.
             # Main setters can retain an earlier effect after its guard becomes
             # false. Include those histories before applying current main rules.
             effects = program.event_effects + tuple(
@@ -402,6 +464,35 @@ def evaluate_room_program(
                 # Unclassified handlers may return zero to the native runner.
                 # Explore failure as well as continuation instead of assuming a no-op.
                 predicate = None
+            elif kind == "unsupported-effect":
+                # A return guess cannot account for unaudited writes or a
+                # handler that fails to advance its PC. Reject reconstruction.
+                bounded = False
+                break
+            elif kind == "constant-test":
+                predicate = bool(args[0])
+            elif kind == "local-flag-forget":
+                changed = dict(writes)
+                for group, first, count in zip(
+                    args[::3], args[1::3], args[2::3], strict=True
+                ):
+                    for index in range(first, first + count):
+                        # These native writes have unresolved values. Keep an
+                        # explicit unknown even if a prior command set this bit.
+                        changed[layout.flag(group, index)] = None
+                writes = tuple(sorted(changed.items()))
+            elif kind == "player-control":
+                changed = dict(writes)
+                for bit in range(8):
+                    # The native control setter clears low bits 0/1, then ORs
+                    # its byte operand into C3000. Preserve untouched higher bits.
+                    if bit < 2 or args[0] & (1 << bit):
+                        changed[layout.flag(5, 31 - bit)] = bool(args[0] & (1 << bit))
+                for index in range(160, 256):
+                    # Model copying/allocation changes CAB14/CAB1C pointers.
+                    # Their local flag aliases cannot retain an earlier shadow.
+                    changed[layout.flag(6, index)] = None
+                writes = tuple(sorted(changed.items()))
             elif kind == "flag-test":
                 group, index, expected = args
                 bit = None
@@ -418,13 +509,36 @@ def evaluate_room_program(
                     if bit is not None and expected in (0, 1)
                     else None
                 )
-            elif kind == "byte-test":
+            elif kind in ("byte-test", "word-test"):
                 index, comparison, expected = args
-                actual = {
-                    0: room.stage,
-                    1: room.room,
-                    9: values[layout.character_address],
-                }.get(index)
+                actual = None
+                shadow = dict(writes)
+                if kind == "byte-test" and index in (0, 1, 9):
+                    actual = {
+                        0: room.stage,
+                        1: room.room,
+                        9: values[layout.character_address],
+                    }[index]
+                    address = layout.byte_variables_base + index
+                    for bit in range(8):
+                        if (address, 1 << bit) in shadow:
+                            value = shadow[address, 1 << bit]
+                            if value is None:
+                                actual = None
+                                break
+                            actual = actual & ~(1 << bit) | int(value) << bit
+                elif kind == "word-test" and index < 16:
+                    # Only fully written scalar words can be reconstructed.
+                    # Higher indices overlap other saved structures and room-local data.
+                    address = layout.word_variables_base + 2 * index
+                    bits = [
+                        shadow.get((address + bit // 8, 1 << (bit % 8)))
+                        for bit in range(16)
+                    ]
+                    if all(bit is not None for bit in bits):
+                        actual = sum(
+                            int(value) << bit for bit, value in enumerate(bits)
+                        )
                 predicate = (
                     None
                     if actual is None or comparison > 5
@@ -437,8 +551,10 @@ def evaluate_room_program(
                         actual != expected,
                     )[comparison]
                 )
-            elif kind == "flag-write":
-                group, index, operation = args
+            elif kind in ("flag-write", "camera-change"):
+                group, index, operation = (
+                    (5, 11, args[0]) if kind == "camera-change" else args
+                )
                 if group >= len(layout.flag_bases):
                     # An undefined bank can write outside the modeled flag state.
                     # It is an unsupported side effect, not a conditional failure.
@@ -465,6 +581,40 @@ def evaluate_room_program(
                         else None
                     )
                     writes = tuple(sorted(changed.items()))
+                if kind == "camera-change":
+                    # The camera rebuild calls local scene helpers. Their local
+                    # flag results are not reconstructed, so discard older shadows.
+                    changed = dict(writes)
+                    for local_group in (4, 6, 9):
+                        for local_index in range(256):
+                            changed[layout.flag(local_group, local_index)] = None
+                    writes = tuple(sorted(changed.items()))
+            elif kind == "variable-write":
+                changed = dict(writes)
+                for width, index, value in zip(
+                    args[::3], args[1::3], args[2::3], strict=True
+                ):
+                    base = (
+                        layout.byte_variables_base
+                        if width == 1
+                        else layout.word_variables_base
+                    )
+                    address = base + width * index
+                    for bit in range(8 * width):
+                        # Use physical bits so variable writes and overlapping
+                        # flag-bank writes share one shadow state. Never write RAM.
+                        changed[address + bit // 8, 1 << (bit % 8)] = bool(
+                            value & (1 << bit)
+                        )
+                writes = tuple(sorted(changed.items()))
+            elif kind == "quantity-transfer" and args[0] in (0, 2):
+                changed = dict(writes)
+                address = layout.byte_variables_base + args[2]
+                for bit in range(8):
+                    # These copies read live source/inventory quantities that
+                    # cannot be reconstructed. Forget a preceding scalar write.
+                    changed[address, 1 << bit] = None
+                writes = tuple(sorted(changed.items()))
             elif kind in ("item", "door", "aot-create", "aot-handler"):
                 changed = dict(slots)
                 changed[args[0]] = frozenset(

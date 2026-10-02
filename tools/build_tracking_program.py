@@ -10,12 +10,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from scan_scd import walk
 
+from games.re1.scd_semantics import (
+    CONTINUING_OPCODES,
+    LOCAL_FLAG_WRITES,
+    UNRESOLVED_PREDICATE_OPCODES,
+)
 from games.re1.tracking_rules import RoomProgram
 
 
-def build_tracking_program(data: bytes, row: dict, operations: list) -> dict:
+def build_tracking_program(
+    data: bytes, row: dict, operations: list, source_complete: bool
+) -> dict:
     def command(address: int, op: int, raw: bytes) -> dict:
-        kind, args = "uncertain-test", []
+        kind, args = "unsupported-effect", []
         if op == 0:
             kind = "end"
         elif op in (1, 2):
@@ -28,6 +35,41 @@ def build_tracking_program(data: bytes, row: dict, operations: list) -> dict:
             args = list(raw[1:4])
         elif op == 6:
             kind, args = "byte-test", list(raw[1:4])
+        elif op == 7:
+            kind, args = (
+                "word-test",
+                [raw[2], raw[3], struct.unpack_from("<H", raw, 4)[0]],
+            )
+        elif op in (8, 0x31):
+            width = 1 if op == 8 else 2
+            kind, args = (
+                "variable-write",
+                [width, raw[1], int.from_bytes(raw[2 : 2 + width], "little")],
+            )
+        elif op == 0x1C:
+            value = struct.unpack_from("<H", raw, 2)[0]
+            kind, args = "variable-write", [1, 8, raw[1], 2, 2, value]
+            # A zero counter leaves its previous direction word unchanged.
+            if value:
+                args += [2, 1, 0x7FFF if value & 0x8000 else 0]
+        elif op in (9, 0x0A, 0x23):
+            # Camera setters and the camera-control command also update word
+            # C3000 bit 20, native flag-bank 5 index 11. Camera predicates stay unresolved.
+            operation = 1 if op == 0x0A or op == 0x23 and raw[1] == 0 else 0
+            kind, args = (
+                ("flag-write", [5, 11, operation])
+                if op == 0x23
+                else ("camera-change", [operation])
+            )
+        elif op == 0x4C:
+            if raw[1] in (0, 1, 2):
+                kind, args = "quantity-transfer", list(raw[1:4])
+            else:
+                # The native default advances four bytes and returns one
+                # without accessing a descriptor or changing a variable.
+                kind, args = "constant-test", [1]
+        elif op == 0x0F:
+            kind, args = "player-control", [raw[1]]
         elif op == 0x18:
             kind = "item"
             args = [raw[1] & 127, raw[10], raw[11], raw[22], raw[23]]
@@ -52,6 +94,15 @@ def build_tracking_program(data: bytes, row: dict, operations: list) -> dict:
             ]
         elif op in (0x24, 0x2D) and raw[2] in (4, 15):
             kind, args = "award", [raw[1], raw[2], int(op == 0x24)]
+        elif op in CONTINUING_OPCODES:
+            kind, args = "constant-test", [1]
+            if op in LOCAL_FLAG_WRITES:
+                kind, args = (
+                    "local-flag-forget",
+                    [field for effect in LOCAL_FLAG_WRITES[op] for field in effect],
+                )
+        elif op in UNRESOLVED_PREDICATE_OPCODES:
+            kind = "uncertain-test"
         return {
             "offset": address,
             "next": address + len(raw),
@@ -90,7 +141,9 @@ def build_tracking_program(data: bytes, row: dict, operations: list) -> dict:
     }
     changed_slots = set()
     for section, _, op, raw in operations:
-        if op == 0x4C:
+        if op == 0x4C and raw[1] in (1, 2):
+            # Mode 0 only reads quantity. Modes 1/2 write the AOT source;
+            # mode 2 looks up inventory using that source's item type.
             changed_slots.add(raw[2])
         if op in (0x24, 0x2D) and raw[2] == 1:
             # Forced door callbacks have side effects beyond the modeled setters.
@@ -121,8 +174,9 @@ def build_tracking_program(data: bytes, row: dict, operations: list) -> dict:
                 if op in (0x24, 0x2D) and raw[2] in (4, 15)
             }
         ),
-        "coverage_complete": all(status == "clean" for status in row["stats"].values())
-        and not unclassified_items,
+        # Clean decoding alone does not validate an indexed event target.
+        # Keep the source audit's invalid-target and section failures mandatory.
+        "coverage_complete": source_complete and not unclassified_items,
         "item_slots": sorted(item_slots),
         "door_slots": sorted(door_slots),
         "mutable_slots": sorted(changed_slots),

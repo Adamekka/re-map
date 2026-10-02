@@ -42,6 +42,8 @@ def rules():
         128,
         0x8000020B,
         2,
+        0x80000200,
+        0x800010E0,
     )
     profile = {
         "cache_audits": [],

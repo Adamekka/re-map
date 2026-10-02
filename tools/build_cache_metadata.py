@@ -366,7 +366,9 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
         mutable_fields=mutable_fields,
     )
     if all(section + "_offset" in row for section in ("init", "main", "events")):
-        row["tracking_program"] = build_tracking_program(data, row, operations)
+        row["tracking_program"] = build_tracking_program(
+            data, row, operations, not source_issues
+        )
     for audit in profile["cache_audits"]:
         if audit["source_rdt"] != source_rdt:
             continue
@@ -440,6 +442,8 @@ def main() -> int:
                         "RE1-CACHE-003",
                         "RE1-ENGINE-001",
                         "RE1-ENGINE-002",
+                        "RE1-SCD-007",
+                        "RE1-VARS-001",
                         "RE1-SOURCE-002",
                         "RE1-SELECT-001",
                     ],
