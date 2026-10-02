@@ -137,7 +137,7 @@ class RuleCommand:
         ):
             raise ValueError("invalid tracking award handler")
         if self.kind == "aot-callback" and (
-            self.args[1] != 13 or self.args[2] not in (0, 1)
+            self.args[1] not in (1, 13) or self.args[2] not in (0, 1)
         ):
             raise ValueError("invalid tracking callback handler")
         if self.kind == "inventory-remove" and not 0 <= self.args[0] <= 255:
@@ -332,6 +332,15 @@ def read_rule_snapshot(
     for program in programs:
         for procedure in program.procedures + program.main_procedures:
             for command in procedure.commands:
+                if (
+                    command.kind == "aot-callback"
+                    and command.args[1] == 1
+                    and 2 in layout.persistent_flag_groups
+                ):
+                    # A source variant can choose any six-bit lock index.
+                    # Read its eight bytes so a known true unlock survives a
+                    # conditional native OR and participates in the recheck.
+                    addresses.update(layout.flag_bases[2] + i for i in range(8))
                 if command.kind in ("flag-test", "flag-write"):
                     group, index, _ = command.args
                     if (
@@ -647,12 +656,45 @@ def evaluate_room_program(
                 )
                 slots = tuple(sorted(changed.items()))
             elif kind in ("award", "aot-callback"):
-                # Completed inventory/map awards clear the acquisition bit.
-                # Read the completed result from RAM; do not grant an item by replaying a script.
+                # Read completed acquisition/unlock results from RAM, never
+                # grant them by replaying a callback during reconstruction.
                 # Opcode 24 returns one, while 2D returns zero to the IF runner.
                 predicate = bool(args[2])
                 changed = dict(writes)
-                if args[1] == 13:
+                if args[1] == 1:
+                    # RE1-SCD-015: forced dispatch ignores handler/mode, but
+                    # the native callback still reads the preserved source.
+                    for descriptor in dict(slots).get(args[0], frozenset({None})):
+                        if descriptor is None or descriptor[0] != "door":
+                            bounded = False
+                            break
+                        lock = descriptor[1][6]
+                        if lock & 0x80 and descriptor[1][8] != 0xFF:
+                            # Inventory/player state can prevent unlocking.
+                            # A conditional set preserves true, but cannot
+                            # retain an earlier false shadow or grant an unlock.
+                            # Type FF always takes the missing-key path.
+                            address = layout.flag(2, lock & 0x3F)
+                            old = changed.get(address)
+                            if (
+                                address not in changed
+                                and 2 in layout.persistent_flag_groups
+                            ):
+                                old = bool(values[address[0]] & address[1])
+                            changed[address] = True if old is True else None
+                    if not bounded:
+                        break
+                    address = layout.flag(5, 6)
+                    changed[address] = True if changed.get(address) is True else None
+                    # Traversal clears CAB00's halfword; dialog setup can mask
+                    # it and copy its old value to CAB02. Forget both aliases
+                    # and conditional message/key byte writes, never past-room RAM.
+                    for index in range(32):
+                        changed[layout.flag(6, index)] = None
+                    for index in (5, 6):
+                        for bit in range(8):
+                            changed[layout.byte_variables_base + index, 1 << bit] = None
+                elif args[1] == 13:
                     # Callback 13 sets C3000 bit 8 only for a zero registry
                     # parameter. That field is not modeled; a prior true bit
                     # remains true, otherwise either result is possible.

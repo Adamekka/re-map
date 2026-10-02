@@ -207,7 +207,9 @@ def test_forced_awards_use_persistent_flags_without_inventing_completion(
     )
 
 
-def test_forced_door_callback_and_dynamic_quantity_still_reject_reconstruction(rules):
+def test_forced_door_preserves_coverage_while_dynamic_quantity_remains_unresolved(
+    rules,
+):
     program = compile_program(
         rules,
         pickup(0, 0x44, 111) + door(1, 8, 0x34) + b"\0",
@@ -215,7 +217,8 @@ def test_forced_door_callback_and_dynamic_quantity_still_reject_reconstruction(r
     )
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert result.unresolved_item_slots == (0,)
-    assert result.unresolved_door_slots == (1,)
+    assert result.unresolved_door_slots == ()
+    assert result.doors == ((1, door(1, 8, 0x34)),)
 
 
 def test_got_item_zero_result_takes_the_native_if_failure_path(rules):

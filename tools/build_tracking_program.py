@@ -104,7 +104,7 @@ def build_tracking_program(
             ]
         elif op in (0x24, 0x2D) and raw[2] in (4, 15):
             kind, args = "award", [raw[1], raw[2], int(op == 0x24)]
-        elif op in (0x24, 0x2D) and raw[2] == 13:
+        elif op in (0x24, 0x2D) and raw[2] in (1, 13):
             kind, args = "aot-callback", [raw[1], raw[2], int(op == 0x24)]
         elif op in CONTINUING_OPCODES:
             kind, args = "constant-test", [1]
@@ -159,15 +159,14 @@ def build_tracking_program(
         for _, _, op, raw in operations
         if op == 0x0C or op == 0x0D and raw[10] == 1
     }
+    # RE1-SCD-015: callback 1 and its helpers preserve the AOT/source.
+    # Its event-time unlock result comes from fresh flags, not replay.
     changed_slots = set()
     for section, _, op, raw in operations:
         if op == 0x4C and raw[1] in (1, 2):
             # Mode 0 only reads quantity. Modes 1/2 write the AOT source;
             # mode 2 looks up inventory using that source's item type.
             changed_slots.add(raw[2])
-        if op in (0x24, 0x2D) and raw[2] == 1:
-            # Forced door callbacks have side effects beyond the modeled setters.
-            changed_slots.add(raw[1])
     # Unsupported generic pickup creators and awards cannot supply a normal item descriptor.
     unclassified_items = any(
         op == 0x0D
