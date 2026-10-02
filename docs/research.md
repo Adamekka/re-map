@@ -1740,3 +1740,54 @@ History:
 - 2026-10-02; Claude Opus 4.6 Thinking and Gemini 3.1 Pro High via agy; each timed out after five minutes with no usable review. Neither supplied findings or endorsement, and neither was automatically retried. All three received the same supplied context.
 - 2026-10-02; Codex root, GPT-6.1 Sol; final inspection additionally applied mandatory source-section and acquisition-width checks to the new event-block fields at profile startup, with two corruption regressions. Final checks passed all 616 tests in 14.40 seconds and scoped Ruff lint/format checks on all seven changed Python files. No project formatter/linter is configured. `git diff --check` passed, final regeneration matched both earlier generations, and the manifest hash matched the audit. External review covered the supplied initial implementation; root verified its candidates and the final corrections directly. These checks establish implementation/source consistency, not natural event activation or additional gameplay confirmation.
 - 2026-10-02; Codex root, GPT-6.1 Sol; corrected finding-ID collisions introduced by the native-flow and ordered-condition entries. The 2026-09-26 event findings retain RE1-EVENT-001/002 and their original provenance. The later native-flow audit is RE1-EVENT-003 and ordered conditions are RE1-EVENT-004. Updated references and the manifest research-ID list; all source rows, commands and runtime behavior are unchanged.
+
+## RE1-EVENT-005: native event activity is separate from retained script pointers
+
+Status: Candidate; pinned native inspection and extraction of existing captures
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Jill Herb and Chemical capture pairs
+Environment: Python 3.14.8 and Capstone 5.0.9 on macOS; existing savestates from DuckStation `0.1-11894-gc66b2694d`; no new emulator or GDB experiment
+Authored: 2026-10-02; Codex root; model: GPT-6.1 Sol
+Basis: primary native instruction inspection and offline RAM extraction
+Claim: the event tick checks an activity byte independently of the retained script pointer. An inactive record's nonzero pointer cannot establish current activation, room ownership or completed execution.
+
+Evidence:
+
+- All native addresses below are PS1 virtual addresses. The tick at `0x80025CDC..0x800262CC` iterates eight records at `0x800CF68C`, with stride `0x34`, totaling 416 bytes. It writes each selected record pointer to `0x800CF688`, a little-endian u32, before testing activity. This pointer alone does not establish that its selected record runs. The tick tests record+2 as a u8 at `0x80025D34..0x80025D3C` and skips zero. The state dispatch reads record+0 as a u8 at `0x80026078`, despite initialization clearing a u16 there.
+- Initializer `0x80025C1C..0x80025C54` writes activity 1 at +2, clears +0/+1, writes depth `0xFF` at +3 and loads a little-endian u32 script pointer at +8 from the indexed event table. The table pointer at `0x800B835C` is a little-endian u32; entry selection uses four-byte indexing. Record+4 receives the little-endian u32 at `0x800CAB14`; its gameplay meaning remains unmodeled here. Depth and frame contracts are separately recorded in RE1-EVENT-003. These fields use their full width, with no added bit mask.
+- Global `FF` at `0x80026068..0x80026074` clears activity and then advances through the common yield path. The tick's next-opcode check at `0x80026278..0x8002629C` also clears activity when it sees `FF`. Neither path clears the retained script pointer. State-0 default termination likewise clears activity, as recorded in RE1-EVENT-003.
+- Extracting all four donated fixtures with `tools/extract_sav_ram.py` produces zero active records and six inactive records with nonzero script pointers in every capture. Herb-before/after report room `00-09` and table pointer `0x8013E6D4`; Chemical-before/after report `00-18` and `0x80121F50`. Their state, activity, depth and script-pointer fields are identical across these pairs and rooms. This is direct evidence of retained inactive data, without identifying the historical events that left it.
+
+| Existing fixture | Extracted RAM SHA256 |
+| --- | --- |
+| `slus00551_green_herb_before.sav` | `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4` |
+| `slus00551_green_herb_after.sav` | `0130861a3a27d2810ccbd0d1e2e7bbc42c64abdac130e1d43dd71ed646784704` |
+| `slus00551_chemical_before.sav` | `bb9110536a02122d7c6a14d489b2e94e7d8224d8ccf297d617694c4eb6e804f2` |
+| `slus00551_chemical_after.sav` | `0d5e7dc6e450a99b9f8a354cc9ffd30e97dd3129427600e384681903330935df` |
+
+Reproduce by extracting each fixture and reading the fields above at RAM offset `0xCF68C + 0x34*slot`, for slots 0 through 7. Inspect the named native ranges in the hash-verified executable, whose text starts at PS1 virtual `0x80010000` and file offset `0x800`. The extraction script and JSON results are in `/tmp/tasks/re-map/event-activation-inspection/`, outside Git.
+
+Limits: none of these captures contains an active event. Start, wait, completion, room ownership, slot replacement and save/load reversal need controlled runtime observations before profile reads can support availability conclusions. Zero active records cannot prove that a future event or collectible is absent. No profile or tracker behavior changed.
+History:
+
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected the initializer and tick, checked the executable hash and extracted the existing capture pairs. Recorded the state field as u8 after checking the dispatch load. No new gameplay or external model review.
+
+## RE1-EVENT-006: script and interaction commands share the native event initializer
+
+Status: Candidate; pinned native call and operand inspection
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`
+Environment: Python 3.14.8 and Capstone 5.0.9 on macOS; read-only owned executable; no new emulator or GDB experiment
+Authored: 2026-10-02; Codex root; model: GPT-6.1 Sol
+Basis: primary native dispatch-table, call and operand inspection
+Claim: SCD event creation, indexed-event creation and interaction callback 9 pass slot/index operands to shared starter `0x80025C58`. Indexed-event reinitialization calls initializer `0x80025C1C` directly. Decoding their commands does not prove that their triggers ran.
+
+Evidence:
+
+- All addresses are PS1 virtual addresses. SCD table `0x80091108`, entry `14`, points to `0x80045C88`. Handler `0x80045C88..0x80045CE0` reads the little-endian u16 at packet+2, passes its low byte as requested slot and high byte as indexed entry to `0x80025C58`, advances four bytes total and returns 1. Packet+1 is skipped by this handler. The current tracking compiler treats this opcode as continuing without retaining its activation operands.
+- State-0 indexed-event opcode `05` dispatches through table `0x800101C8`, entry 5, to `0x80026180`. Its helper at `0x800270E8..0x8002714C` passes packet+1 as slot and packet+2 as indexed entry to the same starter, then finishes a four-byte advance. Opcode `08`, table target `0x800261B0`, uses helper `0x80027150..0x80027180` to reinitialize the selected record directly with packet+1 as indexed entry. RE1-EVENT-003 already records its lack of sequential continuation.
+- Interaction table `0x80090404`, entry 9 at `0x80090428`, points to `0x80037FA0`. Handler `0x80037FA0..0x80037FC8` reads u8 slot at registry-record+2 and u8 indexed entry at +4, calls the shared starter and returns zero. The current abstract descriptors do not retain these activation parameters, so callback identity alone cannot determine which event starts.
+- A whole-executable aligned direct-call scan finds the three starter calls above and initializer calls from the starter and reinitialization helper. This scan does not exclude indirect callers. Reproduction and native call excerpts are in `/tmp/tasks/re-map/event-activation-inspection/start-callers.txt`, outside Git; inspect the listed ranges in the hash-verified executable to reproduce each operand mapping.
+
+Limits: trigger eligibility, native slot allocation/replacement, actual event timing and natural item/door changes remain unvalidated. Shared source metadata must retain command ownership and guards, and live activation must be bound to the actual room source before it can narrow availability. RE1-EVENT-005's inactive pointers provide no execution proof. No implementation or broader completion claim accompanies this inspection.
+History:
+
+- 2026-10-02; Codex root, GPT-6.1 Sol; checked dispatch-table targets and native operands for shared event start/reinitialization. No gameplay or external model review.
