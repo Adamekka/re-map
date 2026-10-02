@@ -153,10 +153,13 @@ def scan_event_commands(
                     if size
                     else []
                 )
-            for operation in found:
-                record(operation)
             if status != "clean":
                 issues.append(f"embedded SCD at 0x{address:x}: {status}")
+                # Procedure walking can retain raw candidates for diagnostics.
+                # A failed embedded block cannot establish reachable event effects.
+                continue
+            for operation in found:
+                record(operation)
         elif state == 1 and op == 0x81:
             if address + 2 > end:
                 issues.append(f"look-at command truncated at 0x{address:x}")

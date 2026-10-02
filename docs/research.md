@@ -1391,6 +1391,7 @@ History:
 - 2026-10-02; Gemini 3.8 Flash High via agy; reviewed supplied source and tests without tools or gameplay. Root verified its mode-0 quantity barrier finding against `0x800486C4..0x800486F8` and removed that barrier. Root also added explicit native default-mode compilation, semantic mode validation and quantity/high-control-bit regressions. Its proposed mode-2 item-ID interpretation was rejected by descriptor lookup `0x80048704..0x80048718` and source quantity store `0x80048758`. Retaining initializer scalar shadows into recurring main evaluation would assert stale state; they remain discarded under RE1-VARS-001's history limit. Camera writes are unconditional set/clear and need no prior RAM value; later persistent flag predicates already contribute their own snapshot reads. Word-operator regressions were added during primary inspection before the review returned.
 - 2026-10-02; Claude Opus 4.6 Thinking via agy; review unavailable with quota error 429. Gemini 3.1 Pro High via agy timed out after five minutes without usable output. Neither supplied findings or an endorsement. Root checked the available review candidates against the pinned executable and performed the final inspection.
 - 2026-10-02; Codex root, GPT-6.1 Sol; all 335 tests passed in 13.48 seconds with `/tmp/re-map-check/bin/python -m pytest -q`. The seven changed Python files passed manually scoped Ruff lint and formatting checks; the project has no configured formatter or linter. `git diff --check` passed. These checks cover implementation and existing captures, not new gameplay validation.
+- 2026-10-02; Codex root, GPT-6.1 Sol; RE1-SCD-008 subsequently corrects opcode `47`'s decoding advance and the malformed synthetic `3D` packet in this feature's local-effect test. It adds an assertion that the test's source coverage is complete before accepting its unknown flag result. Original native-effect evidence and author provenance remain unchanged.
 
 
 ## RE1-VARS-001: byte and word commands share physical shadow bits
@@ -1416,6 +1417,129 @@ Limits: these addresses and effects are Candidate source findings for the pinned
 History:
 
 - 2026-10-02; Codex root, GPT-6.1 Sol; inspected native byte/word loads/stores and counter direction writes, added required profile fields, physical-bit shadow effects, comparison and history regressions. The final implementation checks and external-review scope are recorded in RE1-SCD-007.
+
+
+## RE1-SCD-008: complete native dispatch audit separates PC advance and read bounds
+
+Status: Candidate; pinned instruction/dispatch inspection and synthetic decoder regressions
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; all 81 SCD dispatch entries `00..50`
+Environment: Python 3.14.8, pytest 9.1.1 and Capstone 5.0.9; read-only owned executable/disc and existing Herb-before RAM from DuckStation `0.1-11894-gc66b2694d`; no new emulator/GDB experiment
+Authored: 2026-10-02; Codex root; model: GPT-6.1 Sol
+Basis: primary executable inspection, source regeneration, mandatory decoder bounds and synthetic tests
+Claim: native command PC advances, operand-read extents and branch targets are separate constraints. The shared scanner must use the pinned advances, require every audited immediate operand read to fit its source window, and reject nonadvancing or null dispatch. This corrects three remaining fixed widths and the sound command's native default form without inventing item-specific rules.
+
+Evidence:
+
+- Dispatch entries are little-endian u32 pointers at PS1 VA `0x80091108 + 4*opcode`. The named executable hash was checked before inspection. Every entry's direct PC updates and operand loads was inspected; variable-form jump tables and fixed-count loops were checked separately. Instruction addresses below are PS1 virtual addresses. This audits source behavior, not runtime execution of all commands.
+- Opcode `40`, at `0x8004828C..0x80048330`, writes `source+16` to the script PC at `0x8004829C..0x800482A0`. Its last `lh`, at `0x80048320`, reads `source+16..17`. Thus an 18-byte serialized-field guess consumed the next instruction, while a 16-byte PC span alone would miss a possible operand overread. Decoding now returns a 16-byte command only when all 18 readable bytes exist. A branch can legally target bytes also read by the preceding command; those bytes are not part of its PC interval.
+- Opcode `46`, at `0x800483EC..0x80048520`, advances two header bytes, three 12-byte light records and three u16 values. The loops at `0x80048420..0x800484AC` and `0x800484C8..0x800484EC` have fixed count three. Total advance/read coverage is 44 bytes, replacing the old 46-byte format guess.
+- Opcode `47`, at `0x80046DE4..0x80046E8C`, writes `source+14` at `0x80046DF4..0x80046DF8`; its last u16 load at `0x80046E70` ends at source+14. The old 16-byte width skipped the next opcode. Its existing continuation/effect classification in RE1-SCD-007 is unchanged.
+- Sound `17`, at `0x800458F4..0x80045A5C`, first advances six bytes. Source selector is the low byte at packet+4. Selectors 0..3 additionally advance to source+10, including forms that do not use the coordinate words. Other selectors follow `0x80045950/0x8004596C` to the common return at `0x80045A50`, leaving PC at source+6 and returning one. The scanner now explicitly decodes that native default rather than rejecting it as an unspecified width.
+- The enemy-property jump table at `0x80010770` retains advancing selectors `{0:6,1:8,2:6,3:6,5:6,6:4,8:4,9:6,10:6}`. Selectors 4/7 and values outside the table reach `0x8004731C` without a PC update. The player-property table at `0x800107A0` retains `{0:2,1:4,3:4,4:2,5:4,6:2,7:2,8:4,9:4,10:4}`. Selector 2 and out-of-range values return at `0x800475F4` without advancing. These remain explicit unsupported forms; no finite no-op width is invented.
+- Fixed stubs `26`, at `0x80045824..0x80045828`, and `2E`, at `0x8004539C..0x800453A0`, leave PC and return register unchanged. Their prior nominal one-byte widths could expose a following pickup that the native loop never reaches. Entries `4F/50` are null pointers, not two-byte instructions. Both kinds now reject decoding, including single/deferred event dispatch. The graphics command `4D` does advance two bytes at `0x80048928..0x80048950`; a preliminary excerpt ending at `0x80048910` was incomplete and is not evidence of a nonadvancing handler.
+- Terminal `00` reads no operands and clears native IF depth. The walker records its one-byte opcode and stops that path. ELSE `02` requires its byte-1 operand and jumps to source+byte1; its two-byte decoding extent is not a fixed sequential advance. Existing branch validation rejects an exit inside the command or outside the procedure. All other supported direct operand loads fit inside the audited advance. Skipped padding still must fit the procedure's PC interval.
+- Procedure walking and semantic compilation use identical read windows. An explicit `operand_tail` contains the remaining bytes of the same source section, permitting `40` to read a following instruction, procedure header or sentinel. Instruction flow remains bounded by the current procedure body. A tail cannot supply missing instruction bytes. Direct/single/deferred event dispatch already supplies its bounded event-section window independently of wrapper advance, so it uses the same corrected decoder. No memory outside the provided section is used to close a missing read.
+- Semantic compilation independently checks both section bounds, procedure lengths, clean decoder results and zero-length sentinels. A caller's complete-source claim cannot authorize a truncated procedure list. Failed embedded SCD blocks contribute no speculative linear candidates and stop their event-analysis path; other indexed entries remain independently inspectable. The existing diagnostic procedure walker can still retain explicitly partial candidates, which cannot establish complete source coverage.
+- `tests/test_native_decoding.py` verifies multiple pickups and a door after `40/46/47`, a branch into the overlapping `40` read, missing final halfwords, a readable but non-executable tail, procedure sentinels, compiler/scanner agreement, native sound defaults and null/nonadvancing event rejection. Existing variable-width/alignment tests remain. The earlier local-effect test for `3D` used an invalid six-byte setup instead of twelve bytes; it now uses the complete packet and asserts source coverage before checking flag invalidation, preventing a malformed-source rejection from passing as a semantic test.
+
+The complete dispatch audit follows. A zero entry is a native null pointer. For fixed advancing commands, the listed advance is also the required bounded PC span. Only `40` needs a larger immediate read window, 18 bytes. Variable selectors and terminal/branch handling are described above.
+
+| Opcode | Native handler entry | Native PC advance |
+| --- | --- | --- |
+| `00` | `0x80044c5c` | Terminal; no advance |
+| `01` | `0x80044c6c` | 2 |
+| `02` | `0x80044cc4` | Source + byte 1 |
+| `03` | `0x80044d10` | 2 |
+| `04` | `0x80044d54` | 4 |
+| `05` | `0x80044e54` | 4 |
+| `06` | `0x80044fa4` | 4 |
+| `07` | `0x80045048` | 6 |
+| `08` | `0x800450ec` | 4 |
+| `09` | `0x80045180` | 2 |
+| `0A` | `0x80045248` | 2 |
+| `0B` | `0x800452f4` | 4 |
+| `0C` | `0x80045ea8` | 26 |
+| `0D` | `0x80045e00` | 18 |
+| `0E` | `0x80045160` | 2 |
+| `0F` | `0x80045d38` | 8 |
+| `10` | `0x80045adc` | 2 |
+| `11` | `0x80045aa8` | 2 |
+| `12` | `0x80045bc4` | 10 |
+| `13` | `0x80045c38` | 4 |
+| `14` | `0x80045c88` | 4 |
+| `15` | `0x800453a4` | 2 |
+| `16` | `0x8004574c` | 2 |
+| `17` | `0x800458f4` | 10 for sources 0..3; otherwise 6 |
+| `18` | `0x80045f28` | 26 |
+| `19` | `0x80045b10` | 4 |
+| `1A` | `0x80045b54` | 2 |
+| `1B` | `0x80046420` | 22 |
+| `1C` | `0x80046b68` | 6 |
+| `1D` | `0x80045a60` | 2 |
+| `1E` | `0x80046730` | 4 |
+| `1F` | `0x800467a0` | 28 |
+| `20` | `0x80046c2c` | 14 |
+| `21` | `0x80046cd4` | 14 |
+| `22` | `0x80046e90` | 4 |
+| `23` | `0x80047044` | 2 |
+| `24` | `0x800470b8` | 4 |
+| `25` | `0x80046af8` | 4 |
+| `26` | `0x80045824` | No advance |
+| `27` | `0x8004582c` | 2 |
+| `28` | `0x80047124` | 4/6/8 by selector; unsupported forms do not advance |
+| `29` | `0x800466dc` | 2 |
+| `2A` | `0x800475fc` | 12 |
+| `2B` | `0x80047a10` | 4 |
+| `2C` | `0x80047a78` | 2 |
+| `2D` | `0x80047ae0` | 4 |
+| `2E` | `0x8004539c` | No advance |
+| `2F` | `0x800456b4` | 4 |
+| `30` | `0x80047b18` | 12 |
+| `31` | `0x80045124` | 4 |
+| `32` | `0x80047be0` | 4 |
+| `33` | `0x80047324` | 2/4 by selector; unsupported forms do not advance |
+| `34` | `0x80047c60` | 8 |
+| `35` | `0x80047d68` | 4 |
+| `36` | `0x80047dec` | 4 |
+| `37` | `0x8004534c` | 4 |
+| `38` | `0x80047f40` | 4 |
+| `39` | `0x80047f9c` | 2 |
+| `3A` | `0x80047ff0` | 4 |
+| `3B` | `0x80048054` | 6 |
+| `3C` | `0x80048120` | 6 |
+| `3D` | `0x80047700` | 12 |
+| `3E` | `0x80047834` | 2 |
+| `3F` | `0x8004824c` | 6 |
+| `40` | `0x8004828c` | 16 |
+| `41` | `0x80048334` | 4 |
+| `42` | `0x80047884` | 4 |
+| `43` | `0x8004587c` | 4 |
+| `44` | `0x80045ce4` | 2 |
+| `45` | `0x800483b0` | 2 |
+| `46` | `0x800483ec` | 44 |
+| `47` | `0x80046de4` | 14 |
+| `48` | `0x800478d4` | 2 |
+| `49` | `0x800485d4` | 2 |
+| `4A` | `0x8004541c` | 2 |
+| `4B` | `0x8004555c` | 2 |
+| `4C` | `0x80048634` | 4 |
+| `4D` | `0x8004878c` | 2 |
+| `4E` | `0x80047950` | 4 |
+| `4F` | `0x00000000` | Null dispatch |
+| `50` | `0x00000000` | Null dispatch |
+
+- Regeneration retains 335 item-table sources and 334 bounded tracking sources. All 652 initializer entries and 782 door entries in the static item table are unchanged; only decoding diagnostics/counts changed. All 636 loader choices, source hashes/ranges and event relocations are unchanged. Tracking programs change in 27 source variants. Full source coverage increases from 295 to 307 variants; static cache candidates increase from 255 to 257. These are decoder/source-audit counts, not confirmed playable-room coverage.
+- Manifest SHA256 is `afa4be2230b75d3f0bb2a72b5996a1a0d63f9ae81280a6c1bfef4c134896d557`; item-table SHA256 is `00ef72741801b9f16722f600a9d56be2b8b42ef1a652cfb71c390be47fcfb3d0`. Reproduction uses `tools/build_cache_metadata.py` with the owned SLUS-00551 CUE and committed profile, plus `tools/build_item_table.py` with the same CUE. Compare generated rows and source choices against commit `ce8df1f`. The detailed audit is `/tmp/tasks/re-map/native-decoding/generation-audit.json`, outside Git.
+- Under the same offline Herb-before flags used in RE1-SCD-007, complete item-source coverage changes from 248 to 250; unresolved item slots remain 145, and unresolved door slots fall from 203 to 198. Both command sets run through the current evaluator using source stage digit minus one modulo seven and source room digits. Both evaluations took 0.324 seconds. This is an offline comparison, not live polling latency, prior-engine replay or gameplay across those sources.
+
+Limits: the audit covers this executable's decoder contract, not the effect semantics of every command or the indexed VM's entire instruction set. Unsupported effects still reject reconstruction. No natural story event, save/load, pickup, alternate character or new area was played. Existing captures and source identities retain their original provenance. No other revision, floor-plan geometry or room-reveal behavior is changed.
+History:
+
+- 2026-10-02; Codex root, GPT-6.1 Sol; inspected every native dispatch entry, corrected the three fixed advances, modeled the sound default and explicit read tails, rejected nonadvancing/null dispatch, regenerated metadata and added decoder/boundary regressions. Primary disassembly stays outside Git; the executable hash and handler locations above identify the reproducible source evidence.
+- 2026-10-02; Gemini 3.1 Pro High via agy; reviewed the supplied decoder/compiler changes and tests without tools or gameplay. Root verified that the compiler trusted its caller's completeness claim and added independent parse/sentinel/section checks. The sole production caller already passed source-audit failures as False; direct-call regressions now enforce the compiler's own gate too. Its claimed failing 18-byte procedure test was rejected by the length-prefixed format and the passing test: 18 includes the two-byte header plus a 16-byte body, leaving the sentinel outside that body.
+- 2026-10-02; Gemini 3.8 Flash High via agy; reviewed the same supplied context without gameplay. Root verified the compiler gate and removed speculative candidate recording/continuation after failed embedded blocks. Added malformed-input, sound-truncation, variable-selector and single/deferred-event regressions. Its proposed wider block-tail requirement was checked against the wrapper invariant: block length is at most wrapper width minus two, and the existing window extends another two bytes for the mandatory sentinel, supplying the two-byte `40` overread. A positive embedded-block test reproduces that bound. Existing source-0..3 sound and IF/ELSE tests already cover their alignment/control flow. Full owned-disc regeneration is source evidence and does not substitute for natural gameplay.
+- 2026-10-02; Claude Opus 4.6 Thinking via agy; review unavailable with quota error 429. It supplied no findings or endorsement. Both Gemini reviews completed; root checked their candidates directly and performed the final review.
+- 2026-10-02; Codex root, GPT-6.1 Sol; final verification passed all 378 tests in 13.92 seconds with `/tmp/re-map-check/bin/python -m pytest -q`. Seven changed Python files passed manually scoped Ruff lint and formatting checks; the scanner's formatting check covers its changed decoder region and preserves the pre-existing CLI formatting. The project has no configured formatter or linter. `git diff --check` passed. Review corrections regenerate the same manifest hash above, and a second offline projection retains the stated coverage counts. No new gameplay or restricted artifacts enter this change.
 
 
 ## Suggested next experiments

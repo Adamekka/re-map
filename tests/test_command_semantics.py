@@ -259,7 +259,7 @@ def test_unrecognized_word_comparison_retains_both_outcomes(rules):
         (bytes((0x1B, 0, 0, 255)) + bytes(18), 6, 160),
         (bytes((0x1B, 0, 0, 255)) + bytes(18), 4, 200),
         (bytes((0x2A,)) + bytes(11), 4, 224),
-        (bytes((0x3D,)) + bytes(5), 4, 224),
+        (bytes((0x3D,)) + bytes(11), 4, 224),
         (bytes((0x3E,)) + bytes(1), 4, 224),
         (bytes((0x42,)) + bytes(3), 4, 224),
     ],
@@ -271,7 +271,9 @@ def test_native_local_effect_forgets_prior_flag_writes(rules, setup, group, inde
         + guard(bytes((4, group, index, 0)), pickup(0, 0x44, 111))
         + b"\0"
     )
-    result = evaluate(compile_program(rules, code), rules, bytearray(2 * 1024 * 1024))
+    program = compile_program(rules, code)
+    assert program.coverage_complete
+    result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert result.unresolved_item_slots == (0,)
 
 

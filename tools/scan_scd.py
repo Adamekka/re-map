@@ -1,4 +1,4 @@
-"""Scan RE1 RDT script chunks for item opcodes using reevengi scd1.xml sizes.
+"""Scan SLUS-00551 RDT scripts using audited native PC advances/read bounds.
 
 Local helper only. Prints 0x0D/0x12/0x13/0x18 entries with raw fields.
 Bytecode walking follows both sides of IF blocks and stops at procedure
@@ -7,44 +7,114 @@ termination. Unknown opcodes stop the walk with a warning.
 Usage:
   python3 tools/scan_scd.py /tmp/room1070.rdt
 """
+
 from __future__ import annotations
 
 import argparse
 import struct
 from pathlib import Path
 
-# Fixed sizes from reevengi src/g_re1/scd1.xml. 1+opcodes absent below are
-# variable length (0x17, 0x28, 0x33) or undefined.
+# The reevengi scd1.xml table was a research lead. RE1-SCD-008 audits every
+# native dispatch entry; these are PC advances, not serialized operand extents.
+# Missing entries are variable, nonadvancing, or null native dispatches.
 # SLUS-00551's opcode 0x20 and 0x21 handlers each advance the script by 0xE.
 # Its 0x1F handler advances by 0x1C; 30 consumed the next opcode and could
 # interpret an object's payload as a procedure terminator (RE1-SCD-004).
 # Opcode 00 reads no operands. Counting its usual padding as an operand
 # falsely rejects a branch to that next byte (RE1-SCD-006).
 SIZES = {
-    0x00: 1, 0x01: 2, 0x02: 2, 0x03: 2, 0x04: 4, 0x05: 4, 0x06: 4,
-    0x07: 6, 0x08: 4, 0x09: 2, 0x0A: 2, 0x0B: 4, 0x0C: 26, 0x0D: 18,
-    0x0E: 2, 0x0F: 8, 0x10: 2, 0x11: 2, 0x12: 10, 0x13: 4, 0x14: 4,
-    0x15: 2, 0x16: 2, 0x18: 26, 0x19: 4, 0x1A: 2, 0x1B: 22,
-    0x1C: 6, 0x1D: 2, 0x1E: 4, 0x1F: 28, 0x20: 14, 0x21: 14,
-    0x22: 4, 0x23: 2, 0x24: 4, 0x25: 4, 0x26: 1, 0x27: 2, 0x29: 2,
-    0x2A: 12, 0x2B: 4, 0x2C: 2, 0x2D: 4, 0x2E: 1, 0x2F: 4,
-    0x30: 12, 0x31: 4, 0x32: 4, 0x34: 8, 0x35: 4, 0x36: 4,
-    0x37: 4, 0x38: 4, 0x39: 2, 0x3A: 4, 0x3B: 6, 0x3C: 6,
-    0x3D: 12, 0x3E: 2, 0x3F: 6, 0x40: 18, 0x41: 4, 0x42: 4,
-    0x43: 4, 0x44: 2, 0x45: 2, 0x46: 46, 0x47: 16, 0x48: 2,
-    0x49: 2, 0x4A: 2, 0x4B: 2, 0x4C: 4, 0x4D: 2, 0x4E: 4,
-    0x4F: 2, 0x50: 2,
+    0x00: 1,
+    0x01: 2,
+    0x02: 2,
+    0x03: 2,
+    0x04: 4,
+    0x05: 4,
+    0x06: 4,
+    0x07: 6,
+    0x08: 4,
+    0x09: 2,
+    0x0A: 2,
+    0x0B: 4,
+    0x0C: 26,
+    0x0D: 18,
+    0x0E: 2,
+    0x0F: 8,
+    0x10: 2,
+    0x11: 2,
+    0x12: 10,
+    0x13: 4,
+    0x14: 4,
+    0x15: 2,
+    0x16: 2,
+    0x18: 26,
+    0x19: 4,
+    0x1A: 2,
+    0x1B: 22,
+    0x1C: 6,
+    0x1D: 2,
+    0x1E: 4,
+    0x1F: 28,
+    0x20: 14,
+    0x21: 14,
+    0x22: 4,
+    0x23: 2,
+    0x24: 4,
+    0x25: 4,
+    0x27: 2,
+    0x29: 2,
+    0x2A: 12,
+    0x2B: 4,
+    0x2C: 2,
+    0x2D: 4,
+    0x2F: 4,
+    0x30: 12,
+    0x31: 4,
+    0x32: 4,
+    0x34: 8,
+    0x35: 4,
+    0x36: 4,
+    0x37: 4,
+    0x38: 4,
+    0x39: 2,
+    0x3A: 4,
+    0x3B: 6,
+    0x3C: 6,
+    0x3D: 12,
+    0x3E: 2,
+    0x3F: 6,
+    0x40: 16,
+    0x41: 4,
+    0x42: 4,
+    0x43: 4,
+    0x44: 2,
+    0x45: 2,
+    0x46: 44,
+    0x47: 14,
+    0x48: 2,
+    0x49: 2,
+    0x4A: 2,
+    0x4B: 2,
+    0x4C: 4,
+    0x4D: 2,
+    0x4E: 4,
 }
 ITEM_OPS = {0x0D, 0x12, 0x13, 0x18}
 
 
 def _opcode_size(code: bytes, pos: int) -> tuple[int, str]:
     op = code[pos]
+    if op in (0x26, 0x2E):
+        # These native stubs leave both the PC and result unchanged. Inventing
+        # a one-byte advance would expose commands the game never reaches.
+        return 0, f"unsupported nonadvancing opcode 0x{op:02x} at +{pos}"
+    if op in (0x4F, 0x50):
+        return 0, f"null native opcode 0x{op:02x} at +{pos}"
     if op == 0x33:
         if pos + 2 > len(code):
             return 0, f"truncated opcode 0x33 at +{pos}"
         typ = code[pos + 1]
         # PS1 player-property subcommands advance by two or four bytes; the PC-format guess doubled them.
+        # Selector 2 and out-of-range selectors return one without advancing.
         size = {0: 2, 1: 4, 3: 4, 4: 2, 5: 4, 6: 2, 7: 2, 8: 4, 9: 4, 10: 4}.get(typ)
         if size is None:
             return 0, f"unsupported opcode 0x33 subcommand {typ} at +{pos}"
@@ -52,14 +122,14 @@ def _opcode_size(code: bytes, pos: int) -> tuple[int, str]:
         if pos + 6 > len(code):
             return 0, f"truncated opcode 0x17 at +{pos}"
         typ = struct.unpack_from("<H", code, pos + 4)[0]
-        # Every implemented sound source 0..3 consumes the trailing coordinate words, even when unused.
-        if typ & 255 not in (0, 1, 2, 3):
-            return 0, f"unsupported opcode 0x17 source {typ & 255} at +{pos}"
-        size = 10
+        # Sources 0..3 advance over coordinates even when unused. The native
+        # default returns one after the six-byte header, without those words.
+        size = 10 if typ & 255 in (0, 1, 2, 3) else 6
     elif op == 0x28:
         if pos + 4 > len(code):
             return 0, f"truncated opcode 0x28 at +{pos}"
         # The pinned enemy-property setter advances by its subcommand, not a fixed six-byte packet.
+        # Selectors 4/7 and out-of-range selectors return without advancing.
         subtype = code[pos + 3]
         size = {0: 6, 1: 8, 2: 6, 3: 6, 5: 6, 6: 4, 8: 4, 9: 6, 10: 6}.get(subtype)
         if size is None:
@@ -70,14 +140,22 @@ def _opcode_size(code: bytes, pos: int) -> tuple[int, str]:
             return 0, f"unknown/variable opcode 0x{op:02x} at +{pos}"
     if pos + size > len(code):
         return 0, f"truncated opcode 0x{op:02x} at +{pos}"
+    # Opcode 40 reads a final halfword at +16 while advancing only 16 bytes.
+    # Those bytes can belong to the next instruction or procedure sentinel;
+    # they must exist in the caller's source read window.
+    if op == 0x40 and pos + 18 > len(code):
+        return 0, f"truncated operand read for opcode 0x40 at +{pos}"
     return size, "clean"
 
 
-def walk(code: bytes, base: int) -> tuple[list[tuple[int, int, bytes]], str]:
+def walk(
+    code: bytes, base: int, *, operand_tail: bytes = b""
+) -> tuple[list[tuple[int, int, bytes]], str]:
     """Return opcodes reachable through either side of each IF."""
     decoded: dict[int, tuple[int, int, bytes]] = {}
     pending = [0]
     issues: list[str] = []
+    read_window = code + operand_tail
     while pending:
         pos = pending.pop()
         if pos == len(code) or pos in decoded:
@@ -86,9 +164,12 @@ def walk(code: bytes, base: int) -> tuple[list[tuple[int, int, bytes]], str]:
             issues.append(f"branch outside procedure at +{pos}")
             continue
         op = code[pos]
-        size, status = _opcode_size(code, pos)
+        size, status = _opcode_size(read_window, pos)
         if status != "clean":
             issues.append(status)
+            continue
+        if pos + size > len(code):
+            issues.append(f"opcode 0x{op:02x} advances outside procedure at +{pos}")
             continue
         decoded[pos] = (base + pos, op, code[pos : pos + size])
         if op == 0x00:
@@ -117,13 +198,16 @@ def walk(code: bytes, base: int) -> tuple[list[tuple[int, int, bytes]], str]:
     return [row for _, row in ordered], status
 
 
-def walk_linear(code: bytes, base: int) -> list[tuple[int, int, bytes]]:
+def walk_linear(
+    code: bytes, base: int, *, operand_tail: bytes = b""
+) -> list[tuple[int, int, bytes]]:
     """Keep raw candidates beyond opcode 0 when control flow is unresolved."""
     ops: list[tuple[int, int, bytes]] = []
     pos = 0
+    read_window = code + operand_tail
     while pos < len(code):
-        size, status = _opcode_size(code, pos)
-        if status != "clean":
+        size, status = _opcode_size(read_window, pos)
+        if status != "clean" or pos + size > len(code):
             break
         if code[pos] == 0x00 and pos + 1 < len(code):
             # This candidate-only fallback retains nominal two-byte end/padding
@@ -151,11 +235,14 @@ def walk_procedures(span: bytes, base: int) -> tuple[list[tuple[int, int, bytes]
         if length < 2 or pos + length > len(span):
             return sorted(ops), f"partial: bad procedure length at +{pos}"
         code = span[pos + 2 : pos + length]
-        found, status = walk(code, base + pos + 2)
+        # Native operand reads can peek beyond a procedure's PC boundary.
+        # Keep that read window inside this source section; flow stays inside code.
+        tail = span[pos + length :]
+        found, status = walk(code, base + pos + 2, operand_tail=tail)
         if status != "clean":
             # A malformed branch can decode payload bytes as phantom opcodes.
             # Keep only the prior linear candidates until this path is resolved.
-            ops.extend(walk_linear(code, base + pos + 2))
+            ops.extend(walk_linear(code, base + pos + 2, operand_tail=tail))
             issues.append(f"{status.removeprefix('partial: ')} in procedure +{pos}")
         else:
             ops.extend(found)

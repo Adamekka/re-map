@@ -2058,8 +2058,8 @@
     ]
    },
    "stats": {
-    "init": "clean/38",
-    "main": "clean/82"
+    "init": "clean/40",
+    "main": "clean/84"
    },
    "items": [
     {
@@ -4103,7 +4103,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/49",
     "main": "clean/100"
    },
    "items": [
@@ -4171,7 +4171,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/49",
     "main": "clean/100"
    },
    "items": [
@@ -5284,8 +5284,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)/34",
-    "main": "clean/29"
+    "init": "clean/35",
+    "main": "clean/30"
    },
    "items": [
     {
@@ -5364,8 +5364,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)/23",
-    "main": "clean/29"
+    "init": "clean/24",
+    "main": "clean/30"
    },
    "items": [
     {
@@ -6007,8 +6007,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)/46",
-    "main": "clean/254"
+    "init": "clean/61",
+    "main": "clean/276"
    },
    "items": [],
    "doors": [
@@ -6057,8 +6057,8 @@
     ]
    },
    "stats": {
-    "init": "partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)/46",
-    "main": "clean/254"
+    "init": "clean/61",
+    "main": "clean/276"
    },
    "items": [],
    "doors": [
@@ -7662,8 +7662,8 @@
     ]
    },
    "stats": {
-    "init": "clean/38",
-    "main": "clean/43"
+    "init": "clean/41",
+    "main": "clean/47"
    },
    "items": [
     {
@@ -7870,7 +7870,7 @@
    },
    "stats": {
     "init": "clean/55",
-    "main": "clean/178"
+    "main": "clean/183"
    },
    "items": [
     {
@@ -7952,7 +7952,7 @@
    },
    "stats": {
     "init": "clean/55",
-    "main": "clean/178"
+    "main": "clean/183"
    },
    "items": [
     {
@@ -9934,7 +9934,7 @@
    },
    "stats": {
     "init": "clean/58",
-    "main": "clean/19"
+    "main": "clean/21"
    },
    "items": [
     {
@@ -10009,7 +10009,7 @@
    },
    "stats": {
     "init": "clean/58",
-    "main": "clean/19"
+    "main": "clean/21"
    },
    "items": [
     {
@@ -15332,8 +15332,8 @@
     ]
    },
    "stats": {
-    "init": "clean/38",
-    "main": "clean/82"
+    "init": "clean/40",
+    "main": "clean/84"
    },
    "items": [
     {
@@ -17716,7 +17716,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/49",
     "main": "clean/100"
    },
    "items": [
@@ -17784,7 +17784,7 @@
     ]
    },
    "stats": {
-    "init": "clean/46",
+    "init": "clean/49",
     "main": "clean/100"
    },
    "items": [
@@ -18595,7 +18595,7 @@
     ]
    },
    "stats": {
-    "init": "clean/42",
+    "init": "clean/43",
     "main": "clean/58"
    },
    "items": [],
@@ -18645,7 +18645,7 @@
     ]
    },
    "stats": {
-    "init": "clean/69",
+    "init": "clean/70",
     "main": "clean/78"
    },
    "items": [
@@ -19022,8 +19022,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)/34",
-    "main": "clean/29"
+    "init": "clean/35",
+    "main": "clean/30"
    },
    "items": [
     {
@@ -19102,8 +19102,8 @@
     ]
    },
    "stats": {
-    "init": "partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)/23",
-    "main": "clean/29"
+    "init": "clean/24",
+    "main": "clean/30"
    },
    "items": [
     {
@@ -19681,7 +19681,7 @@
     ]
    },
    "stats": {
-    "init": "clean/25",
+    "init": "clean/26",
     "main": "clean/28"
    },
    "items": [
@@ -19773,7 +19773,7 @@
     ]
    },
    "stats": {
-    "init": "clean/25",
+    "init": "clean/26",
     "main": "clean/28"
    },
    "items": [
@@ -21124,8 +21124,8 @@
     ]
    },
    "stats": {
-    "init": "clean/43",
-    "main": "clean/115"
+    "init": "clean/45",
+    "main": "clean/117"
    },
    "items": [
     {
@@ -22461,7 +22461,7 @@
    },
    "stats": {
     "init": "clean/55",
-    "main": "clean/178"
+    "main": "clean/183"
    },
    "items": [
     {
@@ -22543,7 +22543,7 @@
    },
    "stats": {
     "init": "clean/55",
-    "main": "clean/178"
+    "main": "clean/183"
    },
    "items": [
     {
@@ -24285,8 +24285,8 @@
     ]
    },
    "stats": {
-    "init": "clean/43",
-    "main": "clean/115"
+    "init": "clean/45",
+    "main": "clean/117"
    },
    "items": [
     {

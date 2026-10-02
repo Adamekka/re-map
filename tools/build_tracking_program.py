@@ -110,17 +110,25 @@ def build_tracking_program(
             "args": args,
         }
 
-    def procedures(section: str) -> list[dict]:
+    def procedures(section: str) -> tuple[list[dict], bool]:
         result = []
         cursor = row[section + "_offset"]
         end = cursor + row[section + "_size"]
+        if not 0 <= cursor < end <= len(data):
+            return result, False
         while cursor + 2 <= end:
             length = struct.unpack_from("<H", data, cursor)[0]
-            if length == 0 or length < 2 or cursor + length > end:
-                break
-            found, status = walk(data[cursor + 2 : cursor + length], cursor + 2)
+            if length == 0:
+                return result, True
+            if length < 2 or cursor + length > end:
+                return result, False
+            found, status = walk(
+                data[cursor + 2 : cursor + length],
+                cursor + 2,
+                operand_tail=data[cursor + length : end],
+            )
             if status != "clean":
-                break
+                return result, False
             result.append(
                 {
                     "start": cursor + 2,
@@ -131,7 +139,7 @@ def build_tracking_program(
                 }
             )
             cursor += length
-        return result
+        return result, False
 
     item_slots = set(row["item_aot_ids"])
     door_slots = {
@@ -157,9 +165,11 @@ def build_tracking_program(
         and raw[1] not in item_slots
         for _, _, op, raw in operations
     )
+    init_procedures, init_complete = procedures("init")
+    main_procedures, main_complete = procedures("main")
     program = {
-        "procedures": procedures("init"),
-        "main_procedures": procedures("main"),
+        "procedures": init_procedures,
+        "main_procedures": main_procedures,
         # Event activation and historical guards are not reconstructable from
         # current flags. Keep every decoded write as a possible effect instead.
         "event_effects": [
@@ -176,7 +186,12 @@ def build_tracking_program(
         ),
         # Clean decoding alone does not validate an indexed event target.
         # Keep the source audit's invalid-target and section failures mandatory.
-        "coverage_complete": source_complete and not unclassified_items,
+        # Independently require clean parsing and both sentinels. A caller's
+        # source audit cannot authorize a truncated semantic procedure list.
+        "coverage_complete": source_complete
+        and init_complete
+        and main_complete
+        and not unclassified_items,
         "item_slots": sorted(item_slots),
         "door_slots": sorted(door_slots),
         "mutable_slots": sorted(changed_slots),

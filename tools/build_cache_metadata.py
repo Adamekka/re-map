@@ -443,6 +443,7 @@ def main() -> int:
                         "RE1-ENGINE-001",
                         "RE1-ENGINE-002",
                         "RE1-SCD-007",
+                        "RE1-SCD-008",
                         "RE1-VARS-001",
                         "RE1-SOURCE-002",
                         "RE1-SELECT-001",

@@ -59,7 +59,7 @@ def test_variable_width_command_does_not_consume_or_hide_the_following_item(
 
 
 @pytest.mark.parametrize(
-    ("opcode", "subtype"), [(0x17, 4), (0x28, 4), (0x28, 7), (0x33, 2), (0x33, 11)]
+    ("opcode", "subtype"), [(0x28, 4), (0x28, 7), (0x33, 2), (0x33, 11)]
 )
 def test_unsupported_subcommand_never_uses_an_invented_width(opcode, subtype):
     command = bytearray(10)

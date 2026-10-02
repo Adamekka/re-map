@@ -8,6 +8,7 @@
     "RE1-ENGINE-001",
     "RE1-ENGINE-002",
     "RE1-SCD-007",
+    "RE1-SCD-008",
     "RE1-VARS-001",
     "RE1-SOURCE-002",
     "RE1-SELECT-001"
@@ -23833,11 +23834,17 @@
               },
               {
                 "offset": 9826,
-                "next": 9842,
+                "next": 9840,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9840,
+                "next": 9842,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9842,
@@ -23883,11 +23890,17 @@
               },
               {
                 "offset": 9856,
-                "next": 9872,
+                "next": 9870,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9870,
+                "next": 9872,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9872,
@@ -24345,10 +24358,18 @@
               },
               {
                 "offset": 10066,
-                "next": 10082,
+                "next": 10080,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10080,
+                "next": 10082,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -24501,10 +24522,18 @@
               },
               {
                 "offset": 10144,
-                "next": 10160,
+                "next": 10158,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10158,
+                "next": 10160,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -45685,16 +45714,42 @@
               },
               {
                 "offset": 18458,
-                "next": 18474,
+                "next": 18472,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 18474,
-                "next": 18475,
-                "kind": "end",
+                "offset": 18472,
+                "next": 18486,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18486,
+                "next": 18500,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18500,
+                "next": 18504,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  29,
+                  0
+                ]
+              },
+              {
+                "offset": 18504,
+                "next": 18506,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -47628,16 +47683,42 @@
               },
               {
                 "offset": 18458,
-                "next": 18474,
+                "next": 18472,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 18474,
-                "next": 18475,
-                "kind": "end",
+                "offset": 18472,
+                "next": 18486,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18486,
+                "next": 18500,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18500,
+                "next": 18504,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  29,
+                  0
+                ]
+              },
+              {
+                "offset": 18504,
+                "next": 18506,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -64987,11 +65068,11 @@
         }
       ],
       "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "init: partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)",
-      "reason": "init: partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures); non-bit comparison 0x10 at 0x3eb52",
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "non-bit comparison 0x10 at 0x3eb52",
       "stats": {
-        "init": "partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)",
+        "init": "clean",
         "main": "clean",
         "events": "clean"
       },
@@ -65100,7 +65181,347 @@
         }
       ],
       "tracking_program": {
-        "procedures": [],
+        "procedures": [
+          {
+            "start": 256482,
+            "end": 256838,
+            "commands": [
+              {
+                "offset": 256482,
+                "next": 256508,
+                "kind": "door",
+                "args": [
+                  0,
+                  4000,
+                  11800,
+                  1300,
+                  1400,
+                  1,
+                  0,
+                  14,
+                  0,
+                  129
+                ]
+              },
+              {
+                "offset": 256508,
+                "next": 256526,
+                "kind": "aot-create",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256526,
+                "next": 256544,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 256544,
+                "next": 256570,
+                "kind": "item",
+                "args": [
+                  3,
+                  11,
+                  15,
+                  11,
+                  129
+                ]
+              },
+              {
+                "offset": 256570,
+                "next": 256572,
+                "kind": "if",
+                "args": [
+                  256604
+                ]
+              },
+              {
+                "offset": 256572,
+                "next": 256576,
+                "kind": "flag-test",
+                "args": [
+                  5,
+                  46,
+                  1
+                ]
+              },
+              {
+                "offset": 256576,
+                "next": 256602,
+                "kind": "item",
+                "args": [
+                  4,
+                  12,
+                  7,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 256602,
+                "next": 256604,
+                "kind": "else",
+                "args": [
+                  256630
+                ]
+              },
+              {
+                "offset": 256604,
+                "next": 256630,
+                "kind": "item",
+                "args": [
+                  4,
+                  51,
+                  3,
+                  22,
+                  129
+                ]
+              },
+              {
+                "offset": 256630,
+                "next": 256658,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 256658,
+                "next": 256660,
+                "kind": "if",
+                "args": [
+                  256676
+                ]
+              },
+              {
+                "offset": 256660,
+                "next": 256664,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  10,
+                  1
+                ]
+              },
+              {
+                "offset": 256664,
+                "next": 256674,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256674,
+                "next": 256676,
+                "kind": "else",
+                "args": [
+                  256836
+                ]
+              },
+              {
+                "offset": 256676,
+                "next": 256678,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  11,
+                  0
+                ]
+              },
+              {
+                "offset": 256678,
+                "next": 256682,
+                "kind": "variable-write",
+                "args": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "offset": 256682,
+                "next": 256692,
+                "kind": "aot-handler",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256692,
+                "next": 256694,
+                "kind": "if",
+                "args": [
+                  256728
+                ]
+              },
+              {
+                "offset": 256694,
+                "next": 256698,
+                "kind": "flag-test",
+                "args": [
+                  5,
+                  46,
+                  1
+                ]
+              },
+              {
+                "offset": 256698,
+                "next": 256700,
+                "kind": "if",
+                "args": [
+                  256716
+                ]
+              },
+              {
+                "offset": 256700,
+                "next": 256704,
+                "kind": "flag-test",
+                "args": [
+                  7,
+                  12,
+                  0
+                ]
+              },
+              {
+                "offset": 256704,
+                "next": 256714,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  4,
+                  129
+                ]
+              },
+              {
+                "offset": 256714,
+                "next": 256716,
+                "kind": "else",
+                "args": [
+                  256726
+                ]
+              },
+              {
+                "offset": 256716,
+                "next": 256726,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 256726,
+                "next": 256728,
+                "kind": "else",
+                "args": [
+                  256756
+                ]
+              },
+              {
+                "offset": 256728,
+                "next": 256730,
+                "kind": "if",
+                "args": [
+                  256746
+                ]
+              },
+              {
+                "offset": 256730,
+                "next": 256734,
+                "kind": "flag-test",
+                "args": [
+                  7,
+                  22,
+                  0
+                ]
+              },
+              {
+                "offset": 256734,
+                "next": 256744,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  4,
+                  129
+                ]
+              },
+              {
+                "offset": 256744,
+                "next": 256746,
+                "kind": "else",
+                "args": [
+                  256756
+                ]
+              },
+              {
+                "offset": 256746,
+                "next": 256756,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 256756,
+                "next": 256768,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256768,
+                "next": 256780,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256780,
+                "next": 256792,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256792,
+                "next": 256836,
+                "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256836,
+                "next": 256837,
+                "kind": "end",
+                "args": []
+              }
+            ]
+          }
+        ],
         "main_procedures": [
           {
             "start": 256842,
@@ -65228,8 +65649,14 @@
               },
               {
                 "offset": 256920,
-                "next": 256966,
+                "next": 256964,
                 "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256964,
+                "next": 256966,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -65363,7 +65790,7 @@
         ],
         "event_effects": [],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -65417,11 +65844,11 @@
         }
       ],
       "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "init: partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)",
-      "reason": "init: partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures); non-bit comparison 0x10 at 0x3eb26",
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "non-bit comparison 0x10 at 0x3eb26",
       "stats": {
-        "init": "partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)",
+        "init": "clean",
         "main": "clean",
         "events": "clean"
       },
@@ -65501,7 +65928,249 @@
         }
       ],
       "tracking_program": {
-        "procedures": [],
+        "procedures": [
+          {
+            "start": 256482,
+            "end": 256794,
+            "commands": [
+              {
+                "offset": 256482,
+                "next": 256508,
+                "kind": "door",
+                "args": [
+                  0,
+                  4000,
+                  11800,
+                  1300,
+                  1400,
+                  1,
+                  0,
+                  14,
+                  0,
+                  129
+                ]
+              },
+              {
+                "offset": 256508,
+                "next": 256526,
+                "kind": "aot-create",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256526,
+                "next": 256544,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 256544,
+                "next": 256570,
+                "kind": "item",
+                "args": [
+                  3,
+                  11,
+                  15,
+                  11,
+                  129
+                ]
+              },
+              {
+                "offset": 256570,
+                "next": 256596,
+                "kind": "item",
+                "args": [
+                  4,
+                  17,
+                  6,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 256596,
+                "next": 256622,
+                "kind": "item",
+                "args": [
+                  5,
+                  47,
+                  3,
+                  89,
+                  129
+                ]
+              },
+              {
+                "offset": 256622,
+                "next": 256650,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 256650,
+                "next": 256652,
+                "kind": "if",
+                "args": [
+                  256668
+                ]
+              },
+              {
+                "offset": 256652,
+                "next": 256656,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  10,
+                  1
+                ]
+              },
+              {
+                "offset": 256656,
+                "next": 256666,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256666,
+                "next": 256668,
+                "kind": "else",
+                "args": [
+                  256792
+                ]
+              },
+              {
+                "offset": 256668,
+                "next": 256670,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  11,
+                  0
+                ]
+              },
+              {
+                "offset": 256670,
+                "next": 256674,
+                "kind": "variable-write",
+                "args": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "offset": 256674,
+                "next": 256684,
+                "kind": "aot-handler",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256684,
+                "next": 256686,
+                "kind": "if",
+                "args": [
+                  256702
+                ]
+              },
+              {
+                "offset": 256686,
+                "next": 256690,
+                "kind": "flag-test",
+                "args": [
+                  7,
+                  12,
+                  0
+                ]
+              },
+              {
+                "offset": 256690,
+                "next": 256700,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  4,
+                  129
+                ]
+              },
+              {
+                "offset": 256700,
+                "next": 256702,
+                "kind": "else",
+                "args": [
+                  256712
+                ]
+              },
+              {
+                "offset": 256702,
+                "next": 256712,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 256712,
+                "next": 256724,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256724,
+                "next": 256736,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256736,
+                "next": 256748,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256748,
+                "next": 256792,
+                "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256792,
+                "next": 256793,
+                "kind": "end",
+                "args": []
+              }
+            ]
+          }
+        ],
         "main_procedures": [
           {
             "start": 256798,
@@ -65629,8 +66298,14 @@
               },
               {
                 "offset": 256876,
-                "next": 256922,
+                "next": 256920,
                 "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256920,
+                "next": 256922,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -65764,7 +66439,7 @@
         ],
         "event_effects": [],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -71662,12 +72337,12 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
+      "cache_complete": true,
       "door_cache_complete": false,
-      "door_cache_reason": "init: partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x36570; door interaction update outside init at 0x36afe",
-      "reason": "init: partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)",
+      "door_cache_reason": "door interaction update outside init at 0x36570; door interaction update outside init at 0x36afe",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
-        "init": "partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)",
+        "init": "clean",
         "main": "clean",
         "events": "clean"
       },
@@ -72124,7 +72799,589 @@
         }
       ],
       "tracking_program": {
-        "procedures": [],
+        "procedures": [
+          {
+            "start": 219994,
+            "end": 220792,
+            "commands": [
+              {
+                "offset": 219994,
+                "next": 220020,
+                "kind": "door",
+                "args": [
+                  0,
+                  20800,
+                  1000,
+                  3300,
+                  2400,
+                  15,
+                  0,
+                  0,
+                  0,
+                  129
+                ]
+              },
+              {
+                "offset": 220020,
+                "next": 220046,
+                "kind": "door",
+                "args": [
+                  1,
+                  1600,
+                  10300,
+                  3100,
+                  1600,
+                  21,
+                  0,
+                  2,
+                  0,
+                  192
+                ]
+              },
+              {
+                "offset": 220046,
+                "next": 220048,
+                "kind": "if",
+                "args": [
+                  220090
+                ]
+              },
+              {
+                "offset": 220048,
+                "next": 220052,
+                "kind": "byte-test",
+                "args": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 220052,
+                "next": 220070,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220070,
+                "next": 220088,
+                "kind": "aot-create",
+                "args": [
+                  3,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220088,
+                "next": 220090,
+                "kind": "else",
+                "args": [
+                  220126
+                ]
+              },
+              {
+                "offset": 220090,
+                "next": 220108,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220108,
+                "next": 220126,
+                "kind": "aot-create",
+                "args": [
+                  3,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220126,
+                "next": 220144,
+                "kind": "aot-create",
+                "args": [
+                  4,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 220144,
+                "next": 220162,
+                "kind": "aot-create",
+                "args": [
+                  5,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 220162,
+                "next": 220180,
+                "kind": "aot-create",
+                "args": [
+                  6,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220180,
+                "next": 220182,
+                "kind": "if",
+                "args": [
+                  220206
+                ]
+              },
+              {
+                "offset": 220182,
+                "next": 220186,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  48,
+                  1
+                ]
+              },
+              {
+                "offset": 220186,
+                "next": 220204,
+                "kind": "aot-create",
+                "args": [
+                  7,
+                  9,
+                  193
+                ]
+              },
+              {
+                "offset": 220204,
+                "next": 220206,
+                "kind": "else",
+                "args": [
+                  220224
+                ]
+              },
+              {
+                "offset": 220206,
+                "next": 220224,
+                "kind": "aot-create",
+                "args": [
+                  7,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220224,
+                "next": 220252,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220252,
+                "next": 220280,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220280,
+                "next": 220308,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220308,
+                "next": 220336,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220336,
+                "next": 220364,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220364,
+                "next": 220392,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220392,
+                "next": 220420,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220420,
+                "next": 220422,
+                "kind": "if",
+                "args": [
+                  220456
+                ]
+              },
+              {
+                "offset": 220422,
+                "next": 220426,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  48,
+                  1
+                ]
+              },
+              {
+                "offset": 220426,
+                "next": 220454,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220454,
+                "next": 220456,
+                "kind": "else",
+                "args": [
+                  220512
+                ]
+              },
+              {
+                "offset": 220456,
+                "next": 220484,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220484,
+                "next": 220512,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220512,
+                "next": 220516,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  28,
+                  0
+                ]
+              },
+              {
+                "offset": 220516,
+                "next": 220520,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  60,
+                  0
+                ]
+              },
+              {
+                "offset": 220520,
+                "next": 220524,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220524,
+                "next": 220528,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220528,
+                "next": 220532,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220532,
+                "next": 220534,
+                "kind": "if",
+                "args": [
+                  220560
+                ]
+              },
+              {
+                "offset": 220534,
+                "next": 220538,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  47,
+                  1
+                ]
+              },
+              {
+                "offset": 220538,
+                "next": 220548,
+                "kind": "aot-handler",
+                "args": [
+                  2,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220548,
+                "next": 220558,
+                "kind": "aot-handler",
+                "args": [
+                  3,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220558,
+                "next": 220560,
+                "kind": "else",
+                "args": [
+                  220582
+                ]
+              },
+              {
+                "offset": 220560,
+                "next": 220564,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220564,
+                "next": 220568,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220568,
+                "next": 220582,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220582,
+                "next": 220584,
+                "kind": "if",
+                "args": [
+                  220632
+                ]
+              },
+              {
+                "offset": 220584,
+                "next": 220588,
+                "kind": "byte-test",
+                "args": [
+                  3,
+                  0,
+                  2
+                ]
+              },
+              {
+                "offset": 220588,
+                "next": 220602,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220602,
+                "next": 220616,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220616,
+                "next": 220620,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220620,
+                "next": 220624,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220624,
+                "next": 220626,
+                "kind": "camera-change",
+                "args": [
+                  0
+                ]
+              },
+              {
+                "offset": 220626,
+                "next": 220630,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220630,
+                "next": 220632,
+                "kind": "else",
+                "args": [
+                  220636
+                ]
+              },
+              {
+                "offset": 220632,
+                "next": 220636,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220636,
+                "next": 220658,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220658,
+                "next": 220680,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220680,
+                "next": 220702,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220702,
+                "next": 220724,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220724,
+                "next": 220746,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220746,
+                "next": 220768,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220768,
+                "next": 220790,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220790,
+                "next": 220791,
+                "kind": "end",
+                "args": []
+              }
+            ]
+          }
+        ],
         "main_procedures": [
           {
             "start": 220798,
@@ -72234,16 +73491,34 @@
               },
               {
                 "offset": 220864,
-                "next": 220880,
+                "next": 220878,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 220880,
-                "next": 220881,
-                "kind": "end",
+                "offset": 220878,
+                "next": 220892,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220892,
+                "next": 220896,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  1,
+                  1
+                ]
+              },
+              {
+                "offset": 220896,
+                "next": 220898,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -72488,17 +73763,27 @@
               },
               {
                 "offset": 221008,
-                "next": 221024,
+                "next": 221022,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221024,
-                "next": 221025,
-                "kind": "end",
-                "args": []
+                "offset": 221022,
+                "next": 221036,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221036,
+                "next": 221038,
+                "kind": "else",
+                "args": [
+                  221062
+                ]
               },
               {
                 "offset": 221038,
@@ -72736,17 +74021,27 @@
               },
               {
                 "offset": 221136,
-                "next": 221152,
+                "next": 221150,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221152,
-                "next": 221153,
-                "kind": "end",
-                "args": []
+                "offset": 221150,
+                "next": 221164,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221164,
+                "next": 221166,
+                "kind": "else",
+                "args": [
+                  221190
+                ]
               },
               {
                 "offset": 221166,
@@ -72984,17 +74279,35 @@
               },
               {
                 "offset": 221264,
-                "next": 221280,
+                "next": 221278,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221280,
-                "next": 221281,
-                "kind": "end",
-                "args": []
+                "offset": 221278,
+                "next": 221292,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221292,
+                "next": 221306,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221306,
+                "next": 221308,
+                "kind": "else",
+                "args": [
+                  221346
+                ]
               },
               {
                 "offset": 221308,
@@ -73038,23 +74351,27 @@
               },
               {
                 "offset": 221328,
-                "next": 221344,
+                "next": 221342,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221344,
-                "next": 221348,
-                "kind": "unsupported-effect",
-                "args": []
+                "offset": 221342,
+                "next": 221346,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
-                "offset": 221348,
+                "offset": 221346,
                 "next": 221350,
-                "kind": "camera-change",
+                "kind": "flag-write",
                 "args": [
+                  4,
+                  10,
                   1
                 ]
               },
@@ -73244,17 +74561,35 @@
               },
               {
                 "offset": 221424,
-                "next": 221440,
+                "next": 221438,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221440,
-                "next": 221441,
-                "kind": "end",
-                "args": []
+                "offset": 221438,
+                "next": 221452,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221452,
+                "next": 221466,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221466,
+                "next": 221468,
+                "kind": "else",
+                "args": [
+                  221506
+                ]
               },
               {
                 "offset": 221468,
@@ -73298,23 +74633,27 @@
               },
               {
                 "offset": 221488,
-                "next": 221504,
+                "next": 221502,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221504,
-                "next": 221508,
-                "kind": "unsupported-effect",
-                "args": []
+                "offset": 221502,
+                "next": 221506,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
-                "offset": 221508,
+                "offset": 221506,
                 "next": 221510,
-                "kind": "camera-change",
+                "kind": "flag-write",
                 "args": [
+                  4,
+                  10,
                   1
                 ]
               },
@@ -73544,11 +74883,17 @@
               },
               {
                 "offset": 221596,
-                "next": 221612,
+                "next": 221610,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 221610,
+                "next": 221612,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 221612,
@@ -73658,17 +75003,27 @@
               },
               {
                 "offset": 221654,
-                "next": 221670,
+                "next": 221668,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221670,
-                "next": 221671,
-                "kind": "end",
-                "args": []
+                "offset": 221668,
+                "next": 221682,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221682,
+                "next": 221684,
+                "kind": "else",
+                "args": [
+                  221708
+                ]
               },
               {
                 "offset": 221684,
@@ -73906,10 +75261,18 @@
               },
               {
                 "offset": 221782,
-                "next": 221798,
+                "next": 221796,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 221796,
+                "next": 221798,
+                "kind": "else",
+                "args": [
+                  221850
                 ]
               },
               {
@@ -73954,16 +75317,112 @@
               },
               {
                 "offset": 221818,
-                "next": 221834,
+                "next": 221832,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221834,
-                "next": 221835,
-                "kind": "end",
+                "offset": 221832,
+                "next": 221846,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221846,
+                "next": 221850,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221850,
+                "next": 221854,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  10,
+                  1
+                ]
+              },
+              {
+                "offset": 221854,
+                "next": 221858,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  11,
+                  1
+                ]
+              },
+              {
+                "offset": 221858,
+                "next": 221862,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  12,
+                  1
+                ]
+              },
+              {
+                "offset": 221862,
+                "next": 221866,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  13,
+                  1
+                ]
+              },
+              {
+                "offset": 221866,
+                "next": 221870,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  14,
+                  1
+                ]
+              },
+              {
+                "offset": 221870,
+                "next": 221874,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  15,
+                  1
+                ]
+              },
+              {
+                "offset": 221874,
+                "next": 221878,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  16,
+                  0
+                ]
+              },
+              {
+                "offset": 221878,
+                "next": 221882,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  17,
+                  1
+                ]
+              },
+              {
+                "offset": 221882,
+                "next": 221884,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -74124,17 +75583,27 @@
               },
               {
                 "offset": 221950,
-                "next": 221966,
+                "next": 221964,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221966,
-                "next": 221967,
-                "kind": "end",
-                "args": []
+                "offset": 221964,
+                "next": 221978,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221978,
+                "next": 221982,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 221982,
@@ -74342,7 +75811,7 @@
           }
         ],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -74385,12 +75854,12 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
+      "cache_complete": true,
       "door_cache_complete": false,
-      "door_cache_reason": "init: partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x36570; door interaction update outside init at 0x36afe",
-      "reason": "init: partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)",
+      "door_cache_reason": "door interaction update outside init at 0x36570; door interaction update outside init at 0x36afe",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
-        "init": "partial: unknown/variable opcode 0xc4 at +624 (2 issues) in procedure +0 (1 procedures)",
+        "init": "clean",
         "main": "clean",
         "events": "clean"
       },
@@ -74847,7 +76316,589 @@
         }
       ],
       "tracking_program": {
-        "procedures": [],
+        "procedures": [
+          {
+            "start": 219994,
+            "end": 220792,
+            "commands": [
+              {
+                "offset": 219994,
+                "next": 220020,
+                "kind": "door",
+                "args": [
+                  0,
+                  20800,
+                  1000,
+                  3300,
+                  2400,
+                  15,
+                  0,
+                  0,
+                  0,
+                  129
+                ]
+              },
+              {
+                "offset": 220020,
+                "next": 220046,
+                "kind": "door",
+                "args": [
+                  1,
+                  1600,
+                  10300,
+                  3100,
+                  1600,
+                  21,
+                  0,
+                  2,
+                  0,
+                  192
+                ]
+              },
+              {
+                "offset": 220046,
+                "next": 220048,
+                "kind": "if",
+                "args": [
+                  220090
+                ]
+              },
+              {
+                "offset": 220048,
+                "next": 220052,
+                "kind": "byte-test",
+                "args": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 220052,
+                "next": 220070,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220070,
+                "next": 220088,
+                "kind": "aot-create",
+                "args": [
+                  3,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220088,
+                "next": 220090,
+                "kind": "else",
+                "args": [
+                  220126
+                ]
+              },
+              {
+                "offset": 220090,
+                "next": 220108,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220108,
+                "next": 220126,
+                "kind": "aot-create",
+                "args": [
+                  3,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 220126,
+                "next": 220144,
+                "kind": "aot-create",
+                "args": [
+                  4,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 220144,
+                "next": 220162,
+                "kind": "aot-create",
+                "args": [
+                  5,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 220162,
+                "next": 220180,
+                "kind": "aot-create",
+                "args": [
+                  6,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220180,
+                "next": 220182,
+                "kind": "if",
+                "args": [
+                  220206
+                ]
+              },
+              {
+                "offset": 220182,
+                "next": 220186,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  48,
+                  1
+                ]
+              },
+              {
+                "offset": 220186,
+                "next": 220204,
+                "kind": "aot-create",
+                "args": [
+                  7,
+                  9,
+                  193
+                ]
+              },
+              {
+                "offset": 220204,
+                "next": 220206,
+                "kind": "else",
+                "args": [
+                  220224
+                ]
+              },
+              {
+                "offset": 220206,
+                "next": 220224,
+                "kind": "aot-create",
+                "args": [
+                  7,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220224,
+                "next": 220252,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220252,
+                "next": 220280,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220280,
+                "next": 220308,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220308,
+                "next": 220336,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220336,
+                "next": 220364,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220364,
+                "next": 220392,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220392,
+                "next": 220420,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220420,
+                "next": 220422,
+                "kind": "if",
+                "args": [
+                  220456
+                ]
+              },
+              {
+                "offset": 220422,
+                "next": 220426,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  48,
+                  1
+                ]
+              },
+              {
+                "offset": 220426,
+                "next": 220454,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220454,
+                "next": 220456,
+                "kind": "else",
+                "args": [
+                  220512
+                ]
+              },
+              {
+                "offset": 220456,
+                "next": 220484,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220484,
+                "next": 220512,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220512,
+                "next": 220516,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  28,
+                  0
+                ]
+              },
+              {
+                "offset": 220516,
+                "next": 220520,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  60,
+                  0
+                ]
+              },
+              {
+                "offset": 220520,
+                "next": 220524,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220524,
+                "next": 220528,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220528,
+                "next": 220532,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220532,
+                "next": 220534,
+                "kind": "if",
+                "args": [
+                  220560
+                ]
+              },
+              {
+                "offset": 220534,
+                "next": 220538,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  47,
+                  1
+                ]
+              },
+              {
+                "offset": 220538,
+                "next": 220548,
+                "kind": "aot-handler",
+                "args": [
+                  2,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220548,
+                "next": 220558,
+                "kind": "aot-handler",
+                "args": [
+                  3,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 220558,
+                "next": 220560,
+                "kind": "else",
+                "args": [
+                  220582
+                ]
+              },
+              {
+                "offset": 220560,
+                "next": 220564,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220564,
+                "next": 220568,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220568,
+                "next": 220582,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220582,
+                "next": 220584,
+                "kind": "if",
+                "args": [
+                  220632
+                ]
+              },
+              {
+                "offset": 220584,
+                "next": 220588,
+                "kind": "byte-test",
+                "args": [
+                  3,
+                  0,
+                  2
+                ]
+              },
+              {
+                "offset": 220588,
+                "next": 220602,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220602,
+                "next": 220616,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220616,
+                "next": 220620,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220620,
+                "next": 220624,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220624,
+                "next": 220626,
+                "kind": "camera-change",
+                "args": [
+                  0
+                ]
+              },
+              {
+                "offset": 220626,
+                "next": 220630,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220630,
+                "next": 220632,
+                "kind": "else",
+                "args": [
+                  220636
+                ]
+              },
+              {
+                "offset": 220632,
+                "next": 220636,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220636,
+                "next": 220658,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220658,
+                "next": 220680,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220680,
+                "next": 220702,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220702,
+                "next": 220724,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220724,
+                "next": 220746,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220746,
+                "next": 220768,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220768,
+                "next": 220790,
+                "kind": "local-flag-forget",
+                "args": [
+                  6,
+                  160,
+                  32,
+                  4,
+                  200,
+                  8
+                ]
+              },
+              {
+                "offset": 220790,
+                "next": 220791,
+                "kind": "end",
+                "args": []
+              }
+            ]
+          }
+        ],
         "main_procedures": [
           {
             "start": 220798,
@@ -74957,16 +77008,34 @@
               },
               {
                 "offset": 220864,
-                "next": 220880,
+                "next": 220878,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 220880,
-                "next": 220881,
-                "kind": "end",
+                "offset": 220878,
+                "next": 220892,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 220892,
+                "next": 220896,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  1,
+                  1
+                ]
+              },
+              {
+                "offset": 220896,
+                "next": 220898,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -75211,17 +77280,27 @@
               },
               {
                 "offset": 221008,
-                "next": 221024,
+                "next": 221022,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221024,
-                "next": 221025,
-                "kind": "end",
-                "args": []
+                "offset": 221022,
+                "next": 221036,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221036,
+                "next": 221038,
+                "kind": "else",
+                "args": [
+                  221062
+                ]
               },
               {
                 "offset": 221038,
@@ -75459,17 +77538,27 @@
               },
               {
                 "offset": 221136,
-                "next": 221152,
+                "next": 221150,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221152,
-                "next": 221153,
-                "kind": "end",
-                "args": []
+                "offset": 221150,
+                "next": 221164,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221164,
+                "next": 221166,
+                "kind": "else",
+                "args": [
+                  221190
+                ]
               },
               {
                 "offset": 221166,
@@ -75707,17 +77796,35 @@
               },
               {
                 "offset": 221264,
-                "next": 221280,
+                "next": 221278,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221280,
-                "next": 221281,
-                "kind": "end",
-                "args": []
+                "offset": 221278,
+                "next": 221292,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221292,
+                "next": 221306,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221306,
+                "next": 221308,
+                "kind": "else",
+                "args": [
+                  221346
+                ]
               },
               {
                 "offset": 221308,
@@ -75761,23 +77868,27 @@
               },
               {
                 "offset": 221328,
-                "next": 221344,
+                "next": 221342,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221344,
-                "next": 221348,
-                "kind": "unsupported-effect",
-                "args": []
+                "offset": 221342,
+                "next": 221346,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
-                "offset": 221348,
+                "offset": 221346,
                 "next": 221350,
-                "kind": "camera-change",
+                "kind": "flag-write",
                 "args": [
+                  4,
+                  10,
                   1
                 ]
               },
@@ -75967,17 +78078,35 @@
               },
               {
                 "offset": 221424,
-                "next": 221440,
+                "next": 221438,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221440,
-                "next": 221441,
-                "kind": "end",
-                "args": []
+                "offset": 221438,
+                "next": 221452,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221452,
+                "next": 221466,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221466,
+                "next": 221468,
+                "kind": "else",
+                "args": [
+                  221506
+                ]
               },
               {
                 "offset": 221468,
@@ -76021,23 +78150,27 @@
               },
               {
                 "offset": 221488,
-                "next": 221504,
+                "next": 221502,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221504,
-                "next": 221508,
-                "kind": "unsupported-effect",
-                "args": []
+                "offset": 221502,
+                "next": 221506,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
-                "offset": 221508,
+                "offset": 221506,
                 "next": 221510,
-                "kind": "camera-change",
+                "kind": "flag-write",
                 "args": [
+                  4,
+                  10,
                   1
                 ]
               },
@@ -76267,11 +78400,17 @@
               },
               {
                 "offset": 221596,
-                "next": 221612,
+                "next": 221610,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 221610,
+                "next": 221612,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 221612,
@@ -76381,17 +78520,27 @@
               },
               {
                 "offset": 221654,
-                "next": 221670,
+                "next": 221668,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221670,
-                "next": 221671,
-                "kind": "end",
-                "args": []
+                "offset": 221668,
+                "next": 221682,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221682,
+                "next": 221684,
+                "kind": "else",
+                "args": [
+                  221708
+                ]
               },
               {
                 "offset": 221684,
@@ -76629,10 +78778,18 @@
               },
               {
                 "offset": 221782,
-                "next": 221798,
+                "next": 221796,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 221796,
+                "next": 221798,
+                "kind": "else",
+                "args": [
+                  221850
                 ]
               },
               {
@@ -76677,16 +78834,112 @@
               },
               {
                 "offset": 221818,
-                "next": 221834,
+                "next": 221832,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221834,
-                "next": 221835,
-                "kind": "end",
+                "offset": 221832,
+                "next": 221846,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221846,
+                "next": 221850,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221850,
+                "next": 221854,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  10,
+                  1
+                ]
+              },
+              {
+                "offset": 221854,
+                "next": 221858,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  11,
+                  1
+                ]
+              },
+              {
+                "offset": 221858,
+                "next": 221862,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  12,
+                  1
+                ]
+              },
+              {
+                "offset": 221862,
+                "next": 221866,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  13,
+                  1
+                ]
+              },
+              {
+                "offset": 221866,
+                "next": 221870,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  14,
+                  1
+                ]
+              },
+              {
+                "offset": 221870,
+                "next": 221874,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  15,
+                  1
+                ]
+              },
+              {
+                "offset": 221874,
+                "next": 221878,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  16,
+                  0
+                ]
+              },
+              {
+                "offset": 221878,
+                "next": 221882,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  17,
+                  1
+                ]
+              },
+              {
+                "offset": 221882,
+                "next": 221884,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -76847,17 +79100,27 @@
               },
               {
                 "offset": 221950,
-                "next": 221966,
+                "next": 221964,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 221966,
-                "next": 221967,
-                "kind": "end",
-                "args": []
+                "offset": 221964,
+                "next": 221978,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 221978,
+                "next": 221982,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
                 "offset": 221982,
@@ -77065,7 +79328,7 @@
           }
         ],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -78026,20 +80289,22 @@
               },
               {
                 "offset": 102208,
-                "next": 102224,
+                "next": 102222,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 102224,
-                "next": 102228,
-                "kind": "uncertain-test",
-                "args": []
+                "offset": 102222,
+                "next": 102226,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
               },
               {
-                "offset": 102228,
+                "offset": 102226,
                 "next": 102230,
                 "kind": "constant-test",
                 "args": [
@@ -78088,32 +80353,34 @@
               },
               {
                 "offset": 102256,
-                "next": 102272,
+                "next": 102270,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 102272,
-                "next": 102276,
-                "kind": "uncertain-test",
-                "args": []
-              },
-              {
-                "offset": 102276,
-                "next": 102280,
+                "offset": 102270,
+                "next": 102274,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 102280,
+                "offset": 102274,
+                "next": 102278,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 102278,
                 "next": 102282,
-                "kind": "camera-change",
+                "kind": "constant-test",
                 "args": [
-                  0
+                  1
                 ]
               },
               {
@@ -79935,13 +82202,13 @@
         }
       ],
       "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x12788: partial: unknown/variable opcode 0xb8 at +18 (1 issues) in procedure +0 (1 procedures)",
-      "reason": "indexed event scripts: embedded SCD at 0x12788: partial: unknown/variable opcode 0xb8 at +18 (1 issues) in procedure +0 (1 procedures); unguarded item interaction update outside init at 0x116fc; non-bit comparison 0x10 at 0x111f6",
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "unguarded item interaction update outside init at 0x116fc; non-bit comparison 0x10 at 0x111f6",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x12788: partial: unknown/variable opcode 0xb8 at +18 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -81973,7 +84240,7 @@
           }
         ],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -101440,13 +103707,13 @@
         }
       ],
       "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x970: partial: unsupported opcode 0x17 source 29 at +16 (1 issues) in procedure +0 (1 procedures)",
-      "reason": "indexed event scripts: embedded SCD at 0x970: partial: unsupported opcode 0x17 source 29 at +16 (1 issues) in procedure +0 (1 procedures); item quantity transfer requires live refresh at 0x396; item quantity transfer requires live refresh at 0x8be",
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "item quantity transfer requires live refresh at 0x396; item quantity transfer requires live refresh at 0x8be",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x970: partial: unsupported opcode 0x17 source 29 at +16 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -101905,18 +104172,34 @@
               },
               {
                 "offset": 1208,
-                "next": 1224,
+                "next": 1222,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
+                "offset": 1222,
+                "next": 1224,
+                "kind": "else",
+                "args": [
+                  1238
+                ]
+              },
+              {
                 "offset": 1224,
-                "next": 1240,
+                "next": 1238,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 1238,
+                "next": 1240,
+                "kind": "if",
+                "args": [
+                  1248
                 ]
               },
               {
@@ -101941,6 +104224,16 @@
                 "kind": "else",
                 "args": [
                   1252
+                ]
+              },
+              {
+                "offset": 1248,
+                "next": 1252,
+                "kind": "aot-handler",
+                "args": [
+                  6,
+                  9,
+                  129
                 ]
               },
               {
@@ -102287,18 +104580,34 @@
               },
               {
                 "offset": 1378,
-                "next": 1394,
+                "next": 1392,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
+                "offset": 1392,
+                "next": 1394,
+                "kind": "else",
+                "args": [
+                  1408
+                ]
+              },
+              {
                 "offset": 1394,
-                "next": 1410,
+                "next": 1408,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 1408,
+                "next": 1410,
+                "kind": "else",
+                "args": [
+                  1454
                 ]
               },
               {
@@ -102339,19 +104648,33 @@
               },
               {
                 "offset": 1424,
-                "next": 1440,
+                "next": 1438,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
+                "offset": 1438,
+                "next": 1440,
+                "kind": "else",
+                "args": [
+                  1454
+                ]
+              },
+              {
                 "offset": 1440,
-                "next": 1456,
+                "next": 1454,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 1454,
+                "next": 1456,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 1456,
@@ -102374,12 +104697,32 @@
             ]
           },
           {
+            "offset": 1718,
+            "next": 1722,
+            "kind": "aot-handler",
+            "args": [
+              4,
+              9,
+              129
+            ]
+          },
+          {
             "offset": 1760,
             "next": 1764,
             "kind": "aot-handler",
             "args": [
               4,
               0,
+              129
+            ]
+          },
+          {
+            "offset": 1952,
+            "next": 1956,
+            "kind": "aot-handler",
+            "args": [
+              5,
+              9,
               129
             ]
           },
@@ -102397,7 +104740,7 @@
         "award_slots": [
           3
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -102988,12 +105331,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x36d7e",
-      "reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
+      "door_cache_reason": "door interaction update outside init at 0x36d7e",
+      "reason": "unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -105080,11 +107423,17 @@
               },
               {
                 "offset": 220312,
-                "next": 220328,
+                "next": 220326,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220326,
+                "next": 220328,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220328,
@@ -105156,11 +107505,17 @@
               },
               {
                 "offset": 220374,
-                "next": 220390,
+                "next": 220388,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220388,
+                "next": 220390,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220390,
@@ -105256,11 +107611,17 @@
               },
               {
                 "offset": 220444,
-                "next": 220460,
+                "next": 220458,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220458,
+                "next": 220460,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220460,
@@ -105332,11 +107693,17 @@
               },
               {
                 "offset": 220506,
-                "next": 220522,
+                "next": 220520,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220520,
+                "next": 220522,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220522,
@@ -105394,11 +107761,17 @@
               },
               {
                 "offset": 220542,
-                "next": 220558,
+                "next": 220556,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220556,
+                "next": 220558,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220558,
@@ -105828,7 +108201,7 @@
         "award_slots": [
           4
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -105892,12 +108265,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x36d7e",
-      "reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
+      "door_cache_reason": "door interaction update outside init at 0x36d7e",
+      "reason": "unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -107984,11 +110357,17 @@
               },
               {
                 "offset": 220312,
-                "next": 220328,
+                "next": 220326,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220326,
+                "next": 220328,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220328,
@@ -108060,11 +110439,17 @@
               },
               {
                 "offset": 220374,
-                "next": 220390,
+                "next": 220388,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220388,
+                "next": 220390,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220390,
@@ -108160,11 +110545,17 @@
               },
               {
                 "offset": 220444,
-                "next": 220460,
+                "next": 220458,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220458,
+                "next": 220460,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220460,
@@ -108236,11 +110627,17 @@
               },
               {
                 "offset": 220506,
-                "next": 220522,
+                "next": 220520,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220520,
+                "next": 220522,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220522,
@@ -108298,11 +110695,17 @@
               },
               {
                 "offset": 220542,
-                "next": 220558,
+                "next": 220556,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220556,
+                "next": 220558,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220558,
@@ -108732,7 +111135,7 @@
         "award_slots": [
           4
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -127628,11 +130031,17 @@
               },
               {
                 "offset": 80124,
-                "next": 80140,
+                "next": 80138,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 80138,
+                "next": 80140,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 80140,
@@ -127674,16 +130083,24 @@
               },
               {
                 "offset": 80154,
-                "next": 80170,
+                "next": 80168,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 80170,
-                "next": 80171,
-                "kind": "end",
+                "offset": 80168,
+                "next": 80182,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 80182,
+                "next": 80184,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -128745,11 +131162,17 @@
               },
               {
                 "offset": 80124,
-                "next": 80140,
+                "next": 80138,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 80138,
+                "next": 80140,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 80140,
@@ -128791,16 +131214,24 @@
               },
               {
                 "offset": 80154,
-                "next": 80170,
+                "next": 80168,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 80170,
-                "next": 80171,
-                "kind": "end",
+                "offset": 80168,
+                "next": 80182,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 80182,
+                "next": 80184,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -193060,11 +195491,17 @@
               },
               {
                 "offset": 9826,
-                "next": 9842,
+                "next": 9840,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9840,
+                "next": 9842,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9842,
@@ -193110,11 +195547,17 @@
               },
               {
                 "offset": 9856,
-                "next": 9872,
+                "next": 9870,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9870,
+                "next": 9872,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9872,
@@ -193572,10 +196015,18 @@
               },
               {
                 "offset": 10066,
-                "next": 10082,
+                "next": 10080,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10080,
+                "next": 10082,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -193728,10 +196179,18 @@
               },
               {
                 "offset": 10144,
-                "next": 10160,
+                "next": 10158,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10158,
+                "next": 10160,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -216851,16 +219310,42 @@
               },
               {
                 "offset": 18458,
-                "next": 18474,
+                "next": 18472,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 18474,
-                "next": 18475,
-                "kind": "end",
+                "offset": 18472,
+                "next": 18486,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18486,
+                "next": 18500,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18500,
+                "next": 18504,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  29,
+                  0
+                ]
+              },
+              {
+                "offset": 18504,
+                "next": 18506,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -218794,16 +221279,42 @@
               },
               {
                 "offset": 18458,
-                "next": 18474,
+                "next": 18472,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
               },
               {
-                "offset": 18474,
-                "next": 18475,
-                "kind": "end",
+                "offset": 18472,
+                "next": 18486,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18486,
+                "next": 18500,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 18500,
+                "next": 18504,
+                "kind": "flag-write",
+                "args": [
+                  4,
+                  29,
+                  0
+                ]
+              },
+              {
+                "offset": 18504,
+                "next": 18506,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -232487,8 +234998,14 @@
               },
               {
                 "offset": 38830,
-                "next": 38876,
+                "next": 38874,
                 "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 38874,
+                "next": 38876,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -234277,9 +236794,17 @@
               },
               {
                 "offset": 38952,
-                "next": 38998,
+                "next": 38996,
                 "kind": "unsupported-effect",
                 "args": []
+              },
+              {
+                "offset": 38996,
+                "next": 38998,
+                "kind": "if",
+                "args": [
+                  39008
+                ]
               },
               {
                 "offset": 38998,
@@ -236078,11 +238603,11 @@
         }
       ],
       "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "init: partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)",
-      "reason": "init: partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures); non-bit comparison 0x10 at 0x3eb52",
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "non-bit comparison 0x10 at 0x3eb52",
       "stats": {
-        "init": "partial: overlapping branch target at +354 (1 issues) in procedure +0 (1 procedures)",
+        "init": "clean",
         "main": "clean",
         "events": "clean"
       },
@@ -236191,7 +238716,347 @@
         }
       ],
       "tracking_program": {
-        "procedures": [],
+        "procedures": [
+          {
+            "start": 256482,
+            "end": 256838,
+            "commands": [
+              {
+                "offset": 256482,
+                "next": 256508,
+                "kind": "door",
+                "args": [
+                  0,
+                  4000,
+                  11800,
+                  1300,
+                  1400,
+                  1,
+                  0,
+                  14,
+                  0,
+                  129
+                ]
+              },
+              {
+                "offset": 256508,
+                "next": 256526,
+                "kind": "aot-create",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256526,
+                "next": 256544,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 256544,
+                "next": 256570,
+                "kind": "item",
+                "args": [
+                  3,
+                  11,
+                  15,
+                  11,
+                  129
+                ]
+              },
+              {
+                "offset": 256570,
+                "next": 256572,
+                "kind": "if",
+                "args": [
+                  256604
+                ]
+              },
+              {
+                "offset": 256572,
+                "next": 256576,
+                "kind": "flag-test",
+                "args": [
+                  5,
+                  46,
+                  1
+                ]
+              },
+              {
+                "offset": 256576,
+                "next": 256602,
+                "kind": "item",
+                "args": [
+                  4,
+                  12,
+                  7,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 256602,
+                "next": 256604,
+                "kind": "else",
+                "args": [
+                  256630
+                ]
+              },
+              {
+                "offset": 256604,
+                "next": 256630,
+                "kind": "item",
+                "args": [
+                  4,
+                  51,
+                  3,
+                  22,
+                  129
+                ]
+              },
+              {
+                "offset": 256630,
+                "next": 256658,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 256658,
+                "next": 256660,
+                "kind": "if",
+                "args": [
+                  256676
+                ]
+              },
+              {
+                "offset": 256660,
+                "next": 256664,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  10,
+                  1
+                ]
+              },
+              {
+                "offset": 256664,
+                "next": 256674,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256674,
+                "next": 256676,
+                "kind": "else",
+                "args": [
+                  256836
+                ]
+              },
+              {
+                "offset": 256676,
+                "next": 256678,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  11,
+                  0
+                ]
+              },
+              {
+                "offset": 256678,
+                "next": 256682,
+                "kind": "variable-write",
+                "args": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "offset": 256682,
+                "next": 256692,
+                "kind": "aot-handler",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256692,
+                "next": 256694,
+                "kind": "if",
+                "args": [
+                  256728
+                ]
+              },
+              {
+                "offset": 256694,
+                "next": 256698,
+                "kind": "flag-test",
+                "args": [
+                  5,
+                  46,
+                  1
+                ]
+              },
+              {
+                "offset": 256698,
+                "next": 256700,
+                "kind": "if",
+                "args": [
+                  256716
+                ]
+              },
+              {
+                "offset": 256700,
+                "next": 256704,
+                "kind": "flag-test",
+                "args": [
+                  7,
+                  12,
+                  0
+                ]
+              },
+              {
+                "offset": 256704,
+                "next": 256714,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  4,
+                  129
+                ]
+              },
+              {
+                "offset": 256714,
+                "next": 256716,
+                "kind": "else",
+                "args": [
+                  256726
+                ]
+              },
+              {
+                "offset": 256716,
+                "next": 256726,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 256726,
+                "next": 256728,
+                "kind": "else",
+                "args": [
+                  256756
+                ]
+              },
+              {
+                "offset": 256728,
+                "next": 256730,
+                "kind": "if",
+                "args": [
+                  256746
+                ]
+              },
+              {
+                "offset": 256730,
+                "next": 256734,
+                "kind": "flag-test",
+                "args": [
+                  7,
+                  22,
+                  0
+                ]
+              },
+              {
+                "offset": 256734,
+                "next": 256744,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  4,
+                  129
+                ]
+              },
+              {
+                "offset": 256744,
+                "next": 256746,
+                "kind": "else",
+                "args": [
+                  256756
+                ]
+              },
+              {
+                "offset": 256746,
+                "next": 256756,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 256756,
+                "next": 256768,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256768,
+                "next": 256780,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256780,
+                "next": 256792,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256792,
+                "next": 256836,
+                "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256836,
+                "next": 256837,
+                "kind": "end",
+                "args": []
+              }
+            ]
+          }
+        ],
         "main_procedures": [
           {
             "start": 256842,
@@ -236319,8 +239184,14 @@
               },
               {
                 "offset": 256920,
-                "next": 256966,
+                "next": 256964,
                 "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256964,
+                "next": 256966,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -236454,7 +239325,7 @@
         ],
         "event_effects": [],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -236508,11 +239379,11 @@
         }
       ],
       "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "init: partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)",
-      "reason": "init: partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures); non-bit comparison 0x10 at 0x3eb26",
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "non-bit comparison 0x10 at 0x3eb26",
       "stats": {
-        "init": "partial: overlapping branch target at +310 (1 issues) in procedure +0 (1 procedures)",
+        "init": "clean",
         "main": "clean",
         "events": "clean"
       },
@@ -236592,7 +239463,249 @@
         }
       ],
       "tracking_program": {
-        "procedures": [],
+        "procedures": [
+          {
+            "start": 256482,
+            "end": 256794,
+            "commands": [
+              {
+                "offset": 256482,
+                "next": 256508,
+                "kind": "door",
+                "args": [
+                  0,
+                  4000,
+                  11800,
+                  1300,
+                  1400,
+                  1,
+                  0,
+                  14,
+                  0,
+                  129
+                ]
+              },
+              {
+                "offset": 256508,
+                "next": 256526,
+                "kind": "aot-create",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256526,
+                "next": 256544,
+                "kind": "aot-create",
+                "args": [
+                  2,
+                  7,
+                  1
+                ]
+              },
+              {
+                "offset": 256544,
+                "next": 256570,
+                "kind": "item",
+                "args": [
+                  3,
+                  11,
+                  15,
+                  11,
+                  129
+                ]
+              },
+              {
+                "offset": 256570,
+                "next": 256596,
+                "kind": "item",
+                "args": [
+                  4,
+                  17,
+                  6,
+                  12,
+                  129
+                ]
+              },
+              {
+                "offset": 256596,
+                "next": 256622,
+                "kind": "item",
+                "args": [
+                  5,
+                  47,
+                  3,
+                  89,
+                  129
+                ]
+              },
+              {
+                "offset": 256622,
+                "next": 256650,
+                "kind": "constant-test",
+                "args": [
+                  1
+                ]
+              },
+              {
+                "offset": 256650,
+                "next": 256652,
+                "kind": "if",
+                "args": [
+                  256668
+                ]
+              },
+              {
+                "offset": 256652,
+                "next": 256656,
+                "kind": "flag-test",
+                "args": [
+                  0,
+                  10,
+                  1
+                ]
+              },
+              {
+                "offset": 256656,
+                "next": 256666,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256666,
+                "next": 256668,
+                "kind": "else",
+                "args": [
+                  256792
+                ]
+              },
+              {
+                "offset": 256668,
+                "next": 256670,
+                "kind": "flag-write",
+                "args": [
+                  5,
+                  11,
+                  0
+                ]
+              },
+              {
+                "offset": 256670,
+                "next": 256674,
+                "kind": "variable-write",
+                "args": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "offset": 256674,
+                "next": 256684,
+                "kind": "aot-handler",
+                "args": [
+                  1,
+                  2,
+                  129
+                ]
+              },
+              {
+                "offset": 256684,
+                "next": 256686,
+                "kind": "if",
+                "args": [
+                  256702
+                ]
+              },
+              {
+                "offset": 256686,
+                "next": 256690,
+                "kind": "flag-test",
+                "args": [
+                  7,
+                  12,
+                  0
+                ]
+              },
+              {
+                "offset": 256690,
+                "next": 256700,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  4,
+                  129
+                ]
+              },
+              {
+                "offset": 256700,
+                "next": 256702,
+                "kind": "else",
+                "args": [
+                  256712
+                ]
+              },
+              {
+                "offset": 256702,
+                "next": 256712,
+                "kind": "aot-handler",
+                "args": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "offset": 256712,
+                "next": 256724,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256724,
+                "next": 256736,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256736,
+                "next": 256748,
+                "kind": "local-flag-forget",
+                "args": [
+                  4,
+                  224,
+                  32
+                ]
+              },
+              {
+                "offset": 256748,
+                "next": 256792,
+                "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256792,
+                "next": 256793,
+                "kind": "end",
+                "args": []
+              }
+            ]
+          }
+        ],
         "main_procedures": [
           {
             "start": 256798,
@@ -236720,8 +239833,14 @@
               },
               {
                 "offset": 256876,
-                "next": 256922,
+                "next": 256920,
                 "kind": "unsupported-effect",
+                "args": []
+              },
+              {
+                "offset": 256920,
+                "next": 256922,
+                "kind": "endif",
                 "args": []
               },
               {
@@ -236855,7 +239974,7 @@
         ],
         "event_effects": [],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -240000,9 +243119,17 @@
               },
               {
                 "offset": 112206,
-                "next": 112252,
+                "next": 112250,
                 "kind": "unsupported-effect",
                 "args": []
+              },
+              {
+                "offset": 112250,
+                "next": 112252,
+                "kind": "if",
+                "args": [
+                  112270
+                ]
               },
               {
                 "offset": 112252,
@@ -240808,9 +243935,17 @@
               },
               {
                 "offset": 112206,
-                "next": 112252,
+                "next": 112250,
                 "kind": "unsupported-effect",
                 "args": []
+              },
+              {
+                "offset": 112250,
+                "next": 112252,
+                "kind": "if",
+                "args": [
+                  112270
+                ]
               },
               {
                 "offset": 112252,
@@ -251860,11 +254995,17 @@
               },
               {
                 "offset": 9888,
-                "next": 9904,
+                "next": 9902,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9902,
+                "next": 9904,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9904,
@@ -251910,11 +255051,17 @@
               },
               {
                 "offset": 9918,
-                "next": 9934,
+                "next": 9932,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9932,
+                "next": 9934,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9934,
@@ -252696,10 +255843,18 @@
               },
               {
                 "offset": 10278,
-                "next": 10294,
+                "next": 10292,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10292,
+                "next": 10294,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -252852,10 +256007,18 @@
               },
               {
                 "offset": 10356,
-                "next": 10372,
+                "next": 10370,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10370,
+                "next": 10372,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -268156,12 +271319,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x36d7e",
-      "reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
+      "door_cache_reason": "door interaction update outside init at 0x36d7e",
+      "reason": "unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -270248,11 +273411,17 @@
               },
               {
                 "offset": 220312,
-                "next": 220328,
+                "next": 220326,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220326,
+                "next": 220328,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220328,
@@ -270324,11 +273493,17 @@
               },
               {
                 "offset": 220374,
-                "next": 220390,
+                "next": 220388,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220388,
+                "next": 220390,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220390,
@@ -270424,11 +273599,17 @@
               },
               {
                 "offset": 220444,
-                "next": 220460,
+                "next": 220458,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220458,
+                "next": 220460,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220460,
@@ -270500,11 +273681,17 @@
               },
               {
                 "offset": 220506,
-                "next": 220522,
+                "next": 220520,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220520,
+                "next": 220522,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220522,
@@ -270562,11 +273749,17 @@
               },
               {
                 "offset": 220542,
-                "next": 220558,
+                "next": 220556,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220556,
+                "next": 220558,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220558,
@@ -270996,7 +274189,7 @@
         "award_slots": [
           4
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -271060,12 +274253,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); door interaction update outside init at 0x36d7e",
-      "reason": "indexed event scripts: embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures); unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
+      "door_cache_reason": "door interaction update outside init at 0x36d7e",
+      "reason": "unguarded item interaction update outside init at 0x35e90; unguarded item interaction update outside init at 0x35e94; unguarded item interaction update outside init at 0x35ef0; unguarded item interaction update outside init at 0x35ef4; room-local comparison field 3 at 0x35a3e; non-bit comparison 0x10 at 0x35b40; room-local comparison field 2 at 0x35b98; non-bit comparison 0x3c at 0x35b9c; non-bit comparison 0x3f at 0x35bac; room-local comparison field 2 at 0x35bd2; room-local comparison field 2 at 0x35bde; room-local comparison field 2 at 0x35dd6; room-local comparison field 2 at 0x35ddc; room-local comparison field 2 at 0x35df6",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "embedded SCD at 0x36954: partial: truncated opcode 0x18 at +16 (1 issues) in procedure +0 (1 procedures)"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -273152,11 +276345,17 @@
               },
               {
                 "offset": 220312,
-                "next": 220328,
+                "next": 220326,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220326,
+                "next": 220328,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220328,
@@ -273228,11 +276427,17 @@
               },
               {
                 "offset": 220374,
-                "next": 220390,
+                "next": 220388,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220388,
+                "next": 220390,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220390,
@@ -273328,11 +276533,17 @@
               },
               {
                 "offset": 220444,
-                "next": 220460,
+                "next": 220458,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220458,
+                "next": 220460,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220460,
@@ -273404,11 +276615,17 @@
               },
               {
                 "offset": 220506,
-                "next": 220522,
+                "next": 220520,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220520,
+                "next": 220522,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220522,
@@ -273466,11 +276683,17 @@
               },
               {
                 "offset": 220542,
-                "next": 220558,
+                "next": 220556,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 220556,
+                "next": 220558,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 220558,
@@ -273900,7 +277123,7 @@
         "award_slots": [
           4
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -296139,11 +299362,17 @@
               },
               {
                 "offset": 9888,
-                "next": 9904,
+                "next": 9902,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9902,
+                "next": 9904,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9904,
@@ -296189,11 +299418,17 @@
               },
               {
                 "offset": 9918,
-                "next": 9934,
+                "next": 9932,
                 "kind": "constant-test",
                 "args": [
                   1
                 ]
+              },
+              {
+                "offset": 9932,
+                "next": 9934,
+                "kind": "endif",
+                "args": []
               },
               {
                 "offset": 9934,
@@ -296975,10 +300210,18 @@
               },
               {
                 "offset": 10278,
-                "next": 10294,
+                "next": 10292,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10292,
+                "next": 10294,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
@@ -297131,10 +300374,18 @@
               },
               {
                 "offset": 10356,
-                "next": 10372,
+                "next": 10370,
                 "kind": "constant-test",
                 "args": [
                   1
+                ]
+              },
+              {
+                "offset": 10370,
+                "next": 10372,
+                "kind": "camera-change",
+                "args": [
+                  0
                 ]
               },
               {
