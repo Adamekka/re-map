@@ -17,7 +17,7 @@ from build_item_table import _iter_files, _read_file
 from build_source_choices import build_source_choices
 from build_tracking_program import build_tracking_program
 from list_psx_files import _sector_data
-from scan_events import scan_event_commands
+from scan_events import scan_event_program
 from scan_scd import walk_procedures
 
 
@@ -86,7 +86,8 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
             events_size=event_end - event_start,
             events_sha256=hashlib.sha256(data[event_start:event_end]).hexdigest(),
         )
-    found, status = scan_event_commands(data, event_start, event_end)
+    event_scan = scan_event_program(data, event_start, event_end)
+    found, status = event_scan.operations, event_scan.status
     operations.extend(("events", address, op, raw) for address, op, raw in found)
     stats["events"] = status
     if status != "clean":
@@ -367,7 +368,7 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
     )
     if all(section + "_offset" in row for section in ("init", "main", "events")):
         row["tracking_program"] = build_tracking_program(
-            data, row, operations, not source_issues
+            data, row, operations, not source_issues, event_scan
         )
     for audit in profile["cache_audits"]:
         if audit["source_rdt"] != source_rdt:
@@ -452,6 +453,7 @@ def main() -> int:
                         "RE1-SCD-014",
                         "RE1-SCD-015",
                         "RE1-EVENT-001",
+                        "RE1-EVENT-002",
                         "RE1-VARS-001",
                         "RE1-SOURCE-002",
                         "RE1-SELECT-001",

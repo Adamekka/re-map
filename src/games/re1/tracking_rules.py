@@ -177,6 +177,7 @@ class RuleProcedure:
 class RoomProgram:
     procedures: tuple[RuleProcedure, ...]
     main_procedures: tuple[RuleProcedure, ...]
+    event_blocks: tuple[tuple[RuleProcedure, ...], ...]
     event_effects: tuple[RuleCommand, ...]
     award_slots: tuple[int, ...]
     coverage_complete: bool
@@ -214,10 +215,22 @@ class RoomProgram:
             self.event_effects
         ):
             raise ValueError("invalid tracking event effects")
+        # Separate dispatches can reach shared bytes. Validate each list's
+        # order; cross-list source order does not establish execution order.
+        for block in self.event_blocks:
+            last_end = 0
+            for procedure in block:
+                if procedure.start < last_end or any(
+                    command.offset in occupied for command in procedure.commands
+                ):
+                    raise ValueError(
+                        "event block overlaps initialization or runs out of order"
+                    )
+                last_end = procedure.end
 
     @staticmethod
     def load(raw: dict) -> RoomProgram:
-        def procedures(section: str) -> tuple[RuleProcedure, ...]:
+        def procedures(rows: list[dict]) -> tuple[RuleProcedure, ...]:
             return tuple(
                 RuleProcedure(
                     row["start"],
@@ -232,12 +245,13 @@ class RoomProgram:
                         for command in row["commands"]
                     ),
                 )
-                for row in raw[section]
+                for row in rows
             )
 
         return RoomProgram(
-            procedures("procedures"),
-            procedures("main_procedures"),
+            procedures(raw["procedures"]),
+            procedures(raw["main_procedures"]),
+            tuple(procedures(block) for block in raw["event_blocks"]),
             tuple(
                 RuleCommand(
                     command["offset"],
@@ -395,13 +409,57 @@ def evaluate_room_program(
         creator, fields, _, _ = descriptor
         return creator, fields, args[1], args[2]
 
-    def closure(choices, effects):
+    event_updates = tuple(
+        (
+            block,
+            tuple(
+                command
+                for procedure in block
+                for command in procedure.commands
+                if command.kind in ("item", "door", "aot-create", "aot-handler")
+            ),
+        )
+        for block in program.event_blocks
+    )
+    event_outcomes = {}
+
+    def closure(choices, effects, slot):
         choices = set(choices)
         pending = list(choices)
         while pending:
             descriptor = pending.pop()
-            for command in effects:
-                changed = update_descriptor(descriptor, command.kind, command.args)
+            outcomes = {update_descriptor(descriptor, c.kind, c.args) for c in effects}
+            for block_index, (block, updates) in enumerate(event_updates):
+                relevant = tuple(c for c in updates if c.args[0] == slot)
+                if not relevant:
+                    continue
+                key = (block_index, slot, descriptor)
+                if key not in event_outcomes:
+                    # Activation, earlier flags and other event scheduling are
+                    # unavailable. Each block is optional and starts with unknown
+                    # guards. Its own ordered writes/tests retain their relation.
+                    states = [(((slot, frozenset({descriptor})),), ())]
+                    successful = True
+                    for procedure in block:
+                        successful, states = run_procedure(procedure, states, True)
+                        if not successful:
+                            break
+                    if successful:
+                        event_outcomes[key] = frozenset(
+                            d
+                            for slots, _ in states
+                            for d in dict(slots).get(slot, frozenset({None}))
+                        )
+                    else:
+                        # A callback requiring another descriptor, unsupported
+                        # effect or analysis limit cannot authorize pruning.
+                        # Retain the old independent-write possibilities.
+                        event_outcomes[key] = frozenset(
+                            update_descriptor(descriptor, c.kind, c.args)
+                            for c in relevant
+                        )
+                outcomes.update(event_outcomes[key])
+            for changed in outcomes:
                 if changed not in choices:
                     choices.add(changed)
                     pending.append(changed)
@@ -411,36 +469,10 @@ def evaluate_room_program(
                 return frozenset(choices), True
         return frozenset(choices), False
 
-    history_unresolved = set()
-    for index, procedure in enumerate(program.procedures + program.main_procedures):
-        if index == len(program.procedures):
-            # Current RAM already reflects completed initialization. Main tests
-            # must use that snapshot rather than repeat init's shadow flag writes.
-            # Scalar variables can also change during prior main/event ticks;
-            # their initializer shadows are not proof of their current values.
-            # Main setters can retain an earlier effect after its guard becomes
-            # false. Include those histories before applying current main rules.
-            effects = program.event_effects + tuple(
-                command
-                for block in program.main_procedures
-                for command in block.commands
-                if command.kind in ("item", "door", "aot-create", "aot-handler")
-            )
-            historical = []
-            for slots, _ in paths:
-                changed = dict(slots)
-                for slot in set(program.item_slots) | set(program.door_slots):
-                    choices, exceeded = closure(
-                        changed.get(slot, frozenset({None})),
-                        [command for command in effects if command.args[0] == slot],
-                    )
-                    changed[slot] = choices
-                    if exceeded:
-                        history_unresolved.add(slot)
-                historical.append((tuple(sorted(changed.items())), ()))
-            paths = historical
+    def run_procedure(procedure, initial, historical):
+        successful = True
         commands = {command.offset: command for command in procedure.commands}
-        pending = [(procedure.start, (), slots, writes) for slots, writes in paths]
+        pending = [(procedure.start, (), slots, writes) for slots, writes in initial]
         finished = set()
         seen = set()
         while pending:
@@ -452,7 +484,7 @@ def evaluate_room_program(
             # These are analysis budgets, not claimed native stack capacities.
             # A malformed or branching source must not stall live polling.
             if len(seen) > 4096 or len(stack) > 16:
-                bounded = False
+                successful = False
                 break
             if pc == procedure.end:
                 finished.add((slots, writes))
@@ -467,7 +499,7 @@ def evaluate_room_program(
                 continue
             if kind in ("else", "endif"):
                 if not stack:
-                    bounded = False
+                    successful = False
                     break
                 pending.append(
                     (
@@ -479,6 +511,7 @@ def evaluate_room_program(
                 )
                 continue
             predicate = True
+            assumption = None
             if kind == "uncertain-test":
                 # Unclassified handlers may return zero to the native runner.
                 # Explore failure as well as continuation instead of assuming a no-op.
@@ -486,7 +519,7 @@ def evaluate_room_program(
             elif kind == "unsupported-effect":
                 # A return guess cannot account for unaudited writes or a
                 # handler that fails to advance its PC. Reject reconstruction.
-                bounded = False
+                successful = False
                 break
             elif kind == "constant-test":
                 predicate = bool(args[0])
@@ -532,9 +565,13 @@ def evaluate_room_program(
                 if group < len(layout.flag_bases):
                     address, mask = layout.flag(group, index)
                     bit = dict(writes).get((address, mask))
-                    if (address, mask) not in dict(writes) and (
-                        group in layout.persistent_flag_groups
-                        or (group, index) in layout.persistent_flag_bits
+                    if (
+                        not historical
+                        and (address, mask) not in dict(writes)
+                        and (
+                            group in layout.persistent_flag_groups
+                            or (group, index) in layout.persistent_flag_bits
+                        )
                     ):
                         bit = bool(values[address] & mask)
                 predicate = (
@@ -542,6 +579,15 @@ def evaluate_room_program(
                     if bit is not None and expected in (0, 1)
                     else None
                 )
+                if (
+                    historical
+                    and bit is None
+                    and group < len(layout.flag_bases)
+                    and expected in (0, 1)
+                ):
+                    # Repeated tests in one synchronous block observe the same
+                    # physical bit until a modeled writer changes or forgets it.
+                    assumption = (layout.flag(group, index), bool(expected))
             elif kind in ("byte-test", "word-test"):
                 index, comparison, expected = args
                 actual = None
@@ -560,13 +606,20 @@ def evaluate_room_program(
                                 actual = None
                                 break
                             actual = actual & ~(1 << bit) | int(value) << bit
-                elif kind == "word-test" and index < 16:
-                    # Only fully written scalar words can be reconstructed.
-                    # Higher indices overlap other saved structures and room-local data.
-                    address = layout.word_variables_base + 2 * index
+                elif kind == "byte-test" or index < 16:
+                    # A block's written bytes/low scalar words are available.
+                    # Higher word indices overlap other saved structures and
+                    # room-local data, so do not infer them from a scalar shadow.
+                    width = 1 if kind == "byte-test" else 2
+                    base = (
+                        layout.byte_variables_base
+                        if width == 1
+                        else layout.word_variables_base
+                    )
+                    address = base + width * index
                     bits = [
                         shadow.get((address + bit // 8, 1 << (bit % 8)))
-                        for bit in range(16)
+                        for bit in range(8 * width)
                     ]
                     if all(bit is not None for bit in bits):
                         actual = sum(
@@ -591,14 +644,18 @@ def evaluate_room_program(
                 if group >= len(layout.flag_bases):
                     # An undefined bank can write outside the modeled flag state.
                     # It is an unsupported side effect, not a conditional failure.
-                    bounded = False
+                    successful = False
                     break
                 else:
                     address, mask = layout.flag(group, index)
                     old = dict(writes).get((address, mask))
-                    if (address, mask) not in dict(writes) and (
-                        group in layout.persistent_flag_groups
-                        or (group, index) in layout.persistent_flag_bits
+                    if (
+                        not historical
+                        and (address, mask) not in dict(writes)
+                        and (
+                            group in layout.persistent_flag_groups
+                            or (group, index) in layout.persistent_flag_bits
+                        )
                     ):
                         old = bool(values[address] & mask)
                     changed = dict(writes)
@@ -666,7 +723,7 @@ def evaluate_room_program(
                     # the native callback still reads the preserved source.
                     for descriptor in dict(slots).get(args[0], frozenset({None})):
                         if descriptor is None or descriptor[0] != "door":
-                            bounded = False
+                            successful = False
                             break
                         lock = descriptor[1][6]
                         if lock & 0x80 and descriptor[1][8] != 0xFF:
@@ -677,12 +734,13 @@ def evaluate_room_program(
                             address = layout.flag(2, lock & 0x3F)
                             old = changed.get(address)
                             if (
-                                address not in changed
+                                not historical
+                                and address not in changed
                                 and 2 in layout.persistent_flag_groups
                             ):
                                 old = bool(values[address[0]] & address[1])
                             changed[address] = True if old is True else None
-                    if not bounded:
+                    if not successful:
                         break
                     address = layout.flag(5, 6)
                     changed[address] = True if changed.get(address) is True else None
@@ -721,14 +779,14 @@ def evaluate_room_program(
                             or descriptor[0] != "item"
                             or not 0x4E <= descriptor[1][1] < 0x54
                         ):
-                            bounded = False
+                            successful = False
                             break
                         _, item_type, _, gid, _ = descriptor[1]
                         # Read actual acquisition/ownership from fresh RAM;
                         # discard older shadows only at the possible targets.
                         changed[layout.flag(7, gid)] = None
                         changed[layout.flag(8, item_type - 0x4E + 124)] = None
-                    if not bounded:
+                    if not successful:
                         break
                 if not predicate:
                     # 2D sets pending bit 10 and toggles bit 11 after dispatch,
@@ -738,16 +796,56 @@ def evaluate_room_program(
                     old = changed.get(address)
                     changed[address] = None if old is None else not old
                 writes = tuple(sorted(changed.items()))
+            false_writes = true_writes = writes
+            if assumption is not None:
+                address, expected = assumption
+                changed = dict(writes)
+                changed[address] = expected
+                false_writes = tuple(sorted(changed.items()))
+                changed[address] = not expected
+                true_writes = tuple(sorted(changed.items()))
             if predicate is not True:
                 if stack:
-                    pending.append((stack[-1], stack[:-1], slots, writes))
+                    pending.append((stack[-1], stack[:-1], slots, false_writes))
                 else:
-                    finished.add((slots, writes))
+                    finished.add((slots, false_writes))
             if predicate is not False:
-                pending.append((command.next, stack, slots, writes))
-        if not bounded:
+                pending.append((command.next, stack, slots, true_writes))
+        return successful, list(finished)
+
+    history_unresolved = set()
+    for index, procedure in enumerate(program.procedures + program.main_procedures):
+        if index == len(program.procedures):
+            # Current RAM already reflects completed initialization. Main tests
+            # must use that snapshot rather than repeat init's shadow flag writes.
+            # Scalar variables can also change during prior main/event ticks;
+            # their initializer shadows are not proof of their current values.
+            # Main setters can retain an earlier effect after its guard becomes
+            # false. Include those histories before applying current main rules.
+            effects = program.event_effects + tuple(
+                command
+                for block in program.main_procedures
+                for command in block.commands
+                if command.kind in ("item", "door", "aot-create", "aot-handler")
+            )
+            historical = []
+            for slots, _ in paths:
+                changed = dict(slots)
+                for slot in set(program.item_slots) | set(program.door_slots):
+                    choices, exceeded = closure(
+                        changed.get(slot, frozenset({None})),
+                        [command for command in effects if command.args[0] == slot],
+                        slot,
+                    )
+                    changed[slot] = choices
+                    if exceeded:
+                        history_unresolved.add(slot)
+                historical.append((tuple(sorted(changed.items())), ()))
+            paths = historical
+        successful, paths = run_procedure(procedure, paths, False)
+        if not successful:
+            bounded = False
             break
-        paths = list(finished)
     uncertain_items, uncertain_doors = set(), set()
     items, doors, disabled_doors = [], [], []
     labels = dict(item_labels)
@@ -832,7 +930,7 @@ def evaluate_room_program(
         effects = [
             command for command in program.event_effects if command.args[0] == slot
         ]
-        choices, exceeded = closure(choices, effects)
+        choices, exceeded = closure(choices, effects, slot)
         meanings = {interpret_descriptor(descriptor) for descriptor in choices}
         if (
             not bounded

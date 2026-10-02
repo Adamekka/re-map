@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from scan_events import EventScan
 from scan_scd import walk
 
 from games.re1.scd_semantics import (
@@ -15,11 +16,15 @@ from games.re1.scd_semantics import (
     LOCAL_FLAG_WRITES,
     UNRESOLVED_PREDICATE_OPCODES,
 )
-from games.re1.tracking_rules import RoomProgram
+from games.re1.tracking_rules import RoomProgram, RuleCommand, RuleProcedure
 
 
 def build_tracking_program(
-    data: bytes, row: dict, operations: list, source_complete: bool
+    data: bytes,
+    row: dict,
+    operations: list,
+    source_complete: bool,
+    event_scan: EventScan,
 ) -> dict:
     def command(address: int, op: int, raw: bytes) -> dict:
         kind, args = "unsupported-effect", []
@@ -122,10 +127,8 @@ def build_tracking_program(
             "args": args,
         }
 
-    def procedures(section: str) -> tuple[list[dict], bool]:
+    def procedures(cursor: int, end: int) -> tuple[list[dict], bool]:
         result = []
-        cursor = row[section + "_offset"]
-        end = cursor + row[section + "_size"]
         if not 0 <= cursor < end <= len(data):
             return result, False
         while cursor + 2 <= end:
@@ -176,17 +179,61 @@ def build_tracking_program(
         and raw[1] not in item_slots
         for _, _, op, raw in operations
     )
-    init_procedures, init_complete = procedures("init")
-    main_procedures, main_complete = procedures("main")
+    init_procedures, init_complete = procedures(
+        row["init_offset"], row["init_offset"] + row["init_size"]
+    )
+    main_procedures, main_complete = procedures(
+        row["main_offset"], row["main_offset"] + row["main_size"]
+    )
+    event_blocks = []
+    block_commands = set()
+    event_complete = event_scan.status == "clean"
+    for start in event_scan.block_starts:
+        blocks, complete = procedures(start, row["events_offset"] + row["events_size"])
+        assert complete, "event scanner must validate every embedded procedure list"
+        if not any(
+            c["kind"] in ("item", "door", "aot-create", "aot-handler")
+            and c["args"][0] in item_slots | door_slots
+            for block in blocks
+            for c in block["commands"]
+        ):
+            # Flags from separate dispatches cannot establish this block's
+            # historical input. Store only blocks that change tracked slots.
+            continue
+        try:
+            # Width decoding does not enforce the semantic procedure schema.
+            # Invalid blocks cannot authorize pruning or source completeness.
+            for block in blocks:
+                RuleProcedure(
+                    block["start"],
+                    block["end"],
+                    tuple(
+                        RuleCommand(c["offset"], c["next"], c["kind"], tuple(c["args"]))
+                        for c in block["commands"]
+                    ),
+                )
+        except ValueError:
+            event_complete = False
+            continue
+        event_blocks.append(blocks)
+        block_commands.update(
+            c["offset"] for block in blocks for c in block["commands"]
+        )
     program = {
         "procedures": init_procedures,
         "main_procedures": main_procedures,
-        # Event activation and historical guards are not reconstructable from
-        # current flags. Keep every decoded write as a possible effect instead.
+        "event_blocks": event_blocks,
+        # Single/deferred dispatches have no shared SCD-runner boundary. Their
+        # changes remain independent, including commands reached by both forms.
         "event_effects": [
             command(address, op, raw)
             for section, address, op, raw in operations
-            if section == "events" and op in (0x0C, 0x0D, 0x12, 0x13, 0x18)
+            if section == "events"
+            and op in (0x0C, 0x0D, 0x12, 0x13, 0x18)
+            and (
+                address not in block_commands
+                or address in event_scan.standalone_commands
+            )
         ],
         "award_slots": sorted(
             {
@@ -202,6 +249,7 @@ def build_tracking_program(
         "coverage_complete": source_complete
         and init_complete
         and main_complete
+        and event_complete
         and not unclassified_items,
         "item_slots": sorted(item_slots),
         "door_slots": sorted(door_slots),

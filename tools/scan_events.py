@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import struct
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 from scan_scd import _opcode_size, walk_procedures
@@ -19,11 +20,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from games.re1.scd_semantics import NONZERO_RETURN_OPCODES, ZERO_RETURN_OPCODES
 
 
-def scan_event_commands(
-    data: bytes, start: int, end: int
-) -> tuple[list[tuple[int, int, bytes]], str]:
+@dataclass(frozen=True)
+class EventScan:
+    operations: tuple[tuple[int, int, bytes], ...]
+    block_starts: tuple[int, ...]
+    standalone_commands: tuple[int, ...]
+    status: str
+
+
+def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
     if not 0 < start < end <= len(data):
-        return [], "bad indexed event range"
+        return EventScan((), (), (), "bad indexed event range")
     entries = []
     cursor = start
     while cursor + 4 <= end:
@@ -33,13 +40,15 @@ def scan_event_commands(
             break
         target = start + relative
         if not start < target < end:
-            return [], "indexed event pointer is outside its section"
+            return EventScan((), (), (), "indexed event pointer is outside its section")
         entries.append(target)
     else:
-        return [], "indexed event table has no sentinel"
+        return EventScan((), (), (), "indexed event table has no sentinel")
     if any(target < cursor for target in entries):
-        return [], "indexed event pointer overlaps its table"
+        return EventScan((), (), (), "indexed event pointer overlaps its table")
     operations: dict[int, tuple[int, int, bytes]] = {}
+    block_starts = set()
+    standalone_commands = set()
     # Waits, counters, loops and calls share the native record's depth byte.
     # Frames retain only initialized fields; using a stale native field is unsupported.
     pending = [(entry, 0, ()) for entry in entries]
@@ -147,6 +156,7 @@ def scan_event_commands(
                 issues.append(f"deferred SCD at 0x{command:x}: {status}")
                 continue
             record((command, data[command], data[command : command + size]))
+            standalone_commands.add(command)
             # FD repeats only on nonzero. Audited zero returns cannot repeat,
             # while audited nonzero handlers cannot expose a later exit path.
             if data[command] not in ZERO_RETURN_OPCODES:
@@ -193,6 +203,12 @@ def scan_event_commands(
                 continue
             for operation in found:
                 record(operation)
+            if op == 6:
+                # The native runner finishes this procedure list before the
+                # event VM advances. Retain that boundary for ordered rules.
+                block_starts.add(address + 2)
+            else:
+                standalone_commands.update(operation[0] for operation in found)
         elif state == 1 and op == 0x81:
             if address + 2 > end:
                 issues.append(f"look-at command truncated at 0x{address:x}")
@@ -233,4 +249,18 @@ def scan_event_commands(
             elif state == 1 and op in (0x80, 0x8B) or state == 2 and op == 1:
                 next_state = 0
         pending.append((address + width, next_state, next_stack))
-    return sorted(operations.values()), "clean" if not issues else "; ".join(issues)
+    return EventScan(
+        tuple(sorted(operations.values())),
+        tuple(sorted(block_starts)),
+        tuple(sorted(standalone_commands)),
+        "clean" if not issues else "; ".join(issues),
+    )
+
+
+def scan_event_commands(
+    data: bytes, start: int, end: int
+) -> tuple[list[tuple[int, int, bytes]], str]:
+    # Keep the command-list API for standalone decoder callers. Metadata
+    # generation needs the richer result so it cannot lose dispatch boundaries.
+    result = scan_event_program(data, start, end)
+    return list(result.operations), result.status

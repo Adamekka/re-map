@@ -299,6 +299,10 @@ class Re1Profile:
                 for section, procedures in (
                     ("init", program.procedures),
                     ("main", program.main_procedures),
+                    (
+                        "events",
+                        tuple(p for block in program.event_blocks for p in block),
+                    ),
                 ):
                     if any(
                         not row[section + "_offset"]
@@ -320,6 +324,12 @@ class Re1Profile:
                     tuple(
                         command
                         for procedure in program.procedures + program.main_procedures
+                        for command in procedure.commands
+                    )
+                    + tuple(
+                        command
+                        for block in program.event_blocks
+                        for procedure in block
                         for command in procedure.commands
                     )
                     + program.event_effects

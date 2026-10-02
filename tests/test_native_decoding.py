@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 from build_cache_metadata import scan_cache_rdt
 from build_tracking_program import build_tracking_program
-from scan_events import scan_event_commands
+from scan_events import scan_event_commands, scan_event_program
 from scan_scd import walk, walk_linear, walk_procedures
 from test_cache_metadata import indexed_event, pickup, source
 from test_tracking_rules import compile_program
@@ -92,7 +92,15 @@ def test_compiler_cannot_trust_a_complete_claim_after_its_own_decoder_failure(
     data = source(malformed, b"\0", bytes(4))
     row = scan_cache_rdt(data, "PSX/STAGE1/ROOM1091.RDT", rules[1])
     assert not row["tracking_program"]["coverage_complete"]
-    assert not build_tracking_program(data, row, [], True)["coverage_complete"]
+    assert not build_tracking_program(
+        data,
+        row,
+        [],
+        True,
+        scan_event_program(
+            data, row["events_offset"], row["events_offset"] + row["events_size"]
+        ),
+    )["coverage_complete"]
 
 
 @pytest.mark.parametrize("header", [bytes((1, 0)), bytes((255, 255)), bytes((3, 0, 0))])
@@ -103,7 +111,15 @@ def test_compiler_rejects_invalid_lengths_and_missing_sentinels(rules, header):
     short = bytearray(data)
     short[start : start + len(header)] = header
     row["init_size"] = len(header)
-    assert not build_tracking_program(short, row, [], True)["coverage_complete"]
+    assert not build_tracking_program(
+        short,
+        row,
+        [],
+        True,
+        scan_event_program(
+            short, row["events_offset"], row["events_offset"] + row["events_size"]
+        ),
+    )["coverage_complete"]
 
 
 @pytest.mark.parametrize("section", ["init", "main"])
@@ -111,7 +127,15 @@ def test_compiler_rejects_a_source_section_outside_the_provided_bytes(rules, sec
     data = source(b"\0", b"\0", bytes(4))
     row = scan_cache_rdt(data, "PSX/STAGE1/ROOM1091.RDT", rules[1])
     row[section + "_size"] = len(data)
-    assert not build_tracking_program(data, row, [], True)["coverage_complete"]
+    assert not build_tracking_program(
+        data,
+        row,
+        [],
+        True,
+        scan_event_program(
+            data, row["events_offset"], row["events_offset"] + row["events_size"]
+        ),
+    )["coverage_complete"]
 
 
 @pytest.mark.parametrize("source", [4, 29, 127, 255])
