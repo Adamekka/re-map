@@ -173,6 +173,7 @@ def poll_once(
     }
     past_contexts = {}
     raw_sources = {rid: observation.active_doors}
+    disabled_sources = {rid: observation.disabled_doors}
     for room, cached in profile.room_observations.items():
         if room == rid or str(room) not in tracker.rooms:
             continue
@@ -185,10 +186,11 @@ def poll_once(
         )
         refreshed[room] = evaluated.items
         raw_sources[room] = evaluated.doors
+        disabled_sources[room] = evaluated.disabled_doors
         door_coverage[room] = evaluated.doors_complete, evaluated.door_reason
     decoded_doors = []
     for source, raw_doors in raw_sources.items():
-        for slot, raw in raw_doors:
+        for slot, raw in raw_doors + disabled_sources[source]:
             try:
                 door = parse_door(
                     slot,
@@ -202,16 +204,23 @@ def poll_once(
                 return PollResult(
                     PollStatus.ReadFailure, f"door interpretation failed: {exc}"
                 )
-            label = door.reason
+            disabled = (slot, raw) in disabled_sources[source]
+            label = "Passage is unavailable" if disabled else door.reason
             key_name = dict(layout.item_labels).get(door.lock_type)
             if (
-                door.state.value == "locked"
+                not disabled
+                and door.state.value == "locked"
                 and door.reason == "Requires a key"
                 and key_name
             ):
                 label = "Locked · " + key_name
             decoded_doors.append(
-                DoorDetail(source, door.target, door.state.name, label)
+                DoorDetail(
+                    source,
+                    door.target,
+                    "BLOCKED" if disabled else door.state.name,
+                    label,
+                )
             )
     camera = (
         read_memory(profile.camera_address, 1)

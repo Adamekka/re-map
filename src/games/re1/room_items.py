@@ -101,6 +101,7 @@ class RuntimeRoomItems:
     list_complete: bool = False
     coverage_reason: str = ""
     active_doors: tuple[tuple[int, bytes], ...] = ()
+    disabled_doors: tuple[tuple[int, bytes], ...] = ()
     error: str = ""
     retry: bool = False
     memory_markers: tuple[tuple[int, bytes], ...] = ()
@@ -187,6 +188,7 @@ def observe_room_items(
         )
     items: list[RuntimeRoomItem] = []
     doors: list[tuple[int, bytes]] = []
+    disabled_doors: list[tuple[int, bytes]] = []
     for slot in range(last_slot + 1):
         record = records.data[slot * 12 : (slot + 1) * 12]
         handler, mode, parameter, model, gid, pointer = struct.unpack("<BBHHHI", record)
@@ -240,6 +242,11 @@ def observe_room_items(
         if handler == 13:
             # This handler opens the file screen; reading documents does not block room completion.
             continue
+        if raw[0] == 0x0C and handler == 0 and not selected_pending:
+            # A validated door pointer survives a scripted handler disable.
+            # Preserve the wall marker and show that this passage is unavailable.
+            disabled_doors.append((slot, raw[:25] + bytes((mode,))))
+            continue
         if handler not in (0, 1, 3, 4, 15) and not selected_pending:
             continue
         if handler in (0, 3) and not selected_pending and raw[0] != 0x18:
@@ -251,7 +258,8 @@ def observe_room_items(
                 error=f"interaction {slot}: pickup or door descriptor is truncated",
             )
         if handler == 1:
-            doors.append((slot, raw))
+            # Handler setters update the registry mode without rewriting its source.
+            doors.append((slot, raw[:25] + bytes((mode,))))
             continue
         if raw[0] not in (0x0D, 0x18):
             if handler == 0 and not selected_pending:
@@ -371,6 +379,7 @@ def observe_room_items(
         list_complete=True,
         coverage_reason=f"{room}: registered item, map, and pending award descriptors classified",
         active_doors=tuple(doors),
+        disabled_doors=tuple(disabled_doors),
         memory_markers=(
             (layout.aot_bound_address, values[0]),
             (layout.aot_base, records.data),

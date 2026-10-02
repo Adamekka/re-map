@@ -435,7 +435,7 @@ def test_transient_bank_equality_cannot_authorize_observed_item_reuse(tmp_path, 
     assert result.items.items == ()
 
 
-def test_scripted_award_exposure_is_a_shared_mutation_barrier(rules):
+def test_dormant_scripted_awards_resolve_from_acquisition_and_rewind(rules):
     program = compile_program(
         rules,
         pickup(1, 0x44, 111) + bytes((0x13, 1, 3, 1, 0)),
@@ -444,6 +444,12 @@ def test_scripted_award_exposure_is_a_shared_mutation_barrier(rules):
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert not result.items.list_complete
     assert result.unresolved_item_slots == (1,)
+    flags = bytearray([255] * 32)
+    flags[14] &= ~1
+    result = evaluate(program, rules, bytearray(2 * 1024 * 1024), bytes(flags))
+    assert result.items.list_complete
+    assert result.items.items[0].state == RuntimeItemState.Taken
+    assert not evaluate(program, rules, bytearray(2 * 1024 * 1024)).items.list_complete
 
 
 @pytest.mark.parametrize("change", ["room", "registry", "source"])
@@ -546,7 +552,7 @@ def test_builder_rejects_unbounded_slots_before_emitting_a_profile(rules):
 
 
 def test_changed_door_handlers_are_explicitly_unresolved(rules):
-    program = compile_program(rules, door(2, 8, 0x34) + bytes((0x13, 2, 0, 1, 0)))
+    program = compile_program(rules, door(2, 8, 0x34) + bytes((0x13, 2, 2, 1, 0)))
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert result.doors == ()
     assert result.unresolved_door_slots == (2,)

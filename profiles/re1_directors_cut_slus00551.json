@@ -444,7 +444,7 @@
   ],
   "room_manifest_path": "../data/room_manifest_slus00551.json",
   "cache_audits": [],
-  "notes": "Pinned runtime identity. Registered items: RE1-COVER-002. Doors: RE1-DOORS-002. Shared rules: RE1-ENGINE-001. Event source binding: RE1-SOURCE-002. Loader choices: RE1-SELECT-001. Runtime and story validation limits remain in those findings.",
+  "notes": "Pinned runtime identity. Registered items: RE1-COVER-002. Doors: RE1-DOORS-002. Shared rules: RE1-ENGINE-001/002. Event source binding: RE1-SOURCE-002. Loader choices: RE1-SELECT-001. Runtime and story validation limits remain in those findings.",
   "tracking_rule_layout": {
     "persistent_flag_groups": [
       0,

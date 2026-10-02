@@ -294,19 +294,38 @@ class Re1Profile:
                 program = RoomProgram.load(row["tracking_program"])
                 if row["source_rdt"] in room_programs:
                     raise ValueError("duplicate tracking source")
-                if any(
-                    not row["init_offset"]
-                    <= procedure.start
-                    < procedure.end
-                    <= row["init_offset"] + row["init_size"]
-                    for procedure in program.procedures
+                for section, procedures in (
+                    ("init", program.procedures),
+                    ("main", program.main_procedures),
                 ):
-                    raise ValueError("tracking procedure outside source init")
+                    if any(
+                        not row[section + "_offset"]
+                        <= procedure.start
+                        < procedure.end
+                        <= row[section + "_offset"] + row[section + "_size"]
+                        for procedure in procedures
+                    ):
+                        raise ValueError("tracking procedure outside source " + section)
+                if any(
+                    not row["events_offset"]
+                    <= command.offset
+                    < command.next
+                    <= row["events_offset"] + row["events_size"]
+                    for command in program.event_effects
+                ):
+                    raise ValueError("tracking effect outside source events")
+                commands = (
+                    tuple(
+                        command
+                        for procedure in program.procedures + program.main_procedures
+                        for command in procedure.commands
+                    )
+                    + program.event_effects
+                )
                 if any(
                     command.kind == "item"
                     and command.args[3] >= runtime_layout.acquisition_flags_width * 8
-                    for procedure in program.procedures
-                    for command in procedure.commands
+                    for command in commands
                 ):
                     raise ValueError("tracking item ID exceeds acquisition flags")
                 room_programs[row["source_rdt"]] = program

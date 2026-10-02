@@ -41,6 +41,7 @@ class RuleCommand:
             "door": 10,
             "aot-create": 3,
             "aot-handler": 3,
+            "award": 3,
             "uncertain-test": 0,
         }
         if (
@@ -56,7 +57,7 @@ class RuleCommand:
         ):
             raise ValueError("tracking rule operand exceeds one byte")
         if (
-            self.kind in ("item", "aot-create", "aot-handler", "door")
+            self.kind in ("item", "aot-create", "aot-handler", "door", "award")
             and not 0 <= self.args[0] < 24
         ):
             raise ValueError("tracking rule slot exceeds the pinned AOT registry")
@@ -78,6 +79,10 @@ class RuleCommand:
             0 <= value <= 255 for value in self.args[1:]
         ):
             raise ValueError("invalid tracking handler fields")
+        if self.kind == "award" and (
+            self.args[1] not in (4, 15) or self.args[2] not in (0, 1)
+        ):
+            raise ValueError("invalid tracking award handler")
 
 
 @dataclass(frozen=True)
@@ -112,6 +117,9 @@ class RuleProcedure:
 @dataclass(frozen=True)
 class RoomProgram:
     procedures: tuple[RuleProcedure, ...]
+    main_procedures: tuple[RuleProcedure, ...]
+    event_effects: tuple[RuleCommand, ...]
+    award_slots: tuple[int, ...]
     coverage_complete: bool
     item_slots: tuple[int, ...]
     door_slots: tuple[int, ...]
@@ -120,14 +128,19 @@ class RoomProgram:
     def __post_init__(self) -> None:
         if type(self.coverage_complete) is not bool:
             raise ValueError("tracking coverage requires an explicit boolean")
-        for slots in (self.item_slots, self.door_slots, self.mutable_slots):
+        for slots in (
+            self.item_slots,
+            self.door_slots,
+            self.mutable_slots,
+            self.award_slots,
+        ):
             if len(set(slots)) != len(slots) or any(
                 type(slot) is not int or not 0 <= slot < 24 for slot in slots
             ):
                 raise ValueError("invalid tracking program slots")
         occupied = set()
         last_end = 0
-        for procedure in self.procedures:
+        for procedure in self.procedures + self.main_procedures:
             if procedure.start < last_end:
                 raise ValueError("tracking procedures overlap or run out of order")
             last_end = procedure.end
@@ -135,11 +148,18 @@ class RoomProgram:
                 if command.offset in occupied:
                     raise ValueError("tracking procedures overlap")
                 occupied.add(command.offset)
+        if any(
+            command.kind not in ("item", "door", "aot-create", "aot-handler")
+            for command in self.event_effects
+        ) or len({command.offset for command in self.event_effects}) != len(
+            self.event_effects
+        ):
+            raise ValueError("invalid tracking event effects")
 
     @staticmethod
     def load(raw: dict) -> RoomProgram:
-        return RoomProgram(
-            tuple(
+        def procedures(section: str) -> tuple[RuleProcedure, ...]:
+            return tuple(
                 RuleProcedure(
                     row["start"],
                     row["end"],
@@ -153,8 +173,22 @@ class RoomProgram:
                         for command in row["commands"]
                     ),
                 )
-                for row in raw["procedures"]
+                for row in raw[section]
+            )
+
+        return RoomProgram(
+            procedures("procedures"),
+            procedures("main_procedures"),
+            tuple(
+                RuleCommand(
+                    command["offset"],
+                    command["next"],
+                    command["kind"],
+                    tuple(command["args"]),
+                )
+                for command in raw["event_effects"]
             ),
+            tuple(raw["award_slots"]),
             raw["coverage_complete"],
             tuple(raw["item_slots"]),
             tuple(raw["door_slots"]),
@@ -226,7 +260,7 @@ def read_rule_snapshot(
         address for address, _ in layout.source_selection_masks
     }
     for program in programs:
-        for procedure in program.procedures:
+        for procedure in program.procedures + program.main_procedures:
             for command in procedure.commands:
                 if command.kind in ("flag-test", "flag-write"):
                     group, index, _ = command.args
@@ -250,6 +284,7 @@ def read_rule_snapshot(
 class RuleEvaluation:
     items: RuntimeRoomItems
     doors: tuple[tuple[int, bytes], ...]
+    disabled_doors: tuple[tuple[int, bytes], ...]
     unresolved_item_slots: tuple[int, ...]
     unresolved_door_slots: tuple[int, ...]
 
@@ -267,7 +302,62 @@ def evaluate_room_program(
     # Slots contain semantic creator operands and the latest AOT handler/mode.
     paths = [((), ())]
     bounded = True
-    for procedure in program.procedures:
+
+    def update_descriptor(descriptor, kind, args):
+        if kind == "item":
+            return kind, args, 15 if args[1] >= 0x4E else 4, args[4]
+        if kind == "door":
+            return kind, args, 1, args[9]
+        if kind == "aot-create":
+            return kind, args, args[1], args[2]
+        assert kind == "aot-handler"
+        if descriptor is None:
+            return None  # Setters preserve pointers and cannot create an absent descriptor.
+        creator, fields, _, _ = descriptor
+        return creator, fields, args[1], args[2]
+
+    def closure(choices, effects):
+        choices = set(choices)
+        pending = list(choices)
+        while pending:
+            descriptor = pending.pop()
+            for command in effects:
+                changed = update_descriptor(descriptor, command.kind, command.args)
+                if changed not in choices:
+                    choices.add(changed)
+                    pending.append(changed)
+            # Event order and repetition are unknown. Bound the per-slot closure
+            # instead of selecting a last writer or blocking unrelated slots.
+            if len(choices) > 256:
+                return frozenset(choices), True
+        return frozenset(choices), False
+
+    history_unresolved = set()
+    for index, procedure in enumerate(program.procedures + program.main_procedures):
+        if index == len(program.procedures):
+            # Current RAM already reflects completed initialization. Main tests
+            # must use that snapshot rather than repeat init's shadow flag writes.
+            # Main setters can retain an earlier effect after its guard becomes
+            # false. Include those histories before applying current main rules.
+            effects = program.event_effects + tuple(
+                command
+                for block in program.main_procedures
+                for command in block.commands
+                if command.kind in ("item", "door", "aot-create", "aot-handler")
+            )
+            historical = []
+            for slots, _ in paths:
+                changed = dict(slots)
+                for slot in set(program.item_slots) | set(program.door_slots):
+                    choices, exceeded = closure(
+                        changed.get(slot, frozenset({None})),
+                        [command for command in effects if command.args[0] == slot],
+                    )
+                    changed[slot] = choices
+                    if exceeded:
+                        history_unresolved.add(slot)
+                historical.append((tuple(sorted(changed.items())), ()))
+            paths = historical
         commands = {command.offset: command for command in procedure.commands}
         pending = [(procedure.start, (), slots, writes) for slots, writes in paths]
         finished = set()
@@ -350,7 +440,10 @@ def evaluate_room_program(
             elif kind == "flag-write":
                 group, index, operation = args
                 if group >= len(layout.flag_bases):
-                    predicate = None
+                    # An undefined bank can write outside the modeled flag state.
+                    # It is an unsupported side effect, not a conditional failure.
+                    bounded = False
+                    break
                 else:
                     address, mask = layout.flag(group, index)
                     old = dict(writes).get((address, mask))
@@ -374,21 +467,16 @@ def evaluate_room_program(
                     writes = tuple(sorted(changed.items()))
             elif kind in ("item", "door", "aot-create", "aot-handler"):
                 changed = dict(slots)
-                if kind == "item":
-                    changed[args[0]] = (
-                        kind,
-                        args,
-                        15 if args[1] >= 0x4E else 4,
-                        args[4],
-                    )
-                elif kind == "door":
-                    changed[args[0]] = (kind, args, 1, args[9])
-                elif kind == "aot-create":
-                    changed[args[0]] = (kind, args, args[1], args[2])
-                elif args[0] in changed:
-                    creator, fields, _, _ = changed[args[0]]
-                    changed[args[0]] = (creator, fields, args[1], args[2])
+                changed[args[0]] = frozenset(
+                    update_descriptor(descriptor, kind, args)
+                    for descriptor in changed.get(args[0], frozenset({None}))
+                )
                 slots = tuple(sorted(changed.items()))
+            elif kind == "award":
+                # Completed inventory/map awards clear the acquisition bit.
+                # Read the completed result from RAM; do not grant an item by replaying a script.
+                # Opcode 24 returns one, while 2D returns zero to the IF runner.
+                predicate = bool(args[2])
             if predicate is not True:
                 if stack:
                     pending.append((stack[-1], stack[:-1], slots, writes))
@@ -400,35 +488,34 @@ def evaluate_room_program(
             break
         paths = list(finished)
     uncertain_items, uncertain_doors = set(), set()
-    items, doors = [], []
+    items, doors, disabled_doors = [], [], []
     labels = dict(item_labels)
-    for slot in sorted(set(program.item_slots) | set(program.door_slots)):
-        choices = {dict(slots).get(slot) for slots, _ in paths}
-        if (
-            not bounded
-            or not program.coverage_complete
-            or slot in program.mutable_slots
-            or len(choices) != 1
-        ):
-            if slot in program.item_slots:
-                uncertain_items.add(slot)
-            if slot in program.door_slots:
-                uncertain_doors.add(slot)
-            continue
-        descriptor = choices.pop()
+
+    def interpret_descriptor(descriptor):
         if descriptor is None:
-            continue
+            return "absent", None
         creator, args, handler, mode = descriptor
+        slot = args[0]
         if creator == "item":
             _, item_type, amount, gid, _ = args
             if item_type == 0 or item_type >= 0x54:
-                continue  # Documents do not count as normal collectibles.
-            if item_type == 0x4D or handler not in (0, 3, 4, 15):
-                uncertain_items.add(slot)
-                continue
+                return "absent", None  # Documents are excluded from room completion.
+            if (
+                item_type == 0x4D
+                or handler not in (0, 3, 4, 15)
+                or handler == 4
+                and item_type >= 0x4E
+                or handler == 15
+                and item_type < 0x4E
+            ):
+                return "unresolved", None
             index = 4 * (gid // 32) + 3 - (gid % 32) // 8
             assert index < len(flags), "validated item GlobalId must fit the flag block"
             remaining = bool(flags[index] & (128 >> (gid % 8)))
+            if remaining and handler in (0, 3) and slot in program.award_slots:
+                # A dormant descriptor can still be awarded by an event. Its
+                # current availability needs event progress, not just a pickup bit.
+                return "unresolved", None
             state = (
                 RuntimeItemState.Taken
                 if not remaining
@@ -436,7 +523,8 @@ def evaluate_room_program(
                 if handler in (4, 15)
                 else RuntimeItemState.Unavailable
             )
-            items.append(
+            return (
+                "item",
                 # Reconstructed descriptors have no live PS1 source pointer.
                 # Zero stays internal; only observed AOTs authorize memory reads.
                 RuntimeRoomItem(
@@ -451,9 +539,9 @@ def evaluate_room_program(
                     else RuntimeItemKind.Inventory,
                     0,
                     0x18,
-                )
+                ),
             )
-        elif creator == "door" and handler == 1:
+        elif creator == "door" and handler in (0, 1):
             _, x, z, width, depth, animation, lock, target, key, _ = args
             raw = bytearray(26)
             raw[:2] = bytes((0x0C, slot))
@@ -465,16 +553,47 @@ def evaluate_room_program(
                 key,
                 mode,
             )
-            doors.append((slot, bytes(raw)))
+            return "door" if handler == 1 else "disabled-door", (slot, bytes(raw))
         elif creator == "aot-create" and handler in (1, 3, 4, 15):
+            return "unresolved", None
+        elif creator == "door":
+            # A changed handler can expose another scripted interaction.
+            # Its physical access has no implemented door rule yet.
+            return "unresolved", None
+        return "absent", None
+
+    for slot in sorted(set(program.item_slots) | set(program.door_slots)):
+        choices = {
+            descriptor
+            for slots, _ in paths
+            for descriptor in dict(slots).get(slot, frozenset({None}))
+        }
+        effects = [
+            command for command in program.event_effects if command.args[0] == slot
+        ]
+        choices, exceeded = closure(choices, effects)
+        meanings = {interpret_descriptor(descriptor) for descriptor in choices}
+        if (
+            not bounded
+            or not program.coverage_complete
+            or slot in program.mutable_slots
+            or exceeded
+            or slot in history_unresolved
+            or len(meanings) != 1
+            or ("unresolved", None) in meanings
+        ):
             if slot in program.item_slots:
                 uncertain_items.add(slot)
             if slot in program.door_slots:
                 uncertain_doors.add(slot)
-        elif creator == "door":
-            # A changed handler can expose another scripted interaction.
-            # Its physical access has no implemented door rule yet.
-            uncertain_doors.add(slot)
+            continue
+        kind, value = meanings.pop()
+        if kind == "item":
+            items.append(value)
+        elif kind == "door":
+            doors.append(value)
+        elif kind == "disabled-door":
+            disabled_doors.append(value)
     reason = "" if not uncertain_items else "Some item conditions need a room visit."
     if not bounded or not program.coverage_complete:
         reason = "Room script coverage is incomplete."
@@ -486,6 +605,7 @@ def evaluate_room_program(
             coverage_reason=reason,
         ),
         tuple(doors),
+        tuple(disabled_doors),
         tuple(sorted(uncertain_items)),
         tuple(sorted(uncertain_doors)),
     )

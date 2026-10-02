@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 class TrackedRoom:
     items: RuntimeRoomItems
     doors: tuple[tuple[int, bytes], ...]
+    disabled_doors: tuple[tuple[int, bytes], ...]
     doors_complete: bool
     door_reason: str
 
@@ -42,11 +43,16 @@ def validate_current_room(
                 coverage_reason="Room script coverage is unavailable.",
             ),
             observation.active_doors,
+            observation.disabled_doors,
             False,
             "Door access needs another visit.",
         )
     represented = {item.aot_id for item in observation.items}
     active_doors = {slot for slot, _ in observation.active_doors}
+    disabled_doors = {slot for slot, _ in observation.disabled_doors}
+    represented_doors = {
+        slot for slot, _ in observation.active_doors + observation.disabled_doors
+    }
     doors_complete = True
     for source in sources:
         expected = evaluate_room_program(
@@ -58,8 +64,9 @@ def validate_current_room(
             room_layout.item_labels,
         )
         if (
-            set(expected.unresolved_door_slots) - active_doors
+            set(expected.unresolved_door_slots) - represented_doors
             or {slot for slot, _ in expected.doors} - active_doors
+            or {slot for slot, _ in expected.disabled_doors} - disabled_doors
             or not profile.room_programs[source.source_rdt].coverage_complete
         ):
             doors_complete = False
@@ -94,6 +101,7 @@ def validate_current_room(
     return TrackedRoom(
         observation,
         observation.active_doors,
+        observation.disabled_doors,
         doors_complete,
         "" if doors_complete else "Door access needs another visit.",
     )
@@ -119,6 +127,7 @@ def refresh_visited_room(
                 ok=True, coverage_reason="Re-enter this room to refresh its items."
             ),
             (),
+            (),
             False,
             "Door access needs another visit.",
         )
@@ -135,6 +144,7 @@ def refresh_visited_room(
             RuntimeRoomItems(
                 ok=True, coverage_reason="Room source selection is unsupported."
             ),
+            (),
             (),
             False,
             "Door access needs another visit.",
@@ -170,7 +180,13 @@ def refresh_visited_room(
         and cached.doors_complete
     )
     if observed.list_complete and reuse_doors:
-        return TrackedRoom(observed, cached.observation.active_doors, True, "")
+        return TrackedRoom(
+            observed,
+            cached.observation.active_doors,
+            cached.observation.disabled_doors,
+            True,
+            "",
+        )
     rule_sources = (
         cached.sources
         if same_source
@@ -221,22 +237,31 @@ def refresh_visited_room(
         )
     if reuse_doors:
         doors = cached.observation.active_doors
+        disabled_doors = cached.observation.disabled_doors
     else:
         common_doors = set(evaluations[0].doors)
+        common_disabled = set(evaluations[0].disabled_doors)
         for evaluation in evaluations[1:]:
             common_doors.intersection_update(evaluation.doors)
+            common_disabled.intersection_update(evaluation.disabled_doors)
         doors = tuple(sorted(common_doors))
+        disabled_doors = tuple(sorted(common_disabled))
     doors_complete = reuse_doors or (
         all(
             not evaluation.unresolved_door_slots
             and profile.room_programs[source.source_rdt].coverage_complete
             for source, evaluation in zip(rule_sources, evaluations, strict=True)
         )
-        and all(evaluation.doors == evaluations[0].doors for evaluation in evaluations)
+        and all(
+            (evaluation.doors, evaluation.disabled_doors)
+            == (evaluations[0].doors, evaluations[0].disabled_doors)
+            for evaluation in evaluations
+        )
     )
     return TrackedRoom(
         items,
         doors,
+        disabled_doors,
         doors_complete,
         "" if doors_complete else "Door access needs another visit.",
     )

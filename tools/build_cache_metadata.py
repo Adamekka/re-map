@@ -439,6 +439,7 @@ def main() -> int:
                         "RE1-CACHE-002",
                         "RE1-CACHE-003",
                         "RE1-ENGINE-001",
+                        "RE1-ENGINE-002",
                         "RE1-SOURCE-002",
                         "RE1-SELECT-001",
                     ],
