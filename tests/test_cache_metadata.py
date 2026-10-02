@@ -409,7 +409,9 @@ def test_initial_door_branch_records_global_dependencies(profile):
 
 
 def test_unknown_event_path_disables_items_and_doors(profile):
-    event = indexed_event(bytes((0x0F, 0xFF)))
+    # State 0's default is a proven stop. State 1's default does not advance,
+    # so it still provides the unsupported flow this coverage test requires.
+    event = indexed_event(bytes((1, 0x0F, 0xFF)))
     row = scan_cache_rdt(
         source(bytes((0, 0)), bytes((0, 0)), event), "PSX/STAGE1/ROOM1091.RDT", profile
     )

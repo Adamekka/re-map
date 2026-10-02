@@ -50,6 +50,33 @@ CONTINUING_OPCODES = frozenset(
     }
 )
 
+# RE1-EVENT-001: these handlers also return nonzero. This return contract
+# controls FD repetition only; it does not authorize ignoring their effects.
+NONZERO_RETURN_OPCODES = CONTINUING_OPCODES | frozenset(
+    {
+        0x01,
+        0x02,
+        0x03,
+        0x05,
+        0x08,
+        0x09,
+        0x0A,
+        0x0C,
+        0x0D,
+        0x0F,
+        0x12,
+        0x13,
+        0x18,
+        0x1C,
+        0x23,
+        0x31,
+        0x40,
+        0x46,
+        0x4C,
+        0x4D,
+    }
+)
+
 # Each predicate only reads its condition and advances the script pointer.
 # Inventory, buttons, geometry and enemy state have no supported past-room
 # snapshot; retain both outcomes rather than read another room's temporary state.

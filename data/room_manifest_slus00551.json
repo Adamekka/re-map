@@ -9,6 +9,7 @@
     "RE1-ENGINE-002",
     "RE1-SCD-007",
     "RE1-SCD-008",
+    "RE1-EVENT-001",
     "RE1-VARS-001",
     "RE1-SOURCE-002",
     "RE1-SELECT-001"
@@ -117579,14 +117580,14 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
+      "cache_complete": true,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x250ec; door interaction update outside init at 0x25130",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x250ec",
+      "door_cache_reason": "door interaction update outside init at 0x25130",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x17 at 0x250ec"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -118027,7 +118028,7 @@
         "award_slots": [
           8
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           6,
           8
@@ -118072,14 +118073,14 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
+      "cache_complete": true,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x255e0; door interaction update outside init at 0x25624",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x255e0",
+      "door_cache_reason": "door interaction update outside init at 0x25624",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x17 at 0x255e0"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -119038,7 +119039,7 @@
         "award_slots": [
           8
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           6,
           8
@@ -143980,12 +143981,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x19b6c; event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x19b6c; event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
+      "door_cache_reason": "event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
+      "reason": "event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x17 at 0x19b6c"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -146060,12 +146061,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x19b6c; event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x19b6c; event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
+      "door_cache_reason": "event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
+      "reason": "event creation index outside table at 0x19a3a; event creation index outside table at 0x19a4c; event creation index outside table at 0x19a5e",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x17 at 0x19b6c"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -171157,14 +171158,14 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x48 at 0x25446",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x48 at 0x25446",
+      "cache_complete": true,
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x48 at 0x25446"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -172353,7 +172354,7 @@
           }
         ],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -235597,14 +235598,14 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
+      "cache_complete": true,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x0a at 0xa48c; door interaction update outside init at 0xabaa; room-local door comparison field 5 at 0xaba6",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x0a at 0xa48c",
+      "door_cache_reason": "door interaction update outside init at 0xabaa; room-local door comparison field 5 at 0xaba6",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x0a at 0xa48c"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -237672,7 +237673,7 @@
         "award_slots": [
           7
         ],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [
           7
         ],
@@ -286971,12 +286972,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x223dc; event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x223dc; event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
+      "door_cache_reason": "event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
+      "reason": "event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x17 at 0x223dc"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -289111,12 +289112,12 @@
       ],
       "cache_complete": false,
       "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x223dc; event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x17 at 0x223dc; event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
+      "door_cache_reason": "event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
+      "reason": "event creation index outside table at 0x222aa; event creation index outside table at 0x222bc; event creation index outside table at 0x222ce",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x17 at 0x223dc"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -292766,14 +292767,14 @@
           "mask": 255
         }
       ],
-      "cache_complete": false,
-      "door_cache_complete": false,
-      "door_cache_reason": "indexed event scripts: unsupported event state 0 opcode 0x48 at 0x29d12",
-      "reason": "indexed event scripts: unsupported event state 0 opcode 0x48 at 0x29d12",
+      "cache_complete": true,
+      "door_cache_complete": true,
+      "door_cache_reason": "door definitions initialized only; source and initialization guards covered",
+      "reason": "init/main/indexed events covered; item manifest guards captured",
       "stats": {
         "init": "clean",
         "main": "clean",
-        "events": "unsupported event state 0 opcode 0x48 at 0x29d12"
+        "events": "clean"
       },
       "flag_tests": [
         {
@@ -294294,7 +294295,7 @@
           }
         ],
         "award_slots": [],
-        "coverage_complete": false,
+        "coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,

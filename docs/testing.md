@@ -26,7 +26,9 @@ These checks cover multiple pickups, last-item clearance, acquisition rewind, st
 
 Decoder alignment and operand bounds have a focused suite, `python3 -m pytest -q tests/test_native_decoding.py tests/test_scan_scd.py tests/test_scan_scd_widths.py`. It checks pickups and doors after native setup commands, overlapping operand reads, procedure/event boundaries and rejection of nonadvancing or null dispatches. These are source-format regressions, not gameplay tests.
 
-Research entries RE1-ENGINE-001/002, RE1-SCD-007/008, RE1-VARS-001, RE1-SOURCE-002 and RE1-SELECT-001 describe the supported rules, evidence and remaining validation limits. Full map geometry remains limited to Mansion 1F even though the generated rule metadata covers other areas.
+Indexed-event flow has a focused suite, `python3 -m pytest -q tests/test_event_contract.py tests/test_scan_events.py tests/test_cache_metadata.py`. It checks shared wait/counter/call/loop depth, overlapping counter reads, deferred-command return paths, native termination and actor/motion packet boundaries. Unknown nonadvancing states and reads beyond the supplied section still reject coverage. These tests use synthetic packets and do not reproduce natural puzzle or story events.
+
+Research entries RE1-ENGINE-001/002, RE1-SCD-007/008, RE1-EVENT-001, RE1-VARS-001, RE1-SOURCE-002 and RE1-SELECT-001 describe the supported rules, evidence and remaining validation limits. Full map geometry remains limited to Mansion 1F even though the generated rule metadata covers other areas.
 
 # Diagnosing failures
 

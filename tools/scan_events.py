@@ -2,15 +2,21 @@
 
 This decoder follows every indexed entry in VM state 0, including FA/FB loops
 and FC/FD deferred SCD dispatch. Widths and transitions come from the named
-SLUS-00551 interpreter in RE1-CACHE-002. Unsupported or malformed paths reject
+SLUS-00551 interpreter in RE1-CACHE-002 and RE1-EVENT-001. Malformed paths reject
 coverage; payload bytes are never scanned as free-standing commands.
 """
 
 from __future__ import annotations
 
 import struct
+import sys
+from pathlib import Path
 
 from scan_scd import _opcode_size, walk_procedures
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from games.re1.scd_semantics import NONZERO_RETURN_OPCODES
 
 
 def scan_event_commands(
@@ -34,8 +40,8 @@ def scan_event_commands(
     if any(target < cursor for target in entries):
         return [], "indexed event pointer overlaps its table"
     operations: dict[int, tuple[int, int, bytes]] = {}
-    # Stack frames hold their kind, repeat address, and deferred command address.
-    # Counter values affect repetition counts, not the set of commands reachable through a loop.
+    # Waits, counters, loops and calls share the native record's depth byte.
+    # Frames retain only initialized fields; using a stale native field is unsupported.
     pending = [(entry, 0, ()) for entry in entries]
     seen = set()
     issues = []
@@ -83,12 +89,37 @@ def scan_event_commands(
         next_stack = stack
         if op == 0xFF:
             continue
-        if op in (0xF6, 0xF7, 0xFE):
+        if op == 0xFE:
             width = 1
+        elif op == 0xF6:
+            width = 1
+            next_stack = stack + (("wait", 0, 0),)
+        elif op == 0xF7:
+            if not stack:
+                issues.append(f"event wait end has no frame at 0x{address:x}")
+                continue
+            # This native pop reads no stored frame fields, so any existing
+            # frame can be discarded after the external wait condition clears.
+            width = 1
+            next_stack = stack[:-1]
         elif op == 0xF8:
-            width = 4
+            # F8 reads the counter at +2 but advances only to +1. The next
+            # byte is executable, normally F9, rather than skipped padding.
+            if address + 4 > end:
+                issues.append(f"event counter read truncated at 0x{address:x}")
+                continue
+            width = 1
+            next_stack = stack + (("counter", 0, 0),)
         elif op == 0xF9:
+            if not stack or stack[-1][0] not in ("counter", "loop"):
+                issues.append(
+                    f"event counter end has no counter frame at 0x{address:x}"
+                )
+                continue
+            # A u16 decrement eventually exits, including a zero starting value.
+            # Repeating F9 changes no source command or VM state.
             width = 3
+            next_stack = stack[:-1]
         elif op == 0xFA:
             width = 4
             next_stack = stack + (("loop", address + 4, 0),)
@@ -100,8 +131,8 @@ def scan_event_commands(
             width = 1
             next_stack = stack[:-1]
         elif op == 0xFC:
-            if address + 2 > end or data[address + 1] < 3:
-                issues.append(f"event call has invalid extent at 0x{address:x}")
+            if address + 2 > end:
+                issues.append(f"event call header truncated at 0x{address:x}")
                 continue
             target = address + data[address + 1]
             pending.append((target, state, stack + (("call", target, address + 2),)))
@@ -116,8 +147,12 @@ def scan_event_commands(
                 issues.append(f"deferred SCD at 0x{command:x}: {status}")
                 continue
             record((command, data[command], data[command : command + size]))
-            # FD repeats its command while the SCD handler returns nonzero.
-            pending.append((repeat, state, stack))
+            # FD repeats only on nonzero. Native SCD 00 returns zero, while
+            # audited nonzero handlers cannot expose a later exit path.
+            if data[command] != 0:
+                pending.append((repeat, state, stack))
+            if data[command] in NONZERO_RETURN_OPCODES:
+                continue
             width = 1
             next_stack = stack[:-1]
         elif state == 0 and op in (6, 7):
@@ -125,31 +160,29 @@ def scan_event_commands(
                 issues.append(f"embedded SCD header truncated at 0x{address:x}")
                 continue
             width = data[address + 1]
-            if width < 3 or address + width > end:
+            if width == 0 or address + width > end:
                 issues.append(f"embedded SCD extent invalid at 0x{address:x}")
                 continue
-            payload = data[address + 2 : address + width]
             if op == 6:
-                if len(payload) < 2:
-                    issues.append(f"embedded SCD block missing length at 0x{address:x}")
-                    continue
-                length = struct.unpack_from("<H", payload)[0]
-                if not 2 <= length <= len(payload):
-                    issues.append(
-                        f"embedded SCD block length mismatch at 0x{address:x}"
-                    )
-                    continue
-                # Odd event widths can leave one sentinel byte in the following VM no-op.
-                # The actual runner reads its two-byte zero sentinel beyond that declared width.
-                found, status = walk_procedures(
-                    data[address + 2 : min(address + width + 2, end)], address + 2
-                )
+                # The runner reads its entire length-prefixed list and sentinel
+                # independently of the VM jump width. Only this source section
+                # bounds those reads, including an empty list's zero sentinel.
+                found, status = walk_procedures(data[address + 2 : end], address + 2)
             else:
                 # Single-command dispatch reads its operands independently of the VM's advance width.
                 # Some real AOT updates intentionally consume fields beyond the shorter wrapper.
+                if address + 2 >= end:
+                    issues.append(f"embedded SCD opcode truncated at 0x{address:x}")
+                    continue
                 size, status = _opcode_size(data[address + 2 : end], 0)
                 found = (
-                    [(address + 2, payload[0], data[address + 2 : address + 2 + size])]
+                    [
+                        (
+                            address + 2,
+                            data[address + 2],
+                            data[address + 2 : address + 2 + size],
+                        )
+                    ]
                     if size
                     else []
                 )
@@ -167,6 +200,10 @@ def scan_event_commands(
             width = 10 if data[address + 1] & 15 else 2
         elif state == 3:
             width = 2
+        elif state == 0 and op >= 10:
+            # The native state-0 default disables the event and returns from
+            # the tick. It cannot execute bytes following this terminating opcode.
+            continue
         else:
             width = widths.get(state, {}).get(op, 0)
             if width == 0:
