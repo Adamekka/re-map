@@ -17,6 +17,7 @@ from scan_scd import _opcode_size, walk_procedures
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from games.re1.event_state import EventDispatch, EventPoint, EventStart
 from games.re1.scd_semantics import NONZERO_RETURN_OPCODES, ZERO_RETURN_OPCODES
 
 
@@ -26,11 +27,18 @@ class EventScan:
     block_starts: tuple[int, ...]
     standalone_commands: tuple[int, ...]
     status: str
+    entries: tuple[int, ...]
+    points: tuple[EventPoint, ...]
+    dispatches: tuple[EventDispatch, ...]
+    starts: tuple[EventStart, ...]
 
 
 def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
+    def failed(message: str) -> EventScan:
+        return EventScan((), (), (), message, (), (), (), ())
+
     if not 0 < start < end <= len(data):
-        return EventScan((), (), (), "bad indexed event range")
+        return failed("bad indexed event range")
     entries = []
     cursor = start
     while cursor + 4 <= end:
@@ -40,20 +48,23 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             break
         target = start + relative
         if not start < target < end:
-            return EventScan((), (), (), "indexed event pointer is outside its section")
+            return failed("indexed event pointer is outside its section")
         entries.append(target)
     else:
-        return EventScan((), (), (), "indexed event table has no sentinel")
+        return failed("indexed event table has no sentinel")
     if any(target < cursor for target in entries):
-        return EventScan((), (), (), "indexed event pointer overlaps its table")
+        return failed("indexed event pointer overlaps its table")
+    if len(entries) > 256:
+        return failed("indexed event table exceeds byte-sized entry indices")
     operations: dict[int, tuple[int, int, bytes]] = {}
     block_starts = set()
     standalone_commands = set()
     # Waits, counters, loops and calls share the native record's depth byte.
     # Frames retain only initialized fields; using a stale native field is unsupported.
-    pending = [(entry, 0, ()) for entry in entries]
+    pending = [(index, entry, 0, ()) for index, entry in enumerate(entries)]
     seen = set()
     issues = []
+    points, dispatches, starts = set(), set(), set()
 
     def record(operation: tuple[int, int, bytes]) -> None:
         command, opcode, raw = operation
@@ -80,8 +91,10 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
         2: {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 4, 6: 4, 7: 8, 8: 3, 9: 2, 10: 4, 11: 8},
     }
     while pending:
-        address, state, stack = pending.pop()
-        key = (address, state, stack)
+        entry, address, state, stack = pending.pop()
+        # Shared source bytes can belong to several indexed entries. Losing
+        # that owner would turn an alias into a guessed live event identity.
+        key = (entry, address, state, stack)
         if key in seen:
             continue
         # The native 0x34-byte event record contains four return/call/counter slots.
@@ -93,6 +106,20 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             issues.append(f"event path leaves section at 0x{address:x}")
             continue
         op = data[address]
+        points.add(
+            EventPoint(
+                entry,
+                address,
+                state,
+                len(stack),
+                "ending"
+                if op == 0xFF
+                else "waiting"
+                if op in (0xF7, 0xF9, 0xFD)
+                else "active",
+                stack,
+            )
+        )
         width = 0
         next_state = state
         next_stack = stack
@@ -136,7 +163,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             if not stack or stack[-1][0] != "loop":
                 issues.append(f"event loop end has no frame at 0x{address:x}")
                 continue
-            pending.append((stack[-1][1], state, stack))
+            pending.append((entry, stack[-1][1], state, stack))
             width = 1
             next_stack = stack[:-1]
         elif op == 0xFC:
@@ -144,7 +171,9 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                 issues.append(f"event call header truncated at 0x{address:x}")
                 continue
             target = address + data[address + 1]
-            pending.append((target, state, stack + (("call", target, address + 2),)))
+            pending.append(
+                (entry, target, state, stack + (("call", target, address + 2),))
+            )
             continue
         elif op == 0xFD:
             if not stack or stack[-1][0] != "call":
@@ -156,11 +185,12 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                 issues.append(f"deferred SCD at 0x{command:x}: {status}")
                 continue
             record((command, data[command], data[command : command + size]))
+            dispatches.add(EventDispatch(entry, address, (command,)))
             standalone_commands.add(command)
             # FD repeats only on nonzero. Audited zero returns cannot repeat,
             # while audited nonzero handlers cannot expose a later exit path.
             if data[command] not in ZERO_RETURN_OPCODES:
-                pending.append((repeat, state, stack))
+                pending.append((entry, repeat, state, stack))
             if data[command] in NONZERO_RETURN_OPCODES:
                 continue
             width = 1
@@ -203,6 +233,11 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                 continue
             for operation in found:
                 record(operation)
+            dispatches.add(
+                EventDispatch(
+                    entry, address, tuple(operation[0] for operation in found)
+                )
+            )
             if op == 6:
                 # The native runner finishes this procedure list before the
                 # event VM advances. Retain that boundary for ordered rules.
@@ -237,6 +272,12 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                 next_state = 2
             elif state == 0 and op == 5 and data[address + 2] >= len(entries):
                 issues.append(f"event creation index outside table at 0x{address:x}")
+            elif state == 0 and op == 5:
+                starts.add(
+                    EventStart(
+                        entry, address, "start", (data[address + 1], data[address + 2])
+                    )
+                )
             elif state == 0 and op == 8:
                 index = data[address + 1]
                 if index >= len(entries):
@@ -244,16 +285,23 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                         f"event reinitialization index outside table at 0x{address:x}"
                     )
                 else:
-                    pending.append((entries[index], 0, ()))
+                    # Reinitialization replaces this record's script rather
+                    # than carrying the old entry's ownership into the target.
+                    starts.add(EventStart(entry, address, "restart", (index,)))
+                    pending.append((index, entries[index], 0, ()))
                 continue
             elif state == 1 and op in (0x80, 0x8B) or state == 2 and op == 1:
                 next_state = 0
-        pending.append((address + width, next_state, next_stack))
+        pending.append((entry, address + width, next_state, next_stack))
     return EventScan(
         tuple(sorted(operations.values())),
         tuple(sorted(block_starts)),
         tuple(sorted(standalone_commands)),
         "clean" if not issues else "; ".join(issues),
+        tuple(entries),
+        tuple(sorted(points)),
+        tuple(sorted(dispatches)),
+        tuple(sorted(starts)),
     )
 
 

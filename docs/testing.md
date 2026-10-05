@@ -36,6 +36,10 @@ Forced-door regressions run with `python3 -m pytest -q tests/test_forced_doors.p
 
 Ordered event-condition regressions run with `python3 -m pytest -q tests/test_event_conditions.py`. Embedded full procedure lists retain command order, progress writes and repeated guard relations. Single/deferred changes and separate dispatches remain independent possibilities. Current progress flags do not prove that an earlier event ran. The suite covers waits, multi-procedure blocks, physical aliases, malformed inputs, analysis limits and fresh acquisition/story reversal using synthetic packets and substitutions. Natural event activation, puzzle progression and save/load still need gameplay validation; the existing-capture unresolved counts are unchanged.
 
+Event-activation regressions run with `python3 -m pytest -q tests/test_event_activation.py`. The debug tracker reports active event slots, their matching source and indexed entry, registered event interactions, and potential item/door slots. The reader binds these observations to the current room's verified source and relocated event table. It ignores inactive script pointers and rereads event positions before publishing state. An unbound active event or event interaction prevents clearance.
+
+The suite covers shared script aliases, initialized frame pointers, guarded starts, transitive starts, callbacks, explicit read failures, source bounds, stops and snapshot reversal. Active records and reversal in these tests are synthetic. A limited live attract-mode experiment bound registered interactions, including a trigger linked to a Map slot in room `00-07`, but captured no active event. Natural start/stop, puzzle changes and normal save/load remain unvalidated. RE1-EVENT-005 through RE1-EVENT-008 record these limits. Event activity never grants acquisition or proves earlier execution.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

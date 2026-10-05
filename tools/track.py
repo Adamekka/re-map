@@ -13,7 +13,7 @@ import logging
 import sys
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import DuckStationGdb
 from games.re1.door_state import parse_door
+from games.re1.event_state import read_event_snapshot
 from games.re1.re1_profile import MemoryResult, Re1Profile
 from games.re1.room_cache import (
     CachedRoomObservation,
@@ -74,7 +75,13 @@ def poll_once(
     rid = current.room
     layout, doors_layout = profile.runtime_room_layout, profile.door_state_layout
     rule_layout = profile.tracking_rule_layout
-    if layout is None or doors_layout is None or rule_layout is None:
+    event_layout = profile.event_layout
+    if (
+        layout is None
+        or doors_layout is None
+        or rule_layout is None
+        or event_layout is None
+    ):
         return PollResult(
             PollStatus.ReadFailure,
             "runtime room interpretation unavailable for this profile",
@@ -91,6 +98,24 @@ def poll_once(
             PollStatus.Retry if observation.retry else PollStatus.ReadFailure,
             observation.error,
         )
+    loaded_pointer = read_memory(layout.loaded_rdt_pointer_address, 4)
+    if not loaded_pointer.ok or len(loaded_pointer.data) != 4:
+        return PollResult(
+            PollStatus.ReadFailure,
+            f"event room pointer read failed: {loaded_pointer.error or 'short read'}",
+        )
+    base = int.from_bytes(loaded_pointer.data, "little")
+    registry = dict(observation.memory_markers)[layout.aot_base]
+    event_snapshot = read_event_snapshot(
+        event_layout,
+        source_query.sources,
+        profile.room_programs,
+        base,
+        registry,
+        read_memory,
+    )
+    if not event_snapshot.ok:
+        return PollResult(PollStatus.ReadFailure, event_snapshot.error)
     door_values = []
     for address, width in (
         (doors_layout.unlock_flags_address, doors_layout.unlock_flags_width),
@@ -145,6 +170,21 @@ def poll_once(
         profile, observation, source_query.sources, rule_snapshot, flags
     )
     observation = current_evaluation.items
+    if any(
+        event.reason for event in event_snapshot.events + event_snapshot.interactions
+    ):
+        # An active unbound script can change the registry beyond this room's
+        # inspected program. Keep observed pickups but do not authorize clearance.
+        observation = replace(
+            observation,
+            list_complete=False,
+            coverage_reason="Room events are not yet identified.",
+        )
+        current_evaluation = replace(
+            current_evaluation,
+            doors_complete=False,
+            door_reason="Door event conditions are unresolved.",
+        )
     represented = {
         item.global_id
         for item in observation.items
@@ -275,7 +315,24 @@ def poll_once(
             return PollResult(
                 PollStatus.Retry, "item or door state changed during read; retry"
             )
-    for address, expected in source_query.memory_markers + observation.memory_markers:
+    pool_again = read_memory(
+        event_layout.pool_address, event_layout.capacity * event_layout.stride
+    )
+    if (
+        not pool_again.ok
+        or len(pool_again.data) != event_layout.capacity * event_layout.stride
+    ):
+        return PollResult(
+            PollStatus.ReadFailure, f"event recheck: {pool_again.error or 'short read'}"
+        )
+    if event_layout.positions(pool_again.data) != event_snapshot.positions:
+        return PollResult(PollStatus.Retry, "event changed during room read; retry")
+    for address, expected in (
+        source_query.memory_markers
+        + observation.memory_markers
+        + event_snapshot.memory_markers
+        + ((layout.loaded_rdt_pointer_address, loaded_pointer.data),)
+    ):
         result = read_memory(address, len(expected))
         if not result.ok or len(result.data) != len(expected):
             return PollResult(
@@ -339,6 +396,19 @@ def poll_once(
     details.append("Visited scope: this tracker session")
     if record.door_reason:
         details.append(record.door_reason)
+    details.append(
+        f"Active events: {len(event_snapshot.events)}; registered event interactions: {len(event_snapshot.interactions)}"
+    )
+    for event in event_snapshot.events:
+        details.append(
+            f"Event slot {event.slot}: {event.phase}; owners {event.owners}; potential item slots {event.item_slots}; door slots {event.door_slots}"
+            + (f"; {event.reason}" if event.reason else "")
+        )
+    for interaction in event_snapshot.interactions:
+        details.append(
+            f"Interaction {interaction.slot}: starts event {interaction.entry} in slot {interaction.requested_slot}; potential item slots {interaction.item_slots}; door slots {interaction.door_slots}"
+            + (f"; {interaction.reason}" if interaction.reason else "")
+        )
     return PollResult(
         PollStatus.Display,
         render(rid, record, profile.profile_id) + "\n" + "\n".join(details),

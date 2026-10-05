@@ -12,6 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from games.game_profile import RoomId
+from games.re1.event_state import EventProgram
 from games.re1.room_items import (
     MemoryResult,
     RuntimeItemKind,
@@ -49,6 +50,7 @@ class RuleCommand:
             "aot-handler": 3,
             "award": 3,
             "aot-callback": 3,
+            "event-start": 2,
             "inventory-remove": 1,
             "uncertain-test": 0,
         }
@@ -137,9 +139,13 @@ class RuleCommand:
         ):
             raise ValueError("invalid tracking award handler")
         if self.kind == "aot-callback" and (
-            self.args[1] not in (1, 13) or self.args[2] not in (0, 1)
+            self.args[1] not in (1, 9, 13) or self.args[2] not in (0, 1)
         ):
             raise ValueError("invalid tracking callback handler")
+        if self.kind == "event-start" and any(
+            not 0 <= value <= 255 for value in self.args
+        ):
+            raise ValueError("invalid tracking event start")
         if self.kind == "inventory-remove" and not 0 <= self.args[0] <= 255:
             raise ValueError("invalid inventory removal type")
 
@@ -184,6 +190,7 @@ class RoomProgram:
     item_slots: tuple[int, ...]
     door_slots: tuple[int, ...]
     mutable_slots: tuple[int, ...]
+    event_program: EventProgram
 
     def __post_init__(self) -> None:
         if type(self.coverage_complete) is not bool:
@@ -266,6 +273,7 @@ class RoomProgram:
             tuple(raw["item_slots"]),
             tuple(raw["door_slots"]),
             tuple(raw["mutable_slots"]),
+            EventProgram.load(raw["event_program"]),
         )
 
 
@@ -523,6 +531,10 @@ def evaluate_room_program(
                 break
             elif kind == "constant-test":
                 predicate = bool(args[0])
+            elif kind == "event-start":
+                # Starting a native event returns one. Its later dispatches
+                # remain represented by event rules; never replay scheduling.
+                predicate = True
             elif kind in ("local-flag-forget", "local-flag-clear"):
                 changed = dict(writes)
                 for group, first, count in zip(
@@ -752,6 +764,10 @@ def evaluate_room_program(
                     for index in (5, 6):
                         for bit in range(8):
                             changed[layout.byte_variables_base + index, 1 << bit] = None
+                elif args[1] == 9:
+                    # Callback 9 starts a script with registry parameters. Its
+                    # activity comes from fresh event RAM, never replay here.
+                    pass
                 elif args[1] == 13:
                     # Callback 13 sets C3000 bit 8 only for a zero registry
                     # parameter. That field is not modeled; a prior true bit

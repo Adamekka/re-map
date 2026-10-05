@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Protocol
 
 from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQuery
+from games.re1.event_state import EventLayout
 from games.re1.room_cache import (
     CachedRoomObservation,
     RoomDependency,
@@ -107,6 +108,7 @@ class Re1Profile:
         default_factory=dict
     )
     tracking_rule_layout: TrackingRuleLayout | None = None
+    event_layout: EventLayout | None = None
     room_observations: dict[RoomId, CachedRoomObservation] = field(default_factory=dict)
 
     @staticmethod
@@ -261,7 +263,11 @@ class Re1Profile:
         room_programs = {}
         source_choices = {}
         rule_layout = None
+        event_layout = None
         if runtime_layout is not None:
+            event_layout = EventLayout(
+                **{key: _number(value) for key, value in raw["event_layout"].items()}
+            )
             rule_raw = raw["tracking_rule_layout"]
             rule_layout = TrackingRuleLayout(
                 tuple(_number(value) for value in raw["script_flag_bases"]),
@@ -294,6 +300,55 @@ class Re1Profile:
                 ):
                     raise ValueError("invalid tracking source room")
                 program = RoomProgram.load(row["tracking_program"])
+                events = program.event_program
+                event_end = row["events_offset"] + row["events_size"]
+                if any(
+                    not row["events_offset"] <= offset < event_end
+                    for offset in events.entries
+                    + tuple(point.offset for point in events.points)
+                    + tuple(dispatch.offset for dispatch in events.dispatches)
+                    + tuple(start.offset for start in events.starts)
+                    + tuple(
+                        offset
+                        for point in events.points
+                        for kind, repeat, command in point.frames
+                        for offset in (
+                            (repeat, command)
+                            if kind == "call"
+                            else (repeat,)
+                            if kind == "loop"
+                            else ()
+                        )
+                    )
+                    + tuple(
+                        offset
+                        for dispatch in events.dispatches
+                        for offset in dispatch.commands
+                    )
+                ):
+                    raise ValueError("event activation metadata outside source events")
+                if any(
+                    not row["init_offset"] <= record[0] < event_end
+                    for record in events.creators
+                    + events.registry_writes
+                    + events.changes
+                    + events.script_starts
+                ):
+                    raise ValueError("event registry metadata outside source scripts")
+                if any(
+                    offset < row["events_offset"] + 4 * (len(events.entries) + 1)
+                    for offset in events.entries
+                ):
+                    raise ValueError("event entry overlaps indexed table")
+                initial_positions = {
+                    (point.entry, point.offset, point.state, point.depth)
+                    for point in events.points
+                }
+                if any(
+                    (index, offset, 0, 0) not in initial_positions
+                    for index, offset in enumerate(events.entries)
+                ):
+                    raise ValueError("event entry has no initial VM position")
                 if row["source_rdt"] in room_programs:
                     raise ValueError("duplicate tracking source")
                 for section, procedures in (
@@ -456,6 +511,7 @@ class Re1Profile:
             room_programs=room_programs,
             room_source_choices=source_choices,
             tracking_rule_layout=rule_layout,
+            event_layout=event_layout,
         )
 
     def has_room_addresses(self) -> bool:

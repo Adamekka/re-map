@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -107,9 +108,11 @@ def build_tracking_program(
                 raw[10] if op == 0x0D else raw[2],
                 raw[11] if op == 0x0D else raw[3],
             ]
+        elif op == 0x14:
+            kind, args = "event-start", [raw[2], raw[3]]
         elif op in (0x24, 0x2D) and raw[2] in (4, 15):
             kind, args = "award", [raw[1], raw[2], int(op == 0x24)]
-        elif op in (0x24, 0x2D) and raw[2] in (1, 13):
+        elif op in (0x24, 0x2D) and raw[2] in (1, 9, 13):
             kind, args = "aot-callback", [raw[1], raw[2], int(op == 0x24)]
         elif op in CONTINUING_OPCODES:
             kind, args = "constant-test", [1]
@@ -192,13 +195,18 @@ def build_tracking_program(
         blocks, complete = procedures(start, row["events_offset"] + row["events_size"])
         assert complete, "event scanner must validate every embedded procedure list"
         if not any(
-            c["kind"] in ("item", "door", "aot-create", "aot-handler")
+            c["kind"] in ("aot-create", "aot-handler", "event-start", "award")
+            or c["kind"] == "aot-callback"
+            and c["args"][1] in (1, 9)
+            or c["kind"] == "quantity-transfer"
+            and c["args"][0] in (1, 2)
+            or c["kind"] in ("item", "door")
             and c["args"][0] in item_slots | door_slots
             for block in blocks
             for c in block["commands"]
         ):
-            # Flags from separate dispatches cannot establish this block's
-            # historical input. Store only blocks that change tracked slots.
+            # Keep trigger guards even if this dispatch changes no tracked
+            # item/door directly. Other unrelated blocks need no rule payload.
             continue
         try:
             # Width decoding does not enforce the semantic procedure schema.
@@ -223,6 +231,43 @@ def build_tracking_program(
         "procedures": init_procedures,
         "main_procedures": main_procedures,
         "event_blocks": event_blocks,
+        "event_program": {
+            "entries": list(event_scan.entries),
+            "points": [asdict(point) for point in event_scan.points],
+            "dispatches": [asdict(dispatch) for dispatch in event_scan.dispatches],
+            "starts": [asdict(start) for start in event_scan.starts],
+            "creators": sorted(
+                [address, raw[1] & 127 if op == 0x18 else raw[1]]
+                for _, address, op, raw in operations
+                if op in (0x0C, 0x0D, 0x18)
+            ),
+            "registry_writes": sorted(
+                [
+                    address,
+                    raw[1],
+                    *struct.unpack_from("<HH", raw, 12 if op == 0x0D else 4),
+                ]
+                for _, address, op, raw in operations
+                if op in (0x0D, 0x12)
+            ),
+            "changes": sorted(
+                [
+                    address,
+                    raw[2] if op == 0x4C else raw[1] & 127 if op == 0x18 else raw[1],
+                ]
+                for _, address, op, raw in operations
+                if op in (0x0C, 0x0D, 0x12, 0x13, 0x18)
+                or op in (0x24, 0x2D)
+                and raw[2] in (1, 4, 15)
+                or op == 0x4C
+                and raw[1] in (1, 2)
+            ),
+            "script_starts": sorted(
+                [address, raw[2], raw[3]]
+                for _, address, op, raw in operations
+                if op == 0x14
+            ),
+        },
         # Single/deferred dispatches have no shared SCD-runner boundary. Their
         # changes remain independent, including commands reached by both forms.
         "event_effects": [
