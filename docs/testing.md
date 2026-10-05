@@ -38,7 +38,7 @@ Ordered event-condition regressions run with `python3 -m pytest -q tests/test_ev
 
 Event-activation regressions run with `python3 -m pytest -q tests/test_event_activation.py`. The debug tracker reports active event slots, their matching source and indexed entry, registered event interactions, and potential item/door slots. The reader binds these observations to the current room's verified source and relocated event table. It ignores inactive script pointers and rereads event positions before publishing state. An unbound active event or event interaction prevents clearance.
 
-The suite covers shared script aliases, initialized frame pointers, guarded starts, transitive starts, callbacks, explicit read failures, source bounds, stops and snapshot reversal. Active records and reversal in these tests are synthetic. A limited live attract-mode experiment bound registered interactions, including a trigger linked to a Map slot in room `00-07`, but captured no active event. RE1-EVENT-005 through RE1-EVENT-008 record that experiment's limits. RE1-EVENT-013 later captured natural opening starts/stops; puzzle changes and normal save/load of active events remain unvalidated. Event activity never grants acquisition or proves earlier execution.
+The suite covers shared script aliases, initialized frame pointers, guarded starts, transitive starts, callbacks, explicit read failures, source bounds, stops and snapshot reversal. Active records and reversal in these tests are synthetic. A limited live attract-mode experiment bound registered interactions, including a trigger linked to a Map slot in room `00-07`, but captured no active event. RE1-EVENT-005 through RE1-EVENT-008 record that experiment's limits. RE1-EVENT-013 later captured natural opening starts/stops. RE1-EVENT-015 captures map acceptance and decline; other puzzle changes and normal save/load of active events remain unvalidated. Event activity never grants acquisition or proves earlier execution.
 
 # Capturing live event observations
 
@@ -59,7 +59,7 @@ Each JSONL record includes session identity, sequence, UTC time and elapsed time
 
 The requested polling rate is a limit, not a guarantee. Short events between polls can be missed. `became-active`, `became-inactive` and `position-changed` describe differences between observations, not completed execution or the cause of a reload. Item registry coverage is separate from room completion. This tool does not update tracker visit history or use event activity to grant acquisition.
 
-Run `python3 -m pytest -q tests/test_event_capture.py` for synthetic lifecycle, coherence, flag, gap and pause-cleanup regressions. RE1-EVENT-009/010 record the implementation and live tests. Actual Herb-before/after/before savestate loads restored the recorded item state, but every event slot in those recordings remained inactive. RE1-EVENT-013 later captured natural opening events with the watchpoint mode below. Item/puzzle progression and normal save/load of active events still need validation.
+Run `python3 -m pytest -q tests/test_event_capture.py` for synthetic lifecycle, coherence, flag, gap and pause-cleanup regressions. RE1-EVENT-009/010 record the implementation and live tests. Actual Herb-before/after/before savestate loads restored the recorded item state, but every event slot in those recordings remained inactive. RE1-EVENT-013 later captured natural opening events with the watchpoint mode below. RE1-EVENT-015 and RE1-PICKUP-004 add the Art Room Map interaction and reversal check. Other item/puzzle progression and normal save/load of active events still need validation.
 
 ## Capturing short events with watchpoints
 
@@ -83,6 +83,21 @@ Run `python3 -m pytest -q tests/test_gdb.py tests/test_event_breakpoints.py` for
 RE1-EVENT-013 records a natural gameplay check. Boot the owned disc in an isolated copy, select New Game, Training and Jill, and attach the recorder at character selection. Skip the movies with ordinary Start and let the Main Hall and Dining Room opening scripts run. The tested run captured 19 starts with 13 initializer steps each, eight stops and waits/restarts across slots 0/1/2/3/6/7. Every newly initialized slot bound to a room source and indexed entry. Slots 4/5 activation and item/puzzle interactions remain untested. Room transitions produced source-unavailable gaps, and three snapshots caught the already-running Main Hall event at its temporary parent pointer during a child start. RE1-EVENT-014 adds those source-bound positions to the shared scanner and resolves all three in a recorded-field replay. The original recording remains unchanged; complete event and availability interpretation are still unfinished.
 
 For automated native input, DuckStation's built-in controller macros can hold a normal controller binding until the next key tap when toggle is enabled and frequency is zero. The experiment used temporary settings in its private portable copy and restored them afterward. This makes ordinary game input reproducible without changing guest memory. The measured initializer captures paused approximately 0.41..0.45 seconds each, so use this setup for validation rather than continuous player-facing tracking.
+
+## Art Room map validation
+
+RE1-EVENT-015 and RE1-PICKUP-004 record the tested Training Jill case on SLUS-00551. Use the isolated emulator/version above and keep Ink Ribbon untouched throughout:
+
+1. Complete the opening and Barry's Lock Pick conversation through normal gameplay. Enter Art Room `00-07` from Main Hall `00-06`.
+2. Push the movable wooden steps beside the statue. Save a private before savestate, then climb the steps. Do navigation before attaching the watchpoint recorder; native pause/frame-step actions can end it with an unexpected debugger-stop diagnostic.
+3. Attach `--breakpoints` while the game runs. Interact with the map and choose No. Expect indexed entry 0 to start and stop while Map remains available and PS1 virtual `0x800C86ED` bit 6 remains set.
+4. Interact again and choose Yes. Expect entry 0 and child entry 1, both linked to item slot 2. Accepting clears bit 6: the tested byte changed `0xFF -> 0xBF`. Dismiss the message, stop the recorder and save a private after savestate. The tracker should show Map taken, Ink Ribbon available and an incomplete room.
+5. Keep only one GDB client connected. Leave to Main Hall and return normally. The Map bit must remain cleared; initialization may omit its taken descriptor. Ink Ribbon remains available and blocks clearance.
+6. Use ordinary polling for before/after savestate loads. Before restores Map available and bit 6 set; after restores Map taken and bit 6 clear. Completion must be recomputed while the tracker's session visits remain recorded.
+
+The completed runs captured five checked initializations and five stops, including decline without acquisition. Offline replay of full coherent RAM captures kept the Art Room incomplete through pickup, reentry and reversal. Acquiring the game's map added no tracker regions; only the observed Art Room and Main Hall visits were revealed.
+
+This case does not validate ordinary in-game save/load, last-item clearance, other puzzles or other characters/revisions. Private artifact hashes and exact event/flag evidence are in the research entries. The checked replay uses captured RAM, not synthetic flag substitutions.
 
 # Diagnosing failures
 

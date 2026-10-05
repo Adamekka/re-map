@@ -322,6 +322,7 @@ Evidence: /tmp/ram_slot.bin, /tmp/ram_resume.bin, /tmp/ram_bak.bin from tools/ex
 Limits: no controlled before and after pickup, no leave and re-enter test, no save and load round trip on this bit, polarity unknown.
 History:
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; authored; save diff only, still Candidate.
+- 2026-10-06; Codex root, GPT-6.1 Sol; added controlled acceptance, decline, room reentry and savestate reversal evidence in RE1-PICKUP-004. The original uncontrolled comparison and its authorship remain as recorded.
 
 ## RE1-STATIC-002: 335 RDT files listed from SLUS-00551 without extraction
 
@@ -2059,3 +2060,71 @@ History:
 - 2026-10-05; Gemini 3.8 Flash High through agy; completed a supplied-snapshot review of the complete scanner/metadata/test diff and runtime ownership contracts without tools. Returned "No findings." It did not reproduce gameplay.
 - 2026-10-05; Gemini 3.1 Pro High through agy; completed the same supplied-snapshot review without tools. Claimed that added positions at offsets 67979, 68063, 150181, 222035 and 223387 invent loop frames or depth. Root compared all nine added source instances at those offsets against `b40db10`; every exact parent point already has the same entry/state/depth/phase/frames. The generation audit verifies this for all 734 added points. Rejected this finding; no implementation change followed. The comparison is preserved in private `review/frame-check.json`. This review did not reproduce gameplay.
 - 2026-10-05; Claude Opus 5.5 High through agy; remained unavailable under the quota exhaustion already recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds. No new retry or model substitution was made, and no review was attributed to it.
+
+## RE1-EVENT-015: Art Room map interaction binds its natural event starts
+
+Status: Candidate; controlled map accept/decline paths in one Training Jill playthrough
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Art Room `00-07`, source `PSX/STAGE1/ROOM1070.RDT`
+Environment: isolated portable DuckStation `0.1-11894-gc66b2694d`, commit `c66b2694da65cece8886ed3d4a069098831f8358`; native GDB localhost port 2345; Python 3.14.8; repository commit `8b87205`
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: normal gameplay input, live activity-write captures and a private log audit
+Claim: the shared event reader binds the tested map interaction to indexed entry 0 and its accepted-map child to entry 1. Declining ends the parent without acquiring the map. These observations extend RE1-EVENT-013/014 beyond opening cutscenes without granting acquisition from event activity.
+
+Evidence:
+
+- Continued a fresh Training Jill game through the first zombie, Barry's return and Lock Pick conversation. Entered the Art Room from Main Hall, positioned the movable wooden steps beside the statue and climbed them through normal controller input. No guest memory writes, injected event calls or executable patches were used. Private controller macros and paused frame stepping helped navigation; the activity recordings ran during ordinary continuous gameplay.
+- Before interaction, AOT 5 registered callback 9 requesting event slot 9, indexed entry 0, with potential item slot 2. The live allocator selected pool slot 0. Its initializer stopped at PS1 virtual `0x80025C24` and completed all 13 checked steps from RE1-EVENT-011. The reader bound it to `ROOM1070.RDT`, entry 0, with potential Map slot 2 and no unresolved reason.
+- The first accepted interaction recorded parent slot 0 and child slot 1, entry 1. Both mapped to the same verified room source and potential item slot 2. Subsequent writes at next native PC `0x8002625C` stopped the parent, then the child. The acquisition bit remained set until the final snapshot, which reported Map taken. All five snapshots were source-bound, with no gaps or unbound parent during the child start.
+- Restored the private positioned-before state. A second recording captured a decline: entry 0 started and stopped while Map remained available. A subsequent Yes choice started entry 0 and child entry 1, then stopped both with Map taken. This recording contains seven snapshots, six activity hits and no gaps. Across the two recordings, five natural starts completed 13 steps each and five stops completed without stepping. Initializer capture pauses measured 0.390..0.421 seconds, excluding stop-delivery latency.
+- The log audit checked contiguous sequence numbers, single session identity, ending records, source ownership, trigger slots/PCs, item states and manifest provenance. Both recordings use manifest SHA256 `431c83b18df30776560bb527f881f792714b45fd7192b5b743e42ee49f9d0b5a` and profile SHA256 `ff65f07c2dfdbe87ee6e6d95c158395ff0e5921f78de62b92e9df37cdfe0fa4e`.
+
+Artifacts outside Git at `/tmp/tasks/re-map/item-event-validation/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `art-map-events-e.jsonl` | `0e8eb83ad72a34b0733b0f6942649f08378342e90c1c3163effc3fc689b67de0` | First accept, two starts and two stops; 41.212 seconds |
+| `map-decline-accept.jsonl` | `d5e03a4dc47a4affb58fed9c16b3595f40dd2d00c3c8d69e6a5978b9c17eee76` | Decline followed by accept; 117.612 seconds |
+
+`audit.py`, `audit.json`, setup recordings, CLI/emulator logs, private states and RAM remain outside Git. An earlier setup recording, `art-map-events-d.jsonl`, ended with `Unexpected debugger stop with signal 5` after a native pause action. It recorded no event hit and is retained as failed setup evidence, not an activation result. Restarted capture with a new path and a running emulator. Earlier incorrect step placements and failed zombie retreats are also setup attempts, not successful pickup tests.
+
+Limits: one room, one character/mode and two accepting runs from the same playthrough, separated by a savestate restore. Slots 4/5 activation, other puzzles, natural door unlocking, ordinary save/load and complete execution history remain unvalidated. Watchpoints can affect timing and miss wide writes or emulator restores. This test validates the observed source binding and capture path; it does not establish every story-dependent availability rule.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; performed normal gameplay, audited both event recordings and kept failed setup attempts separate. UTC records span the preceding UTC date. No production code or generated metadata changed.
+
+## RE1-PICKUP-004: controlled Art Room map acquisition and reversal
+
+Status: Candidate; accept/decline, reentry and savestate checks passed; normal save/load untested
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable and Training Jill environment from RE1-EVENT-015; Art Room `00-07` and Main Hall `00-06`
+Environment: isolated DuckStation `0.1-11894-gc66b2694d`; coherent paused GDB RAM captures; existing shared tracker at commit `8b87205`
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: controlled gameplay, live flag reads, private savestate restores and offline replay of complete coherent RAM captures
+Claim: the Art Room Map descriptor uses GlobalId 145, with acquisition at PS1 virtual `0x800C86ED`, u8 bit 6 (`0x40`), clear when taken. Acceptance changes `0xFF` to `0xBF`; decline does not. Reentry and before/after savestate restores preserve or reverse the observed state correctly. This supplies controlled evidence for the earlier RE1-PICKUP-001 lead.
+
+Evidence:
+
+- The source-bound live descriptor identifies Map type `0x4E`, quantity 1, AOT 2 and GlobalId 145. The existing native flag calculation selects byte index 17 in the 32-byte block at PS1 virtual `0x800C86DC` and mask `0x40`. RE1-EVENT-015's first accept and later decline/accept recordings show exactly this byte transition. The room's Ink Ribbon, GlobalId 39, remains available with its acquisition byte `0x800C86E3` equal to `0xFF`.
+- After accepting and dismissing the message, captured all 2 MiB of PS1 RAM while paused. The existing `poll_once` reported Map taken, Ink Ribbon available, complete item/door coverage and `INCOMPLETE`. Normal movement and door interaction then produced `00-07 -> 00-06 -> 00-07`. Separate coherent Main Hall and return captures retained the map bit at `0xBF`. On reentry, initialization omitted the already-taken Map descriptor; Ink Ribbon remained available and the room remained incomplete.
+- Polling recorded the return state followed by loading the positioned-before savestate: `0xBF -> 0xFF`, Map absent from the registry -> Map available. A separate polling run recorded before -> after savestate restoration: `0xFF -> 0xBF`, Map available -> taken. Both logs ended on interruption without gaps or failures. Savestate restoration proves restoration behavior, not ordinary save-file persistence.
+- Replayed five complete RAM captures in six steps through the existing shared tracker, retaining one profile/cache and tracker throughout: before, after, Main Hall, return, before again, after again. The second before step reused the same capture. Every Art Room verdict was incomplete with complete coverage and available Ink Ribbon. The tracker refreshed its cached Map state on both reversals. This is replay of real captured RAM, not substituted flag bytes or a new gameplay run.
+- The same replay checked the map response: acquisition revealed only region `07`; entering Main Hall added `06`; later restores retained these session visits and added no other region. The game's map-owned byte at PS1 virtual `0x800C871C` also changed `0x00 -> 0x08` on acceptance and reversed with the states. That ownership interpretation remains a limited observation supporting RE1-PICKUP-001, not a new production address or a reveal trigger.
+
+Artifacts outside Git at `/tmp/tasks/re-map/item-event-validation/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `map-rewind.jsonl` | `567edb5b1dba8f4685538f7d1fa377daf86049f3444a507dc21a4e655edaa778` | Reentry state -> positioned-before load |
+| `map-load-after.jsonl` | `0b2691035d558795c7075d26334db1f1ce0954369f7fe4698f2a54391b5a1f4a` | Before -> after load |
+| `art-map-positioned-before.sav` | `e5b06502d95a22d260f8bc4fdc9e4cb2c07eacb4137f36e3537b2712caee6141` | Steps positioned, Map and Ink untouched |
+| `art-map-after.sav` | `193780b5fd8941bcb70066b5e5061c833696b1761cd763eb2f5eb3f2ad468bd2` | Accepted Map, Ink untouched |
+| `map-restored-before.bin` | `db76ff09b829b04c257a3492367550b2e78ea36d83881ce651c8bdc435494543` | Coherent before RAM |
+| `map-after.bin` | `90dd91cfc306d45d745f829944e2b2c8511682244e4e04bbba838e7665750332` | Coherent first-accept RAM |
+| `map-main-hall.bin` | `ac1c99a481c0f6667d9fecfbc333e7bfa6e1aebef1aa52e2a5bcfca47a704610` | Coherent RAM after leaving |
+| `map-return.bin` | `1e0c4b7151fa54e99554e5111b0ed5a860dec2645f0ef4521a3fc9b1aaecdcc7` | Coherent RAM after returning |
+| `map-restored-after.bin` | `f3a9bfa7a7c3f50620e05661b74013a7c7633d94e59b1727c0560d9cd63b39ff` | Coherent after-load RAM |
+
+Limits: no ordinary in-game save/load, Chris/other mode/revision, last-item clearance or other map pickup was tested. The Map and Ink states do not prove that every availability condition in the game is implemented. Collected descriptors can disappear on reentry, so registry counts need not retain the prior taken Map row. The observed session visit history intentionally survives savestate loads; completion is recomputed from fresh game state.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; collected the map twice, declined once, left/returned normally, restored both private states and audited the existing tracker against coherent captures. Closed the owned emulator normally and restored its private settings byte-for-byte. No game files, saves, RAM or captured bytecode were added to Git.
+- 2026-10-06; Codex root, GPT-6.1 Sol; final documentation review checked recorded counts, addresses, artifact hashes, provenance and stated limits. The focused event activation/capture/watchpoint/tracker/map regressions passed 107 tests in 9.26 seconds. `git diff --check` passed; the repository has no configured Markdown formatter or linter.
