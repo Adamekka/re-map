@@ -38,7 +38,7 @@ Ordered event-condition regressions run with `python3 -m pytest -q tests/test_ev
 
 Event-activation regressions run with `python3 -m pytest -q tests/test_event_activation.py`. The debug tracker reports active event slots, their matching source and indexed entry, registered event interactions, and potential item/door slots. The reader binds these observations to the current room's verified source and relocated event table. It ignores inactive script pointers and rereads event positions before publishing state. An unbound active event or event interaction prevents clearance.
 
-The suite covers shared script aliases, initialized frame pointers, guarded starts, transitive starts, callbacks, explicit read failures, source bounds, stops and snapshot reversal. Active records and reversal in these tests are synthetic. A limited live attract-mode experiment bound registered interactions, including a trigger linked to a Map slot in room `00-07`, but captured no active event. Natural start/stop, puzzle changes and normal save/load remain unvalidated. RE1-EVENT-005 through RE1-EVENT-008 record these limits. Event activity never grants acquisition or proves earlier execution.
+The suite covers shared script aliases, initialized frame pointers, guarded starts, transitive starts, callbacks, explicit read failures, source bounds, stops and snapshot reversal. Active records and reversal in these tests are synthetic. A limited live attract-mode experiment bound registered interactions, including a trigger linked to a Map slot in room `00-07`, but captured no active event. RE1-EVENT-005 through RE1-EVENT-008 record that experiment's limits. RE1-EVENT-013 later captured natural opening starts/stops; puzzle changes and normal save/load of active events remain unvalidated. Event activity never grants acquisition or proves earlier execution.
 
 # Capturing live event observations
 
@@ -59,7 +59,7 @@ Each JSONL record includes session identity, sequence, UTC time and elapsed time
 
 The requested polling rate is a limit, not a guarantee. Short events between polls can be missed. `became-active`, `became-inactive` and `position-changed` describe differences between observations, not completed execution or the cause of a reload. Item registry coverage is separate from room completion. This tool does not update tracker visit history or use event activity to grant acquisition.
 
-Run `python3 -m pytest -q tests/test_event_capture.py` for synthetic lifecycle, coherence, flag, gap and pause-cleanup regressions. RE1-EVENT-009/010 record the implementation and live tests. Actual Herb-before/after/before savestate loads restored the recorded item state, but every live event slot remained inactive. Natural event start/stop and puzzle/story changes still require a gameplay capture.
+Run `python3 -m pytest -q tests/test_event_capture.py` for synthetic lifecycle, coherence, flag, gap and pause-cleanup regressions. RE1-EVENT-009/010 record the implementation and live tests. Actual Herb-before/after/before savestate loads restored the recorded item state, but every event slot in those recordings remained inactive. RE1-EVENT-013 later captured natural opening events with the watchpoint mode below. Item/puzzle progression and normal save/load of active events still need validation.
 
 ## Capturing short events with watchpoints
 
@@ -79,6 +79,10 @@ RE1 writes activity before finishing its event record. The tool verifies the exa
 Watchpoints observe CPU accesses starting at the watched byte. Wide writes starting earlier and emulator savestate restores can bypass them. Items, doors and flags are snapshots taken at activity writes, so unrelated changes do not trigger this mode. Use ordinary polling to observe those changes and save/load reversal. Neither mode establishes a complete execution history or grants acquisition from event activity.
 
 Run `python3 -m pytest -q tests/test_gdb.py tests/test_event_breakpoints.py` for protocol framing, all-slot initialization, start/stop/restart observations, bounds and cleanup checks. The activity and CPU execution in these tests are synthetic. RE1-EVENT-011 records the pinned initializer contract and the live capture limits. RE1-EVENT-012 records real activity-clear writes across all eight slots, which produced source-unavailable gaps rather than active-event snapshots.
+
+RE1-EVENT-013 records a natural gameplay check. Boot the owned disc in an isolated copy, select New Game, Training and Jill, and attach the recorder at character selection. Skip the movies with ordinary Start and let the Main Hall and Dining Room opening scripts run. The tested run captured 19 starts with 13 initializer steps each, eight stops and waits/restarts across slots 0/1/2/3/6/7. Every newly initialized slot bound to a room source and indexed entry. Slots 4/5 activation and item/puzzle interactions remain untested. Room transitions produced source-unavailable gaps, and three snapshots caught the already-running Main Hall event outside supported positions. Those unresolved observations prevent claiming complete event interpretation.
+
+For automated native input, DuckStation's built-in controller macros can hold a normal controller binding until the next key tap when toggle is enabled and frequency is zero. The experiment used temporary settings in its private portable copy and restored them afterward. This makes ordinary game input reproducible without changing guest memory. The measured initializer captures paused approximately 0.41..0.45 seconds each, so use this setup for validation rather than continuous player-facing tracking.
 
 # Diagnosing failures
 
