@@ -1841,3 +1841,66 @@ Limits: this is one automatic demo sequence, not controlled normal gameplay or s
 History:
 
 - 2026-10-05; Codex root, GPT-6.1 Sol; performed the isolated GDB observation and attempted the short-event capture. Recorded registered targets and preserved the unsuccessful activation capture as a limit. Corrected the initial experimental description of the linked item from Shotgun to Map after checking source item ID `0x4E`; the captured slot metadata was unchanged. No external reviewer reproduced this experiment.
+
+## RE1-EVENT-009: reusable coherent event observation log
+
+Status: Candidate; implementation and synthetic regression contract
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; no other revision
+Environment: Python 3.14.8, pytest 9.1.1 on macOS; required profile layouts and native contracts from RE1-EVENT-005/007
+Authored: 2026-10-05; Codex root; model: GPT-6.1 Sol
+Basis: implementation inspection and synthetic substitutions over the donated Herb and Chemical fixtures
+Claim: `tools/capture_events.py` can log source-bound event, registry, item, door and flag observations without updating tracker history. Its change labels compare observed snapshots and do not establish completed execution, trigger eligibility or a complete event history.
+
+Evidence:
+
+- The tool requires an explicit profile and a new output file outside the repository. Session metadata records profile/manifest hashes, executable identity, GDB endpoint, requested polling rate/duration and PS1 virtual address semantics. Snapshots include UTC/monotonic times, sequence numbers, pause duration, room/source aliases, event positions/owners, registered event targets, item states, door states and watched flag values. Descriptor reads contain SHA256 fingerprints, not game bytecode. Live registry coverage is labeled separately from room completion.
+- The watch reads all eight event slots through the pinned layout, ignoring inactive fields and incidental counters. It reads current room/context, acquisition and door flags, the inclusive live registry and bounded descriptor fingerprints. Full script-flag banks remain in the paused snapshot. Capture triggers mask unrelated transient flag bits, retaining profile-persistent bits and source-declared flag tests/writes/dependencies. RE1-EVENT-010 records why the initial unfiltered trigger was rejected.
+- On a watched change, the tool interrupts DuckStation, verifies the executable and actual relocated room source, reads the existing item/door/event interpretation, and rechecks all source/registry/event markers plus watched values before recording. Invalid or changing input produces an explicit gap. The next valid capture is a comparison baseline. A room/source change does not report prior-room slots as stopped. Active events with unresolved ownership remain explicit diagnostics.
+- Capture cleanup attempts resume in a `finally` block even if interruption, reading or logging fails. A failed resume reports an explicit diagnostic. Transport loss stops with a diagnostic; this experiment tool does not reconnect. Normal duration and Ctrl+C termination append an end record when the output remains writable. Connecting resumes the emulator because native GDB attachment pauses it.
+- `tests/test_event_capture.py` covers all eight synthetic active/stopped/restored slots, flags changing without event activity, in-place descriptor quantity changes, the last inclusive registry record, ignored retained records beyond the bound, unrelated transient flags, wrong game, unbound activity, failed/short/mixed reads, source changes, log fingerprinting, pause cleanup and comparison reset after a gap. These substitutions do not validate natural activation or normal save/load.
+
+Reproduce with `python3 -m pytest -q tests/test_event_capture.py`. `docs/testing.md` gives the external capture command. The complete redacted external-review snapshot and response streams are outside Git at `/tmp/tasks/re-map/event-capture/`.
+
+Limits: events can start and stop between polls. Polling frequency is requested, not guaranteed, and changed snapshots require pauses. No historical completion, acquisition inference, map reveal, tracker persistence or room availability rule changes accompany this tool. Natural activation, waits, slot replacement and puzzle/story effects remain unvalidated. Source/hash agreement and synthetic tests do not confirm runtime execution.
+History:
+
+- 2026-10-05; Codex root, GPT-6.1 Sol; implemented the user-approved reusable capture tool, corrected the inclusive registry watch bound, added read/coherence/cleanup regressions and filtered transient capture triggers after the live experiment. Full suite passed 680 tests in 32.69 seconds. After correcting the source-mutation test to alter the quantity byte, all 31 focused tests passed in 2.48 seconds. Scoped Ruff lint/format checks passed; no project formatter/linter is configured.
+- 2026-10-05; Gemini 3.8 Flash High through agy; completed a supplied-snapshot code review of the new capture reader, CLI, tests and existing contracts without tools. Returned "No findings." This review did not reproduce gameplay.
+- 2026-10-05; Claude Opus 5.5 High through agy; review unavailable due to individual quota exhaustion, reporting a reset in 111 hours, 35 minutes, 30 seconds. No response, retry or model substitution.
+
+- 2026-10-05; Gemini 3.1 Pro High through agy; completed a supplied-snapshot review without tools. Identified duplicate recording when a torn running hint resolves to the previous coherent capture. Root reproduced that case in the CLI regression and now suppresses identical captures while preserving polling, heartbeats and resume cleanup. Its separate suggestion to omit camera/player/special inputs was not applied: camera is recorded context, and the existing door interpreter consumes player/special state. That review did not validate runtime addresses or gameplay.
+
+- 2026-10-05; Codex root, GPT-6.1 Sol; verified the review correction directly. All 31 focused tests passed in 2.31 seconds; the final full suite passed 680 tests in 30.50 seconds. Scoped Ruff lint/format checks and `git diff --check` passed. Closed the isolated emulator after the recording ended; native shutdown required a second termination signal after the accessibility timeout. No active-event gameplay was obtained.
+
+## RE1-EVENT-010: live capture records item-state savestate reversal
+
+Status: Candidate; controlled emulator observations, no natural active-event capture
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable identity from RE1-EVENT-009; Jill in Winding Passage, room `00-09`
+Environment: DuckStation `0.1-11894-gc66b2694d`, isolated portable copy, native GDB localhost port 2345; Python 3.14.8 on macOS; requested 20 Hz
+Authored: 2026-10-05; Codex root; model: GPT-6.1 Sol
+Basis: live GDB observations during actual emulator loads of the donated Herb-before/after savestates; no emulator RAM writes
+Claim: the capture tool observes the Herb acquisition state restoring in both directions during savestate loading. Filtering unrelated transient flags prevents continuous idle capture pauses in this tested room. Neither observation proves natural indexed-event execution.
+
+Evidence:
+
+- Started the isolated emulator with `tests/fixtures/slus00551_green_herb_before.sav` and the owned CUE. The reusable CLI validated the runtime and captured room/source/registry/item/door/flag snapshots. Loading the after state through System, Load State, Load From File changed Green Herb from `available` to `taken`. A second actual file load of the before state restored `available`. The final log contains three coherent snapshots with no gaps and no active event slots. Snapshot times were approximately 0.106, 15.620 and 65.843 seconds. Capture pauses were 50.30, 45.16 and 52.58 ms. The relevant acquisition byte is PS1 RAM offset `0xC86EA`, bit 0, equivalent to PS1 virtual `0x800C86EA`. Original fixture provenance and pickup experiments remain RE1-PICKUP-002; this experiment observes loads, not a new pickup.
+- The first watch compared every raw script flag byte. Unrelated `script-flags-4/5` changes caused 1,210 captures in 141.96 seconds, with 48.15 seconds spent interrupting/reading/resuming. A native UI observation showed 3 game FPS and 10% speed. Ctrl+C ended the recording cleanly. This broad capture trigger was rejected; it would interfere with experiments.
+- After masking transient bits from capture triggers, a 120.03-second idle run produced one baseline snapshot, zero gaps and 2,238 watch samples. Its sole pause took 37.11 ms. A native UI observation showed 30 game FPS, 60 video FPS and 100% speed. Full flag bytes remain in recorded snapshots. The final 180.02-second reversal run recorded 3,358 samples, approximately 18.65 samples/second, and spent 148.04 ms total in its three capture pauses. These are measurements for this idle/load case, not a guarantee during active events.
+- A first load experiment recorded before-to-after only. Its duration expired before the attempted return load, so it is not reversal evidence. The separate final run above captures both actual loads. CUA key attempts did not move Jill or take the Herb. Later native accessibility/screenshot requests timed out even though GDB recorded the return load. No successful manual gameplay was attributed to those attempts.
+- Offline extraction of the seven existing user `.sav` states and the current slot-1 `.bak` found no active event record. The current Art Room slot/backup have already taken Map and Ink Ribbon and no registered event interaction. These private inputs were read explicitly and remain outside Git. They do not provide an active-event continuation test.
+
+Artifacts outside Git at `/tmp/tasks/re-map/event-capture/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `live-trial-a.jsonl` | `08309b5bd571b6b1a635c2c72a89840f1b252b93f52f9baa4ba7b1222f9c92bc` | Rejected unfiltered trigger and interrupted termination |
+| `live-trial-b.jsonl` | `5a2aedcc6ea0e9f7eebea74c289affd49f8110c7d426b5caea865e631b751f24` | Filtered idle observation and duration termination |
+| `live-loads.jsonl` | `594d8be468f79118fb93f73c6a3a8e579e8089ba33216ae3a183af06e4cf3c9e` | Before-to-after load only |
+| `live-reversal.jsonl` | `08c20d6118670bf1453bef3e447f7c03fd86c0fb2258d63035ce6e83b62d151b` | Before, after, before actual savestate loads |
+
+`audit_logs.py` and `live-audit.json` in the same directory reproduce capture counts/timings/hashes. Emulator/CLI logs retain diagnostics. Game files, RAM extractions and savestates were not added to Git.
+
+Limits: all live event slots remained inactive. Start/stop, waits, natural pickup, door unlock, puzzle/story effects, ordinary in-game save/load and another character/revision were not tested here. Normal save/load evidence for existing flags must be evaluated under its original research findings. Transient filtering does not make polling exhaustive; activity between samples can be missed. No room-completion or availability claim is promoted by this capture.
+History:
+
+- 2026-10-05; Codex root, GPT-6.1 Sol; launched the isolated emulator, ran the reusable CLI, performed actual native file-load reversal, inspected private inactive states, audited timings and preserved the failed broad trigger. External code reviewers did not run this experiment.

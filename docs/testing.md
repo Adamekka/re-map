@@ -40,6 +40,27 @@ Event-activation regressions run with `python3 -m pytest -q tests/test_event_act
 
 The suite covers shared script aliases, initialized frame pointers, guarded starts, transitive starts, callbacks, explicit read failures, source bounds, stops and snapshot reversal. Active records and reversal in these tests are synthetic. A limited live attract-mode experiment bound registered interactions, including a trigger linked to a Map slot in room `00-07`, but captured no active event. Natural start/stop, puzzle changes and normal save/load remain unvalidated. RE1-EVENT-005 through RE1-EVENT-008 record these limits. Event activity never grants acquisition or proves earlier execution.
 
+# Capturing live event observations
+
+Use an isolated DuckStation copy with the exact SLUS-00551 profile and native GDB enabled. Stop any other tracker/GDB client before connecting this tool. It resumes the game on connection and briefly pauses on observed event, item, door or relevant flag changes.
+
+From the repository directory, choose a new log path outside the repository:
+
+```sh
+python3 tools/capture_events.py \
+  --profile profiles/re1_directors_cut_slus00551.json \
+  --out /tmp/re-map-events.jsonl \
+  --seconds 180 --hz 20
+```
+
+The output file must not exist. Stop early with Ctrl+C. The tool resumes before closing; connection/resume failures report a diagnostic. A broken connection ends the capture, so restart with a new output path after restoring GDB access.
+
+Each JSONL record includes session identity, sequence, UTC time and elapsed time. Snapshots contain verified room/source aliases, all observed active slots, registered event interactions, current item/door states and flag values. Descriptor reads use hashes rather than game bytecode. Identical coherent captures do not add duplicate snapshots. Gaps explain failed reads or unsupported state; recovery begins a new comparison baseline. Heartbeats give sample and capture counts every 30 seconds.
+
+The requested polling rate is a limit, not a guarantee. Short events between polls can be missed. `became-active`, `became-inactive` and `position-changed` describe differences between observations, not completed execution or the cause of a reload. Item registry coverage is separate from room completion. This tool does not update tracker visit history or use event activity to grant acquisition.
+
+Run `python3 -m pytest -q tests/test_event_capture.py` for synthetic lifecycle, coherence, flag, gap and pause-cleanup regressions. RE1-EVENT-009/010 record the implementation and live tests. Actual Herb-before/after/before savestate loads restored the recorded item state, but every live event slot remained inactive. Natural event start/stop and puzzle/story changes still require a gameplay capture.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:
