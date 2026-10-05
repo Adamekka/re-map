@@ -306,6 +306,42 @@ def test_vm_and_scd_starts_link_transitive_item_and_door_changes(rules):
     assert active.item_slots == (0,) and active.door_slots == (1,)
 
 
+@pytest.mark.parametrize("loop", [False, True])
+@pytest.mark.parametrize("advance", [1, 2, 3])
+def test_parent_start_position_keeps_ownership_and_frame_checks(rules, loop, advance):
+    parent = (
+        (b"\xfa\x00\x02\x00" if loop else b"")
+        + b"\x05\x18\x01\x00"
+        + (b"\xfb" if loop else b"")
+        + b"\xff"
+    )
+    child = b"\x07\x06\x13\x00\x00\x00\x07\x06\x13\x01\x00\x00\xff"
+    ram, script, program = setup(
+        rules, pickup(0, 0x44, 111) + door(1, 8, 0x34) + b"\0", indexed(parent, child)
+    )
+    start = program.event_program.starts[0]
+    point = next(
+        point for point in program.event_program.points if point.offset == start.offset
+    )
+    # The native helper stores parent PC+1 while initializing a child. These
+    # substitutions exercise that captured position, not real CPU execution.
+    activate(ram, replace(point, offset=start.offset + advance), slot=7)
+    active = read(ram, script, program).events[0]
+    if advance == 1:
+        assert active.phase == "active" and active.owners == ((script.source_rdt, 0),)
+        assert active.item_slots == (0,) and active.door_slots == (1,)
+        if loop:
+            ram[LAYOUT.pool_address - 0x80000000 + 7 * LAYOUT.stride + 12] ^= 1
+            assert read(ram, script, program).events[0].phase == "unbound"
+    else:
+        assert active.phase == "unbound" and active.owners == ()
+    # A readable in-flight PC is not another VM entry into its operand bytes.
+    assert not any(
+        point.offset in (start.offset + 2, start.offset + 3)
+        for point in program.event_program.points
+    )
+
+
 def test_restart_cycles_are_bounded_without_inventing_execution(rules):
     ram, script, program = setup(rules, b"\0", indexed(b"\x08\x01", b"\x08\x00"))
     activate(ram, program.event_program.points[0])

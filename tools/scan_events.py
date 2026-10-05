@@ -273,6 +273,12 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             elif state == 0 and op == 5 and data[address + 2] >= len(entries):
                 issues.append(f"event creation index outside table at 0x{address:x}")
             elif state == 0 and op == 5:
+                # The native starter stores parent PC+1 before initializing
+                # the child, then adds three on return. Retain this readable
+                # position without decoding the operand as another VM command.
+                points.add(
+                    EventPoint(entry, address + 1, state, len(stack), "active", stack)
+                )
                 starts.add(
                     EventStart(
                         entry, address, "start", (data[address + 1], data[address + 2])
