@@ -453,6 +453,8 @@ When blocked, first:
 
 Ask the user to perform manual gameplay steps only when the agent cannot obtain the required runtime state itself.
 
+Choose among test scenarios and prepare test setups autonomously when the agent can obtain equivalent validation from them. Do not ask the user to choose an emulator test setup that the agent can prepare itself.
+
 When requesting a user test, make it precise. Example:
 
 ```text
