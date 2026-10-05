@@ -1,17 +1,22 @@
-"""Minimal GDB remote client for DuckStation RAM reads.
+"""GDB remote client for DuckStation RAM reads and isolated debug captures.
 
-Only implements what the tracker needs: connect, read memory, close.
 All reads return an explicit result, never a silent default.
 Address space must be a PS1 virtual address such as 0x80000000.
-See docs/research.md RE1-EMU-001 for access and RE1-EMU-007 for reply handling.
+See docs/research.md RE1-EMU-001 for access, RE1-EMU-007 for reply handling,
+and RE1-EMU-008 for write watchpoints and single stepping.
 """
 
 from __future__ import annotations
 
 import logging
+import math
+import re
+import select
 import socket
 import time
+from collections import deque
 from dataclasses import dataclass
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,38 @@ class MemRead:
     ok: bool
     data: bytes
     error: str = ""
+
+
+@dataclass(frozen=True)
+class SignalStop:
+    signal: int
+
+
+@dataclass(frozen=True)
+class WriteWatchStop:
+    signal: int
+    address: int
+
+
+@dataclass(frozen=True)
+class NoStop:
+    """No stop packet arrived within the requested wait."""
+
+
+@dataclass(frozen=True)
+class DebugFailure:
+    error: str
+
+
+def _decode_stop(payload: bytes) -> SignalStop | WriteWatchStop:
+    assert _is_stop_reply(payload), "validated stop reply"
+    signal = int(payload[1:3], 16)
+    if payload.startswith(b"T") and b"watch:" in payload:
+        match = re.fullmatch(rb"T[0-9a-fA-F]{2}watch:([0-9a-fA-F]{1,8});", payload)
+        if match is None:
+            raise ValueError("malformed GDB write-watchpoint stop")
+        return WriteWatchStop(signal, int(match[1], 16))
+    return SignalStop(signal)
 
 
 def _checksum(payload: bytes) -> bytes:
@@ -89,6 +126,7 @@ class DuckStationGdb:
         self._host = host
         self._port = port
         self._sock: socket.socket | None = None
+        self._watch_stops: deque[WriteWatchStop] = deque()
 
     @property
     def connected(self) -> bool:
@@ -111,6 +149,7 @@ class DuckStationGdb:
 
     def close(self) -> None:
         sock, self._sock = self._sock, None
+        self._watch_stops.clear()
         if sock is not None:
             try:
                 sock.close()
@@ -149,9 +188,16 @@ class DuckStationGdb:
             reply = _read_packet(self._sock, time.monotonic() + 3.0)
             if not _is_stop_reply(reply):
                 raise ConnectionError(f"unexpected GDB interrupt reply: {reply[:32]!r}")
-        except OSError as exc:
+            stop = _decode_stop(reply)
+            if isinstance(stop, WriteWatchStop):
+                self._watch_stops.append(stop)
+        except (OSError, ValueError) as exc:
             self.close()
             return str(exc)
+        except KeyboardInterrupt:
+            # Cancellation may split a frame; disconnect releases owned watches.
+            self.close()
+            raise
         return ""
 
     def read_memory(self, address: int, length: int) -> MemRead:
@@ -172,12 +218,19 @@ class DuckStationGdb:
                 if _is_stop_reply(resp):
                     # A pause notification does not finish the outstanding memory request.
                     logger.info("GDB stop notification during memory read: %r", resp)
+                    stop = _decode_stop(resp)
+                    if isinstance(stop, WriteWatchStop):
+                        self._watch_stops.append(stop)
                     continue
                 break
-        except (OSError, ConnectionError) as exc:
+        except (OSError, ValueError) as exc:
             # A late reply after failure cannot safely be assigned to a later request.
             self.close()
             return MemRead(ok=False, data=b"", error=str(exc))
+        except KeyboardInterrupt:
+            # Do not reuse a partially consumed reply during watchpoint cleanup.
+            self.close()
+            raise
         if resp.startswith(b"E"):
             return MemRead(ok=False, data=b"", error=f"gdb error: {resp[:16]!r}")
         if len(resp) != length * 2:
@@ -199,3 +252,120 @@ class DuckStationGdb:
 
     def read_u32_le(self, address: int) -> MemRead:
         return self.read_memory(address, 4)
+
+    def _request(self, payload: bytes) -> MemRead:
+        if self._sock is None:
+            return MemRead(False, b"", "not connected")
+        try:
+            self._sock.sendall(_encode_packet(payload))
+            deadline = time.monotonic() + 2.0
+            while True:
+                reply = _read_packet(self._sock, deadline)
+                if not _is_stop_reply(reply):
+                    break
+                stop = _decode_stop(reply)
+                if isinstance(stop, WriteWatchStop):
+                    self._watch_stops.append(stop)
+            if not reply:
+                return MemRead(False, b"", "GDB command is unsupported")
+            if reply.startswith(b"E"):
+                return MemRead(False, b"", f"GDB error: {reply[:16]!r}")
+            return MemRead(True, reply)
+        except (OSError, ValueError) as error:
+            self.close()
+            return MemRead(False, b"", str(error))
+        except KeyboardInterrupt:
+            # A cancelled exchange can leave a partial frame. Disconnect also
+            # releases this client's watches in the pinned DuckStation server.
+            self.close()
+            raise
+
+    def change_write_watchpoint(
+        self, action: Literal["insert", "remove"], address: int, width: int
+    ) -> str:
+        assert action in ("insert", "remove"), "explicit watchpoint action"
+        if not 1 <= width <= 256 or not 0 <= address <= 0xFFFFFFFF - (width - 1):
+            return "write watchpoint requires a valid address and width 1..256"
+        prefix = "Z" if action == "insert" else "z"
+        result = self._request(f"{prefix}2,{address:x},{width:x}".encode("ascii"))
+        if not result.ok:
+            return result.error
+        if result.data != b"OK":
+            self.close()
+            return f"unexpected watchpoint reply: {result.data[:32]!r}"
+        return ""
+
+    def read_register(self, index: int) -> MemRead:
+        if not 0 <= index <= 0xFF:
+            return MemRead(False, b"", "register index must fit one byte")
+        result = self._request(f"p{index:x}".encode("ascii"))
+        if not result.ok:
+            return result
+        try:
+            if len(result.data) != 8:
+                raise ValueError("GDB register reply requires four bytes")
+            data = bytes.fromhex(result.data.decode("ascii"))
+            if len(data) != 4:
+                raise ValueError("GDB register reply requires four bytes")
+            return MemRead(True, data)
+        except ValueError as error:
+            self.close()
+            return MemRead(False, b"", str(error))
+
+    def wait_stop(
+        self, wait_seconds: float
+    ) -> SignalStop | WriteWatchStop | NoStop | DebugFailure:
+        if not math.isfinite(wait_seconds) or wait_seconds < 0:
+            return DebugFailure("stop wait must be finite and nonnegative")
+        if self._sock is None:
+            return DebugFailure("not connected")
+        if self._watch_stops:
+            return self._watch_stops.popleft()
+        deadline = time.monotonic() + wait_seconds
+        try:
+            while True:
+                ready, _, _ = select.select(
+                    [self._sock], [], [], max(0.0, deadline - time.monotonic())
+                )
+                if not ready:
+                    return NoStop()
+                first = self._sock.recv(1, socket.MSG_PEEK)
+                if not first:
+                    raise ConnectionError("gdb server closed connection")
+                if first == b"+":
+                    # Continue only gets an ACK. It must not turn an idle wait
+                    # into a packet timeout or consume part of a later stop.
+                    self._sock.recv(1)
+                    continue
+                reply = _read_packet(self._sock, time.monotonic() + 2.0)
+                if not _is_stop_reply(reply):
+                    raise ConnectionError(f"unexpected GDB stop reply: {reply[:32]!r}")
+                return _decode_stop(reply)
+        except (OSError, ValueError) as error:
+            self.close()
+            return DebugFailure(str(error))
+        except KeyboardInterrupt:
+            self.close()
+            raise
+
+    def single_step(self) -> str:
+        if self._sock is None:
+            return "not connected"
+        try:
+            self._sock.sendall(_encode_packet(b"s"))
+            reply = _read_packet(self._sock, time.monotonic() + 3.0)
+            if not _is_stop_reply(reply):
+                raise ConnectionError(f"unexpected GDB step reply: {reply[:32]!r}")
+            stop = _decode_stop(reply)
+            if isinstance(stop, WriteWatchStop):
+                self._watch_stops.append(stop)
+                return "single step encountered another write watchpoint"
+            if stop.signal != 5:
+                return f"single step stopped with signal {stop.signal}"
+            return ""
+        except (OSError, ValueError) as error:
+            self.close()
+            return str(error)
+        except KeyboardInterrupt:
+            self.close()
+            raise

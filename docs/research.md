@@ -1904,3 +1904,84 @@ Limits: all live event slots remained inactive. Start/stop, waits, natural picku
 History:
 
 - 2026-10-05; Codex root, GPT-6.1 Sol; launched the isolated emulator, ran the reusable CLI, performed actual native file-load reversal, inspected private inactive states, audited timings and preserved the failed broad trigger. External code reviewers did not run this experiment.
+
+## RE1-EMU-008: native write-watch stops and single-step framing
+
+Status: Candidate; pinned source contract and one live CPU-write probe
+Scope: DuckStation `0.1-11894-gc66b2694d`, commit `c66b2694da65cece8886ed3d4a069098831f8358`; Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`
+Environment: isolated portable DuckStation on macOS, native GDB localhost port 2345; Python 3.14.8
+Authored: 2026-10-05; Codex root; model: GPT-6.1 Sol
+Basis: primary emulator source inspection, a live CPU write/step/remove probe, fragmented-packet regressions
+Claim: this DuckStation server exposes client-owned CPU write callbacks through GDB `Z2`/`z2`. The observed stop is readable after the writing instruction finishes. Single stepping advances one instruction and produces a separate stop reply. This establishes the transport needed for RE1-EVENT-011, not complete event execution history.
+
+Evidence:
+
+- [Pinned GDB server](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/gdb_server.cpp#L879) accepts write-watch lengths 1..256. `AddBreakpoint` at lines 1139..1190 creates debugger callbacks without patching guest instructions. `OnBreakpointHit` at lines 1371..1403 emits `T05watch:<actual access address>;` and suppresses a duplicate paused notification. [Disconnect cleanup](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/gdb_server.cpp#L1266) removes that client's callbacks. When the last client leaves, it resumes if the first client attached while the emulator was running.
+- [CPU interpreter](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/cpu_core.cpp#L1605) checks a byte store before executing it. The interpreter completes the instruction before exiting to network processing at lines 2660..2673. `MemoryBreakpointCheck` at lines 2594..2600 checks the access's starting address; a wider store starting before a watched byte can bypass it. Emulator savestate restoration is not a CPU write.
+- GDB register index 37, command `p25`, reads the next native PC; index 4 reads A0. Replies contain four little-endian bytes. [Single-step command](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/gdb_server.cpp#L842) acknowledges `s` and calls `System::SingleStepCPU`. [The system operation](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/system.cpp#L2419) schedules one instruction. The interpreter then pauses with `S05`. Continue acknowledges without a data reply. Existing RE1-EMU-007 explains asynchronous stop handling during reads.
+- The live probe verified the game signature and initializer hash, installed a one-byte write watch on PS1 virtual `0x800CF688`, resumed, and caught the game's regular selected-event-record pointer store. This address is the little-endian u32 field from RE1-EVENT-005; watching its first byte was sufficient for this store. The server reported signal 5 and address `0x800CF688`; `p25` returned `0x80025D2C`. Reading the pointer already returned `0x800CF68C`. One step advanced PC to `0x80025D30`. Removing the watch and resuming produced `NoStop` in the subsequent bounded wait. No guest RAM writes, injected activity or patched instructions were used.
+- `tests/test_gdb.py` checks fragmented replies, ACK-only idle waits, stops interleaved with register/memory replies, rejected watch commands, malformed watch/register replies and nested write stops during stepping. Protocol bytes in these tests are synthetic.
+
+Reproduction artifacts remain outside Git in `/tmp/tasks/re-map/event-breakpoints/`. `probe.py` records the live sequence; `probe.json` SHA256 is `34fb1d3b5b34c503bc95796cc27f990efb87fb2752cab01e25751ad5f13c0993`. Downloaded source files are pinned to the commit above.
+
+Limits: the live probe watches the selected-record pointer, not an activity transition. It validates this transport/stop phase and one sequential step, not the full RE1 initializer, natural event activation, return-delay stepping, cleanup after an actual broken connection, or other emulator versions. Exact-width byte watches do not cover every overlapping access or savestate load. Other clients must be stopped during these experiments.
+History:
+
+- 2026-10-05; Codex root, GPT-6.1 Sol; inspected the pinned server/interpreter/system code, ran the isolated probe and implemented bounded stop/register/watch/step operations. Runtime evidence remains limited to the sequence above.
+
+## RE1-EVENT-011: activity-write capture completes the pinned initializer
+
+Status: Candidate; pinned native contract, synthetic regressions and inactive live observations
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable identity from RE1-EMU-008; all eight event records from RE1-EVENT-005/006
+Environment: Python 3.14.8, pytest 9.1.1 and Capstone 5.0.9 on macOS; isolated DuckStation `0.1-11894-gc66b2694d`, native GDB localhost port 2345
+Authored: 2026-10-05; Codex root; model: GPT-6.1 Sol
+Basis: hash-checked owned executable inspection, shared capture implementation, synthetic activity/CPU tests and negative live recordings
+Claim: the optional `--breakpoints` mode can watch every event activity byte and finish the source-derived initializer before binding a newly active record. It preserves activity-write observations in the existing coherent JSONL format. Natural indexed-event start/stop remains unvalidated by the inactive recordings below.
+
+Evidence:
+
+- The exact owned executable hash matches the profile. Its initializer is 60 bytes at PS1 virtual `0x80025C1C..0x80025C58`, SHA256 `617d66cbb61456b7eadb7e38a53eb71ab9cdefc1a278dca868363d5322ac6869`. It stores u8 activity at `0x80025C20` through A0+2 before initializing state/depth and pointer fields. It writes the little-endian u32 script PC at `0x80025C54`, the return delay slot after `jr ra` at `0x80025C50`. RE1-EVENT-005/006 retain the earlier initializer and event-pool provenance.
+- With the post-store phase from RE1-EMU-008, register 37 should report `0x80025C24` at the activity hit. Thirteen single steps through `0x80025C54` finish this straight-line body. The tool checks the exact code hash and A0 record address, verifies each next PC before stepping, and refuses an unexpected path. This is a pinned source contract, not a live observation of all 13 steps. Other activity writes receive a coherent capture without stepping.
+- The profile stores initializer addresses/hash. The optional mode installs width-one watches at `0x800CF68E + slot*0x34` for all eight records. KSEG0/KSEG1 hit addresses normalize to the same physical byte. Startup requires the pinned initializer configuration, runtime signature and code hash. A rejected command, unexpected stop or stepping failure ends the run explicitly; there is no implicit polling replacement.
+- A paused baseline and each activity write use the existing source-bound room/registry/item/door/flag capture from RE1-EVENT-009. Repeated identical activity writes remain snapshots because they can represent a restart. Captured item/door states do not trigger this mode independently. A failed capture emits a gap; the next valid observation begins a baseline. Bounded stop waits allow duration/interruption and 30-second heartbeats. Cleanup tracks in-flight installs, removes watches in reverse order, resumes and disconnects. Pinned server disconnect cleanup is documented separately in RE1-EMU-008.
+- `tests/test_event_breakpoints.py` models all eight initializer starts, stop/restart between polls, unchanged restarts, corrupt identity/code/registers/record addresses, a deviating PC, foreign stops, rejected/interrupting setup and transport failure. Each case verifies resumed state and applicable owned-watch removal. RAM activity and CPU steps are explicitly synthetic. The test-only initializer writes do not confirm a natural event or an in-game save/load.
+- Starting the CLI from the actual donated Herb-before savestate, room `00-09`, completed a 45.025-second idle run with one baseline, zero hits and no gaps. A separate 180.039-second recording included native CUA arrows/confirm attempts. Repeated taps visibly moved Jill, but neither a pickup nor an indexed event was obtained. It also ended normally with one baseline and zero hits/gaps. Both runs installed/removed the eight watches and left the isolated game running. They prove inactive-mode setup/termination for this case, not active initializer completion.
+
+Artifacts outside Git at `/tmp/tasks/re-map/event-breakpoints/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `live-idle.jsonl` | `739f6fabddaa86742b93f5a9e86ff21e0fb661b437a1f4b36a8d4698c57e1168` | Baseline, heartbeat and duration cleanup |
+| `live-interaction.jsonl` | `20cededcb99b1b8a317fea6c09b6d8ea10adf8426ed2dee87eecfd761e0f6575` | Key attempts with no activity hit |
+
+`plan.md`, the CLI/emulator logs and external review streams remain in the same scratch directory. Extracted native code, disc files, private emulator configuration and captured RAM are not committed.
+
+Limits: no natural activity start/stop, waits, slot replacement, puzzle/story change, pickup, door unlock or normal save/load is established by these inactive runs. Wide overlapping stores and emulator restores bypass CPU watches. Capture pausing/stepping can alter timing, and the measured capture interval omits stop-delivery latency. Event activity still grants no acquisition, eligibility or execution history. This changes the observation tool only; the unfinished availability/history interpretation remains separate work.
+History:
+
+- 2026-10-05; Codex root, GPT-6.1 Sol; inspected initializer order, implemented the user-approved optional shared mode, ran synthetic regressions and the inactive live recordings. No runtime finding was promoted to confirmed.
+- 2026-10-05; Gemini 3.8 Flash High through agy; completed the supplied-snapshot code/protocol/test review and returned "No findings." It used no tools and did not reproduce gameplay.
+- 2026-10-05; Gemini 3.1 Pro High through agy; completed the supplied-snapshot review of the capture, protocol and cleanup paths. Root reproduced and corrected masking of a failed connection or interruption by a subsequent resume attempt. Disconnected captures now preserve the original failure, and cancellation during memory/interrupt exchanges closes the partial stream. New synthetic regressions cover both capture modes and these exchanges. Root also checked watch removal against the pinned server: valid removal returns `OK` even when an in-flight install never completed, and disconnect clears remaining owned callbacks.
+- 2026-10-05; Claude Opus 5.5 High through agy; review unavailable due to individual quota exhaustion, reporting reset in 110 hours, 53 minutes, 55 seconds. No review returned; no retry or model substitution was made.
+- 2026-10-05; Codex root, GPT-6.1 Sol; final review and regressions verified the diagnostic correction, including a failed coherent read after a write hit. The final suite passed all 722 tests in 35.33 seconds. Scoped Ruff format/lint and `git diff --check` passed. No project formatter/linter is configured; the scoped lint invocation excludes pre-existing `PYI034`/`UP037` warnings on the unchanged GDB context-manager return annotation, verified against HEAD. Closed the owned isolated emulator after capture cleanup; its process exited normally. No active initializer was validated.
+
+## RE1-EVENT-012: native transition clears hit every activity watch
+
+Status: Candidate; two clear loops during one automatic/menu experiment
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable identity from RE1-EMU-008; the eight-record pool from RE1-EVENT-005/006
+Environment: isolated DuckStation `0.1-11894-gc66b2694d`, native GDB localhost port 2345; Python 3.14.8 and Capstone 5.0.9 on macOS
+Authored: 2026-10-05; Codex root; model: GPT-6.1 Sol
+Basis: live CPU-write stops, hash-checked native inspection and reusable CLI output
+Claim: all eight optional activity watches caught the game's byte-clearing loop twice. The corresponding room source was unavailable, so these hits produced explicit gaps rather than source-bound event snapshots. This validates activity-write delivery and continued resume after capture gaps, not an active initializer or completed event.
+
+Evidence:
+
+- After the two inactive recordings in RE1-EVENT-011 ended, restarted the isolated game through its native System menu. Started the optional recorder while the runtime signature and old room `00-07` source still matched. Native key attempts progressed through the opening/title/demo screens; no controlled player interaction or story event was established.
+- The 180.021-second run recorded one baseline, 16 hits and 16 `source-unavailable` gaps. Each eight-hit group reports slots 0 through 7 and the exact addresses `0x800CF68E + slot*0x34`, with signal 5, zero steps and next native PC `0x800441C0`. The first group arrived around 82.914..83.143 seconds. The log preserves exact times for both groups. Every gap reports `room script ranges are outside PS1 RAM`. The recorder continued and ended normally, removing its watches and disconnecting.
+- In the hash-checked executable, `0x800441B4..0x800441CC` loops eight times. The byte store at `0x800441BC` writes zero through a `0x800D0000 + slot*0x34` base and displacement `-0x972`, exactly the watched activity byte. `0x800441C0` increments the slot counter; the loop bounds it to eight and advances the offset by `0x34`. These native writes corroborate the all-slot offsets and post-store PC interpretation. They are record clears, not observed starts or proof that a previously active event stopped.
+- The complete JSONL is `/tmp/tasks/re-map/event-breakpoints/live-attract.jsonl`, SHA256 `4e5f77d90f04c037b351f69bf3783b0a93eb79898607bf44477b43fc54f04d57`. The matching CLI/emulator logs remain outside Git. Reproduce by restarting the isolated game, attaching the optional CLI after identity verification, and observing title/demo transitions. The exact timing and room-source readiness can differ.
+
+Limits: both clear loops belong to one automatic/menu experiment. No natural activation hit, full initializer stepping, wait, acquisition, door unlock, puzzle progression, ordinary save/load or another revision was captured. A zero write alone does not establish earlier activity. The observation adds runtime evidence for delivery and gaps only; RE1-EVENT-011's activation limits remain.
+History:
+
+- 2026-10-05; Codex root, GPT-6.1 Sol; ran the isolated recording, audited all 16 hit addresses/PCs, inspected the corresponding native zero-store loop and kept source-unavailable observations as gaps. External reviewers inspected code only and did not run this experiment.

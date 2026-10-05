@@ -425,6 +425,12 @@
     "repeat_offset": "0x0C",
     "deferred_offset": "0x1C"
   },
+  "event_capture_initializer": {
+    "address": "0x80025C1C",
+    "activity_write_address": "0x80025C20",
+    "commit_address": "0x80025C54",
+    "sha256": "617d66cbb61456b7eadb7e38a53eb71ab9cdefc1a278dca868363d5322ac6869"
+  },
   "script_flag_bases": [
     "0x800C8700",
     "0x800C8694",

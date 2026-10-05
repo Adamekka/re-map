@@ -5,6 +5,7 @@ Activity is transient evidence, never an acquisition or execution-history flag.
 
 from __future__ import annotations
 
+import hashlib
 import struct
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -160,6 +161,36 @@ class EventProgram:
             tuple(tuple(row) for row in raw["changes"]),
             tuple(tuple(row) for row in raw["script_starts"]),
         )
+
+
+@dataclass(frozen=True)
+class EventInitializer:
+    address: int
+    activity_write_address: int
+    commit_address: int
+    sha256: str
+
+    def __post_init__(self) -> None:
+        # The completion loop assumes the pinned straight-line initializer,
+        # ending with a return and its script-pointer store in the delay slot.
+        if (
+            not 0x80000000 <= self.address < self.commit_address + 4 <= 0x80200000
+            or self.address % 4
+            or self.activity_write_address != self.address + 4
+            or self.commit_address != self.address + 56
+            or len(self.sha256) != 64
+            or any(character not in "0123456789abcdef" for character in self.sha256)
+        ):
+            raise ValueError("invalid pinned event initializer")
+
+    def verify(self, read_memory: Callable[[int, int], MemoryResult]) -> str:
+        width = self.commit_address + 4 - self.address
+        result = read_memory(self.address, width)
+        if not result.ok or len(result.data) != width:
+            return f"Event initializer: {result.error or 'short read'}"
+        if hashlib.sha256(result.data).hexdigest() != self.sha256:
+            return "Event initializer does not match the pinned executable."
+        return ""
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,15 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from emulator.duckstation_gdb import DuckStationGdb, _encode_packet
+import emulator.duckstation_gdb as gdb_module
+from emulator.duckstation_gdb import (
+    DebugFailure,
+    DuckStationGdb,
+    NoStop,
+    SignalStop,
+    WriteWatchStop,
+    _encode_packet,
+)
 
 
 def _fake_server(sock: socket.socket):
@@ -58,6 +66,24 @@ def test_read_memory_rejects_bad_length():
     gdb = DuckStationGdb()
     res = gdb.read_memory(0x80000000, 0)
     assert not res.ok
+
+
+@pytest.mark.parametrize("operation", ["memory", "interrupt"])
+def test_cancelled_exchange_closes_the_partially_consumed_stream(
+    monkeypatch, packet_pair, operation
+):
+    gdb, _ = packet_pair
+
+    def cancelled(*args):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(gdb_module, "_read_packet", cancelled)
+    with pytest.raises(KeyboardInterrupt):
+        if operation == "memory":
+            gdb.read_memory(0x80000000, 1)
+        else:
+            gdb.interrupt()
+    assert not gdb.connected
 
 
 class OneByteSocket(socket.socket):
@@ -179,3 +205,86 @@ def test_gdb_error_response_keeps_aligned_connection(packet_pair):
     assert not result.ok and "gdb error" in result.error
     next_read = gdb.read_memory(0x80000004, 2)
     assert next_read.ok and next_read.data == bytes.fromhex("1234")
+
+
+def test_watchpoint_commands_preserve_stops_and_register_reply_alignment(packet_pair):
+    gdb, server = packet_pair
+    server.sendall(
+        _encode_packet(b"S02")
+        + _encode_packet(b"OK")
+        + _encode_packet(b"T05watch:800cf68e;")
+        + _encode_packet(b"245c0280")
+        + _encode_packet(b"OK")
+    )
+    assert gdb.change_write_watchpoint("insert", 0x800CF68E, 1) == ""
+    pc = gdb.read_register(37)
+    assert pc.ok and int.from_bytes(pc.data, "little") == 0x80025C24
+    assert gdb.wait_stop(0) == WriteWatchStop(5, 0x800CF68E)
+    assert gdb.change_write_watchpoint("remove", 0x800CF68E, 1) == ""
+    commands = server.recv(4096)
+    assert _encode_packet(b"Z2,800cf68e,1") in commands
+    assert _encode_packet(b"p25") in commands
+    assert _encode_packet(b"z2,800cf68e,1") in commands
+
+
+def test_memory_read_does_not_lose_a_write_watchpoint(packet_pair):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(b"T05watch:a00cf68e;") + _encode_packet(b"1234"))
+    result = gdb.read_memory(0x80000000, 2)
+    assert result.ok and result.data == bytes.fromhex("1234")
+    assert gdb.wait_stop(0) == WriteWatchStop(5, 0xA00CF68E)
+
+
+def test_idle_stop_wait_drains_acks_without_closing_connection(packet_pair):
+    gdb, server = packet_pair
+    server.sendall(b"++")
+    assert isinstance(gdb.wait_stop(0), NoStop)
+    assert gdb.connected
+    server.sendall(_encode_packet(b"T05watch:800cf68e;"))
+    assert gdb.wait_stop(0) == WriteWatchStop(5, 0x800CF68E)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        b"$T05watch:garbage;#00",
+        _encode_packet(b"OK"),
+        _encode_packet(b"T05watch:123456789;"),
+    ],
+)
+def test_invalid_stop_closes_stream(packet_pair, reply):
+    gdb, server = packet_pair
+    server.sendall(reply)
+    assert isinstance(gdb.wait_stop(0), DebugFailure)
+    assert not gdb.connected
+
+
+def test_plain_stop_and_single_step_are_explicit(packet_pair):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(b"S02") + b"+" + _encode_packet(b"S05"))
+    assert gdb.wait_stop(0) == SignalStop(2)
+    assert gdb.single_step() == ""
+    assert _encode_packet(b"s") in server.recv(4096)
+
+
+@pytest.mark.parametrize("reply", [b"", b"E01", b"not-ok"])
+def test_watchpoint_rejection_is_not_success(packet_pair, reply):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(reply))
+    assert gdb.change_write_watchpoint("insert", 0x800CF68E, 1)
+    assert gdb.connected == (reply != b"not-ok")
+
+
+@pytest.mark.parametrize("reply", [b"xxffffff", b"1234", b"112233gg"])
+def test_invalid_register_value_closes_stream(packet_pair, reply):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(reply))
+    assert not gdb.read_register(37).ok
+    assert not gdb.connected
+
+
+def test_unexpected_step_watchpoint_is_retained(packet_pair):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(b"T05watch:800cf68e;"))
+    assert gdb.single_step()
+    assert gdb.wait_stop(0) == WriteWatchStop(5, 0x800CF68E)
