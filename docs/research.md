@@ -2499,3 +2499,94 @@ History:
 - 2026-10-06; Gemini 3.1 Pro High via agy, fresh conversation `64674351-9a4d-44f6-a863-ad58bf0affbb`; reviewed the supplied interpreter, source/schema interfaces, native contracts, complete new tests and exact metadata delta, returning "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr. No tools, tests or gameplay were run by the reviewer.
 - 2026-10-06; Gemini 3.8 Flash High via agy, fresh conversation `cd96a4df-b3ff-4548-94ee-36b2c5b6528f`; exhausted its output-token limit after repetitive analysis and ended with result ERROR. The partial response is diagnostic data, not a completed review or endorsement. This was the single fresh recovery attempt; no further retry or substitution. No tool steps were attempted. Root's direct audit and Pro's completed perspective remain the review basis.
 - 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, review, substitution or endorsement.
+
+## RE1-SCD-018: lighting writes require a bounded room-file destination
+
+Status: Candidate; pinned native instructions and synthetic bounds tests
+Scope: RE1 Director's Cut, NTSC-U, SLUS-00551, disc revision pinned by `SLUS_005.51` SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; opcode `40`
+Environment: read-only owned executable/disc inspection, Python 3.14.8 and Capstone 5.0.9; no new DuckStation gameplay
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: primary native inspection, source-file bounds and synthetic tracking tests
+Claim: native command `40` returns one and writes lighting fields inside the loaded RDT. Reconstruction treats it as a constant successful result only when every destination remains in the unreferenced prefix after the 19-entry offset table and before every nonzero pointed section. An unsafe index remains an unsupported effect.
+
+Evidence:
+
+- Dispatch entry `0x80091108 + 4*0x40` selects `0x8004828C`. The handler through `0x80048330` advances PC by 16, sign-extends packet byte 1, and loads the current room-file base from PS1 virtual `0x800CAB10`. Destination record offset is `0x94 + 44*index`. Seven sign-extended halfwords are stored as little-endian u32 values at record offsets `8, 12, 16, 20, 24, 28, 40`. The final word ends at record+44. The return delay slot at `0x80048330` sets one.
+- The last source halfword is read at packet+16, independently of the 16-byte PC advance. RE1-SCD-008's required 18-byte read window and separate bounded operand tail remain unchanged. The semantic compiler neither truncates the read nor changes instruction flow.
+- Native code does not bound its signed index. The compiler requires the first destination at or after file offset `0x94` and the last word's end no later than both the earliest nonzero RDT section offset and the supplied file's end. It does not assume only indices 0/1/2 exist or use a room-name exception. Negative/header targets and writes reaching another section reject reconstruction when reached.
+- Owned `ROOM3030.RDT` uses indices 0/1/2 at file offsets `0x1278C/0x1279C/0x127AC`. Its earliest pointed section is `0x1F4`; all three destinations fit. These are static source observations, not executions of those event commands.
+- `tests/test_rendering_commands.py` checks safe higher indices with a larger synthetic prefix, signed negative indices, positive indices reaching scripts, an exact last-word section boundary, SCD branch returns, independent event dispatch and preservation of flags/items/doors. Existing native-decoding tests retain the overlapping source read and truncated-tail cases.
+
+Limits: this proves a source contract for the pinned executable and bounded destinations, not natural puzzle execution, lighting correctness, other revisions or whole-game item coverage. Rendering values and camera/actor predicates remain outside reconstructed availability. The instruction excerpt is private at `/tmp/tasks/re-map/rendering-commands/native.txt`, SHA256 `3505a3e6c55fca2c9d153eff05686ef33866c351cc6e92a0ea7a82a88c2b330c`; no executable bytes or room assets are committed.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the native writes and return, added the mandatory destination bound and synthetic regressions. RE1-NATIVE-002 records shared generation and replay checks separately.
+
+
+## RE1-SCD-019: model recoloring preserves tracked descriptor and flag state
+
+Status: Candidate; pinned native instruction/helper inspection and synthetic tests
+Scope: same executable/revision as RE1-SCD-018; opcode `4D`
+Environment: same read-only inspection/test environment as RE1-SCD-018; no new gameplay
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: primary handler/helper inspection and synthetic tracking/event-return tests
+Claim: command `4D` advances two bytes and returns one after recoloring model rendering data. It preserves the modeled collectible/door descriptors, variable bytes, saved flags and local flag aliases. Its second packet byte is not a state operand.
+
+Evidence:
+
+- Handler `0x8004878C..0x80048950` loads the model-data pointer at PS1 virtual `0x800C51BC` and calls `0x8005CD94` fourteen times at model-relative offsets `0, 0x7C, 0xF8, 0x45C, 0x5D0, 0x174, 0x1F0, 0x26C, 0x2E8, 0x364, 0x3E0, 0x4D8, 0x554, 0x64C`, with color arguments `0x30, 0x80820, 0x606060`. It reads no packet operand. PC advances two at `0x80048928..0x8004893C`, and the function returns one at `0x80048934/0x8004894C`.
+- The complete helper `0x8005CD94..0x8005CEFC` sets model-part header bit `0x80`, preserves primitive words' upper byte while replacing their color bits, and writes scratchpad PS1 virtual `0x1F800000` and, on its copied-model path, `0x1F800018`. It reads `0x800C3000` bit 0 to select that second path. The copied-model addresses come from actor/model pointers, including the actor at `0x800CAB14`; it does not change these pointers or the selector bit. There are no further calls from this helper. These rendering destinations are separate from the modeled flags, variables and AOT/script descriptors.
+- Static inspection finds eighteen commands across `ROOM30B0/30B1`, `ROOM30F0/30F1` and `ROOMA0F0/A0F1`, three per source. RE1-NATIVE-002 records their generation delta. Synthetic tests use nonzero packet padding, both tracking epochs, branch success, ordered/single event dispatch, descriptor preservation, flag preservation and acquisition reversal. An FD deferred call cannot take its exit branch after this nonzero return.
+
+Limits: no live recoloring, model allocation or later-area gameplay was performed. This does not resolve model/actor predicates or certify arbitrary invalid native model pointers. RE1-SCD-018 identifies the pinned instruction excerpt and hash.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected all fourteen calls, the complete helper and the caller's advance/return; added shared continuing-command semantics and regressions. Original RE1-SCD-008 width provenance is unchanged.
+
+
+## RE1-SCD-020: effect-record flag writes do not change the aliased pool header
+
+Status: Candidate; pinned native instruction inspection and synthetic tests
+Scope: same executable/revision as RE1-SCD-018; opcode `4E`
+Environment: same read-only inspection/test environment as RE1-SCD-018; no new gameplay
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: primary native inspection and synthetic tracking/event-return tests
+Claim: command `4E` returns one after modifying an existing effect pool's per-record flag halfwords. It reads each record's active header, preserves the header and writes no modeled flag or collectible/door descriptor. It therefore requires no pool-header invalidation, unlike effect creation/clearing commands in RE1-SCD-007/011.
+
+Evidence:
+
+- Handler `0x80047950..0x80047A0C` advances PC by four and reads byte 1 as operation and packet+2 as a little-endian u16 mask. It visits 64 records at PS1 virtual `0x800C3024 + 0x84*record`. For a nonzero header halfword, operation 0 ORs the mask, 1 ANDs its complement, and 2 XORs it into the flag halfword at record+14. Other operation bytes skip the store. All paths return one, including an inactive pool and default operations.
+- Flag-store addresses run from `0x800C3032` through `0x800C50AE`, each two bytes. They lie outside every modeled flag-bank and scalar-variable range. The first record's header `0x800C3024/0x800C3025` overlaps bank 4; `4E` only reads it. It also preserves the player-state gate at `0x800C5125` used by door interpretation. The loop contains no calls or AOT/source writes.
+- Owned `ROOM3030.RDT` uses mode 0 and 1, both with mask `0x8000`, at offsets `0x11538/0x11748`. Tests include modes 0/1/2/255 and mask `0xFFFF`, preserved local/persistent flag shadows, fresh acquisition reversal, SCD branch results and deferred-return reachability. Adding `4E` to the continuing set also makes its nonzero FD return explicit rather than exploring a nonexistent exit.
+
+Limits: no controlled live effect-pool mutation was captured. Actor/effect-dependent availability remains unresolved where the corresponding predicates lack a supported state model. RE1-SCD-018 identifies the private native excerpt and hash.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the complete loop, every operation/default path and the exact write addresses; added shared continuing/nonzero semantics and synthetic regressions.
+
+
+## RE1-NATIVE-002: shared rendering command support and unchanged projection limits
+
+Status: Candidate; generated source comparison, synthetic tests and recorded-RAM replay
+Scope: pinned SLUS-00551 identity from RE1-SCD-018; commands `40/4D/4E` across all generated source variants
+Environment: owned disc/executable, Python 3.14.8, pytest 9.1.1 and Capstone 5.0.9; earlier captures retain their documented DuckStation environment and provenance
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: RE1-SCD-018/019/020 contracts, source regeneration, synthetic tests and unchanged captured-RAM replay
+Claim: shared interpretation recognizes the remaining 23 rendering-command occurrences in seven source variants while preserving conservative completion and save/load refresh. Under the existing single offline flag snapshot, complete item and door coverage does not increase.
+
+Evidence:
+
+- Two independent disc generations produce the same manifest, SHA256 `4dcb36457ad9040ee868b3df06537d67b3320f54bed7ab0c5043005ab8c07767`. Against commit `4e947a8`'s manifest SHA256 `30ed335b05dfbefdbf6275c2eb52bc73044725da4c9b913003922ecd252c524b`, the only row differences are 23 commands changing from `unsupported-effect` with no operands to `constant-test` with result one. The four new research references are the only other changes. Every signature, range, identity, source-choice row, mutable-field declaration, coverage flag and event-flow record is unchanged. There remain 334 sources and 636 loader choices.
+- `ROOM3030` has three `40` and two `4E` changes; `ROOM30B0/30B1`, `ROOM30F0/30F1` and `ROOMA0F0/A0F1` each have three `4D` changes. The private source audit binds extraction to each committed full-source SHA256. No room-specific interpretation was added.
+- All **1,005 tests pass in 45.66 seconds**, including 61 new rendering cases. The four changed Python files pass manually scoped Ruff lint/format checks; no repository formatter/linter is configured. `git diff --check` passes.
+- The unchanged twelve-step, eleven-distinct-capture replay from RE1-REENTRY-004 passes through one tracker/profile. It preserves Main Hall clearance after departure, Art Room's remaining Ribbon and available/taken Map reversal, three normal-load captures, the later ordinary round trip, earlier Ribbon-state reversal and reveal only for entered rooms 06/07. This performs no new gameplay and substitutes no RAM values.
+- The same donated Herb-before flag configuration projects all 334 source variants offline. Complete items remain **258**, complete doors remain **268**, with no gains or losses. ROOM30B0/30B1 already resolved before this change. Tracing current reentry analysis of ROOM3030 and ROOM30F0 reaches the existing 4,096-state procedure budget in recurring main scripts at file `0x112A8` and `0x35DE6`, respectively. The other main-script/condition limits are unfinished detection work, not reasons to guess clearance. The projection took 5.06 seconds total; this is not a live polling-latency measurement.
+- Private artifacts are under `/tmp/tasks/re-map/rendering-commands/`: `source-audit.json`, `generation-audit.json`, `manifest-generated.json`, `manifest-repeated.json`, `audit.py`, `audit.json`, `projection.json`, `projection-delta.json`, `remaining-blockers.json` and `pytest.log`. The regeneration command remains `tools/build_cache_metadata.py` with the owned CUE and pinned profile; none of the raw game/capture data is committed.
+
+Limits: natural execution of these commands, the five still-unresolved variants, broader puzzles/story events, other characters and other revisions remain unvalidated. This improves shared command interpretation without claiming new whole-room gameplay coverage. Map geometry and persistence policy are unchanged.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the primary native effects, added bounded/shared semantics and 61 synthetic cases, regenerated twice, compared every manifest field, reran the unmodified captured-state sequence and recorded the unchanged projection and remaining analysis limits.
+- 2026-10-06; Gemini 3.1 Pro High via agy, conversation `0114f608-371e-4115-9200-c8f86a5c78bb`; reviewed the complete supplied diff, compiler/interpreter/scanner interfaces, native handler/helper excerpts, new tests and exact generation delta. Returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. The self-contained review packet was 188,931 bytes, SHA256 `55c31ba02e86045177ee097d03fef24252849827f27609d31b80490fd1c5d0d5`.
+- 2026-10-06; Gemini 3.8 Flash High via agy, conversation `76e30b86-0510-4877-886e-bd9939152289`; completed the same supplied-snapshot review and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Root independently checked the native write boundaries, preserved flags and conservative projection before accepting the review result.
+- 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, review, substitution or endorsement.

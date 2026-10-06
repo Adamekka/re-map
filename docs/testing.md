@@ -131,6 +131,12 @@ Run `python3 -m pytest -q tests/test_native_callbacks.py` for forced movement ca
 
 RE1-SCD-016/017 record the pinned native contracts. RE1-NATIVE-001 records the implementation, two identical disc regenerations, the unchanged twelve-step captured save/load replay and an offline projection of all 334 source variants. These synthetic/source checks do not confirm natural movement/flag interactions or later-area gameplay. The projection uses one flag configuration and must not be presented as a count of rooms validated in-game.
 
+## Shared rendering commands
+
+Run `python3 -m pytest -q tests/test_rendering_commands.py tests/test_native_decoding.py` for lighting command `40`, model recoloring `4D` and effect-record flags `4E`. Synthetic tests cover lighting destinations bounded before pointed room sections, signed/unsafe indices, the overlapping final operand read, SCD branch returns, ordered/single/deferred event dispatch, local flag aliases, fresh acquisition reversal and item/door preservation.
+
+RE1-SCD-018/019/020 record the pinned native contracts; RE1-NATIVE-002 records two identical disc regenerations and the unchanged twelve-step captured save/load replay. The offline projection still resolves items in 258 and doors in 268 of 334 source variants under one existing flag snapshot. Five variants containing these commands still hit other reconstruction limits; recognition of the commands does not establish full room coverage. No new natural lighting/recoloring/effect event was played, so these findings remain Candidate.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

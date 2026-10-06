@@ -1,4 +1,4 @@
-"""Pinned SLUS-00551 command returns audited in RE1-SCD-007 and 009 through 014.
+"""Pinned SLUS-00551 command returns audited in RE1-SCD-007 and 009 through 020.
 
 These handlers return one after their visual, audio, enemy or event work.
 They do not directly write the modeled item/door descriptors or persistent flags.
@@ -48,6 +48,10 @@ CONTINUING_OPCODES = frozenset(
         0x49,
         0x4A,
         0x4B,
+        # RE1-SCD-019/020: rendering colors and effect-record flags do not
+        # change descriptors, variables or the aliased pool header at C3024.
+        0x4D,
+        0x4E,
     }
 )
 
@@ -77,7 +81,6 @@ NONZERO_RETURN_OPCODES = CONTINUING_OPCODES | frozenset(
         0x40,
         0x48,
         0x4C,
-        0x4D,
     }
 )
 

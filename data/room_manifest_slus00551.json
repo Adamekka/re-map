@@ -18,7 +18,11 @@
     "RE1-SCD-015",
     "RE1-SCD-016",
     "RE1-SCD-017",
+    "RE1-SCD-018",
+    "RE1-SCD-019",
+    "RE1-SCD-020",
     "RE1-NATIVE-001",
+    "RE1-NATIVE-002",
     "RE1-EVENT-001",
     "RE1-EVENT-003",
     "RE1-EVENT-004",
@@ -364247,8 +364251,10 @@
                 {
                   "offset": 70968,
                   "next": 70972,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 70972,
@@ -364575,8 +364581,10 @@
                 {
                   "offset": 71496,
                   "next": 71500,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 71500,
@@ -366900,20 +366908,26 @@
                 {
                   "offset": 75660,
                   "next": 75676,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 75676,
                   "next": 75692,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 75692,
                   "next": 75708,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 75708,
@@ -467751,8 +467765,10 @@
                 {
                   "offset": 192934,
                   "next": 192936,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 192936,
@@ -467843,8 +467859,10 @@
                 {
                   "offset": 193042,
                   "next": 193044,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 193044,
@@ -467935,8 +467953,10 @@
                 {
                   "offset": 193150,
                   "next": 193152,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 193152,
@@ -483783,8 +483803,10 @@
                 {
                   "offset": 192934,
                   "next": 192936,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 192936,
@@ -483875,8 +483897,10 @@
                 {
                   "offset": 193042,
                   "next": 193044,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 193044,
@@ -483967,8 +483991,10 @@
                 {
                   "offset": 193150,
                   "next": 193152,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 193152,
@@ -506355,8 +506381,10 @@
                 {
                   "offset": 222816,
                   "next": 222818,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222818,
@@ -506447,8 +506475,10 @@
                 {
                   "offset": 222920,
                   "next": 222922,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222922,
@@ -506539,8 +506569,10 @@
                 {
                   "offset": 223024,
                   "next": 223026,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 223026,
@@ -524163,8 +524195,10 @@
                 {
                   "offset": 222816,
                   "next": 222818,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222818,
@@ -524255,8 +524289,10 @@
                 {
                   "offset": 222920,
                   "next": 222922,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222922,
@@ -524347,8 +524383,10 @@
                 {
                   "offset": 223024,
                   "next": 223026,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 223026,
@@ -1274716,8 +1274754,10 @@
                 {
                   "offset": 222816,
                   "next": 222818,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222818,
@@ -1274808,8 +1274848,10 @@
                 {
                   "offset": 222920,
                   "next": 222922,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222922,
@@ -1274900,8 +1274942,10 @@
                 {
                   "offset": 223024,
                   "next": 223026,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 223026,
@@ -1292524,8 +1292568,10 @@
                 {
                   "offset": 222816,
                   "next": 222818,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222818,
@@ -1292616,8 +1292662,10 @@
                 {
                   "offset": 222920,
                   "next": 222922,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 222922,
@@ -1292708,8 +1292756,10 @@
                 {
                   "offset": 223024,
                   "next": 223026,
-                  "kind": "unsupported-effect",
-                  "args": []
+                  "kind": "constant-test",
+                  "args": [
+                    1
+                  ]
                 },
                 {
                   "offset": 223026,

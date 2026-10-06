@@ -88,6 +88,21 @@ def build_tracking_program(
             # Clearing the pool zeros its first record's two header bytes.
             # Only those bytes overlap a script flag bank, at C3024/C3025.
             kind, args = "local-flag-clear", [4, 240, 16]
+        elif op == 0x40:
+            # RE1-SCD-018: native writes into the RDT lighting prefix using a
+            # signed index without a bounds check. Only prefix-confined writes
+            # preserve the headers, pointed sections and script descriptors.
+            index = int.from_bytes(raw[1:2], "little", signed=True)
+            lighting_record = 0x94 + 44 * index
+            section_offsets = [
+                offset for offset in struct.unpack_from("<19I", data, 0x48) if offset
+            ]
+            if (
+                section_offsets
+                and 0x94 <= lighting_record + 8
+                and lighting_record + 44 <= min(*section_offsets, len(data))
+            ):
+                kind, args = "constant-test", [1]
         elif op == 0x18:
             kind = "item"
             args = [raw[1] & 127, raw[10], raw[11], raw[22], raw[23]]
