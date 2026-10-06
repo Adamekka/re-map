@@ -1004,6 +1004,50 @@ History:
 - 2026-10-06; Codex root, GPT-6.1 Sol; inspected the complete final code/test diff and manually checked the documentation against the recorded results and four artifact hashes. Final scoped Ruff lint/format and `git diff --check` passed. Only implementation, synthetic tests and evidence notes changed; all game bytes, captures, scratch tools and review logs remain outside Git.
 
 
+## RE1-ANALYSIS-005: remaining gaps after shared message-door support
+
+Status: Candidate; source diagnostics under one unchanged captured flag state
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, pinned executable identity in RE1-DOORS-004; all 334 generated source variants at `860e905`
+Environment: Python 3.14.8 and Capstone 5.0.9; donated Herb-before RAM SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`; no emulator interaction or RAM writes
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: unchanged diagnostic scripts, semantic source inspection and reinspection of existing native contracts
+Claim: 88 source variants still have unresolved items or doors under this capture. The diagnostics distinguish 60 condition/descriptor ambiguities, 22 incomplete source programs and six source/context failures. No procedure budget is reached in this run. These are source-variant counts, not gameplay coverage.
+
+Evidence:
+
+- Reused the RE1-DOORS-003 private gap and descriptor diagnostics in a new directory, preserving their earlier artifacts. The prior 92 combined failures fall to 88; two newly resolved door variants still have unresolved items. RE1-DOORS-004 separately records the complete item/door projection counts.
+- Four source/context failures occur at handler-9 updates to slot 3 in `ROOM10E0/10E1` and `ROOM60E0/60E1`; two occur at handler-2 updates to slot 1 in `ROOM5130/5131`. Each failing path lacks a modeled current-entry creator. RE1-REENTRY-003/004's retained-pointer constraint still applies. Removing that check cannot establish a new source or event target.
+- The 22 incomplete programs include 13 indexed-event decoding failures, seven invalid event-creation targets and two forced awards without an item initializer. These categories use the first source-coverage failure; some rows have additional diagnostics. Init/main decoding is clean in all 22.
+- Investigated whether an index at the zero marker could be treated as an event starting at section offset zero. Rejected that interpretation. Rechecked RE1-EVENT-002's loader at PS1 VA `0x80044B74..0x80044BDC`: it relocates only nonzero entries and stops before changing the zero marker. RE1-EVENT-005's complete initializer at `0x80025C1C..0x80025C58` copies the selected table word directly into the record's script pointer, with no base addition. Hash-bound `ROOM5070` and `ROOMC070` both declare index 7 after seven entries, selecting that unchanged zero. Their table's first byte `0x20` cannot establish a harmless state-0 stop for a null script pointer. Source coverage remains unresolved; no decoder bounds were relaxed.
+
+Private artifacts under `/tmp/tasks/re-map/post-message-inspection/` are `gaps.json`, SHA256 `ccb63e43c0ea0569dec7f61aa5b1064aed8f43ca578eda447f61fcc56c1367a2`; `ambiguity.json`, SHA256 `6b8c1d09b259fad08dbd36d9fa28c8a0532e3a145c8a01152810a706304443be`; and `start-native.txt`, SHA256 `6bb7ed3a82bf7686f82b9993ea0143fbbeeaf78031d9ff418a8641717a291466`. Scratch scripts and game-derived artifacts remain outside Git.
+Limits: no new gameplay, normal save/load, source-generation or implementation test was performed. An invalid start present in source need not execute in normal play; resolving its reachability requires supported conditions rather than declaring it harmless. Other captured flag configurations were not reclassified for this diagnostic.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; recomputed the gap categories, inspected missing-creator paths and incomplete-source diagnostics, and rejected the zero-marker event-root hypothesis against the hash-verified loader and initializer. Production code and generated metadata remain unchanged.
+
+## RE1-FLAG-002: alternate pickup acquisition needs an explicit flag rule
+
+Status: Candidate; pinned native interpretation, no natural pickup experiment
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; item type `0x4D`, previously identified as Radio in RE1-COVER-002
+Environment: Python 3.14.8 and Capstone 5.0.9; semantic source metadata at `860e905`, no emulator interaction
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: independent reinspection of RE1-COVER-002's native branch and the profile's flag layout
+Claim investigated: acquisition cannot universally use the descriptor's ordinary GlobalId bit. Type `0x4D` follows a separate set-to-acquired flag at PS1 virtual byte `0x800C870C`, mask `0x01`, equivalent to RAM offset `0xC870C`, width one byte. This is profile script flag bank 0/index 127, not map-ownership bank 8/index 127. The original RE1-COVER-002 authorship and runtime limits remain unchanged.
+
+Evidence:
+
+- Complete dispatcher `0x80034340..0x80034394`, including the return delay slot, reads selected source item type and branches on `0x4D`. That path passes base `0x800C8700` and index 127 to setter `0x80048954`, then returns without calling ordinary award `0x8002CD30`. The other path calls that ordinary award routine.
+- Setter `0x80048954..0x8004897C` selects little-endian word `base + 4*(index//32)` and ORs `0x80000000 >> (index%32)`. Index 127 therefore sets word `0x800C870C` mask one, or its low byte mask `0x01`. The profile marks bank 0 persistent; its bank-8 base is separately `0x800C8710`. Native source inspection does not validate this pickup's normal-save/load behavior.
+- Four complete source variants contain this item type: `ROOM4080`, `ROOM61A0`, `ROOM70C1` and `ROOMD1A0`. Their reentry item state is unresolved in the current diagnostic. The live observer explicitly rejects an active Radio descriptor, and reconstructed interpretation rejects the type. No item label or alternate acquisition rule is currently configured for it.
+- Proposed shared implementation scope is a profile-backed acquisition rule that defines the flag source, index selection and acquired polarity. Live observation, historical reconstruction and cache refresh would use the same resolver. Ordinary GlobalId pickups retain their existing tested rule; separately flagged pickups use an explicit rule rather than room-specific exceptions. Missing rules and failed/coherence-changing reads must remain explicit failures. This proposal has not been implemented or approved.
+
+Private native excerpt `/tmp/tasks/re-map/post-message-inspection/acquisition-native.txt` has SHA256 `088c82254b0139d466c657c1993892d83d0d3a44fb03056052a641ae73e1a904`. Reproduce the address calculation from the named ranges in the hash-verified executable, whose text starts at PS1 VA `0x80010000` and file offset `0x800`.
+Limits: no Radio pickup, natural availability transition, departure/reentry or normal save/load was played. A separate ownership/acquisition flag alone does not establish availability or whole-room clearance. Other special item paths and revisions were not audited, and no coverage increase is claimed for this proposal.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; rechecked the dispatcher and flag setter, calculated the exact bank/address/mask, inspected all four semantic creators and identified a shared resolver as the next implementation candidate. Manually checked both new findings against the diagnostic counts, unique IDs and four artifact hashes; `git diff --check` passed. No Markdown formatter/linter is configured. No production or profile changes.
+
 ## RE1-MAP-002: numeric Mansion 1F floor plan from indexed room regions
 
 Status: Candidate for live map behavior; pinned disc encoding and executable calculations checked statically
