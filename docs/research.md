@@ -2094,12 +2094,12 @@ History:
 
 ## RE1-PICKUP-004: controlled Art Room map acquisition and reversal
 
-Status: Candidate; accept/decline, reentry and savestate checks passed; normal save/load untested
+Status: Confirmed for this revision; scoped to the Training Jill checks below and the normal-save checks in RE1-SAVE-003
 Scope: Resident Evil Director's Cut USA SLUS-00551, executable and Training Jill environment from RE1-EVENT-015; Art Room `00-07` and Main Hall `00-06`
 Environment: isolated DuckStation `0.1-11894-gc66b2694d`; coherent paused GDB RAM captures; existing shared tracker at commit `8b87205`
 Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
 Basis: controlled gameplay, live flag reads, private savestate restores and offline replay of complete coherent RAM captures
-Claim: the Art Room Map descriptor uses GlobalId 145, with acquisition at PS1 virtual `0x800C86ED`, u8 bit 6 (`0x40`), clear when taken. Acceptance changes `0xFF` to `0xBF`; decline does not. Reentry and before/after savestate restores preserve or reverse the observed state correctly. This supplies controlled evidence for the earlier RE1-PICKUP-001 lead.
+Claim: the Art Room Map descriptor uses GlobalId 145, with acquisition at PS1 virtual `0x800C86ED`, u8 bit 6 (`0x40`), clear when taken. Acceptance changes `0xFF` to `0xBF`; decline does not. Reentry and before/after savestate restores preserve or reverse the observed state correctly. RE1-SAVE-003 adds normal in-game save/load of both acquisition states and earlier-save reversal. This supplies controlled evidence for the earlier RE1-PICKUP-001 lead.
 
 Evidence:
 
@@ -2123,8 +2123,46 @@ Artifacts outside Git at `/tmp/tasks/re-map/item-event-validation/`:
 | `map-return.bin` | `1e0c4b7151fa54e99554e5111b0ed5a860dec2645f0ef4521a3fc9b1aaecdcc7` | Coherent RAM after returning |
 | `map-restored-after.bin` | `f3a9bfa7a7c3f50620e05661b74013a7c7633d94e59b1727c0560d9cd63b39ff` | Coherent after-load RAM |
 
-Limits: no ordinary in-game save/load, Chris/other mode/revision, last-item clearance or other map pickup was tested. The Map and Ink states do not prove that every availability condition in the game is implemented. Collected descriptors can disappear on reentry, so registry counts need not retain the prior taken Map row. The observed session visit history intentionally survives savestate loads; completion is recomputed from fresh game state.
+Limits: Chris/other mode/revision, last-item clearance and other map pickups remain untested. The Map and Ink states do not prove that every availability condition in the game is implemented. Collected descriptors can disappear on reentry, so registry counts need not retain the prior taken Map row. The observed session visit history intentionally survives savestate loads; completion is recomputed from fresh game state. Normal-save checks are scoped separately in RE1-SAVE-003.
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; collected the map twice, declined once, left/returned normally, restored both private states and audited the existing tracker against coherent captures. Closed the owned emulator normally and restored its private settings byte-for-byte. No game files, saves, RAM or captured bytecode were added to Git.
 - 2026-10-06; Codex root, GPT-6.1 Sol; final documentation review checked recorded counts, addresses, artifact hashes, provenance and stated limits. The focused event activation/capture/watchpoint/tracker/map regressions passed 107 tests in 9.26 seconds. `git diff --check` passed; the repository has no configured Markdown formatter or linter.
+- 2026-10-06; Codex root, GPT-6.1 Sol; tested both acquisition states through the game's Load Game menu and loaded the earlier save after the collected save, as recorded in RE1-SAVE-003. Promoted only this Training Jill Map rule from Candidate; other availability and event rules retain their own validation limits.
+
+## RE1-SAVE-003: Art Room map acquisition survives normal saves and reverses with an earlier save
+
+Status: Confirmed for this revision
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Training Jill, Art Room `00-07` Map, saves made and loaded in Main Hall `00-06`
+Environment: isolated DuckStation `0.1-11894-gc66b2694d` on macOS arm64; native GDB at localhost port 2345; a newly created private shared memory card; coherent paused 2 MiB RAM captures; existing tracker at commit `67dd263`
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: normal controller input, in-game typewriter saves, emulator restart followed by the game's Load Game menu, read-only GDB captures, memory-card inspection and existing-tracker replay
+Claim: the Map acquisition bit from RE1-PICKUP-004 persists through normal saving/loading. Loading the earlier uncollected save after the collected save restores the set bit. The corresponding observed map-owned byte also reverses. No guest RAM writes, injected calls or patched game code were used.
+
+Evidence:
+
+1. Prepared the untouched Map scenario with private `art-map-before.sav` from RE1-EVENT-015. Left Art Room normally, took the Main Hall Ink Ribbon and used its typewriter to save to empty card slot 1. The game displayed `Jill /01/M.Hall 1F`. After the save returned to gameplay, Map byte `0x800C86ED` was `0xFF`, its bit 6 set, and map-owned byte lead `0x800C871C` was `0x00`.
+2. Restarted the game using DuckStation's Restart Game action. Selected Load Game at the title screen and loaded card slot 1. After Jill returned to gameplay, captured RAM with the exact profile verified. Map byte remained `0xFF` and the ownership lead remained `0x00`.
+3. Prepared the already-collected Map scenario with private `art-map-after.sav` from RE1-PICKUP-004. Descended the steps and left Art Room normally, took Main Hall Ink Ribbon and saved through the typewriter to empty card slot 2. Map byte was `0xBF`, its bit 6 clear, and the ownership lead was `0x08`.
+4. Restarted again, selected the game's Load Game and loaded card slot 2. After return to gameplay, coherent RAM retained Map byte `0xBF` and ownership lead `0x08`.
+5. Restarted a third time and loaded card slot 1 through Load Game. Gameplay RAM restored Map byte `0xFF` and ownership lead `0x00`. All three loaded captures identify current room `00-06`; Art Room Ink Ribbon byte `0x800C86E3` remains `0xFF` throughout.
+6. The 131072-byte card contains separate directory entries `BASLUS-005510` and `BASLUS-005511` in blocks 1 and 2. Their acquisition blocks begin at file offsets `0x227C` and `0x427C`; Map bytes at `0x228D` and `0x428D` are `0xFF` and `0xBF`. Each 32-byte acquisition block matches its post-save and post-load RAM captures exactly. Block 1 remained byte-identical when slot 2 was written. These are card file offsets, not PS1 addresses. They agree with the payload-copy evidence in RE1-SAVE-002.
+7. Replayed actual coherent captures through one profile/cache and tracker. Primed Art Room with its prior before/after captures, then supplied this test's normal loads in order: before, after, earlier before. Cached Map changed `taken -> available -> taken -> available` from fresh acquisition bytes while current room was Main Hall. Art Room Ink Ribbon stayed available with complete item/door coverage, so the room stayed `INCOMPLETE`. Only entered regions `07` and `06` were visible; ownership reversal revealed no extra room. The replay uses captured RAM without synthetic flag substitutions.
+
+Artifacts outside Git at `/tmp/tasks/re-map/map-save-load/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `before-save-complete.bin` | `dd5292a01b4ac94c2f79f7b7a3952039f932f3d33bed967a6dc520356ad23edd` | Untouched Map after slot 1 save |
+| `before-normal-load.bin` | `787b760543e7e5b807745671cce30fdac853565604b71f0c8054e356175770cf` | First normal load of slot 1 |
+| `after-save-complete.bin` | `07fd3aba0c0e6a05b8bd9f31a498a969a373531e59dcfd00d7557f84be818616` | Collected Map after slot 2 save |
+| `after-normal-load.bin` | `01f1e60a354e5d555f26a810cff94498d0902b7519bd668a1f80502e10008d4e` | Normal load of slot 2 |
+| `earlier-normal-load.bin` | `a32890f93e76be8149122a2c6b8063ffa792f34bad8774ede006dd954c768a78` | Earlier slot 1 loaded after slot 2 |
+| `before-only-card.mcd` | `0d9a76d4f834e46464e681956cebc2dfee1a848af264b4431c5627932563b2ea` | Card snapshot with slot 1 only |
+| `both-saves-card.mcd` | `28734147c3547009d6da5290098beca6cc7500aa952e11d2eb1acede17d77761` | Card snapshot with both normal saves |
+
+Limits: savestates prepared the two saving scenarios; every return under test used restart and the game's Load Game, with no DuckStation savestate return. GDB captures began after gameplay returned, so this does not test tracker reconnect behavior during boot/load screens or normal saving/loading of active events. The map-owned byte remains an observed lead rather than a new production address. Main Hall completion is still `UNKNOWN` after its ribbon is collected, including in the replay; this test confirms no Main Hall clearance or last-item clearance. Other characters, modes, revisions, map pickups and Chemical earlier-save reversal remain untested. The original RE1-SAVE-001/002 evidence and authorship are unchanged.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; performed both typewriter saves and all three normal loads, verified exact runtime identity, compared coherent RAM and private card blocks, and ran the persistent-cache replay. Closed the owned emulator normally with resume-save disabled and restored its private settings byte-for-byte. All RAM, cards, savestates and scratch navigation/audit scripts remain outside Git.
+- 2026-10-06; Codex root, GPT-6.1 Sol; reviewed the documentation against all seven listed artifact hashes, the five-step capture replay, card comparisons and settings restoration. Those checks and `git diff --check` passed. No production code changed; the repository has no configured Markdown formatter or linter.

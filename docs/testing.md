@@ -97,7 +97,17 @@ RE1-EVENT-015 and RE1-PICKUP-004 record the tested Training Jill case on SLUS-00
 
 The completed runs captured five checked initializations and five stops, including decline without acquisition. Offline replay of full coherent RAM captures kept the Art Room incomplete through pickup, reentry and reversal. Acquiring the game's map added no tracker regions; only the observed Art Room and Main Hall visits were revealed.
 
-This case does not validate ordinary in-game save/load, last-item clearance, other puzzles or other characters/revisions. Private artifact hashes and exact event/flag evidence are in the research entries. The checked replay uses captured RAM, not synthetic flag substitutions.
+RE1-SAVE-003 adds normal memory-card saving/loading and earlier-save reversal for this Map. To repeat it with an isolated empty card:
+
+1. Leave the Map untouched, collect Main Hall Ink Ribbon and save through its typewriter to slot 1.
+2. Restart the game, choose Load Game and load slot 1. After control returns, expect Map byte `0x800C86ED` equal to `0xFF`.
+3. Prepare or play the collected Map state, save through the typewriter to slot 2, restart and load slot 2 through Load Game. Expect `0xBF`.
+4. Restart and load the earlier slot 1 through Load Game. Expect `0xFF` again. Do not load an emulator savestate for any of these returns.
+5. Keep Art Room Ink Ribbon untouched. A tracker that previously observed Art Room must refresh Map available/taken/available while preserving its session visits and keeping that room incomplete.
+
+Savestates may prepare the two saving scenarios. The completed test matched all three loaded acquisition blocks to their private card payloads and replayed the captured RAM through one tracker/cache without synthetic substitutions. Main Hall completion remained unknown after its ribbon was taken; this does not establish clearance there.
+
+Last-item clearance, other puzzles, other characters/revisions and normal save/load of active events remain unvalidated. Private artifact hashes and exact event/flag evidence are in the research entries.
 
 # Diagnosing failures
 
