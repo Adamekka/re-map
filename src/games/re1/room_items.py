@@ -105,6 +105,17 @@ class RuntimeRoomItems:
     error: str = ""
     retry: bool = False
     memory_markers: tuple[tuple[int, bytes], ...] = ()
+    non_collectible_slots: tuple[int, ...] = ()
+
+    def __post_init__(self) -> None:
+        assert len(set(self.non_collectible_slots)) == len(self.non_collectible_slots)
+        assert all(
+            type(slot) is int and 0 <= slot < 128 for slot in self.non_collectible_slots
+        )
+        assert self.ok or not self.non_collectible_slots
+        assert not set(self.non_collectible_slots) & {
+            item.aot_id for item in self.items
+        }, "a live slot cannot be both collectible and noncollectible"
 
 
 def observe_room_items(
@@ -189,6 +200,7 @@ def observe_room_items(
     items: list[RuntimeRoomItem] = []
     doors: list[tuple[int, bytes]] = []
     disabled_doors: list[tuple[int, bytes]] = []
+    non_collectible_slots: list[int] = []
     for slot in range(last_slot + 1):
         record = records.data[slot * 12 : (slot + 1) * 12]
         handler, mode, parameter, model, gid, pointer = struct.unpack("<BBHHHI", record)
@@ -239,8 +251,12 @@ def observe_room_items(
                 ok=False,
                 error=f"interaction {slot}: door handler has an unsupported source descriptor",
             )
-        if handler == 13:
-            # This handler opens the file screen; reading documents does not block room completion.
+        if handler in (8, 13, 16) and not selected_pending:
+            # RE1-COVER-002/RE1-CLEAR-001: storage, documents and saving do
+            # not award room items. Retain validated live evidence because
+            # source history can still consider an older pickup handler here.
+            # A forced pending award uses its descriptor despite this handler.
+            non_collectible_slots.append(slot)
             continue
         if raw[0] == 0x0C and handler == 0 and not selected_pending:
             # A validated door pointer survives a scripted handler disable.
@@ -383,5 +399,14 @@ def observe_room_items(
         memory_markers=(
             (layout.aot_bound_address, values[0]),
             (layout.aot_base, records.data),
+            (layout.main_flags_address, values[4]),
+        )
+        # The selected record matters only during a pending pickup. Ordinary
+        # doors, storage and saving also change this shared pointer.
+        + (
+            ((layout.pending_action_pointer_address, values[3]),)
+            if pending_item
+            else ()
         ),
+        non_collectible_slots=tuple(non_collectible_slots),
     )

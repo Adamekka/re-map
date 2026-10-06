@@ -55,8 +55,14 @@ def validate_current_room(
     }
     doors_complete = True
     for source in sources:
+        program = profile.room_programs[source.source_rdt]
+        # Forced awards ignore the current handler. Noncollectible evidence
+        # resolves only current slots without that dormant-award possibility.
+        resolved_slots = represented | (
+            set(observation.non_collectible_slots) - set(program.award_slots)
+        )
         expected = evaluate_room_program(
-            profile.room_programs[source.source_rdt],
+            program,
             source.room,
             layout,
             snapshot,
@@ -72,7 +78,7 @@ def validate_current_room(
             doors_complete = False
         if (
             expected.unresolved_item_slots
-            and set(expected.unresolved_item_slots) - represented
+            and set(expected.unresolved_item_slots) - resolved_slots
             or not profile.room_programs[source.source_rdt].coverage_complete
         ):
             observation = replace(

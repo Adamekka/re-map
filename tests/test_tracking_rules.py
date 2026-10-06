@@ -2,6 +2,7 @@
 
 import struct
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -528,6 +529,205 @@ def test_live_registry_resolves_present_uncertain_items_and_explains_missing_one
         tracker.room_state(RoomId(0, 9)).reason
         == "Room item conditions are unresolved."
     )
+
+
+@pytest.mark.parametrize("handler", (8, 13, 16))
+def test_live_noncollectible_slots_resolve_uncertainty_and_rewind(
+    tmp_path, rules, handler
+):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    name = next(
+        source.source_rdt
+        for source in profile.room_sources
+        if source.source_rdt.endswith("1091.RDT")
+    )
+    profile.room_programs[name] = compile_program(
+        rules, guard(bytes((6, 2, 0, 1)), pickup(5, 0x44, 111)) + b"\0"
+    )
+    tracker = Tracker()
+    for live_handler, pending, completion in (
+        (4, False, RoomCompletion.Incomplete),
+        (handler, False, RoomCompletion.Cleared),
+        (handler, True, RoomCompletion.Incomplete),
+        (handler, False, RoomCompletion.Cleared),
+        (4, False, RoomCompletion.Incomplete),
+    ):
+        ram[0xB819C] = live_handler
+        struct.pack_into("<I", ram, 0xB7DCC, 0x800B819C)
+        flags = struct.unpack_from("<I", ram, 0xC3000)[0] & ~0xC00
+        struct.pack_into("<I", ram, 0xC3000, flags | (0x400 if pending else 0))
+        assert (
+            poll_once(profile, tracker, RamReader(ram).read_memory).status
+            == PollStatus.Display
+        )
+        record = tracker.room_state(RoomId(0, 9))
+        assert record.list_complete and record.completion == completion
+        assert {room for room in tracker.rooms} == {"00-09"}
+
+
+def test_noncollectible_evidence_does_not_bypass_expected_pickup_or_source_coverage(
+    tmp_path,
+):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = 16
+    tracker = Tracker()
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    record = tracker.room_state(RoomId(0, 9))
+    assert not record.list_complete and record.completion == RoomCompletion.Unknown
+    assert record.reason == "Room items are still updating."
+    # A taken acquisition bit removes the expected available pickup. Incomplete
+    # script coverage must still block clearance even with live typewriter proof.
+    ram[0xC86EA] &= ~1
+    name = profile.room_observations[RoomId(0, 9)].sources[0].source_rdt
+    profile.room_programs[name] = replace(
+        profile.room_programs[name], coverage_complete=False
+    )
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    record = tracker.room_state(RoomId(0, 9))
+    assert not record.list_complete and record.completion == RoomCompletion.Unknown
+    assert record.reason == "Room item conditions are unresolved."
+
+
+@pytest.mark.parametrize("award_slot", (5, 6))
+def test_noncollectible_slot_does_not_resolve_dormant_awards(
+    tmp_path, rules, award_slot
+):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = 16
+    name = next(
+        source.source_rdt
+        for source in profile.room_sources
+        if source.source_rdt.endswith("1091.RDT")
+    )
+    program = compile_program(
+        rules,
+        guard(bytes((6, 2, 0, 1)), pickup(5, 0x44, 111))
+        + (pickup(6, 0x26, 13) if award_slot == 6 else b"")
+        + bytes((0x13, award_slot, 3, 0, 0)),
+        main=bytes((0x24, award_slot, 4, 0, 0)),
+    )
+    profile.room_programs[name] = program
+    snapshot = read_rule_snapshot(
+        profile.tracking_rule_layout, (program,), RamReader(ram).read_memory
+    )
+    expected = evaluate_room_program(
+        program,
+        RoomId(0, 9),
+        profile.tracking_rule_layout,
+        snapshot,
+        bytes(ram[0xC86DC:0xC86FC]),
+        profile.runtime_room_layout.item_labels,
+    )
+    assert award_slot in expected.unresolved_item_slots
+    tracker = Tracker()
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    assert not tracker.room_state(RoomId(0, 9)).list_complete
+    assert tracker.room_state(RoomId(0, 9)).completion == RoomCompletion.Unknown
+
+
+@pytest.mark.parametrize(
+    "change", ("pending-start", "pending-target", "unrelated-control")
+)
+def test_late_pending_state_changes_cannot_publish_noncollectible_coverage(
+    tmp_path, rules, change
+):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = 16
+    struct.pack_into("<I", ram, 0xB7DCC, 0x800B819C)
+    flags = struct.unpack_from("<I", ram, 0xC3000)[0] & ~0xC00
+    struct.pack_into(
+        "<I", ram, 0xC3000, flags | (0x400 if change == "pending-target" else 0)
+    )
+    name = next(
+        source.source_rdt
+        for source in profile.room_sources
+        if source.source_rdt.endswith("1091.RDT")
+    )
+    profile.room_programs[name] = compile_program(
+        rules, guard(bytes((6, 2, 0, 1)), pickup(5, 0x44, 111)) + b"\0"
+    )
+
+    class LateReader(RamReader):
+        registry_reads = 0
+
+        def read_memory(self, address, length):
+            if address == 0x800B8160:
+                self.registry_reads += 1
+                if self.registry_reads == 3:
+                    # Change state after the observer's own coherent recheck.
+                    if change == "pending-target":
+                        struct.pack_into("<I", self.ram, 0xB7DCC, 0x800B8190)
+                    else:
+                        value = struct.unpack_from("<I", self.ram, 0xC3000)[0]
+                        struct.pack_into(
+                            "<I",
+                            self.ram,
+                            0xC3000,
+                            value ^ (1 if change == "unrelated-control" else 0x400),
+                        )
+            return super().read_memory(address, length)
+
+    tracker = Tracker()
+    result = poll_once(profile, tracker, LateReader(ram).read_memory)
+    if change == "unrelated-control":
+        assert result.status == PollStatus.Display
+        assert tracker.room_state(RoomId(0, 9)).completion == RoomCompletion.Cleared
+    else:
+        assert result.status == PollStatus.Retry
+        assert tracker.rooms == {} and profile.room_observations == {}
+
+
+def test_past_room_reconstruction_cannot_reuse_live_noncollectible_evidence(
+    tmp_path, rules
+):
+    from games.re1.tracking_engine import refresh_visited_room
+
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = 16
+    name = next(
+        source.source_rdt
+        for source in profile.room_sources
+        if source.source_rdt.endswith("1091.RDT")
+    )
+    program = compile_program(
+        rules, guard(bytes((6, 2, 0, 1)), pickup(5, 0x44, 111)) + b"\0"
+    )
+    profile.room_programs[name] = program
+    tracker = Tracker()
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        == PollStatus.Display
+    )
+    cached = profile.room_observations[RoomId(0, 9)]
+    assert cached.observation.list_complete
+    assert cached.observation.non_collectible_slots == (5,)
+    # This source is deliberately ineligible for cached-item reuse; only its
+    # historical rules can now supply a verdict for a room no longer current.
+    cached = replace(
+        cached, sources=(replace(cached.sources[0], cache_complete=False),)
+    )
+    snapshot = read_rule_snapshot(
+        profile.tracking_rule_layout, (program,), RamReader(ram).read_memory
+    )
+    result = refresh_visited_room(
+        profile, cached, cached.context, snapshot, bytes(ram[0xC86DC:0xC86FC])
+    )
+    assert not result.items.list_complete
+    assert result.items.items == () and result.items.non_collectible_slots == ()
 
 
 @pytest.mark.parametrize("limit", ["stack", "paths"])

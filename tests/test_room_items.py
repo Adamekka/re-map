@@ -10,6 +10,7 @@ from games.game_profile import RoomId
 from games.re1.room_items import (
     RuntimeItemKind,
     RuntimeItemState,
+    RuntimeRoomItems,
     RuntimeRoomLayout,
     observe_room_items,
 )
@@ -119,6 +120,94 @@ def test_files_do_not_block_normal_room_completion(layout, tmp_path):
     ram[0xB819C] = 13
     result = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
     assert result.ok and result.list_complete and result.items == ()
+    assert result.non_collectible_slots == (5,)
+
+
+@pytest.mark.parametrize("handler", (8, 13, 16))
+@pytest.mark.parametrize("opcode", (0x0D, 0x18))
+def test_audited_noncollectible_interactions_preserve_live_slot_evidence(
+    layout, tmp_path, handler, opcode
+):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    pointer = struct.unpack_from("<I", ram, 0xB819C + 8)[0] - 0x80000000
+    ram[pointer - 2] = opcode
+    ram[0xB819C] = handler
+    result = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
+    assert result.ok and result.list_complete and result.items == ()
+    assert result.non_collectible_slots == (5,)
+
+
+@pytest.mark.parametrize("handler", (8, 13, 16))
+@pytest.mark.parametrize("pending_mask", (0x400, 0x800))
+def test_pending_award_overrides_a_noncollectible_handler(
+    layout, tmp_path, handler, pending_mask
+):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = handler
+    struct.pack_into("<I", ram, 0xB7DCC, 0x800B819C)
+    flags = struct.unpack_from("<I", ram, 0xC3000)[0]
+    struct.pack_into("<I", ram, 0xC3000, flags | pending_mask)
+    result = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
+    assert result.ok and result.items[0].state == RuntimeItemState.Available
+    assert result.non_collectible_slots == ()
+
+
+@pytest.mark.parametrize("change", ("pointer", "slot", "opcode", "truncated"))
+def test_invalid_noncollectible_sources_supply_no_live_evidence(
+    layout, tmp_path, change
+):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = 16
+    pointer = struct.unpack_from("<I", ram, 0xB819C + 8)[0] - 0x80000000
+    if change == "pointer":
+        struct.pack_into("<I", ram, 0xB819C + 8, 0x80121E94)
+    elif change == "slot":
+        ram[pointer - 1] = 4
+    elif change == "opcode":
+        ram[pointer - 2] = 0x13
+    else:
+        end = struct.unpack_from("<I", ram, 0x121C00 + 0x6C)[0]
+        source = end - 18
+        ram[source - 0x80000000 : end - 0x80000000] = bytes((0x18, 5)) + bytes(16)
+        struct.pack_into("<I", ram, 0xB819C + 8, source + 2)
+    result = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
+    assert not result.ok and result.non_collectible_slots == ()
+
+
+@pytest.mark.parametrize("handler", (0, 2, 3, 9))
+def test_dormant_and_unaudited_handlers_supply_no_absence_evidence(
+    layout, tmp_path, handler
+):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = handler
+    result = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
+    assert result.ok and result.non_collectible_slots == ()
+
+
+def test_noncollectible_registry_changes_discard_evidence(layout, tmp_path):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram[0xB819C] = 16
+    reads = 0
+
+    def changing_reader(address, length):
+        nonlocal reads
+        if address == layout.aot_base:
+            reads += 1
+            if reads == 2:
+                ram[0xB819C] = 4
+        return RamReader(ram).read_memory(address, length)
+
+    result = observe_room_items(layout, RoomId(0, 9), changing_reader)
+    assert not result.ok and result.retry and result.non_collectible_slots == ()
+
+
+def test_noncollectible_evidence_cannot_conflict_with_a_live_item(layout, tmp_path):
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    result = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
+    with pytest.raises(AssertionError, match="both collectible and noncollectible"):
+        replace(result, non_collectible_slots=(5,))
+    with pytest.raises(AssertionError):
+        RuntimeRoomItems(ok=True, non_collectible_slots=(5, 5))
 
 
 def test_generic_descriptor_uses_actual_pickup_fields(layout, tmp_path):

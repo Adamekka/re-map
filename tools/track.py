@@ -339,9 +339,18 @@ def poll_once(
                 PollStatus.ReadFailure,
                 f"room snapshot recheck failed: {result.error or 'short read'}",
             )
-        if result.data != expected:
+        # Only pending-item bits govern this observation. Other control bits
+        # can change without invalidating the registered collectible state.
+        unchanged = (
+            (int.from_bytes(result.data, "little") ^ int.from_bytes(expected, "little"))
+            & layout.pending_item_mask
+            == 0
+            if address == layout.main_flags_address
+            else result.data == expected
+        )
+        if not unchanged:
             return PollResult(
-                PollStatus.Retry, "room source or registry changed during read; retry"
+                PollStatus.Retry, "room snapshot changed during read; retry"
             )
     final_room = profile.read_current_room(read_memory)
     if not final_room.ok or final_room.room is None:

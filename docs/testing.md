@@ -107,6 +107,8 @@ RE1-SAVE-003 adds normal memory-card saving/loading and earlier-save reversal fo
 
 Savestates may prepare the two saving scenarios. The completed test matched all three loaded acquisition blocks to their private card payloads and replayed the captured RAM through one tracker/cache without synthetic substitutions. Main Hall completion remained unknown after its ribbon was taken; this does not establish clearance there. RE1-CLEAR-001 traces that verdict to slot 5's typewriter interaction and optional pickup-handler history. Its four-capture replay is a diagnosis of unchanged behavior, not a clearance regression or a new gameplay test.
 
+RE1-CLEAR-002 replays those captures through shared live-interaction coverage. Main Hall now reports cleared while current after its ribbon is taken, including in all three normal-load captures, and incomplete when the captured uncollected ribbon state returns. The reader validates typewriter, item-box and document descriptors explicitly, preserves pending pickups and dormant-award uncertainty, and rechecks pending state before publication. After leaving Main Hall, unresolved event history still prevents an established clearance verdict there. These are recorded-RAM checks of the implementation, with no new gameplay run. Run `python3 -m pytest -q tests/test_room_items.py tests/test_tracking_rules.py` for its synthetic boundary and timing regressions.
+
 Last-item clearance, other puzzles, other characters/revisions and normal save/load of active events remain unvalidated. Private artifact hashes and exact event/flag evidence are in the research entries.
 
 # Diagnosing failures
