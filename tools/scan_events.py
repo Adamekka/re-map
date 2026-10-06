@@ -17,7 +17,7 @@ from scan_scd import _opcode_size, walk_procedures
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from games.re1.event_state import EventDispatch, EventPoint, EventStart
+from games.re1.event_state import EventDispatch, EventFailure, EventPoint, EventStart
 from games.re1.scd_semantics import NONZERO_RETURN_OPCODES, ZERO_RETURN_OPCODES
 
 
@@ -27,15 +27,17 @@ class EventScan:
     block_starts: tuple[int, ...]
     standalone_commands: tuple[int, ...]
     status: str
+    table_complete: bool
     entries: tuple[int, ...]
     points: tuple[EventPoint, ...]
     dispatches: tuple[EventDispatch, ...]
     starts: tuple[EventStart, ...]
+    failures: tuple[EventFailure, ...]
 
 
 def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
     def failed(message: str) -> EventScan:
-        return EventScan((), (), (), message, (), (), (), ())
+        return EventScan((), (), (), message, False, (), (), (), (), ())
 
     if not 0 < start < end <= len(data):
         return failed("bad indexed event range")
@@ -64,7 +66,14 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
     pending = [(index, entry, 0, ()) for index, entry in enumerate(entries)]
     seen = set()
     issues = []
+    failures = set()
     points, dispatches, starts = set(), set(), set()
+
+    def reject(message: str) -> None:
+        # Keep the owning entry even when its PC leaves the verified section.
+        # Reentry can exclude this failure only by excluding the entire entry.
+        issues.append(message)
+        failures.add(EventFailure(entry, address, message))
 
     def record(operation: tuple[int, int, bytes]) -> None:
         command, opcode, raw = operation
@@ -99,11 +108,21 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             continue
         # The native 0x34-byte event record contains four return/call/counter slots.
         if len(seen) >= 16384 or len(stack) > 4:
-            issues.append("event control flow exceeds bounded analysis")
-            break
+            reject("event control flow exceeds bounded analysis")
+            if len(seen) >= 16384:
+                # Unprocessed entries have no coverage proof when the shared
+                # decoder budget is exhausted. None may silently look complete.
+                for owner, offset, _, _ in pending:
+                    failures.add(
+                        EventFailure(
+                            owner, offset, "event control flow exceeds bounded analysis"
+                        )
+                    )
+                break
+            continue
         seen.add(key)
         if not cursor <= address < end:
-            issues.append(f"event path leaves section at 0x{address:x}")
+            reject(f"event path leaves section at 0x{address:x}")
             continue
         op = data[address]
         points.add(
@@ -132,7 +151,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             next_stack = stack + (("wait", 0, 0),)
         elif op == 0xF7:
             if not stack:
-                issues.append(f"event wait end has no frame at 0x{address:x}")
+                reject(f"event wait end has no frame at 0x{address:x}")
                 continue
             # This native pop reads no stored frame fields, so any existing
             # frame can be discarded after the external wait condition clears.
@@ -142,15 +161,13 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             # F8 reads the counter at +2 but advances only to +1. The next
             # byte is executable, normally F9, rather than skipped padding.
             if address + 4 > end:
-                issues.append(f"event counter read truncated at 0x{address:x}")
+                reject(f"event counter read truncated at 0x{address:x}")
                 continue
             width = 1
             next_stack = stack + (("counter", 0, 0),)
         elif op == 0xF9:
             if not stack or stack[-1][0] not in ("counter", "loop"):
-                issues.append(
-                    f"event counter end has no counter frame at 0x{address:x}"
-                )
+                reject(f"event counter end has no counter frame at 0x{address:x}")
                 continue
             # A u16 decrement eventually exits, including a zero starting value.
             # Repeating F9 changes no source command or VM state.
@@ -161,14 +178,14 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             next_stack = stack + (("loop", address + 4, 0),)
         elif op == 0xFB:
             if not stack or stack[-1][0] != "loop":
-                issues.append(f"event loop end has no frame at 0x{address:x}")
+                reject(f"event loop end has no frame at 0x{address:x}")
                 continue
             pending.append((entry, stack[-1][1], state, stack))
             width = 1
             next_stack = stack[:-1]
         elif op == 0xFC:
             if address + 2 > end:
-                issues.append(f"event call header truncated at 0x{address:x}")
+                reject(f"event call header truncated at 0x{address:x}")
                 continue
             target = address + data[address + 1]
             pending.append(
@@ -177,12 +194,12 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             continue
         elif op == 0xFD:
             if not stack or stack[-1][0] != "call":
-                issues.append(f"deferred event command has no frame at 0x{address:x}")
+                reject(f"deferred event command has no frame at 0x{address:x}")
                 continue
             _, repeat, command = stack[-1]
             size, status = _opcode_size(data[command:end], 0)
             if status != "clean":
-                issues.append(f"deferred SCD at 0x{command:x}: {status}")
+                reject(f"deferred SCD at 0x{command:x}: {status}")
                 continue
             record((command, data[command], data[command : command + size]))
             dispatches.add(EventDispatch(entry, address, (command,)))
@@ -197,11 +214,11 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             next_stack = stack[:-1]
         elif state == 0 and op in (6, 7):
             if address + 2 > end:
-                issues.append(f"embedded SCD header truncated at 0x{address:x}")
+                reject(f"embedded SCD header truncated at 0x{address:x}")
                 continue
             width = data[address + 1]
             if width == 0 or address + width > end:
-                issues.append(f"embedded SCD extent invalid at 0x{address:x}")
+                reject(f"embedded SCD extent invalid at 0x{address:x}")
                 continue
             if op == 6:
                 # The runner reads its entire length-prefixed list and sentinel
@@ -212,7 +229,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                 # Single-command dispatch reads its operands independently of the VM's advance width.
                 # Some real AOT updates intentionally consume fields beyond the shorter wrapper.
                 if address + 2 >= end:
-                    issues.append(f"embedded SCD opcode truncated at 0x{address:x}")
+                    reject(f"embedded SCD opcode truncated at 0x{address:x}")
                     continue
                 size, status = _opcode_size(data[address + 2 : end], 0)
                 found = (
@@ -227,7 +244,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                     else []
                 )
             if status != "clean":
-                issues.append(f"embedded SCD at 0x{address:x}: {status}")
+                reject(f"embedded SCD at 0x{address:x}: {status}")
                 # Procedure walking can retain raw candidates for diagnostics.
                 # A failed embedded block cannot establish reachable event effects.
                 continue
@@ -246,7 +263,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
                 standalone_commands.update(operation[0] for operation in found)
         elif state == 1 and op == 0x81:
             if address + 2 > end:
-                issues.append(f"look-at command truncated at 0x{address:x}")
+                reject(f"look-at command truncated at 0x{address:x}")
                 continue
             width = 10 if data[address + 1] & 15 else 2
         elif state == 3:
@@ -258,12 +275,12 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
         else:
             width = widths.get(state, {}).get(op, 0)
             if width == 0:
-                issues.append(
+                reject(
                     f"unsupported event state {state} opcode 0x{op:02x} at 0x{address:x}"
                 )
                 continue
         if address + width > end:
-            issues.append(f"event command truncated at 0x{address:x}")
+            reject(f"event command truncated at 0x{address:x}")
             continue
         if op < 0xF6:
             if state == 0 and op == 1:
@@ -271,7 +288,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             elif state == 0 and op in (2, 3):
                 next_state = 2
             elif state == 0 and op == 5 and data[address + 2] >= len(entries):
-                issues.append(f"event creation index outside table at 0x{address:x}")
+                reject(f"event creation index outside table at 0x{address:x}")
             elif state == 0 and op == 5:
                 # The native starter stores parent PC+1 before initializing
                 # the child, then adds three on return. Retain this readable
@@ -287,7 +304,7 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
             elif state == 0 and op == 8:
                 index = data[address + 1]
                 if index >= len(entries):
-                    issues.append(
+                    reject(
                         f"event reinitialization index outside table at 0x{address:x}"
                     )
                 else:
@@ -304,10 +321,12 @@ def scan_event_program(data: bytes, start: int, end: int) -> EventScan:
         tuple(sorted(block_starts)),
         tuple(sorted(standalone_commands)),
         "clean" if not issues else "; ".join(issues),
+        True,
         tuple(entries),
         tuple(sorted(points)),
         tuple(sorted(dispatches)),
         tuple(sorted(starts)),
+        tuple(sorted(failures)),
     )
 
 

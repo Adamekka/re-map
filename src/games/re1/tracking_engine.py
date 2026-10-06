@@ -286,9 +286,8 @@ def refresh_visited_room(
         disabled_doors = tuple(sorted(common_disabled))
     doors_complete = reuse_doors or (
         all(
-            not evaluation.unresolved_door_slots
-            and profile.room_programs[source.source_rdt].coverage_complete
-            for source, evaluation in zip(rule_sources, evaluations, strict=True)
+            not evaluation.unresolved_door_slots and evaluation.coverage_complete
+            for evaluation in evaluations
         )
         and all(
             (evaluation.doors, evaluation.disabled_doors)

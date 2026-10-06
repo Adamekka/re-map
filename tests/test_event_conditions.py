@@ -490,6 +490,7 @@ def test_startup_validates_ordered_blocks_against_source_and_acquisition_bounds(
     # The replacement intentionally loses the original dispatch payloads.
     # Isolate the mandatory source/ID bounds from semantic coverage checking.
     row["tracking_program"]["coverage_complete"] = False
+    row["tracking_program"]["reentry_coverage_complete"] = False
     row["tracking_program"]["event_blocks"] = [
         [
             {

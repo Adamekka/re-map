@@ -33,6 +33,7 @@
     "RE1-EVENT-016",
     "RE1-EVENT-017",
     "RE1-REENTRY-004",
+    "RE1-REENTRY-005",
     "RE1-REENTRY-002",
     "RE1-QUANTITY-001",
     "RE1-QUANTITY-002",
@@ -19454,6 +19455,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               68694,
@@ -21140,6 +21142,7 @@
           7
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           6,
@@ -23236,6 +23239,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               68694,
@@ -23450,6 +23454,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           3,
@@ -23680,6 +23685,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               150594,
@@ -23723,6 +23729,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -23952,6 +23959,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               150594,
@@ -23995,6 +24003,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -24285,6 +24294,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               22002,
@@ -24352,6 +24362,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -24757,6 +24768,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               109110,
@@ -24808,6 +24820,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -25112,6 +25125,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               109110,
@@ -25163,6 +25177,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -26661,6 +26676,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44350,
@@ -26811,6 +26827,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           9
@@ -27959,6 +27976,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44350,
@@ -28119,6 +28137,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           8,
           9
@@ -31024,6 +31043,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               163850,
@@ -31563,6 +31583,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -47179,6 +47200,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               163850,
@@ -49261,6 +49283,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           7,
@@ -59230,6 +59253,13 @@
               ]
             }
           ],
+          "failures": [
+            {
+              "entry": 8,
+              "offset": 197858,
+              "reason": "unsupported event state 1 opcode 0x07 at 0x304e2"
+            }
+          ],
           "creators": [
             [
               195470,
@@ -60251,6 +60281,7 @@
           6
         ],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           6
@@ -92410,6 +92441,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               195470,
@@ -95374,6 +95406,7 @@
           6
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           6
@@ -96756,6 +96789,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               214886,
@@ -97167,6 +97201,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -99126,6 +99161,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               104142,
@@ -99335,6 +99371,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -101293,6 +101330,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               104142,
@@ -101502,6 +101540,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -103393,6 +103432,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               117210,
@@ -103613,6 +103653,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -107571,6 +107612,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               117210,
@@ -107755,6 +107797,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -108022,6 +108065,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               62694,
@@ -108073,6 +108117,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -108294,6 +108339,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               70486,
@@ -108353,6 +108399,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -110571,6 +110618,13 @@
             }
           ],
           "starts": [],
+          "failures": [
+            {
+              "entry": 3,
+              "offset": 207944,
+              "reason": "event path leaves section at 0x32c48"
+            }
+          ],
           "creators": [
             [
               206670,
@@ -110818,6 +110872,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5,
@@ -113029,6 +113084,13 @@
             }
           ],
           "starts": [],
+          "failures": [
+            {
+              "entry": 3,
+              "offset": 207940,
+              "reason": "event path leaves section at 0x32c44"
+            }
+          ],
           "creators": [
             [
               206670,
@@ -113276,6 +113338,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5,
@@ -118011,6 +118074,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               9598,
@@ -118393,6 +118457,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -122014,6 +122079,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               141950,
@@ -122325,6 +122391,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -125946,6 +126013,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               141950,
@@ -126257,6 +126325,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -145095,6 +145164,13 @@
               ]
             }
           ],
+          "failures": [
+            {
+              "entry": 17,
+              "offset": 204572,
+              "reason": "event path leaves section at 0x31f1c"
+            }
+          ],
           "creators": [
             [
               199094,
@@ -146830,6 +146906,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -151598,6 +151675,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               199094,
@@ -152127,6 +152205,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -152533,6 +152612,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               134918,
@@ -152652,6 +152732,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -153061,6 +153142,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               96330,
@@ -153177,6 +153259,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -153587,6 +153670,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               96330,
@@ -153703,6 +153787,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -156060,6 +156145,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               117438,
@@ -156304,6 +156390,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -157249,6 +157336,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               150190,
@@ -157423,6 +157511,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -160084,6 +160173,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               8734,
@@ -160179,6 +160269,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -168096,6 +168187,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               8734,
@@ -168423,6 +168515,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -172808,6 +172901,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               130602,
@@ -173262,6 +173356,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -183786,6 +183881,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               105082,
@@ -184819,6 +184915,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -195340,6 +195437,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               105082,
@@ -196373,6 +196471,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -196746,6 +196845,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               626,
@@ -196843,6 +196943,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -199539,6 +199640,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               13334,
@@ -199751,6 +199853,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -200255,6 +200358,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               19018,
@@ -200398,6 +200502,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -200905,6 +201010,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               19018,
@@ -201048,6 +201154,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -202245,6 +202352,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               196766,
@@ -202483,6 +202591,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -203676,6 +203785,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               196766,
@@ -203914,6 +204024,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -204580,6 +204691,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               268730,
@@ -204685,6 +204797,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -206750,6 +206863,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               168186,
@@ -206899,6 +207013,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -208962,6 +209077,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               168186,
@@ -209111,6 +209227,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -209614,6 +209731,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               144890,
@@ -209703,6 +209821,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -216144,6 +216263,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               144890,
@@ -216721,6 +216841,7 @@
           8
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           8
         ],
@@ -217389,6 +217510,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               40138,
@@ -217440,6 +217562,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -218117,6 +218240,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               40138,
@@ -218168,6 +218292,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -223649,6 +223774,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               18058,
@@ -224336,6 +224462,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -229815,6 +229942,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               18058,
@@ -230502,6 +230630,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -230787,6 +230916,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               227210,
@@ -230883,6 +231013,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -231167,6 +231298,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               227210,
@@ -231263,6 +231395,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -232157,6 +232290,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115982,
@@ -232281,6 +232415,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -233177,6 +233312,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115982,
@@ -233301,6 +233437,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -235054,6 +235191,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67346,
@@ -235253,6 +235391,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -237005,6 +237144,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67346,
@@ -237204,6 +237344,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -237419,6 +237560,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               39026,
@@ -237470,6 +237612,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -242273,6 +242416,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               96566,
@@ -242705,6 +242849,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           7,
           9
@@ -252319,6 +252464,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               96566,
@@ -253087,6 +253233,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           7,
           9
@@ -254216,6 +254363,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               52354,
@@ -254396,6 +254544,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -269320,6 +269469,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               167754,
@@ -270281,6 +270431,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -281097,6 +281248,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               167754,
@@ -281900,6 +282052,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -292044,6 +292197,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67242,
@@ -292602,6 +292756,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -295920,6 +296075,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67242,
@@ -296143,6 +296299,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -296931,6 +297088,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               256482,
@@ -297093,6 +297251,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -297749,6 +297908,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               256482,
@@ -297889,6 +298049,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -299452,6 +299613,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               185838,
@@ -299604,6 +299766,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -301027,6 +301190,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               68478,
@@ -301319,6 +301483,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -303222,6 +303387,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149274,
@@ -303470,6 +303636,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -314402,6 +314569,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149274,
@@ -315294,6 +315462,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -319481,6 +319650,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               89570,
@@ -320050,6 +320220,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           6,
@@ -324288,6 +324459,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               89570,
@@ -324836,6 +325008,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           6,
@@ -339886,6 +340059,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               219994,
@@ -340841,6 +341015,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -355881,6 +356056,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               219994,
@@ -356836,6 +357012,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -361766,6 +361943,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               101690,
@@ -362128,6 +362306,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -390755,6 +390934,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               69582,
@@ -391074,6 +391254,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -392767,6 +392948,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               25966,
@@ -393027,6 +393209,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -394723,6 +394906,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               25966,
@@ -394983,6 +395167,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -400957,6 +401142,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               255618,
@@ -401728,6 +401914,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           15,
           16,
@@ -407703,6 +407890,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               255618,
@@ -408474,6 +408662,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           15,
           16,
@@ -413934,6 +414123,13 @@
             }
           ],
           "starts": [],
+          "failures": [
+            {
+              "entry": 7,
+              "offset": 41704,
+              "reason": "event path leaves section at 0xa2e8"
+            }
+          ],
           "creators": [
             [
               39414,
@@ -414309,6 +414505,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6
         ],
@@ -419764,6 +419961,13 @@
             }
           ],
           "starts": [],
+          "failures": [
+            {
+              "entry": 7,
+              "offset": 41704,
+              "reason": "event path leaves section at 0xa2e8"
+            }
+          ],
           "creators": [
             [
               39414,
@@ -420139,6 +420343,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6
         ],
@@ -423026,6 +423231,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               221514,
@@ -423218,6 +423424,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -429477,6 +429684,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               221514,
@@ -429702,6 +429910,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -432876,6 +433085,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               110474,
@@ -433092,6 +433302,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -442395,6 +442606,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               110474,
@@ -442990,6 +443202,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -443308,6 +443521,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               186070,
@@ -443375,6 +443589,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -447837,6 +448052,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               186070,
@@ -447975,6 +448191,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -454036,6 +454253,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               43646,
@@ -454175,6 +454393,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           9
@@ -464750,6 +464969,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               43646,
@@ -465000,6 +465220,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           9
@@ -480442,6 +480663,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               189996,
@@ -481035,6 +481257,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -496480,6 +496703,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               189996,
@@ -497073,6 +497297,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -497535,6 +497760,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               806,
@@ -497586,6 +497812,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -502124,6 +502351,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               814,
@@ -502325,6 +502553,7 @@
           3
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -502629,6 +502858,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               814,
@@ -502664,6 +502894,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -502896,6 +503127,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               89174,
@@ -502970,6 +503202,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -520084,6 +520317,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               219198,
@@ -520783,6 +521017,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -537898,6 +538133,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               219198,
@@ -538597,6 +538833,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -540042,6 +540279,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               326,
@@ -540173,6 +540411,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -541015,6 +541254,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               82594,
@@ -541126,6 +541366,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           7,
@@ -542019,6 +542260,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               82594,
@@ -542130,6 +542372,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           7,
@@ -542846,6 +543089,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               124214,
@@ -542970,6 +543214,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -543600,6 +543845,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               124214,
@@ -543697,6 +543943,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -545701,6 +545948,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               53030,
@@ -545851,6 +546099,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -546108,6 +546357,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               129274,
@@ -546197,6 +546447,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -546705,6 +546956,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               278214,
@@ -546899,6 +547151,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           8
@@ -554178,6 +554431,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               103402,
@@ -554655,6 +554909,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -569762,6 +570017,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               103402,
@@ -570823,6 +571079,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -572140,6 +572397,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               151238,
@@ -572382,6 +572640,7 @@
           8
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           8
@@ -578913,6 +579172,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               151238,
@@ -579443,6 +579703,7 @@
           8
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           8
@@ -579710,6 +579971,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               86830,
@@ -579791,6 +580053,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -589488,6 +589751,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               199294,
@@ -590152,6 +590416,7 @@
           6
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           6
@@ -599590,6 +599855,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               199294,
@@ -600236,8 +600502,10 @@
           6
         ],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
-          5
+          5,
+          6
         ],
         "door_slots": [
           0,
@@ -608272,6 +608540,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               91834,
@@ -609339,6 +609608,7 @@
           7
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -611785,6 +612055,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               91834,
@@ -612261,6 +612532,7 @@
           7
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -614595,6 +614867,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               233874,
@@ -614889,6 +615162,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           8
@@ -615070,6 +615344,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               72366,
@@ -615143,6 +615418,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -615321,6 +615597,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               72366,
@@ -615394,6 +615671,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -621871,6 +622149,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               25618,
@@ -622497,6 +622776,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -629859,6 +630139,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               25618,
@@ -630709,6 +630990,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -636052,6 +636334,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               79306,
@@ -636318,6 +636601,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           7
@@ -641663,6 +641947,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               79306,
@@ -641929,6 +642214,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           7
@@ -652807,6 +653093,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               124746,
@@ -653783,6 +654070,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -665141,6 +665429,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               124750,
@@ -666218,6 +666507,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -670962,6 +671252,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               128494,
@@ -671477,6 +671768,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -675642,6 +675934,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               128494,
@@ -676121,6 +676414,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -676503,6 +676797,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44262,
@@ -676688,6 +676983,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -683521,6 +683817,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               14670,
@@ -684036,6 +684333,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -690863,6 +691161,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               14670,
@@ -691378,6 +691677,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -693289,6 +693589,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               52890,
@@ -693435,6 +693736,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -704000,6 +704302,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               113906,
@@ -704180,6 +704483,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -714323,6 +714627,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               113906,
@@ -714513,6 +714818,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -715407,6 +715713,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               18642,
@@ -715507,6 +715814,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -722950,6 +723258,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               18642,
@@ -723218,6 +723527,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -724229,6 +724539,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               81518,
@@ -724323,6 +724634,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -725339,6 +725651,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               81518,
@@ -725433,6 +725746,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -728133,6 +728447,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               150414,
@@ -728388,6 +728703,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -730741,6 +731057,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               198074,
@@ -730855,6 +731172,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -732954,6 +733272,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               198074,
@@ -733070,6 +733389,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -733688,6 +734008,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               57590,
@@ -733850,6 +734171,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           4
@@ -738145,6 +738467,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               104250,
@@ -738750,6 +739073,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -743032,6 +743356,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               104250,
@@ -743629,6 +743954,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -747244,6 +747570,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               818,
@@ -747557,6 +747884,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -751065,6 +751393,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               818,
@@ -751382,6 +751711,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -752219,6 +752549,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               118786,
@@ -752424,6 +752755,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           7
         ],
@@ -755737,6 +756069,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               167326,
@@ -756179,6 +756512,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           7,
@@ -759494,6 +759828,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               167326,
@@ -759936,6 +760271,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           7,
@@ -762259,6 +762595,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               84650,
@@ -762445,6 +762782,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -764893,6 +765231,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               84650,
@@ -765069,6 +765408,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -772613,6 +772953,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               55178,
@@ -772819,6 +773160,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -778284,6 +778626,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               55178,
@@ -778480,6 +778823,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -779436,6 +779780,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               430,
@@ -779629,6 +779974,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -779892,6 +780238,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               52118,
@@ -779982,6 +780329,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -781117,6 +781465,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               160762,
@@ -781276,6 +781625,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -782407,6 +782757,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               160762,
@@ -782566,6 +782917,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -783512,6 +783864,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               152394,
@@ -783684,6 +784037,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -788289,6 +788643,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149586,
@@ -788827,6 +789182,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -793455,6 +793811,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149586,
@@ -793988,6 +794345,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -800004,6 +800362,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44834,
@@ -800099,6 +800458,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -803763,6 +804123,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               44834,
@@ -803914,6 +804275,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -818043,6 +818405,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               115846,
@@ -818884,6 +819247,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2
         ],
@@ -843462,6 +843826,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               115846,
@@ -844999,6 +845364,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2
         ],
@@ -860401,6 +860767,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               61338,
@@ -860534,6 +860901,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -882867,6 +883235,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               61338,
@@ -883053,6 +883422,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -883952,6 +884322,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               406,
@@ -884085,6 +884456,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -885032,6 +885404,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               406,
@@ -885165,6 +885538,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -889277,6 +889651,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               68694,
@@ -889773,6 +890148,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           6,
@@ -889980,6 +890356,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               68694,
@@ -890069,6 +890446,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           3,
@@ -896258,6 +896636,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               150594,
@@ -896839,6 +897218,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -897018,6 +897398,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               150594,
@@ -897061,6 +897442,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -897750,6 +898132,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               21994,
@@ -897856,6 +898239,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -898546,6 +898930,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               21994,
@@ -898652,6 +899037,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -899852,6 +900238,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               109110,
@@ -899981,6 +900368,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -900849,6 +901237,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               109110,
@@ -900937,6 +901326,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -901184,6 +901574,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44350,
@@ -901289,6 +901680,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           8
@@ -901612,6 +902004,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44350,
@@ -901717,6 +902110,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           8
@@ -904622,6 +905016,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               163850,
@@ -905161,6 +905556,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -920777,6 +921173,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               163850,
@@ -922859,6 +923256,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           6,
           7,
@@ -932828,6 +933226,13 @@
               ]
             }
           ],
+          "failures": [
+            {
+              "entry": 8,
+              "offset": 197858,
+              "reason": "unsupported event state 1 opcode 0x07 at 0x304e2"
+            }
+          ],
           "creators": [
             [
               195470,
@@ -933849,6 +934254,7 @@
           6
         ],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           6
@@ -966008,6 +966414,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               195470,
@@ -968972,6 +969379,7 @@
           6
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5,
           6
@@ -970354,6 +970762,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               214886,
@@ -970765,6 +971174,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -972145,6 +972555,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               214886,
@@ -972556,6 +972967,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -972794,6 +973206,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               104142,
@@ -972920,6 +973333,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -973157,6 +973571,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               104142,
@@ -973283,6 +973698,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -976027,6 +976443,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               117210,
@@ -976272,6 +976689,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -980715,6 +981133,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               117210,
@@ -980910,6 +981329,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -983846,6 +984266,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               62698,
@@ -984051,6 +984472,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -985057,6 +985479,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               62698,
@@ -985161,6 +985584,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -987264,6 +987688,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               70494,
@@ -987491,6 +987916,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -987964,6 +988390,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               70494,
@@ -988064,6 +988491,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -990282,6 +990710,13 @@
             }
           ],
           "starts": [],
+          "failures": [
+            {
+              "entry": 3,
+              "offset": 207944,
+              "reason": "event path leaves section at 0x32c48"
+            }
+          ],
           "creators": [
             [
               206670,
@@ -990529,6 +990964,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5,
@@ -992740,6 +993176,13 @@
             }
           ],
           "starts": [],
+          "failures": [
+            {
+              "entry": 3,
+              "offset": 207940,
+              "reason": "event path leaves section at 0x32c44"
+            }
+          ],
           "creators": [
             [
               206670,
@@ -992987,6 +993430,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5,
@@ -997722,6 +998166,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               9598,
@@ -998104,6 +998549,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -1001609,6 +1002055,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               141950,
@@ -1001914,6 +1002361,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1005419,6 +1005867,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               141950,
@@ -1005724,6 +1006173,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1024562,6 +1025012,13 @@
               ]
             }
           ],
+          "failures": [
+            {
+              "entry": 17,
+              "offset": 204572,
+              "reason": "event path leaves section at 0x31f1c"
+            }
+          ],
           "creators": [
             [
               199094,
@@ -1026297,6 +1026754,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1031065,6 +1031523,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               199094,
@@ -1031594,6 +1032053,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1032206,6 +1032666,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               94422,
@@ -1032325,6 +1032786,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1032934,6 +1033396,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               94422,
@@ -1033053,6 +1033516,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1033456,6 +1033920,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               134918,
@@ -1033575,6 +1034040,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -1033984,6 +1034450,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               96330,
@@ -1034100,6 +1034567,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1036457,6 +1036925,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               117438,
@@ -1036701,6 +1037170,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -1037646,6 +1038116,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               150226,
@@ -1037820,6 +1038291,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -1040481,6 +1040953,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               8734,
@@ -1040576,6 +1041049,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1048493,6 +1048967,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               8734,
@@ -1048820,6 +1049295,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1053205,6 +1053681,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               130602,
@@ -1053659,6 +1054136,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1064183,6 +1064661,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               105082,
@@ -1065216,6 +1065695,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -1075737,6 +1076217,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               105082,
@@ -1076770,6 +1077251,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -1077023,6 +1077505,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               642,
@@ -1077120,6 +1077603,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           4,
@@ -1080358,6 +1080842,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               81734,
@@ -1080820,6 +1081305,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           4
@@ -1084057,6 +1084543,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               81734,
@@ -1084519,6 +1085006,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           4
@@ -1087866,6 +1088354,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               13358,
@@ -1088218,6 +1088707,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -1088559,6 +1089049,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               13358,
@@ -1088639,6 +1089130,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1089143,6 +1089635,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               19018,
@@ -1089286,6 +1089779,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1089793,6 +1090287,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               19018,
@@ -1089936,6 +1090431,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1091133,6 +1091629,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               196766,
@@ -1091371,6 +1091868,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -1092564,6 +1093062,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               196766,
@@ -1092802,6 +1093301,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -1093575,6 +1094075,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               414,
@@ -1093720,6 +1094221,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1094612,6 +1095114,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               268730,
@@ -1094767,6 +1095270,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1095443,6 +1095947,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               268730,
@@ -1095554,6 +1096059,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1097619,6 +1098125,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               168186,
@@ -1097768,6 +1098275,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1099831,6 +1100339,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               168186,
@@ -1099980,6 +1100489,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1100483,6 +1100993,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               144890,
@@ -1100572,6 +1101083,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1107013,6 +1107525,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               144890,
@@ -1107590,6 +1108103,7 @@
           8
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           8
         ],
@@ -1108372,6 +1108886,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               40138,
@@ -1108423,6 +1108938,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1109063,6 +1109579,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               40138,
@@ -1109114,6 +1109631,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1114595,6 +1115113,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               18058,
@@ -1115282,6 +1115801,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -1120761,6 +1121281,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               18058,
@@ -1121448,6 +1121969,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           9
         ],
@@ -1128286,6 +1128808,13 @@
               ]
             }
           ],
+          "failures": [
+            {
+              "entry": 11,
+              "offset": 229412,
+              "reason": "event path leaves section at 0x38024"
+            }
+          ],
           "creators": [
             [
               227210,
@@ -1128795,6 +1129324,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1129079,6 +1129609,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               227210,
@@ -1129175,6 +1129706,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1130069,6 +1130601,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115982,
@@ -1130193,6 +1130726,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1131089,6 +1131623,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115982,
@@ -1131213,6 +1131748,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1132966,6 +1133502,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67346,
@@ -1133165,6 +1133702,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1134917,6 +1135455,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67346,
@@ -1135116,6 +1135655,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1135331,6 +1135871,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               38990,
@@ -1135382,6 +1135923,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -1140185,6 +1140727,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               96566,
@@ -1140617,6 +1141160,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           7,
           9
@@ -1150231,6 +1150775,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               96566,
@@ -1150999,6 +1151544,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           7,
           9
@@ -1152128,6 +1152674,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               52354,
@@ -1152308,6 +1152855,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -1156828,6 +1157376,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               38434,
@@ -1157345,6 +1157894,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1172515,6 +1173065,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               38434,
@@ -1173934,6 +1174485,7 @@
           7
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           7
         ],
@@ -1174224,6 +1174776,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               167754,
@@ -1174275,6 +1174828,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1174567,6 +1175121,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               167754,
@@ -1174618,6 +1175173,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1174769,6 +1175325,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               67242,
@@ -1174828,6 +1175385,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1174977,6 +1175535,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               67242,
@@ -1175036,6 +1175595,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1175824,6 +1176384,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               256482,
@@ -1175986,6 +1176547,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4
@@ -1176642,6 +1177204,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               256482,
@@ -1176782,6 +1177345,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1178345,6 +1178909,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               185838,
@@ -1178497,6 +1179062,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1179920,6 +1180486,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               68478,
@@ -1180212,6 +1180779,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -1180891,6 +1181459,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149250,
@@ -1181026,6 +1181595,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -1181704,6 +1182274,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149250,
@@ -1181839,6 +1182410,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -1182109,6 +1182681,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               142570,
@@ -1182160,6 +1182733,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1182564,6 +1183138,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               106298,
@@ -1182623,6 +1183198,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1183104,6 +1183680,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               106298,
@@ -1183179,6 +1183756,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1186047,6 +1186625,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               111986,
@@ -1186462,6 +1187041,7 @@
           5
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           5,
@@ -1189329,6 +1189909,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               111986,
@@ -1189744,6 +1190325,7 @@
           5
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           5,
@@ -1190242,6 +1190824,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               211718,
@@ -1190407,6 +1190990,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1190905,6 +1191489,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               211718,
@@ -1191070,6 +1191655,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1192738,6 +1193324,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               334438,
@@ -1193001,6 +1193588,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -1194667,6 +1195255,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               334438,
@@ -1194930,6 +1195519,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -1195975,6 +1196565,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               35230,
@@ -1196139,9 +1196730,11 @@
           4
         ],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
-          3
+          3,
+          4
         ],
         "door_slots": [
           0
@@ -1196668,6 +1197261,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               84678,
@@ -1196748,6 +1197342,7 @@
           3
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -1197278,6 +1197873,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               84678,
@@ -1197358,6 +1197954,7 @@
           3
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2,
@@ -1197827,6 +1198424,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               43810,
@@ -1197893,6 +1198491,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -1198164,6 +1198763,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               37018,
@@ -1198207,6 +1198807,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1199424,6 +1200025,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               152174,
@@ -1199606,6 +1200208,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           10
         ],
@@ -1200800,6 +1201403,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               152174,
@@ -1200974,6 +1201578,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1203466,6 +1204071,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               169142,
@@ -1203624,6 +1204230,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1206117,6 +1206724,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               169142,
@@ -1206275,6 +1206883,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1207654,6 +1208263,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               267354,
@@ -1208065,6 +1208675,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1209445,6 +1210056,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               267354,
@@ -1209856,6 +1210468,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1210139,6 +1210752,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               134006,
@@ -1210198,6 +1210812,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1210481,6 +1211096,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               134006,
@@ -1210540,6 +1211156,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1215691,6 +1216308,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               9614,
@@ -1216151,6 +1216769,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1216510,6 +1217129,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115566,
@@ -1216611,6 +1217231,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1219659,6 +1220280,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               266734,
@@ -1219974,6 +1220596,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1222671,6 +1223294,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               67282,
@@ -1222883,6 +1223507,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1225578,6 +1226203,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               67282,
@@ -1225790,6 +1226416,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1228136,6 +1228763,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               198606,
@@ -1228399,6 +1229027,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -1230889,6 +1231518,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               198606,
@@ -1231157,6 +1231787,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -1231934,6 +1232565,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               334762,
@@ -1232039,6 +1232671,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1234065,6 +1234698,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               333626,
@@ -1234214,6 +1234848,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1236238,6 +1236873,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               333626,
@@ -1236387,6 +1237023,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1236762,6 +1237399,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               333738,
@@ -1236851,6 +1237489,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1243451,6 +1244090,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               333738,
@@ -1244058,6 +1244698,7 @@
           8
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           8
         ],
@@ -1244763,6 +1245404,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               199870,
@@ -1244814,6 +1245456,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1245528,6 +1246171,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               199870,
@@ -1245579,6 +1246223,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1248680,6 +1249325,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149466,
@@ -1249003,6 +1249649,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1260660,6 +1261307,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149466,
@@ -1261581,6 +1262229,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1265875,6 +1266524,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               183282,
@@ -1266444,6 +1267094,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           6,
@@ -1270788,6 +1271439,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               183282,
@@ -1271336,6 +1271988,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           6,
@@ -1288457,6 +1289110,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               219198,
@@ -1289156,6 +1289810,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -1306271,6 +1306926,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               219198,
@@ -1306970,6 +1307626,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           5
@@ -1308697,6 +1309354,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               298142,
@@ -1308829,6 +1309487,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": false,
         "item_slots": [
           5,
           9,
@@ -1310603,6 +1311262,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               298142,
@@ -1310735,6 +1311395,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": false,
         "item_slots": [
           5,
           9,
@@ -1311248,6 +1311909,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               242706,
@@ -1311442,6 +1312104,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           8
@@ -1318977,6 +1319640,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               103402,
@@ -1319464,6 +1320128,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1334864,6 +1335529,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               103402,
@@ -1335935,6 +1336601,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1338627,6 +1339294,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               150414,
@@ -1338882,6 +1339550,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1
         ],
@@ -1341359,6 +1342028,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               156390,
@@ -1341473,6 +1342143,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1343696,6 +1344367,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               156390,
@@ -1343812,6 +1344484,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           5
         ],
@@ -1348170,6 +1348843,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               139126,
@@ -1348775,6 +1349449,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1353117,6 +1353792,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               139126,
@@ -1353714,6 +1354390,7 @@
         ],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1358429,6 +1359106,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               170446,
@@ -1358975,6 +1359653,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1363711,6 +1364390,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               170446,
@@ -1364252,6 +1364932,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1370771,6 +1371452,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               169138,
@@ -1371352,6 +1372034,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1371877,6 +1372560,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               169138,
@@ -1371920,6 +1372604,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1372229,6 +1372914,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44350,
@@ -1372334,6 +1373020,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           8
@@ -1372719,6 +1373406,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               44350,
@@ -1372824,6 +1373512,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4,
           8
@@ -1374206,6 +1374895,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               267354,
@@ -1374617,6 +1375307,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1375997,6 +1376688,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               267354,
@@ -1376408,6 +1377100,7 @@
           2
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3
@@ -1378524,6 +1379217,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               134014,
@@ -1378751,6 +1379445,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1379237,6 +1379932,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               134014,
@@ -1379337,6 +1380033,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": false,
+        "reentry_coverage_complete": true,
         "item_slots": [
           4
         ],
@@ -1384488,6 +1385185,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               9614,
@@ -1384948,6 +1385646,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3,
           4,
@@ -1385307,6 +1386006,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115566,
@@ -1385408,6 +1386108,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1388456,6 +1389157,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               266734,
@@ -1388771,6 +1389473,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1391817,6 +1392520,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               266734,
@@ -1392132,6 +1392836,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1395420,6 +1396125,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               67306,
@@ -1395757,6 +1396463,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],
@@ -1396147,6 +1396854,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               67306,
@@ -1396227,6 +1396935,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1398573,6 +1399282,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               198606,
@@ -1398836,6 +1399546,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -1401326,6 +1402037,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               198606,
@@ -1401594,6 +1402306,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0
@@ -1402485,6 +1403198,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               334762,
@@ -1402640,6 +1403354,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1403329,6 +1404044,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               334762,
@@ -1403440,6 +1404156,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1405466,6 +1406183,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               333626,
@@ -1405615,6 +1406333,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1407639,6 +1408358,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               333626,
@@ -1407788,6 +1408508,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1408163,6 +1408884,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               333738,
@@ -1408252,6 +1408974,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1414852,6 +1415575,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               333738,
@@ -1415459,6 +1416183,7 @@
           8
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           8
         ],
@@ -1416278,6 +1417003,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               199870,
@@ -1416329,6 +1417055,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1417043,6 +1417770,7 @@
           "points": [],
           "dispatches": [],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               199870,
@@ -1417094,6 +1417822,7 @@
         "event_commands": [],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [],
         "door_slots": [
           0,
@@ -1420195,6 +1420924,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149466,
@@ -1420518,6 +1421248,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1432175,6 +1432906,7 @@
               ]
             }
           ],
+          "failures": [],
           "creators": [
             [
               149466,
@@ -1433096,6 +1433828,7 @@
           1
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           1,
           2
@@ -1435705,6 +1436438,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               115106,
@@ -1435929,6 +1436663,7 @@
           4
         ],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           2,
           3,
@@ -1436398,6 +1437133,7 @@
             }
           ],
           "starts": [],
+          "failures": [],
           "creators": [
             [
               43810,
@@ -1436464,6 +1437200,7 @@
         ],
         "award_slots": [],
         "coverage_complete": true,
+        "reentry_coverage_complete": true,
         "item_slots": [
           3
         ],

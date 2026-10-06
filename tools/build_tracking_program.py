@@ -24,7 +24,7 @@ def build_tracking_program(
     data: bytes,
     row: dict,
     operations: list,
-    source_complete: bool,
+    structural_complete: bool,
     event_scan: EventScan,
 ) -> dict:
     def command(address: int, op: int, raw: bytes) -> dict:
@@ -184,6 +184,16 @@ def build_tracking_program(
         for _, _, op, raw in operations
         if op in (0x12, 0x13) and raw[2] in (3, 4, 15)
     )
+    # A reachable generic pickup or forced award still needs a descriptor.
+    # Keep these slots even when no ordinary item creator exists in the source.
+    item_slots.update(
+        raw[1]
+        for _, _, op, raw in operations
+        if op == 0x0D
+        and raw[10] in (3, 4, 15)
+        or op in (0x24, 0x2D)
+        and raw[2] in (4, 15)
+    )
     door_slots = {
         raw[1]
         for _, _, op, raw in operations
@@ -206,7 +216,7 @@ def build_tracking_program(
         and raw[10] in (3, 4, 15)
         or op in (0x24, 0x2D)
         and raw[2] in (4, 15)
-        and raw[1] not in item_slots
+        and raw[1] not in row["item_aot_ids"]
         for _, _, op, raw in operations
     )
     init_procedures, init_complete = procedures(
@@ -217,7 +227,7 @@ def build_tracking_program(
     )
     event_blocks = []
     block_commands = set()
-    event_complete = event_scan.status == "clean"
+    event_complete = event_scan.table_complete
     for start in event_scan.block_starts:
         blocks, complete = procedures(start, row["events_offset"] + row["events_size"])
         assert complete, "event scanner must validate every embedded procedure list"
@@ -251,6 +261,7 @@ def build_tracking_program(
             "points": [asdict(point) for point in event_scan.points],
             "dispatches": [asdict(dispatch) for dispatch in event_scan.dispatches],
             "starts": [asdict(start) for start in event_scan.starts],
+            "failures": [asdict(failure) for failure in event_scan.failures],
             "creators": sorted(
                 [address, raw[1] & 127 if op == 0x18 else raw[1]]
                 for _, address, op, raw in operations
@@ -317,11 +328,23 @@ def build_tracking_program(
         # Keep the source audit's invalid-target and section failures mandatory.
         # Independently require clean parsing and both sentinels. A caller's
         # source audit cannot authorize a truncated semantic procedure list.
-        "coverage_complete": source_complete
+        "coverage_complete": structural_complete
         and init_complete
         and main_complete
         and event_complete
-        and not unclassified_items,
+        and event_scan.status == "clean"
+        and not unclassified_items
+        and not any(
+            op == 0x14 and raw[3] >= len(event_scan.entries)
+            for _, _, op, raw in operations
+        ),
+        # Reentry follows guarded starts before using any event effect. A
+        # malformed table/section cannot be pruned, but an owned event failure
+        # can be excluded when no supported execution path starts its entry.
+        "reentry_coverage_complete": structural_complete
+        and init_complete
+        and main_complete
+        and event_complete,
         "item_slots": sorted(item_slots),
         "door_slots": sorted(door_slots),
         "mutable_slots": sorted(changed_slots),

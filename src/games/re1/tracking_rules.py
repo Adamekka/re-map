@@ -199,6 +199,7 @@ class RoomProgram:
     event_effects: tuple[RuleCommand, ...]
     award_slots: tuple[int, ...]
     coverage_complete: bool
+    reentry_coverage_complete: bool
     item_slots: tuple[int, ...]
     door_slots: tuple[int, ...]
     mutable_slots: tuple[int, ...]
@@ -206,8 +207,17 @@ class RoomProgram:
     event_commands: tuple[RuleCommand, ...]
 
     def __post_init__(self) -> None:
-        if type(self.coverage_complete) is not bool:
+        if any(
+            type(value) is not bool
+            for value in (self.coverage_complete, self.reentry_coverage_complete)
+        ):
             raise ValueError("tracking coverage requires an explicit boolean")
+        if self.coverage_complete and (
+            not self.reentry_coverage_complete or self.event_program.failures
+        ):
+            raise ValueError(
+                "complete current coverage requires complete event decoding"
+            )
         for slots in (
             self.item_slots,
             self.door_slots,
@@ -252,7 +262,7 @@ class RoomProgram:
             self.event_commands
         ) or any(command.offset in occupied for command in self.event_commands):
             raise ValueError("invalid standalone event commands")
-        if self.coverage_complete:
+        if self.reentry_coverage_complete:
             semantic_commands = {
                 command.offset: command
                 for procedure in self.procedures + self.main_procedures
@@ -316,6 +326,7 @@ class RoomProgram:
             ),
             tuple(raw["award_slots"]),
             raw["coverage_complete"],
+            raw["reentry_coverage_complete"],
             tuple(raw["item_slots"]),
             tuple(raw["door_slots"]),
             tuple(raw["mutable_slots"]),
@@ -493,6 +504,7 @@ class RuleEvaluation:
     disabled_doors: tuple[tuple[int, bytes], ...]
     unresolved_item_slots: tuple[int, ...]
     unresolved_door_slots: tuple[int, ...]
+    coverage_complete: bool
 
 
 @dataclass(frozen=True)
@@ -531,6 +543,10 @@ def evaluate_room_program(
     paths = [((), ())]
     bounded = True
     reentry = epoch == RoomRuleEpoch.Reentry
+    source_complete = (
+        program.reentry_coverage_complete if reentry else program.coverage_complete
+    )
+    failed_entries = {failure.entry for failure in program.event_program.failures}
     started = set()
     registry_parameters = {
         offset: (parameter, model, operation)
@@ -1253,6 +1269,16 @@ def evaluate_room_program(
                     address = layout.flag(5, 23)
                     changed[address] = True if changed.get(address) is True else None
                 elif args[1] == 4:
+                    if any(
+                        descriptor is None
+                        or descriptor[0] != "item"
+                        or not 1 <= descriptor[1][1] <= 0x4D
+                        for descriptor in dict(slots).get(args[0], frozenset({None}))
+                    ):
+                        # Forced awards ignore the live handler and dereference
+                        # the retained source. A missing creator is not a no-op.
+                        successful = False
+                        break
                     # The pending bit depends on the registry parameter, which
                     # setters can change independently of mode. A conditional
                     # OR cannot erase an already established true bit.
@@ -1357,6 +1383,28 @@ def evaluate_room_program(
             for block in program.event_blocks
         }
         commands = {c.offset: c for c in program.event_commands}
+
+        def events_have_coverage():
+            # VM waits and native child starts have no retained SCD guard.
+            # Any start belonging to a reachable entry may run later.
+            pending_entries = list(started)
+            visited_entries = set()
+            while pending_entries:
+                entry = pending_entries.pop()
+                if entry in visited_entries:
+                    continue
+                visited_entries.add(entry)
+                targets = {
+                    start.args[-1]
+                    for start in program.event_program.starts
+                    if start.entry == entry
+                }
+                started.update(targets)
+                pending_entries.extend(targets - visited_entries)
+            # Decode failures may conceal any registry/flag write, including
+            # slots absent from decoded data. Exclude the entire failed entry.
+            return not started & failed_entries
+
         if bounded and paths:
             paths = [join_paths(paths)]
             # A monotone join covers arbitrary tick counts and dispatch order.
@@ -1375,22 +1423,9 @@ def evaluate_room_program(
                 # another tick/dispatch. Temporary writes inside that list
                 # cannot become the starting state of a separate runner.
                 outcomes.update(main_paths)
-                # VM waits and native child starts have no retained SCD guard.
-                # Any start belonging to a reachable entry may run later.
-                pending_entries = list(started)
-                visited_entries = set()
-                while pending_entries:
-                    entry = pending_entries.pop()
-                    if entry in visited_entries:
-                        continue
-                    visited_entries.add(entry)
-                    targets = {
-                        start.args[-1]
-                        for start in program.event_program.starts
-                        if start.entry == entry
-                    }
-                    started.update(targets)
-                    pending_entries.extend(targets - visited_entries)
+                if not events_have_coverage():
+                    bounded = False
+                    break
                 for dispatch in program.event_program.dispatches:
                     if dispatch.entry not in started or not dispatch.commands:
                         continue
@@ -1448,6 +1483,9 @@ def evaluate_room_program(
                     bounded, paths = run_procedure(procedure, paths, False)
                     if not bounded:
                         break
+                # The final main pass also participates in the mandatory
+                # coverage check before its descriptors can be published.
+                bounded = bounded and events_have_coverage()
                 event_offsets = {
                     offset
                     for dispatch in program.event_program.dispatches
@@ -1613,7 +1651,7 @@ def evaluate_room_program(
                 meanings = {("item", replace(identities.pop(), amount=amount))}
         if (
             not bounded
-            or not program.coverage_complete
+            or not source_complete
             or slot in program.mutable_slots
             and slot not in quantity_slots
             or exceeded
@@ -1634,7 +1672,7 @@ def evaluate_room_program(
         elif kind == "disabled-door":
             disabled_doors.append(value)
     reason = "" if not uncertain_items else "Some item conditions need a room visit."
-    if not bounded or not program.coverage_complete:
+    if not bounded or not source_complete:
         reason = "Room script coverage is incomplete."
     return RuleEvaluation(
         RuntimeRoomItems(
@@ -1647,4 +1685,5 @@ def evaluate_room_program(
         tuple(disabled_doors),
         tuple(sorted(uncertain_items)),
         tuple(sorted(uncertain_doors)),
+        bounded and source_complete,
     )

@@ -22,6 +22,8 @@ Run `python3 -m pytest -q tests/test_dynamic_quantities.py` for quantity reads/w
 
 # Shared-engine regression checks
 
+Script reachability checks run with `python3 -m pytest -q tests/test_script_reachability.py`. Departed-room reconstruction excludes a failed event only when its entry cannot be reached through the supported setup, recurring scripts, native child starts/restarts or registered/forced interactions. Unknown conditions include both possibilities. Malformed tables and source sections remain global failures. A reached decoding failure prevents item and door clearance even when no affected slot could be decoded. Current-room validation retains its historical coverage barrier; inactive events do not prove that an earlier script never ran. RE1-REENTRY-005 records the synthetic checks, unchanged-capture replay and remaining natural gameplay limits.
+
 Run `python3 -m pytest -q` with pytest installed. The focused engine suite is `python3 -m pytest -q tests/test_tracking_rules.py tests/test_event_tracking.py tests/test_command_semantics.py tests/test_room_cache.py`.
 
 These checks cover multiple pickups, last-item clearance, acquisition rewind, story-dependent alternatives, dormant items, source selection, door replacement, unresolved branches, malformed metadata and reads that change during polling. The Herb and Chemical cases compare rules with the donated before/after RAM fixtures. Other flag changes in this suite are explicitly synthetic and do not validate a natural story event or normal in-game save/load.

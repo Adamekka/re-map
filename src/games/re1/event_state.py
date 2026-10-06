@@ -72,12 +72,31 @@ class EventStart:
     args: tuple[int, ...]
 
 
+@dataclass(frozen=True, order=True)
+class EventFailure:
+    entry: int
+    offset: int
+    reason: str
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.entry) is not int
+            or not 0 <= self.entry < 256
+            or type(self.offset) is not int
+            or self.offset < 0
+            or not isinstance(self.reason, str)
+            or not self.reason.strip()
+        ):
+            raise ValueError("invalid event coverage failure")
+
+
 @dataclass(frozen=True)
 class EventProgram:
     entries: tuple[int, ...]
     points: tuple[EventPoint, ...]
     dispatches: tuple[EventDispatch, ...]
     starts: tuple[EventStart, ...]
+    failures: tuple[EventFailure, ...]
     # Creator offsets bind retained registry pointers. Parameter writers retain
     # all three u16 values: callback 9 consumes the first two low bytes;
     # callback 7 consumes the bank, index and operation without truncation.
@@ -91,7 +110,7 @@ class EventProgram:
             type(offset) is not int or offset < 0 for offset in self.entries
         ):
             raise ValueError("invalid indexed event table")
-        for collection in (self.points, self.dispatches, self.starts):
+        for collection in (self.points, self.dispatches, self.starts, self.failures):
             if len(set(collection)) != len(collection) or any(
                 type(row.entry) is not int
                 or type(row.offset) is not int
@@ -157,6 +176,7 @@ class EventProgram:
                 EventStart(row["entry"], row["offset"], row["kind"], tuple(row["args"]))
                 for row in raw["starts"]
             ),
+            tuple(EventFailure(**row) for row in raw["failures"]),
             tuple(tuple(row) for row in raw["creators"]),
             tuple(tuple(row) for row in raw["registry_writes"]),
             tuple(tuple(row) for row in raw["changes"]),

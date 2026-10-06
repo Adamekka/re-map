@@ -57,12 +57,14 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
     operations = []
     issues = []
     source_issues = []
+    structural_issues = []
     stats = {}
     flag_tests = []
     for index, section in ((6, "init"), (7, "main")):
         start, end = offsets[index : index + 2]
         if not 0 < start < end <= len(data):
             source_issues.append(f"{section}: bad range")
+            structural_issues.append(f"{section}: bad range")
             stats[section] = "bad-range"
             continue
         span = data[start:end]
@@ -78,6 +80,7 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
         stats[section] = status
         if status != "clean":
             source_issues.append(f"{section}: {status}")
+            structural_issues.append(f"{section}: {status}")
 
     event_start, event_end = offsets[8:10]
     if 0 < event_start < event_end <= len(data):
@@ -92,6 +95,8 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
     stats["events"] = status
     if status != "clean":
         source_issues.append(f"indexed event scripts: {status}")
+        if not event_scan.table_complete:
+            structural_issues.append(f"indexed event scripts: {status}")
     event_count = 0
     if 0 < event_start < event_end <= len(data):
         for address in range(event_start, event_end - 3, 4):
@@ -368,7 +373,7 @@ def scan_cache_rdt(data: bytes, source_rdt: str, profile: dict) -> dict:
     )
     if all(section + "_offset" in row for section in ("init", "main", "events")):
         row["tracking_program"] = build_tracking_program(
-            data, row, operations, not source_issues, event_scan
+            data, row, operations, not structural_issues, event_scan
         )
     for audit in profile["cache_audits"]:
         if audit["source_rdt"] != source_rdt:
@@ -469,6 +474,7 @@ def main() -> int:
                         "RE1-EVENT-016",
                         "RE1-EVENT-017",
                         "RE1-REENTRY-004",
+                        "RE1-REENTRY-005",
                         "RE1-REENTRY-002",
                         "RE1-QUANTITY-001",
                         "RE1-QUANTITY-002",

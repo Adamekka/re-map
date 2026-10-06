@@ -123,7 +123,7 @@ def test_message_handler_cannot_close_incomplete_source_coverage(rules, epoch):
     )
     assert program.coverage_complete and not snapshot.error
     result = evaluate_room_program(
-        replace(program, coverage_complete=False),
+        replace(program, coverage_complete=False, reentry_coverage_complete=False),
         RoomId(0, 9),
         rules[0],
         snapshot,
