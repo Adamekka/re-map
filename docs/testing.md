@@ -125,6 +125,12 @@ Run `python3 -m pytest -q tests/test_room_reentry.py` for synthetic reset bounds
 
 Fresh last-item pickup timing, other puzzles, other characters/revisions and normal save/load of active events remain unvalidated. Private artifact hashes and exact event/flag evidence are in the research entries.
 
+## Shared native callbacks
+
+Run `python3 -m pytest -q tests/test_native_callbacks.py` for forced movement callbacks 5/6 and parameter-driven flag callback 7. The tests cover source and parameter binding, disabled handlers, current/reentry epochs, init/main/indexed dispatch, pending consumers, command returns, physical aliases, bank/index bounds, fresh flag reversal and failed reads.
+
+RE1-SCD-016/017 record the pinned native contracts. RE1-NATIVE-001 records the implementation, two identical disc regenerations, the unchanged twelve-step captured save/load replay and an offline projection of all 334 source variants. These synthetic/source checks do not confirm natural movement/flag interactions or later-area gameplay. The projection uses one flag configuration and must not be presented as a count of rooms validated in-game.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

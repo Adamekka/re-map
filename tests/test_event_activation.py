@@ -357,7 +357,7 @@ def test_registered_interaction_uses_current_parameter_bytes_and_reverses(rules)
     ram, script, program = setup(
         rules, pickup(0, 0x44, 111) + bytes(creator) + b"\0", indexed_event(change)
     )
-    assert program.event_program.registry_writes[0][1:] == (2, 0xA0FF, 0xB000)
+    assert program.event_program.registry_writes[0][1:] == (2, 0xA0FF, 0xB000, 0)
     offset = next(
         offset for offset, slot in program.event_program.creators if slot == 2
     )

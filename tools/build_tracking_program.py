@@ -114,7 +114,7 @@ def build_tracking_program(
             kind, args = "event-start", [raw[2], raw[3]]
         elif op in (0x24, 0x2D) and raw[2] in (4, 15):
             kind, args = "award", [raw[1], raw[2], int(op == 0x24)]
-        elif op in (0x24, 0x2D) and raw[2] in (1, 9, 13):
+        elif op in (0x24, 0x2D) and raw[2] in (1, 5, 6, 7, 9, 13):
             kind, args = "aot-callback", [raw[1], raw[2], int(op == 0x24)]
         elif op in CONTINUING_OPCODES:
             kind, args = "constant-test", [1]
@@ -245,7 +245,7 @@ def build_tracking_program(
                 [
                     address,
                     raw[1],
-                    *struct.unpack_from("<HH", raw, 12 if op == 0x0D else 4),
+                    *struct.unpack_from("<HHH", raw, 12 if op == 0x0D else 4),
                 ]
                 for _, address, op, raw in operations
                 if op in (0x0D, 0x12)

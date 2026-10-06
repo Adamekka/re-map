@@ -238,12 +238,13 @@ def test_standalone_event_commands_are_mandatory_for_complete_dispatches(rules):
 
 def test_registry_parameter_writer_must_match_its_source_command_slot(rules):
     program = compile_program(rules, interaction() + b"\0", event=indexed(b"\xff"))
-    offset, _, parameter, model = program.event_program.registry_writes[0]
+    offset, _, parameter, model, operation = program.event_program.registry_writes[0]
     with pytest.raises(ValueError, match="parameter writer"):
         replace(
             program,
             event_program=replace(
-                program.event_program, registry_writes=((offset, 6, parameter, model),)
+                program.event_program,
+                registry_writes=((offset, 6, parameter, model, operation),),
             ),
         )
 

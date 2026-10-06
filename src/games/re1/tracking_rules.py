@@ -142,7 +142,7 @@ class RuleCommand:
         ):
             raise ValueError("invalid tracking award handler")
         if self.kind == "aot-callback" and (
-            self.args[1] not in (1, 9, 13) or self.args[2] not in (0, 1)
+            self.args[1] not in (1, 5, 6, 7, 9, 13) or self.args[2] not in (0, 1)
         ):
             raise ValueError("invalid tracking callback handler")
         if self.kind == "event-start" and any(
@@ -270,7 +270,7 @@ class RoomProgram:
                 offset not in semantic_commands
                 or semantic_commands[offset].kind not in ("aot-create", "aot-handler")
                 or semantic_commands[offset].args[0] != slot
-                for offset, slot, _, _ in self.event_program.registry_writes
+                for offset, slot, _, _, _ in self.event_program.registry_writes
             ):
                 raise ValueError("registry parameter writer lacks its semantic slot")
 
@@ -427,6 +427,21 @@ def read_rule_snapshot(
             + tuple(p for block in program.event_blocks for p in block)
             for command in procedure.commands
         )
+        if any(c.kind == "aot-callback" and c.args[1] == 7 for c in commands):
+            for _, _, group, index, _ in program.event_program.registry_writes:
+                # Callback 7 uses a fixed word for control/dialog banks. Other
+                # banks use the full u16 index; reject unbounded targets later.
+                if group in (5, 6):
+                    index &= 31
+                if (
+                    group < 10
+                    and index <= 255
+                    and (
+                        group in layout.persistent_flag_groups
+                        or (group, index) in layout.persistent_flag_bits
+                    )
+                ):
+                    addresses.add(layout.flag(group, index)[0])
         for command in commands:
             if (
                 command.kind == "aot-callback"
@@ -502,8 +517,8 @@ def evaluate_room_program(
     reentry = epoch == RoomRuleEpoch.Reentry
     started = set()
     registry_parameters = {
-        offset: (parameter, model)
-        for offset, _, parameter, model in program.event_program.registry_writes
+        offset: (parameter, model, operation)
+        for offset, _, parameter, model, operation in program.event_program.registry_writes
     }
     quantity_slots = {
         command.args[1]
@@ -521,6 +536,11 @@ def evaluate_room_program(
         if command.kind == "quantity-transfer" and command.args[0] in (1, 2)
     }
     history_unresolved = set()
+    persistent = {
+        layout.flag(group, index)
+        for group in layout.persistent_flag_groups
+        for index in range(256)
+    } | {layout.flag(*bit) for bit in layout.persistent_flag_bits}
 
     def targets_slot(command, slot):
         return command.args[1 if command.kind == "quantity-transfer" else 0] == slot
@@ -534,7 +554,7 @@ def evaluate_room_program(
                 or descriptor[4] == RegistryParameterState.Unreconstructed
             ):
                 return False
-            _, model = descriptor[4]
+            _, model, _ = descriptor[4]
             if model & 255 >= len(program.event_program.entries):
                 return False
             targets.add(model & 255)
@@ -1025,6 +1045,60 @@ def evaluate_room_program(
                     for index in (5, 6):
                         for bit in range(8):
                             changed[layout.byte_variables_base + index, 1 << bit] = None
+                elif args[1] in (5, 6):
+                    if any(
+                        descriptor is None
+                        for descriptor in dict(slots).get(args[0], frozenset({None}))
+                    ):
+                        # Movement callbacks dereference source geometry even
+                        # when forced on a disabled AOT. A stale pointer cannot
+                        # establish a supported execution path.
+                        successful = False
+                        break
+                    # The callback queues movement with C3004 bit 22. Native
+                    # player consumers clear it later; no tick timing is known.
+                    changed[layout.flag(5, 41)] = None
+                    address = layout.flag(6, 25)
+                    # Orientation can skip the immediate clear, and the
+                    # movement consumer later sets this dialog bit again.
+                    changed[address] = None
+                elif args[1] == 7:
+                    targets = set()
+                    for descriptor in dict(slots).get(args[0], frozenset({None})):
+                        if (
+                            descriptor is None
+                            or descriptor[4] == RegistryParameterState.Unreconstructed
+                        ):
+                            successful = False
+                            break
+                        group, index, operation = descriptor[4]
+                        if group in (5, 6):
+                            index &= 31
+                        if group >= 10 or index > 255:
+                            # The native default can write through an unset
+                            # register, and larger banks exceed our read bounds.
+                            # Neither is a modeled no-op or a safe flag alias.
+                            successful = False
+                            break
+                        targets.add((layout.flag(group, index), bool(operation)))
+                    if not successful:
+                        break
+                    for address in {bit for bit, _ in targets}:
+                        old = changed.get(address)
+                        if (
+                            not historical
+                            and address not in changed
+                            and address in persistent
+                            and address[0] in values
+                        ):
+                            old = bool(values[address[0]] & address[1])
+                        choices = {
+                            value if target == address else old
+                            for target, value in targets
+                        }
+                        # Alternative registry writers may target different
+                        # bits. Untouched alternatives retain the prior value.
+                        changed[address] = choices.pop() if len(choices) == 1 else None
                 elif args[1] == 9:
                     # Callback 9 starts a script with registry parameters. Its
                     # activity comes from fresh event RAM, never replay here.
@@ -1103,12 +1177,6 @@ def evaluate_room_program(
             bounded, paths = run_procedure(procedure, paths, False)
             if not bounded:
                 break
-
-        persistent = {
-            layout.flag(group, index)
-            for group in layout.persistent_flag_groups
-            for index in range(256)
-        } | {layout.flag(*bit) for bit in layout.persistent_flag_bits}
 
         def join_paths(states):
             # Reuse each path's maps across all bits. Rebuilding a full shadow

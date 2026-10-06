@@ -79,9 +79,10 @@ class EventProgram:
     dispatches: tuple[EventDispatch, ...]
     starts: tuple[EventStart, ...]
     # Creator offsets bind retained registry pointers. Parameter writers retain
-    # both u16 values: callback 9 consumes their low bytes, not handler/mode.
+    # all three u16 values: callback 9 consumes the first two low bytes;
+    # callback 7 consumes the bank, index and operation without truncation.
     creators: tuple[tuple[int, int], ...]
-    registry_writes: tuple[tuple[int, int, int, int], ...]
+    registry_writes: tuple[tuple[int, int, int, int, int], ...]
     changes: tuple[tuple[int, int], ...]
     script_starts: tuple[tuple[int, int, int], ...]
 
@@ -124,7 +125,7 @@ class EventProgram:
                 raise ValueError("invalid event activation target")
         for rows, width, capacity, maximum in (
             (self.creators, 2, 24, 65535),
-            (self.registry_writes, 4, 24, 65535),
+            (self.registry_writes, 5, 24, 65535),
             (self.changes, 2, 24, 65535),
             (self.script_starts, 3, 256, 255),
         ):

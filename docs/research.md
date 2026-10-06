@@ -2433,3 +2433,69 @@ Limits: this is a source contract, not a breakpoint trace or a natural zero-quan
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; disassembled the complete transfer handler, ordinary interaction handler and acceptance routine, checked exact stores and ordering, and recorded the candidate contract separately from the implementation regressions.
+
+## RE1-SCD-016: movement callbacks preserve descriptors but their request is consumed
+
+Status: Candidate; direct native inspection and synthetic effect checks, without natural callback execution
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; interaction callbacks 5 and 6
+Environment: owned executable/disc, Capstone 5.0.9 and Python 3.14.8 on macOS; no new emulator or GDB experiment
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: pinned MIPS instruction inspection and synthetic shared-interpreter regressions
+Claim: callbacks 5/6 read rectangle geometry through the AOT's source pointer and modify actor movement fields. They preserve the registered handler, parameters, source bytes and acquisition flags. Their pending movement and dialog bits cannot be treated as permanent values across ticks.
+Evidence:
+
+- Callback table at PS1 virtual `0x80090404` selects `0x80037BB4..0x80037CC8` and `0x80037CC8..0x80037DD8`. Both read the source pointer at registry offset 8 and actor pointer at `0x800CAB14`. Callback 5 compares actor X against rectangle X/half-width; callback 6 uses Z/depth. Depending on orientation they store direction at actor offset `0xC4`, clear actor byte `0x85`, update actor byte 3 and clear little-endian `0x800CAB00` mask `0x0040`. Both unconditionally OR `0x00400000` into `0x800C3004`, physical flag-bank-5/index-41. Neither calls another function or stores to an AOT/source/acquisition location under the native initialized actor layout.
+- The subsequent player path at `0x8003E990..0x8003EA08` ORs `0x0040` into `0x800CAB00` at `0x8003E9EC` and clears `0x00400000` from `0x800C3004` at `0x8003E9F0`. The dialog alias is bank 6 index 25. The interpreter therefore forgets both physical bits, preserving other shadows. An initial implementation preserving a previously false dialog bit was rejected before commit after inspecting this consumer.
+- An initially inspected `0x8002A7F4` consumer accesses `0x800C3000`, not the movement word at `0x800C3004`; it does not supply the movement-clear contract. This distinction was checked directly against its address construction.
+- `tests/test_native_callbacks.py` checks both callbacks, missing sources, disabled modeled creators, independent items/doors, recurring main/indexed dispatch and the consumed bits. Source geometry must have a modeled creator; a missing retained pointer remains unresolved. The tool never changes emulator RAM.
+- Native excerpts are private at `/tmp/tasks/re-map/native-callbacks/native.txt`, SHA256 `8dcbe8855283dc2c7769132607f5b7d6b1096dfc4d47abb574f8ec5c5b4f45eb`. They include both callback bodies, the consumer, registry setters and dispatch returns.
+
+Limits: no natural callback activation, actor movement, consumer timing or normal save/load of that interaction was tested. Actor coordinates and orientation are not reconstructed. These rules cover forced SCD dispatch; they do not infer the history of every registered native interaction. Other actor callbacks and revisions retain their own limits.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the callback bodies and pending consumer, rejected the permanent-bit interpretation, and added shared conservative effects and regressions. RE1-NATIVE-001 records generation/replay checks separately.
+
+## RE1-SCD-017: flag callback consumes three registry words
+
+Status: Candidate; direct pinned native inspection and synthetic parameter/alias checks
+Scope: same SLUS-00551 executable as RE1-SCD-016; interaction callback 7 and generic/extended registry writers
+Environment: owned executable/disc and Capstone 5.0.9; no new live experiment
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: direct native dispatch, store and flag-target inspection
+Claim: callback 7 uses the little-endian u16 fields at registry offsets 2/4/6 as bank/index/operation. Operation zero clears one MSB-first bit; every nonzero value sets it. Banks 5/6 select a fixed word and use index modulo 32. Other banks select `base + 4 * (index // 32)` using the full u16 index.
+Evidence:
+
+- Body `0x80037DD8..0x80037EF8` checks bank `<10`, selects its address through the table at `0x800103EC`, reads index at offset 4 and operation at offset 6, and constructs `0x80000000 >> (index & 31)`. Stores at `0x80037ECC/0x80037EEC` implement set/clear. Bank bases agree with the existing profile. The bank-5/6 cases jump directly to `0x80037EA4` without adding a word offset. An undefined bank reaches that code without establishing the address register; the interpreter rejects it. Non-fixed-word indices above 255 exceed the modeled bank and also reject reconstruction rather than inventing an alias.
+- Generic creator `0x80045E00..0x80045EA8` copies packet offsets 12/14/16 into registry offsets 2/4/6. Extended setter `0x80045BC4..0x80045C38` copies packet offsets 4/6/8 into the same fields. Short setter `0x80045C38..0x80045C88` changes only handler/mode. The semantic descriptor retains all three words per exact writer offset and slot. Previously generated metadata retained only the first two.
+- Forced dispatch at `0x800470B8..0x80047124` returns one regardless of callback result. `0x80047AE0..0x80047B18` subsequently sets/toggles pending flags and returns zero, as originally recorded in RE1-SCD-014. Callback 7's own zero return does not become a predicate or repeat a deferred command.
+- Synthetic tests cover every bank, bit/word boundaries, u16 operation and fixed-word index extremes, invalid addresses, short/extended setters, conflicting parameter alternatives, physical bank aliases, source-context bytes that cannot supply local history, command/pending ordering, acquisition reversal and failed target reads. Acquisition results remain fresh RAM values even when a simulated callback changes an acquisition-bank shadow. The native excerpt hash is in RE1-SCD-016.
+
+Limits: no flag callback was activated naturally. The implementation does not replay collection, infer unsupported creator parameters, follow arbitrary native pointers or extend flag banks beyond their modeled bounds. Invalid native operands are explicit unsupported paths, not confirmed game behavior. Other callback IDs remain separately scoped.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected all native branches and writer fields, retained the third u16 word, and implemented bounded source-dependent effects without changing acquisition provenance.
+
+## RE1-NATIVE-001: shared forced callback support and source projection
+
+Status: Candidate; implementation, synthetic/source checks and unchanged recorded-state replay
+Scope: pinned SLUS-00551 identity from RE1-SCD-016; forced callbacks 5/6/7 across generated source variants
+Environment: Python 3.14.8, pytest 9.1.1, Capstone 5.0.9 on macOS; existing DuckStation `0.1-11894-gc66b2694d` captures; no new gameplay
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: RE1-SCD-016/017 native contracts, source regeneration, synthetic tests and captured-RAM replay
+Claim: the shared compiler/interpreter now supports these forced callbacks without blanket source rejection. Parameters follow modeled creators/setters, branch alternatives join conservatively, unsupported source/operand paths remain unresolved and fresh acquisition flags remain authoritative.
+Evidence:
+
+- Two owned-disc generations are identical: manifest SHA256 `30ed335b05dfbefdbf6275c2eb52bc73044725da4c9b913003922ecd252c524b`. Relative to `d914405`, 20 command occurrences across 12 source variants become callback rules: callback 5 has four occurrences, 6 has twelve and 7 has four. All 1,981 registry-writer rows gain their third source u16. Reverting only those classifications and removing those words reproduces every previous source row exactly. Source signatures/ranges, loader choices, item/door identities, acquisition IDs, coverage flags, mutable fields and all other commands are unchanged; metadata gains these three research references.
+- All 944 tests pass in 45.35 seconds, including 124 new callback cases. Scoped Ruff lint/format checks pass for the seven changed Python files; the repository has no configured formatter/linter. The final diff was inspected and `git diff --check` passed before commit.
+- The original twelve-step RE1-REENTRY-004 captured-RAM replay passes. Main Hall remains cleared after departure and normal loads, the earlier ribbon-available capture restores incomplete, Art Room stays incomplete with its ribbon remaining, and only entered regions 06/07 appear. This adds no live save/load or callback execution observation.
+- Under the same donated Herb-before flag configuration used in RE1-QUANTITY-001, offline item-source completeness rises from 252 to 258 of 334; door-source completeness rises from 262 to 268. Neither loses a previously complete variant. Both gain `ROOM2070/2071`, `ROOM6100/6101` and `ROOM7070/7071`. The full projection takes about 4.94 seconds here, with the slowest source about 283 ms. These counts describe source interpretation under one snapshot, not rooms tested in gameplay or continuous polling latency.
+- Private reproduction artifacts are `/tmp/tasks/re-map/native-callbacks/audit.py`, `audit.json`, `projection.json`, `generation-audit.json`, both generated manifests and native excerpts. Regenerate with `tools/build_cache_metadata.py`, the owned CUE and pinned profile; run `tests/test_native_callbacks.py` for the synthetic contracts. Restricted code/captures/disc files remain outside Git.
+
+Limits: whole-game runtime validation, other unresolved predicates/effects, source scanner gaps, ordinary activation of these callbacks, other characters/revisions and later-area floor plans remain unfinished. The map still has Mansion 1F geometry and entry-only reveal. Visit history remains session-scoped. No new game profile, persistence policy or map geometry is introduced.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved shared callback feature, audited unchanged source fields, checked fresh flag reversal and replayed the original captures. Existing native/source findings and human capture attribution remain as recorded.
+- 2026-10-06; Gemini 3.8 Flash High via agy, initial conversation `40e9da17-a735-4301-9092-628acaa72199`; reported missing essential implementation/test context after the transport truncated the large generated diff. Its SUCCESS result is not a completed implementation review or endorsement. The initial Pro conversation `b9bfeff6-336f-4af0-b909-985df28d2150` was terminated after diagnosing that same packet defect, with no response. A single fresh call per model uses the complete authored source/test snapshot and an exact compact generated-data delta.
+- 2026-10-06; Gemini 3.1 Pro High via agy, fresh conversation `64674351-9a4d-44f6-a863-ad58bf0affbb`; reviewed the supplied interpreter, source/schema interfaces, native contracts, complete new tests and exact metadata delta, returning "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr. No tools, tests or gameplay were run by the reviewer.
+- 2026-10-06; Gemini 3.8 Flash High via agy, fresh conversation `cd96a4df-b3ff-4548-94ee-36b2c5b6528f`; exhausted its output-token limit after repetitive analysis and ended with result ERROR. The partial response is diagnostic data, not a completed review or endorsement. This was the single fresh recovery attempt; no further retry or substitution. No tool steps were attempted. Root's direct audit and Pro's completed perspective remain the review basis.
+- 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, review, substitution or endorsement.
