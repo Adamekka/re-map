@@ -2227,3 +2227,85 @@ History:
 - 2026-10-06; Gemini 3.8 Flash High via agy; the first review call encountered a provider internal error and ended with an interrupted-stream error. Its returned text was not accepted as a completed review. Retried this model once in a fresh session with the complete diff and affected interfaces/call sites/tests retained; the completed Pro review was preserved.
 - 2026-10-06; Gemini 3.8 Flash High via agy; the fresh retry completed successfully and returned no findings. Reviewed the same implementation scope, including source/pending validation, forced-award exclusions, cached reconstruction and the complete new synthetic tests. It did not reproduce gameplay or run checks.
 - 2026-10-06; Codex root, GPT-6.1 Sol; inspected the final diff, verified all nine replay capture hashes and the ten-step current/away-room verdict sequence, and confirmed the profile and room manifest are byte-identical to the prior commit. Final scoped Ruff lint/format and `git diff --check` passed. Both accepted Gemini calls reached a completed response, successful terminal result and process exit with empty stderr; no findings required edits. Reviews do not expand the runtime validation state. No Markdown formatter or linter is configured.
+- 2026-10-06; Codex root, GPT-6.1 Sol; clarified the final replay step's scope in RE1-CLEAR-003. Its Art Room return capture predates Main Hall ribbon acquisition and restores that ribbon's available flag. It is not an ordinary departure from the preceding collected state. A new normal-load and walked round trip independently reproduced the away-room uncertainty with the ribbon still collected.
+
+## RE1-CLEAR-003: normal Main Hall departure loses coverage with acquisition unchanged
+
+Status: Confirmed for the listed normal-load and walked room transitions; the cause's general interpretation remains Candidate
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Training Jill, Main Hall `00-06` and Art Room `00-07`; tracker commit `e63f475`
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`; existing private RE1-SAVE-003 card copied for this experiment; GDB localhost:2345, Python 3.14.8; native controller macros and paused frame stepping
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: new ordinary game load and controller-driven room transitions, coherent read-only RAM captures and replay through the unchanged shared tracker
+Claim: Main Hall reports cleared after normal loading, unknown while the player is in Art Room, then cleared on normal reentry. Its acquired ribbon flag and full acquisition block remain unchanged. This establishes an away-room coverage regression rather than a pickup-state reversal.
+
+Evidence:
+
+1. Started the owned disc without an emulator savestate. Used the game's Load Game menu to load card slot 2, `Jill /01/M.Hall 1F`, from RE1-SAVE-003. After control returned, the current room was `00-06`. Ribbon GlobalId 52 at PS1 virtual `0x800C86E1`, mask `0x08`, was cleared in byte `0xF7`; Map GlobalId 145 remained taken in `0x800C86ED = 0xBF`. `poll_once` reported `CLEARED` with complete item coverage and explicit noncollectible slot 5.
+2. Walked around the typewriter alcove, crossed the hall and used the Art Room door normally. After the door animation and room initialization finished, captured `00-07` with the same ribbon and Map bytes. Art Room had available Ink Ribbon, complete item/door coverage and `INCOMPLETE`. Replaying the two captures through one profile/cache and tracker changed Main Hall to `UNKNOWN` with incomplete item coverage.
+3. Turned and used the return door normally. After control returned in `00-06`, current Main Hall was `CLEARED` again, with noncollectible slot 5. No item was collected, card save made, game reset or savestate loaded during this round trip. The 32 acquisition bytes at PS1 virtual `0x800C86DC` matched the original slot-2 card payload in all three captures. Only entered map regions `06`, then `06` and `07`, appeared.
+4. The two current Main Hall captures have slot 5 registered as handler 16 with a generic opcode-`0x0D` source at PS1 virtual `0x8015182A`. While away, the evaluator's only unresolved item slot is 5. Its alternatives are the generic typewriter creator with handler 16, meaning absent, and the same creator with handler 4, meaning unresolved. Slot 6 resolves absent. The selected source is `PSX/STAGE1/ROOM1061.RDT`, SHA256 `4bb6e58451df65a2ac13f7bf13ce2c914e82753e551c460255af89a1cc858738`.
+5. Current live evidence does not make that source's cache eligible. Its manifest has `cache_complete = false` and dependencies include transient room/control bits. `refresh_visited_room` therefore reconstructs from source rather than carrying forward the live typewriter classification. Unconditionally retaining the last cleared color would conceal changed story conditions and earlier loads; this experiment does not authorize that shortcut.
+6. Rechecked RE1-CLEAR-002's older final `map-return.bin`, SHA256 `1e0c4b7151fa54e99554e5111b0ed5a860dec2645f0ef4521a3fc9b1aaecdcc7`. Its Main Hall ribbon byte is `0xFF`, mask `0x08` set, and story bank 1/index 11 is false. That replay step is an earlier uncollected state, not a natural departure from the preceding collected Main Hall capture. Its original verdict remains recorded, but it alone cannot establish the regression now reproduced above.
+
+| Private capture | SHA256 | Current room/verdict | Main Hall verdict |
+| --- | --- | --- | --- |
+| `main-loaded.bin` | `a9f2a970b20cfd3a4151311d76424f5ced14d6ecd2c83d146a6e71186bfbcc33` | `00-06 / CLEARED` | `CLEARED` |
+| `art-after-leaving.bin` | `b743e87bc4697c107e0e211bc05252e038c0a90ca9540fb8aaa35052e4310265` | `00-07 / INCOMPLETE` | `UNKNOWN` |
+| `main-returned.bin` | `ad1be172396d4d6e8e5c7406a12765109ef20266a55d4d122650e2b82b5f9b33` | `00-06 / CLEARED` | `CLEARED` |
+
+Reproduction: load the tested collected-ribbon card save through Load Game, capture Main Hall, walk to Art Room, capture, return and capture again. Run the unchanged `poll_once` over these captures in order with one profile/cache and tracker. `/tmp/tasks/re-map/away-room-validation/audit.py` checks the recorded sequence, source alternatives, fresh flags, card payload equality, map reveal and restored settings; `audit.json` retains the detailed results. The capture scripts interrupt before reading all 2 MiB. Navigation coordinates are experiment leads, not added profile addresses.
+
+Hygiene: the copied input card SHA256 was `28734147c3547009d6da5290098beca6cc7500aa952e11d2eb1acede17d77761`. After the run its hash was `0477d308bdb7441d28ddb2b8ad0cc699d14fcf89f89494501d540d654e6d952f`; twelve bytes changed within the reserved frame at file offsets 8064..8191. Both save payloads and directory entries were byte-identical; the reserved changes' purpose was not investigated. The original card was untouched. Closed the owned emulator normally and restored its private settings byte-for-byte, SHA256 `1a469b241fc5d5804c65c596599629d5c490705e52bcf1d9e590b09dd7cc5872`. No tracker server or emulator was left running. RAM, cards, extracted code and scripts remain outside Git.
+
+Limits: one collected-ribbon normal load and one walked round trip were tested. No fresh ribbon acquisition, before-pickup normal-save reversal, active story event, alternate character/mode/revision or other room's clearance was newly tested. The three captures establish the regression; they do not establish an implementation fix or prove optional past events impossible. RE1-CLEAR-001/002 and RE1-EVENT-004 retain their earlier provenance and limits.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; prepared the private card copy, loaded slot 2 normally, performed the two door transitions through native input, captured and audited the three unchanged RAM states, traced the away-room alternatives, and identified the older replay's acquisition rewind. No production code or generated metadata changed.
+
+## RE1-EVENT-016: room setup clears only a bounded portion of local flag storage
+
+Status: Candidate; pinned native inspection and compatible post-initialization captures, without an instruction/watchpoint execution test
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 from RE1-CLEAR-003; native room setup and script flag-bank 4
+Environment: Capstone 5.0.9, owned executable, and the three RE1-CLEAR-003 RAM captures; no emulator memory writes
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: direct MIPS instruction inspection, resolved callers and runtime-value comparison
+Claim: native routine `0x80044138` unconditionally stores zero to PS1 virtual words `0x800C300C` and `0x800C3008` at `0x800441A8` and `0x800441B0`. These eight bytes cover flag-bank 4 indices 0..63 under the existing MSB-first little-endian mapping. They provide a bounded candidate initial value for a new room-entry simulation. They do not make the full 32-byte bank persistent or prove that the first 64 bits remain zero after scripts execute.
+
+Evidence:
+
+- Inspected the complete routine through its return at `0x80044844`. It first masks the low four bits of words `0x800C3000` and `0x800C3004`, calls existing reset helpers, writes the two zero words, then clears the eight event activity fields and continues room loading through `0x8004484C`. These instructions do not clear the rest of bank 4; higher indices overlap other runtime structures and need their own semantics.
+- Resolved direct calls at `0x8002A750` and `0x80052D4C`. The latter is on the inspected door-loading path. This is source evidence about the routine and callers, not a new runtime trace of either instruction.
+- All three RE1-CLEAR-003 post-initialization captures have eight zero bytes at RAM offsets `0xC3008..0xC300F`. Bank-4/index-9 at PS1 virtual byte `0x800C300A`, mask `0x40`, and index 13 in that byte, mask `0x04`, are false. Such final values are compatible with the reset; they do not independently prove which instruction wrote them or exclude later writes.
+- The current evaluator deliberately discards initializer local shadows before recurring-main interpretation because earlier ticks may change them, as recorded in RE1-VARS-001. A reset value belongs at a room-entry boundary followed by modeled writes and event starts. Supplying it as an immutable current-main value or reading equal local bytes from another room would be invalid.
+
+Reproduction: inspect the named words/stores/callers in the pinned executable and compare only their bounded bytes in the three captured states. Complete native excerpts are private at `/tmp/tasks/re-map/away-room-validation/full-room-load-native.txt`, SHA256 `a8f86259d18e3489ec373296d4e7dda406ab24e0f925961eb83e98e740b997ad`. No new configured address, reset rule or profile metadata was added.
+
+Limits: no execution breakpoint or write watchpoint verified reset timing relative to all room scripts. Other native helpers and script aliases can subsequently change local bits. Do not initialize the entire bank to zero, use this as proof of earlier event history, or broaden it to other revisions. A shared reconstruction must retain unsupported effects and analysis limits as unresolved states.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; located the stores with a bounded constant-reference scan, independently inspected the full routine and resolved caller instructions, compared the three capture values, and recorded the bounded reset candidate.
+
+## RE1-EVENT-017: Main Hall pickup-handler activation depends on room-local progress
+
+Status: Candidate; source interpretation under the existing native command contracts, not a completed event-reachability proof
+Scope: SLUS-00551 and `PSX/STAGE1/ROOM1061.RDT`, SHA256 from RE1-CLEAR-003; indexed entry 25 and its decoded start sites
+Environment: unchanged numeric room manifest, clean indexed-event scan of the owned RDT, existing interpreter contracts and RE1-CLEAR-003 captures
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: branch-aware source inspection and fresh captured persistent flags
+Claim: entry 25's handler-4 setter is not an unconditional room action. Its three decoded recurring-main start sites require local bank-4/index-9 to be true. Distinguishing a new room entry from possible past dispatches is necessary before those guards can narrow away-room reconstruction.
+
+Evidence:
+
+- Entry 25's standalone setter at file offset 202858 changes slot 5 to handler 4 and preserves its creator pointer. Its decoded starts at offsets 196280, 196352 and 196424 are all inside the bank-4/index-9 true branch beginning at 196258. They additionally use local indices 10/11/12 and 13. The existing `event_effects` closure deliberately keeps the setter independent of those start conditions.
+- Decoded bank-4/index-9 setters are initializer offset 195812 and main offsets 196184 and 196226. The initializer setter is in the story-bank-1/index-5 false branch. The two main setters are in the opening branch that also requires this saved bit to be false. The clean indexed-event scan contains no direct flag-write to bank-4/index 9. This list describes decoded flag commands; it does not rule out every alias or native writer.
+- Story-bank-1/index 5 at PS1 virtual `0x800C8697`, mask `0x04`, is true in all three new captures. The corresponding local index 9 is false. RE1-EVENT-016 supplies a candidate reset boundary, rather than borrowing the Art Room's local flag values as Main Hall history.
+- The generic creator at offset 195626 has handler 16. Its bytes at the later award-reader's type/quantity/GlobalId offsets would instead read values 16, 129 and 3 if a pickup handler were hypothetically applied. GlobalId 3 is still uncollected in the tested saves. Therefore checking only the real ribbon's acquired GlobalId 52 cannot discharge this generic-handler uncertainty. This is a hypothetical source read, not evidence that the game ever awards that payload.
+
+Assessment: the next shared detection candidate is reconstruction from a fresh room-entry boundary: apply audited resets, interpret initialization against fresh saved state, follow supported script/event start conditions, and retain subsequent local writes and possible scheduling. This differs from filtering arbitrary historical events with current flags. It requires a shared activation model and conservative handling of unsupported starts, aliases, native effects and bounded analysis. No named-item exception, cached-color override or implementation change was made.
+
+Reproduction: inspect the source offsets against the clean scan, locate the three entry-25 starts in the retained branch structure, and compare the named bits in RE1-CLEAR-003. The private RDT and native excerpts remain outside Git. The existing evaluator still returns unresolved slot 5 in the ordinary away-room capture.
+
+Limits: no event-25 execution or exhaustive native/alias reachability was newly tested. True current story bits alone cannot disprove historical dispatches. Reentry initialization, future scheduling, script/local flag relations and remaining-item identity must be modeled before this lead changes completion. Other sources, dormant awards, puzzles and characters retain their existing coverage limits.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the three retained start branches and decoded local-progress writers, checked the generic source's hypothetical award fields and GlobalId-3 bit, and separated the entry-reconstruction candidate from unsupported pruning of past history.

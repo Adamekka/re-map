@@ -109,7 +109,15 @@ Savestates may prepare the two saving scenarios. The completed test matched all 
 
 RE1-CLEAR-002 replays those captures through shared live-interaction coverage. Main Hall now reports cleared while current after its ribbon is taken, including in all three normal-load captures, and incomplete when the captured uncollected ribbon state returns. The reader validates typewriter, item-box and document descriptors explicitly, preserves pending pickups and dormant-award uncertainty, and rechecks pending state before publication. After leaving Main Hall, unresolved event history still prevents an established clearance verdict there. These are recorded-RAM checks of the implementation, with no new gameplay run. Run `python3 -m pytest -q tests/test_room_items.py tests/test_tracking_rules.py` for its synthetic boundary and timing regressions.
 
-Last-item clearance, other puzzles, other characters/revisions and normal save/load of active events remain unvalidated. Private artifact hashes and exact event/flag evidence are in the research entries.
+RE1-CLEAR-003 adds a normal-load and walked Main Hall round trip with the ribbon already collected:
+
+1. Load the tested slot-2 card save through the game's Load Game menu. After control returns in Main Hall, expect ribbon byte `0x800C86E1 = 0xF7`, mask `0x08` clear, and current completion `CLEARED` with complete item coverage.
+2. Walk through the Art Room door without collecting anything. Capture after control returns. The ribbon flag and full acquisition block must remain unchanged. At tracker commit `e63f475`, Art Room reports `INCOMPLETE`, while cached Main Hall incorrectly loses coverage and reports `UNKNOWN`.
+3. Return through the same door. Current Main Hall reports `CLEARED` again. Keep the same profile/cache and tracker for the captured-state replay; reveal only the entered regions `06` and `07`.
+
+The new run used ordinary controller input and no savestate return. The older Art Room return at the end of RE1-CLEAR-002's replay restores the Main Hall ribbon's uncollected state, so it alone does not test ordinary post-collection departure. The new three-capture sequence independently reproduces the coverage regression. RE1-EVENT-016/017 record bounded reset/start-condition leads; no away-room implementation fix has been made.
+
+Fresh last-item pickup timing, other puzzles, other characters/revisions and normal save/load of active events remain unvalidated. Private artifact hashes and exact event/flag evidence are in the research entries.
 
 # Diagnosing failures
 
