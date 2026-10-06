@@ -2460,6 +2460,40 @@ History:
 - 2026-10-06; Codex root, GPT-6.1 Sol; performed private substitutions, observed coverage losses, rejected the extension and left production predicate behavior unchanged.
 
 
+## RE1-ANALYSIS-003: merging interaction alternatives at matching branch states avoids two procedure limits
+
+Status: Candidate; private offline experiment, not implemented
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; all 334 generated source variants at `d3c36b3`, reentry analysis only
+Environment: Python 3.14.8; donated Herb-before RAM SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`; no emulator interaction or RAM writes
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: interpreter tracing and three private in-memory substitutions, without production edits
+Claim investigated: forward control flow permits joining possible interaction descriptors when paths reach the same script PC, IF stack and physical shadow values. This can reduce duplicate execution while preserving distinct flag states and all descriptor alternatives.
+
+Evidence:
+
+- The updated gap audit finds 92 variants with unresolved item or door coverage. Its mutually exclusive diagnostic categories are 62 with condition/descriptor ambiguity and no failed procedure, 22 with incomplete source coverage, six with other source/context failures, and two exceeding the procedure budget. These counts describe one offline snapshot, not naturally validated rooms.
+- Repeating RE1-AOT-003's full-registry-context experiment after shared disabling produces no complete item/door gains, losses or changes to previously published payloads. A separate partial registry experiment retains known handler/mode/extended parameters without claiming a source identity and still rejects source-dependent reads. It also produces no complete coverage gains or losses in this snapshot. These observations do not reject the native contracts or establish that such models are unnecessary in other states.
+- The branch experiment processes pending states by ascending PC. At a matching PC, IF stack and exact physical shadow tuple, it unions descriptor alternatives separately for each slot, including a missing descriptor when a path lacks that slot. It leaves paths with different flag shadows separate. `RuleProcedure` already enforces forward branch targets. The existing 4,096-state, stack, descriptor and fixed-point limits are unchanged.
+- Complete item projections increase **269 -> 271**. The gains are `ROOM3050.RDT` and `ROOM3051.RDT`; each exposes item slots 15..18 with GlobalIds 203..206 under this captured configuration. Peak states per procedure fall **4,097 -> 524**, and each variant's failed-procedure count falls one -> zero. Door slots 1/2 become interpretable, but slot 0 still has a message-handler ambiguity, so complete door coverage remains **281/334**.
+- Across all 334 paired evaluations, every previously published item descriptor, quantity, acquisition state, door and disabled-door payload remains present and equal. No previously complete item or door result becomes incomplete. The report compares published results, not equality of every unresolved alternative or internal execution path.
+
+Private artifacts remain under `/tmp/tasks/re-map/post-disable-inspection/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `gaps.json` | `7bd0db110768c74d00ee37ec5fc6554b1ccb8db354c1e13c46f04b6a7a74a18b` | Updated failure categories and traced commands |
+| `context-comparison.json` | `f94a1fa759853e928b5e117dbae14f7690f06c80ff9b505f8b4d015bfd8141da` | Repeated full-context experiment |
+| `registry-comparison.json` | `d41c99949dcd9738c480cb8148e0ddd69cddbc0fc25a102a242bcf15548830db` | Partial registry experiment |
+| `merge_experiment.py` | `bdde18612aac971016ab01b0cf673f051a307b728b4e7515e1f20d3f4a7877f9` | Reproducible in-memory branch substitution and comparison |
+| `merge-comparison.json` | `29f6e0d57529fca44e359e53a33e01dcb5b3ae90e4787405508ba5a1d6020c98` | Paired coverage and published-payload results |
+| `merge-budget.json` | `88f6927bfed7e37432a98c11c166b05e52e26bb49d898ffc25214fa091c90b73` | Traced procedure counts and the two gained item lists |
+
+Limits: no production implementation, regression suite, current-room experiment, other captured flag state, save/load replay or natural gameplay validation was performed for merging. Joining slots can discard correlations between them; implementation must verify that all consumers remain conservative and that distinct guard states remain separate. The private list-based scheduling is an experiment, not a polling-performance design. Remaining item/door ambiguity and incomplete source coverage are unchanged.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; reran the gap audit and full-context hypothesis, inspected unresolved descriptor meanings, compared a partial registry hypothesis, then measured the branch-state candidate across 334 variants and traced both prior budget failures. Recorded evidence before requesting implementation approval. Manually reviewed the documentation diff and passed `git diff --check`; no Markdown formatter/linter is configured.
+
+
 ## RE1-AOT-003: disabling a registry handler does not dereference its retained source
 
 Status: Candidate; pinned native inspection and private offline experiment; implementation follow-up in RE1-AOT-004
