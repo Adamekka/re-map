@@ -274,7 +274,9 @@ def build_tracking_program(
             command(address, op, raw)
             for section, address, op, raw in operations
             if section == "events"
-            and op in (0x0C, 0x0D, 0x12, 0x13, 0x18)
+            and (
+                op in (0x0C, 0x0D, 0x12, 0x13, 0x18) or op == 0x4C and raw[1] in (1, 2)
+            )
             and (
                 address not in block_commands
                 or address in event_scan.standalone_commands

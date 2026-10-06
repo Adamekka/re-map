@@ -14,6 +14,7 @@ from enum import Enum
 from typing import Protocol
 
 from games.game_profile import RoomId
+from games.item_quantity import ItemQuantityState
 
 
 class MemoryResult(Protocol):
@@ -85,13 +86,20 @@ class RuntimeRoomLayout:
 class RuntimeRoomItem:
     aot_id: int
     item_type: int
-    amount: int
+    amount: int | ItemQuantityState
     label: str
     global_id: int
     state: RuntimeItemState
     kind: RuntimeItemKind
     source_address: int
     source_opcode: int
+
+    def __post_init__(self) -> None:
+        assert (
+            type(self.amount) is int
+            and 0 <= self.amount <= 255
+            or self.amount is ItemQuantityState.Unreconstructed
+        ), "RE1 quantity must be a byte or explicitly unreconstructed"
 
 
 @dataclass(frozen=True)

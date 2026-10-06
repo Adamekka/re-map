@@ -17,6 +17,7 @@ from test_live_items import RamReader, fixture_ram
 from track import PollStatus, poll_once
 
 from games.game_profile import RoomId
+from games.item_quantity import ItemQuantityState
 from games.re1.re1_profile import Re1Profile
 from games.re1.room_items import RuntimeItemState
 from games.re1.tracking_rules import (
@@ -245,7 +246,7 @@ def test_procedure_end_and_else_failures_use_native_parent_stack(rules):
     assert result.items.list_complete
 
 
-def test_dynamic_event_writers_and_quantity_changes_only_block_affected_slots(rules):
+def test_dynamic_event_writers_block_slots_but_quantity_uncertainty_is_separate(rules):
     program = compile_program(
         rules,
         pickup(1, 0x44, 111) + pickup(2, 0x26, 63) + b"\0",
@@ -260,8 +261,9 @@ def test_dynamic_event_writers_and_quantity_changes_only_block_affected_slots(ru
         main=bytes((0x4C, 1, 2, 0, 0)),
     )
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
-    assert [item.aot_id for item in result.items.items] == [1]
-    assert result.unresolved_item_slots == (2,)
+    assert [item.aot_id for item in result.items.items] == [1, 2]
+    assert result.unresolved_item_slots == ()
+    assert result.items.items[1].amount is ItemQuantityState.Unreconstructed
 
 
 def test_rule_read_failure_is_explicit(rules):

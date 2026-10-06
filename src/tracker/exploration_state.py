@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from games.game_profile import RoomId
+from games.item_quantity import ItemQuantityState
 
 
 class RoomCompletion(Enum):
@@ -23,7 +24,14 @@ class RoomCompletion(Enum):
 class ItemDetail:
     label: str
     state: str
-    quantity: int
+    quantity: int | ItemQuantityState
+
+    def __post_init__(self) -> None:
+        assert (
+            type(self.quantity) is int
+            and self.quantity >= 0
+            or self.quantity is ItemQuantityState.Unreconstructed
+        ), "quantity must be a count or explicitly unreconstructed"
 
 
 @dataclass(frozen=True)

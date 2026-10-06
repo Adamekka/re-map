@@ -207,7 +207,7 @@ def test_forced_awards_use_persistent_flags_without_inventing_completion(
     )
 
 
-def test_forced_door_preserves_coverage_while_dynamic_quantity_remains_unresolved(
+def test_forced_door_and_item_coverage_survive_dynamic_quantity_uncertainty(
     rules,
 ):
     program = compile_program(
@@ -216,7 +216,7 @@ def test_forced_door_preserves_coverage_while_dynamic_quantity_remains_unresolve
         bytes((0x4C, 1, 0, 0, 0x24, 1, 1, 0, 0)),
     )
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
-    assert result.unresolved_item_slots == (0,)
+    assert result.items.list_complete and result.unresolved_item_slots == ()
     assert result.unresolved_door_slots == ()
     assert result.doors == ((1, door(1, 8, 0x34)),)
 

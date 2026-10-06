@@ -463,6 +463,8 @@ def main() -> int:
                         "RE1-EVENT-017",
                         "RE1-REENTRY-004",
                         "RE1-REENTRY-002",
+                        "RE1-QUANTITY-001",
+                        "RE1-QUANTITY-002",
                         "RE1-VARS-001",
                         "RE1-SOURCE-002",
                         "RE1-SELECT-001",

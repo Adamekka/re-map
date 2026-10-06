@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
 from games.game_profile import RoomId
+from games.item_quantity import ItemQuantityState
 from games.re1.event_state import EventProgram
 from games.re1.room_items import (
     MemoryResult,
@@ -222,6 +223,7 @@ class RoomProgram:
                 occupied.add(command.offset)
         if any(
             command.kind not in ("item", "door", "aot-create", "aot-handler")
+            and not (command.kind == "quantity-transfer" and command.args[0] in (1, 2))
             for command in self.event_effects
         ) or len({command.offset for command in self.event_effects}) != len(
             self.event_effects
@@ -503,6 +505,25 @@ def evaluate_room_program(
         offset: (parameter, model)
         for offset, _, parameter, model in program.event_program.registry_writes
     }
+    quantity_slots = {
+        command.args[1]
+        for command in (
+            tuple(
+                c
+                for procedure in program.procedures + program.main_procedures
+                for c in procedure.commands
+            )
+            + tuple(
+                c for block in program.event_blocks for p in block for c in p.commands
+            )
+            + program.event_commands
+        )
+        if command.kind == "quantity-transfer" and command.args[0] in (1, 2)
+    }
+    history_unresolved = set()
+
+    def targets_slot(command, slot):
+        return command.args[1 if command.kind == "quantity-transfer" else 0] == slot
 
     def start_interaction(slot, slots):
         descriptors = dict(slots).get(slot, frozenset({None}))
@@ -520,23 +541,46 @@ def evaluate_room_program(
         started.update(targets)
         return True
 
-    def update_descriptor(descriptor, command):
+    def update_descriptor(
+        descriptor, command, quantity=ItemQuantityState.Unreconstructed
+    ):
         kind, args = command.kind, command.args
+        if kind == "quantity-transfer":
+            # 4C writes source+9. Only an item creator gives that byte an
+            # audited quantity meaning; a door/generic/stale source can differ.
+            if descriptor is None or descriptor[0] != "item":
+                history_unresolved.add(args[1])
+                return descriptor
+            return (*descriptor[:5], quantity)
         # Generic creators and extended setters provide known u16 parameters.
         # Other creators have no reconstructed parameter contract for callback 9.
         parameters = registry_parameters.get(
             command.offset, RegistryParameterState.Unreconstructed
         )
         if kind == "item":
-            return kind, args, 15 if args[1] >= 0x4E else 4, args[4], parameters
+            # A repeated creator reads a possibly mutated source byte. The
+            # disc amount cannot reestablish a quantity after a source writer.
+            amount = (
+                ItemQuantityState.Unreconstructed
+                if args[0] in quantity_slots
+                else args[2]
+            )
+            return kind, args, 15 if args[1] >= 0x4E else 4, args[4], parameters, amount
         if kind == "door":
-            return kind, args, 1, args[9], parameters
+            return kind, args, 1, args[9], parameters, ItemQuantityState.Unreconstructed
         if kind == "aot-create":
-            return kind, args, args[1], args[2], parameters
+            return (
+                kind,
+                args,
+                args[1],
+                args[2],
+                parameters,
+                ItemQuantityState.Unreconstructed,
+            )
         assert kind == "aot-handler"
         if descriptor is None:
             return None  # Setters preserve pointers; no modeled creator supplies one.
-        creator, fields, _, _, retained_parameters = descriptor
+        creator, fields, _, _, retained_parameters, retained_quantity = descriptor
         return (
             creator,
             fields,
@@ -545,6 +589,7 @@ def evaluate_room_program(
             parameters
             if command.offset in registry_parameters
             else retained_parameters,
+            retained_quantity,
         )
 
     event_updates = tuple(
@@ -555,6 +600,8 @@ def evaluate_room_program(
                 for procedure in block
                 for command in procedure.commands
                 if command.kind in ("item", "door", "aot-create", "aot-handler")
+                or command.kind == "quantity-transfer"
+                and command.args[0] in (1, 2)
             ),
         )
         for block in program.event_blocks
@@ -568,7 +615,7 @@ def evaluate_room_program(
             descriptor = pending.pop()
             outcomes = {update_descriptor(descriptor, c) for c in effects}
             for block_index, (block, updates) in enumerate(event_updates):
-                relevant = tuple(c for c in updates if c.args[0] == slot)
+                relevant = tuple(c for c in updates if targets_slot(c, slot))
                 if not relevant:
                     continue
                 key = (block_index, slot, descriptor)
@@ -867,13 +914,49 @@ def evaluate_room_program(
                             value & (1 << bit)
                         )
                 writes = tuple(sorted(changed.items()))
-            elif kind == "quantity-transfer" and args[0] in (0, 2):
+            elif kind == "quantity-transfer":
+                transfer, slot, variable = args
+                descriptors = dict(slots).get(slot, frozenset({None}))
+                amount = ItemQuantityState.Unreconstructed
+                address = layout.byte_variables_base + variable
+                if transfer == 0:
+                    quantities = {
+                        descriptor[5]
+                        if descriptor is not None and descriptor[0] == "item"
+                        else ItemQuantityState.Unreconstructed
+                        for descriptor in descriptors
+                    }
+                    if len(quantities) == 1:
+                        amount = quantities.pop()
+                elif transfer == 1:
+                    shadow = dict(writes)
+                    bits = [shadow.get((address, 1 << bit)) for bit in range(8)]
+                    if all(bit is not None for bit in bits):
+                        amount = sum(
+                            int(value) << bit for bit, value in enumerate(bits)
+                        )
+                if transfer in (1, 2):
+                    if any(d is None or d[0] != "item" for d in descriptors):
+                        # Source+9 is not always an item quantity. An unbound
+                        # write cannot authorize unrelated room conclusions.
+                        successful = False
+                        break
+                    changed_slots = dict(slots)
+                    changed_slots[slot] = frozenset(
+                        update_descriptor(d, command, amount) for d in descriptors
+                    )
+                    slots = tuple(sorted(changed_slots.items()))
+                if transfer == 1:
+                    # Mode 1 reads the scalar without changing it.
+                    pending.append((command.next, stack, slots, writes))
+                    continue
                 changed = dict(writes)
-                address = layout.byte_variables_base + args[2]
                 for bit in range(8):
-                    # These copies read live source/inventory quantities that
-                    # cannot be reconstructed. Forget a preceding scalar write.
-                    changed[address, 1 << bit] = None
+                    # Inventory history is unavailable in mode 2, including
+                    # its no-match path. Forget the amount and scalar together.
+                    changed[address, 1 << bit] = (
+                        bool(amount & (1 << bit)) if type(amount) is int else None
+                    )
                 writes = tuple(sorted(changed.items()))
             elif kind in ("item", "door", "aot-create", "aot-handler"):
                 changed = dict(slots)
@@ -1009,7 +1092,6 @@ def evaluate_room_program(
                 pending.append((command.next, stack, slots, true_writes))
         return successful, list(finished)
 
-    history_unresolved = set()
     if reentry:
         resets = {
             layout.flag(group, index): False
@@ -1185,6 +1267,8 @@ def evaluate_room_program(
                     for block in program.main_procedures
                     for command in block.commands
                     if command.kind in ("item", "door", "aot-create", "aot-handler")
+                    or command.kind == "quantity-transfer"
+                    and command.args[0] in (1, 2)
                 )
                 historical = []
                 for slots, _ in paths:
@@ -1192,7 +1276,11 @@ def evaluate_room_program(
                     for slot in set(program.item_slots) | set(program.door_slots):
                         choices, exceeded = closure(
                             changed.get(slot, frozenset({None})),
-                            [command for command in effects if command.args[0] == slot],
+                            [
+                                command
+                                for command in effects
+                                if targets_slot(command, slot)
+                            ],
                             slot,
                         )
                         changed[slot] = choices
@@ -1211,10 +1299,10 @@ def evaluate_room_program(
     def interpret_descriptor(descriptor):
         if descriptor is None:
             return "absent", None
-        creator, args, handler, mode, _ = descriptor
+        creator, args, handler, mode, _, quantity = descriptor
         slot = args[0]
         if creator == "item":
-            _, item_type, amount, gid, _ = args
+            _, item_type, _, gid, _ = args
             if item_type == 0 or item_type >= 0x54:
                 return "absent", None  # Documents are excluded from room completion.
             if (
@@ -1247,7 +1335,7 @@ def evaluate_room_program(
                 RuntimeRoomItem(
                     slot,
                     item_type,
-                    amount,
+                    quantity,
                     labels.get(item_type, ""),
                     gid,
                     state,
@@ -1290,17 +1378,33 @@ def evaluate_room_program(
             for command in (
                 active_effects if reentry and bounded else program.event_effects
             )
-            if command.args[0] == slot
+            if targets_slot(command, slot)
         ]
         if reentry and not bounded:
             exceeded = False
         else:
             choices, exceeded = closure(choices, effects, slot)
         meanings = {interpret_descriptor(descriptor) for descriptor in choices}
+        if meanings and all(kind == "item" for kind, _ in meanings):
+            # Different amounts do not change the identity, acquisition bit or
+            # registered handler. Join quantity uncertainty independently.
+            identities = {
+                replace(item, amount=ItemQuantityState.Unreconstructed)
+                for _, item in meanings
+            }
+            if len(identities) == 1:
+                amounts = {item.amount for _, item in meanings}
+                amount = (
+                    amounts.pop()
+                    if len(amounts) == 1
+                    else ItemQuantityState.Unreconstructed
+                )
+                meanings = {("item", replace(identities.pop(), amount=amount))}
         if (
             not bounded
             or not program.coverage_complete
             or slot in program.mutable_slots
+            and slot not in quantity_slots
             or exceeded
             or slot in history_unresolved
             or len(meanings) != 1

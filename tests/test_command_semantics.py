@@ -6,6 +6,7 @@ import pytest
 from test_cache_metadata import indexed_event, pickup
 from test_tracking_rules import branch, compile_program, door, evaluate, guard
 
+from games.item_quantity import ItemQuantityState
 from games.re1.room_items import RuntimeItemState
 from games.re1.tracking_rules import RuleCommand
 
@@ -221,11 +222,12 @@ def test_quantity_modes_read_or_mutate_the_descriptor_slot(rules, mode):
     program = compile_program(rules, code)
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert program.mutable_slots == (() if mode == 0 else (0,))
-    assert result.items.list_complete == (mode == 0)
+    assert result.items.list_complete
     if mode == 0:
         assert result.items.items[0].item_type == 0x44
     else:
-        assert result.unresolved_item_slots == (0,)
+        assert result.unresolved_item_slots == ()
+        assert result.items.items[0].amount is ItemQuantityState.Unreconstructed
 
 
 def test_native_quantity_default_does_not_access_a_slot_or_change_a_variable(rules):
