@@ -1059,6 +1059,51 @@ History:
 - 2026-10-07; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, substitution, review or endorsement.
 - 2026-10-07; Codex root, GPT-6.1 Sol; completed the final direct code/data/documentation review, accepted both completed advisory reviews, and checked the five artifact hashes and supplied-snapshot hash. A second generator run is byte-identical to the checked-in manifest. Every original semantic command and manifest row field is unchanged apart from retaining missing award slots in `ROOM4081` and `ROOM7180`; new fields record explicit reentry coverage and owned event failures. Final scoped Ruff lint/format and `git diff --check` pass. All game bytes, RAM captures, scratch tools and review logs remain outside Git.
 
+## RE1-ANALYSIS-006: remaining reconstruction gaps after reachable script coverage
+
+Status: Candidate; private source diagnostics under one unchanged captured state
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; all 334 source variants at `2caa0c4`
+Environment: Python 3.14.8 on macOS; the unchanged Herb-before RAM from RE1-ANALYSIS-001, SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`; no new emulator actions
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: mandatory profile loading, reentry evaluation, procedure/coverage traces and private interpreter substitutions
+Claim: 72 source variants have unresolved items or doors in this configuration after RE1-REENTRY-005. This is an offline diagnostic count, not gameplay coverage.
+
+Evidence:
+
+- Reentry has 287 complete item lists and 301 complete door results. Their combined unresolved set has 47 item-list failures and 33 door failures, with eight variants in both sets. The 72 variants comprise 58 condition/descriptor ambiguities without a traced runner failure, eight ambiguities with a failed per-slot event closure, four reached invalid event starts and two structurally invalid event tables. The outer coverage result can remain complete while a per-slot closure leaves its own interaction unresolved; it does not authorize publishing that slot.
+- Invalid starts remain in `ROOM5070/5071` and `ROOMC070/C071`. `ROOMB000/B001` retain structural coverage failures. The eight failed-closure variants are `ROOM10E0/10E1`, `ROOM10F0`, `ROOM5130/5131`, `ROOM60E0/60E1` and `ROOM60F0`. Their traced failure is a nonzero handler setter without a creator in that closure's source context. No traced procedure state or stack budget is exceeded.
+- Repeated RE1-ANALYSIS-002's unknown-flag assumption experiment against the current interpreter, separately in current/reentry epochs. It produces no complete-result gains. Current complete item lists fall 263 -> 259; reentry item lists fall 287 -> 280 and door results 301 -> 291. It also loses previously published payloads. The earlier rejected approach remains rejected; no production predicate behavior changed.
+- Repeated RE1-ANALYSIS-003's full-registry-context experiment after the reachability change. Current/reentry complete item counts remain 263/287 and door counts 256/301, with no previously published payload changes. Supplying that context alone does not resolve the observed gaps. Neither experiment changes source bounds or treats a missing creator as known.
+
+Private reproducible scripts and reports are under `/tmp/tasks/re-map/post-reachability-inspection/`. `gaps.json` has SHA256 `5eb8410b9e7f544512e869dfe246e62fea739b25ed203a0a290c7659063d27c1`; `experiments.json` has SHA256 `f9ffa16a8bc035eab8403969ef141c25eda78b9ea958ab2bf3e1bbc05c036bd0`. The gap report initially groups all 66 bounded unresolved variants together; the eight failed-closure rows distinguish the two subcategories above. Run `gaps.py` and `experiments.py` against the named commit and fixture to reproduce the counts.
+Limits: one captured flag configuration, no natural traversal, story progression, pickup, load or alternate character was newly tested. Absence of a traced procedure budget does not prove that every other analysis limit is impossible. The private substitutions are diagnostics, not implementation or additional runtime validation. Original earlier audit results and attribution remain unchanged.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; adapted the prior diagnostics to explicit reentry and final coverage, reran both rejected/ungained hypotheses, and separated reached invalid roots from interaction ambiguity. Production code, profile, generated manifest and runtime state remain unchanged.
+
+## RE1-DOORS-005: scripted door interactions need a delegated access rule
+
+Status: Candidate; bounded source pattern, no traversal or availability proof
+Scope: same pinned SLUS-00551 source set and unchanged RAM as RE1-ANALYSIS-006
+Environment: Python 3.14.8; source-bound semantic metadata and descriptor inspection, no new DuckStation session
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: reentry descriptor inspection and indexed dispatch/guard inspection; native callback contracts remain RE1-EVENT-006 and RE1-DOORS-003
+Claim investigated: some unresolved doors retain a valid door creator but register callback 9 to run an indexed script. A shared rule for delegation to the ordinary door callback may resolve access without treating every script handler as an ordinary open door.
+
+Evidence:
+
+- Thirteen unresolved door slots across eleven variants have only door-created, handler-9 alternatives with modeled event parameters. They occur in `ROOM3070/3071`, `ROOM5000`, `ROOM5020/5021`, `ROOM5030/5031`, `ROOM5080/5081` and `ROOM50C0/50C1`; both `ROOM5080/5081` have two such slots. The current descriptor interpreter labels handler-9 door sources unresolved. These are source variants, not eleven confirmed live rooms.
+- Five slots' registered entries contain a direct embedded SCD callback 1 targeting the same door slot: `ROOM3070`, slot 0, entry 5, command `0x364E0`; `ROOM3071`, slot 0, entry 5, `0x36534`; `ROOM5000`, slot 2, entry 5, `0xD124`; `ROOM5020`, slot 0, entry 2, `0x4A18`; `ROOM5021`, slot 0, entry 3, `0x514C`. Each inspected callback is guarded by byte-variable index 5 equaling zero. `ROOM3070/3071` also writes byte-variable index 9 before dispatch. This is a possible delegated route, not proof that its guard is satisfied or traversal succeeds.
+- The other eight slots have no direct same-slot callback in their registered entry's embedded procedure blocks under this inspection. Their additional starts, standalone dispatches, conditional routes and retained registry context need separate analysis. They must not inherit the five direct patterns' classification.
+- Proposed feature: shared scripted-door tracking that binds the registered event target to its source, follows supported delegation and guards, and derives access through the existing ordinary door rule. Unsupported guards, missing source context, failed event decoding and invalid targets still prevent an access proof. Validate normal and scripted door paths, lock changes and load reversal before claiming increased coverage. No implementation approval has been given for this feature.
+
+Private `scripted_doors.py` and `scripted-doors.json` retain the exact source hashes, registered entries and complete inspected callback procedures. The report has SHA256 `e8e1198f0924d059692301045ff2ab8c8724f035b168e55ba3b2a2dfa10d35c8` under `/tmp/tasks/re-map/post-reachability-inspection/`. Source instructions and RAM stay outside Git.
+Limits: no access verdict, door traversal, event timing, meaning of the byte-5 guard, natural lock change or save/load behavior was newly validated. A reachable callback alone cannot prove that a scripted door is open. No map geometry or tracker behavior changed.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; catalogued the thirteen handler-9 slots, inspected the five direct delegated callbacks and their guards, and identified a shared implementation candidate. Recorded the evidence before requesting implementation approval.
+- 2026-10-07; Codex root, GPT-6.1 Sol; manually reviewed both new findings, verified the three artifact hashes, diagnostic counts, five callback guard operands and unique finding IDs, and passed `git diff --check`. No Markdown formatter or linter is configured. This documentation-only audit does not require rerunning the unchanged implementation suite and adds no external review or runtime endorsement.
+
 ## RE1-FLAG-002: alternate pickup acquisition needs an explicit flag rule
 
 Status: Candidate; pinned native interpretation, no natural pickup experiment
