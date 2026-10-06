@@ -149,6 +149,12 @@ Run `python3 -m pytest -q tests/test_interaction_disabling.py tests/test_room_re
 
 The paired offline audit preserves previously resolved payloads across 334 variants, both epochs and three captured flag states. Reentry item coverage increases 262 -> 269 and door coverage 272 -> 281; current coverage is unchanged. The twelve-step captured save/load replay passes, including earlier-state reversal and entry-only map reveal. These checks add no natural disabling-event or whole-game gameplay validation.
 
+## Shared branch merging
+
+Run `python3 -m pytest -q tests/test_branch_merging.py tests/test_script_dependencies.py tests/test_room_reentry.py tests/test_native_callbacks.py tests/test_dynamic_quantities.py tests/test_event_conditions.py tests/test_interaction_disabling.py` for RE1-ANALYSIS-003/004. The runner combines interaction alternatives only at matching script positions, IF stacks, physical shadows and descriptor inputs to quantity/flag callbacks. Synthetic cases retain distinct guard histories, missing sources, conflicting item/door identities, callback parameters, quantity uncertainty and fresh acquisition reversal. Tests preserve a scalar guard that passes for both descriptor inputs. Descriptor, procedure and stack limits still prevent unsupported completion.
+
+The paired audit preserves published results across 334 variants, both modes and three captured states. Current complete item projections increase 255 -> 259; reentry increases 269 -> 271. Door coverage remains 252/281. The existing twelve-step captured save/load replay passes with earlier-state reversal and reveal only on entry. These are offline checks; the newly resolved variants and whole-game behavior still need natural gameplay validation.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

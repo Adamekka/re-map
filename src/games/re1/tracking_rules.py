@@ -7,10 +7,12 @@ not a replay of game side effects or a guess from another room's local bytes.
 
 from __future__ import annotations
 
+import itertools
 import struct
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from enum import Enum
+from heapq import heappop, heappush
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
@@ -534,6 +536,21 @@ def evaluate_room_program(
         for command in all_commands
         if command.kind == "quantity-transfer" and command.args[0] in (1, 2)
     }
+    descriptor_inputs = tuple(
+        sorted(
+            {
+                command.args[1]
+                for command in all_commands
+                if command.kind == "quantity-transfer" and command.args[0] == 0
+            }
+            | {
+                command.args[0]
+                for command in all_commands
+                if command.kind in ("award", "aot-callback")
+                and command.args[1] in (1, 7, 15)
+            }
+        )
+    )
     required_shadow_bits = set()
     for command in all_commands:
         if command.kind == "flag-test":
@@ -701,17 +718,59 @@ def evaluate_room_program(
     def run_procedure(procedure, initial, historical):
         successful = True
         commands = {command.offset: command for command in procedure.commands}
-        pending = [(procedure.start, (), slots, writes) for slots, writes in initial]
+        pending, positions = {}, []
+        sequence = itertools.count()
         finished = set()
         seen = set()
-        while pending:
-            pc, stack, slots, writes = pending.pop()
+
+        def enqueue(pc, stack, slots, writes):
+            nonlocal successful
             # Only shadow bits read anywhere in this room can affect a later
             # decision or quantity. Physical keys preserve flag/scalar aliases;
             # whole-room dependencies also preserve later procedures and ticks.
             writes = tuple(
                 (key, value) for key, value in writes if key in required_shadow_bits
             )
+            # Quantity/registry callbacks can feed later guards. Keep those
+            # descriptor inputs separate: joining amounts 1/2 before a >=1
+            # test would discard a proof that holds on both original paths.
+            descriptors = dict(slots)
+            key = (
+                pc,
+                stack,
+                writes,
+                tuple(
+                    (slot, descriptors.get(slot, frozenset({None})))
+                    for slot in descriptor_inputs
+                ),
+            )
+            if key not in pending:
+                pending[key] = slots
+                # A unique tie breaker avoids comparing unknown shadow values.
+                heappush(positions, (pc, next(sequence), key))
+            elif pending[key] != slots:
+                earlier, later = dict(pending[key]), dict(slots)
+                pending[key] = tuple(
+                    (
+                        slot,
+                        earlier.get(slot, frozenset({None}))
+                        | later.get(slot, frozenset({None})),
+                    )
+                    for slot in sorted(earlier.keys() | later.keys())
+                )
+                # Merging must not bypass the existing descriptor budget.
+                if any(len(choices) > 256 for _, choices in pending[key]):
+                    successful = False
+
+        for slots, writes in initial:
+            enqueue(procedure.start, (), slots, writes)
+        while positions and successful:
+            # Validated branches advance. Processing PCs in order gathers all
+            # predecessors before executing a joined registry. Different IF
+            # stacks, shadows or descriptor inputs retain separate histories.
+            _, _, key = heappop(positions)
+            pc, stack, writes, _ = key
+            slots = pending.pop(key)
             state = (pc, stack, slots, writes)
             if state in seen:
                 continue
@@ -730,19 +789,17 @@ def evaluate_room_program(
                 finished.add((slots, writes))
                 continue
             if kind == "if":
-                pending.append((command.next, stack + (args[0],), slots, writes))
+                enqueue(command.next, stack + (args[0],), slots, writes)
                 continue
             if kind in ("else", "endif"):
                 if not stack:
                     successful = False
                     break
-                pending.append(
-                    (
-                        args[0] if kind == "else" else command.next,
-                        stack[:-1],
-                        slots,
-                        writes,
-                    )
+                enqueue(
+                    args[0] if kind == "else" else command.next,
+                    stack[:-1],
+                    slots,
+                    writes,
                 )
                 continue
             predicate = True
@@ -991,7 +1048,7 @@ def evaluate_room_program(
                     slots = tuple(sorted(changed_slots.items()))
                 if transfer == 1:
                     # Mode 1 reads the scalar without changing it.
-                    pending.append((command.next, stack, slots, writes))
+                    enqueue(command.next, stack, slots, writes)
                     continue
                 changed = dict(writes)
                 for bit in range(8):
@@ -1183,11 +1240,11 @@ def evaluate_room_program(
                 true_writes = tuple(sorted(changed.items()))
             if predicate is not True:
                 if stack:
-                    pending.append((stack[-1], stack[:-1], slots, false_writes))
+                    enqueue(stack[-1], stack[:-1], slots, false_writes)
                 else:
                     finished.add((slots, false_writes))
             if predicate is not False:
-                pending.append((command.next, stack, slots, true_writes))
+                enqueue(command.next, stack, slots, true_writes)
         return successful, list(finished)
 
     if reentry:

@@ -2492,6 +2492,47 @@ Limits: no production implementation, regression suite, current-room experiment,
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; reran the gap audit and full-context hypothesis, inspected unresolved descriptor meanings, compared a partial registry hypothesis, then measured the branch-state candidate across 334 variants and traced both prior budget failures. Recorded evidence before requesting implementation approval. Manually reviewed the documentation diff and passed `git diff --check`; no Markdown formatter/linter is configured.
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved shared runner change and recorded RE1-ANALYSIS-004's synthetic, paired-projection and captured-load checks. The initial experiment remains separate from implementation evidence; no natural gameplay validation is added.
+- 2026-10-06; Codex root, GPT-6.1 Sol; found that merging distinct descriptor inputs before quantity/registry reads can discard a guard proof, despite matching earlier flag shadows. RE1-ANALYSIS-004 retains those inputs separately and adds the counterexample regressions. The original experiment's narrower measured results remain recorded.
+
+
+## RE1-ANALYSIS-004: bounded branch merging preserves source and guard uncertainty
+
+Status: Candidate; synthetic regressions, paired offline projections and previously captured RAM replay
+Scope: RE1 Director's Cut NTSC-U SLUS-00551 identity from RE1-ANALYSIS-003; shared initialization/main/event runner in current and reentry analysis
+Environment: Python 3.14.8 and pytest 9.1.1; capture environments/provenance remain RE1-REENTRY-004's, without a new DuckStation session
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: approved interpreter change, direct invariant/consumer inspection, synthetic boundary tests and comparison against `620f44c`
+Claim: pending states can join possible interaction descriptors at matching script PCs, IF stacks, demanded physical shadow tuples and source descriptor inputs to quantity/flag callbacks. The runner retains missing creators and conflicting identity, parameter, quantity and availability alternatives; differing guard inputs remain separate. This avoids some procedure-budget failures without inventing a source or granting acquisition/unlock.
+
+Evidence:
+
+- A heap processes validated forward PCs and uses a unique sequence number to avoid ordering unknown shadow values. Keyed pending buckets union descriptors separately per slot and include `None` when a predecessor lacks that slot. Inputs to quantity reads and door/flag/map callbacks stay in the join key, because those consumers can affect later scalar/flag guards. Enqueueing filters only RE1-ANALYSIS-001's already-unread shadow bits. A union exceeding the existing 256-descriptor limit fails reconstruction; the 4,096-state, 16-stack and 64-iteration limits remain unchanged. The common runner handles both epochs and every existing procedure entry point. No room-specific exceptions, profile/manifest changes or new memory addresses were added.
+- `tests/test_branch_merging.py` adds 46 synthetic cases for independent registry branches in init/main/ordered events, distinct physical flag/scalar shadows, missing creators, source-dependent callbacks and quantity writes, alternative flag/event callback parameters, conflicting item/door identities, fresh acquisition reversal, unknown quantities, the descriptor boundary and malformed IF stacks. Four cases preserve a `>= 1` guard after reading either quantity 1/2 or registry flag parameters producing scalar 1/2. An unrestricted descriptor union loses that proof by turning the read into unknown. Separate relevant flag histories still reach the original procedure budget and remain unresolved. All tests use synthetic packets and explicitly supplied test RAM.
+- The final full suite passes **1,181 tests in 44.37 seconds**; the final focused file passes **46 in 0.25 seconds**. Ruff formatting and lint checks pass on the modified Python files, and `git diff --check` passes. The repository has no configured formatter/linter; documentation is reviewed manually.
+- The unchanged paired audit from RE1-AOT-004 compares both evaluators across all 334 sources, both epochs and Herb-before, Herb-after and Chemical-before captures, using their recorded hashes from RE1-ANALYSIS-001. All **2,004 comparisons** preserve previously published item descriptors, quantities, acquisition states, doors and disabled doors. Previously complete results remain complete and equal. In each snapshot, current item coverage increases **255 -> 259**, reentry item coverage **269 -> 271**. Complete current/reentry door coverage stays **252/281**.
+- Current item gains are `ROOM3050/3051` and `ROOM5130/5131`; reentry gains are `ROOM3050/3051`. Under Herb-before, traced `ROOM3050/3051` peak states fall **4,097 -> 273** for current analysis and **4,097 -> 524** for reentry. Current `ROOM5130/5131` peaks fall **4,097 -> 2,932/2,942**. Each prior budget failure disappears. Their unresolved door slot 0 remains unresolved; item gains do not establish complete door access.
+- RE1-REENTRY-004's unchanged twelve-step replay of eleven distinct coherent 2 MiB RAM captures passes through one profile/tracker. It covers the recorded Art Map pickup, Main Hall Ribbon states, three normal-load captures, ordinary departure/return and earlier-state reversal. Main Hall remains cleared after departure when its Ribbon is taken and becomes incomplete in the recorded uncollected state. Art Room keeps its remaining Ink Ribbon and Map acquisition reversal. Only entered rooms 06/07 are revealed. No bytes are substituted and no new gameplay occurs.
+
+Private artifacts stay under `/tmp/tasks/re-map/branch-merging/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `differential.py` | `3bb902d9987b00990b92e024a727a0b34651cf3fc0652312c8203f99fbda18a8` | Unchanged paired-evaluator audit |
+| `differential.json` | `9cb2a5f5a8c52fe55ac9e163762657755f841e39205faddefb48bb3f9dec0f14` | Six projections and preserved published results |
+| `audit.json` | `b0fa14d6acb242cad3d1ed50094425d0c9e430f6cd8f550120276f3155698235` | Captured save/load/room replay and source projection |
+| `budget.json` | `0e89c1129a35c8361f3b92f442d9a0c4feb967ee86803661d0514eed1ed07bc4` | Old/new procedure traces for the four gained variants |
+| `pytest-final.log` | `5889e1e98f970fc9a65f1545ba8011202559633567fe623da7620c7eb24de7e3` | Final full-suite result |
+
+Limits: merged slots can lose correlations between descriptors in different slots, so consumers must remain conservative. No claim of equivalence for every unresolved execution path is made. The source counts are disc variants under three captured flag configurations, not validated rooms or playthrough coverage. Newly resolved variants, broader story progression, alternate character/revision and whole-game behavior still need natural gameplay validation. Existing source/condition and door-handler gaps remain.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved shared join, inspected its forward-control-flow invariant and source/quantity/parameter consumers, ran the synthetic boundaries and full suite, compared all source projections and replayed the existing recorded load/room sequence. Raw game/capture data remains outside Git.
+- 2026-10-06; Gemini 3.1 Pro (High), conversation `4716d2da-566d-48df-b85c-4ef211d5d30d`, and Gemini 3.8 Flash (High), conversation `be3054be-7e47-4048-88a4-d0b2a1757aab`; reviewed the initial 184,572-byte implementation/test snapshot and returned no findings. Both processes exited zero with completed responses, successful terminal results and empty stderr; neither used tools or ran tests/gameplay. These draft reviews were superseded after Codex root found the descriptor-input guard regression and corrected it.
+- 2026-10-06; Gemini 3.1 Pro (High), conversation `cd770447-e720-4173-8d26-db30f9affe13`; reviewed the corrected implementation, 46 regression cases, caller/contracts and documentation in a 188,911-byte snapshot (SHA256 `f6e2e3f2144b506d0d6a30350d5cd036f3e0745459423c874f23383c2d38b122`) and returned no findings. Process exit zero, response DONE, terminal SUCCESS and empty stderr were checked; no tools, tests or gameplay were performed by the reviewer. Codex root verified the final diff and test/report evidence independently.
+- 2026-10-06; Gemini 3.8 Flash (High), conversation `6110b773-1cd2-43a4-a1a3-fe265816388b`; the corrected snapshot's review encountered an unexpected stream EOF. The CLI retried internally and returned text, but its terminal result remained ERROR despite process exit zero and empty stderr. This failed call is diagnostic output, not a completed review; one fresh retry was dispatched with the identical snapshot.
+- 2026-10-06; Gemini 3.8 Flash (High), fresh conversation `01c23e49-5d12-4fed-9c82-785e2c3a7180`; the retry encountered the same unexpected stream EOF and emitted an error step without a completed terminal result. Codex root stopped that failed process (exit one) rather than accepting diagnostic output or making another retry. The final Flash review remains unavailable; no endorsement is claimed.
+- 2026-10-06; Claude Opus 5.5 (High); unavailable because of the quota exhaustion recorded on 2026-10-05, with a reported reset in 110 hours 53 minutes 55 seconds from that check. The model was not retried before its reset; no Claude review or endorsement is claimed.
 
 
 ## RE1-AOT-003: disabling a registry handler does not dereference its retained source
