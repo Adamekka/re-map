@@ -114,6 +114,7 @@ class RuntimeRoomItems:
     retry: bool = False
     memory_markers: tuple[tuple[int, bytes], ...] = ()
     non_collectible_slots: tuple[int, ...] = ()
+    message_door_slots: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         assert len(set(self.non_collectible_slots)) == len(self.non_collectible_slots)
@@ -124,6 +125,17 @@ class RuntimeRoomItems:
         assert not set(self.non_collectible_slots) & {
             item.aot_id for item in self.items
         }, "a live slot cannot be both collectible and noncollectible"
+        assert len(set(self.message_door_slots)) == len(self.message_door_slots)
+        assert all(
+            type(slot) is int and 0 <= slot < 128 for slot in self.message_door_slots
+        )
+        assert self.ok or not self.message_door_slots
+        assert set(self.message_door_slots) <= {
+            slot for slot, _ in self.disabled_doors
+        }, "message evidence requires its validated blocked door descriptor"
+        assert not set(self.message_door_slots) & {
+            slot for slot, _ in self.active_doors
+        }, "a message door cannot also allow normal passage"
 
 
 def observe_room_items(
@@ -209,6 +221,7 @@ def observe_room_items(
     doors: list[tuple[int, bytes]] = []
     disabled_doors: list[tuple[int, bytes]] = []
     non_collectible_slots: list[int] = []
+    message_door_slots: list[int] = []
     for slot in range(last_slot + 1):
         record = records.data[slot * 12 : (slot + 1) * 12]
         handler, mode, parameter, model, gid, pointer = struct.unpack("<BBHHHI", record)
@@ -266,10 +279,13 @@ def observe_room_items(
             # A forced pending award uses its descriptor despite this handler.
             non_collectible_slots.append(slot)
             continue
-        if raw[0] == 0x0C and handler == 0 and not selected_pending:
-            # A validated door pointer survives a scripted handler disable.
-            # Preserve the wall marker and show that this passage is unavailable.
+        if raw[0] == 0x0C and handler in (0, 2) and not selected_pending:
+            # RE1-DOORS-003: a retained door source supplies its wall marker,
+            # but a disabled/message handler cannot request normal passage.
+            # A pending forced award still needs the descriptor checks below.
             disabled_doors.append((slot, raw[:25] + bytes((mode,))))
+            if handler == 2:
+                message_door_slots.append(slot)
             continue
         if handler not in (0, 1, 3, 4, 15) and not selected_pending:
             continue
@@ -417,4 +433,5 @@ def observe_room_items(
             else ()
         ),
         non_collectible_slots=tuple(non_collectible_slots),
+        message_door_slots=tuple(message_door_slots),
     )

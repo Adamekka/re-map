@@ -55,6 +55,10 @@ def validate_current_room(
     represented = {item.aot_id for item in observation.items}
     active_doors = {slot for slot, _ in observation.active_doors}
     disabled_doors = {slot for slot, _ in observation.disabled_doors}
+    # An enabled message handler with a validated current source proves blocked
+    # passage even when reconstruction retains an earlier active door. Handler
+    # zero can survive reset with a stale pointer, so it grants no such override.
+    message_doors = set(observation.message_door_slots)
     represented_doors = {
         slot for slot, _ in observation.active_doors + observation.disabled_doors
     }
@@ -76,7 +80,7 @@ def validate_current_room(
         )
         if (
             set(expected.unresolved_door_slots) - represented_doors
-            or {slot for slot, _ in expected.doors} - active_doors
+            or {slot for slot, _ in expected.doors} - active_doors - message_doors
             or {slot for slot, _ in expected.disabled_doors} - disabled_doors
             or not profile.room_programs[source.source_rdt].coverage_complete
         ):

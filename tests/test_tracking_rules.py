@@ -766,7 +766,9 @@ def test_builder_rejects_unbounded_slots_before_emitting_a_profile(rules):
 
 
 def test_changed_door_handlers_are_explicitly_unresolved(rules):
-    program = compile_program(rules, door(2, 8, 0x34) + bytes((0x13, 2, 2, 1, 0)))
+    # An event interaction can dispatch other callbacks; unlike a message,
+    # handler 9 does not establish blocked physical access on its own.
+    program = compile_program(rules, door(2, 8, 0x34) + bytes((0x13, 2, 9, 1, 0)))
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert result.doors == ()
     assert result.unresolved_door_slots == (2,)

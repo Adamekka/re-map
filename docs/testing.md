@@ -155,6 +155,12 @@ Run `python3 -m pytest -q tests/test_branch_merging.py tests/test_script_depende
 
 The paired audit preserves published results across 334 variants, both modes and three captured states. Current complete item projections increase 255 -> 259; reentry increases 269 -> 271. Door coverage remains 252/281. The existing twelve-step captured save/load replay passes with earlier-state reversal and reveal only on entry. These are offline checks; the newly resolved variants and whole-game behavior still need natural gameplay validation.
 
+## Message interactions at known doors
+
+Run `python3 -m pytest -q tests/test_message_doors.py tests/test_room_items.py tests/test_tracking_rules.py tests/test_room_reentry.py tests/test_live_items.py tests/test_map_view.py` for RE1-DOORS-003/004. A validated Door_set source retained by message handler 2 should keep its wall marker and show blocked access with "Passage is unavailable". It must remain blocked even when its ordinary unlock flag is set. Restoring handler 1 should restore normal open/locked interpretation, and reversing the handler or a cached rule's persistent flag should refresh the verdict. Revealing a door must not reveal its destination room.
+
+The 39 new synthetic cases also cover pending forced awards, invalid/changing sources, mixed open/message alternatives, differing targets and incomplete script coverage. Handler-zero reset leftovers must not override an expected active door. The full suite passes 1,220 tests. The paired audit preserves previous payloads across 334 variants, both epochs and three captured flag states; door completeness increases 252 -> 256 current and 281 -> 287 reentry, with item completeness unchanged at 259/271. The unchanged twelve-step recorded save/load replay passes, including the earlier ribbon-available reversal and entry-only map reveal. No naturally activated message door or new door save/load experiment is included in these results.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

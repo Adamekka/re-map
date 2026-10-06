@@ -964,6 +964,44 @@ Limits: no production implementation, synthetic regression suite, captured save/
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; recomputed failure categories, inspected final descriptor alternatives and both reader paths, checked the executable hash and complete native callback/helper ranges, then compared the private shared hypothesis across all six projections. Manually reviewed the research diff and passed `git diff --check`; no Markdown formatter/linter is configured. Implementation approval remains separate from this inspection.
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the subsequently approved shared rule in RE1-DOORS-004. This entry preserves the initial inspection, private hypothesis and their original limits.
+
+## RE1-DOORS-004: validated message doors publish blocked access in both tracking paths
+
+Status: Candidate for natural gameplay; implementation, synthetic regressions and unchanged captured-state replay reproduced
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; known Door_set sources retained by handler 2, current observation and revisited-room reconstruction; comparison baseline `cf3c666`
+Environment: Python 3.14.8, pytest 9.1.1 and existing private RAM captures from DuckStation `0.1-11894-gc66b2694d`; no emulator interaction or live RAM writes for this implementation
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: RE1-DOORS-003 pinned native contract, direct implementation inspection, synthetic tests, paired source evaluation and recorded-RAM replay
+Claim: the shared tracker retains a known door's target and geometry when its current interaction becomes handler 2, and publishes blocked normal passage. The current observer and historical evaluator apply this rule without inferring collection, unlocking or a future script outcome.
+
+Evidence:
+
+- The live observer requires the existing bounded source pointer, complete Door_set bytes and matching slot. Handler 2 joins the existing disabled-door representation only when that slot is not selected for a pending forced award. The final registry/header/pending-state coherence checks run before any evidence is returned. Invalid or changing sources discard the observation rather than supplying a blocked marker.
+- Successful observations carry explicit message-door slot evidence. Construction asserts unique bounded integer slots, corresponding blocked descriptors, no active-door overlap and successful observation. The current-room validator can use this evidence when the reconstruction still expects an older active door. Handler-zero reset leftovers cannot grant that override, and incomplete script coverage still prevents full door coverage.
+- Historical evaluation applies the same blocked classification only to an established door creator. Mixed open/message alternatives, different targets, missing creators, handler-9 event interactions and incomplete scripts remain unresolved. Refresh reads a new rule snapshot, so a persistent flag reversal recomputes the descriptor instead of retaining blocked access.
+- The existing poll and map paths publish `BLOCKED` with "Passage is unavailable" and draw the existing wall marker. Tests verify that a collected unlock flag does not open a message interaction, handler 1 restores ordinary open/locked interpretation, and changing back restores blocked access. Only the entered room appears; the door's destination remains hidden until entered. No profile, generated manifest, map geometry or persistence format changed.
+- `tests/test_message_doors.py` adds 39 synthetic cases covering both epochs, init/main and ordered/single event execution, pending event alternatives, differing message parameters, invalid sources, forced-award exclusions, live marker publication, cached flag reversal and coherence/invariant failures. The focused new-file/shared-rule run passed 82 tests in 12.35 seconds. The full suite passed **1,220 tests in 46.41 seconds**.
+- All **2,004 paired evaluations** across 334 source variants, both epochs and the three RE1-DOORS-003 captures preserve previously published item descriptors, quantities, acquisition states and door payloads. Previously complete results remain equal. Item completeness stays **259 current / 271 reentry**. Complete door projections increase **252 -> 256 current** and **281 -> 287 reentry** in each capture. Current gains are `ROOM3050/3051` and `ROOM5010/5011`; reentry additionally resolves `ROOM3030` and `ROOM4080`. These counts measure source variants under captured flags, not rooms validated through gameplay.
+- The unchanged twelve-step replay uses eleven distinct coherent RAM captures from RE1-REENTRY-004 with one tracker/profile and no byte substitution. Main Hall remains cleared after the recorded normal load and walked Main Hall -> Art Room -> Main Hall round trip. Replaying the earlier ribbon-available capture returns Main Hall to incomplete. That acquisition rewind is a recorded earlier state, not an earlier normal-card-load validation. Art Room remains incomplete because its Ink Ribbon is available, and only entered rooms `06/07` appear.
+
+Private implementation artifacts remain under `/tmp/tasks/re-map/message-doors/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `audit.json` | `8e4acb0fbd465fa1fd15eb53bc670a59ddf5c07949f3a949f9725ce35269ec09` | Captured-state replay with per-capture hashes and source projection |
+| `differential.json` | `229711493ceda1b3a6271527784111c88d1a406442c238f299285b0fcaead75b` | Six paired source comparisons and gained variants |
+| `pytest.log` | `3e7cd6e7b8dacbcdd41eaffe8ba678a19ba17ca864dde16fa5f89413112f173f` | Full-suite result |
+| `review/prompt.txt` | `7fb22849759acded1c4c00e7e2b699d53225e3f86445015d6d401de4cb5f6084` | Complete redacted implementation/test and affected-interface review snapshot |
+
+Limits: no newly resolved message door was activated naturally for this feature. Synthetic blocked/open/locked reversals and recorded save/load replay do not establish new door persistence or whole-game correctness. Classification describes the current normal interaction; forced dispatch and later story actions retain their own analysis requirements. Missing/stale sources, event history, conflicting targets and incomplete coverage can still prevent a verdict. Other characters and revisions remain unvalidated.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved shared rule and explicit current-room evidence, checked source/pending/coherence barriers, added regressions, compared all six source projections and replayed the original captures. Scoped Ruff lint/format checks passed; no repository formatter/linter or Markdown formatter/linter is configured.
+- 2026-10-06; Gemini 3.1 Pro High via agy, conversation `e198fa92-a60a-4acd-aab6-ce7dbdc6f8e0`; reviewed the complete supplied code/test diff, observer, interpreter, current/cached validation, poll publication, map renderer and recorded native contracts. Returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. The supplied snapshot was 173,697 bytes, with the hash listed above. Root reviewed the subsequent evidence notes separately.
+- 2026-10-06; Gemini 3.8 Flash High via agy, conversation `077e73be-84c1-44ce-8290-9e8044eb7e40`; completed the same supplied-snapshot review and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Neither accepted review expands natural gameplay validation.
+- 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, substitution, review or endorsement.
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the complete final code/test diff and manually checked the documentation against the recorded results and four artifact hashes. Final scoped Ruff lint/format and `git diff --check` passed. Only implementation, synthetic tests and evidence notes changed; all game bytes, captures, scratch tools and review logs remain outside Git.
 
 
 ## RE1-MAP-002: numeric Mansion 1F floor plan from indexed room regions

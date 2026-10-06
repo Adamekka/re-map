@@ -1495,7 +1495,7 @@ def evaluate_room_program(
                     0x18,
                 ),
             )
-        elif creator == "door" and handler in (0, 1):
+        elif creator == "door" and handler in (0, 1, 2):
             _, x, z, width, depth, animation, lock, target, key, _ = args
             raw = bytearray(26)
             raw[:2] = bytes((0x0C, slot))
@@ -1507,6 +1507,8 @@ def evaluate_room_program(
                 key,
                 mode,
             )
+            # RE1-DOORS-003: handler 2 displays a message, retaining the door
+            # source without granting traversal or changing its unlock flag.
             return "door" if handler == 1 else "disabled-door", (slot, bytes(raw))
         elif creator == "aot-create" and handler in (1, 3, 4, 15):
             return "unresolved", None
