@@ -2382,6 +2382,7 @@ Limits: no retained stale pointer was deliberately resurrected in gameplay, and 
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; inspected the complete reset and its caller, recorded the retained-pointer distinction, and added the conservative shared reentry guard and regression.
+- 2026-10-06; Codex root, GPT-6.1 Sol; RE1-AOT-003 distinguishes source-independent handler-zero setters from enabling a retained unknown source. Its pinned setter inspection and private experiment do not authorize reconstructing that pointer or executing a source-dependent callback.
 
 ## RE1-QUANTITY-001: shared quantity uncertainty no longer invalidates a known pickup
 
@@ -2434,10 +2435,11 @@ Evidence:
 - The unchanged RE1-REENTRY-004 twelve-step, eleven-distinct-capture replay passes through one tracker/profile. Main Hall clearance survives departure, normal-load captures and the ordinary round trip; an earlier Ribbon state becomes incomplete again; Art Room remains incomplete with its Ribbon and correct Map reversal. The map reveals only entered rooms 06/07. No RAM values were substituted and no new gameplay was performed.
 - Private artifacts are under `/tmp/tasks/re-map/dependency-filtering/`: `audit.py`, `audit.json`, `projection.json`, `differential.py`, `differential.json` and pytest logs. Differential script SHA256 `3bb902d9987b00990b92e024a727a0b34651cf3fc0652312c8203f99fbda18a8`; differential report `8d407e27c2e92d336ee535c72230225f4652a36b33a245e968af7b5c967de549`; replay report `f2d96bd2405b0493bfcea757f6db560f07c30a06035d388f7ae943a777987662`. The committed manifest and profile are unchanged; raw game data and captures remain outside Git.
 
-Limits: this does not establish natural gameplay coverage in the newly resolved variants. ROOM3030 still reaches an analysis limit; other conditional spawns, cross-slot event reconstruction, scenario differences and whole-game save/load remain unfinished. Dependencies are conservative for the current command set; future commands that read shadow state must add their physical read dependencies. RE1-ANALYSIS-002 records the rejected broader predicate experiment.
+Limits: this does not establish natural gameplay coverage in the newly resolved variants. ROOM3030 remains unresolved because of descriptor/condition ambiguity; the dependency-filtered run no longer reports incomplete script coverage there. Other conditional spawns, cross-slot event reconstruction, scenario differences and whole-game save/load remain unfinished. Dependencies are conservative for the current command set; future commands that read shadow state must add their physical read dependencies. RE1-ANALYSIS-002 records the rejected broader predicate experiment.
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; inspected all shadow read sites, implemented shared dependency filtering, added synthetic regressions, compared all published old/new payloads across six projections and replayed the existing save/load sequence.
+- 2026-10-06; Codex root, GPT-6.1 Sol; corrected the stale ROOM3030 budget limitation after tracing the committed evaluator. Its item slot 1 and door slot 0 remain unresolved, with no failed procedure execution in the donated Herb-before projection. RE1-NATIVE-002's earlier budget observation remains valid for its earlier interpreter.
 - 2026-10-06; Gemini 3.1 Pro High via agy, conversation `511d3146-3c2b-422e-8995-b0f1ba519d93`; reviewed the complete supplied diff, full interpreter/schema/event contracts/compiler, new tests and existing callback/quantity/reentry/event regressions. Returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Review packet 188,352 bytes, SHA256 `d4c682cfb56968c191c3a797b17c8c7a5f345e2237712f7f8aaa21be8311ce7d`. Root independently inspected every shadow consumer and verified the paired payload/replay results.
 - 2026-10-06; Gemini 3.8 Flash High via agy, conversation `c3842318-5abe-4bbe-8d00-a54ad05c6812`; completed the same supplied-snapshot review and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Neither review reproduced the runtime experiments or promoted their validation state.
 - 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the RE1-EVENT-011 quota exhaustion, reported on 2026-10-05 with a reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, review, substitution or endorsement.
@@ -2456,6 +2458,30 @@ Limits: rejection concerns this bounded interpreter and snapshot, not the native
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; performed private substitutions, observed coverage losses, rejected the extension and left production predicate behavior unchanged.
+
+
+## RE1-AOT-003: disabling a registry handler does not dereference its retained source
+
+Status: Candidate; pinned native inspection and private offline experiment, not implemented
+Scope: Resident Evil: Director's Cut, NTSC-U, SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; SCD setters `12/13`, visited-room reentry reconstruction
+Environment: Python 3.14.8 and Capstone 5.0.9; donated Herb-before RAM SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`; no new DuckStation session or RAM writes
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: primary native setter inspection, tracing commit `851bc2c`, and an in-memory experimental evaluator
+Claim investigated: a setter writing handler zero can establish a disabled interaction without interpreting the retained source pointer. RE1-REENTRY-003's stale-pointer rejection remains necessary when a setter enables an interaction or a later operation requires its source. Rejecting every setter merely because a creator is missing also rejects source-independent disabling.
+
+Evidence:
+
+- Extended setter `0x80045BC4..0x80045C34` advances the script PC by ten, computes `0x800B8160 + 12*slot`, writes the packet handler and mode to record bytes 0/1, and writes three u16 parameters to record offsets 2/4/6. Short setter `0x80045C38..0x80045C84` advances by four and writes only record bytes 0/1. Both return one. Neither reads, dereferences or replaces the record's retained source pointer at offset 8; neither calls another routine. The inspected command behavior is independent of the handler operand's value.
+- The committed interpreter's reentry guard rejects a reached handler setter whenever a possible slot descriptor is missing, including a write of zero. Tracing all 334 source variants under the captured flag configuration finds 99 with unresolved item or door coverage. Of these, 22 have incomplete source coverage, 54 have descriptor/condition ambiguity without a failed procedure, two reach the procedure budget, and 21 have other failed source/context execution. These categories are diagnostic observations, not whole-game validation.
+- A private experiment exempts only handler-zero setters from that reentry guard. It preserves existing rejection for enabling an unknown source and preserves source-dependent callback/quantity checks. No production code, profile or manifest was edited. Complete item projections change **262 -> 269**, doors **272 -> 281**, with no coverage losses or changes to previously published item/quantity/acquisition, door or disabled-door payloads.
+- Item gains occur in `ROOM1130`, `ROOM20E0/20E1`, `ROOM6130`, `ROOM8130` and `ROOMD130/D131`. Door gains include those seven variants plus `ROOM61A0` and `ROOMD1A0`. These nine source variants are not nine naturally validated rooms. The experiment only uses one captured flag configuration and reentry analysis.
+- A separate private experiment supplies the entire reconstructed reentry registry to final ordered event analysis. It produces no complete item/door gains or losses in the same snapshot. Retaining more context alone did not resolve the observed disabling failures.
+- Private artifacts under `/tmp/tasks/re-map/next-shared-inspection/` include `gaps.py`, `gaps.json`, `context_experiment.py`, `context-comparison.json`, `disable_experiment.py`, `disable-comparison.json` and `setter-native.txt`. The native excerpt SHA256 is `16f95956a448c5ace95520380de53d3acfe952b233b31adc9ecd74e1c34b1d3c`. Raw executable and capture data remain outside Git.
+
+Limits: no production fix, regression suite, save/load replay or natural disabling event has been validated for this experiment. A disabled handler does not grant acquisition, identify the retained source or prove that a later enabling/forced callback is safe. Current-room reconstruction, other flag configurations, other characters and other revisions were not changed or validated. No broader exemption for missing source pointers is supported.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; traced remaining failures, reinspected both native setters, compared two private shared-rule hypotheses and recorded the scoped disabling candidate before implementation approval. Manually reviewed the documentation diff and passed `git diff --check`; no Markdown formatter/linter is configured.
 
 ## RE1-QUANTITY-002: transfer writes preserve item identity and collection is independent of amount
 
