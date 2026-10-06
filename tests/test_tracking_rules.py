@@ -744,10 +744,16 @@ def test_analysis_budgets_report_unresolved_without_guessing_clear(rules, limit)
             # Constant room comparison admits every nested IF in this cached room.
             code = guard(bytes((6, 1, 0, 9)), code)
     else:
-        code = b"".join(
-            branch(bytes((6, 2, 0, 1)), bytes((5, 4, bit, 0)), bytes((5, 4, bit, 1)))
-            for bit in range(13)
-        ) + pickup(1, 0x44, 111)
+        code = (
+            b"".join(
+                branch(
+                    bytes((6, 2, 0, 1)), bytes((5, 4, bit, 0)), bytes((5, 4, bit, 1))
+                )
+                for bit in range(13)
+            )
+            + b"".join(guard(bytes((4, 4, bit, 0)), b"") for bit in range(13))
+            + pickup(1, 0x44, 111)
+        )
     program = compile_program(rules, code + b"\0")
     result = evaluate(program, rules, bytearray(2 * 1024 * 1024))
     assert not result.items.list_complete

@@ -2413,6 +2413,50 @@ History:
 - 2026-10-06; Gemini 3.8 Flash High via agy, retry conversation `270d5c1d-7368-4e21-b727-2db8395355ce`; completed the same implementation-scope review and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr. No tools, test execution or gameplay. The only subsequent source edit was a comment explaining the quantity enum's JSON string representation; interpretation and interfaces are unchanged.
 - 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, review, substitution or endorsement.
 
+
+## RE1-ANALYSIS-001: whole-room shadow dependencies preserve published results and reduce branching
+
+Status: Candidate; interpreter inspection, synthetic regressions and captured-RAM replay
+Scope: Resident Evil: Director's Cut, NTSC-U, SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; all 334 generated source variants
+Environment: Python 3.14.8, pytest 9.1.1; prior RAM captures retain their original DuckStation environment and provenance
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: interpreter dependency inspection, synthetic tests, comparison against commit `86c42fa`, and replay of previously captured game states
+Claim: before deduplicating procedure states, simulated writes can discard physical bits that no command in the whole room program reads. Keeping every flag/scalar predicate dependency and mode-1 quantity input preserves later procedure, event and tick decisions while preventing irrelevant shadow writes from multiplying paths. Acquisition and door access still use fresh game state.
+
+Evidence:
+
+- The mandatory evaluator collects physical byte-address/bit-mask dependencies across initialization, recurring main, ordered event blocks and standalone/deferred event commands. Flag predicates retain their addressed bit, byte/word predicates retain all 8/16 bits, and quantity mode 1 retains its eight scalar input bits even without a predicate. Flag toggles and native conditional writes read their own destination only; any destination observable by a later decision is already retained. Slot descriptors, registry parameters, quantities, event starts, unsupported effects and snapshot reads are not filtered. The existing 4,096-state, 16-stack and 256-descriptor limits remain unchanged.
+- `tests/test_script_dependencies.py` adds 34 synthetic cases across current/reentry epochs: thirteen independent unread flag/byte/word branches, flag/scalar aliases, dependencies in later procedures, optional ordered/single events enabling a later main tick, registry callback alternatives retaining scalar quantities, event-only quantity inputs and unsupported effects. The two earlier path-budget tests now read the branched bits so they continue to exercise genuinely retained state. Existing callback, alias, quantity, story/acquisition and load tests also pass.
+- All **1,039 tests pass in 43.59 seconds**. The four changed Python files pass manually scoped Ruff lint/format checks; no repository formatter/linter is configured. `git diff --check` passes.
+- A differential audit runs both the unmodified evaluator from `86c42fa` and the new evaluator on all 334 programs, both epochs, and three captured RAM states: Herb-before SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`, Herb-after `0130861a3a27d2810ccbd0d1e2e7bbc42c64abdac130e1d43dd71ed646784704`, and Chemical-before `bb9110536a02122d7c6a14d489b2e94e7d8224d8ccf297d617694c4eb6e804f2`. All 2,004 old/new evaluations preserve every previously published item descriptor, amount, acquisition state, door and disabled door. Every previously complete item/door result remains complete with the same payload.
+- In each reentry snapshot, complete item results increase **258 -> 262** and complete door results **268 -> 272**. Gains are `PSX/STAGE3/ROOM30F0.RDT`, `ROOM30F1.RDT`, `PSX/STAGEA/ROOMA0F0.RDT` and `ROOMA0F1.RDT`. In each current snapshot, items remain **255**, while doors increase **250 -> 252** through `ROOM30B0/ROOM30B1`. These are source variants analyzed against existing flags, not six newly played rooms.
+- Reentry analysis of all 334 variants takes 5.07-5.15 seconds with the baseline and 1.09-1.13 seconds with filtering in the paired audit. Current analysis takes 0.25-0.27 seconds before and 0.26-0.28 seconds after. These offline totals do not measure live polling latency or guarantee a speedup for current-room analysis.
+- The unchanged RE1-REENTRY-004 twelve-step, eleven-distinct-capture replay passes through one tracker/profile. Main Hall clearance survives departure, normal-load captures and the ordinary round trip; an earlier Ribbon state becomes incomplete again; Art Room remains incomplete with its Ribbon and correct Map reversal. The map reveals only entered rooms 06/07. No RAM values were substituted and no new gameplay was performed.
+- Private artifacts are under `/tmp/tasks/re-map/dependency-filtering/`: `audit.py`, `audit.json`, `projection.json`, `differential.py`, `differential.json` and pytest logs. Differential script SHA256 `3bb902d9987b00990b92e024a727a0b34651cf3fc0652312c8203f99fbda18a8`; differential report `8d407e27c2e92d336ee535c72230225f4652a36b33a245e968af7b5c967de549`; replay report `f2d96bd2405b0493bfcea757f6db560f07c30a06035d388f7ae943a777987662`. The committed manifest and profile are unchanged; raw game data and captures remain outside Git.
+
+Limits: this does not establish natural gameplay coverage in the newly resolved variants. ROOM3030 still reaches an analysis limit; other conditional spawns, cross-slot event reconstruction, scenario differences and whole-game save/load remain unfinished. Dependencies are conservative for the current command set; future commands that read shadow state must add their physical read dependencies. RE1-ANALYSIS-002 records the rejected broader predicate experiment.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected all shadow read sites, implemented shared dependency filtering, added synthetic regressions, compared all published old/new payloads across six projections and replayed the existing save/load sequence.
+- 2026-10-06; Gemini 3.1 Pro High via agy, conversation `511d3146-3c2b-422e-8995-b0f1ba519d93`; reviewed the complete supplied diff, full interpreter/schema/event contracts/compiler, new tests and existing callback/quantity/reentry/event regressions. Returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Review packet 188,352 bytes, SHA256 `d4c682cfb56968c191c3a797b17c8c7a5f345e2237712f7f8aaa21be8311ce7d`. Root independently inspected every shadow consumer and verified the paired payload/replay results.
+- 2026-10-06; Gemini 3.8 Flash High via agy, conversation `c3842318-5abe-4bbe-8d00-a54ad05c6812`; completed the same supplied-snapshot review and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Neither review reproduced the runtime experiments or promoted their validation state.
+- 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the RE1-EVENT-011 quota exhaustion, reported on 2026-10-05 with a reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, review, substitution or endorsement.
+
+
+## RE1-ANALYSIS-002: extending unknown-flag assumptions to current execution exceeded existing budgets
+
+Status: Rejected; private offline experiment, not implemented
+Scope: same pinned SLUS-00551 executable and generated source set as RE1-ANALYSIS-001; one donated Herb-before flag configuration
+Environment: Python 3.14.8; no emulator interaction
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: private interpreter substitution and source-variant comparison against `86c42fa`
+Claim investigated: applying historical repeated-flag assumptions to current execution might resolve the remaining branching limits.
+Evidence: removing the historical-only guard for unknown flag assumptions resolved no additional variant and lost eight complete item results and thirteen complete door results under the existing budgets. Items changed 258 -> 250, doors 268 -> 255. Combining that experiment with dependency filtering still lost four item and nine door results despite four gains each. The accepted change only filters dependencies; it preserves the original predicate semantics. Private `/tmp/tasks/re-map/branch-consistency-inspection/comparison.json`, SHA256 `f5dedc5946a78ea5fad2943dd085115c2b4372c2cf341848c44a1e3cce0871dd`, lists the standalone experiment's losses; `dependencies-and-consistency-projection.json` records the combined experiment's source results.
+Limits: rejection concerns this bounded interpreter and snapshot, not the native consistency of repeated reads or all possible future analyses.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; performed private substitutions, observed coverage losses, rejected the extension and left production predicate behavior unchanged.
+
 ## RE1-QUANTITY-002: transfer writes preserve item identity and collection is independent of amount
 
 Status: Candidate; direct pinned native inspection without a natural quantity-change trace

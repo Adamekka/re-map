@@ -137,6 +137,12 @@ Run `python3 -m pytest -q tests/test_rendering_commands.py tests/test_native_dec
 
 RE1-SCD-018/019/020 record the pinned native contracts; RE1-NATIVE-002 records two identical disc regenerations and the unchanged twelve-step captured save/load replay. The offline projection still resolves items in 258 and doors in 268 of 334 source variants under one existing flag snapshot. Five variants containing these commands still hit other reconstruction limits; recognition of the commands does not establish full room coverage. No new natural lighting/recoloring/effect event was played, so these findings remain Candidate.
 
+## Script dependency filtering
+
+Run `python3 -m pytest -q tests/test_script_dependencies.py tests/test_tracking_rules.py tests/test_room_reentry.py tests/test_native_callbacks.py tests/test_dynamic_quantities.py tests/test_event_conditions.py` for RE1-ANALYSIS-001. The shared interpreter retains simulated bits only when a predicate or quantity input anywhere in the room program reads them. Physical dependencies preserve flag/scalar aliases and reads in later procedures, events and ticks. Unsupported effects and genuinely relevant branches still prevent unsupported clearance; the analysis limits are unchanged.
+
+The paired offline audit preserves all previously resolved payloads across 334 variants, both analysis epochs and three captured flag states. Reentry item coverage increases 258 -> 262 and door coverage 268 -> 272 in each snapshot; current door coverage increases 250 -> 252. The twelve-step captured save/load replay also passes, including earlier-state reversal and entry-only map reveal. These checks perform no new gameplay. Newly resolved source variants, broader story progression and whole-game save/load still require runtime validation.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

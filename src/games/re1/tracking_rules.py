@@ -520,21 +520,38 @@ def evaluate_room_program(
         offset: (parameter, model, operation)
         for offset, _, parameter, model, operation in program.event_program.registry_writes
     }
+    all_commands = (
+        tuple(
+            c
+            for procedure in program.procedures + program.main_procedures
+            for c in procedure.commands
+        )
+        + tuple(c for block in program.event_blocks for p in block for c in p.commands)
+        + program.event_commands
+    )
     quantity_slots = {
         command.args[1]
-        for command in (
-            tuple(
-                c
-                for procedure in program.procedures + program.main_procedures
-                for c in procedure.commands
-            )
-            + tuple(
-                c for block in program.event_blocks for p in block for c in p.commands
-            )
-            + program.event_commands
-        )
+        for command in all_commands
         if command.kind == "quantity-transfer" and command.args[0] in (1, 2)
     }
+    required_shadow_bits = set()
+    for command in all_commands:
+        if command.kind == "flag-test":
+            group, index, _ = command.args
+            if group < len(layout.flag_bases):
+                required_shadow_bits.add(layout.flag(group, index))
+        elif command.kind in ("byte-test", "word-test") or (
+            command.kind == "quantity-transfer" and command.args[0] == 1
+        ):
+            width = 2 if command.kind == "word-test" else 1
+            index = command.args[2 if command.kind == "quantity-transfer" else 0]
+            base = (
+                layout.word_variables_base if width == 2 else layout.byte_variables_base
+            )
+            required_shadow_bits.update(
+                (base + width * index + bit // 8, 1 << (bit % 8))
+                for bit in range(8 * width)
+            )
     history_unresolved = set()
     persistent = {
         layout.flag(group, index)
@@ -689,6 +706,12 @@ def evaluate_room_program(
         seen = set()
         while pending:
             pc, stack, slots, writes = pending.pop()
+            # Only shadow bits read anywhere in this room can affect a later
+            # decision or quantity. Physical keys preserve flag/scalar aliases;
+            # whole-room dependencies also preserve later procedures and ticks.
+            writes = tuple(
+                (key, value) for key, value in writes if key in required_shadow_bits
+            )
             state = (pc, stack, slots, writes)
             if state in seen:
                 continue

@@ -322,10 +322,16 @@ def test_reentry_analysis_limits_keep_coverage_unresolved(rules, limit):
         for _ in range(17):
             code = guard(bytes((6, 1, 0, 9)), code)
     else:
-        code = b"".join(
-            branch(bytes((6, 2, 0, 1)), bytes((5, 4, bit, 0)), bytes((5, 4, bit, 1)))
-            for bit in range(13)
-        ) + pickup(1, 0x44, 111)
+        code = (
+            b"".join(
+                branch(
+                    bytes((6, 2, 0, 1)), bytes((5, 4, bit, 0)), bytes((5, 4, bit, 1))
+                )
+                for bit in range(13)
+            )
+            + b"".join(guard(bytes((4, 4, bit, 0)), b"") for bit in range(13))
+            + pickup(1, 0x44, 111)
+        )
     program = compile_program(rules, code + b"\0")
     result = reenter(program, rules, bytearray(2 * 1024 * 1024))
     assert not result.items.list_complete and result.unresolved_item_slots == (1,)
