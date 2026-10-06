@@ -127,6 +127,7 @@ class RuntimeRoomItems:
     memory_markers: tuple[tuple[int, bytes], ...] = ()
     non_collectible_slots: tuple[int, ...] = ()
     message_door_slots: tuple[int, ...] = ()
+    scripted_doors: tuple[tuple[int, bytes, int], ...] = ()
 
     def __post_init__(self) -> None:
         assert len(set(self.non_collectible_slots)) == len(self.non_collectible_slots)
@@ -148,6 +149,21 @@ class RuntimeRoomItems:
         assert not set(self.message_door_slots) & {
             slot for slot, _ in self.active_doors
         }, "a message door cannot also allow normal passage"
+        assert self.ok or not self.scripted_doors
+        scripted_slots = [slot for slot, _, _ in self.scripted_doors]
+        assert len(set(scripted_slots)) == len(scripted_slots)
+        assert all(
+            type(slot) is int
+            and 0 <= slot < 24
+            and len(opcode) == 26
+            and opcode[:2] == bytes((0x0C, slot))
+            and type(entry) is int
+            and 0 <= entry < 256
+            for slot, opcode, entry in self.scripted_doors
+        ), "scripted doors require a validated current door source and event index"
+        assert not set(scripted_slots) & {
+            slot for slot, _ in self.active_doors + self.disabled_doors
+        }
 
 
 def observe_room_items(
@@ -250,6 +266,7 @@ def observe_room_items(
     disabled_doors: list[tuple[int, bytes]] = []
     non_collectible_slots: list[int] = []
     message_door_slots: list[int] = []
+    scripted_doors: list[tuple[int, bytes, int]] = []
     for slot in range(last_slot + 1):
         record = records.data[slot * 12 : (slot + 1) * 12]
         handler, mode, parameter, model, gid, pointer = struct.unpack("<BBHHHI", record)
@@ -300,6 +317,11 @@ def observe_room_items(
                 ok=False,
                 error=f"interaction {slot}: door handler has an unsupported source descriptor",
             )
+        if handler == 9 and raw[0] == 0x0C and not selected_pending:
+            # A validated descriptor supplies geometry, not access. The
+            # source-bound event proof must resolve its registered target.
+            scripted_doors.append((slot, raw[:25] + bytes((mode,)), model & 255))
+            continue
         if handler in (8, 13, 16) and not selected_pending:
             # RE1-COVER-002/RE1-CLEAR-001: storage, documents and saving do
             # not award room items. Retain validated live evidence because
@@ -460,4 +482,5 @@ def observe_room_items(
         ),
         non_collectible_slots=tuple(non_collectible_slots),
         message_door_slots=tuple(message_door_slots),
+        scripted_doors=tuple(scripted_doors),
     )

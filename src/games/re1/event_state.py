@@ -91,12 +91,37 @@ class EventFailure:
 
 
 @dataclass(frozen=True)
+class EventDoorRule:
+    entry: int
+    dispatches: tuple[int, ...]
+    door_slots: tuple[int, ...]
+    changes_character: bool
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.entry) is not int
+            or not 0 <= self.entry < 256
+            or len(set(self.dispatches)) != len(self.dispatches)
+            or any(type(offset) is not int or offset < 0 for offset in self.dispatches)
+            or len(self.door_slots) > 1
+            or any(
+                type(slot) is not int or not 0 <= slot < 24 for slot in self.door_slots
+            )
+            or type(self.changes_character) is not bool
+            or self.changes_character
+            and not self.door_slots
+        ):
+            raise ValueError("invalid scripted door rule")
+
+
+@dataclass(frozen=True)
 class EventProgram:
     entries: tuple[int, ...]
     points: tuple[EventPoint, ...]
     dispatches: tuple[EventDispatch, ...]
     starts: tuple[EventStart, ...]
     failures: tuple[EventFailure, ...]
+    door_rules: tuple[EventDoorRule, ...]
     # Creator offsets bind retained registry pointers. Parameter writers retain
     # all three u16 values: callback 9 consumes the first two low bytes;
     # callback 7 consumes the bank, index and operation without truncation.
@@ -142,6 +167,23 @@ class EventProgram:
                 or start.args[-1] >= len(self.entries)
             ):
                 raise ValueError("invalid event activation target")
+        if len({rule.entry for rule in self.door_rules}) != len(self.door_rules) or any(
+            rule.entry >= len(self.entries)
+            or set(rule.dispatches)
+            != {d.offset for d in self.dispatches if d.entry == rule.entry}
+            or any(f.entry == rule.entry for f in self.failures)
+            or any(s.entry == rule.entry for s in self.starts)
+            or any(p.entry == rule.entry and p.state != 0 for p in self.points)
+            or not any(
+                p.entry == rule.entry
+                and p.offset == self.entries[rule.entry]
+                and p.state == 0
+                and p.depth == 0
+                for p in self.points
+            )
+            for rule in self.door_rules
+        ):
+            raise ValueError("scripted door rule lacks bounded event ownership")
         for rows, width, capacity, maximum in (
             (self.creators, 2, 24, 65535),
             (self.registry_writes, 5, 24, 65535),
@@ -177,6 +219,15 @@ class EventProgram:
                 for row in raw["starts"]
             ),
             tuple(EventFailure(**row) for row in raw["failures"]),
+            tuple(
+                EventDoorRule(
+                    row["entry"],
+                    tuple(row["dispatches"]),
+                    tuple(row["door_slots"]),
+                    row["changes_character"],
+                )
+                for row in raw["door_rules"]
+            ),
             tuple(tuple(row) for row in raw["creators"]),
             tuple(tuple(row) for row in raw["registry_writes"]),
             tuple(tuple(row) for row in raw["changes"]),

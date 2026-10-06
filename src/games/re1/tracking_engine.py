@@ -11,6 +11,7 @@ from games.re1.room_cache import (
     refresh_cached_items,
 )
 from games.re1.room_items import RuntimeItemState, RuntimeRoomItems
+from games.re1.scripted_doors import ScriptedDoorAccess, scripted_door_access
 from games.re1.tracking_rules import (
     CachedReentryEvaluation,
     RoomRuleEpoch,
@@ -52,6 +53,32 @@ def validate_current_room(
             False,
             "Door access needs another visit.",
         )
+    active, disabled = list(observation.active_doors), list(observation.disabled_doors)
+    unresolved_scripted_door = False
+    for slot, opcode, entry in observation.scripted_doors:
+        accesses = {
+            scripted_door_access(
+                profile.room_programs[source.source_rdt].event_program,
+                slot,
+                entry,
+                opcode,
+            )
+            for source in sources
+        }
+        if accesses == {ScriptedDoorAccess.Delegated}:
+            active.append((slot, opcode))
+        elif accesses == {ScriptedDoorAccess.Blocked}:
+            disabled.append((slot, opcode))
+        else:
+            unresolved_scripted_door = True
+    observation = replace(
+        observation,
+        active_doors=tuple(active),
+        disabled_doors=tuple(disabled),
+        # Consume candidates once, but retain unresolved access in coverage
+        # even when current static conditions reconstruct no door at that slot.
+        scripted_doors=(),
+    )
     represented = {item.aot_id for item in observation.items}
     active_doors = {slot for slot, _ in observation.active_doors}
     disabled_doors = {slot for slot, _ in observation.disabled_doors}
@@ -62,7 +89,7 @@ def validate_current_room(
     represented_doors = {
         slot for slot, _ in observation.active_doors + observation.disabled_doors
     }
-    doors_complete = True
+    doors_complete = not unresolved_scripted_door
     for source in sources:
         program = profile.room_programs[source.source_rdt]
         # Forced awards ignore the current handler. Noncollectible evidence

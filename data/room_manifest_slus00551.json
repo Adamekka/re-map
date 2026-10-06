@@ -34,6 +34,7 @@
     "RE1-EVENT-017",
     "RE1-REENTRY-004",
     "RE1-REENTRY-005",
+    "RE1-DOORS-006",
     "RE1-REENTRY-002",
     "RE1-QUANTITY-001",
     "RE1-QUANTITY-002",
@@ -19456,6 +19457,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               68694,
@@ -23240,6 +23242,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               68694,
@@ -23686,6 +23689,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               150594,
@@ -23960,6 +23964,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               150594,
@@ -24295,6 +24300,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               22002,
@@ -24769,6 +24775,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               109110,
@@ -25126,6 +25133,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               109110,
@@ -26677,6 +26685,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44350,
@@ -27977,6 +27986,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44350,
@@ -31044,6 +31054,16 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [
+                164980
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               163850,
@@ -47201,6 +47221,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               163850,
@@ -59258,6 +59279,14 @@
               "entry": 8,
               "offset": 197858,
               "reason": "unsupported event state 1 opcode 0x07 at 0x304e2"
+            }
+          ],
+          "door_rules": [
+            {
+              "entry": 12,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
             }
           ],
           "creators": [
@@ -92442,6 +92471,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               195470,
@@ -96790,6 +96820,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               214886,
@@ -99162,6 +99193,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               104142,
@@ -101331,6 +101363,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               104142,
@@ -103433,6 +103466,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               117210,
@@ -107613,6 +107647,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               117210,
@@ -108066,6 +108101,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               62694,
@@ -108340,6 +108376,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               70486,
@@ -110625,6 +110662,7 @@
               "reason": "event path leaves section at 0x32c48"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               206670,
@@ -113091,6 +113129,7 @@
               "reason": "event path leaves section at 0x32c44"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               206670,
@@ -118075,6 +118114,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               9598,
@@ -122080,6 +122120,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               141950,
@@ -126014,6 +126055,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               141950,
@@ -145171,6 +145213,7 @@
               "reason": "event path leaves section at 0x31f1c"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               199094,
@@ -151676,6 +151719,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199094,
@@ -152613,6 +152657,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               134918,
@@ -153143,6 +153188,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96330,
@@ -153671,6 +153717,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96330,
@@ -156146,6 +156193,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               117438,
@@ -157337,6 +157385,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               150190,
@@ -160174,6 +160223,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               8734,
@@ -168188,6 +168238,18 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 13,
+              "dispatches": [
+                10836,
+                10852,
+                10868
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               8734,
@@ -172902,6 +172964,16 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 6,
+              "dispatches": [
+                131920
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               130602,
@@ -183882,6 +183954,32 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 3,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               105082,
@@ -195438,6 +195536,32 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 3,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               105082,
@@ -196846,6 +196970,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               626,
@@ -199641,6 +199766,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               13334,
@@ -200359,6 +200492,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               19018,
@@ -201011,6 +201145,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               19018,
@@ -202353,6 +202488,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               196766,
@@ -203786,6 +203922,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               196766,
@@ -204692,6 +204829,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               268730,
@@ -206864,6 +207002,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               168186,
@@ -209078,6 +209217,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               168186,
@@ -209732,6 +209872,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               144890,
@@ -216264,6 +216405,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               144890,
@@ -217511,6 +217653,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               40138,
@@ -218241,6 +218384,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               40138,
@@ -223775,6 +223919,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               18058,
@@ -229943,6 +230088,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               18058,
@@ -230917,6 +231063,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               227210,
@@ -231299,6 +231446,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               227210,
@@ -232291,6 +232439,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115982,
@@ -233313,6 +233462,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115982,
@@ -235192,6 +235342,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67346,
@@ -237145,6 +237296,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67346,
@@ -237561,6 +237713,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               39026,
@@ -242417,6 +242570,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96566,
@@ -252465,6 +252619,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96566,
@@ -254364,6 +254519,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               52354,
@@ -269470,6 +269626,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               167754,
@@ -281249,6 +281406,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               167754,
@@ -292198,6 +292356,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67242,
@@ -296076,6 +296235,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67242,
@@ -297089,6 +297249,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               256482,
@@ -297909,6 +298070,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               256482,
@@ -299614,6 +299776,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               185838,
@@ -301191,6 +301354,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               68478,
@@ -303388,6 +303552,14 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               149274,
@@ -314570,6 +314742,20 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 36,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               149274,
@@ -319651,6 +319837,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               89570,
@@ -324460,6 +324647,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               89570,
@@ -340060,6 +340248,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               219994,
@@ -356057,6 +356246,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               219994,
@@ -361944,6 +362134,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               101690,
@@ -390935,6 +391133,14 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 23,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               69582,
@@ -392949,6 +393155,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               25966,
@@ -394907,6 +395114,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               25966,
@@ -401143,6 +401351,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               255618,
@@ -407891,6 +408100,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               255618,
@@ -414130,6 +414340,7 @@
               "reason": "event path leaves section at 0xa2e8"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               39414,
@@ -419968,6 +420179,7 @@
               "reason": "event path leaves section at 0xa2e8"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               39414,
@@ -423232,6 +423444,20 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                222404,
+                222417,
+                222418
+              ],
+              "door_slots": [
+                0
+              ],
+              "changes_character": true
+            }
+          ],
           "creators": [
             [
               221514,
@@ -429685,6 +429911,20 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                222488,
+                222501,
+                222502
+              ],
+              "door_slots": [
+                0
+              ],
+              "changes_character": true
+            }
+          ],
           "creators": [
             [
               221514,
@@ -433086,6 +433326,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               110474,
@@ -442607,6 +442848,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               110474,
@@ -443522,6 +443764,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               186070,
@@ -448053,6 +448296,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               186070,
@@ -454254,6 +454498,30 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 3,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 5,
+              "dispatches": [
+                45272,
+                45294,
+                45316,
+                45338,
+                45360,
+                45382,
+                45404,
+                45426,
+                45448
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               43646,
@@ -464970,6 +465238,29 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 7,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 12,
+              "dispatches": [
+                46300,
+                46322,
+                46344,
+                46366,
+                46388,
+                46410,
+                46432,
+                46454
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               43646,
@@ -480664,6 +480955,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               189996,
@@ -496704,6 +496996,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               189996,
@@ -497761,6 +498054,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               806,
@@ -502352,6 +502646,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               814,
@@ -502859,6 +503154,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               814,
@@ -503128,6 +503424,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               89174,
@@ -520318,6 +520615,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               219198,
@@ -538134,6 +538432,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               219198,
@@ -540280,6 +540579,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               326,
@@ -541255,6 +541555,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               82594,
@@ -542261,6 +542562,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               82594,
@@ -543090,6 +543392,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               124214,
@@ -543846,6 +544149,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               124214,
@@ -545949,6 +546253,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               53030,
@@ -546358,6 +546663,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               129274,
@@ -546957,6 +547263,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               278214,
@@ -554432,6 +554739,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               103402,
@@ -570018,6 +570326,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               103402,
@@ -572398,6 +572707,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               151238,
@@ -579173,6 +579490,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               151238,
@@ -579972,6 +580297,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               86830,
@@ -589752,6 +590078,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199294,
@@ -599856,6 +600183,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199294,
@@ -608541,6 +608869,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               91834,
@@ -612056,6 +612385,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               91834,
@@ -614868,6 +615198,16 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 6,
+              "dispatches": [
+                234824
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               233874,
@@ -615345,6 +615685,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               72366,
@@ -615598,6 +615939,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               72366,
@@ -622150,6 +622492,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               25618,
@@ -630140,6 +630483,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               25618,
@@ -636335,6 +636679,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               79306,
@@ -641948,6 +642293,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               79306,
@@ -653094,6 +653440,17 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                127568,
+                127580
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               124746,
@@ -665430,6 +665787,17 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                127932,
+                127944
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               124750,
@@ -671253,6 +671621,14 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               128494,
@@ -675935,6 +676311,14 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               128494,
@@ -676798,6 +677182,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44262,
@@ -683818,6 +684203,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               14670,
@@ -691162,6 +691548,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               14670,
@@ -693590,6 +693977,20 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                53516,
+                53529,
+                53530
+              ],
+              "door_slots": [
+                2
+              ],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               52890,
@@ -704303,6 +704704,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               113906,
@@ -714628,6 +715030,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               113906,
@@ -715714,6 +716117,20 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 2,
+              "dispatches": [
+                18944,
+                18957,
+                18958
+              ],
+              "door_slots": [
+                0
+              ],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               18642,
@@ -723259,6 +723676,20 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 3,
+              "dispatches": [
+                20788,
+                20801,
+                20802
+              ],
+              "door_slots": [
+                0
+              ],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               18642,
@@ -724540,6 +724971,18 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [
+                82052,
+                82078,
+                82092
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               81518,
@@ -725652,6 +726095,18 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [
+                82052,
+                82078,
+                82092
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               81518,
@@ -728448,6 +728903,16 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                151248
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               150414,
@@ -731058,6 +731523,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               198074,
@@ -733273,6 +733739,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               198074,
@@ -734009,6 +734476,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               57590,
@@ -738468,6 +738936,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               104250,
@@ -743357,6 +743826,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               104250,
@@ -747571,6 +748041,34 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 4,
+              "dispatches": [
+                1976,
+                2009,
+                2010
+              ],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 5,
+              "dispatches": [
+                2020,
+                2053,
+                2054
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               818,
@@ -751394,6 +751892,34 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 4,
+              "dispatches": [
+                1952,
+                1985,
+                1986
+              ],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 5,
+              "dispatches": [
+                1996,
+                2029,
+                2030
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               818,
@@ -752550,6 +753076,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               118786,
@@ -756070,6 +756597,17 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 9,
+              "dispatches": [
+                168588,
+                168601
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               167326,
@@ -759829,6 +760367,17 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 9,
+              "dispatches": [
+                168588,
+                168601
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               167326,
@@ -762596,6 +763145,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               84650,
@@ -765232,6 +765782,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               84650,
@@ -772954,6 +773505,18 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [
+                55704,
+                55717,
+                55718
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               55178,
@@ -778627,6 +779190,18 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [
+                55772,
+                55785,
+                55786
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               55178,
@@ -779781,6 +780356,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               430,
@@ -780239,6 +780815,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               52118,
@@ -781466,6 +782043,16 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 2,
+              "dispatches": [
+                161248
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               160762,
@@ -782758,6 +783345,16 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 2,
+              "dispatches": [
+                161248
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               160762,
@@ -783865,6 +784462,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               152394,
@@ -788644,6 +789242,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               149586,
@@ -793812,6 +794411,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               149586,
@@ -800363,6 +800963,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44834,
@@ -804124,6 +804725,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44834,
@@ -818406,6 +819008,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115846,
@@ -843827,6 +844430,14 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 15,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               115846,
@@ -860768,6 +861379,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               61338,
@@ -883236,6 +883848,14 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               61338,
@@ -884323,6 +884943,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               406,
@@ -885405,6 +886026,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               406,
@@ -889652,6 +890274,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               68694,
@@ -890357,6 +890980,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               68694,
@@ -896637,6 +897261,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               150594,
@@ -897399,6 +898024,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               150594,
@@ -898133,6 +898759,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               21994,
@@ -898931,6 +899558,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               21994,
@@ -900239,6 +900867,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               109110,
@@ -901238,6 +901867,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               109110,
@@ -901575,6 +902205,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44350,
@@ -902005,6 +902636,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44350,
@@ -905017,6 +905649,16 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [
+                164980
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               163850,
@@ -921174,6 +921816,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               163850,
@@ -933231,6 +933874,14 @@
               "entry": 8,
               "offset": 197858,
               "reason": "unsupported event state 1 opcode 0x07 at 0x304e2"
+            }
+          ],
+          "door_rules": [
+            {
+              "entry": 12,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
             }
           ],
           "creators": [
@@ -966415,6 +967066,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               195470,
@@ -970763,6 +971415,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               214886,
@@ -972556,6 +973209,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               214886,
@@ -973207,6 +973861,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               104142,
@@ -973572,6 +974227,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               104142,
@@ -976444,6 +977100,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               117210,
@@ -981134,6 +981791,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               117210,
@@ -984267,6 +984925,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               62698,
@@ -985480,6 +986139,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               62698,
@@ -987689,6 +988349,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               70494,
@@ -988391,6 +989052,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               70494,
@@ -990717,6 +991379,7 @@
               "reason": "event path leaves section at 0x32c48"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               206670,
@@ -993183,6 +993846,7 @@
               "reason": "event path leaves section at 0x32c44"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               206670,
@@ -998167,6 +998831,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               9598,
@@ -1002056,6 +1002721,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               141950,
@@ -1005868,6 +1006534,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               141950,
@@ -1025019,6 +1025686,7 @@
               "reason": "event path leaves section at 0x31f1c"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               199094,
@@ -1031524,6 +1032192,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199094,
@@ -1032667,6 +1033336,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               94422,
@@ -1033397,6 +1034067,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               94422,
@@ -1033921,6 +1034592,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               134918,
@@ -1034451,6 +1035123,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96330,
@@ -1036926,6 +1037599,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               117438,
@@ -1038117,6 +1038791,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               150226,
@@ -1040954,6 +1041629,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               8734,
@@ -1048968,6 +1049644,18 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 13,
+              "dispatches": [
+                10836,
+                10852,
+                10868
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               8734,
@@ -1053682,6 +1054370,16 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 6,
+              "dispatches": [
+                131920
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               130602,
@@ -1064662,6 +1065360,32 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 3,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               105082,
@@ -1076218,6 +1076942,32 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 3,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               105082,
@@ -1077506,6 +1078256,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               642,
@@ -1080843,6 +1081594,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               81734,
@@ -1084544,6 +1085296,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               81734,
@@ -1088355,6 +1089108,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               13358,
@@ -1089050,6 +1089804,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               13358,
@@ -1089636,6 +1090391,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               19018,
@@ -1090288,6 +1091044,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               19018,
@@ -1091630,6 +1092387,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               196766,
@@ -1093063,6 +1093821,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               196766,
@@ -1094076,6 +1094835,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               414,
@@ -1095115,6 +1095875,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               268730,
@@ -1095948,6 +1096709,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               268730,
@@ -1098126,6 +1098888,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               168186,
@@ -1100340,6 +1101103,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               168186,
@@ -1100994,6 +1101758,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               144890,
@@ -1107526,6 +1108291,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               144890,
@@ -1108887,6 +1109653,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               40138,
@@ -1109580,6 +1110347,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               40138,
@@ -1115114,6 +1115882,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               18058,
@@ -1121282,6 +1122051,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               18058,
@@ -1128815,6 +1129585,7 @@
               "reason": "event path leaves section at 0x38024"
             }
           ],
+          "door_rules": [],
           "creators": [
             [
               227210,
@@ -1129610,6 +1130381,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               227210,
@@ -1130602,6 +1131374,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115982,
@@ -1131624,6 +1132397,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115982,
@@ -1133503,6 +1134277,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67346,
@@ -1135456,6 +1136231,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67346,
@@ -1135872,6 +1136648,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               38990,
@@ -1140728,6 +1141505,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96566,
@@ -1150776,6 +1151554,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               96566,
@@ -1152675,6 +1153454,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               52354,
@@ -1157377,6 +1158157,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               38434,
@@ -1173066,6 +1173847,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               38434,
@@ -1174777,6 +1175559,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               167754,
@@ -1175122,6 +1175905,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               167754,
@@ -1175326,6 +1176110,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67242,
@@ -1175536,6 +1176321,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67242,
@@ -1176385,6 +1177171,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               256482,
@@ -1177205,6 +1177992,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               256482,
@@ -1178910,6 +1179698,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               185838,
@@ -1180487,6 +1181276,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               68478,
@@ -1181460,6 +1182250,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               149250,
@@ -1182275,6 +1183066,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               149250,
@@ -1182682,6 +1183474,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               142570,
@@ -1183139,6 +1183932,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               106298,
@@ -1183681,6 +1184475,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               106298,
@@ -1186626,6 +1187421,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               111986,
@@ -1189910,6 +1190706,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               111986,
@@ -1190825,6 +1191622,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               211718,
@@ -1191490,6 +1192288,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               211718,
@@ -1193325,6 +1194124,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               334438,
@@ -1195256,6 +1196056,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               334438,
@@ -1196566,6 +1197367,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               35230,
@@ -1197262,6 +1198071,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               84678,
@@ -1197874,6 +1198684,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               84678,
@@ -1198425,6 +1199236,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               43810,
@@ -1198764,6 +1199576,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               37018,
@@ -1200026,6 +1200839,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               152174,
@@ -1201404,6 +1202218,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               152174,
@@ -1204072,6 +1204887,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               169142,
@@ -1206725,6 +1207541,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               169142,
@@ -1208264,6 +1209081,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               267354,
@@ -1210057,6 +1210875,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               267354,
@@ -1210753,6 +1211572,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               134006,
@@ -1211097,6 +1211917,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               134006,
@@ -1216309,6 +1217130,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               9614,
@@ -1217130,6 +1217952,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115566,
@@ -1220281,6 +1221104,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               266734,
@@ -1223295,6 +1224119,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               67282,
@@ -1226204,6 +1227036,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 2,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               67282,
@@ -1228764,6 +1229604,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               198606,
@@ -1231519,6 +1232360,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               198606,
@@ -1232566,6 +1233408,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               334762,
@@ -1234699,6 +1235542,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333626,
@@ -1236874,6 +1237718,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333626,
@@ -1237400,6 +1238245,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333738,
@@ -1244091,6 +1244937,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333738,
@@ -1245405,6 +1246252,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199870,
@@ -1246172,6 +1247020,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199870,
@@ -1249326,6 +1250175,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               149466,
@@ -1261308,6 +1262158,20 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 36,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               149466,
@@ -1266525,6 +1267389,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               183282,
@@ -1271440,6 +1272305,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               183282,
@@ -1289111,6 +1289977,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               219198,
@@ -1306927,6 +1307794,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               219198,
@@ -1309355,6 +1310223,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               298142,
@@ -1311263,6 +1312132,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               298142,
@@ -1311910,6 +1312780,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               242706,
@@ -1319641,6 +1320512,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               103402,
@@ -1335530,6 +1336402,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               103402,
@@ -1339295,6 +1340168,16 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 5,
+              "dispatches": [
+                151240
+              ],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               150414,
@@ -1342029,6 +1342912,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               156390,
@@ -1344368,6 +1345252,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               156390,
@@ -1348844,6 +1349729,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               139126,
@@ -1353793,6 +1354679,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               139126,
@@ -1359107,6 +1359994,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               170446,
@@ -1364391,6 +1365279,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               170446,
@@ -1371453,6 +1372342,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               169138,
@@ -1372561,6 +1373451,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               169138,
@@ -1372915,6 +1373806,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44350,
@@ -1373407,6 +1374299,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               44350,
@@ -1374896,6 +1375789,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               267354,
@@ -1376689,6 +1377583,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               267354,
@@ -1379218,6 +1380113,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               134014,
@@ -1379933,6 +1380829,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               134014,
@@ -1385186,6 +1386083,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               9614,
@@ -1386007,6 +1386905,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               115566,
@@ -1389158,6 +1390057,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               266734,
@@ -1392521,6 +1393421,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               266734,
@@ -1396126,6 +1397027,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67306,
@@ -1396855,6 +1397757,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               67306,
@@ -1399283,6 +1400186,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               198606,
@@ -1402038,6 +1402942,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               198606,
@@ -1403199,6 +1404104,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               334762,
@@ -1404045,6 +1404951,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               334762,
@@ -1406184,6 +1407091,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333626,
@@ -1408359,6 +1409267,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333626,
@@ -1408885,6 +1409794,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333738,
@@ -1415576,6 +1416486,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               333738,
@@ -1417004,6 +1417915,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199870,
@@ -1417771,6 +1418683,7 @@
           "dispatches": [],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               199870,
@@ -1420925,6 +1421838,7 @@
             }
           ],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               149466,
@@ -1432907,6 +1433821,20 @@
             }
           ],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 1,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            },
+            {
+              "entry": 36,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               149466,
@@ -1436439,6 +1437367,14 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [
+            {
+              "entry": 0,
+              "dispatches": [],
+              "door_slots": [],
+              "changes_character": false
+            }
+          ],
           "creators": [
             [
               115106,
@@ -1437134,6 +1438070,7 @@
           ],
           "starts": [],
           "failures": [],
+          "door_rules": [],
           "creators": [
             [
               43810,

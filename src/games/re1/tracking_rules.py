@@ -29,6 +29,7 @@ from games.re1.room_items import (
     RuntimeRoomItem,
     RuntimeRoomItems,
 )
+from games.re1.scripted_doors import ScriptedDoorAccess, scripted_door_access
 
 
 @dataclass(frozen=True)
@@ -290,6 +291,53 @@ class RoomProgram:
                 for offset, slot, _, _, _ in self.event_program.registry_writes
             ):
                 raise ValueError("registry parameter writer lacks its semantic slot")
+        if self.event_program.door_rules:
+            commands = {
+                command.offset: command
+                for block in self.event_blocks
+                for procedure in block
+                for command in procedure.commands
+            } | {command.offset: command for command in self.event_commands}
+            for rule in self.event_program.door_rules:
+                offsets = {
+                    offset
+                    for dispatch in self.event_program.dispatches
+                    if dispatch.entry == rule.entry
+                    for offset in dispatch.commands
+                }
+                if not offsets <= commands.keys():
+                    raise ValueError("scripted door rule lacks semantic commands")
+                owned = tuple(commands[offset] for offset in sorted(offsets))
+                if (
+                    tuple(
+                        command.args[0]
+                        for command in owned
+                        if command.kind == "aot-callback"
+                    )
+                    != rule.door_slots
+                    or any(command.kind == "variable-write" for command in owned)
+                    != rule.changes_character
+                    or any(
+                        not (
+                            command.kind in ("end", "if", "endif")
+                            or command.kind == "byte-test"
+                            and command.args in ((5, 0, 0), (5, 2, 128))
+                            or command.kind == "variable-write"
+                            and len(command.args) == 3
+                            and command.args[:2] == (1, 9)
+                            or command.kind == "aot-callback"
+                            and command.args[1:] == (1, 1)
+                            or command.kind == "constant-test"
+                            and command.args == (1,)
+                            or command.kind == "local-flag-forget"
+                            and command.args == (6, 16, 16)
+                            or command.kind == "flag-write"
+                            and command.args in ((6, 23, 0), (6, 23, 1))
+                        )
+                        for command in owned
+                    )
+                ):
+                    raise ValueError("scripted door rule disagrees with its effects")
 
     @staticmethod
     def load(raw: dict) -> RoomProgram:
@@ -1546,7 +1594,7 @@ def evaluate_room_program(
     def interpret_descriptor(descriptor):
         if descriptor is None:
             return "absent", None
-        creator, args, handler, mode, _, quantity = descriptor
+        creator, args, handler, mode, parameters, quantity = descriptor
         slot = args[0]
         if creator == "item":
             _, item_type, _, gid, _ = args
@@ -1593,7 +1641,7 @@ def evaluate_room_program(
                     0x18,
                 ),
             )
-        elif creator == "door" and handler in (0, 1, 2):
+        elif creator == "door" and handler in (0, 1, 2, 9):
             _, x, z, width, depth, animation, lock, target, key, _ = args
             raw = bytearray(26)
             raw[:2] = bytes((0x0C, slot))
@@ -1605,6 +1653,20 @@ def evaluate_room_program(
                 key,
                 mode,
             )
+            if handler == 9:
+                if parameters is RegistryParameterState.Unreconstructed:
+                    return "unresolved", None
+                access = scripted_door_access(
+                    program.event_program, slot, parameters[1] & 255, bytes(raw)
+                )
+                if access is ScriptedDoorAccess.Unresolved:
+                    return "unresolved", None
+                return (
+                    "door"
+                    if access is ScriptedDoorAccess.Delegated
+                    else "disabled-door",
+                    (slot, bytes(raw)),
+                )
             # RE1-DOORS-003: handler 2 displays a message, retaining the door
             # source without granting traversal or changing its unlock flag.
             return "door" if handler == 1 else "disabled-door", (slot, bytes(raw))

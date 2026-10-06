@@ -458,6 +458,7 @@ def test_activation_schema_and_pinned_layout_are_mandatory(rules):
         "dispatches": [{"entry": 0, "offset": 2, "commands": [3]}],
         "starts": [],
         "failures": [],
+        "door_rules": [],
         "creators": [],
         "registry_writes": [],
         "changes": [],

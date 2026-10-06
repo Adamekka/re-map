@@ -1103,6 +1103,73 @@ History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; catalogued the thirteen handler-9 slots, inspected the five direct delegated callbacks and their guards, and identified a shared implementation candidate. Recorded the evidence before requesting implementation approval.
 - 2026-10-07; Codex root, GPT-6.1 Sol; manually reviewed both new findings, verified the three artifact hashes, diagnostic counts, five callback guard operands and unique finding IDs, and passed `git diff --check`. No Markdown formatter or linter is configured. This documentation-only audit does not require rerunning the unchanged implementation suite and adds no external review or runtime endorsement.
+- 2026-10-07; human user; explicitly approved shared scripted-door tracking. RE1-DIALOG-001 investigates the confirmation guard, and RE1-DOORS-006 records the implementation and its validation limits. The original source-only observations above remain unchanged.
+
+## RE1-DIALOG-001: dialog busy and choice values explain the scripted-door guard
+
+Status: Candidate; pinned native instruction inspection, no natural confirmation experiment
+Scope: RE1 Director's Cut, NTSC-U, SLUS-00551, `SLUS_005.51` SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; the byte-variable layout in RE1-VARS-001 and event contracts in RE1-EVENT-003
+Environment: read-only owned executable/RDT inspection, Python 3.14.8 and Capstone 5.0.9; no new DuckStation gameplay
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: primary native message helper/consumer and source-bound indexed-script inspection
+Claim: PS1 virtual byte `0x800C8665`, RAM offset `0xC8665`, width one byte, contains a message busy bit `0x80` and a selectable result in bit `0x01`. The five delegated scripts in RE1-DOORS-005 wait for this byte to fall below `0x80` and then test zero before calling the ordinary door callback. Zero describes a selectable confirmation result, not a story flag or a door unlock.
+
+Evidence:
+
+- SCD `0B` at `0x800452F4..0x80045348` calls message helper `0x80035278..0x8003538C` and returns one regardless of that helper's result. The helper returns early while the byte's `0x80` bit is already set. Otherwise it writes `0x80`, selects the text source, stores control fields and masks/saves the `0x800CAB00` halfword. It does not request a room transition.
+- Message input at `0x80035B14..0x80035B44` toggles bit 0 with XOR one. Completion at `0x80035AE4..0x80035B08` clears bit `0x80` and restores the saved control halfword. The timed completion path at `0x80035D00..0x80035D58` also clears the busy bit. Result selection at `0x80035D80..0x80035DB8` explicitly uses bit 0. The two low-bit possibilities are therefore user choices under this native contract.
+- The inspected delegated entries issue SCD `0B` with prompt control bit `0x80`, establish an FC deferred predicate `06 05 02 80`, yield and use FD to repeat it. Comparison type 2 means greater than or equal under RE1-SCD-007; the initialized FC/FD frame contract is RE1-EVENT-003. After the wait exits, a full SCD procedure tests `06 05 00 00` and invokes callback 1 on the same door slot. The wrapper's source length must contain its complete dispatched operands.
+- The dialog consumer's token `0A` can invoke one of four valid callbacks from the table at `0x8008EE1C`: `0x80034340`, `0x80034394`, `0x800344E4`, `0x8003455C`. Their direct bodies handle acquisition, inventory consumption/removal and a no-op. They contain no ordinary door callback or passage-request write. This inspection does not make message effects a general no-op in the tracking engine.
+
+Limits: source inspection does not reproduce prompt timing, normal accept/decline, scripted passage, character changes or save/load in the affected rooms. An earlier busy message can suppress a new prompt; the implemented rule describes the route available through a fresh normal interaction, not the event's current PC or proof of completed execution. Arbitrary message bytecode, malformed callback indices, other revisions and unrelated predicates remain outside this claim. RE1-DOORS-006 identifies private excerpts and hashes; no executable or message bytes are committed.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; inspected the complete message helper, busy-bit completion, choice toggle/selection, valid callback table and the five source-bound FC/FD confirmation routes. Kept the native claim Candidate pending natural gameplay validation.
+
+## RE1-DOORS-006: bounded scripted-door rules share ordinary lock interpretation
+
+Status: Candidate; source generation, synthetic regressions and unchanged recorded-RAM replay
+Scope: pinned SLUS-00551 executable from RE1-DIALOG-001, all 334 generated source variants, both current-room and departed-room tracking paths
+Environment: owned disc/executable, Python 3.14.8, pytest 9.1.1 and Capstone 5.0.9; earlier captures retain their recorded DuckStation environment and provenance
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: RE1-DIALOG-001, callback/source contracts in RE1-EVENT-006 and RE1-DOORS-003, generated-source comparisons and synthetic access/refresh tests
+Claim: shared rules classify a source-bound handler-9 door as delegated when its bounded normal interaction calls ordinary callback 1 for the same slot. A bounded interaction with no ordinary door call is blocked. Delegation reuses fresh ordinary lock interpretation and does not grant an unlock. Unsupported guards, effects or event ownership remain unresolved.
+
+Evidence:
+
+- Generation accepts only audited state-0 straight flow, padding/yields, bounded counter waits and the exact dialog-completion frame followed by a zero-choice guard. Accepted SCD effects are message setup, dialog control bit 6/23, positional audio and a single ordinary callback. A guarded callback may first write player byte variable 9. Such a write rejects delegation for lock control `0x40` or a locked type-`0x33` door because those paths depend on player state. External waits can prove a no-call interaction blocked, but cannot prove delegation. Child starts/restarts, other states, unsupported guards/effects, overlapping short wrappers and incomplete owned dispatches produce no rule.
+- Required event metadata binds every proof to its indexed entry and all owned dispatches. Loading validates ownership, source semantic commands, exact callback slot and player-write declaration. Live observation records handler-9 door candidates only after ordinary descriptor bounds, opcode/slot, pending-award and coherent registry checks. All matching source aliases must agree before publication. Unresolved live access prevents complete door coverage even if current setup conditions reconstruct no door at that slot. Reconstruction uses the same proof and retains geometry, destination and actual registry mode. Existing source/cache permissions and whole-source historical barriers remain intact.
+- Two independent disc generations are byte-identical, manifest SHA256 `87887b4812fababdf4b58d23d2d5b7e8876c0bfe6230e3d8eebaa025b86d0e42`. Against commit `292dd0e`'s manifest SHA256 `c70cb13b159c216e94ad3af6639a5d8ad09a920c440c269e37cbfef0be87ae0c`, the only changes are 72 new proof rows across 51 sources and the RE1-DOORS-006 research reference. Every previous identity, source signature/range, loader choice, coverage declaration, mutable field and semantic command is unchanged.
+- All thirteen sole-handler-9 slots catalogued in RE1-DOORS-005 now have a bounded proof. Five delegate on confirmation, eight request no ordinary passage. Under each unchanged Herb-before, Herb-after and Chemical-before RAM snapshot, offline complete door projections increase **256 to 263** in the current epoch and **301 to 312** in reentry. Current gains are `ROOM3070/3071`, `ROOM5000`, `ROOM5020/5021` and `ROOM5030/5031`; reentry additionally resolves `ROOM5080/5081` and `ROOM50C0/50C1`. This is seven/eleven source variants, not naturally validated rooms.
+- Paired old/new evaluation checks 2,004 projections, all 334 sources in both epochs under three unchanged snapshots. Complete item counts remain **263 current / 287 reentry**. Every previously established item identity, quantity, acquisition state, noncollectible slot and active/disabled door payload remains present and unchanged. Previously complete door lists are identical. The comparison uses the prior evaluator and its prior coverage declarations, not relaxed current coverage.
+- The twelve-step, eleven-distinct-capture replay from RE1-REENTRY-004 passes through one tracker/profile. It preserves Art Room's remaining Ribbon and Map acquisition reversal, Main Hall's clearance while departed, three normal-load captures, the later walked return, earlier Ribbon-state reversal and reveal only for entered rooms 06/07. This performs no new gameplay and substitutes no RAM bytes.
+- `tests/test_scripted_doors.py` passes all 45 synthetic cases. They cover both epochs, confirmation flow, player-dependent locks, locked/open/locked reversal, message-only scripts, rejected guards/starts/overlap/slot changes, mandatory metadata, live source-alias disagreement, cached loaded-state reversal and explicit source-read/pending-award/coherence failures. Review regressions retain unresolved live access when static rules see absence and prove a single VM07 dispatch skips its unused tail. The final full suite passes **1,348 tests in 57.02 seconds**. Scoped Ruff lint and format checks pass on all ten changed Python files. No repository formatter/linter or Markdown checks are configured; manually scoped Ruff and `git diff --check` are used.
+
+Private artifacts remain under `/tmp/tasks/re-map/scripted-doors/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `generation.json` | `8996b7954e36c15979d61ff6ffc434525df5894183612d842e7b93b66cb21bce` | Exact metadata delta and proof inventory |
+| `differential.json` | `2934708e3eed79e5b408ba2b383e8680d5718d7a6de6b66f7f107fe146ec7b07` | Paired old/new projections and preserved payloads |
+| `audit.json` | `cbff5a9fda28e50ce70f1b895439d90a1ec4c7db697c52c5de1ef3591567a6b7` | Unchanged twelve-step capture replay after review |
+| `projection.json` | `22a2669bcd95d582068f345d6cd24d829730c3ae561fc9dfefb4611d3463ebb1` | Single captured-state reentry projection after review |
+| `native.txt` | `0cb2ed2dc5123304454d34485d2820143498e3dcf2a404d9bfbaabd1ae088c40` | Callback/message instructions and source-bound routes |
+| `complete-native.txt` | `f45939b00667de1bad7ed6c0323a5d1e672cb467f77d29149a8190ae5dde67b8` | Complete SCD audio handler and dialog input/completion excerpts |
+| `message-callbacks.txt` | `4b792d84d685fd9f163ca8f0921adce25d302541e35ec54b3fce740cbae65307` | Four valid dialog callback bodies and audio helper |
+| `single-dispatch-native.txt` | `0c6468fe57ed24f9192f9ed1c9909cc12407dee6cf55abe7ea337556c8180d51` | VM07's single handler call and return |
+| `pytest-reviewed.log` | `4784171756205e550e396bb2ac880e57953b8068a1e271f8653b80ebea50d416` | Final full regression suite after review |
+
+Run the private `audit_generation.py`, `differential.py` and `audit.py` with their pinned baseline to reproduce these reports. Extracted game/RAM data and generated diagnostics remain outside Git.
+
+Limits: no newly resolved scripted door was activated naturally. Confirmation timing, traversal, normal lock changes, player-variable changes, other characters, later areas and save/load of these new routes remain unvalidated. An ordinary callback retains its own lock checks; proof of delegation does not mean an open door. Forced dispatch and future story changes retain their separate analysis requirements. More complex scripts still need supported conditions. These findings do not establish whole-game reliability, additional map geometry or another game revision.
+History:
+
+- 2026-10-07; human user; approved the named shared scripted-door feature after RE1-DOORS-005's inspection.
+- 2026-10-07; Codex root, GPT-6.1 Sol; inspected the native dialog path, implemented the shared source proof and both consumers, regenerated twice, compared all previous manifest fields and paired projections, replayed unchanged captures, and added synthetic regression cases. Recorded separate native and implementation claims without promoting natural gameplay coverage.
+- 2026-10-07; Gemini 3.1 Pro High via agy, conversation `7ef3c2e4-2e61-42d9-8faf-be2e4b14e0d8`; reviewed the complete supplied diff, new files, scanner/compiler/runtime/profile interfaces, call sites, tests and pinned native contracts. Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Root verified its unresolved-live-door finding and added an explicit coverage failure plus a setup-guard regression. Its proposed exact VM07 span check contradicts the native single-command dispatch at `0x800271E0..0x80027238`, RE1-EVENT-003 and the existing scanner contract; root retained the independent jump, explained it and added a skipped-tail regression. The complete review packet was 284,786 bytes, SHA256 `c1faf2312f9625a0d5ab8bdb051658de07e632afacd71e9a86bb7305dbf63eac`.
+- 2026-10-07; Gemini 3.8 Flash High via agy, conversation `8fd0180e-0aaa-4deb-bdda-9f454df73a75`; reviewed the same supplied snapshot and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. This response does not supersede root's verified coverage correction or establish runtime behavior.
+- 2026-10-07; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, review, substitution or endorsement.
+- 2026-10-07; Codex root, GPT-6.1 Sol; inspected VM07 through its return at `0x80027244/48`, verified both review candidates, added the coverage correction and two regressions, and reviewed the final diff. All 1,348 tests, scoped Ruff checks and `git diff --check` pass. The unchanged capture replay still passes after the correction; source projection counts and generated metadata remain unchanged. The two reports above were rewritten with the final run's measured timings and hashes.
 
 ## RE1-FLAG-002: alternate pickup acquisition needs an explicit flag rule
 
