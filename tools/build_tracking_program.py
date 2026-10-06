@@ -82,6 +82,8 @@ def build_tracking_program(
             kind, args = "flag-write", [5, 14, 0]
         elif op == 0x2C:
             kind, args = "inventory-remove", [raw[1]]
+        elif op == 0x29:
+            kind, args = "display-request", [raw[1]]
         elif op == 0x48:
             # Clearing the pool zeros its first record's two header bytes.
             # Only those bytes overlap a script flag bank, at C3024/C3025.
@@ -160,11 +162,21 @@ def build_tracking_program(
         return result, False
 
     item_slots = set(row["item_aot_ids"])
+    # A generic interaction can become a pickup without any item creator in
+    # this source. Retain that slot so an unknown payload cannot look cleared.
+    item_slots.update(
+        raw[1]
+        for _, _, op, raw in operations
+        if op in (0x12, 0x13) and raw[2] in (3, 4, 15)
+    )
     door_slots = {
         raw[1]
         for _, _, op, raw in operations
         if op == 0x0C or op == 0x0D and raw[10] == 1
     }
+    door_slots.update(
+        raw[1] for _, _, op, raw in operations if op in (0x12, 0x13) and raw[2] == 1
+    )
     # RE1-SCD-015: callback 1 and its helpers preserve the AOT/source.
     # Its event-time unlock result comes from fresh flags, not replay.
     changed_slots = set()
@@ -194,20 +206,8 @@ def build_tracking_program(
     for start in event_scan.block_starts:
         blocks, complete = procedures(start, row["events_offset"] + row["events_size"])
         assert complete, "event scanner must validate every embedded procedure list"
-        if not any(
-            c["kind"] in ("aot-create", "aot-handler", "event-start", "award")
-            or c["kind"] == "aot-callback"
-            and c["args"][1] in (1, 9)
-            or c["kind"] == "quantity-transfer"
-            and c["args"][0] in (1, 2)
-            or c["kind"] in ("item", "door")
-            and c["args"][0] in item_slots | door_slots
-            for block in blocks
-            for c in block["commands"]
-        ):
-            # Keep trigger guards even if this dispatch changes no tracked
-            # item/door directly. Other unrelated blocks need no rule payload.
-            continue
+        # A flag-only dispatch can enable a later item or door event. Reentry
+        # analysis needs its semantics even without a direct interaction update.
         try:
             # Width decoding does not enforce the semantic procedure schema.
             # Invalid blocks cannot authorize pruning or source completeness.
@@ -275,6 +275,15 @@ def build_tracking_program(
             for section, address, op, raw in operations
             if section == "events"
             and op in (0x0C, 0x0D, 0x12, 0x13, 0x18)
+            and (
+                address not in block_commands
+                or address in event_scan.standalone_commands
+            )
+        ],
+        "event_commands": [
+            command(address, op, raw)
+            for section, address, op, raw in operations
+            if section == "events"
             and (
                 address not in block_commands
                 or address in event_scan.standalone_commands

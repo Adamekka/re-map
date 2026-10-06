@@ -19,7 +19,11 @@ from games.re1.room_cache import (
     RoomScriptSource,
 )
 from games.re1.room_items import RuntimeRoomLayout
-from games.re1.tracking_rules import RoomProgram, TrackingRuleLayout
+from games.re1.tracking_rules import (
+    CachedReentryEvaluation,
+    RoomProgram,
+    TrackingRuleLayout,
+)
 
 
 class MemoryResult(Protocol):
@@ -110,6 +114,11 @@ class Re1Profile:
     tracking_rule_layout: TrackingRuleLayout | None = None
     event_layout: EventLayout | None = None
     room_observations: dict[RoomId, CachedRoomObservation] = field(default_factory=dict)
+    # Reentry can be expensive for branching sources. Keep one pure result per
+    # source in this profile instance; fresh inputs always invalidate it.
+    room_reentry_evaluations: dict[str, CachedReentryEvaluation] = field(
+        default_factory=dict
+    )
 
     @staticmethod
     def load(path: Path) -> Re1Profile:
@@ -284,6 +293,7 @@ class Re1Profile:
                 _number(rule_raw["alternate_mask"]),
                 _number(rule_raw["byte_variables_base_ps1"]),
                 _number(rule_raw["word_variables_base_ps1"]),
+                tuple(tuple(clear) for clear in rule_raw["room_entry_flag_clears"]),
             )
             manifest_path = path.parent / raw["room_manifest_path"]
             manifest = json.loads(manifest_path.read_text())
@@ -372,7 +382,7 @@ class Re1Profile:
                     <= command.offset
                     < command.next
                     <= row["events_offset"] + row["events_size"]
-                    for command in program.event_effects
+                    for command in program.event_effects + program.event_commands
                 ):
                     raise ValueError("tracking effect outside source events")
                 commands = (
@@ -388,6 +398,7 @@ class Re1Profile:
                         for command in procedure.commands
                     )
                     + program.event_effects
+                    + program.event_commands
                 )
                 if any(
                     command.kind == "item"

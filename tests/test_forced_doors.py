@@ -328,9 +328,9 @@ def test_past_room_forced_door_reads_fresh_unlock_flags_and_rewinds_in_map(tmp_p
         assert tracked.state == ("OPEN" if unlocked else "LOCKED")
         state = tracker.room_state(RoomId(0, 9))
         assert state.completion == RoomCompletion.Cleared
-        # Another door's existing event alternatives remain unresolved. They
-        # must not hide this supported marker or alter item completion.
-        assert not state.doors_complete
+        # Fresh entry excludes the other door's unstarted event alternatives.
+        # Unlock still comes from current flags rather than callback replay.
+        assert state.doors_complete
         mapped = next(row for row in map_state(tracker)["rooms"] if row["id"] == "09")
         assert mapped["doors_complete"] == state.doors_complete
         assert len(tracker.region_visits) == 2

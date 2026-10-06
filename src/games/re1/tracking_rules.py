@@ -10,6 +10,7 @@ from __future__ import annotations
 import struct
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import Enum
 
 from games.game_profile import RoomId
 from games.re1.event_state import EventProgram
@@ -52,6 +53,7 @@ class RuleCommand:
             "aot-callback": 3,
             "event-start": 2,
             "inventory-remove": 1,
+            "display-request": 1,
             "uncertain-test": 0,
         }
         if (
@@ -148,6 +150,8 @@ class RuleCommand:
             raise ValueError("invalid tracking event start")
         if self.kind == "inventory-remove" and not 0 <= self.args[0] <= 255:
             raise ValueError("invalid inventory removal type")
+        if self.kind == "display-request" and not 0 <= self.args[0] <= 255:
+            raise ValueError("invalid display request")
 
 
 @dataclass(frozen=True)
@@ -191,6 +195,7 @@ class RoomProgram:
     door_slots: tuple[int, ...]
     mutable_slots: tuple[int, ...]
     event_program: EventProgram
+    event_commands: tuple[RuleCommand, ...]
 
     def __post_init__(self) -> None:
         if type(self.coverage_complete) is not bool:
@@ -234,6 +239,38 @@ class RoomProgram:
                         "event block overlaps initialization or runs out of order"
                     )
                 last_end = procedure.end
+        if len({command.offset for command in self.event_commands}) != len(
+            self.event_commands
+        ) or any(command.offset in occupied for command in self.event_commands):
+            raise ValueError("invalid standalone event commands")
+        if self.coverage_complete:
+            semantic_commands = {
+                command.offset: command
+                for procedure in self.procedures + self.main_procedures
+                for command in procedure.commands
+            }
+            event_commands = {
+                command.offset: command for command in self.event_commands
+            } | {
+                command.offset: command
+                for block in self.event_blocks
+                for procedure in block
+                for command in procedure.commands
+            }
+            if any(
+                offset not in event_commands
+                for dispatch in self.event_program.dispatches
+                for offset in dispatch.commands
+            ):
+                raise ValueError("event dispatch lacks semantic commands")
+            semantic_commands.update(event_commands)
+            if any(
+                offset not in semantic_commands
+                or semantic_commands[offset].kind not in ("aot-create", "aot-handler")
+                or semantic_commands[offset].args[0] != slot
+                for offset, slot, _, _ in self.event_program.registry_writes
+            ):
+                raise ValueError("registry parameter writer lacks its semantic slot")
 
     @staticmethod
     def load(raw: dict) -> RoomProgram:
@@ -274,6 +311,10 @@ class RoomProgram:
             tuple(raw["door_slots"]),
             tuple(raw["mutable_slots"]),
             EventProgram.load(raw["event_program"]),
+            tuple(
+                RuleCommand(c["offset"], c["next"], c["kind"], tuple(c["args"]))
+                for c in raw["event_commands"]
+            ),
         )
 
 
@@ -290,6 +331,7 @@ class TrackingRuleLayout:
     alternate_mask: int
     byte_variables_base: int
     word_variables_base: int
+    room_entry_flag_clears: tuple[tuple[int, int, int], ...]
 
     def __post_init__(self) -> None:
         if (
@@ -329,6 +371,30 @@ class TrackingRuleLayout:
             )
         ):
             raise ValueError("room file selectors must belong to the source context")
+        cleared = set()
+        for group, first, count in self.room_entry_flag_clears:
+            if (
+                any(type(value) is not int for value in (group, first, count))
+                or group not in (4, 6, 9)
+                or not 0 <= first < first + count <= 256
+            ):
+                raise ValueError("invalid room entry flag clear")
+            bits = {self.flag(group, index) for index in range(first, first + count)}
+            if bits & cleared:
+                raise ValueError("overlapping room entry flag clears")
+            cleared.update(bits)
+        persistent = {
+            self.flag(group, index)
+            for group in self.persistent_flag_groups
+            for index in range(256)
+        } | {self.flag(*bit) for bit in self.persistent_flag_bits}
+        if cleared & persistent or any(
+            mask & selector_mask
+            for address, mask in cleared
+            for selector_address, selector_mask in self.source_selection_masks
+            if address == selector_address
+        ):
+            raise ValueError("room entry reset overlaps persistent state")
 
     def flag(self, group: int, index: int) -> tuple[int, int]:
         assert 0 <= group < 10 and 0 <= index <= 255
@@ -352,24 +418,30 @@ def read_rule_snapshot(
         address for address, _ in layout.source_selection_masks
     }
     for program in programs:
-        for procedure in program.procedures + program.main_procedures:
-            for command in procedure.commands:
+        commands = program.event_commands + tuple(
+            command
+            for procedure in program.procedures
+            + program.main_procedures
+            + tuple(p for block in program.event_blocks for p in block)
+            for command in procedure.commands
+        )
+        for command in commands:
+            if (
+                command.kind == "aot-callback"
+                and command.args[1] == 1
+                and 2 in layout.persistent_flag_groups
+            ):
+                # A source variant can choose any six-bit lock index.
+                # Read its eight bytes so a known true unlock survives a
+                # conditional native OR and participates in the recheck.
+                addresses.update(layout.flag_bases[2] + i for i in range(8))
+            if command.kind in ("flag-test", "flag-write"):
+                group, index, _ = command.args
                 if (
-                    command.kind == "aot-callback"
-                    and command.args[1] == 1
-                    and 2 in layout.persistent_flag_groups
+                    group in layout.persistent_flag_groups
+                    or (group, index) in layout.persistent_flag_bits
                 ):
-                    # A source variant can choose any six-bit lock index.
-                    # Read its eight bytes so a known true unlock survives a
-                    # conditional native OR and participates in the recheck.
-                    addresses.update(layout.flag_bases[2] + i for i in range(8))
-                if command.kind in ("flag-test", "flag-write"):
-                    group, index, _ = command.args
-                    if (
-                        group in layout.persistent_flag_groups
-                        or (group, index) in layout.persistent_flag_bits
-                    ):
-                        addresses.add(layout.flag(group, index)[0])
+                    addresses.add(layout.flag(group, index)[0])
     values = []
     for address in sorted(addresses):
         result = read_memory(address, 1)
@@ -390,6 +462,26 @@ class RuleEvaluation:
     unresolved_door_slots: tuple[int, ...]
 
 
+@dataclass(frozen=True)
+class CachedReentryEvaluation:
+    program: RoomProgram
+    room: RoomId
+    layout: TrackingRuleLayout
+    snapshot: RuleSnapshot
+    flags: bytes
+    item_labels: tuple[tuple[int, str], ...]
+    result: RuleEvaluation
+
+
+class RoomRuleEpoch(Enum):
+    Current = "current"
+    Reentry = "reentry"
+
+
+class RegistryParameterState(Enum):
+    Unreconstructed = "unreconstructed"
+
+
 def evaluate_room_program(
     program: RoomProgram,
     room: RoomId,
@@ -397,25 +489,63 @@ def evaluate_room_program(
     snapshot: RuleSnapshot,
     flags: bytes,
     item_labels: tuple[tuple[int, str], ...],
+    epoch: RoomRuleEpoch = RoomRuleEpoch.Current,
 ) -> RuleEvaluation:
     assert not snapshot.error, "failed rule reads must not reach interpretation"
+    assert isinstance(epoch, RoomRuleEpoch)
     values = dict(snapshot.values)
     # Slots contain semantic creator operands and the latest AOT handler/mode.
     paths = [((), ())]
     bounded = True
+    reentry = epoch == RoomRuleEpoch.Reentry
+    started = set()
+    registry_parameters = {
+        offset: (parameter, model)
+        for offset, _, parameter, model in program.event_program.registry_writes
+    }
 
-    def update_descriptor(descriptor, kind, args):
+    def start_interaction(slot, slots):
+        descriptors = dict(slots).get(slot, frozenset({None}))
+        targets = set()
+        for descriptor in descriptors:
+            if (
+                descriptor is None
+                or descriptor[4] == RegistryParameterState.Unreconstructed
+            ):
+                return False
+            _, model = descriptor[4]
+            if model & 255 >= len(program.event_program.entries):
+                return False
+            targets.add(model & 255)
+        started.update(targets)
+        return True
+
+    def update_descriptor(descriptor, command):
+        kind, args = command.kind, command.args
+        # Generic creators and extended setters provide known u16 parameters.
+        # Other creators have no reconstructed parameter contract for callback 9.
+        parameters = registry_parameters.get(
+            command.offset, RegistryParameterState.Unreconstructed
+        )
         if kind == "item":
-            return kind, args, 15 if args[1] >= 0x4E else 4, args[4]
+            return kind, args, 15 if args[1] >= 0x4E else 4, args[4], parameters
         if kind == "door":
-            return kind, args, 1, args[9]
+            return kind, args, 1, args[9], parameters
         if kind == "aot-create":
-            return kind, args, args[1], args[2]
+            return kind, args, args[1], args[2], parameters
         assert kind == "aot-handler"
         if descriptor is None:
-            return None  # Setters preserve pointers and cannot create an absent descriptor.
-        creator, fields, _, _ = descriptor
-        return creator, fields, args[1], args[2]
+            return None  # Setters preserve pointers; no modeled creator supplies one.
+        creator, fields, _, _, retained_parameters = descriptor
+        return (
+            creator,
+            fields,
+            args[1],
+            args[2],
+            parameters
+            if command.offset in registry_parameters
+            else retained_parameters,
+        )
 
     event_updates = tuple(
         (
@@ -436,20 +566,28 @@ def evaluate_room_program(
         pending = list(choices)
         while pending:
             descriptor = pending.pop()
-            outcomes = {update_descriptor(descriptor, c.kind, c.args) for c in effects}
+            outcomes = {update_descriptor(descriptor, c) for c in effects}
             for block_index, (block, updates) in enumerate(event_updates):
                 relevant = tuple(c for c in updates if c.args[0] == slot)
                 if not relevant:
                     continue
                 key = (block_index, slot, descriptor)
                 if key not in event_outcomes:
-                    # Activation, earlier flags and other event scheduling are
-                    # unavailable. Each block is optional and starts with unknown
-                    # guards. Its own ordered writes/tests retain their relation.
-                    states = [(((slot, frozenset({descriptor})),), ())]
+                    # Current-room history has unknown earlier guards. Reentry
+                    # instead seeds invariants from its bounded entry analysis.
+                    # Each block is optional; its ordered writes/tests retain
+                    # their relation without selecting an event schedule.
+                    states = [
+                        (
+                            ((slot, frozenset({descriptor})),),
+                            reentry_seed if reentry else (),
+                        )
+                    ]
                     successful = True
                     for procedure in block:
-                        successful, states = run_procedure(procedure, states, True)
+                        successful, states = run_procedure(
+                            procedure, states, not reentry
+                        )
                         if not successful:
                             break
                     if successful:
@@ -463,8 +601,7 @@ def evaluate_room_program(
                         # effect or analysis limit cannot authorize pruning.
                         # Retain the old independent-write possibilities.
                         event_outcomes[key] = frozenset(
-                            update_descriptor(descriptor, c.kind, c.args)
-                            for c in relevant
+                            update_descriptor(descriptor, c) for c in relevant
                         )
                 outcomes.update(event_outcomes[key])
             for changed in outcomes:
@@ -535,6 +672,27 @@ def evaluate_room_program(
                 # Starting a native event returns one. Its later dispatches
                 # remain represented by event rules; never replay scheduling.
                 predicate = True
+                if reentry:
+                    if args[1] >= len(program.event_program.entries):
+                        successful = False
+                        break
+                    started.add(args[1])
+            elif kind == "display-request":
+                # RE1-REENTRY-002: 29 queues a display, setting C3000 bit 18.
+                # The outer display consumer later clears it. Its timing is
+                # unavailable, so neither value is an invariant across ticks.
+                changed = dict(writes)
+                changed[layout.flag(5, 13)] = None
+                for index in (6, 7):
+                    # The outer display consumer clears C8680/C8682 after
+                    # returning. Forget those aliased scalar words now to
+                    # cover both pending and consumed requests without timing.
+                    for bit in range(16):
+                        changed[
+                            layout.word_variables_base + 2 * index + bit // 8,
+                            1 << (bit % 8),
+                        ] = None
+                writes = tuple(sorted(changed.items()))
             elif kind in ("local-flag-forget", "local-flag-clear"):
                 changed = dict(writes)
                 for group, first, count in zip(
@@ -719,11 +877,31 @@ def evaluate_room_program(
                 writes = tuple(sorted(changed.items()))
             elif kind in ("item", "door", "aot-create", "aot-handler"):
                 changed = dict(slots)
+                if (
+                    reentry
+                    and kind == "aot-handler"
+                    and None in changed.get(args[0], frozenset({None}))
+                ):
+                    # Room setup clears handlers, not retained source pointers.
+                    # A setter without this entry's creator could resurrect a
+                    # stale descriptor. Reject it instead of claiming absence.
+                    successful = False
+                    break
                 changed[args[0]] = frozenset(
-                    update_descriptor(descriptor, kind, args)
+                    update_descriptor(descriptor, command)
                     for descriptor in changed.get(args[0], frozenset({None}))
                 )
                 slots = tuple(sorted(changed.items()))
+                if (
+                    reentry
+                    and any(
+                        descriptor is not None and descriptor[2] == 9
+                        for descriptor in changed[args[0]]
+                    )
+                    and not start_interaction(args[0], slots)
+                ):
+                    successful = False
+                    break
             elif kind in ("award", "aot-callback"):
                 # Read completed acquisition/unlock results from RAM, never
                 # grant them by replaying a callback during reconstruction.
@@ -767,7 +945,9 @@ def evaluate_room_program(
                 elif args[1] == 9:
                     # Callback 9 starts a script with registry parameters. Its
                     # activity comes from fresh event RAM, never replay here.
-                    pass
+                    if reentry and not start_interaction(args[0], slots):
+                        successful = False
+                        break
                 elif args[1] == 13:
                     # Callback 13 sets C3000 bit 8 only for a zero registry
                     # parameter. That field is not modeled; a prior true bit
@@ -830,38 +1010,200 @@ def evaluate_room_program(
         return successful, list(finished)
 
     history_unresolved = set()
-    for index, procedure in enumerate(program.procedures + program.main_procedures):
-        if index == len(program.procedures):
-            # Current RAM already reflects completed initialization. Main tests
-            # must use that snapshot rather than repeat init's shadow flag writes.
-            # Scalar variables can also change during prior main/event ticks;
-            # their initializer shadows are not proof of their current values.
-            # Main setters can retain an earlier effect after its guard becomes
-            # false. Include those histories before applying current main rules.
-            effects = program.event_effects + tuple(
-                command
-                for block in program.main_procedures
-                for command in block.commands
-                if command.kind in ("item", "door", "aot-create", "aot-handler")
+    if reentry:
+        resets = {
+            layout.flag(group, index): False
+            for group, first, count in layout.room_entry_flag_clears
+            for index in range(first, first + count)
+        }
+        paths = [((), tuple(sorted(resets.items())))]
+        for procedure in program.procedures:
+            bounded, paths = run_procedure(procedure, paths, False)
+            if not bounded:
+                break
+
+        persistent = {
+            layout.flag(group, index)
+            for group in layout.persistent_flag_groups
+            for index in range(256)
+        } | {layout.flag(*bit) for bit in layout.persistent_flag_bits}
+
+        def join_paths(states):
+            # Reuse each path's maps across all bits. Rebuilding a full shadow
+            # dictionary for every bit made heavily branching rooms too slow.
+            states = tuple((dict(slots), dict(writes)) for slots, writes in states)
+            slots = {slot for descriptors, _ in states for slot in descriptors}
+            bits = {bit for _, writes in states for bit in writes}
+            joined_slots = tuple(
+                (
+                    slot,
+                    frozenset(
+                        descriptor
+                        for descriptors, _ in states
+                        for descriptor in descriptors.get(slot, frozenset({None}))
+                    ),
+                )
+                for slot in sorted(slots)
             )
-            historical = []
-            for slots, _ in paths:
-                changed = dict(slots)
-                for slot in set(program.item_slots) | set(program.door_slots):
-                    choices, exceeded = closure(
-                        changed.get(slot, frozenset({None})),
-                        [command for command in effects if command.args[0] == slot],
-                        slot,
-                    )
-                    changed[slot] = choices
-                    if exceeded:
-                        history_unresolved.add(slot)
-                historical.append((tuple(sorted(changed.items())), ()))
-            paths = historical
-        successful, paths = run_procedure(procedure, paths, False)
-        if not successful:
-            bounded = False
-            break
+            joined_bits = []
+            for bit in sorted(bits):
+                address, mask = bit
+                # A missing local shadow is unknown. A missing saved-bit
+                # shadow still has its fresh snapshot value, when read.
+                initial = (
+                    bool(values[address] & mask)
+                    if bit in persistent and address in values
+                    else None
+                )
+                choices = {writes.get(bit, initial) for _, writes in states}
+                joined_bits.append(
+                    (bit, next(iter(choices)) if len(choices) == 1 else None)
+                )
+            return joined_slots, tuple(joined_bits)
+
+        blocks = {
+            frozenset(c.offset for p in block for c in p.commands): block
+            for block in program.event_blocks
+        }
+        commands = {c.offset: c for c in program.event_commands}
+        if bounded and paths:
+            paths = [join_paths(paths)]
+            # A monotone join covers arbitrary tick counts and dispatch order.
+            # The budget limits analysis, never the game's event capacity.
+            for _ in range(64):
+                before, earlier_starts = paths[0], frozenset(started)
+                outcomes = {before}
+                main_paths = paths
+                for procedure in program.main_procedures:
+                    bounded, main_paths = run_procedure(procedure, main_paths, False)
+                    if not bounded:
+                        break
+                if not bounded:
+                    break
+                # Each SCD runner finishes its whole procedure list before
+                # another tick/dispatch. Temporary writes inside that list
+                # cannot become the starting state of a separate runner.
+                outcomes.update(main_paths)
+                # VM waits and native child starts have no retained SCD guard.
+                # Any start belonging to a reachable entry may run later.
+                pending_entries = list(started)
+                visited_entries = set()
+                while pending_entries:
+                    entry = pending_entries.pop()
+                    if entry in visited_entries:
+                        continue
+                    visited_entries.add(entry)
+                    targets = {
+                        start.args[-1]
+                        for start in program.event_program.starts
+                        if start.entry == entry
+                    }
+                    started.update(targets)
+                    pending_entries.extend(targets - visited_entries)
+                for dispatch in program.event_program.dispatches:
+                    if dispatch.entry not in started or not dispatch.commands:
+                        continue
+                    block = blocks.get(frozenset(dispatch.commands))
+                    if block is None:
+                        if (
+                            len(dispatch.commands) != 1
+                            or dispatch.commands[0] not in commands
+                        ):
+                            bounded = False
+                            break
+                        command = commands[dispatch.commands[0]]
+                        try:
+                            block = (
+                                RuleProcedure(command.offset, command.next, (command,)),
+                            )
+                        except ValueError:
+                            # An isolated branch lacks the runner's IF stack.
+                            # Its metadata cannot prove any narrower outcome.
+                            bounded = False
+                            break
+                    event_paths = paths
+                    for procedure in block:
+                        bounded, event_paths = run_procedure(
+                            procedure, event_paths, False
+                        )
+                        if not bounded:
+                            break
+                    if not bounded:
+                        break
+                    outcomes.update(event_paths)
+                    if len(outcomes) > 4096:
+                        bounded = False
+                        break
+                if not bounded:
+                    break
+                paths = [join_paths(outcomes)]
+                if any(len(choices) > 256 for _, choices in paths[0][0]):
+                    bounded = False
+                    break
+                if paths[0] == before and frozenset(started) == earlier_starts:
+                    break
+            else:
+                bounded = False
+            if bounded:
+                invariant_bits = dict(paths[0][1])
+                for address, mask in persistent:
+                    if address in values and (address, mask) not in invariant_bits:
+                        invariant_bits[address, mask] = bool(values[address] & mask)
+                reentry_seed = tuple(sorted(invariant_bits.items()))
+                # A completed reentry includes a recurring-main pass. Apply
+                # its supported last writers after collecting earlier ticks,
+                # then retain possible events that can run after that pass.
+                for procedure in program.main_procedures:
+                    bounded, paths = run_procedure(procedure, paths, False)
+                    if not bounded:
+                        break
+                event_offsets = {
+                    offset
+                    for dispatch in program.event_program.dispatches
+                    if dispatch.entry in started
+                    for offset in dispatch.commands
+                }
+                event_updates = tuple(
+                    (block, updates)
+                    for block, updates in event_updates
+                    if any(c.offset in event_offsets for p in block for c in p.commands)
+                )
+                active_effects = tuple(
+                    c for c in program.event_effects if c.offset in event_offsets
+                )
+    else:
+        for index, procedure in enumerate(program.procedures + program.main_procedures):
+            if index == len(program.procedures):
+                # Current RAM already reflects completed initialization. Main tests
+                # must use that snapshot rather than repeat init's shadow flag writes.
+                # Scalar variables can also change during prior main/event ticks;
+                # their initializer shadows are not proof of their current values.
+                # Main setters can retain an earlier effect after its guard becomes
+                # false. Include those histories before applying current main rules.
+                effects = program.event_effects + tuple(
+                    command
+                    for block in program.main_procedures
+                    for command in block.commands
+                    if command.kind in ("item", "door", "aot-create", "aot-handler")
+                )
+                historical = []
+                for slots, _ in paths:
+                    changed = dict(slots)
+                    for slot in set(program.item_slots) | set(program.door_slots):
+                        choices, exceeded = closure(
+                            changed.get(slot, frozenset({None})),
+                            [command for command in effects if command.args[0] == slot],
+                            slot,
+                        )
+                        changed[slot] = choices
+                        if exceeded:
+                            history_unresolved.add(slot)
+                    historical.append((tuple(sorted(changed.items())), ()))
+                paths = historical
+            successful, paths = run_procedure(procedure, paths, False)
+            if not successful:
+                bounded = False
+                break
     uncertain_items, uncertain_doors = set(), set()
     items, doors, disabled_doors = [], [], []
     labels = dict(item_labels)
@@ -869,7 +1211,7 @@ def evaluate_room_program(
     def interpret_descriptor(descriptor):
         if descriptor is None:
             return "absent", None
-        creator, args, handler, mode = descriptor
+        creator, args, handler, mode, _ = descriptor
         slot = args[0]
         if creator == "item":
             _, item_type, amount, gid, _ = args
@@ -944,9 +1286,16 @@ def evaluate_room_program(
             for descriptor in dict(slots).get(slot, frozenset({None}))
         }
         effects = [
-            command for command in program.event_effects if command.args[0] == slot
+            command
+            for command in (
+                active_effects if reentry and bounded else program.event_effects
+            )
+            if command.args[0] == slot
         ]
-        choices, exceeded = closure(choices, effects, slot)
+        if reentry and not bounded:
+            exceeded = False
+        else:
+            choices, exceeded = closure(choices, effects, slot)
         meanings = {interpret_descriptor(descriptor) for descriptor in choices}
         if (
             not bounded

@@ -481,9 +481,15 @@ def test_startup_validates_ordered_blocks_against_source_and_acquisition_bounds(
                     for command in procedure["commands"]:
                         if command["kind"] == "item":
                             command["args"][3] %= 128
-            for command in source_row["tracking_program"]["event_effects"]:
+            for command in (
+                source_row["tracking_program"]["event_effects"]
+                + source_row["tracking_program"]["event_commands"]
+            ):
                 if command["kind"] == "item":
                     command["args"][3] %= 128
+    # The replacement intentionally loses the original dispatch payloads.
+    # Isolate the mandatory source/ID bounds from semantic coverage checking.
+    row["tracking_program"]["coverage_complete"] = False
     row["tracking_program"]["event_blocks"] = [
         [
             {

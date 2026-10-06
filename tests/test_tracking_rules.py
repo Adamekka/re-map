@@ -45,6 +45,7 @@ def rules():
         2,
         0x80000200,
         0x800010E0,
+        ((4, 0, 64),),
     )
     profile = {
         "cache_audits": [],
@@ -425,7 +426,10 @@ def test_transient_bank_equality_cannot_authorize_observed_item_reuse(tmp_path, 
     )
     cached = replace(cached, sources=(script,), context=(0,))
     program = compile_program(
-        rules, guard(bytes((4, 4, 0, 0)), pickup(5, 0x44, 111)) + b"\0"
+        # Index 64 lies outside the audited entry reset. Equal bytes in the
+        # current room still cannot establish this departed room's state.
+        rules,
+        guard(bytes((4, 4, 64, 0)), pickup(5, 0x44, 111)) + b"\0",
     )
     profile.room_programs[script.source_rdt] = program
     snapshot = read_rule_snapshot(

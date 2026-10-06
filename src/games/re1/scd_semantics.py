@@ -72,6 +72,7 @@ NONZERO_RETURN_OPCODES = CONTINUING_OPCODES | frozenset(
         0x1E,
         0x23,
         0x24,
+        0x29,
         0x31,
         0x40,
         0x48,

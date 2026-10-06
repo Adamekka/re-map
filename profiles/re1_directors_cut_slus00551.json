@@ -464,6 +464,7 @@
   "cache_audits": [],
   "notes": "Pinned runtime identity. Registered items: RE1-COVER-002. Doors: RE1-DOORS-002. Shared rules: RE1-ENGINE-001/002, RE1-SCD-007 and RE1-SCD-009 through RE1-SCD-015. Command decoding: RE1-SCD-008. Indexed event decoding: RE1-EVENT-001. Event activation: RE1-EVENT-005 through RE1-EVENT-008. Variable banks: RE1-VARS-001. Event source binding: RE1-SOURCE-002. Loader choices: RE1-SELECT-001. Runtime and story validation limits remain in those findings.",
   "tracking_rule_layout": {
+    "room_entry_flag_clears": [[4, 0, 64]],
     "persistent_flag_groups": [
       0,
       1,

@@ -2309,3 +2309,76 @@ Limits: no event-25 execution or exhaustive native/alias reachability was newly 
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; inspected the three retained start branches and decoded local-progress writers, checked the generic source's hypothetical award fields and GlobalId-3 bit, and separated the entry-reconstruction candidate from unsupported pruning of past history.
+
+## RE1-REENTRY-004: shared fresh-entry reconstruction preserves tested departed-room clearance
+
+Status: Confirmed for the listed unchanged-capture implementation replay; general source reconstruction remains Candidate
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; recorded Training Jill Main Hall `00-06` and Art Room `00-07`, plus synthetic shared item/door/event cases
+Environment: original captures from isolated official DuckStation `0.1-11894-gc66b2694d`; Python 3.14.8, pytest 9.1.1, Capstone 5.0.9; no new emulator session or game-memory writes
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: pinned native/source inspection, unchanged coherent RAM replay, synthetic regressions and numeric manifest generation
+Claim: departed rooms use a separate fresh-entry epoch, initialized from current saved flags and the bounded bank-4 clear from RE1-EVENT-016. Supported initialization, recurring-main writes and reachable event dispatches determine possible interactions. This resolves RE1-CLEAR-003's Main Hall clearance regression in the recorded round trip without carrying forward its prior cleared verdict.
+
+Implementation evidence:
+
+- The profile clears only bank-4 indices 0..63 in the simulation, PS1 virtual bytes `0x800C3008..0x800C300F`. Current-room historical interpretation remains separate and does not treat that reset as immutable current state. Physical aliases, native forget effects and later writes can invalidate simulated values. This uses the source-derived reset contract; RE1-EVENT-016's lack of an instruction/watchpoint execution test remains unchanged.
+- Main/event interpretation joins possible earlier ticks and separate dispatches to a bounded fixed point, follows reached SCD starts and native indexed start/restart chains, then applies a recurring-main pass and optional reachable event effects. Full SCD procedure lists retain their synchronous boundary; temporary writes inside one list do not become another runner's starting state. Stable fresh-entry invariants seed the final event interpretation. Unsupported effects, missing semantic payloads, invalid targets and analysis limits prevent clearance.
+- Generic creators and extended setters retain their own known little-endian u16 registry parameters in the semantic descriptor. Short setters preserve those parameters. Callback-9 targets use the descriptor's model low byte, not every parameter ever written to that slot. Unreconstructed parameters remain an explicit failure. Source/schema validation binds each parameter writer to its semantic command and slot.
+- RE1-REENTRY-003's handler-only registry reset retains prior pointers. A reached reentry setter without this entry's modeled creator therefore rejects reconstruction rather than claiming the slot absent.
+- The compiler retains flag-only ordered blocks and standalone semantic event commands, including writes that can enable later starts. Slots changed to pickup or door handlers are tracked even without an item/door creator in that source. Generic payloads cannot silently disappear from completion coverage. No named pickup, puzzle or room exception was added.
+- One computation result per source is retained within the profile instance. Program identity, room, layout, fresh rule snapshot, acquisition bytes and labels must all match before reuse. Any changed input recomputes the result. Failed reads still stop publication before interpretation. This cache is transient computation state, with no persisted completion or visit-history change.
+
+Recorded-state validation:
+
+1. Replayed twelve steps from eleven unchanged 2 MiB captures through one profile/cache and tracker. The sequence includes Art Room Map before/after, Main Hall ribbon available and taken, all three normal-load captures from RE1-SAVE-003, RE1-CLEAR-003's walked round trip, then earlier ribbon-available captures.
+2. Main Hall remains `CLEARED -> CLEARED -> CLEARED` across `main-loaded.bin`, `art-after-leaving.bin` and `main-returned.bin`, with its acquired ribbon byte still `0xF7`. The later earlier-state captures restore its available ribbon and `INCOMPLETE` verdict. The three original capture hashes and ordinary gameplay provenance remain in RE1-CLEAR-003.
+3. Art Room stays `INCOMPLETE` with available Ink Ribbon. Its Map follows available/taken/available across the original normal-save loads, and the taken descriptor can disappear on natural reentry as recorded in RE1-PICKUP-004. Only entered map regions `07` and `06` are revealed. No in-game map ownership or inferred event start grants a visit or acquisition.
+4. Final capture replay's slowest local-memory poll was approximately 3.1 ms. An offline projection over all 334 source variants using one donated Herb-before flag configuration returned complete item interpretation for 248 variants and complete door interpretation for 262. It took approximately 4.74 seconds, with the slowest source about 263 ms. These are source variants under one supplied state, not validated gameplay rooms or live GDB latency. Dictionary reuse removed an observed expensive join; the per-profile cache avoids repeating unchanged analysis.
+
+Generation audit: all 334 source identities and init/main/event hashes, source choices, excluded sources and non-program source fields remain identical. Ordered blocks increased from 691 to 2,586, and 6,289 standalone semantic commands are retained. The count of complete source programs remains 312; clean source coverage is not runtime confirmation. Regeneration was repeated byte-identically. Manifest SHA256 is `2ef6de824895419852c671066cc33359b5901a86a4af203d2a84817dd0b8cd65`; profile SHA256 is `c5533c05da0617604b8e94de8a1f2586d7fd2b51e86ba020b1e6c94603c37512`.
+
+Reproduction: run `python3 -m pytest -q tests/test_room_reentry.py` and the shared engine suites. `/tmp/tasks/re-map/room-reentry/audit.py`, `audit.json`, `projection.json`, `generation-audit.json`, and native excerpts retain the private replay/projection evidence. Rebuild metadata with `tools/build_cache_metadata.py` and the pinned profile/owned disc, then compare it byte-for-byte. Captures, extracted code, disc files and cards remain outside Git.
+
+Limits: no new live gameplay, fresh last-item pickup, natural puzzle/door unlock, display-command execution, active-event normal-save/load, alternate character/mode/revision or later-area traversal was tested. Fresh-entry reconstruction describes what the supported source can establish on entry from the current saved state; it does not prove arbitrary earlier event history. Unmodeled native effects, quantity mutations, unsupported callbacks and conflicting conditions still require detection work. A first analysis after changed inputs can be expensive in branching sources. The original visit-history and Mansion 1F geometry limits remain.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved shared epoch, retained-pointer and parameter checks, expanded numeric metadata, reproduced/fixed synchronous ordering and parameter-reuse failures, optimized the observed slow join and added input-keyed computation reuse. All 787 tests passed in 46.02 seconds. Scoped Ruff lint/format checks and `git diff --check` are the code checks; no formatter/linter is configured in this repository.
+- 2026-10-06; Gemini 3.1 Pro High and Gemini 3.8 Flash High via agy; each completed an initial supplied-snapshot review with no findings. These reviews preceded the subsequent parameter-binding, retained-pointer, schema and cache changes. Neither ran tests or reproduced gameplay.
+- 2026-10-06; Gemini 3.1 Pro High via agy, conversation `a67f580a-ea46-4d6b-8fe5-78bad49307a2`; reviewed the complete final implementation snapshot, compiler/schema contracts, cache invalidation and new regressions, and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr. No tools, tests or gameplay.
+- 2026-10-06; Gemini 3.8 Flash High via agy, conversation `6607fcaf-3b64-4b4f-af00-f8325505c068`; reviewed the same final implementation snapshot, entry bounds, retained pointers, display aliases, dispatch ordering and cache inputs, and reported no findings. Process exit 0, final agent response DONE, result SUCCESS and empty stderr. No tools, tests or gameplay. Primary inspection subsequently corrected the new implementation claim's duplicate ID to RE1-REENTRY-004, preserving the original RE1-REENTRY-001 Herb finding.
+- 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before that reset, review, model substitution or endorsement.
+
+## RE1-REENTRY-002: display request has a transient control and scalar-alias footprint
+
+Status: Candidate; pinned native inspection and synthetic effect regressions, without a natural display execution trace
+Scope: SLUS-00551 executable identity from RE1-REENTRY-004; SCD opcode `0x29`, deferred display consumer and scalar word aliases
+Environment: Capstone 5.0.9 and the owned executable; no game-memory writes or new gameplay
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: direct MIPS handler/consumer inspection and synthetic interpreter tests
+Claim: opcode `0x29` advances two bytes and returns one. It sets `0x800C3000` bit 18, native bank-5/index-13, and queues its operand plus a buffer pointer for later display. The consumer can subsequently clear that bit and words `0x800C8680` and `0x800C8682`, scalar indices 6 and 7 under word base `0x800C8674`. Neither a permanent true display bit nor a preceding scalar shadow is a valid cross-tick invariant.
+
+Evidence:
+
+- Handler `0x800466DC..0x8004672C` ORs `0x00040000` into `0x800C3000`, advances the script pointer at `0x800CF640` by two, writes the pointer from `0x800CAB1C` into `0x800CF63C`, stores the packet's second byte at `0x800CF63B`, and returns 1 in the delay slot. Its direct stores do not change acquisition flags or AOT descriptors.
+- Consumer `0x80031B38..0x80031B84` tests that bit, passes the queued operand/buffer to display routine `0x80036870`, clears both scalar halfwords and masks the pending bit afterward. The inspected display routine through `0x80036E3C` loads/presents the asset and handles display/input/audio work; it does not dispatch a room SCD procedure or award a world pickup in the inspected path. The tracker does not replay that visual work.
+- Shared `display-request` rules conservatively forget the pending bit and both scalar words, covering pending and consumed requests without assuming their timing. The audited nonzero return also participates in deferred event scanning. Synthetic regressions show that prior writes to either scalar alias or a guard on the control bit cannot prove a later pickup's availability. Main Hall's potentially reachable entry 31 uses operand 5; the implementation applies the command contract rather than a named story exception.
+- Private handler/consumer/display/input excerpts are `/tmp/tasks/re-map/room-reentry/display-native.txt`, SHA256 `ab43eea40e0e7658c1e93bd5f077faaf127c0727415bc831c0ee83dc040599fc`. The unchanged target executable hash is recorded above.
+
+Limits: no opcode-29 execution breakpoint, asset-display timing, all operand/asset choices or normal-save/load during display was played. The source contract is specific to the pinned executable. Compatible room captures and synthetic agreement do not promote it to runtime confirmation or prove every library helper's arbitrary-input behavior.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; traced Main Hall's reached but formerly unsupported command, inspected its native producer and consumer, modeled the pending-bit/scalar-alias uncertainty and recorded the source-only scope.
+
+## RE1-REENTRY-003: registry setup retains source pointers behind cleared handlers
+
+Status: Candidate; pinned native inspection with synthetic stale-source rejection, without a new execution trace
+Scope: SLUS-00551 executable identity from RE1-REENTRY-004; room setup's 24-record AOT reset
+Environment: Capstone 5.0.9, owned executable and synthetic reentry regression
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: direct MIPS routine/caller inspection and interpreter regression
+Claim: `0x80044C20..0x80044C58`, called at `0x80044198` before the local flag clear, loops over 24 records and zeros only the handler byte at PS1 virtual `0x800B8160 + 12 * slot`. It does not clear a record's retained source pointer at offset 8. A handler setter in a fresh entry cannot establish an absent descriptor merely because that entry has no modeled creator for its slot.
+Evidence: the loop's store at `0x80044C30` is byte-width, its record increment at `0x80044C40` is 12, and the bound at `0x80044C38` is 24. Its remaining store updates the registry cursor at `0x800B7ED8`. The new synthetic regression rejects a reached pickup-handler setter without an entry creator. Private excerpt `/tmp/tasks/re-map/room-reentry/registry-reset-native.txt` has SHA256 `44a760f500ab9d47e0aa9217149fb99555103dc181c5f260bb56903cfc89bc6b`.
+Limits: no retained stale pointer was deliberately resurrected in gameplay, and no new instruction/watchpoint reset test was performed. Other reset helpers and revisions retain their existing coverage limits. The implementation rejects that unsupported source history rather than assigning a new pointer value.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; inspected the complete reset and its caller, recorded the retained-pointer distinction, and added the conservative shared reentry guard and regression.

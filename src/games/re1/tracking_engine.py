@@ -11,7 +11,12 @@ from games.re1.room_cache import (
     refresh_cached_items,
 )
 from games.re1.room_items import RuntimeItemState, RuntimeRoomItems
-from games.re1.tracking_rules import RuleSnapshot, evaluate_room_program
+from games.re1.tracking_rules import (
+    CachedReentryEvaluation,
+    RoomRuleEpoch,
+    RuleSnapshot,
+    evaluate_room_program,
+)
 
 if TYPE_CHECKING:
     from games.re1.re1_profile import Re1Profile
@@ -203,17 +208,40 @@ def refresh_visited_room(
         )
     )
     assert rule_sources, "validated source choices must reference a source"
-    evaluations = [
-        evaluate_room_program(
-            profile.room_programs[source.source_rdt],
+    evaluations = []
+    for source in rule_sources:
+        program = profile.room_programs[source.source_rdt]
+        previous = profile.room_reentry_evaluations.get(source.source_rdt)
+        if (
+            previous is not None
+            and previous.program is program
+            and previous.room == source.room
+            and previous.layout == layout
+            and previous.snapshot == snapshot
+            and previous.flags == flags
+            and previous.item_labels == room_layout.item_labels
+        ):
+            evaluations.append(previous.result)
+            continue
+        result = evaluate_room_program(
+            program,
             source.room,
             layout,
             snapshot,
             flags,
             room_layout.item_labels,
+            RoomRuleEpoch.Reentry,
         )
-        for source in rule_sources
-    ]
+        profile.room_reentry_evaluations[source.source_rdt] = CachedReentryEvaluation(
+            program,
+            source.room,
+            layout,
+            snapshot,
+            flags,
+            room_layout.item_labels,
+            result,
+        )
+        evaluations.append(result)
     if observed.list_complete:
         items = observed
     else:
