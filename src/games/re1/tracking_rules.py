@@ -1006,11 +1006,12 @@ def evaluate_room_program(
                 if (
                     reentry
                     and kind == "aot-handler"
+                    and args[1] != 0
                     and None in changed.get(args[0], frozenset({None}))
                 ):
                     # Room setup clears handlers, not retained source pointers.
-                    # A setter without this entry's creator could resurrect a
-                    # stale descriptor. Reject it instead of claiming absence.
+                    # Disabling needs no source, but enabling without this
+                    # entry's creator could resurrect a stale descriptor.
                     successful = False
                     break
                 changed[args[0]] = frozenset(

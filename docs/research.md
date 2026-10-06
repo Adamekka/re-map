@@ -2462,7 +2462,7 @@ History:
 
 ## RE1-AOT-003: disabling a registry handler does not dereference its retained source
 
-Status: Candidate; pinned native inspection and private offline experiment, not implemented
+Status: Candidate; pinned native inspection and private offline experiment; implementation follow-up in RE1-AOT-004
 Scope: Resident Evil: Director's Cut, NTSC-U, SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; SCD setters `12/13`, visited-room reentry reconstruction
 Environment: Python 3.14.8 and Capstone 5.0.9; donated Herb-before RAM SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`; no new DuckStation session or RAM writes
 Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
@@ -2478,10 +2478,38 @@ Evidence:
 - A separate private experiment supplies the entire reconstructed reentry registry to final ordered event analysis. It produces no complete item/door gains or losses in the same snapshot. Retaining more context alone did not resolve the observed disabling failures.
 - Private artifacts under `/tmp/tasks/re-map/next-shared-inspection/` include `gaps.py`, `gaps.json`, `context_experiment.py`, `context-comparison.json`, `disable_experiment.py`, `disable-comparison.json` and `setter-native.txt`. The native excerpt SHA256 is `16f95956a448c5ace95520380de53d3acfe952b233b31adc9ecd74e1c34b1d3c`. Raw executable and capture data remain outside Git.
 
-Limits: no production fix, regression suite, save/load replay or natural disabling event has been validated for this experiment. A disabled handler does not grant acquisition, identify the retained source or prove that a later enabling/forced callback is safe. Current-room reconstruction, other flag configurations, other characters and other revisions were not changed or validated. No broader exemption for missing source pointers is supported.
+Limits of the initial experiment: no production fix, regression suite, save/load replay or natural disabling event was validated at that point. A disabled handler does not grant acquisition, identify the retained source or prove that a later enabling/forced callback is safe. Current-room reconstruction, other flag configurations, other characters and other revisions were not changed or validated. No broader exemption for missing source pointers is supported.
 History:
 
 - 2026-10-06; Codex root, GPT-6.1 Sol; traced remaining failures, reinspected both native setters, compared two private shared-rule hypotheses and recorded the scoped disabling candidate before implementation approval. Manually reviewed the documentation diff and passed `git diff --check`; no Markdown formatter/linter is configured.
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved disabling scope and added RE1-AOT-004's regression, differential and captured-load evidence. The original experiment and its limits remain recorded; no natural runtime validation is added.
+
+
+## RE1-AOT-004: shared disabling preserves stale-source rejection and fresh load results
+
+Status: Candidate; synthetic tests, paired source projections and previously captured RAM replay
+Scope: RE1 Director's Cut NTSC-U SLUS-00551 identity from RE1-AOT-003; shared handler-zero setters `12/13`, current and visited-room reconstruction
+Environment: Python 3.14.8, pytest 9.1.1; existing captures retain the DuckStation environment and provenance documented in RE1-REENTRY-004
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: RE1-AOT-003's native contract, scoped interpreter change, synthetic regressions and captured-state comparisons against `bf75fcd`
+Claim: reentry reconstruction can execute a handler-zero setter without a creator for that slot. It keeps an unreconstructed source unreconstructed, preserves known sources and rejects subsequent enabling or source-dependent operations that lack an audited source. Disabling does not grant acquisition or an unlock.
+
+Evidence:
+
+- The missing-creator guard exempts only `aot-handler` commands whose handler operand is zero. Nonzero handlers still reject a path containing a missing source. There is no new pointer, descriptor, quantity or acquisition value. Existing callback/quantity source checks, current-room semantics, event interpretation, profile data, scanner widths and analysis limits are unchanged. The shared rule applies to both setter forms without room-specific exceptions.
+- `tests/test_interaction_disabling.py` adds 96 synthetic cases. Both setter forms, modes 0/255, current/reentry epochs and init/main/ordered/standalone events preserve unrelated items and doors. Subsequent short/extended enabling, both forced-callback return forms and quantity writes cannot use a missing source; quantity reads remain unknown when a branch depends on them. Known item/door sources and callback parameters survive disabling; disable alone yields unavailable items or disabled doors without setting acquired flags. Dormant awards still require fresh acquisition. Partial creator branches need a new creator before enabling, and saved story reversal cannot reuse an earlier creator.
+- All **1,135 tests pass in 44.90 seconds**. The two changed Python files pass manually scoped Ruff lint/format checks and `git diff --check`. No repository formatter/linter is configured.
+- The unmodified evaluator from `bf75fcd` and the new evaluator are compared for every source, both epochs and three unchanged captured RAM states: Herb-before, Herb-after and Chemical-before, with hashes recorded in RE1-ANALYSIS-001. All **2,004 paired comparisons** preserve every previously published item descriptor, amount, acquisition state, door and disabled door. Previously complete results remain complete with the same payload. In each reentry snapshot, complete items increase **262 -> 269**, doors **272 -> 281**. The gains match RE1-AOT-003's seven item/nine door variant lists. Each current snapshot remains **255** complete item results and **252** complete door results, with no gains or losses.
+- The unchanged twelve-step, eleven-distinct-capture RE1-REENTRY-004 replay passes through one tracker/profile. Main Hall stays cleared after normal-load captures and its ordinary departure/return; an earlier Ribbon-available state becomes incomplete again. Art Room retains its remaining Ribbon and correct available/taken Map reversal. Only entered rooms 06/07 appear. This replays previous observations without substituting RAM bytes or performing new gameplay.
+- Private `/tmp/tasks/re-map/interaction-disabling/` holds `audit.py`, `audit.json`, `projection.json`, `differential.py`, `differential.json` and `pytest.log`. The differential report SHA256 is `f41f851d14093a1f1113985d3a5775dc2f442dfe4732918fc5b01817e20216aa`; replay report `cbe606650931cc4ce25288eabfeeb254ca5e315ab462ae63b3d1a738e5cb0bb5`. The unchanged differential script has SHA256 `3bb902d9987b00990b92e024a727a0b34651cf3fc0652312c8203f99fbda18a8`. Profile/manifest are unchanged and all raw game/capture data remains outside Git.
+
+Limits: source projections are not naturally validated rooms. No newly resolved disabling event, broader story progression, whole-game playthrough, alternate character or other revision was tested in gameplay. The rule does not resolve an unknown retained pointer, authorize a nonzero setter or remove any other source/condition barrier.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; implemented the approved shared disabling rule, verified retained-source barriers and fresh acquisition reversal, ran the full suite, compared old/new payloads across six projections and replayed the existing load/room sequence.
+- 2026-10-06; Gemini 3.1 Pro High via agy, conversation `3a946832-39d2-4915-b6e3-931d8f4ce729`; reviewed the complete supplied diff, full interpreter/schema/event contracts/compiler, native setter excerpt, all new tests and existing reentry/callback/door/quantity regressions. Returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Review packet 185,975 bytes, SHA256 `56cfe4e31e4440780e84df55fdbf53a21d86afe61f99f1f7b7cb8c011de5151f`. Root independently checked the source-free disable and retained-source barriers before review dispatch.
+- 2026-10-06; Gemini 3.8 Flash High via agy, conversation `75402988-0875-4ecc-b440-2c7f2fdbe8c0`; completed the same supplied-snapshot review and returned "No findings." Process exit 0, final agent response DONE, result SUCCESS and empty stderr; no tools, tests or gameplay. Neither reviewer reproduced runtime observations or promoted these Candidate findings.
+- 2026-10-06; Claude Opus 5.5 High via agy; remained unavailable under the RE1-EVENT-011 quota exhaustion, reported on 2026-10-05 with a reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, review, substitution or endorsement.
 
 ## RE1-QUANTITY-002: transfer writes preserve item identity and collection is independent of amount
 

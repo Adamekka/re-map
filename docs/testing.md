@@ -143,6 +143,12 @@ Run `python3 -m pytest -q tests/test_script_dependencies.py tests/test_tracking_
 
 The paired offline audit preserves all previously resolved payloads across 334 variants, both analysis epochs and three captured flag states. Reentry item coverage increases 258 -> 262 and door coverage 268 -> 272 in each snapshot; current door coverage increases 250 -> 252. The twelve-step captured save/load replay also passes, including earlier-state reversal and entry-only map reveal. These checks perform no new gameplay. Newly resolved source variants, broader story progression and whole-game save/load still require runtime validation.
 
+## Shared interaction disabling
+
+Run `python3 -m pytest -q tests/test_interaction_disabling.py tests/test_room_reentry.py tests/test_native_callbacks.py tests/test_dynamic_quantities.py tests/test_forced_doors.py` for RE1-AOT-003/004. Both short and extended handler-zero setters can disable an interaction without reading its retained source. Tests cover init/main/ordered/standalone commands, known-source preservation, nonzero setters, forced callbacks, quantity consumers, partial creators, dormant awards and fresh acquisition/story reversal. Unknown source data still cannot authorize enabling or a source-dependent operation.
+
+The paired offline audit preserves previously resolved payloads across 334 variants, both epochs and three captured flag states. Reentry item coverage increases 262 -> 269 and door coverage 272 -> 281; current coverage is unchanged. The twelve-step captured save/load replay passes, including earlier-state reversal and entry-only map reveal. These checks add no natural disabling-event or whole-game gameplay validation.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:
