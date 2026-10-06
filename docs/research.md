@@ -932,6 +932,40 @@ History:
 - 2026-10-02; Codex root, GPT-6.1 Sol; rechecked callback 1 and its helper chain for RE1-SCD-015. The earlier description of `0x80051E38` as event scheduling is superseded by the direct audio audit there. Original authorship and gameplay limits remain unchanged.
 
 
+## RE1-DOORS-003: message handlers retain door identity without requesting passage
+
+Status: Candidate; pinned native inspection and private offline hypothesis, not implemented
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; known Door_set sources changed to interaction handler 2, current and reentry analysis at `386bf25`
+Environment: Python 3.14.8 and Capstone 5.0.9; three existing Herb-before, Herb-after and Chemical-before RAM captures from the previously recorded DuckStation environment; no emulator interaction or RAM writes
+Authored: 2026-10-06; Codex root; model: GPT-6.1 Sol
+Basis: shared interpreter/live-reader inspection, pinned callback/helper disassembly and an in-memory comparison
+Claim investigated: a validated door source can retain its target and geometry when its registered handler becomes a message interaction. Handler 2 itself does not request passage, so that exact interaction can support blocked access independently of the door's acquisition/unlock flags. Handler identity does not establish a source when its retained pointer is missing or stale.
+
+Evidence:
+
+- The updated reentry audit still finds 92 variants with unresolved items or doors, now categorized as 64 with condition/descriptor ambiguity, 22 with incomplete source coverage and six with other source/context failures. None reaches a procedure budget in this snapshot. Branch merging resolved item lists in variants whose door ambiguity remains, so the combined unresolved count does not fall. These counts describe source variants under one captured flag configuration, not gameplay coverage.
+- The live reader currently preserves handler-zero Door_set sources as disabled doors but drops handler-2 door markers. The shared evaluator accepts door handlers zero/one and leaves other door handlers unresolved. Its final alternatives include six fully bounded reentry variants whose remaining door is consistently handler 2. Mixed open/message alternatives remain separately unresolved.
+- Callback table entry PS1 VA `0x8009040C` points to `0x80037AF0..0x80037B1C`. It reads the registry's u16 fields at offsets 2/4, calls `0x80035278`, then returns zero. It neither reads the retained source pointer nor calls the door callback. The complete dialog helper `0x80035278..0x80035390` has no calls and updates text/control state, including `0x800C8665`, `0x800CAB00/02` and `0x800CF856..5C`. It does not write the door request's source pointer or pending transition bit.
+- For comparison, door callback 1 at `0x8003789C..0x80037AF0` reads registry offset 8. Its successful passage path `0x80037A9C..0x80037AD8` stores the source pointer at `0x800CABFC`, writes one to `0x800C845B`, clears `0x800CAB00`, and ORs `0x02000000` into `0x800C3000`. The message callback/helper contains no equivalent passage request. RE1-AOT-003 separately records that short/extended handler setters retain the source pointer.
+- A private evaluator substitution accepts handler 2 alongside zero/one for an already known door creator and groups it with disabled doors solely to measure classification. All 2,004 paired evaluations across 334 sources, both epochs and the three recorded captures preserve previously published items, quantities, acquisition states, active doors and disabled doors. Previously complete results remain complete and equal. Item completeness stays **259 current / 271 reentry**. Complete door projections increase **252 -> 256 current** and **281 -> 287 reentry** in each capture.
+- Current gains are `ROOM3050/3051` and `ROOM5010/5011`. Reentry gains additionally include `ROOM3030` and `ROOM4080`. The substitution changes no production file, live observation, UI, source manifest or profile. It does not resolve mixed open/blocked alternatives, event-handler-9 doors, unknown sources or incomplete scripts.
+
+Private artifacts remain under `/tmp/tasks/re-map/post-merge-inspection/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `gaps.json` | `e3c2b7dcbfbb1aaa43b31158094205bc9ec2f7815395d1760e8feaa679c00b14` | Updated reentry failure categories |
+| `ambiguity.json` | `96f9b90f3949f0fb5bfd23ee18a9156d9a0dda2775ee04742cd1144d54cd9d83` | Final possible descriptor/door meanings |
+| `message-native.txt` | `3a47e3cae1142d3914993f94dab9019ad718ea0860e1c830b02678576fff48e4` | Complete message/door callbacks and dialog helper |
+| `message_experiment.py` | `1e1c5e65c2fb87b70df8560e9d0aeb819f6a801cdee30016618e2d5a3f6cf9b3` | Private substitution and paired checks |
+| `message-comparison.json` | `edf596989e2c0dc8066440848786ee284f2574ca1c07ff7704037ef9fa36cc4a` | Six coverage comparisons and gained variants |
+
+Limits: no production implementation, synthetic regression suite, captured save/load replay or natural blocked-door interaction was performed for this hypothesis. Native source inspection does not establish that a message interaction can never be followed by another scripted action. Blocked classification applies to its current normal interaction; it does not infer a future event outcome, rule out forced door dispatch or claim a persistent lock. Missing/stale sources, pending awards and differing descriptor alternatives need explicit handling. Other characters/revisions and whole-game behavior remain unvalidated.
+History:
+
+- 2026-10-06; Codex root, GPT-6.1 Sol; recomputed failure categories, inspected final descriptor alternatives and both reader paths, checked the executable hash and complete native callback/helper ranges, then compared the private shared hypothesis across all six projections. Manually reviewed the research diff and passed `git diff --check`; no Markdown formatter/linter is configured. Implementation approval remains separate from this inspection.
+
+
 ## RE1-MAP-002: numeric Mansion 1F floor plan from indexed room regions
 
 Status: Candidate for live map behavior; pinned disc encoding and executable calculations checked statically
