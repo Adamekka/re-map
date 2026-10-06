@@ -7,6 +7,11 @@ import pytest
 from test_live_items import RamReader, fixture_ram
 
 from games.game_profile import RoomId
+from games.re1.acquisition_state import (
+    AcquisitionLayout,
+    FixedAcquisitionRule,
+    GlobalIdAcquisitionRule,
+)
 from games.re1.room_items import (
     RuntimeItemKind,
     RuntimeItemState,
@@ -30,6 +35,15 @@ def layout():
         pending_action_pointer_address=0x800B7DCC,
         main_flags_address=0x800C3000,
         pending_item_mask=0xC00,
+        acquisition=AcquisitionLayout(
+            0x800C86DC,
+            32,
+            (
+                GlobalIdAcquisitionRule(1, 0x4C, False),
+                FixedAcquisitionRule(0x4D, 0x4D, 0x800C870C, 1, True),
+                GlobalIdAcquisitionRule(0x4E, 0x53, False),
+            ),
+        ),
         item_labels=(
             (0x44, "Green Herb"),
             (0x26, "Chemical"),
@@ -252,18 +266,13 @@ def test_generic_nonpickup_needs_only_its_eighteen_byte_descriptor(layout, tmp_p
     assert not truncated.ok and "descriptor is truncated" in truncated.error
 
 
-def test_generic_door_and_radio_need_explicit_supported_semantics(layout, tmp_path):
+def test_generic_door_needs_explicit_supported_semantics(layout, tmp_path):
     ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
     pointer = struct.unpack_from("<I", ram, 0xB819C + 8)[0] - 0x80000000
     ram[pointer - 2] = 0x0D
     ram[0xB819C] = 1
     door = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
     assert not door.ok and "unsupported source descriptor" in door.error
-    ram[pointer - 2] = 0x18
-    ram[pointer + 8] = 0x4D
-    ram[0xB819C] = 4
-    radio = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
-    assert not radio.ok and "separate scenario flag" in radio.error
 
 
 @pytest.mark.parametrize(

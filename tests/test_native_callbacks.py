@@ -233,7 +233,7 @@ def test_flag_callback_requires_reconstructed_parameters(rules, creator):
     assert not result.items.list_complete
 
 
-def test_callback_shadow_cannot_grant_acquisition_and_fresh_flags_reverse(rules):
+def test_callback_shadow_changes_activation_without_granting_acquisition(rules):
     program = compile_program(
         rules,
         interaction(0, 7, 7, 111, 0)
@@ -243,11 +243,13 @@ def test_callback_shadow_cannot_grant_acquisition_and_fresh_flags_reverse(rules)
     )
     flags = bytearray([255]) * 32
     for acquired, state in (
-        (False, "available"),
+        (False, "unavailable"),
         (True, "taken"),
-        (False, "available"),
+        (False, "unavailable"),
     ):
         # GlobalId 111 selects byte 14, bit 0 under the native MSB-first word layout.
+        # The callback clears this bit before the creator, disabling its handler.
+        # Fresh acquisition still decides whether the item is already taken.
         flags[14] = 254 if acquired else 255
         result = evaluate(
             program,

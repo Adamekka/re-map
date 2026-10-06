@@ -18,6 +18,11 @@ from track import PollStatus, poll_once
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
+from games.re1.acquisition_state import (
+    AcquisitionLayout,
+    FixedAcquisitionRule,
+    GlobalIdAcquisitionRule,
+)
 from games.re1.re1_profile import Re1Profile
 from games.re1.room_items import RuntimeItemState
 from games.re1.tracking_rules import (
@@ -47,6 +52,15 @@ def rules():
         0x80000200,
         0x800010E0,
         ((4, 0, 64),),
+        AcquisitionLayout(
+            bases[7],
+            32,
+            (
+                GlobalIdAcquisitionRule(1, 0x4C, False),
+                FixedAcquisitionRule(0x4D, 0x4D, bases[0] + 12, 1, True),
+                GlobalIdAcquisitionRule(0x4E, 0x53, False),
+            ),
+        ),
     )
     profile = {
         "cache_audits": [],

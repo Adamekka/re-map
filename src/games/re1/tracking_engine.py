@@ -167,7 +167,7 @@ def refresh_visited_room(
     same_source = selection == cached.source_selection and any(
         source.source_rdt == selected_name for source in cached.sources
     )
-    observed = refresh_cached_items(cached, context, flags)
+    observed = refresh_cached_items(cached, context, flags, layout.acquisition, values)
     global_masks = {layout.character_address: 255}
     for group in layout.persistent_flag_groups:
         for offset in range(32):

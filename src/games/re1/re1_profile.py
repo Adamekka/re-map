@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Protocol
 
 from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQuery
+from games.re1.acquisition_state import AcquisitionLayout
 from games.re1.event_state import EventLayout
 from games.re1.room_cache import (
     CachedRoomObservation,
@@ -228,6 +229,11 @@ class Re1Profile:
         runtime_layout = None
         if runtime_raw is not None:
             runtime_layout = RuntimeRoomLayout(
+                acquisition=AcquisitionLayout.load(
+                    raw["acquisition_rules"],
+                    _number(runtime_raw["acquisition_flags_address"]),
+                    _number(runtime_raw["acquisition_flags_width"]),
+                ),
                 **{
                     key: tuple(
                         (_number(item_type), str(label)) for item_type, label in value
@@ -235,7 +241,7 @@ class Re1Profile:
                     if key == "item_labels"
                     else _number(value)
                     for key, value in runtime_raw.items()
-                }
+                },
             )
             for key in ("stage_address_ps1", "room_address_ps1", "camera_address_ps1"):
                 address = _addr(key)
@@ -294,6 +300,7 @@ class Re1Profile:
                 _number(rule_raw["byte_variables_base_ps1"]),
                 _number(rule_raw["word_variables_base_ps1"]),
                 tuple(tuple(clear) for clear in rule_raw["room_entry_flag_clears"]),
+                runtime_layout.acquisition,
             )
             manifest_path = path.parent / raw["room_manifest_path"]
             manifest = json.loads(manifest_path.read_text())
@@ -406,6 +413,11 @@ class Re1Profile:
                     for command in commands
                 ):
                     raise ValueError("tracking item ID exceeds acquisition flags")
+                for command in commands:
+                    if command.kind == "item" and 1 <= command.args[1] <= 0x53:
+                        runtime_layout.acquisition.flag(
+                            command.args[1], command.args[3]
+                        )
                 room_programs[row["source_rdt"]] = program
                 dependencies = tuple(
                     RoomDependency(

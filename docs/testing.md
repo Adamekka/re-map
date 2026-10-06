@@ -161,6 +161,12 @@ Run `python3 -m pytest -q tests/test_message_doors.py tests/test_room_items.py t
 
 The 39 new synthetic cases also cover pending forced awards, invalid/changing sources, mixed open/message alternatives, differing targets and incomplete script coverage. Handler-zero reset leftovers must not override an expected active door. The full suite passes 1,220 tests. The paired audit preserves previous payloads across 334 variants, both epochs and three captured flag states; door completeness increases 252 -> 256 current and 281 -> 287 reentry, with item completeness unchanged at 259/271. The unchanged twelve-step recorded save/load replay passes, including the earlier ribbon-available reversal and entry-only map reveal. No naturally activated message door or new door save/load experiment is included in these results.
 
+## Shared acquisition flags
+
+Run `python3 -m pytest -q tests/test_acquisition_state.py tests/test_native_callbacks.py tests/test_room_items.py tests/test_room_cache.py tests/test_tracking_rules.py` for RE1-FLAG-003. The pinned profile explicitly selects each supported pickup's flag and acquired polarity. Ordinary pickups/maps use their GlobalId flag; type `4D`, Radio, uses byte `0x800C870C`, mask one, set-to-acquired. Its initial active handler still follows the ordinary GlobalId bit. A later handler setter can change availability independently of ownership.
+
+The tests cover both tracking epochs, same-pass activation writes and physical aliases, separate flags of both polarities, earlier-state reversal, observed/reconstructed caches, changing/failed reads and dormant forced awards. The unchanged twelve-step captured save/load replay and 2,004 paired source evaluations preserve prior item/door payloads. Complete item projections increase from 259/271 to 263/275 for current/reentry under the three captured flag configurations; door coverage remains 256/287. These are offline checks. A natural Radio pickup and its before/after normal saves still need validation before the separate flag can be called runtime-confirmed.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

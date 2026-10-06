@@ -382,6 +382,10 @@
         "Mixed Herbs"
       ],
       [
+        "0x4D",
+        "Radio"
+      ],
+      [
         "0x4E",
         "Map"
       ],
@@ -431,6 +435,25 @@
     "commit_address": "0x80025C54",
     "sha256": "617d66cbb61456b7eadb7e38a53eb71ab9cdefc1a278dca868363d5322ac6869"
   },
+  "acquisition_rules": [
+    {
+      "item_types": ["0x01", "0x4C"],
+      "index": "global_id",
+      "acquired_when_set": false
+    },
+    {
+      "item_types": ["0x4D", "0x4D"],
+      "index": "fixed",
+      "address_ps1": "0x800C870C",
+      "mask": "0x01",
+      "acquired_when_set": true
+    },
+    {
+      "item_types": ["0x4E", "0x53"],
+      "index": "global_id",
+      "acquired_when_set": false
+    }
+  ],
   "script_flag_bases": [
     "0x800C8700",
     "0x800C8694",

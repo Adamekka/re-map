@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from games.game_profile import RoomId
+from games.re1.acquisition_state import AcquisitionFlag, AcquisitionLayout
 from games.re1.room_items import (
     MemoryResult,
     RuntimeItemState,
@@ -230,7 +231,7 @@ class CachedRoomObservation:
     observation: RuntimeRoomItems
     sources: tuple[RoomScriptSource, ...]
     context: tuple[int, ...]
-    absent_flags: tuple[tuple[int, bool], ...]
+    absent_flags: tuple[tuple[AcquisitionFlag, bool], ...]
     source_selection: tuple[int, ...]
     doors_complete: bool
 
@@ -253,14 +254,9 @@ def refresh_cached_items(
     cached: CachedRoomObservation,
     context: tuple[int, ...],
     acquisition_flags: bytes,
+    acquisition: AcquisitionLayout,
+    extra_flags: dict[int, int],
 ) -> RuntimeRoomItems:
-    def remaining(global_id: int) -> bool:
-        index = 4 * (global_id // 32) + 3 - (global_id % 32) // 8
-        assert 0 <= index < len(acquisition_flags), (
-            "validated manifest GlobalId must fit the acquisition block"
-        )
-        return bool(acquisition_flags[index] & (0x80 >> (global_id % 8)))
-
     if (
         not cached.sources
         or not all(source.cache_complete for source in cached.sources)
@@ -270,8 +266,8 @@ def refresh_cached_items(
         )
         or context != cached.context
         or any(
-            remaining(gid) != was_remaining
-            for gid, was_remaining in cached.absent_flags
+            acquisition.collected(flag, acquisition_flags, extra_flags) != was_collected
+            for flag, was_collected in cached.absent_flags
         )
     ):
         return RuntimeRoomItems(
@@ -282,9 +278,13 @@ def refresh_cached_items(
     items = tuple(
         replace(
             item,
-            state=RuntimeItemState.Available
-            if remaining(item.global_id)
-            else RuntimeItemState.Taken,
+            state=RuntimeItemState.Taken
+            if acquisition.collected(
+                acquisition.flag(item.item_type, item.global_id),
+                acquisition_flags,
+                extra_flags,
+            )
+            else RuntimeItemState.Available,
         )
         if item.state != RuntimeItemState.Unavailable
         else item

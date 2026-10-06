@@ -22,6 +22,7 @@ from threading import Thread
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import DuckStationGdb
+from games.re1.acquisition_state import AcquisitionFlag
 from games.re1.door_state import parse_door
 from games.re1.event_state import read_event_snapshot
 from games.re1.re1_profile import MemoryResult, Re1Profile
@@ -132,19 +133,6 @@ def poll_once(
         door_values.append(result.data)
     flags = door_values[3]
 
-    def remaining(gid: int) -> bool:
-        index = 4 * (gid // 32) + 3 - (gid % 32) // 8
-        assert 0 <= index < len(flags), (
-            "validated GlobalId must fit the acquisition block"
-        )
-        return bool(flags[index] & (0x80 >> (gid % 8)))
-
-    if any(
-        item.state != RuntimeItemState.Unavailable
-        and (item.state == RuntimeItemState.Available) != remaining(item.global_id)
-        for item in observation.items
-    ):
-        return PollResult(PollStatus.Retry, "pickup changed during room read")
     context, error = read_cache_context(source_query.sources, read_memory)
     if error:
         return PollResult(PollStatus.ReadFailure, error)
@@ -166,6 +154,15 @@ def poll_once(
     if rule_snapshot.error:
         return PollResult(PollStatus.ReadFailure, rule_snapshot.error)
     rule_values = dict(rule_snapshot.values)
+    if any(
+        item.state != RuntimeItemState.Unavailable
+        and (item.state == RuntimeItemState.Taken)
+        != layout.acquisition.collected(
+            layout.acquisition.flag(item.item_type, item.global_id), flags, rule_values
+        )
+        for item in observation.items
+    ):
+        return PollResult(PollStatus.Retry, "pickup changed during room read")
     current_evaluation = validate_current_room(
         profile, observation, source_query.sources, rule_snapshot, flags
     )
@@ -186,21 +183,47 @@ def poll_once(
             door_reason="Door event conditions are unresolved.",
         )
     represented = {
-        item.global_id
+        layout.acquisition.flag(item.item_type, item.global_id)
         for item in observation.items
         if item.state != RuntimeItemState.Unavailable
     }
-    absent_gids = {
-        gid
-        for source in source_query.sources
-        for gid in source.item_global_ids
-        if gid not in represented
-    }
+    absent_flags = set()
+    for source in source_query.sources:
+        program = profile.room_programs[source.source_rdt]
+        commands = (
+            program.event_effects
+            + program.event_commands
+            + tuple(
+                command
+                for procedure in program.procedures
+                + program.main_procedures
+                + tuple(p for block in program.event_blocks for p in block)
+                for command in procedure.commands
+            )
+        )
+        for command in commands:
+            if command.kind == "item" and 1 <= command.args[1] <= 0x53:
+                flag = layout.acquisition.flag(command.args[1], command.args[3])
+                activation = AcquisitionFlag(
+                    *rule_layout.flag(7, command.args[3]), False
+                )
+                if activation != flag:
+                    # A separately owned pickup can become active on reentry
+                    # when its ordinary GlobalId bit changes. Ownership alone
+                    # cannot authorize reuse of an observed absence.
+                    absent_flags.add(activation)
+                if flag not in represented:
+                    # Absence must follow the actual acquisition bit. Different
+                    # pickup kinds can share a GlobalId but use different banks.
+                    absent_flags.add(flag)
     current_cached = CachedRoomObservation(
         observation,
         source_query.sources,
         context,
-        tuple((gid, remaining(gid)) for gid in sorted(absent_gids)),
+        tuple(
+            (flag, layout.acquisition.collected(flag, flags, rule_values))
+            for flag in sorted(absent_flags)
+        ),
         tuple(
             rule_values[address] & mask
             for address, mask in rule_layout.source_selection_masks

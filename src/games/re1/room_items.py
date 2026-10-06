@@ -15,6 +15,7 @@ from typing import Protocol
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
+from games.re1.acquisition_state import AcquisitionLayout, FixedAcquisitionRule
 
 
 class MemoryResult(Protocol):
@@ -48,8 +49,14 @@ class RuntimeRoomLayout:
     main_flags_address: int
     pending_item_mask: int
     item_labels: tuple[tuple[int, str], ...]
+    acquisition: AcquisitionLayout
 
     def __post_init__(self) -> None:
+        if (self.acquisition.flags_address, self.acquisition.flags_width) != (
+            self.acquisition_flags_address,
+            self.acquisition_flags_width,
+        ):
+            raise ValueError("acquisition rules disagree with the runtime flag block")
         if not 1 <= self.aot_capacity <= 128:
             raise ValueError("AOT capacity must fit the seven-bit item slot index")
         if not 1 <= self.acquisition_flags_width <= 32:
@@ -63,6 +70,11 @@ class RuntimeRoomLayout:
             (self.acquisition_flags_address, self.acquisition_flags_width),
             (self.pending_action_pointer_address, 4),
             (self.main_flags_address, 4),
+            *(
+                (rule.address, 1)
+                for rule in self.acquisition.rules
+                if isinstance(rule, FixedAcquisitionRule)
+            ),
         ):
             if (
                 not self.ram_base
@@ -161,6 +173,18 @@ def observe_room_items(
         ),
         ("pending interaction", layout.pending_action_pointer_address, 4),
         ("interaction state", layout.main_flags_address, 4),
+    ) + tuple(
+        ("separate acquisition flag", address, 1)
+        for address in sorted(
+            {
+                rule.address
+                for rule in layout.acquisition.rules
+                if isinstance(rule, FixedAcquisitionRule)
+                and not layout.acquisition_flags_address
+                <= rule.address
+                < layout.acquisition_flags_address + layout.acquisition_flags_width
+            }
+        )
     )
     for label, address, width in fields:
         result = read_memory(address, width)
@@ -168,7 +192,11 @@ def observe_room_items(
             detail = result.error if not result.ok else "short read"
             return RuntimeRoomItems(ok=False, error=f"{label}: {detail}")
         values.append(result.data)
-    bound, rdt, flags, pending, main = values
+    bound, rdt, flags, pending, main = values[:5]
+    extra_flags = {
+        address: value[0]
+        for (_, address, _), value in zip(fields[5:], values[5:], strict=True)
+    }
     bound_address = int.from_bytes(bound, "little")
     rdt_address = int.from_bytes(rdt, "little")
     last_slot, remainder = divmod(bound_address - layout.aot_base, 12)
@@ -330,14 +358,6 @@ def observe_room_items(
                     error=f"interaction {slot}: unsupported active item type 0x{item_type:02X}",
                 )
             continue
-        if item_type == 0x4D:
-            if handler not in (4, 15) and not selected_pending:
-                continue
-            # Radio ownership uses scenario-bank bit 127, bypassing the normal acquisition flag clear.
-            return RuntimeRoomItems(
-                ok=False,
-                error=f"interaction {slot}: Radio acquisition needs its separate scenario flag",
-            )
         if handler == 15 and not 0x4E <= item_type <= 0x53:
             return RuntimeRoomItems(
                 ok=False,
@@ -348,14 +368,16 @@ def observe_room_items(
                 ok=False,
                 error=f"interaction {slot}: ordinary pickup handler has a map type",
             )
-        # The engine indexes MSB-first bits in little-endian 32-bit words, not a linear byte bitfield.
-        byte_index = 4 * (global_id // 32) + 3 - (global_id % 32) // 8
-        if byte_index >= len(flags):
+        try:
+            acquisition_flag = layout.acquisition.flag(item_type, global_id)
+        except ValueError as error:
             return RuntimeRoomItems(
                 ok=False,
-                error=f"interaction {slot}: item GlobalId is outside the flag block",
+                error=f"interaction {slot}: {error}",
             )
-        remaining = bool(flags[byte_index] & (0x80 >> (global_id % 8)))
+        remaining = not layout.acquisition.collected(
+            acquisition_flag, flags, extra_flags
+        )
         if not remaining:
             state = RuntimeItemState.Taken
         elif handler in (4, 15) or selected_pending:
@@ -424,6 +446,10 @@ def observe_room_items(
             (layout.aot_bound_address, values[0]),
             (layout.aot_base, records.data),
             (layout.main_flags_address, values[4]),
+        )
+        + tuple(
+            (address, value)
+            for (_, address, _), value in zip(fields[5:], values[5:], strict=True)
         )
         # The selected record matters only during a pending pickup. Ordinary
         # doors, storage and saving also change this shared pointer.

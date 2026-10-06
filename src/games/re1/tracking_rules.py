@@ -16,6 +16,11 @@ from heapq import heappop, heappush
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
+from games.re1.acquisition_state import (
+    AcquisitionFlag,
+    AcquisitionLayout,
+    FixedAcquisitionRule,
+)
 from games.re1.event_state import EventProgram
 from games.re1.room_items import (
     MemoryResult,
@@ -336,6 +341,7 @@ class TrackingRuleLayout:
     byte_variables_base: int
     word_variables_base: int
     room_entry_flag_clears: tuple[tuple[int, int, int], ...]
+    acquisition: AcquisitionLayout
 
     def __post_init__(self) -> None:
         if (
@@ -351,6 +357,8 @@ class TrackingRuleLayout:
             base % 4 or not 0x80000000 <= base <= 0x801FFFE0 for base in self.flag_bases
         ):
             raise ValueError("tracking rules require ten bounded flag banks")
+        if self.acquisition.flags_address != self.flag_bases[7]:
+            raise ValueError("acquisition rules disagree with the script flag bank")
         if len(set(self.persistent_flag_groups)) != len(
             self.persistent_flag_groups
         ) or any(not 0 <= group < 10 for group in self.persistent_flag_groups):
@@ -418,9 +426,15 @@ def read_rule_snapshot(
     programs: tuple[RoomProgram, ...],
     read_memory: Callable[[int, int], MemoryResult],
 ) -> RuleSnapshot:
-    addresses = {layout.character_address} | {
-        address for address, _ in layout.source_selection_masks
-    }
+    addresses = (
+        {layout.character_address}
+        | {address for address, _ in layout.source_selection_masks}
+        | {
+            rule.address
+            for rule in layout.acquisition.rules
+            if isinstance(rule, FixedAcquisitionRule)
+        }
+    )
     for program in programs:
         commands = program.event_commands + tuple(
             command
@@ -553,6 +567,10 @@ def evaluate_room_program(
     )
     required_shadow_bits = set()
     for command in all_commands:
+        if command.kind == "item":
+            # RE1-COVER-002: creator activation still uses the GlobalId bit,
+            # even when collection is recorded in a separate flag bank.
+            required_shadow_bits.add(layout.flag(7, command.args[3]))
         if command.kind == "flag-test":
             group, index, _ = command.args
             if group < len(layout.flag_bases):
@@ -619,7 +637,13 @@ def evaluate_room_program(
                 if args[0] in quantity_slots
                 else args[2]
             )
-            return kind, args, 15 if args[1] >= 0x4E else 4, args[4], parameters, amount
+            address, mask = layout.flag(7, args[3])
+            index = address - layout.acquisition.flags_address
+            assert 0 <= index < len(flags), "creator GlobalId must fit its flag block"
+            # Acquisition and activation can use different flags. A creator
+            # whose ordinary bit is clear registers handler zero, not a pickup.
+            handler = (15 if args[1] >= 0x4E else 4) if flags[index] & mask else 0
+            return kind, args, handler, args[4], parameters, amount
         if kind == "door":
             return kind, args, 1, args[9], parameters, ItemQuantityState.Unreconstructed
         if kind == "aot-create":
@@ -668,6 +692,19 @@ def evaluate_room_program(
         while pending:
             descriptor = pending.pop()
             outcomes = {update_descriptor(descriptor, c) for c in effects}
+            if not reentry:
+                for command in effects:
+                    if command.kind == "item" and 1 <= command.args[1] <= 0x53:
+                        args = command.args
+                        activation = AcquisitionFlag(*layout.flag(7, args[3]), False)
+                        if layout.acquisition.flag(args[1], args[3]) != activation:
+                            # Separate ownership cannot prove the GlobalId bit
+                            # that an earlier optional creator observed.
+                            created = update_descriptor(descriptor, command)
+                            outcomes.update(
+                                (*created[:2], handler, *created[3:])
+                                for handler in (0, 15 if args[1] >= 0x4E else 4)
+                            )
             for block_index, (block, updates) in enumerate(event_updates):
                 relevant = tuple(c for c in updates if targets_slot(c, slot))
                 if not relevant:
@@ -1075,6 +1112,29 @@ def evaluate_room_program(
                     update_descriptor(descriptor, command)
                     for descriptor in changed.get(args[0], frozenset({None}))
                 )
+                if kind == "item":
+                    address, mask = layout.flag(7, args[3])
+                    shadow = dict(writes)
+                    separate_history = (
+                        historical
+                        and 1 <= args[1] <= 0x53
+                        and layout.acquisition.flag(args[1], args[3])
+                        != AcquisitionFlag(address, mask, False)
+                    )
+                    if (address, mask) in shadow or separate_history:
+                        enabled = shadow.get((address, mask))
+                        handlers = (
+                            (0, 15 if args[1] >= 0x4E else 4)
+                            if enabled is None
+                            else (15 if args[1] >= 0x4E else 4,)
+                            if enabled
+                            else (0,)
+                        )
+                        changed[args[0]] = frozenset(
+                            (*descriptor[:2], handler, *descriptor[3:])
+                            for descriptor in changed[args[0]]
+                            for handler in handlers
+                        )
                 slots = tuple(sorted(changed.items()))
                 if (
                     reentry
@@ -1455,17 +1515,17 @@ def evaluate_room_program(
             if item_type == 0 or item_type >= 0x54:
                 return "absent", None  # Documents are excluded from room completion.
             if (
-                item_type == 0x4D
-                or handler not in (0, 3, 4, 15)
+                handler not in (0, 3, 4, 15)
                 or handler == 4
                 and item_type >= 0x4E
                 or handler == 15
                 and item_type < 0x4E
             ):
                 return "unresolved", None
-            index = 4 * (gid // 32) + 3 - (gid % 32) // 8
-            assert index < len(flags), "validated item GlobalId must fit the flag block"
-            remaining = bool(flags[index] & (128 >> (gid % 8)))
+            acquisition_flag = layout.acquisition.flag(item_type, gid)
+            remaining = not layout.acquisition.collected(
+                acquisition_flag, flags, values
+            )
             if remaining and handler in (0, 3) and slot in program.award_slots:
                 # A dormant descriptor can still be awarded by an event. Its
                 # current availability needs event progress, not just a pickup bit.
