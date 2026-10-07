@@ -392,6 +392,8 @@ After a game, save, or savestate change, reread game-derived state before presen
 
 ## Testing
 
+Keep RetroAchievements disabled in emulator instances used for agent testing. Verify this before loading a game or save so validation cannot unlock achievements on the user's account.
+
 Every discovered address or rule needs a reproducible test.
 
 At minimum test:
