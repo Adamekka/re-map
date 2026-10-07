@@ -3139,3 +3139,50 @@ History:
 - 2026-10-07; Gemini 3.8 Flash High via agy, conversation `ac8fa192-1092-49d8-976e-b5a998e4f46c`; the initial call encountered server error 500 and ultimately returned ERROR after exceeding its output limit. Partial output is diagnostic only, with no accepted review or endorsement. The original packet was 364,899 bytes, SHA256 `7a70fbcac2cda8b4f0a1b6050dd66c2d7dee234370ff9d3c621b4659e59204ef`.
 - 2026-10-07; Gemini 3.8 Flash High via agy, fresh retry conversation `c648ecd2-6c7f-4761-8866-300a8c1bba9e`; reviewed the complete final staged diff, shared compiler/scanner, mandatory metadata and current/cached consumers, call sites, new and existing tests and pinned native contracts in a shorter packet. Returned "No findings." Process exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool attempts. The retry packet was 350,477 bytes, SHA256 `efbe20620fe4c6f16eed619ad1023b76b75e37d6ba9dd5b071e393bd3034bfb6`. This review did not run tests or reproduce gameplay. Root independently verified the native bounds, record collisions, fresh flags and conservative coverage before consulting reviewers.
 - 2026-10-07; Claude Opus 5.5 High via agy; remained unavailable under the RE1-EVENT-011 quota exhaustion recorded on 2026-10-05, with reset reported in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.
+
+
+## RE1-ANALYSIS-008: remaining gaps after bounded scripted-collectible tracking
+
+Status: Candidate; source-derived diagnostic under one unchanged RAM snapshot
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; tracker commit `1d79e8a`, all 334 source variants
+Environment: Python 3.14.8, committed semantic metadata and donated Herb-before RAM; no emulator interaction
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: traced reentry interpretation, registry alternatives and owned event-command inspection
+Claim: after RE1-COLLECT-002, the unchanged offline projection has 43 incomplete item variants and 22 incomplete door variants. Fifty-seven variants have either gap. These counts describe source analysis under this snapshot, not gameplay coverage.
+
+Evidence:
+
+- Repeated RE1-ANALYSIS-007's diagnostic against `1d79e8a`. Complete reentry item lists are 291/334 and complete doors are 312/334. Eight variants have both gaps. The four item gains from RE1-COLLECT-002 reduce the previous union from 61 to 57.
+- Fifty-one variants have bounded final coverage with condition or descriptor ambiguity. Eight of those retain failed per-slot AOT-handler contexts: `ROOM10E0/10E1`, `ROOM10F0`, `ROOM5130/5131`, `ROOM60E0/60E1` and `ROOM60F0`. Four other variants still reach an invalid event start to index 7, `ROOM5070/5071` and `ROOMC070/C071`. `ROOMB000/B001` still lack structural source coverage.
+- No traced unresolved slot exceeds the 256-alternative closure bound. The report records no procedure-budget or stack-depth failure under this snapshot. This does not prove that other game states fit those bounds.
+- Four remaining variants contain item descriptors with handler-9 alternatives. Slot 6 in `ROOM1060/6060` has type `0x02`, GlobalId 26 and ordinary/scripted handlers 4/9. Slot 2 in `ROOM9120/ROOME120` has type `0x34`, GlobalId 27 and handlers 4/9. Their registered targets enter actor VM state. RE1-COLLECT-003 examines acquisition independently of those unsupported access routes.
+
+Private evidence directory `/tmp/tasks/re-map/post-scripted-collectible-inspection/`: `gaps.json`, SHA256 `a60babc96b761f6d7632dcad501f990ac79e54c1f637aa6fc51d1a7dc532f8d3`; `interactions.json`, SHA256 `10035d9059b231d764f79854e76c9b200bf5980cdcd4e79db1c7ca17cbe4d03a`. Run `gaps.py` with the named commit, pinned profile and donated Herb-before capture, then `interactions.py` to record registry writers and owned event commands. Extracted base RAM SHA256 is `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`. No game bytes or RAM are committed.
+Limits: this inspection adds no availability rule, live room observation, save/load experiment or spatial map. Source metadata retains its existing provenance; no new raw-disc extraction or native actor execution was performed.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; traced all 334 sources, checked the remaining category counts and inspected the four registered-item alternatives. Production rules remain unchanged.
+
+
+## RE1-COLLECT-003: acquired scripted items need no new access proof
+
+Status: Candidate; interpreter inspection and a private synthetic comparison
+Scope: pinned SLUS-00551 identity and tracker commit from RE1-ANALYSIS-008; validated item-source descriptors with handler 9
+Environment: Python 3.14.8, existing generated metadata and private copies of donated Herb-before RAM; no gameplay or emulator writes
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: committed interpreter/source inspection, RE1-FLAG-001/003 acquisition contracts and synthetic flag changes
+Claim: the interpreter currently requires a supported handler-9 interaction before consulting acquisition. A source-bound item whose fresh flag already says acquired can instead be classified Taken without proving how its now-unneeded interaction grants access. Uncollected items still require the existing access proof.
+
+Evidence:
+
+- In `src/games/re1/tracking_rules.py` at `1d79e8a`, `evaluate_room_program`'s `interpret_descriptor` calls `scripted_collectible_access` before reading the item's acquisition flag. A rejected actor/story route therefore returns unresolved even when that flag says the item is taken.
+- The generated metadata for `ROOM9120/ROOME120` retains the same slot-2 source identity, type `0x34` and GlobalId 27, across handlers 4 and 9. Entry 7 includes actor VM state and story/camera effects. At file offset `0x24B98` it restores handler 4 with parameters `1,0,0`; its owned commands contain no explicit award. These facts do not establish current access while the item is uncollected.
+- A private copy of the evaluator skips the handler-9 access test only when the existing acquisition resolver reports collected. It retains the original uncollected path and all other interpreter logic. The experiment compares baseline and probe across all 334 sources, both current/reentry epochs and five flag configurations, giving 3,340 paired projections.
+- The unchanged capture has no gain, with complete item lists remaining 267 current and 291 reentry. Clearing only GlobalId 26 also produces no gain over the baseline. Clearing GlobalId 27 produces exactly two additional complete variants, `ROOM9120` and `ROOME120`: current 269 to 271 and reentry 291 to 293. Clearing both bits or all 256 GlobalId bits produces the same two incremental gains. The separate fixed Radio acquisition flag stays unchanged.
+- Every previously complete item result remains identical. Every previously published item, including quantity and acquisition state, remains present with the same value. Doors, disabled doors, unresolved door slots and whole-source coverage remain identical in all comparisons. There are no lost complete results. Flag changes are synthetic and cannot establish pickup or persistence behavior.
+
+Private evidence directory from RE1-ANALYSIS-008: `acquisition_probe.py`, SHA256 `a3b39dc4cf053825ed9abfd90ca35dcad947d9b1dc32e4ad1c7dcb3d40ea1534`; `acquisition-probe.json`, SHA256 `6ecf576a13e2fceaa789a4bb7c87fc940fed1aeea90a4f6873930d53b09bb513`. Run the probe against `1d79e8a` and the named capture. It substitutes a private evaluator and changes flags in copied RAM; it changes no repository source or emulator state.
+Limits: this probe exercises reconstructed descriptors only. Production live and departed-room consumers still need a coordinated implementation and regressions for source aliases, stale pointers, pending awards, read/coherence failures and earlier-state reversal. Normal pickup, actor scheduling, reentry and normal-save/savestate behavior for these two source variants remain untested. The candidate adds no address and grants no uncollected availability or whole-room clearance without complete coverage.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; inspected the acquisition/access ordering and source alternatives, ran the private comparison and checked the result-preservation assertions. Recorded a shared implementation candidate; no production change or implementation approval yet.
