@@ -3445,3 +3445,42 @@ History:
 - 2026-10-07; Gemini 3.1 Pro High via agy, conversation `f452a5d6-430d-4802-a997-47c1404142b0`; reviewed the supplied complete feature diff, core interfaces, catalog, regressions and pinned native contracts. Raised boundary-matching concerns. Root checked actual marker counts and source endpoints, then removed unsupported boundary-to-exit assignment and verified the corrected browser behavior. Advisory review did not reproduce native execution or gameplay.
 - 2026-10-07; Gemini 3.8 Flash High via agy, conversation `049477ae-b97d-4ca4-bf24-39c9cf3853f8`; reviewed the same snapshot and returned no findings. Both completed calls have exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool use. Their snapshot predates the final boundary correction and small lint adjustments; those final changes were inspected and verified by root.
 - 2026-10-07; Claude Opus 5.5 High via agy; unavailable under RE1-EVENT-011's quota exhaustion reported on 2026-10-05 with reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.
+
+## RE1-MAP-007: first live adjacency check and incomplete floor-crossing experiment
+
+Status: Candidate; one captured natural transition on Mansion 1F, no completed floor-crossing test
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Training Jill
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned CUE loaded from the user's Games directory, native keyboard input, GDB localhost:2345, production tracker at `c90d60b`, private map preview on port 8766
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: normal controller input, native screenshots, two coherent paused RAM captures and exact replay through the shared tracker
+Claim: the observed Storeroom-to-East-Stairway transition preserves entry-only map reveal and supported remaining-item/door details. This experiment does not establish natural floor switching or increase whole-game item/door interpretation coverage.
+
+Evidence and test log:
+
+| Action | Expected | Observed |
+| --- | --- | --- |
+| Load the existing Chemical-before setup in Storeroom `00-18`; start a fresh tracker | Only Storeroom outlined, Chemical remaining | Region `mansion1f:18` only; Chemical available, complete item list, `INCOMPLETE`; exit to `00-0b` has no lock |
+| Leave through the room's door using movement and confirm input | East Stairway `00-0b` added, Chemical untouched, remaining herb shown | Regions `18` and `0B` only; Green Herb available, complete item list, `INCOMPLETE`; return exit has no lock, exit to `00-0a` is unlocked, upstairs exit to `01-07` has no lock |
+| Attempt the East Stairway ascent | Stable Mansion 2F view, followed by a captured return | Later native observation showed the title screen; no coherent upstairs capture or controlled round trip was obtained |
+| Load the fresh opening Dining Room setup | Obtain a route to Main Hall stairs | The Main Hall door reports passage unavailable during this story phase; excluded from the floor-crossing result |
+| Load the previously validated post-opening Art Room setup | Leave the statue platform and reach Main Hall stairs | Platform navigation did not complete; no additional adjacency or floor result |
+| Load the existing Herb-before setup in Winding Passage `00-09` | Reach an adjacent stairway and resume the floor test | Fresh tracker showed only region `09`, Green Herb remaining and supported door access. Native control then repeatedly timed out, so no floor result |
+
+The first two captures verify the runtime executable signatures before reading all 2 MiB of PS1 RAM while paused. No guest RAM writes, teleports, executable patches or injected event calls were used. Existing Main/Sub bytes at PS1 virtual `0x800C8660`/`0x800C8661` and camera at `0x800C8662` are u8 values. The Chemical byte `0x800C86DE`, u8 mask `0x04`, stayed `0xFF`. Source binding, item interpretation and door access use the existing profile rules. The live browser displayed the two outlined rooms and their supported details. During the door transition, polling briefly rejected disagreeing room/source identity and out-of-RAM script ranges before recovering.
+
+Private evidence under `/tmp/tasks/re-map/multi-area-gameplay/`:
+
+| Artifact | SHA256 | Purpose |
+| --- | --- | --- |
+| `storeroom-before.bin` | `f25890c65f29c2a9653dc8432077795828453ef2ed46117b9986173ade6d5845` | Coherent starting RAM |
+| `east-stairs-before.bin` | `52ecade361ce3cfc9b2bbd9265eb9ce257b11d855914345227159ccb67a6be67` | Coherent RAM after the observed exit |
+| `adjacency-audit.json` | `490d5ff25925c55d26934510e9e007ed22f2d8728cc66806536a2988ac162a44` | Exact snapshot publication equality, room/area/reveal/item checks |
+| `live-floors-b.jsonl` | `d12b367ea0858e45cc8f8bf2576a0a50ba2b68a9047b9c7b8d5a279dfed34703` | Separate Art Room setup run |
+| `live-floors-c.jsonl` | `b8ab08817105de08bddd8b1d5f1b065fb5cd99a58f05fa6b8634c4acb4795c0c` | Separate Winding Passage setup run |
+
+The exact replay uses one fresh profile/cache and tracker for the two new captures, checks their hashes and byte lengths, and compares each complete published payload with its live capture metadata. It adds reproducibility for this transition, not another natural run. Earlier buffered poll output included `01-07` among room changes across setup loads, but no contemporaneous controlled screenshot/capture establishes its entry or return; it is excluded from validation.
+
+Limits and failed setup: the title-screen outcome is unexplained. Native automation later reported repeated five-second timeouts and a macOS ScreenCaptureKit audio/video capture failure. DuckStation's own Screenshot menu still produced one view of the loaded Winding Passage setup. Disconnecting the owned GDB client and resetting the native-control session did not restore app access. This does not establish a GDB performance fault or a tracker floor-selection defect. All temporary GDB/HTTP sessions ended normally and the agent-created browser tab closed. The isolated emulator remained running because native control could no longer close it. No user save was overwritten; raw captures, screenshots, states, logs and the private polling script remain outside Git. Natural Mansion 1F/2F switching, return histories and later areas still require a completed controlled experiment.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; performed the first observed adjacency, captured and replayed its RAM, checked live browser publication, and recorded unsuccessful floor-test setups separately. Production code and profile data were unchanged.
