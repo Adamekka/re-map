@@ -35,6 +35,7 @@
     "RE1-REENTRY-004",
     "RE1-REENTRY-005",
     "RE1-DOORS-006",
+    "RE1-COLLECT-002",
     "RE1-REENTRY-002",
     "RE1-QUANTITY-001",
     "RE1-QUANTITY-002",
@@ -19458,6 +19459,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               68694,
@@ -23243,6 +23245,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               68694,
@@ -23690,6 +23693,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               150594,
@@ -23965,6 +23969,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               150594,
@@ -24301,6 +24306,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               22002,
@@ -24776,6 +24782,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               109110,
@@ -25134,6 +25141,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               109110,
@@ -26686,6 +26694,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44350,
@@ -27987,6 +27996,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44350,
@@ -31064,6 +31074,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               163850,
@@ -47222,6 +47233,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               163850,
@@ -59289,6 +59301,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               195470,
@@ -92472,6 +92485,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               195470,
@@ -96821,6 +96835,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               214886,
@@ -99194,6 +99209,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               104142,
@@ -101364,6 +101380,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               104142,
@@ -103467,6 +103484,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               117210,
@@ -107648,6 +107666,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               117210,
@@ -108102,6 +108121,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               62694,
@@ -108377,6 +108397,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               70486,
@@ -110663,6 +110684,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               206670,
@@ -113130,6 +113152,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               206670,
@@ -118115,6 +118138,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               9598,
@@ -122121,6 +122145,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               141950,
@@ -126056,6 +126081,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               141950,
@@ -145214,6 +145240,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199094,
@@ -151720,6 +151747,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199094,
@@ -152658,6 +152686,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               134918,
@@ -153189,6 +153218,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96330,
@@ -153718,6 +153748,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96330,
@@ -156194,6 +156225,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               117438,
@@ -157386,6 +157418,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               150190,
@@ -160224,6 +160257,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               8734,
@@ -168250,6 +168284,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               8734,
@@ -172974,6 +173009,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               130602,
@@ -183980,6 +184016,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               105082,
@@ -195562,6 +195599,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               105082,
@@ -196971,6 +197009,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               626,
@@ -199774,6 +199813,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               13334,
@@ -200493,6 +200533,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               19018,
@@ -201146,6 +201187,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               19018,
@@ -202489,6 +202531,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               196766,
@@ -203923,6 +203966,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               196766,
@@ -204830,6 +204874,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               268730,
@@ -207003,6 +207048,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               168186,
@@ -209218,6 +209264,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               168186,
@@ -209873,6 +209920,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               144890,
@@ -216406,6 +216454,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               144890,
@@ -217654,6 +217703,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               40138,
@@ -218385,6 +218435,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               40138,
@@ -223920,6 +223971,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               18058,
@@ -230089,6 +230141,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               18058,
@@ -231064,6 +231117,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               227210,
@@ -231447,6 +231501,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               227210,
@@ -232440,6 +232495,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115982,
@@ -233463,6 +233519,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115982,
@@ -235343,6 +235400,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67346,
@@ -237297,6 +237355,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67346,
@@ -237714,6 +237773,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               39026,
@@ -242571,6 +242631,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96566,
@@ -252620,6 +252681,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96566,
@@ -254520,6 +254582,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               52354,
@@ -269627,6 +269690,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               167754,
@@ -281407,6 +281471,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               167754,
@@ -292357,6 +292422,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67242,
@@ -296236,6 +296302,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67242,
@@ -297250,6 +297317,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               256482,
@@ -298071,6 +298139,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               256482,
@@ -299777,6 +299846,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               185838,
@@ -301355,6 +301425,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               68478,
@@ -303560,6 +303631,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               149274,
@@ -314756,6 +314828,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               149274,
@@ -319838,6 +319911,51 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 2,
+                  "dispatches": [
+                    90924,
+                    90937,
+                    90938
+                  ],
+                  "starts": [
+                    [
+                      90948,
+                      3,
+                      3
+                    ]
+                  ]
+                },
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    90960,
+                    90984
+                  ],
+                  "starts": []
+                }
+              ]
+            },
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    90960,
+                    90984
+                  ],
+                  "starts": []
+                }
+              ]
+            }
+          ],
           "creators": [
             [
               89570,
@@ -324648,6 +324766,51 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 2,
+                  "dispatches": [
+                    90928,
+                    90941,
+                    90942
+                  ],
+                  "starts": [
+                    [
+                      90952,
+                      3,
+                      3
+                    ]
+                  ]
+                },
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    90964,
+                    90988
+                  ],
+                  "starts": []
+                }
+              ]
+            },
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    90964,
+                    90988
+                  ],
+                  "starts": []
+                }
+              ]
+            }
+          ],
           "creators": [
             [
               89570,
@@ -340249,6 +340412,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               219994,
@@ -356247,6 +356411,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               219994,
@@ -362142,6 +362307,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               101690,
@@ -391141,6 +391307,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               69582,
@@ -393156,6 +393323,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               25966,
@@ -395115,6 +395283,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               25966,
@@ -401352,6 +401521,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               255618,
@@ -408101,6 +408271,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               255618,
@@ -414341,6 +414512,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               39414,
@@ -420180,6 +420352,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               39414,
@@ -423458,6 +423631,7 @@
               "changes_character": true
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               221514,
@@ -429925,6 +430099,7 @@
               "changes_character": true
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               221514,
@@ -433327,6 +433502,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               110474,
@@ -442849,6 +443025,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               110474,
@@ -443765,6 +443942,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               186070,
@@ -448297,6 +448475,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               186070,
@@ -454522,6 +454701,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               43646,
@@ -465261,6 +465441,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               43646,
@@ -480956,6 +481137,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               189996,
@@ -496997,6 +497179,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               189996,
@@ -498055,6 +498238,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               806,
@@ -502647,6 +502831,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               814,
@@ -503155,6 +503340,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               814,
@@ -503425,6 +503611,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               89174,
@@ -520616,6 +520803,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               219198,
@@ -538433,6 +538621,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               219198,
@@ -540580,6 +540769,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               326,
@@ -541556,6 +541746,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               82594,
@@ -542563,6 +542754,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               82594,
@@ -543393,6 +543585,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               124214,
@@ -544150,6 +544343,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               124214,
@@ -546254,6 +546448,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               53030,
@@ -546664,6 +546859,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               129274,
@@ -547264,6 +547460,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               278214,
@@ -554740,6 +554937,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               103402,
@@ -570327,6 +570525,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               103402,
@@ -572715,6 +572914,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               151238,
@@ -579498,6 +579698,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               151238,
@@ -580298,6 +580499,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               86830,
@@ -590079,6 +590281,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199294,
@@ -600184,6 +600387,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199294,
@@ -608870,6 +609074,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               91834,
@@ -612386,6 +612591,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               91834,
@@ -615208,6 +615414,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               233874,
@@ -615686,6 +615893,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               72366,
@@ -615940,6 +616148,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               72366,
@@ -622493,6 +622702,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               25618,
@@ -630484,6 +630694,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               25618,
@@ -636680,6 +636891,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               79306,
@@ -642294,6 +642506,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               79306,
@@ -653451,6 +653664,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               124746,
@@ -665798,6 +666012,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               124750,
@@ -671629,6 +671844,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               128494,
@@ -676319,6 +676535,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               128494,
@@ -677183,6 +677400,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44262,
@@ -684204,6 +684422,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               14670,
@@ -691549,6 +691768,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               14670,
@@ -693991,6 +694211,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               52890,
@@ -704705,6 +704926,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               113906,
@@ -715031,6 +715253,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               113906,
@@ -716131,6 +716354,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               18642,
@@ -723690,6 +723914,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               18642,
@@ -724983,6 +725208,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               81518,
@@ -726107,6 +726333,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               81518,
@@ -728913,6 +729140,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               150414,
@@ -731524,6 +731752,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               198074,
@@ -733740,6 +733969,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               198074,
@@ -734477,6 +734707,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               57590,
@@ -738937,6 +739168,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               104250,
@@ -743827,6 +744059,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               104250,
@@ -748069,6 +748302,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               818,
@@ -751920,6 +752154,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               818,
@@ -753077,6 +753312,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               118786,
@@ -756608,6 +756844,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               167326,
@@ -760378,6 +760615,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               167326,
@@ -763146,6 +763384,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               84650,
@@ -765783,6 +766022,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               84650,
@@ -773517,6 +773757,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               55178,
@@ -779202,6 +779443,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               55178,
@@ -780357,6 +780599,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               430,
@@ -780816,6 +781059,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               52118,
@@ -782053,6 +782297,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               160762,
@@ -783355,6 +783600,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               160762,
@@ -784463,6 +784709,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               152394,
@@ -789243,6 +789490,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               149586,
@@ -794412,6 +794660,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               149586,
@@ -800964,6 +801213,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44834,
@@ -804726,6 +804976,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44834,
@@ -819009,6 +819260,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115846,
@@ -844438,6 +844690,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               115846,
@@ -861380,6 +861633,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               61338,
@@ -883856,6 +884110,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               61338,
@@ -884944,6 +885199,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               406,
@@ -886027,6 +886283,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               406,
@@ -890275,6 +890532,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               68694,
@@ -890981,6 +891239,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               68694,
@@ -897262,6 +897521,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               150594,
@@ -898025,6 +898285,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               150594,
@@ -898760,6 +899021,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               21994,
@@ -899559,6 +899821,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               21994,
@@ -900868,6 +901131,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               109110,
@@ -901868,6 +902132,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               109110,
@@ -902206,6 +902471,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44350,
@@ -902637,6 +902903,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44350,
@@ -905659,6 +905926,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               163850,
@@ -921817,6 +922085,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               163850,
@@ -933884,6 +934153,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               195470,
@@ -967067,6 +967337,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               195470,
@@ -971416,6 +971687,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               214886,
@@ -973210,6 +973482,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               214886,
@@ -973862,6 +974135,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               104142,
@@ -974228,6 +974502,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               104142,
@@ -977101,6 +977376,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               117210,
@@ -981792,6 +982068,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               117210,
@@ -984926,6 +985203,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               62698,
@@ -986140,6 +986418,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               62698,
@@ -988350,6 +988629,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               70494,
@@ -989053,6 +989333,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               70494,
@@ -991380,6 +991661,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               206670,
@@ -993847,6 +994129,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               206670,
@@ -998832,6 +999115,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               9598,
@@ -1002722,6 +1003006,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               141950,
@@ -1006535,6 +1006820,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               141950,
@@ -1025687,6 +1025973,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199094,
@@ -1032193,6 +1032480,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199094,
@@ -1033337,6 +1033625,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               94422,
@@ -1034068,6 +1034357,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               94422,
@@ -1034593,6 +1034883,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               134918,
@@ -1035124,6 +1035415,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96330,
@@ -1037600,6 +1037892,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               117438,
@@ -1038792,6 +1039085,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               150226,
@@ -1041630,6 +1041924,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               8734,
@@ -1049656,6 +1049951,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               8734,
@@ -1054380,6 +1054676,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               130602,
@@ -1065386,6 +1065683,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               105082,
@@ -1076968,6 +1077266,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               105082,
@@ -1078257,6 +1078556,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               642,
@@ -1081595,6 +1081895,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               81734,
@@ -1085297,6 +1085598,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               81734,
@@ -1089109,6 +1089411,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               13358,
@@ -1089805,6 +1090108,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               13358,
@@ -1090392,6 +1090696,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               19018,
@@ -1091045,6 +1091350,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               19018,
@@ -1092388,6 +1092694,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               196766,
@@ -1093822,6 +1094129,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               196766,
@@ -1094836,6 +1095144,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               414,
@@ -1095876,6 +1096185,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               268730,
@@ -1096710,6 +1097020,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               268730,
@@ -1098889,6 +1099200,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               168186,
@@ -1101104,6 +1101416,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               168186,
@@ -1101759,6 +1102072,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               144890,
@@ -1108292,6 +1108606,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               144890,
@@ -1109654,6 +1109969,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               40138,
@@ -1110348,6 +1110664,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               40138,
@@ -1115883,6 +1116200,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               18058,
@@ -1122052,6 +1122370,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               18058,
@@ -1129586,6 +1129905,7 @@
             }
           ],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               227210,
@@ -1130382,6 +1130702,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               227210,
@@ -1131375,6 +1131696,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115982,
@@ -1132398,6 +1132720,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115982,
@@ -1134278,6 +1134601,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67346,
@@ -1136232,6 +1136556,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67346,
@@ -1136649,6 +1136974,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               38990,
@@ -1141506,6 +1141832,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96566,
@@ -1151555,6 +1151882,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               96566,
@@ -1153455,6 +1153783,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               52354,
@@ -1158158,6 +1158487,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               38434,
@@ -1173848,6 +1174178,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               38434,
@@ -1175560,6 +1175891,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               167754,
@@ -1175906,6 +1176238,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               167754,
@@ -1176111,6 +1176444,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67242,
@@ -1176322,6 +1176656,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67242,
@@ -1177172,6 +1177507,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               256482,
@@ -1177993,6 +1178329,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               256482,
@@ -1179699,6 +1180036,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               185838,
@@ -1181277,6 +1181615,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               68478,
@@ -1182251,6 +1182590,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               149250,
@@ -1183067,6 +1183407,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               149250,
@@ -1183475,6 +1183816,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               142570,
@@ -1183933,6 +1184275,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               106298,
@@ -1184476,6 +1184819,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               106298,
@@ -1187422,6 +1187766,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               111986,
@@ -1190707,6 +1191052,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               111986,
@@ -1191623,6 +1191969,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               211718,
@@ -1192289,6 +1192636,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               211718,
@@ -1194125,6 +1194473,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               334438,
@@ -1196057,6 +1196406,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               334438,
@@ -1197375,6 +1197725,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               35230,
@@ -1198072,6 +1198423,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               84678,
@@ -1198685,6 +1199037,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               84678,
@@ -1199237,6 +1199590,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               43810,
@@ -1199577,6 +1199931,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               37018,
@@ -1200840,6 +1201195,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               152174,
@@ -1202219,6 +1202575,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               152174,
@@ -1204888,6 +1205245,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               169142,
@@ -1207542,6 +1207900,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               169142,
@@ -1209082,6 +1209441,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               267354,
@@ -1210876,6 +1211236,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               267354,
@@ -1211573,6 +1211934,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               134006,
@@ -1211918,6 +1212280,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               134006,
@@ -1217131,6 +1217494,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               9614,
@@ -1217953,6 +1218317,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115566,
@@ -1221105,6 +1221470,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               266734,
@@ -1224127,6 +1224493,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               67282,
@@ -1227044,6 +1227411,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               67282,
@@ -1229605,6 +1229973,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               198606,
@@ -1232361,6 +1232730,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               198606,
@@ -1233409,6 +1233779,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               334762,
@@ -1235543,6 +1235914,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333626,
@@ -1237719,6 +1238091,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333626,
@@ -1238246,6 +1238619,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333738,
@@ -1244938,6 +1245312,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333738,
@@ -1246253,6 +1246628,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199870,
@@ -1247021,6 +1247397,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199870,
@@ -1250176,6 +1250553,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               149466,
@@ -1262172,6 +1262550,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               149466,
@@ -1267390,6 +1267769,51 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 2,
+                  "dispatches": [
+                    184776,
+                    184789,
+                    184790
+                  ],
+                  "starts": [
+                    [
+                      184800,
+                      3,
+                      3
+                    ]
+                  ]
+                },
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    184812,
+                    184836
+                  ],
+                  "starts": []
+                }
+              ]
+            },
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    184812,
+                    184836
+                  ],
+                  "starts": []
+                }
+              ]
+            }
+          ],
           "creators": [
             [
               183282,
@@ -1272306,6 +1272730,51 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 2,
+                  "dispatches": [
+                    184780,
+                    184793,
+                    184794
+                  ],
+                  "starts": [
+                    [
+                      184804,
+                      3,
+                      3
+                    ]
+                  ]
+                },
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    184816,
+                    184840
+                  ],
+                  "starts": []
+                }
+              ]
+            },
+            {
+              "slot": 4,
+              "handler": 15,
+              "stages": [
+                {
+                  "entry": 3,
+                  "dispatches": [
+                    184816,
+                    184840
+                  ],
+                  "starts": []
+                }
+              ]
+            }
+          ],
           "creators": [
             [
               183282,
@@ -1289978,6 +1290447,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               219198,
@@ -1307795,6 +1308265,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               219198,
@@ -1310224,6 +1310695,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               298142,
@@ -1312133,6 +1312605,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               298142,
@@ -1312781,6 +1313254,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               242706,
@@ -1320513,6 +1320987,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               103402,
@@ -1336403,6 +1336878,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               103402,
@@ -1340178,6 +1340654,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               150414,
@@ -1342913,6 +1343390,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               156390,
@@ -1345253,6 +1345731,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               156390,
@@ -1349730,6 +1350209,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               139126,
@@ -1354680,6 +1355160,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               139126,
@@ -1359995,6 +1360476,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               170446,
@@ -1365280,6 +1365762,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               170446,
@@ -1372343,6 +1372826,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               169138,
@@ -1373452,6 +1373936,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               169138,
@@ -1373807,6 +1374292,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44350,
@@ -1374300,6 +1374786,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               44350,
@@ -1375790,6 +1376277,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               267354,
@@ -1377584,6 +1378072,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               267354,
@@ -1380114,6 +1380603,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               134014,
@@ -1380830,6 +1381320,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               134014,
@@ -1386084,6 +1386575,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               9614,
@@ -1386906,6 +1387398,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               115566,
@@ -1390058,6 +1390551,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               266734,
@@ -1393422,6 +1393916,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               266734,
@@ -1397028,6 +1397523,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67306,
@@ -1397758,6 +1398254,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               67306,
@@ -1400187,6 +1400684,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               198606,
@@ -1402943,6 +1403441,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               198606,
@@ -1404105,6 +1404604,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               334762,
@@ -1404952,6 +1405452,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               334762,
@@ -1407092,6 +1407593,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333626,
@@ -1409268,6 +1409770,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333626,
@@ -1409795,6 +1410298,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333738,
@@ -1416487,6 +1416991,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               333738,
@@ -1417916,6 +1418421,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199870,
@@ -1418684,6 +1419190,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               199870,
@@ -1421839,6 +1422346,7 @@
           ],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               149466,
@@ -1433835,6 +1434343,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               149466,
@@ -1437375,6 +1437884,7 @@
               "changes_character": false
             }
           ],
+          "collectible_rules": [],
           "creators": [
             [
               115106,
@@ -1438071,6 +1438581,7 @@
           "starts": [],
           "failures": [],
           "door_rules": [],
+          "collectible_rules": [],
           "creators": [
             [
               43810,

@@ -476,6 +476,7 @@ def main() -> int:
                         "RE1-REENTRY-004",
                         "RE1-REENTRY-005",
                         "RE1-DOORS-006",
+                        "RE1-COLLECT-002",
                         "RE1-REENTRY-002",
                         "RE1-QUANTITY-001",
                         "RE1-QUANTITY-002",

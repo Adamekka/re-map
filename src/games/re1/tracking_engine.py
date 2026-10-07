@@ -11,6 +11,7 @@ from games.re1.room_cache import (
     refresh_cached_items,
 )
 from games.re1.room_items import RuntimeItemState, RuntimeRoomItems
+from games.re1.scripted_collectibles import scripted_collectible_access
 from games.re1.scripted_doors import ScriptedDoorAccess, scripted_door_access
 from games.re1.tracking_rules import (
     CachedReentryEvaluation,
@@ -54,6 +55,29 @@ def validate_current_room(
             "Door access needs another visit.",
         )
     active, disabled = list(observation.active_doors), list(observation.disabled_doors)
+    items = list(observation.items)
+    unresolved_scripted_collectible = False
+    for item, record, entry in observation.scripted_collectibles:
+        if all(
+            scripted_collectible_access(
+                profile.room_programs[source.source_rdt].event_program,
+                item.aot_id,
+                item.item_type,
+                record,
+                entry,
+            )
+            for source in sources
+        ):
+            items.append(
+                replace(
+                    item,
+                    state=RuntimeItemState.Taken
+                    if item.state is RuntimeItemState.Taken
+                    else RuntimeItemState.Available,
+                )
+            )
+        else:
+            unresolved_scripted_collectible = True
     unresolved_scripted_door = False
     for slot, opcode, entry in observation.scripted_doors:
         accesses = {
@@ -75,9 +99,15 @@ def validate_current_room(
         observation,
         active_doors=tuple(active),
         disabled_doors=tuple(disabled),
+        items=tuple(items),
+        scripted_collectibles=(),
         # Consume candidates once, but retain unresolved access in coverage
         # even when current static conditions reconstruct no door at that slot.
         scripted_doors=(),
+        list_complete=observation.list_complete and not unresolved_scripted_collectible,
+        coverage_reason="Room item conditions are unresolved."
+        if unresolved_scripted_collectible
+        else observation.coverage_reason,
     )
     represented = {item.aot_id for item in observation.items}
     active_doors = {slot for slot, _ in observation.active_doors}

@@ -115,6 +115,56 @@ class EventDoorRule:
 
 
 @dataclass(frozen=True)
+class EventCollectibleStage:
+    entry: int
+    dispatches: tuple[int, ...]
+    starts: tuple[tuple[int, int, int], ...]
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.entry) is not int
+            or not 0 <= self.entry < 256
+            or len(set(self.dispatches)) != len(self.dispatches)
+            or any(type(offset) is not int or offset < 0 for offset in self.dispatches)
+            or len(self.starts) > 1
+            or any(
+                len(row) != 3
+                or any(type(value) is not int for value in row)
+                or row[0] < 0
+                or not 0 <= row[1] < 8
+                or not 0 <= row[2] < 256
+                for row in self.starts
+            )
+        ):
+            raise ValueError("invalid scripted collectible stage")
+
+
+@dataclass(frozen=True)
+class EventCollectibleRule:
+    slot: int
+    handler: int
+    stages: tuple[EventCollectibleStage, ...]
+
+    def __post_init__(self) -> None:
+        records = [row[1] for stage in self.stages for row in stage.starts]
+        if (
+            type(self.slot) is not int
+            or not 0 <= self.slot < 24
+            or type(self.handler) is not int
+            or self.handler not in (4, 15)
+            or not 1 <= len(self.stages) <= 8
+            or len({stage.entry for stage in self.stages}) != len(self.stages)
+            or len(set(records)) != len(records)
+            or self.stages[-1].starts
+            or any(
+                len(stage.starts) != 1 or stage.starts[0][2] != child.entry
+                for stage, child in zip(self.stages, self.stages[1:])
+            )
+        ):
+            raise ValueError("invalid scripted collectible rule")
+
+
+@dataclass(frozen=True)
 class EventProgram:
     entries: tuple[int, ...]
     points: tuple[EventPoint, ...]
@@ -122,6 +172,7 @@ class EventProgram:
     starts: tuple[EventStart, ...]
     failures: tuple[EventFailure, ...]
     door_rules: tuple[EventDoorRule, ...]
+    collectible_rules: tuple[EventCollectibleRule, ...]
     # Creator offsets bind retained registry pointers. Parameter writers retain
     # all three u16 values: callback 9 consumes the first two low bytes;
     # callback 7 consumes the bank, index and operation without truncation.
@@ -184,6 +235,38 @@ class EventProgram:
             for rule in self.door_rules
         ):
             raise ValueError("scripted door rule lacks bounded event ownership")
+        if len({rule.stages[0].entry for rule in self.collectible_rules}) != len(
+            self.collectible_rules
+        ) or any(
+            stage.entry >= len(self.entries)
+            or set(stage.dispatches)
+            != {d.offset for d in self.dispatches if d.entry == stage.entry}
+            or any(f.entry == stage.entry for f in self.failures)
+            or any(s.entry == stage.entry for s in self.starts)
+            or any(p.entry == stage.entry and p.state != 0 for p in self.points)
+            or not any(
+                p.entry == stage.entry
+                and p.offset == self.entries[stage.entry]
+                and p.state == 0
+                and p.depth == 0
+                for p in self.points
+            )
+            or set(stage.starts)
+            != {
+                row
+                for row in self.script_starts
+                if row[0]
+                in {
+                    offset
+                    for d in self.dispatches
+                    if d.entry == stage.entry
+                    for offset in d.commands
+                }
+            }
+            for rule in self.collectible_rules
+            for stage in rule.stages
+        ):
+            raise ValueError("scripted collectible rule lacks bounded event ownership")
         for rows, width, capacity, maximum in (
             (self.creators, 2, 24, 65535),
             (self.registry_writes, 5, 24, 65535),
@@ -227,6 +310,21 @@ class EventProgram:
                     row["changes_character"],
                 )
                 for row in raw["door_rules"]
+            ),
+            tuple(
+                EventCollectibleRule(
+                    row["slot"],
+                    row["handler"],
+                    tuple(
+                        EventCollectibleStage(
+                            stage["entry"],
+                            tuple(stage["dispatches"]),
+                            tuple(tuple(start) for start in stage["starts"]),
+                        )
+                        for stage in row["stages"]
+                    ),
+                )
+                for row in raw["collectible_rules"]
             ),
             tuple(tuple(row) for row in raw["creators"]),
             tuple(tuple(row) for row in raw["registry_writes"]),

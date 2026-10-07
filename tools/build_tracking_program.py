@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from build_scripted_door_rules import build_scripted_door_rules
+from build_interaction_rules import build_interaction_rules
 from scan_events import EventScan
 from scan_scd import walk
 
@@ -263,7 +263,7 @@ def build_tracking_program(
             "dispatches": [asdict(dispatch) for dispatch in event_scan.dispatches],
             "starts": [asdict(start) for start in event_scan.starts],
             "failures": [asdict(failure) for failure in event_scan.failures],
-            "door_rules": build_scripted_door_rules(data, event_scan, event_blocks),
+            **build_interaction_rules(data, event_scan, event_blocks),
             "creators": sorted(
                 [address, raw[1] & 127 if op == 0x18 else raw[1]]
                 for _, address, op, raw in operations

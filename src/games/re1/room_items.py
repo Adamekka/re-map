@@ -128,6 +128,7 @@ class RuntimeRoomItems:
     non_collectible_slots: tuple[int, ...] = ()
     message_door_slots: tuple[int, ...] = ()
     scripted_doors: tuple[tuple[int, bytes, int], ...] = ()
+    scripted_collectibles: tuple[tuple[RuntimeRoomItem, int, int], ...] = ()
 
     def __post_init__(self) -> None:
         assert len(set(self.non_collectible_slots)) == len(self.non_collectible_slots)
@@ -164,6 +165,20 @@ class RuntimeRoomItems:
         assert not set(scripted_slots) & {
             slot for slot, _ in self.active_doors + self.disabled_doors
         }
+        collectible_slots = [item.aot_id for item, _, _ in self.scripted_collectibles]
+        assert self.ok or not self.scripted_collectibles
+        assert len(set(collectible_slots)) == len(collectible_slots)
+        assert not set(collectible_slots) & {item.aot_id for item in self.items}
+        assert all(
+            0 <= item.aot_id < 24
+            and item.source_opcode == 0x18
+            and item.source_address > 0
+            and type(record) is int
+            and 0 <= record < 256
+            and type(entry) is int
+            and 0 <= entry < 256
+            for item, record, entry in self.scripted_collectibles
+        ), "scripted collectibles require a validated item source and registered target"
 
 
 def observe_room_items(
@@ -267,6 +282,7 @@ def observe_room_items(
     non_collectible_slots: list[int] = []
     message_door_slots: list[int] = []
     scripted_doors: list[tuple[int, bytes, int]] = []
+    scripted_collectibles: list[tuple[RuntimeRoomItem, int, int]] = []
     for slot in range(last_slot + 1):
         record = records.data[slot * 12 : (slot + 1) * 12]
         handler, mode, parameter, model, gid, pointer = struct.unpack("<BBHHHI", record)
@@ -337,7 +353,11 @@ def observe_room_items(
             if handler == 2:
                 message_door_slots.append(slot)
             continue
-        if handler not in (0, 1, 3, 4, 15) and not selected_pending:
+        if (
+            handler not in (0, 1, 3, 4, 15)
+            and not (handler == 9 and raw[0] == 0x18)
+            and not selected_pending
+        ):
             continue
         if handler in (0, 3) and not selected_pending and raw[0] != 0x18:
             # Generic AOT records have no copied item identity that can distinguish dormant data from stale data.
@@ -407,21 +427,25 @@ def observe_room_items(
             state = RuntimeItemState.Available
         else:
             state = RuntimeItemState.Unavailable
-        items.append(
-            RuntimeRoomItem(
-                aot_id=slot,
-                item_type=item_type,
-                amount=amount,
-                label=labels.get(item_type, ""),
-                global_id=global_id,
-                state=state,
-                kind=RuntimeItemKind.Map
-                if item_type >= 0x4E
-                else RuntimeItemKind.Inventory,
-                source_address=source_address,
-                source_opcode=raw[0],
-            )
+        item = RuntimeRoomItem(
+            aot_id=slot,
+            item_type=item_type,
+            amount=amount,
+            label=labels.get(item_type, ""),
+            global_id=global_id,
+            state=state,
+            kind=RuntimeItemKind.Map
+            if item_type >= 0x4E
+            else RuntimeItemKind.Inventory,
+            source_address=source_address,
+            source_opcode=raw[0],
         )
+        if handler == 9 and not selected_pending:
+            # Setters replace registry parameters, but the retained source
+            # supplies item identity. Its event route still needs a source proof.
+            scripted_collectibles.append((item, parameter & 255, model & 255))
+        else:
+            items.append(item)
     # A pickup or script update can happen between reads; never publish counts from two different states.
     for (label, address, width), expected in zip(fields, values, strict=True):
         result = read_memory(address, width)
@@ -483,4 +507,5 @@ def observe_room_items(
         non_collectible_slots=tuple(non_collectible_slots),
         message_door_slots=tuple(message_door_slots),
         scripted_doors=tuple(scripted_doors),
+        scripted_collectibles=tuple(scripted_collectibles),
     )

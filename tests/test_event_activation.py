@@ -459,6 +459,7 @@ def test_activation_schema_and_pinned_layout_are_mandatory(rules):
         "starts": [],
         "failures": [],
         "door_rules": [],
+        "collectible_rules": [],
         "creators": [],
         "registry_writes": [],
         "changes": [],

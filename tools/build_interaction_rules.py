@@ -1,18 +1,18 @@
-"""Prove bounded RE1 interaction scripts that delegate or only display text.
+"""Prove bounded RE1 door and collectible interactions from shared event flow.
 
 The proof accepts audited state-0 control flow and dialog completion, not
-arbitrary reachable callbacks. See RE1-DOORS-005/006 for scope and evidence.
+arbitrary reachable callbacks. See RE1-DOORS-006 and RE1-COLLECT-002 for scope and evidence.
 """
 
 from scan_events import EventScan
 
 
-def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> list[dict]:
+def build_interaction_rules(data: bytes, scan: EventScan, blocks: list) -> dict:
     operations = {offset: (op, raw) for offset, op, raw in scan.operations}
     # VM header and first procedure length precede the first SCD command.
     procedures = {block[0]["start"] - 4: block for block in blocks if block}
     failed = {failure.entry for failure in scan.failures}
-    result = []
+    inspected = {}
 
     def inspect_entry(entry, first):
         points = {point.offset for point in scan.points if point.entry == entry}
@@ -24,7 +24,7 @@ def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> lis
         ):
             return
         cursor, seen = first, set()
-        visited_dispatches, calls = set(), []
+        visited_dispatches, calls, awards, children, setters = set(), [], [], [], []
         prompt, completed_prompt = False, False
         changes_character, external_wait, supported = False, False, True
 
@@ -43,8 +43,29 @@ def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> lis
                     continue  # This dialog control bit cannot change a door source.
                 elif op == 0x17:
                     continue  # Positional audio does not dispatch a door action.
-                elif op == 0x24 and raw[2] == 1 and not calls:
-                    calls.append(raw[1])
+                elif (
+                    op == 0x24
+                    and raw[2] in (1, 4, 15)
+                    and not (calls or awards or children)
+                ):
+                    if raw[2] == 1:
+                        calls.append(raw[1])
+                    else:
+                        awards.append((raw[1], raw[2]))
+                elif op == 0x14 and not (calls or awards or children or setters):
+                    # Exact child records avoid the starter's automatic allocation
+                    # and let the consumer reject overwriting its own active record.
+                    if raw[2] >= 8 or raw[3] >= len(scan.entries):
+                        return False
+                    children.append((offset, raw[2], raw[3]))
+                elif (
+                    op == 0x12
+                    and raw[2] in (4, 15)
+                    and raw[3] == 129
+                    and raw[4:] == bytes(6)
+                    and not (calls or awards or children)
+                ):
+                    setters.append((raw[1], raw[2]))
                 else:
                     return False
             return True
@@ -69,6 +90,9 @@ def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> lis
                 if (
                     not prompt
                     or calls
+                    or awards
+                    or children
+                    or setters
                     or operations.get(command) != (6, bytes((6, 5, 2, 128)))
                     or target < command + 4
                     or target not in points
@@ -119,12 +143,15 @@ def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> lis
                                 supported = False
                                 break
                             continue
-                        # The accepted dialog branch has one normal door call.
-                        # Story, inventory and unmodeled guards need another rule.
+                        # Acceptance is a selectable dialog outcome, not a story
+                        # predicate. Every other guard remains unresolved.
                         body = commands[2:-2]
                         if (
                             not completed_prompt
                             or calls
+                            or awards
+                            or children
+                            or setters
                             or len(commands) < 5
                             or commands[1]["kind"] != "byte-test"
                             or commands[1]["args"] != [5, 0, 0]
@@ -132,19 +159,25 @@ def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> lis
                             or commands[-1]["kind"] != "end"
                             or commands[0]["args"] != [commands[-1]["offset"]]
                             or not body
-                            or body[-1]["kind"] != "aot-callback"
-                            or body[-1]["args"][1:] != [1, 1]
-                            or any(
+                        ):
+                            supported = False
+                            break
+                        if body[-1]["kind"] == "aot-callback" and body[-1]["args"][
+                            1:
+                        ] == [1, 1]:
+                            if any(
                                 c["kind"] != "variable-write"
                                 or len(c["args"]) != 3
                                 or c["args"][:2] != [1, 9]
                                 for c in body[:-1]
-                            )
-                        ):
+                            ):
+                                supported = False
+                                break
+                            changes_character = bool(body[:-1])
+                            calls.append(body[-1]["args"][0])
+                        elif not inspect_commands(body) or not (awards or children):
                             supported = False
                             break
-                        changes_character = bool(body[:-1])
-                        calls.append(body[-1]["args"][0])
                 if not supported:
                     break
                 cursor += width
@@ -156,17 +189,57 @@ def build_scripted_door_rules(data: bytes, scan: EventScan, blocks: list) -> lis
         if (
             supported
             and visited_dispatches == dispatches
-            and not (calls and external_wait)
-        ):
-            result.append(
-                {
-                    "entry": entry,
-                    "dispatches": sorted(dispatches),
-                    "door_slots": calls,
-                    "changes_character": changes_character,
-                }
+            and not ((calls or awards or children) and external_wait)
+            and (
+                not setters or awards and all(setter == awards[0] for setter in setters)
             )
+        ):
+            inspected[entry] = {
+                "entry": entry,
+                "dispatches": sorted(dispatches),
+                "door_slots": calls,
+                "changes_character": changes_character,
+                "awards": awards,
+                "starts": children,
+            }
 
     for entry, first in enumerate(scan.entries):
         inspect_entry(entry, first)
-    return result
+    doors, collectibles = [], []
+    for entry, root in inspected.items():
+        if not root["awards"] and not root["starts"]:
+            doors.append(
+                {
+                    key: root[key]
+                    for key in (
+                        "entry",
+                        "dispatches",
+                        "door_slots",
+                        "changes_character",
+                    )
+                }
+            )
+        stages, records, seen, cursor = [], set(), set(), entry
+        while cursor in inspected and cursor not in seen:
+            seen.add(cursor)
+            stage = inspected[cursor]
+            if stage["door_slots"] or stage["changes_character"] or len(stages) == 8:
+                # Eight native records must include the root, so a ninth
+                # distinct stage cannot retain all of its active parents.
+                break
+            stages.append(
+                {key: stage[key] for key in ("entry", "dispatches", "starts")}
+            )
+            if stage["awards"]:
+                slot, handler = stage["awards"][0]
+                collectibles.append(
+                    {"slot": slot, "handler": handler, "stages": stages}
+                )
+                break
+            if not stage["starts"]:
+                break
+            _, record, cursor = stage["starts"][0]
+            if record in records:
+                break  # A child must not overwrite an earlier active child record.
+            records.add(record)
+    return {"door_rules": doors, "collectible_rules": collectibles}

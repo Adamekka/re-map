@@ -29,6 +29,7 @@ from games.re1.room_items import (
     RuntimeRoomItem,
     RuntimeRoomItems,
 )
+from games.re1.scripted_collectibles import scripted_collectible_access
 from games.re1.scripted_doors import ScriptedDoorAccess, scripted_door_access
 
 
@@ -291,7 +292,7 @@ class RoomProgram:
                 for offset, slot, _, _, _ in self.event_program.registry_writes
             ):
                 raise ValueError("registry parameter writer lacks its semantic slot")
-        if self.event_program.door_rules:
+        if self.event_program.door_rules or self.event_program.collectible_rules:
             commands = {
                 command.offset: command
                 for block in self.event_blocks
@@ -338,6 +339,52 @@ class RoomProgram:
                     )
                 ):
                     raise ValueError("scripted door rule disagrees with its effects")
+            writes = {row[0]: row[1:] for row in self.event_program.registry_writes}
+            for rule in self.event_program.collectible_rules:
+                for index, stage in enumerate(rule.stages):
+                    offsets = {
+                        offset
+                        for dispatch in self.event_program.dispatches
+                        if dispatch.entry == stage.entry
+                        for offset in dispatch.commands
+                    }
+                    if not offsets <= commands.keys():
+                        raise ValueError("scripted collectible lacks semantic commands")
+                    owned = tuple(commands[offset] for offset in sorted(offsets))
+                    awards = tuple(c.args for c in owned if c.kind == "award")
+                    starts = tuple(
+                        (c.offset, *c.args) for c in owned if c.kind == "event-start"
+                    )
+                    if (
+                        awards
+                        != (
+                            ((rule.slot, rule.handler, 1),)
+                            if index == len(rule.stages) - 1
+                            else ()
+                        )
+                        or starts != stage.starts
+                        or any(
+                            not (
+                                c.kind in ("end", "if", "endif", "award", "event-start")
+                                or c.kind == "aot-handler"
+                                and index == len(rule.stages) - 1
+                                and c.args == (rule.slot, rule.handler, 129)
+                                and writes.get(c.offset) == (rule.slot, 0, 0, 0)
+                                or c.kind == "byte-test"
+                                and c.args in ((5, 0, 0), (5, 2, 128))
+                                or c.kind == "constant-test"
+                                and c.args == (1,)
+                                or c.kind == "local-flag-forget"
+                                and c.args == (6, 16, 16)
+                                or c.kind == "flag-write"
+                                and c.args in ((6, 23, 0), (6, 23, 1))
+                            )
+                            for c in owned
+                        )
+                    ):
+                        raise ValueError(
+                            "scripted collectible rule disagrees with its effects"
+                        )
 
     @staticmethod
     def load(raw: dict) -> RoomProgram:
@@ -1600,6 +1647,21 @@ def evaluate_room_program(
             _, item_type, _, gid, _ = args
             if item_type == 0 or item_type >= 0x54:
                 return "absent", None  # Documents are excluded from room completion.
+            if handler == 9:
+                if (
+                    parameters is RegistryParameterState.Unreconstructed
+                    or not scripted_collectible_access(
+                        program.event_program,
+                        slot,
+                        item_type,
+                        parameters[0] & 255,
+                        parameters[1] & 255,
+                    )
+                ):
+                    return "unresolved", None
+                # Access is proven by the source route. Acquisition still comes
+                # from the current game flags, including earlier save loads.
+                handler = 15 if item_type >= 0x4E else 4
             if (
                 handler not in (0, 3, 4, 15)
                 or handler == 4
