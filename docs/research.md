@@ -3742,3 +3742,47 @@ Limits: savestate restoration proves restoration, not persistence through the ga
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; compared the eight-byte unlock bank and retained opcode, matched native messages to publications, observed passage with the bit retained, actually loaded the earlier state and verified the visited-room door reevaluation. Original decoder and formula authorship remain in RE1-DOORS-002.
+
+## RE1-SAVE-004: public memory card provides candidate later-area checkpoints
+
+Status: Candidate, native save loading and later-area gameplay remain untested
+Scope: intended target is Resident Evil Director's Cut NTSC-U SLUS-00551; downloaded save directory identifiers match that serial, but runtime compatibility is not yet established
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned SLUS-00551 disc, private shared memory card, read-only GDB localhost:2345
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: public author's download, archive and memory-card inspection, native achievements settings, isolated disc boot log
+Claim: the downloaded card contains native directory entries labeled Courtyard, Guardhouse and Laboratory. These are candidate starting points for validating RE1-MAP-005 and RE1-MAP-006's remaining floor plans without repeating Mansion progression. Directory labels alone do not establish loaded room identities or correct tracker behavior.
+
+Source: [Tehppyd's save page](https://tehppyddistrict.blogspot.com/2017/12/resident-evil-directors-cut-dual-shock.html), with its public USA archive at [Google Drive](https://drive.google.com/file/d/1-B5iFXICLz1Qcca4cf6BfNEApk4GtAQR/view). The author describes compatibility with US Director's Cut versions and claims no cheats were used. Those are source claims, not independently reproduced findings. GameFAQs downloads were blocked by its browser challenge; that route was abandoned without bypassing the challenge.
+
+Private artifacts under `/tmp/tasks/re-map/online-saves/`:
+
+| Artifact | Bytes | SHA256 |
+| --- | --- | --- |
+| `tehppyd-usa.zip` | 17657 | `11f0cd0447a7674d18e7753ed630db8b595efa0fa6358eedafa21df9eb8f481d` |
+| `SCEVMC0.mcd` | 131072 | `8a9d5c774f45584ec84d19af6fc4bc5cc28e75fb6afefd6772c8becb6b2e2236` |
+| `SCEVMC1.mcd` | 131072 | `21bc80edfdcbdae68d2341256930413306997a3c46765ae9e20b8009b125db7a` |
+
+The archive's folder is `SLUS00747`, but every occupied PS1 directory entry is named `BASLUS-00551` followed by a slot digit. Only its two 131200-byte VMP files were extracted. Each raw card is the exact 131072-byte payload after the 128-byte VMP header. The `MC` header and XOR checksums of the first sixteen frames were checked; no save identifiers or save blocks were edited. DuckStation's pinned [memory-card reader](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/memory_card_image.cpp#L92) checks the raw card size in `LoadFromFile` and the `MC` signature in `IsValid`. Container extraction does not prove that RE1 can load a particular save.
+
+Occupied entries on `SCEVMC1.mcd`, decoded from the directory titles:
+
+| Native slot | File identifier | Character/mode label | Location label |
+| --- | --- | --- | --- |
+| 1 | `BASLUS-005510` | Chris Advanced | Guardhouse |
+| 2 | `BASLUS-005511` | Chris Advanced | Laboratory |
+| 3 | `BASLUS-005512` | Jill Original | Courtyard |
+| 4 | `BASLUS-005513` | Chris Original | Laboratory |
+| 5 | `BASLUS-005514` | Jill Advanced | Laboratory |
+
+Safety/setup observations: before booting any game or loading a save, the isolated copy's native Achievements settings showed `Enable Achievements` unchecked, Hardcore disabled and `Not Logged In`. Its configuration also held `Achievements.Enabled = false`. The durable requirement is recorded in AGENTS.md. This test did not change the user's installed emulator settings or use an achievement account.
+
+A separate `working-card.mcd` copy was mounted in the isolated instance, and the owned disc booted successfully according to DuckStation's log. Native window observation then repeatedly timed out, including after a control-session reset and a successful GDB interrupt/read/resume. No native Load Game selection or later-area gameplay was completed. This produces no new runtime map coverage. The failure is in the test's native window access; it does not establish a tracker defect or save incompatibility.
+
+After boot, the working card differed at only `0x1F80`, `0x1F81` and `0x1FFF`, within its administrative block, with values `00 -> 4D`, `00 -> 43` and `00 -> 0E`. All fifteen save blocks, bytes `8192..131071`, were unchanged. The working card SHA256 became `478262def290e9c37bd6bcb7e6a2e75f94f394783e826715c36bee4bddac8a8e`; both original raw cards remain preserved. The exact isolated process was terminated after native access failed, and temporary card and controller settings were restored from their pre-test backup. Achievements remain disabled.
+
+Reproduction for the pending test: with achievements disabled, mount a fresh copy of `SCEVMC1.mcd` as the isolated shared card, boot the owned SLUS-00551 disc, and use the game's Load Game menu to select slot 3, Jill Original / Courtyard. Verify the native character is controllable, check pinned executable signatures, and capture the actual Main/Sub/camera before evaluating the map. Start a fresh tracker and verify only the entered region is visible, then cross an adjacent room or floor normally and return. Other slots provide separate Laboratory and Guardhouse candidates. Their Original/Advanced and Jill/Chris scopes must be recorded independently of the previously tested Training Jill route.
+
+Limits: no online checkpoint has been loaded through the game's menu, no new area has been entered, and no pickup, door, story condition or normal-save persistence behavior is validated by this setup. Save provenance and source claims are separate from tracker validation. Saves, archive contents and private scripts remain outside Git; production code and profiles are unchanged.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; obtained the public archive, extracted raw card payloads without changing saves, inspected directory labels, verified achievements were disabled before boot, recorded native-control failure and restored temporary settings. Manually reviewed this documentation; no external implementation review applies to this research-only change.
