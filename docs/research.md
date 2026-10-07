@@ -930,6 +930,7 @@ Limits: no controlled door unlock pair, normal save/load door check, savestate r
 History:
 - 2026-09-29; Codex subagent `/root/remake_doors`, model GPT-6.1 Sol; inspected and implemented; checked the pinned executable paths, regenerated door metadata outside Git, matched four existing RAM fixtures, and added a pure decoder with fixture and synthetic flag-reversal tests. No game control or memory writes.
 - 2026-10-02; Codex root, GPT-6.1 Sol; rechecked callback 1 and its helper chain for RE1-SCD-015. The earlier description of `0x80051E38` as event scheduling is superseded by the direct audio audit there. Original authorship and gameplay limits remain unchanged.
+- 2026-10-07; Codex root, GPT-6.1 Sol; added the scoped native lock-message, Library unlock and earlier savestate-restoration observations in RE1-DOORS-007. Those cases now have gameplay evidence; this entry's broader door-type and normal-save persistence limits remain unresolved.
 
 
 ## RE1-DOORS-003: message handlers retain door identity without requesting passage
@@ -3628,6 +3629,7 @@ Limits: this adds two rooms on an already tested floor, not live coverage of ano
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; prepared the side-stair route, entered both adjoining rooms naturally, observed entry-only outlines and return history, replayed all ten captures exactly and preserved a separate checkpoint. No external implementation review was performed because this work changes research documentation only.
+- 2026-10-07; Codex root, GPT-6.1 Sol; actually loaded that retained checkpoint in RE1-MAP-011 and observed the collected Terrace state. The original extraction-only experiment is preserved above; the later runtime evidence adds after-state restoration.
 
 ## RE1-PICKUP-005: Terrace scripted Bazooka grant clears its acquisition bit
 
@@ -3655,3 +3657,88 @@ Limits: no earlier-save or savestate reversal, normal in-game save/load, ordinar
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; observed Barry's grant, captured the pending prompt and confirmed acquisition, compared the flag bank and inventory, left and returned normally, and replayed the complete states. Preserved prior formula and profile-label authorship.
+- 2026-10-07; Codex root, GPT-6.1 Sol; actually loaded the retained `g-terrace-collected.sav` through DuckStation's native Load From File menu. `h-terrace-restored` and the later same-session reload `h4-floor-6` both retain acquisition byte `0xBD`, inventory slot 3 bytes `07 06` and the published taken/cleared Terrace state. RE1-MAP-011 records hashes and replay evidence. This adds after-pickup savestate restoration; before-pickup reversal and normal in-game save/load remain untested for this grant.
+
+## RE1-MAP-011: three further Mansion 2F rooms reveal on natural entry
+
+Status: Confirmed for this revision, limited to the recorded C-Passage, Small Library and East Stairway 2F entries and checkpoint restoration
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Training Jill
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned disc, ordinary controls through computer use, GDB localhost:2345, production tracker at `c2dbf65`, private browser preview on port 8766
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: native gameplay and messages, 17 coherent paused RAM captures, browser observations and 21 exact state replays with the shared profile/tracker
+Claim: natural entries into C-Passage `01-04`, Small Library `01-06` and East Stairway 2F `01-07` add their outlines individually. Loading an earlier checkpoint reevaluates game-derived door and item state while retaining the session's observed-room history. This adds three rooms to RE1-MAP-010's live route without changing production geometry or rules.
+
+Evidence and test log:
+
+| Action | Expected | Observed |
+| --- | --- | --- |
+| Load RE1-MAP-010's retained Terrace checkpoint and start a fresh tracker | Reveal current room only; retain its collected item | Only region `12`; `CLEARED`, item taken, quantity 6; native character restored |
+| Enter Terrace Entry, then Main Hall 2F | Reveal only entered rooms | Regions `11,12`, then `03,11,12` |
+| Enter C-Passage naturally | Add its outline without revealing its locked destinations | `01-04`; regions `03,04,11,12`; five interpreted doors; complete zero-item list, `CLEARED` |
+| Interact with two Armor Key doors and the door locked from inside | Native access agrees with the tracker | Native armor-carving messages for targets `01-0d` and `01-05`; inside-lock message for `01-07`; tracker remains locked/locked/blocked respectively |
+| Enter Small Library through C-Passage | Add only the Library | `01-06`; regions `03,04,06,11,12`; two interpreted doors; complete zero-item list, `CLEARED` |
+| Unlock its door and enter East Stairway 2F | Update access before revealing the next room | Native unlock message, then `01-07`; regions `03,04,06,07,11,12`; four interpreted current-room doors; complete zero-item list, `CLEARED` |
+| Load the earlier Terrace checkpoint in the same tracker session | Reread game state and keep session visit history | Current room returns to `01-12`; all six outlines remain; Terrace item stays taken; cached Library door reevaluates from unlocked to unlockable, as detailed in RE1-DOORS-007 |
+| Replay four recorded tracker histories | Match complete publications, including destination labels and quantities | All 17 unique captures match exactly; 21 replay steps include four reused history/initial-state captures, which are not counted as new observations |
+
+Room Main/Sub/camera remain u8 at PS1 virtual `0x800C8660`/`0x800C8661`/`0x800C8662`. Each capture verifies the pinned runtime signatures before reading all 2 MiB while paused. Automatic entry captures can catch door animation; native views subsequently showed Jill in the C-Passage, Library and East Stairway. The interpreted zero-item states agree across the captures; this did not independently search every surface or exercise later story spawns. Enemies were present while the tracker reported cleared, consistent with the collectible-only completion definition.
+
+Experiment changes and failures: the first private capture harness stopped after a GDB read timed out at `0x800C3002`; the existing production runner already has reconnection, so subsequent private harnesses copied that behavior. Transitions also temporarily rejected room-script ranges outside PS1 RAM and then recovered. Two initial C-Passage attempts ended in death. Computer use rejected the two-nonmodifier `E+K` aim/fire chord; the isolated copy's R1 binding was temporarily changed from E to Shift, permitting ordinary `Shift+K` combat. Native firing and use of the carried First Aid Spray allowed the later C-Passage route to reach both new rooms. A separate harness attempt incorrectly issued resume while already running and stopped at its assertion; it produced no room-entry evidence beyond Terrace. These are experiment failures, not evidence of a production reconnect or completion bug.
+
+The East Stairway return attempt also ended in death after the entry capture. An attempted inventory hold did not open the status screen; the later diagnostic capture records that death rather than a healthy return. The earlier checkpoint was loaded instead to obtain the distinct state-restoration test. No successful Library return or checkpoint preserving the new unlock is claimed. No guest RAM writes, teleports or injected events were used. The private watcher and browser tab were closed, the isolated app exited without saving over existing states, and its R1 binding was restored to E.
+
+Private evidence under `/tmp/tasks/re-map/multi-area-gameplay/`:
+
+| RAM capture | UTC time, 2026-10-07 | SHA256 |
+| --- | --- | --- |
+| `h-terrace-restored.bin` | 20:39:30 | `60a1dbad615a2747f513c485ef47224ce4df3b80e5b872db6b6dfeb37fff1038` |
+| `h-floor-1.bin` | 20:41:07 | `c3baa2a64b97af0e684519b48460e9ddbef74d8e1c583b66ad2f0c92905f1547` |
+| `h-floor-2.bin` | 20:42:40 | `03cf307826ea538cdcb7f5aa0fb390669241f2feff5ef823347976163457ae0b` |
+| `h2-floor-1.bin` | 20:47:36 | `c853d98e7519279db9996412d828ee04c57d0d972a0b57c42e6e121258602c6e` |
+| `h-cpassage-controlled.bin` | 20:49:04 | `0841acabd5022ed499591a5a51b7377f7baea38ffcabdf44b8a0a2a33f2ae2c6` |
+| `h3-terrace-equipped.bin` | 20:54:02 | `0228590ee8aceb0e621fce3481aabe639f8bd3be23ab43f67d0352cfdd66837c` |
+| `h4-floor-1.bin` | 20:55:49 | `f9c26583d23643ce713ae7ea6f2dbb5e572053723dc0a6950e9c3c0e3844e82c` |
+| `h4-floor-2.bin` | 20:56:31 | `d101a631f5be5cd1e3df4a52356c1f9bef9367c2bf92c8c8bb63dd91cf6ae5f9` |
+| `h4-floor-3.bin` | 20:57:13 | `2e692e9e33316ca218f59f320eb21aad21d70efe139d84eb11da9175951cca01` |
+| `h-armor-door-message.bin` | 21:00:29 | `bb4e022e5d607bf3313ca0847fd03a2ed071d034b63e89c7334f349e9170de34` |
+| `h-armor-room-message.bin` | 21:02:57 | `2f831885182f173b6514e6573ab0a3e70d676674f641afb0c9736025d1228617` |
+| `h-opposite-door-message.bin` | 21:06:39 | `ccb5637c16a1c810f67e04350f531f833979643647eb533ac0736ceb482d9aac` |
+| `h4-floor-4.bin` | 21:07:45 | `1421edfa3231d3397b36cb53530a254126cdddee053f6383ec5f238d3d4dc19a` |
+| `h-library-unlocked-message.bin` | 21:13:10 | `2d41a07ceeeeaa2c1f8ab78a6b6423171f1c2789bba399d144c458987d879537` |
+| `h4-floor-5.bin` | 21:14:20 | `206584c3ceff133a5d731bd2d63b14c494a42e49fe2c3721e47890a1ecb8344e` |
+| `h-eaststairs-controlled.bin` | 21:15:16 | `87c48a2d9058d75bd7ff4af1f01c6fbc93e10eb6788fd4bd9f979ad1864bd9bd` |
+| `h4-floor-6.bin` | 21:17:07 | `f89f40a2a9852e03a0313879dbff9bd3157a9e7a0e90ed1213ca9678072110ee` |
+
+Adjacent JSON files contain full published state and capture metadata. `audit_native_h.py`, SHA256 `1a8b8abb7450c0ff1324abed82908f1e83035140636edcd0b250e8ce738657b2`, verifies identity, hashes, full publication equality, exact visit sets and the unlock/reload assertions. Its `native-h-audit.json`, SHA256 `b2d35ab3757ca5d408eb97e0f3831b4ae2e28cf14d9edc6a7de463520a46feb5`, distinguishes unique captures from replay steps. The final live journal `live-floors-h4.jsonl` has SHA256 `13f01d9bbf86b4fd3653a0abf91da6f93b18f25bdaf5f09c1c3a58b4f29ee08a`; the earlier failure journal `live-floors-h.jsonl` has SHA256 `9bf60af0cfb0532da1968ea2cb5f9735fdf0c5b3d02d8121a24bd0bb3188cc07`. `h-restored-library-map.png`, SHA256 `e98c3cca9f4b02c5d506ba6e1ea482359a58deb47654d8f11286ceb435c39002`, shows the six outlines and restored Library door label. The loaded checkpoint is unchanged, SHA256 `21d29e6a52c093f291e4b5760746de0f07eb53b780fb24275d0cc596dc699936`.
+
+Limits: this extends one Mansion 2F route, not additional floor plans. Nine other floor plans still lack gameplay validation. No return from East Stairway, normal save/load for the new door, later-area transition, alternate character/revision or whole-game playthrough was completed. The isolated control setup and diagnostic deaths are not player-facing tracker features. Research-only changes introduce no production rules or assets.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; loaded the checkpoint, used ordinary combat and native door interactions, observed three new room entries, loaded the earlier state in the same tracker session, checked rendered labels and replayed all captures exactly. Manually reviewed the documentation and passed `git diff --check`; no Markdown formatter/linter is configured.
+
+## RE1-DOORS-007: native unlock and earlier savestate restore reevaluate a Library door
+
+Status: Confirmed for this revision, limited to the recorded native interactions, unlock and earlier savestate restoration
+Scope: same pinned revision and Training Jill session as RE1-MAP-011; C-Passage `01-04` and Small Library `01-06`
+Environment: same isolated DuckStation, native controls and read-only GDB capture setup as RE1-MAP-011
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: native lock/unlock messages, coherent before/after/entry/reload RAM and exact shared-tracker replay
+Claim: Small Library AOT 1's selector `0x95` and lock type `0xFE` use unlock index 21, PS1 virtual `0x800C86B5`, u8 mask `0x04`. Native unlocking sets that bit; the existing decoder changes from unlockable to open. The bit stays set through passage into East Stairway, then clears when the earlier savestate is actually loaded. The tracker reevaluates the visited Library's access despite the current room being Terrace. This supplies a scoped gameplay pair for RE1-DOORS-002's formula, without promoting all door types or persistence checks.
+
+Evidence and test log:
+
+| Action/capture | RAM | Tracker/native result |
+| --- | --- | --- |
+| Library before interaction, `h4-floor-4` | Eight unlock bytes at `0x800C86B4` all zero | Door to `01-07`: `UNLOCKABLE`, can unlock from this side |
+| Confirm at the Library door, `h-library-unlocked-message` | `0x800C86B5: 0x00 -> 0x04`; all seven other unlock bytes unchanged | Native “You unlocked it.”; door becomes `OPEN`, unlocked |
+| Pass through, `h4-floor-5` | Byte remains `0x04` | Current room `01-07`; retained Library door remains open; destination becomes visited |
+| Load pre-unlock Terrace checkpoint, `h4-floor-6` | All eight unlock bytes return to zero | Library door becomes unlockable again; its visit history remains; Terrace acquisition byte `0xBD` and item taken state remain intact |
+
+Before and immediately after unlock, Library AOT 1 remains handler 1 at PS1 virtual `0x800B816C`, 12-byte record. Its offset-8 little-endian u32 pointer remains `0x80158BA6`, pointing two bytes into the same 26-byte Door_set opcode. Byte 14 is `0x95`, byte 15 is `0x07`, and byte 24 is `0xFE`. Index `0x95 & 0x3F = 21` yields byte 1 of the eight-byte bank and mask `0x04` under the existing high-bit-first little-endian-word calculation. These independently captured values distinguish a real flag change from a replaced door descriptor or visit-based access inference.
+
+The C-Passage controls separately corroborate locked classification: native armor-carving messages at AOT 4 to `01-0d` and AOT 1 to `01-05` match the two Armor Key labels; AOT 3 to `01-07` displays “It's locked from inside.” and remains blocked. No key was used on those three doors, so their unlocking behavior is not confirmed here. All capture hashes, audit assertions and native-input failure limits are recorded in RE1-MAP-011.
+
+Limits: savestate restoration proves restoration, not persistence through the game's normal save/load. A successful natural return to Library, reciprocal door behavior, key-consuming unlocks, puzzle/event locks, alternate characters and revisions remain untested by this experiment. No production exception or guessed clearance was added.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; compared the eight-byte unlock bank and retained opcode, matched native messages to publications, observed passage with the bit retained, actually loaded the earlier state and verified the visited-room door reevaluation. Original decoder and formula authorship remain in RE1-DOORS-002.
