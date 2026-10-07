@@ -1171,6 +1171,51 @@ History:
 - 2026-10-07; Claude Opus 5.5 High via agy; remained unavailable under the quota exhaustion recorded in RE1-EVENT-011, which reported a reset in 110 hours, 53 minutes, 55 seconds on 2026-10-05. No retry before reset, review, substitution or endorsement.
 - 2026-10-07; Codex root, GPT-6.1 Sol; inspected VM07 through its return at `0x80027244/48`, verified both review candidates, added the coverage correction and two regressions, and reviewed the final diff. All 1,348 tests, scoped Ruff checks and `git diff --check` pass. The unchanged capture replay still passes after the correction; source projection counts and generated metadata remain unchanged. The two reports above were rewritten with the final run's measured timings and hashes.
 
+## RE1-ANALYSIS-007: remaining gaps after bounded scripted-door tracking
+
+Status: Candidate; source-derived diagnostic under one unchanged RAM snapshot
+Scope: RE1 Director's Cut NTSC-U, SLUS-00551, pinned executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; tracker commit `0b60d9e`, all 334 source variants
+Environment: Python 3.14.8, committed semantic metadata and donated Herb-before RAM; no new emulator session or gameplay
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: traced fresh-entry interpretation and source-bound event/descriptor inspection
+Claim: after RE1-DOORS-006, the unchanged offline projection still has 47 incomplete item variants and 22 incomplete door variants. Sixty-one variants have either gap. These are source-analysis counts, not rooms validated during a playthrough.
+
+Evidence:
+
+- Repeated RE1-ANALYSIS-006's diagnostic against `0b60d9e`. Complete reentry items remain 287/334 and complete doors are 312/334. Eight variants have both kinds of gap, giving a union of 61. The earlier union was 72; the eleven previously recorded door gains account for the difference.
+- Fifty-five variants have bounded final room coverage with condition/descriptor ambiguity. Within those, eight encounter a failed per-slot event procedure and conservatively retain independent writer alternatives. Four other variants reach the invalid event start to index 7 already recorded in RE1-ANALYSIS-006: `ROOM5070/5071` and `ROOMC070/C071`. Two `ROOMB000/B001` variants still lack structural source coverage. No failure was newly treated as harmless.
+- The ambiguity groups include active/dormant pickup handlers, map/item script handlers, open/message doors and differing door definitions. No per-slot closure exceeds its 256-alternative bound in this snapshot. A single source can have more than one unresolved slot, so slot-category totals do not count distinct rooms.
+- Inspection of registered item scripts identifies the bounded confirmation/child-event route in RE1-COLLECT-001. Other inspected item routes enter actor VM state or depend on room-local progress. They do not inherit that confirmation route's proposed availability interpretation.
+
+Private reports are under `/tmp/tasks/re-map/post-scripted-door-inspection/`: `gaps.json`, SHA256 `a11f175d5ec75cec08a5a682db2f4955ba88e34ce4e8c01eb8e7cb6bcc3b958e`; and `interactions.json`, SHA256 `8315cac25c4781d56d145688e1244cd64c2e578038b404d421adab777654c1c6`. Run `gaps.py` against the named commit and donated Herb-before fixture to reproduce the projection; `interactions.py` records the inspected registry writers and owned event commands. No RAM or game bytes are committed.
+Limits: no new availability verdict, save/load replay, native event execution, other snapshot or natural later-area gameplay was tested. This inspection changes no production behavior or map geometry.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; traced all 334 source variants, counted remaining gaps, inspected registered item event targets and retained structural/invalid-start failures. The user requested continuation; implementation of a new feature remains subject to separate approval.
+
+## RE1-COLLECT-001: confirmation can delegate a collectible award to a child event
+
+Status: Candidate; full-source hashes and bounded script sequence inspected, no availability or pickup experiment
+Scope: same pinned SLUS-00551 identity as RE1-ANALYSIS-007; source variants `ROOM3000/3001` and `ROOMA000/A001`
+Environment: read-only owned disc extraction, committed event metadata and Python 3.14.8; no new DuckStation gameplay
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: hash-verified source bytes, complete owned state-0 dispatches and existing native contracts RE1-DIALOG-001, RE1-EVENT-006 and RE1-SCD-007
+Claim investigated: some unresolved collectible descriptors register callback 9 to run a confirmation script, which starts a child event that restores a normal collectible handler and invokes its award callback. A shared proof of this route may establish collectible access while acquisition continues to come from the game's flags.
+
+Evidence:
+
+- All four source files match their committed full-source SHA256. Slot 4 has map-type item `0x50`, GlobalId 79, with alternatives for registered handler 9 and normal map handler 15. Its scripted registry parameters request record 2 and indexed entry 2. The current interpreter cannot establish collectible access for handler 9, so this alternative remains unresolved.
+- Entry 2 issues a prompt with control bit `0x80`, waits through the initialized FC/FD byte-5 busy predicate and tests byte variable 5 equal to zero. Its accepted procedure then dispatches SCD event start with slot/index `(3,3)`. The corresponding start-command offsets are `0x16344`, `0x16348`, `0x2D1E0`, `0x2D1E4` for the four files above. This is a selectable source route, not evidence that the choice or event start occurred.
+- Entry 3 begins with a full procedure that sets slot 4 to handler 15, mode 129, and invokes callback 15 through opcode 24. The award offsets are `0x1635E`, `0x16362`, `0x2D1FA`, `0x2D1FE`, respectively. Its later message does not establish acquisition. Both entries have only decoded state-0 positions and no owned decoding failures. Existing native contracts identify the shared event initializer and map callback; this inspection does not reattribute or promote those claims.
+- The current door proof intentionally excludes child starts and collectible callbacks. An award's reachability alone cannot prove current access. A proposed shared collectible rule must bind the original descriptor and registry target, prove the complete supported confirmation/child route, preserve pending-award and source/coherence checks, and reject unsupported guards, effects, cycles or missing targets. It must not grant acquisition by simulating a callback.
+
+Private `collectible-chains.json` has SHA256 `a9b2f6bde5e8da6556e3163c3a6963fc14879dbc7621647039653c7b7e5ae470` in the inspection directory above. `collectible_chains.py` verifies every full-source hash, root prompt/guard, child start and matching map-handler/award operands from the owned disc. The report retains hashes, offsets and semantic operands, not extracted room assets.
+Limits: no normal accept/decline, child scheduling, pickup, normal save/load or savestate reversal was newly observed. Other inspected actor/story-dependent routes remain unresolved. Four similar variants do not prove that all scripted collectibles share this route. No production implementation or implementation approval accompanies this finding.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; inspected the four root/child sequences, independently checked source hashes and exact prompt/start/award operands, and identified shared scripted-collectible access as the next candidate for approval.
+- 2026-10-07; Codex root, GPT-6.1 Sol; manually reviewed both new findings, verified unique IDs, projection counts, the eight failed per-slot procedures and all three report hashes, and passed `git diff --check`. No Markdown formatter or linter is configured. This documentation-only inspection changes no implementation and requires no rerun of the unchanged test suite; no external review or runtime endorsement is added.
+
 ## RE1-FLAG-002: alternate pickup acquisition needs an explicit flag rule
 
 Status: Candidate; pinned native interpretation, no natural pickup experiment
