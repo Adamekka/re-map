@@ -3532,3 +3532,49 @@ Limits: this is one Training Jill session with two ascent observations and one d
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; performed the natural Art Room exit and Main Hall up/down/up run, checked rendered outlines and supported details, captured and replayed nine snapshots exactly, and documented the scoped result. Production code and profile data were unchanged.
+
+## RE1-MAP-009: native Main Hall map views preserve tracker state
+
+Status: Confirmed for this revision, limited to the two recorded Main Hall map-menu openings
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Training Jill
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned CUE from the user's Games directory, native keyboard input, GDB localhost:2345, production tracker at `d0610fd`, private map preview on port 8766
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: native map-menu observations and screenshots, seven coherent paused RAM captures, exact replay through the shared tracker
+Claim: opening the game's map in Main Hall 1F and 2F selects the same floor and current region as the tracker and leaves its complete published state unchanged. The native current-room shapes were also compared visually with the catalog's Main Hall outlines; this is a qualitative comparison, not a measurement of every pixel or room.
+
+Evidence and test log:
+
+| Action | Expected | Observed |
+| --- | --- | --- |
+| Load the existing full-health floor-level Art Room setup and start a fresh tracker | Reveal Art Room only | Region `mansion1f:07`, Map and Ink Ribbon available |
+| Leave normally for Main Hall 1F | Add Main Hall, preserve untouched items | Regions `06` and `07` only; Main Hall Ink Ribbon remains available; supported door access unchanged |
+| Open status menu, select Map, confirm Mansion 1F | Native floor/current room agree; tracker reveals no extra room | Native context `[0,0,6]`, current Main Hall shown as the large central room; complete tracker payload exactly equal to the pre-menu capture |
+| Return to gameplay and ascend normally | Switch to Mansion 2F | Current `01-03`, region `03` only, complete zero-item state and four supported exits |
+| Open status menu, select Map, confirm Mansion 2F | Native floor/current room agree; tracker reveals no extra room | Native context `[1,1,3]`, Main Hall's separate balcony/stair regions shown; complete tracker payload exactly equal to the entry capture |
+| Attempt the eastern balcony route to Terrace Entry | Capture a new adjoining room | No new room reached. Two navigation captures stayed in `01-03`; later computer control rejected actions because the emulator window changed, so input stopped |
+| Replay all seven captures in order with one fresh profile/cache and tracker | Reproduce complete live publications | Exact equality for all seven payloads; final visit set only `mansion1f:07`, `mansion1f:06`, `mansion2f:03` |
+
+RE1-MAP-004's temporary native map context at PS1 virtual `0x800B7F85`, `0x800B7F86`, `0x800B7F87` contains three unsigned bytes for normalized family, selected floor and region. The two menu captures observed `00 00 06` and `01 01 03`, respectively. These are experimental reads of the selected native view, not new production room addresses. The catalog selected `mansion1f:06` and `mansion2f:03` from the existing Main/Sub/camera reads. Both map views preserved the full item, quantity, completion and directional-door payload, not just room count. The native 1F image also showed previously visited rooms absent from this fresh tracker's history; those extra outlines did not appear in the tracker. No in-game map was collected during this run.
+
+The native 1F screenshot shows the central Main Hall and adjoining Art Room to its right, consistent with their catalog outlines. The 2F screenshot shows the Main Hall's two side balconies, rear connection and separate central stair regions, consistent with its three catalog rings. The game uses red for its current room; the tracker uses its own item/completion colors. This comparison does not validate room-clear colors against the original game's map.
+
+Private evidence under `/tmp/tasks/re-map/multi-area-gameplay/`:
+
+| RAM capture | UTC time, 2026-10-07 | SHA256 |
+| --- | --- | --- |
+| `f-art-start.bin` | 19:29:15 | `9283fff86a0eb297a507528a1fbb754bb6472e23866e5e93fda86cda5f81a0f0` |
+| `f-main1-before-map.bin` | 19:30:03 | `a67623d80c6cc6d4a3d82a886a3f946f487f33a7ca92d5ed656de1a1a9742e73` |
+| `f-native-map1.bin` | 19:32:24 | `7f84f1753a82ec4fcb3f7bcc216112cdf044d29d8281f99404fedca529cdb601` |
+| `f-floor-1.bin` | 19:34:57 | `6a8e26e57f06b12d60492670fc705c5d034c9f8a4ded2eb2563477931147f097` |
+| `f-native-map2.bin` | 19:37:53 | `aecb76fad4a78dda866b9e9a4052b9a4799dc1ccf9cc4ede4f180dfb053c237e` |
+| `f-balcony-position.bin` | 19:40:00 | `c23d39b36447d3dff19a01e916df371b4271bda74355f48b4d3a13221ada96a4` |
+| `f-balcony-position2.bin` | 19:41:49 | `2cc9f76b7bef513e72728a9d48d414bc538ce1f3c3f7f3af49de5c7b33498a2a` |
+
+Adjacent `.json` files contain the full live payloads. `live-floors-f.jsonl` SHA256 is `55ae13d971019ed5d449ca1c1a95e2505e356b54c7911180c7bd1f14e1a7ceb5`; `native-map-audit.json` SHA256 is `e101dfa48f51c78e763b64b5aec19fa65e8d1345154278b9a2dfe310ba5d6aa2`. Reproduce with `python /tmp/tasks/re-map/multi-area-gameplay/audit_native_maps_f.py` using these artifacts and source revision; script SHA256 is `1b7db49561b50a5d7eb5b4c7a8e1da8f045188607af96b57f343600add7a3659`. Each RAM capture verifies the executable signatures before reading 2 MiB while paused. All retained the setup's health candidate 150 and Chemical byte `0xFF`.
+
+Native screenshots remain in the isolated emulator's private `Contents/MacOS/screenshots/` directory: `Resident Evil - Director's Cut 2026-10-07-21-32-51.png`, SHA256 `cf64c100a77ca157c9972131455762b2599cae2db1e28c3205cfa67655772107`, and `Resident Evil - Director's Cut 2026-10-07-21-38-11.png`, SHA256 `08ed30d7ef89647a978904b6273b0f09f793cc5e5865c80b9389a634aecee235`. Filenames use local time; capture metadata uses UTC. The emulator's Screenshot action saved these views without the desktop window or performance overlay. Screenshots and game bytes remain outside Git.
+
+Limits: two Main Hall map views do not confirm the other nine floor plans, adjoining 2F rooms, all wall-marker positions, other cameras/scenarios, map acquisition, pickup/save reversal or whole-game reliability. No new item/door source coverage was gained. Navigation did not reach Terrace Entry and is excluded from successful validation. The experiment used only the initial existing savestate and ordinary controls thereafter, with no guest RAM writes or injected events. The owned GDB/HTTP session ended normally and the temporary browser tab closed. The emulator was not closed after the external window-change notices. Production code and profile data were unchanged.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; opened and captured both native map views, compared their context and visible geometry, replayed all seven publications exactly, and recorded the interrupted adjoining-room attempt separately.
