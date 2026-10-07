@@ -3216,3 +3216,49 @@ History:
 - 2026-10-07; Gemini 3.8 Flash High via agy, conversation `c74f8992-a03f-4585-a7f5-3810a83186e9`; failed after a stream connection reset and repeated DNS failures while refreshing access. The stalled call was closed before retry, with process exit 3, terminal ERROR and an empty response. No review or endorsement is accepted. No permissions were granted or credentials changed.
 - 2026-10-07; Gemini 3.8 Flash High via agy, fresh retry conversation `17ccc040-f198-4658-901a-e1bafcecc917`; used the same complete packet after DNS recovered. Another connection reset interrupted the stream. The process exited zero and its final agent response reached DONE with empty stderr, but the terminal result remained ERROR. Its "No findings" text is diagnostic only, with no accepted review or endorsement. This was the sole fresh retry; no further attempt or substitution.
 - 2026-10-07; Claude Opus 5.5 High via agy; remained unavailable under the RE1-EVENT-011 quota exhaustion recorded on 2026-10-05, with reset reported in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.
+
+## RE1-SCD-021: item-interaction predicates compare transient byte variables
+
+Status: Candidate; pinned native handler, writer and reset inspection, without an execution trace
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; SCD commands `10/11`
+Environment: owned executable, Python 3.14.8 and Capstone 5.0.9; no emulator interaction
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: primary dispatch/handler inspection, direct native writer references and resolved reset calls
+Claim: opcode `10` compares packet byte 1 with u8 PS1 virtual `0x800C8672`; opcode `11` compares it with u8 `0x800C8673`. Both advance the script PC by two and return one for equality, zero otherwise. These are byte-variable indices 18 and 19 under RE1-VARS-001. They are item-interaction bytes, not persistent acquisition bits or searches of held inventory.
+
+Evidence:
+
+- Dispatch table PS1 virtual `0x80091108` maps `10` to `0x80045ADC` and `11` to `0x80045AA8`. The complete adjacent handlers through `0x80045B10` load the packet through PC word `0x800CF640`, advance it by two, load the corresponding unsigned byte and compare it with packet+1. Neither calls a helper nor writes tracked state apart from the PC.
+- Inspected direct stores include ordinary acquisition at `0x8002CE1C` and the map callback at `0x800385E4`, both copying retained source+8 to `0x800C8673`. The item-return path at `0x8002D0A4`, item-use dispatch at `0x800343AC` and menu paths at `0x80056270`, `0x80056558`, `0x800565C4` and `0x80056634` write `0x800C8672`. These examples explain the interaction interpretation; they do not enumerate every indirect or overlay writer.
+- Reset helper `0x8005BAA4..0x8005BACC` clears both bytes, word `0x800C8670`, and word `0x800C300C`. Direct calls occur at `0x8004422C` inside the room setup audited in RE1-EVENT-016 and at `0x8002A008`. The latter follows calls to recurring SCD runner `0x800489CC` and native event runner `0x80025CDC`. Thus a reset does not make either byte immutable during room execution. No zero seed was added to the interpreter.
+- Held-inventory search is a separate routine, `0x8002CCB8..0x8002CD30`. It walks two-byte entries through pointer `0x800BA008`, bounded by count byte `0x800C8667`, and compares entry item types with its argument. Neither predicate calls it. Reading today's inventory would not reconstruct an earlier item-use event.
+
+Reproduction: private `/tmp/tasks/re-map/post-acquisition-inspection/native_predicates.py` verifies the executable SHA256, resolves both table entries, scans direct calls to the reset helper and disassembles the named ranges. `native-predicates.json` has SHA256 `509a624a66a8a36140d093b5ea045a52a3ddf5f12f997ecefa027795174ff68c`; `native-predicates.txt` has SHA256 `8e6fe319a8799ec4fd49ddd60029eb467a22526693b8c3661b5a5db6aaf8220d`. Extracted instructions remain outside Git.
+Limits: no natural item-use/acquisition predicate, instruction breakpoint or write watchpoint was observed. Reset stores alone do not prove a value at every later initialization/main/event boundary. Native scheduling, external player actions and unmodeled writers can invalidate an earlier shadow. No profile address or production semantic rule changed.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; inspected complete predicates and reset helper, checked direct writer excerpts and caller order, distinguished inventory search, and rejected an immutable zero assumption. Existing command-width and acquisition findings retain their original provenance.
+
+
+## RE1-ANALYSIS-009: item-interaction predicate probe preserves coverage without gains
+
+Status: Candidate; source-derived diagnostic and private interpreter comparison under one unchanged RAM snapshot
+Scope: pinned SLUS-00551 identity from RE1-SCD-021; tracker commit `d1a8cf4`, all 334 generated source variants, both current and reentry epochs
+Environment: Python 3.14.8, owned disc and donated Herb-before RAM; no gameplay, emulator writes or production edits
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: RE1-SCD-021 native contracts, full-source hash verification, traced reentry interpretation and private semantic substitution
+Claim: the remaining unchanged-snapshot gaps are still 43 item variants and 22 door variants. Mapping `10/11` to supported physical byte comparisons preserves all tested results but produces no whole-source coverage gain. This is a shared interpretation candidate, not evidence that these changes alone resolve the remaining unknown rooms.
+
+Evidence:
+
+- Repeated RE1-ANALYSIS-008's diagnostic against `d1a8cf4`. Reentry complete items remain 291/334 and complete doors remain 312/334. Fifty-seven variants have either gap and eight have both. Fifty-one variants retain bounded condition/descriptor ambiguity, four reach an invalid event start to index 7, and two lack structural source coverage. The same eight variants retain failed per-slot AOT-handler contexts. No traced unresolved slot exceeds the 256-alternative closure bound; no procedure-budget or stack-depth failure appears under this snapshot.
+- Extracted each of the 334 source RDTs from the owned disc and verified its full SHA256 against the committed manifest before reading operands. Found 132 distinct `10/11` commands across 72 source variants, 102 opcode `10` and 30 opcode `11`. Every retained command has the audited two-byte extent.
+- Private copies of the semantic programs replace only these `uncertain-test` commands with `byte-test`, index 18 or 19, comparison equality, and the source operand. The existing evaluator resolves only supported physical shadows; it reads no new transient RAM or inventory and introduces no initial value. Source identities, proof metadata and all other commands remain unchanged.
+- A second private evaluator additionally assigns a known byte-19 shadow after the immediate map callback when its descriptor alternatives agree on item type. This is a precision experiment, not a complete native scheduling model or an approved production effect rule. Both modes, both epochs and 334 sources give 1,336 paired projections against the unchanged evaluator.
+- Complete item counts remain 267 current and 291 reentry; complete door counts remain 263 current and 312 reentry in every mode. There are no gained/lost complete results or changed previously published items, quantities, acquisition states, doors or disabled doors. Every previously complete item result remains identical. The test uses one donated flag configuration and cannot establish full-playthrough coverage.
+
+Private evidence directory `/tmp/tasks/re-map/post-acquisition-inspection/`: `gaps.json`, SHA256 `b6fcc1f6a67461f1d36729c860f9537568523665d4ddaabd1976351899515e8f`; `item-predicates.json`, SHA256 `73c710840ae5e7116aa5e56a823770997a5bd6f5ad6f0dbac63c1099e1e2fee8`; `predicate-probe.json`, SHA256 `2deeaf226237e6a1b95ae9ceff87c0b9a7fb98587ae558ace582b555915d2432`. Run `gaps.py` and then `item_predicates.py` against the named commit, pinned profile and owned disc. Extracted base RAM SHA256 is `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`. Game bytes, RAM and experimental evaluators remain outside Git.
+Limits: no new natural puzzle, item interaction, character/scenario, normal-save/load or savestate reversal was tested. No room-entry zero seed, current inventory inference, production parser change or completion override was applied. Production implementation and broader effect/lifetime validation remain separate work.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; traced remaining gaps, verified all owned source hashes and predicate operands, ran both private comparison modes, checked result preservation and recorded the absence of coverage gains.
