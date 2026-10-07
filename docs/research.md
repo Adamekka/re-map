@@ -3484,3 +3484,51 @@ Limits and failed setup: the title-screen outcome is unexplained. Native automat
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; performed the first observed adjacency, captured and replayed its RAM, checked live browser publication, and recorded unsuccessful floor-test setups separately. Production code and profile data were unchanged.
+- 2026-10-07; Codex root, GPT-6.1 Sol; subsequent RE1-MAP-008 completed a Main Hall floor round trip with a different starting setup after native control recovered. The earlier failed setups remain excluded from floor validation.
+
+## RE1-MAP-008: natural Main Hall floor switching and return history
+
+Status: Confirmed for this revision, limited to the observed Main Hall crossings and session history
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Training Jill
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned `Resident Evil - Director's Cut.cue` from the user's Games directory, native keyboard input, GDB localhost:2345, production tracker at `e15e9be` with feature code from `c90d60b`, private map preview on port 8766
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: natural controller input, native screenshots and browser DOM observations, nine coherent paused RAM captures, exact replay through the shared tracker
+Claim: ordinary Main Hall stair use switches the tracker between Mansion 1F and 2F, reveals only entered regions, and restores each floor's observed visits and supported item/door details on return.
+
+Evidence and test log:
+
+| Action | Expected | Observed |
+| --- | --- | --- |
+| Load the existing private floor-level Art Room setup; start a fresh tracker | Only entered Art Room outlined | `00-07`, region `mansion1f:07`, Map and Ink Ribbon available; no other room revealed |
+| Leave normally for Main Hall 1F | Main Hall added, items untouched | `00-06`, regions `06` and `07` only; Ink Ribbon available, quantity 3, `INCOMPLETE`; four exits detected, including Armor Key lock toward `00-11` |
+| Walk to the central staircase and ascend | Switch to Mansion 2F, reveal only the entered Main Hall | `01-03`, region `mansion2f:03` only, `CLEARED` with complete zero-item coverage; four no-lock exits after animation, downstairs destination named and the three unvisited destinations unnamed |
+| Descend through the same stairs without loading a state | Restore 1F history and remaining item | `00-06`, regions `06` and `07` only; Ink Ribbon still available, `INCOMPLETE`; same four supported exits, with upstairs now named Main Hall 2F |
+| Ascend again without loading a state | Restore 2F history without revealing neighbors | `01-03`, region `03` only; same complete zero-item state and four no-lock exits |
+| Replay starting-state RAM, followed by all nine new captures | Reproduce complete published payloads | Exact equality for each capture, including item quantities, directional doors and visit-dependent destination labels; final visit set exactly `mansion1f:07`, `mansion1f:06`, `mansion2f:03` |
+
+Only the initial Art Room setup used a savestate. All four subsequent room changes used ordinary movement and confirm input; no guest RAM writes, teleports, executable patches or injected events were used. Each capture verifies the running executable signatures, pauses the CPU and reads all 2 MiB of RAM. Room Main/Sub at PS1 virtual `0x800C8660`/`0x800C8661` and camera at `0x800C8662` remain u8 values under the existing profile. Captured Main Hall cameras were 2 then 1 downstairs and 0 upstairs. These observations validate existing map selection, not a new address interpretation.
+
+The live 2F DOM contained exactly one current, cleared room group with the Main Hall's multi-ring SVG outline and three open wall markers. Its sidebar contained four exits; the cross-floor stair exit has no same-floor neighbor marker. No unopened adjacent room outline appeared. On the downstairs return, the browser showed two explored rooms, the remaining Ink Ribbon, the Armor Key lock and the visited upstairs destination. All native views showed Jill under player control after each stair animation. Initial automatic pauses also captured the transition animation; the later `controlled`/`return` captures and browser observations establish the settled gameplay views separately. Polling briefly rejected room/source disagreement and out-of-RAM script ranges during each crossing, then recovered without reconnecting.
+
+Private evidence under `/tmp/tasks/re-map/multi-area-gameplay/`:
+
+| RAM capture | UTC time, 2026-10-07 | SHA256 |
+| --- | --- | --- |
+| `e-main-before.bin` | 19:12:36 | `8928a69b82aa64edb8a3cc9fd8daa7b1b26d0107031fb0da428163cadd839cc8` |
+| `e-stair-approach.bin` | 19:14:03 | `16877eaa67a40ccc324cfadca61a4ba1519fa94811845d7342887f95d3863613` |
+| `e-stair-blocked.bin` | 19:15:16 | `853027d8b9d408a57ed1a63c9fad2d0e6c8e6b285d86413087ab5ef10e6d7c2d` |
+| `e-floor-1.bin` | 19:16:04 | `6a21d9663a1951d2c73c4f7d405f17d06c685296f5a4e8fe5544b5b89982e4ce` |
+| `e-upstairs-controlled.bin` | 19:19:34 | `6132eb64b5f865e6088edd474ee505b9817273f2229f6a135efe040b49956ccc` |
+| `e-floor-2.bin` | 19:20:51 | `39f4f08bf781a7b6ab1ec60e4beb744a5e025d0366f4a131696996c1a3513cc3` |
+| `e-main-return.bin` | 19:21:27 | `fcca8b81a61123773727c400cf91ddf9fd9482f571ddbbd9cb328d926d84c976` |
+| `e-floor-3.bin` | 19:21:55 | `a12d1cebe72caea6b3c96b8cd1386943a502878f95fd44d9b91c68659bf02980` |
+| `e-upstairs-return.bin` | 19:22:33 | `c77ca5140180bd0b4d96b51f4e8f830f30bdf0c225e585c090af73a4f37b3e9d` |
+
+Each adjacent `.json` records the full live payload, timestamp, region, camera and capture hash. `live-floors-e.jsonl` SHA256 `8771e2ff5253c65ca989808308ada5c4277393538647fb14920128b60f4e2eec` records the session. `floor-crossing-audit.json` SHA256 `5c668401fc3241a7f0338ac1e3434ec2f22ff41c4f3d3da1f9147c05050d4e40` records publication equality and final history. Reproduce with `python /tmp/tasks/re-map/multi-area-gameplay/audit_floors_e.py` using the recorded artifacts and source revision; script SHA256 `a6d637374d05c2f292b8eb4cf7a4125b0e669d72a025e26c7ba579d5c748b489`. The starting private `SLUS-00551_2.sav` has SHA256 `609184b9bef7eab045790b5a3873e1eb73957954be33a9303192945379465e76`; its extracted RAM SHA256 is `e19a99452d27e0e69fefbe9ba2d11c47218eb07912c63c2340ebe5b601b17f44`. That extraction primes the replay's initial Art Room visit and is not an additional live observation.
+
+Failed setup and changed conditions: native control recovered after restarting the isolated emulator. A renewed Chemical-before route again reached East Stairway 1F, where a zombie visibly grabbed Jill; the starting health candidate was 54 and the run later reached the intro/title flow without an upstairs capture. This does not prove the cause of RE1-MAP-007's earlier title outcome. Its separate `live-floors-d.jsonl` SHA256 is `1bfaf2531086554e3f9ff17cb0e1acdf3466bd3fc8ea0d242ddeef2f99a7f1b1`. The successful run instead used the existing Art Room floor-level setup with health candidate 150 and an enemy-free Main Hall route. All nine successful captures retained that value and the untouched Chemical byte `0xFF`; health was a setup check, not a newly confirmed tracker address.
+
+Limits: this is one Training Jill session with two ascent observations and one descent, not a whole-game playthrough. It does not validate the other nine floor plans, all Mansion rooms, native map-screen alignment, map acquisition in this run, pickup/save reversals, other scenarios, or changed story conditions. RE1-MAP-004/005/006 retain their broader source/synthetic validation limits. Whole-game item and door coverage is unchanged. Raw RAM, saves, game assets and private scripts remain outside Git. The owned GDB/HTTP session ended normally, its browser tab closed, and the isolated game closed without saving.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; performed the natural Art Room exit and Main Hall up/down/up run, checked rendered outlines and supported details, captured and replayed nine snapshots exactly, and documented the scoped result. Production code and profile data were unchanged.
