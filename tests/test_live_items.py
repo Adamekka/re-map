@@ -217,6 +217,7 @@ def test_live_log_records_item_changes_and_read_failures(tmp_path, monkeypatch):
 def test_profile_rejects_ambiguous_or_invalid_identity_config(tmp_path: Path):
     raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
     raw["room_manifest_path"] = str(REPO / "data/room_manifest_slus00551.json")
+    raw["floor_plans_path"] = str(REPO / "data/floor_plans_slus00551.json")
     raw["pilot_items"][0]["flag_mask"] = "0x01"
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(json.dumps(raw))
@@ -299,7 +300,13 @@ def test_live_tracker_reconnects_after_startup_or_runtime_failure(
             return super().read_memory(address, length)
 
     reader = ReconnectingReader(ram)
-    server = track.MapServer(0, track.mansion_floor_plan()) if map_enabled else None
+    server = (
+        track.MapServer(
+            0, json.loads((REPO / "data/floor_plans_slus00551.json").read_text())
+        )
+        if map_enabled
+        else None
+    )
     log = tmp_path / "reconnect.log"
     monkeypatch.setattr(track, "DuckStationGdb", lambda host, port: reader)
     monkeypatch.setattr(track, "MapServer", lambda port, plan: server)
@@ -363,6 +370,7 @@ def test_live_tracker_reconnects_after_startup_or_runtime_failure(
 def test_runtime_profile_requires_room_identity_and_camera(key, tmp_path):
     raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
     raw["room_manifest_path"] = str(REPO / "data/room_manifest_slus00551.json")
+    raw["floor_plans_path"] = str(REPO / "data/floor_plans_slus00551.json")
     del raw[key]
     path = tmp_path / "missing-address.json"
     path.write_text(json.dumps(raw))

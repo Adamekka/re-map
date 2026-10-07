@@ -3354,3 +3354,94 @@ Limits: native file-selector tables, runtime stage/room/camera bindings, map nam
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; inventoried map files, pinned the executable identity, tested the existing extractor without modification and reran the metadata report. Original extraction-method authorship remains in RE1-MAP-002.
+
+## RE1-MAP-004: native floor selection depends on Main, Sub and camera
+
+Status: Candidate; pinned executable inspection and bounded native execution, no new gameplay
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`
+Environment: Python 3.14.8, Capstone 5.0.9, owned disc; no emulator memory writes or new DuckStation session
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: disassembly of the pinned executable, native file registry and an independent bounded MIPS instruction executor
+Claim: the native map selects eleven floor files. Main modulo five selects the area family; Sub and, in several spaces, camera select the floor and highlighted region. Later Mansion phases use the same native geometry while retaining their actual logical room identities.
+
+Evidence:
+
+- Traced PS1 virtual addresses `0x800336EC..0x80033A00`, stopping before the first helper call. Main/Sub/camera are unsigned bytes at `0x800C8660/61/62`. The native temporary map context receives normalized family, floor selector and region at `0x800B7F85/86/87`, also unsigned bytes. These context fields are source evidence, not new production reads.
+- The five little-endian u32 jump-table entries at `0x80010344` are `0x80033798`, `0x80033844`, `0x800338E8`, `0x80033978`, `0x80033998`. Ordinary region equals Sub. Family zero selects Mansion 1F; family one selects Mansion 2F below Sub `1A`, otherwise B1; family two selects Courtyard 1F below Sub six, otherwise B1; family three selects Guardhouse 1F below Sub `0D`, otherwise B1; family four selects Laboratory B1 below Sub two, B2 below five, B3 below `13`, otherwise B4.
+- Camera overrides are: family zero/Sub `07`, cameras 3..6, Mansion 1F region `1D`; zero/`0F`, cameras 3/4, Mansion 1F `1E`; zero/`10`, camera zero, Mansion B1 `1E`; one/`0F`, cameras 2/5, Mansion 2F `1D`; one/`0C`, cameras 4..7, Mansion 1F `1F`; two/`0B`, cameras 5/6, Courtyard B1 `11`; two/`0F`, camera six, Courtyard B1 `12`; four/`07`, cameras 0..3, Laboratory B3 `16`.
+- The eleven little-endian u16 file IDs at `0x8008EB80` are `220,221,222,223,224,229,230,225,226,227,228`. Registry entries at `0x80091F68 + 12*file_id` contain three little-endian u32 values: LBA, size and type. All selected files have size 29,216 and type 4,096; their LBA/size match the owned ISO directory. This establishes MAP01/02/03/04/05/0A/0B/06/07/08/09 in selector order. The four larger map-named files from RE1-MAP-003 are outside this selector table.
+- Inspected helper `0x80033AA0..0x80033CEC`: it tests visited/map-availability state but does not replace the selected floor or region. External reveal deliberately follows observed entry, not those native map-ownership bits.
+- A separate private executor runs the disassembled selector with branch delays, unsigned 32-bit multiplication/HI, shifts and sparse memory. Every one of the 159 supported logical source rooms at all 256 byte camera values agrees with both the generator transcription and loaded catalog: 40,704 comparisons, zero mismatches. This executes bounded native instructions outside DuckStation; it does not reproduce natural camera transitions.
+
+Private evidence under `/tmp/tasks/re-map/multi-area-maps/`: `native-map.txt`, SHA256 `c68352bbcfeb9372cbd572b78e04494fd35a03fdd822ff7991385e7966b0ae73`; `native-map-helper.txt`, SHA256 `b70c378139f9e5aaa9245957977b9e0964d698891db18a89d3bb0a228722baa1`; `native-selector-check.json`, SHA256 `c60b38609fdb727c1fea4874948ee78c798199813e4203b311b058c418de78a9`. Run `native_selector_check.py` with the named environment and pinned private executable to repeat the comparisons. Disassembly and game bytes remain outside Git.
+Limits: later-area room entry, natural camera changes, native map-screen comparison, character/story progression and normal-save/savestate reversal of these floor transitions remain untested. Source agreement does not promote these bindings to runtime-confirmed status or other revisions.
+History:
+
+- 2026-10-07; human user; approved multi-area floor plans with automatic switching, entry-only reveal and existing item/door states.
+- 2026-10-07; Codex root, GPT-6.1 Sol; traced the native selector, file table and subsequent helper, transcribed numeric bindings, independently compared all supported room/camera inputs and retained actual phase-specific logical IDs.
+
+## RE1-MAP-005: eleven numeric floor plans contain paired, full and boundary door markers
+
+Status: Candidate; source extraction and geometry checks, no new live door-wall identification
+Scope: pinned SLUS-00551 executable and eleven selected files from RE1-MAP-004
+Environment: Python 3.14.8, owned disc; existing RE1-MAP-002 extractor extended with an explicit marker policy
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: indexed map-region ownership, contour extraction, marker adjacency and verified native file records
+Claim: the eleven native plans yield 118 outlined regions and 108 door markers. The new marker policy recognizes two full doorways and seven boundary markers in addition to 99 reciprocal pairs. Boundary geometry supplies an owned wall but no destination identity.
+
+| Floor | File | Outlined regions | Door markers |
+| --- | --- | ---: | ---: |
+| Mansion 1F | MAP01 | 32 | 28 |
+| Mansion 2F | MAP02 | 26 | 24 |
+| Mansion B1 | MAP03 | 4 | 3 |
+| Courtyard 1F | MAP04 | 5 | 4 |
+| Courtyard B1 | MAP05 | 12 | 10 |
+| Guardhouse 1F | MAP0A | 13 | 14 |
+| Guardhouse B1 | MAP0B | 5 | 4 |
+| Laboratory B1 | MAP06 | 2 | 3 |
+| Laboratory B2 | MAP07 | 3 | 2 |
+| Laboratory B3 | MAP08 | 14 | 14 |
+| Laboratory B4 | MAP09 | 2 | 2 |
+
+Evidence:
+
+- Region shade groups and existing contour ownership remain unchanged. A previously unpaired marker is accepted only when rectangular, adjacent to exactly one complete owned floor edge and without non-opposing additional floor ownership. A complete opposite edge identifies the second region; otherwise the result records only the owned boundary wall. Malformed or ambiguous markers still fail extraction.
+- The two full markers join MAP03 region `1C` with `1E`, and MAP0A region `0C` with `0A`. The seven boundary owners are Courtyard 1F `00/04`, Guardhouse 1F `00`, Laboratory B1 `00/01`, Laboratory B3 `0C` and Laboratory B4 `14`. Each owner has one boundary marker in this catalog. No boundary destination is inferred from exit count or floor membership.
+- Five supported source rooms select a native region with no colored polygon: `06-00` Mansion elevator on 2F; `02-03` heliport on Courtyard 1F; `02-10` laboratory elevator on Courtyard B1; `04-0d` elevator on Laboratory B3; `04-15` elevator on Laboratory B4. The catalog declares these omissions and retains room metadata. It does not fabricate shapes.
+- All 118 outlines have logical source aliases. The 159 actual Main/Sub identities normalize to 115 selector rows, with explicit camera overrides. Reference names come from the user-provided labels and are not evidence for identity. Native camera regions can share a logical room's item list.
+- Two complete generations are byte-identical. The old reciprocal-only Mansion generator still produces its committed artifact byte-for-byte. Synthetic marker tests cover a full doorway, an owned boundary without a neighbor and rejected ambiguous ownership.
+
+Numeric catalog SHA256 is `a91720c8a0f4070658712ba9941eacf58265c7b58ac7235672fe1cb625bda4b5`. Private `marker-audit.json` under `/tmp/tasks/re-map/multi-area-maps/` has SHA256 `d9aa4e3eaa71ee67a018c1c1f54901568c9818b30404dcbf8b20a753247eff46`. Reproduce with `tools/build_floor_plans.py <owned CUE> <output JSON>` and the pinned manifest, then compare output hashes. The catalog contains numeric contours, coordinates, labels, source hashes and bindings; no source image, texture or palette colors are exported.
+Limits: geometric adjacency does not validate live directionality, door access or actual traversal. Seven boundary wall identities remain unfinished detection work even when their logical exits have known access. The larger map-named files remain excluded by the native table, rather than accepted by relaxed contour checks. Original contour-method authorship remains in RE1-MAP-002.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; extended the explicit extraction policy, audited marker ownership, generated and regenerated all eleven plans and checked unchanged Mansion output. Kept unoutlined rooms and boundary identities explicit.
+
+## RE1-MAP-006: shared map publication switches floors and reveals only entered regions
+
+Status: Candidate; implementation, synthetic browser checks and unchanged recorded-RAM replay
+Scope: pinned SLUS-00551 profile and RE1-MAP-004/005 catalog; existing item/door tracking rules unchanged
+Environment: Python 3.14.8, pytest 9.1.1, local browser preview on port 8766; no new emulator gameplay
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: direct implementation inspection, regression tests, browser execution and existing captured-state replay
+Claim: production map publication now selects the native area/floor from a coherent source-bound room/camera observation. It preserves entered geometry per floor, uses actual logical room IDs for item/door details and keeps completion separate from visits. Demonstrated map coverage increases from one floor to eleven; item/door interpretation coverage is unchanged.
+
+Implementation and evidence:
+
+- Runtime profiles require revision-matching floor-plan configuration. Mandatory loading validates schema, executable identity, area/region references, finite geometry, camera rules and corresponding logical source aliases. Every supported source room must have a binding. Unsupported external room data yields an explicit unavailable-map result, not a guessed area.
+- Polling rereads camera before the final room check. A failed, short or changed camera read cannot publish a new region visit. Camera-dependent spaces enter history separately. In-game map-ownership changes do not reveal outlines. Unoutlined current rooms retain their details and selected floor without adding visits to nonexistent shapes.
+- The browser automatically changes floor title, geometry and selection. It renders only the selected floor's entered regions. Full logical IDs preserve door links across later Mansion phases and area boundaries. Destination names are withheld until that logical room has been observed. Paired/full door markers use supported endpoint identities; boundary markers remain unassigned while known exit states stay in the list.
+- The full suite passes 1,526 tests in 65.38 seconds. After the final boundary-rendering correction, all 60 focused map/extraction/HTTP tests pass in 3.65 seconds. The new tests cover selector/camera boundaries, all 159 source identities at all byte cameras, entry-only floor histories, map acquisition, undrawn rooms, camera coherence and malformed configuration including disagreeing aliases. Scoped Ruff lint/format and `git diff --check` pass; the repository has no configured project formatter, linter or Markdown check. Existing test import bootstraps retain their scoped lint exception.
+- A private, explicitly synthetic browser preview exercised one room on each of all eleven floors: `00-09`, `01-03`, `06-1a`, `02-00`, `02-06`, `03-00`, `03-0d`, `04-00`, `04-02`, `04-05`, `04-13`. Every selected title and logical room ID matched, with exactly one entered/current outline and no cross-floor reveal. Returning to Mansion 1F retained its original outline, item and door details. A waiting snapshot retained geometry while removing current/completion colors, door markers and item/door details. Browser error/warning logs were empty.
+- After review, a second browser case used Courtyard `02-00` with synthetic access on actual source endpoints `00-1b`, `02-01` and `02-02`. The paired marker showed Open/Unlocked, the boundary stayed Unchecked, and all three access labels remained in the list; only region `00` was revealed. This verifies renderer behavior, not those endpoints' natural access states. Temporary servers/tabs were closed; the user's tracker and emulator were untouched.
+- The unchanged twelve-step, eleven-capture replay preserves Main Hall clearance, normal-load/return results, Art Room Ribbon and Map acquisition reversals and entry-only reveal of logical rooms `00-06/00-07`. Offline projection still reports 291/334 complete reentry item variants and 312/334 complete door variants under the unchanged Herb-before configuration. This feature adds map coverage, not new whole-source item or door completeness, natural progression tests or a whole-game reliability claim.
+
+Private replay evidence under `/tmp/tasks/re-map/multi-area-maps/`: `audit.json`, SHA256 `ee748bb741a2d2c9f6c10e969548fd73373d24ee8956c9aa6575e72326995ebf`; `projection.json`, SHA256 `617bc89afaaede17874dcb5633c8a59588c4459f05972551a466d95c00e5ded5`. Run `audit.py` with the named environment and existing RE1-REENTRY-004 captures. Raw RAM, game files, saves and browser test fixtures remain outside Git. Replaying old captures adds regression evidence, not new gameplay coverage.
+Limits: later-area natural entry, actual boundary-door wall identification, whole-game item/story behavior, character differences and broader normal-save/savestate validation remain open. Visit history still belongs to the tracker session and resets on restart. Five native unoutlined spaces retain details rather than invented geometry. The original 43 item and 22 door source gaps from RE1-ANALYSIS-010 are not resolved by this map feature.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; implemented required catalog loading, coherent selection, per-floor reveal and full-ID door publication; ran static/native comparisons, regressions, unchanged capture replay and browser checks. Independent direct review checked source aliases, camera publication, unoutlined details, stale-state removal and directional endpoint handling.
+- 2026-10-07; human user; specifically authorized sending this feature's 306,066-byte redacted snapshot to Gemini Pro and Gemini Flash through agy. Snapshot SHA256 `374d927e8fdbd7a670035143155941d2427758c0f3eee2f86551102ae5fc6164`; code, tests, configuration and numeric map metadata only, with no game files, RAM, saves, credentials or personal paths.
+- 2026-10-07; Gemini 3.1 Pro High via agy, conversation `f452a5d6-430d-4802-a997-47c1404142b0`; reviewed the supplied complete feature diff, core interfaces, catalog, regressions and pinned native contracts. Raised boundary-matching concerns. Root checked actual marker counts and source endpoints, then removed unsupported boundary-to-exit assignment and verified the corrected browser behavior. Advisory review did not reproduce native execution or gameplay.
+- 2026-10-07; Gemini 3.8 Flash High via agy, conversation `049477ae-b97d-4ca4-bf24-39c9cf3853f8`; reviewed the same snapshot and returned no findings. Both completed calls have exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool use. Their snapshot predates the final boundary correction and small lint adjustments; those final changes were inspected and verified by root.
+- 2026-10-07; Claude Opus 5.5 High via agy; unavailable under RE1-EVENT-011's quota exhaustion reported on 2026-10-05 with reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.

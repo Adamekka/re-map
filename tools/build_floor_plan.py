@@ -15,6 +15,7 @@ import json
 import re
 import struct
 import sys
+from enum import Enum
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -23,7 +24,14 @@ from extract_psx_file import _find
 from list_psx_files import _sector_data
 
 
-def extract_floor_plan(data: bytes) -> dict:
+class DoorMarkerPolicy(Enum):
+    ReciprocalHalves = "reciprocal-halves"
+    FullAndBoundaryMarkers = "full-and-boundary-markers"
+
+
+def extract_floor_plan(
+    data: bytes, marker_policy: DoorMarkerPolicy = DoorMarkerPolicy.ReciprocalHalves
+) -> dict:
     if len(data) < 20 or struct.unpack_from("<II", data) != (16, 9):
         raise ValueError("Mansion map must be an 8-bit indexed TIM")
     palette_size, _, _, palette_width, palette_height = struct.unpack_from(
@@ -65,6 +73,7 @@ def extract_floor_plan(data: bytes) -> dict:
 
     rooms = []
     markers = []
+    floor_owners = {}
     for room_id in range(32):
         # The game edits six CLUT entries per region and highlights entry
         # 16 + 6*region. Keeping its shade indices also includes stair detail.
@@ -83,6 +92,7 @@ def extract_floor_plan(data: bytes) -> dict:
             if door_pixels:
                 raise ValueError(f"Region {room_id:02X} has doors without a floor")
             continue
+        floor_owners.update((point, f"{room_id:02X}") for point in floor_pixels)
         edges = set()
         for x, y in floor_pixels:
             for a, b in (
@@ -180,6 +190,7 @@ def extract_floor_plan(data: bytes) -> dict:
                         max(x for x, _ in marker) + 1,
                         max(y for _, y in marker) + 1,
                     ],
+                    "cells": len(marker),
                 }
             )
 
@@ -202,6 +213,59 @@ def extract_floor_plan(data: bytes) -> dict:
             )
             == 2.25
         ]
+        if not candidates and marker_policy is DoorMarkerPolicy.FullAndBoundaryMarkers:
+            x0, y0, x1, y1 = marker["bounds"]
+            if marker["cells"] != (x1 - x0) * (y1 - y0):
+                raise ValueError(
+                    f"Region {marker['room']} has a nonrectangular full marker"
+                )
+            boundaries = (
+                [(x0 - 1, y) for y in range(y0, y1)],
+                [(x1, y) for y in range(y0, y1)],
+                [(x, y0 - 1) for x in range(x0, x1)],
+                [(x, y1) for x in range(x0, x1)],
+            )
+            owners = []
+            for boundary in boundaries:
+                values = {floor_owners.get(point) for point in boundary}
+                owners.append(values.pop() if len(values) == 1 else None)
+            sides = [
+                side for side, owner in enumerate(owners) if owner == marker["room"]
+            ]
+            if len(sides) != 1:
+                raise ValueError(
+                    f"Region {marker['room']} has an ambiguous full marker"
+                )
+            side = sides[0]
+            opposite = side ^ 1
+            other_room = owners[opposite]
+            if any(
+                owner is not None
+                for n, owner in enumerate(owners)
+                if n not in (side, opposite)
+            ):
+                raise ValueError(
+                    f"Region {marker['room']} has an ambiguous marker wall"
+                )
+            # Some maps encode a complete doorway once, or an exit at the plan
+            # boundary. Require a full owned floor edge; never guess a neighbor.
+            axis = 1 if side < 2 else 0
+            plane = marker["center"][1 - axis] if other_room else (x0, x1, y0, y1)[side]
+            segment = (
+                [[plane, y0], [plane, y1]] if axis == 1 else [[x0, plane], [x1, plane]]
+            )
+            room_ids = sorted([marker["room"]] + ([other_room] if other_room else []))
+            doors.append(
+                {
+                    "id": "-".join(room_ids) + (f"-exit-{i}" if not other_room else ""),
+                    "rooms": room_ids,
+                    "segment": segment,
+                    "sides": [{"room": marker["room"], "point": marker["center"]}],
+                    "encoding": "full" if other_room else "boundary",
+                }
+            )
+            paired.add(i)
+            continue
         if len(candidates) != 1 or candidates[0][0] in paired:
             raise ValueError(f"Region {marker['room']} has an unpaired door marker")
         j, other = candidates[0]

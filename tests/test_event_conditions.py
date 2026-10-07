@@ -510,6 +510,7 @@ def test_startup_validates_ordered_blocks_against_source_and_acquisition_bounds(
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps(manifest))
     raw["room_manifest_path"] = str(manifest_path)
+    raw["floor_plans_path"] = str(REPO / "data/floor_plans_slus00551.json")
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(json.dumps(raw))
     with pytest.raises(

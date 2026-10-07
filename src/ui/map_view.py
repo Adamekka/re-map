@@ -1,72 +1,64 @@
-"""Browser floor plan for explored Mansion 1F rooms."""
+"""Browser floor plans for explored rooms across RE1 areas."""
 
 from __future__ import annotations
 
 import json
 import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 
 from tracker.exploration_state import Tracker
 
-REPO = Path(__file__).resolve().parents[2]
 MAP_PROFILE_ID = "re1_directors_cut_slus00551"
 logger = logging.getLogger(__name__)
-
-
-def mansion_floor_plan() -> dict:
-    plan = json.loads((REPO / "data/mansion1f_floor_plan.json").read_text())
-    names = json.loads((REPO / "data/mansion1f_names.json").read_text())
-    for room in plan["rooms"]:
-        room["name"] = names.get(room["id"], "Room " + room["id"])
-    return plan
 
 
 def map_state(tracker: Tracker) -> dict:
     current = tracker.current
     if current is None:
         return {"status": "waiting", "current": None, "rooms": []}
-    rooms = []
-    if current.stage == 0:
-        for region, key in sorted(tracker.region_visits.items()):
-            if not region.startswith("mansion1f:"):
-                continue
-            record = tracker.rooms[key]
-            rooms.append(
-                {
-                    "id": region.split(":", 1)[1],
-                    "room": key,
-                    "state": record.completion.value,
-                    "items": [
-                        {
-                            "label": item.label,
-                            "state": item.state,
-                            "quantity": item.quantity,
-                        }
-                        for item in record.items
-                    ],
-                    "reason": record.reason,
-                    "doors_complete": record.doors_complete,
-                    "door_reason": record.door_reason,
-                }
-            )
+    area = (
+        tracker.current_region.split(":", 1)[0]
+        if tracker.current_region
+        else "unmapped"
+    )
+
+    def room_detail(key, region):
+        record = tracker.rooms[key]
+        return {
+            "id": region,
+            "room": key,
+            "state": record.completion.value,
+            "items": [
+                {"label": item.label, "state": item.state, "quantity": item.quantity}
+                for item in record.items
+            ],
+            "reason": record.reason,
+            "doors_complete": record.doors_complete,
+            "door_reason": record.door_reason,
+        }
+
+    region = tracker.current_region.split(":", 1)[-1]
     return {
         "status": "display",
         "current": str(current),
-        "map_region": tracker.current_region.split(":", 1)[-1],
-        "area": "mansion1f"
-        if tracker.current_region.startswith("mansion1f:")
-        else "unmapped",
-        "rooms": rooms,
+        "map_region": region,
+        "area": area,
+        "map_error": tracker.map_error,
+        "current_detail": room_detail(str(current), region),
+        "rooms": [
+            room_detail(key, region.split(":", 1)[1])
+            for region, key in sorted(tracker.region_visits.items())
+            if region.startswith(area + ":")
+        ],
         "doors": [
             {
-                "source": f"{door.source.room:02X}",
-                "target": f"{door.target.room:02X}",
+                "source": str(door.source),
+                "target": str(door.target),
+                "target_visited": str(door.target) in tracker.rooms,
                 "state": door.state,
                 "label": door.label,
             }
             for door in tracker.doors
-            if door.source.stage == door.target.stage == 0
         ],
     }
 
@@ -195,10 +187,10 @@ li span:last-child { color:#94a7b6; text-align:right; }
 </style>
 </head>
 <body>
-<header><h1>Resident Evil</h1><span id="place">Mansion · 1F</span></header>
+<header><h1>Resident Evil</h1><span id="place"></span></header>
 <div id="status" role="status">Waiting for game.</div>
 <main>
-<div id="map-shell"><svg id="map" role="img" aria-label="Explored Mansion first floor"></svg></div>
+<div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms"></svg></div>
 <aside><div id="room-name">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
 </main>
 <div id="legend">
@@ -210,11 +202,13 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
 </div>
 <script>
-const plan = __GRAPH__;
-const byId = new Map(plan.rooms.map(room => [room.id,room]));
+const catalog = __GRAPH__;
+const areas = new Map(catalog.areas.map(plan => [plan.id,plan]));
+const knownRooms = new Map(catalog.areas.flatMap(plan=>[...plan.rooms,...plan.unoutlined_rooms].flatMap(region=>region.room_ids.map(id=>[id,region.name]))));
 const svg = document.getElementById('map');
 const ns = 'http://www.w3.org/2000/svg';
 let selected = null;
+let selectedArea = null;
 let lastState = null;
 let lastReportedError = '';
 function reportError(source,error) {
@@ -252,22 +246,16 @@ function draw(state) {
     return;
   }
   svg.replaceChildren();
-  const firstFloor=state.area==='mansion1f';
-  document.getElementById('place').textContent=firstFloor?'Mansion · 1F':'Room '+state.current;
-  if(!firstFloor) {
-    status.textContent='Room '+state.current+'. This floor has no map yet.';
-    document.getElementById('room-name').textContent='Room '+state.current;
-    document.getElementById('room-id').textContent='';
-    document.getElementById('completion').textContent='';
-    document.getElementById('items').replaceChildren();
-    document.getElementById('doors').replaceChildren();
-    document.getElementById('note').textContent='';
-    return;
-  }
+  const plan=areas.get(state.area);
+  if(selectedArea!==state.area) {selected=null;selectedArea=state.area;}
+  const byId=new Map((plan ? plan.rooms : []).map(room=>[room.id,room]));
+  document.getElementById('place').textContent=plan ? plan.name : 'Room '+state.current;
+  svg.setAttribute('aria-label',plan ? 'Explored '+plan.name : 'Explored rooms');
   const visible=new Map(state.rooms.filter(room=>byId.has(room.id)).map(room=>[room.id,room]));
-  const currentId=(state.map_region || state.current.slice(3)).toUpperCase();
+  const currentId=state.map_region;
   const picked=selected && visible.has(selected) ? selected : currentId;
-  status.textContent=visible.size+' '+(visible.size===1?'room':'rooms')+' explored';
+  status.textContent=plan ? visible.size+' '+(visible.size===1?'room':'rooms')+' explored' : state.map_error;
+  if(plan && !byId.has(currentId)) status.textContent+=' · This room has no outline on the game map.';
   for(const [id,visit] of visible) {
     const room=byId.get(id);
     const group=element('g',{class:'room '+visit.state+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name});
@@ -279,11 +267,19 @@ function draw(state) {
     group.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();selected=id;draw(lastState);}});
     svg.append(group);
   }
-  for(const marker of plan.doors) {
+  for(const marker of plan ? plan.doors : []) {
     if(!marker.rooms.some(id=>visible.has(id))) continue;
     // A door can be visible on an entered wall before its destination is explored.
-    const observations=state.doors.filter(door=>marker.rooms.includes(door.source)&&marker.rooms.includes(door.target));
-    const observed=observations.find(door=>door.source===picked)||observations.find(door=>door.source===currentId)||observations[0];
+    const owner=byId.get(marker.rooms[0]),neighbor=byId.get(marker.rooms[1]);
+    // Boundary markers encode no destination. Even a unique off-plan exit cannot
+    // prove its wall identity; retain its known access in the door list instead.
+    const observations=neighbor ? state.doors.filter(door=>
+      owner.room_ids.includes(door.source)&&neighbor.room_ids.includes(door.target) || neighbor.room_ids.includes(door.source)&&owner.room_ids.includes(door.target)) : [];
+    const pickedSource=visible.get(picked)?.room || state.current;
+    const candidates=observations.filter(door=>door.source===pickedSource);
+    const currentCandidates=observations.filter(door=>door.source===state.current);
+    const chosen=candidates.length ? candidates : currentCandidates.length ? currentCandidates : observations;
+    const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state&&door.label===chosen[0].label) ? chosen[0] : null;
     const access=observed ? observed.state : 'UNCHECKED';
     const group=element('g',{class:'door '+access});
     const [a,b]=marker.segment;
@@ -297,10 +293,10 @@ function draw(state) {
     const width=Math.max(68,right-left+18),height=Math.max(44,bottom-top+18);
     svg.setAttribute('viewBox',[(left+right-width)/2,(top+bottom-height)/2,width,height].join(' '));
   }
-  const visit=visible.get(picked), room=byId.get(picked);
-  if(!visit || !room) return;
-  document.getElementById('room-name').textContent=room.name;
-  document.getElementById('room-id').textContent='Room 00-'+picked+(picked===currentId?' · Current room':'');
+  const visit=visible.get(picked) || state.current_detail;
+  const room=byId.get(picked) || (plan ? plan.unoutlined_rooms.find(room=>room.id===picked) : null);
+  document.getElementById('room-name').textContent=room ? room.name : 'Room '+visit.room;
+  document.getElementById('room-id').textContent='Room '+visit.room+(visit.room===state.current?' · Current room':'');
   const completion={INCOMPLETE:'Items remain',CLEARED:'All available items collected',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   document.getElementById('completion').textContent=completion[visit.state];
   const items=document.getElementById('items');items.replaceChildren();
@@ -309,9 +305,9 @@ function draw(state) {
     name.textContent=item.label;detail.textContent=item.state==='taken'?'Collected':item.state==='available'?'Remaining':'Not available';row.append(name,detail);items.append(row);
   }
   const doors=document.getElementById('doors');doors.replaceChildren();
-  for(const door of state.doors.filter(door=>door.source===picked)) {
+  for(const door of state.doors.filter(door=>door.source===visit.room)) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
-    name.textContent=visible.has(door.target) && byId.has(door.target)?byId.get(door.target).name:'Unexplored room';
+    name.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';
     detail.textContent=door.label;row.append(name,detail);doors.append(row);
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');

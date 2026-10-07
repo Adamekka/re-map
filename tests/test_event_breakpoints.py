@@ -235,6 +235,7 @@ def test_breakpoint_mode_rejects_missing_initializer_configuration(
     raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
     raw.pop("event_capture_initializer")
     raw["room_manifest_path"] = str(REPO / "data/room_manifest_slus00551.json")
+    raw["floor_plans_path"] = str(REPO / "data/floor_plans_slus00551.json")
     path.write_text(json.dumps(raw))
     out = tmp_path / "unwritten.jsonl"
     monkeypatch.setattr(

@@ -10,7 +10,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "tools"))
 
-from build_floor_plan import extract_floor_plan
+from build_floor_plan import DoorMarkerPolicy, extract_floor_plan
 
 
 def tim(width, height, cells):
@@ -75,6 +75,34 @@ def test_door_with_no_owned_floor_is_an_explicit_failure():
     data = tim(8, 8, {(2, 2): 16, (3, 2): 19})
     with pytest.raises(ValueError, match="doors without a floor"):
         extract_floor_plan(data)
+
+
+def test_full_door_marker_binds_two_complete_owned_floor_edges():
+    cells = {(x, y): 16 for y in range(1, 6) for x in range(1, 4)}
+    cells.update({(x, y): 22 for y in range(1, 6) for x in range(6, 9)})
+    cells.update({(4, 3): 13, (5, 3): 13})
+    plan = extract_floor_plan(
+        tim(10, 8, cells), DoorMarkerPolicy.FullAndBoundaryMarkers
+    )
+    assert plan["doors"][0]["rooms"] == ["00", "01"]
+    assert plan["doors"][0]["encoding"] == "full"
+    assert plan["doors"][0]["segment"] == [[5.0, 3], [5.0, 4]]
+
+
+def test_boundary_marker_has_no_guessed_destination():
+    cells = {(x, y): 16 for y in range(1, 6) for x in range(1, 4)}
+    cells.update({(x, y): 13 for y in range(2, 4) for x in range(4, 6)})
+    plan = extract_floor_plan(tim(8, 8, cells), DoorMarkerPolicy.FullAndBoundaryMarkers)
+    assert plan["doors"][0]["rooms"] == ["00"]
+    assert plan["doors"][0]["encoding"] == "boundary"
+    assert plan["doors"][0]["segment"] == [[4, 2], [4, 4]]
+
+
+def test_full_marker_policy_still_rejects_ambiguous_floor_ownership():
+    with pytest.raises(ValueError, match="ambiguous full marker"):
+        extract_floor_plan(
+            tim(8, 8, {(1, 1): 16, (3, 3): 13}), DoorMarkerPolicy.FullAndBoundaryMarkers
+        )
 
 
 @pytest.mark.parametrize("data", [b"", bytes(20), tim(8, 8, {(1, 1): 16})[:-1]])

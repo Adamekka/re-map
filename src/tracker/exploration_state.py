@@ -61,6 +61,7 @@ class Tracker:
     current: RoomId | None = None
     region_visits: dict[str, str] = field(default_factory=dict)
     current_region: str = ""
+    map_error: str = ""
     doors: tuple[DoorDetail, ...] = ()
 
     def _key(self, room: RoomId) -> str:

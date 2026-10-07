@@ -12,11 +12,15 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
 from tracker.exploration_state import Tracker
-from ui.map_view import MapRequestHandler, MapServer, mansion_floor_plan, map_state
+from ui.map_view import MapRequestHandler, MapServer, map_state
+
+
+def catalog():
+    return json.loads((REPO / "data/floor_plans_slus00551.json").read_text())
 
 
 def test_mansion_floor_plan_uses_architectural_shapes_and_wall_doors():
-    plan = mansion_floor_plan()
+    plan = catalog()["areas"][0]
     rooms = {room["id"]: room for room in plan["rooms"]}
     assert len(rooms) == 32
     assert rooms["09"]["name"] == "Winding Passage"
@@ -35,7 +39,7 @@ def test_map_starts_without_revealed_rooms():
 
 
 def test_map_server_serves_page_and_current_snapshot(caplog):
-    server = MapServer(0, mansion_floor_plan())
+    server = MapServer(0, catalog())
     assert server.server_address[0] == "127.0.0.1"
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -73,7 +77,7 @@ def test_map_server_serves_page_and_current_snapshot(caplog):
 
 
 def test_map_records_browser_errors_and_rejects_invalid_reports(caplog):
-    server = MapServer(0, mansion_floor_plan())
+    server = MapServer(0, catalog())
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -130,7 +134,7 @@ def test_map_handler_exceptions_keep_traceback(caplog, monkeypatch):
         raise RuntimeError("injected map failure")
 
     monkeypatch.setattr(MapRequestHandler, "do_GET", fail_request)
-    server = MapServer(0, mansion_floor_plan())
+    server = MapServer(0, catalog())
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:

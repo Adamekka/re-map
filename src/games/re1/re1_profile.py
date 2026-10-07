@@ -13,6 +13,7 @@ from typing import Protocol
 from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQuery
 from games.re1.acquisition_state import AcquisitionLayout
 from games.re1.event_state import EventLayout
+from games.re1.map_layout import Re1MapLayout
 from games.re1.room_cache import (
     CachedRoomObservation,
     RoomDependency,
@@ -102,6 +103,7 @@ class Re1Profile:
     stage_address: int | None = None
     room_address: int | None = None
     camera_address: int | None = None
+    map_layout: Re1MapLayout | None = None
     revision: str = "unknown"
     runtime_signature: RuntimeSignature | None = None
     pilot_items: tuple[PilotItem, ...] = ()
@@ -520,11 +522,31 @@ class Re1Profile:
                     "room source choices must cover every supported selector"
                 )
 
+        map_layout = None
+        if runtime_layout is not None:
+            if "floor_plans_path" not in raw:
+                raise ValueError("runtime room profile requires floor_plans_path")
+            map_layout = Re1MapLayout.load(
+                path.parent / raw["floor_plans_path"],
+                str(raw["profile_id"]),
+                str(raw["executable_identity"]),
+            )
+            for room in {source.room for source in room_sources}:
+                if (
+                    room.stage % map_layout.stage_modulus,
+                    room.room,
+                    0,
+                ) not in map_layout.choices:
+                    raise ValueError(
+                        "floor plans must cover every supported room source"
+                    )
+
         return Re1Profile(
             profile_id=str(raw.get("profile_id", path.stem)),
             stage_address=_addr("stage_address_ps1"),
             room_address=_addr("room_address_ps1"),
             camera_address=_addr("camera_address_ps1"),
+            map_layout=map_layout,
             revision=str(raw.get("revision", "unknown")),
             runtime_signature=signature,
             pilot_items=tuple(pilots),

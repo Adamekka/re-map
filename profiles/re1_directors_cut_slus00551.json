@@ -10,6 +10,7 @@
   "stage_address_ps1": "0x800C8660",
   "room_address_ps1": "0x800C8661",
   "camera_address_ps1": "0x800C8662",
+  "floor_plans_path": "../data/floor_plans_slus00551.json",
   "runtime_signature": {
     "address_space": "PS1 virtual address",
     "window_width_bytes": 32,

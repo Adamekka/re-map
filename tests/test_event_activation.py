@@ -512,6 +512,7 @@ def test_profile_rejects_unbounded_frames_and_missing_entry_positions(
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps(manifest))
     raw["room_manifest_path"] = str(manifest_path)
+    raw["floor_plans_path"] = str(REPO / "data/floor_plans_slus00551.json")
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(json.dumps(raw))
     with pytest.raises(

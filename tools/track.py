@@ -25,6 +25,7 @@ from emulator.duckstation_gdb import DuckStationGdb
 from games.re1.acquisition_state import AcquisitionFlag
 from games.re1.door_state import parse_door
 from games.re1.event_state import read_event_snapshot
+from games.re1.map_layout import MapLocation, MapUnavailable
 from games.re1.re1_profile import MemoryResult, Re1Profile
 from games.re1.room_cache import (
     CachedRoomObservation,
@@ -36,7 +37,7 @@ from games.re1.tracking_engine import refresh_visited_room, validate_current_roo
 from games.re1.tracking_rules import read_rule_snapshot
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from ui.debug_view import render
-from ui.map_view import MAP_PROFILE_ID, MapServer, mansion_floor_plan, map_state
+from ui.map_view import MAP_PROFILE_ID, MapServer, map_state
 
 logger = logging.getLogger(__name__)
 
@@ -381,6 +382,12 @@ def poll_once(
             return PollResult(
                 PollStatus.Retry, "room snapshot changed during read; retry"
             )
+    camera_again = read_memory(profile.camera_address, 1)
+    if not camera_again.ok or len(camera_again.data) != 1:
+        return PollResult(PollStatus.ReadFailure, "camera recheck failed")
+    if camera_again.data != camera.data:
+        # Cameras can cross map-region boundaries without changing Main/Sub.
+        return PollResult(PollStatus.Retry, "camera changed during read; retry")
     final_room = profile.read_current_room(read_memory)
     if not final_room.ok or final_room.room is None:
         return PollResult(
@@ -389,20 +396,19 @@ def poll_once(
     if final_room.room != rid:
         return PollResult(PollStatus.Retry, "room changed during final read; retry")
     tracker.mark_current(rid)
-    # Only source-bound Mansion rooms have a confirmed ordinary floor-plan region.
-    region = (
-        f"mansion1f:{rid.room:02X}" if rid.stage == 0 and source_query.sources else ""
+    selection = (
+        profile.map_layout.select(rid, camera.data[0])
+        if profile.map_layout is not None and source_query.sources
+        else MapUnavailable("This room has no verified map binding.")
     )
-    # The original map separates secret spaces inside one RDT room by camera.
-    if region and rid.room == 7 and 3 <= camera.data[0] <= 6:
-        region = "mansion1f:1D"
-    elif region and rid.room == 15 and camera.data[0] in (3, 4):
-        region = "mansion1f:1E"
-    elif region and rid.room == 16 and camera.data[0] == 0:
-        region = ""
-    tracker.current_region = region
-    if region:
-        tracker.region_visits[region] = str(rid)
+    if isinstance(selection, MapLocation):
+        tracker.current_region = f"{selection.area}:{selection.region}"
+        tracker.map_error = ""
+        if selection.outlined:
+            tracker.region_visits[tracker.current_region] = str(rid)
+    else:
+        tracker.current_region = ""
+        tracker.map_error = selection.reason
     profile.room_observations[rid] = current_cached
     for room, result in refreshed.items():
         normal_items = tuple(
@@ -565,7 +571,10 @@ def main() -> int:
     try:
         if args.map:
             try:
-                map_server = MapServer(8765, mansion_floor_plan())
+                assert profile.map_layout is not None, (
+                    "runtime profile requires floor plans"
+                )
+                map_server = MapServer(8765, profile.map_layout.document)
             except (OSError, ValueError) as exc:
                 logger.exception("Map startup failed")
                 print(f"map unavailable: {exc}", file=sys.stderr)

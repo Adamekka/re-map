@@ -22,7 +22,7 @@ from games.re1.tracking_rules import (
     read_rule_snapshot,
 )
 from tracker.exploration_state import RoomCompletion, Tracker
-from ui.map_view import mansion_floor_plan, map_state
+from ui.map_view import map_state
 
 pytest_plugins = ("test_tracking_rules", "test_room_items")
 
@@ -226,13 +226,16 @@ def test_live_message_door_changes_and_unlock_reversal_reach_map_markers(tmp_pat
         snapshot = map_state(tracker)
         assert [room["id"] for room in snapshot["rooms"]] == ["09"]
         marker = next(
-            d for d in snapshot["doors"] if d["source"] == "09" and d["target"] == "14"
+            d
+            for d in snapshot["doors"]
+            if d["source"] == "00-09" and d["target"] == "00-14"
         )
         assert marker["state"] == state
         if handler == 2:
             assert marker["label"] == "Passage is unavailable"
     assert any(
-        set(marker["rooms"]) == {"09", "14"} for marker in mansion_floor_plan()["doors"]
+        set(marker["rooms"]) == {"09", "14"}
+        for marker in profile.map_layout.document["areas"][0]["doors"]
     )
 
 
