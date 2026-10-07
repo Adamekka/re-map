@@ -154,13 +154,19 @@ def poll_once(
     if rule_snapshot.error:
         return PollResult(PollStatus.ReadFailure, rule_snapshot.error)
     rule_values = dict(rule_snapshot.values)
+    # Scripted candidates already carry acquisition state before access is
+    # resolved. A load between reads must not publish a stale Taken candidate.
     if any(
-        item.state != RuntimeItemState.Unavailable
-        and (item.state == RuntimeItemState.Taken)
+        (item.state == RuntimeItemState.Taken)
         != layout.acquisition.collected(
             layout.acquisition.flag(item.item_type, item.global_id), flags, rule_values
         )
-        for item in observation.items
+        for item in tuple(
+            item
+            for item in observation.items
+            if item.state != RuntimeItemState.Unavailable
+        )
+        + tuple(item for item, _, _ in observation.scripted_collectibles)
     ):
         return PollResult(PollStatus.Retry, "pickup changed during room read")
     current_evaluation = validate_current_room(

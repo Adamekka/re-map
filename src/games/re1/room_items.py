@@ -442,7 +442,7 @@ def observe_room_items(
         )
         if handler == 9 and not selected_pending:
             # Setters replace registry parameters, but the retained source
-            # supplies item identity. Its event route still needs a source proof.
+            # supplies item identity. Uncollected access still needs a source proof.
             scripted_collectibles.append((item, parameter & 255, model & 255))
         else:
             items.append(item)

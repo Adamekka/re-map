@@ -1,4 +1,4 @@
-"""RE1-COLLECT-002: synthetic shared access checks, not new gameplay evidence."""
+"""RE1-COLLECT-002/003: synthetic access/acquisition checks, not gameplay evidence."""
 
 import json
 import struct
@@ -83,6 +83,107 @@ def test_access_keeps_fresh_acquisition_and_restores_earlier_state(
             RuntimeItemState.Taken if taken else RuntimeItemState.Available
         )
         assert bytes(flags) == before
+
+
+@pytest.mark.parametrize("epoch", list(RoomRuleEpoch))
+@pytest.mark.parametrize("item_type", [0x44, 0x4D, 0x50])
+def test_taken_scripted_items_resolve_without_access_and_reverse(
+    rules, epoch, item_type
+):
+    descriptor = bytearray(pickup(4, item_type, 79))
+    descriptor[11] = 6
+    program = compile_program(
+        rules,
+        bytes(descriptor) + setter(4, 9, 2, 0) + b"\0",
+        event=indexed(bytes((1, 0xFF))),
+    )
+    assert program.coverage_complete
+    assert not scripted_collectible_access(program.event_program, 4, item_type, 2, 0)
+    ram = bytearray(2 * 1024 * 1024)
+    flag = rules[0].acquisition.flag(item_type, 79)
+    for taken in (False, True, False):
+        flags = bytearray([255] * 32)
+        value = flag.mask if taken == flag.acquired_when_set else 0
+        if (
+            rules[0].acquisition.flags_address
+            <= flag.address
+            < (rules[0].acquisition.flags_address + 32)
+        ):
+            index = flag.address - rules[0].acquisition.flags_address
+            flags[index] = flags[index] & ~flag.mask | value
+        else:
+            ram[flag.address - 0x80000000] = value
+        snapshot = read_rule_snapshot(rules[0], (program,), RamReader(ram).read_memory)
+        assert not snapshot.error
+        result = evaluate_room_program(
+            program, RoomId(0, 9), rules[0], snapshot, bytes(flags), (), epoch
+        )
+        assert result.coverage_complete and result.items.list_complete is taken
+        if taken:
+            assert not result.unresolved_item_slots
+            (item,) = result.items.items
+            assert (item.aot_id, item.item_type, item.global_id, item.amount) == (
+                4,
+                item_type,
+                79,
+                6,
+            )
+            assert item.state is RuntimeItemState.Taken
+        else:
+            assert not result.items.items and result.unresolved_item_slots == (4,)
+
+
+@pytest.mark.parametrize("epoch", list(RoomRuleEpoch))
+@pytest.mark.parametrize("barrier", ["source", "mutable", "invalid-target", "decode"])
+def test_taken_scripted_items_retain_source_and_execution_barriers(
+    rules, epoch, barrier
+):
+    target = 255 if barrier == "invalid-target" else 0
+    program = compile_program(
+        rules,
+        pickup(4, 0x44, 79)
+        + setter(4, 9, 2, target)
+        + (
+            bytes((0x14, 0, 2, target))
+            if barrier in ("invalid-target", "decode")
+            else b""
+        )
+        + b"\0",
+        event=indexed(bytes((0xFD, 0xFF)) if barrier == "decode" else bytes((1, 0xFF))),
+    )
+    if barrier == "source":
+        program = replace(
+            program, coverage_complete=False, reentry_coverage_complete=False
+        )
+    elif barrier == "mutable":
+        program = replace(program, mutable_slots=(4,))
+    snapshot = read_rule_snapshot(
+        rules[0], (program,), RamReader(bytearray(2 * 1024 * 1024)).read_memory
+    )
+    result = evaluate_room_program(
+        program, RoomId(0, 9), rules[0], snapshot, bytes(32), (), epoch
+    )
+    assert not result.items.list_complete and not result.items.items
+    assert result.unresolved_item_slots == (4,)
+
+
+def test_taken_scripted_items_do_not_merge_different_source_identities(rules):
+    program = compile_program(
+        rules,
+        branch(bytes((6, 2, 0, 1)), pickup(4, 0x44, 79), pickup(4, 0x50, 80))
+        + setter(4, 9, 2, 0)
+        + b"\0",
+        event=indexed(bytes((1, 0xFF))),
+    )
+    snapshot = read_rule_snapshot(
+        rules[0], (program,), RamReader(bytearray(2 * 1024 * 1024)).read_memory
+    )
+    result = evaluate_room_program(
+        program, RoomId(0, 9), rules[0], snapshot, bytes(32), (), RoomRuleEpoch.Reentry
+    )
+    assert result.coverage_complete
+    assert not result.items.list_complete and not result.items.items
+    assert result.unresolved_item_slots == (4,)
 
 
 @pytest.mark.parametrize(
@@ -300,9 +401,17 @@ def test_live_source_identity_survives_overwritten_registry_parameters(
     )
 
 
+@pytest.mark.parametrize("collected", [False, True])
 @pytest.mark.parametrize("failure", ["pointer", "read", "short", "changed"])
-def test_live_candidates_keep_read_and_coherence_failures(layout, tmp_path, failure):
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+def test_live_candidates_keep_read_and_coherence_failures(
+    layout, tmp_path, failure, collected
+):
+    ram = fixture_ram(
+        "slus00551_green_herb_after.sav"
+        if collected
+        else "slus00551_green_herb_before.sav",
+        tmp_path,
+    )
     item = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory).items[0]
     address = 0xB8160 + 12 * item.aot_id
     ram[address] = 9
@@ -326,8 +435,16 @@ def test_live_candidates_keep_read_and_coherence_failures(layout, tmp_path, fail
     assert result.retry is (failure == "changed")
 
 
-def test_pending_award_uses_descriptor_without_needing_script_access(layout, tmp_path):
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+@pytest.mark.parametrize("collected", [False, True])
+def test_pending_award_uses_descriptor_without_needing_script_access(
+    layout, tmp_path, collected
+):
+    ram = fixture_ram(
+        "slus00551_green_herb_after.sav"
+        if collected
+        else "slus00551_green_herb_before.sav",
+        tmp_path,
+    )
     item = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory).items[0]
     address = 0xB8160 + 12 * item.aot_id
     ram[address] = 9
@@ -340,14 +457,22 @@ def test_pending_award_uses_descriptor_without_needing_script_access(layout, tmp
     )
     observed = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
     assert observed.ok and not observed.scripted_collectibles
-    assert observed.items[0].state is RuntimeItemState.Available
+    assert observed.items[0].state is (
+        RuntimeItemState.Taken if collected else RuntimeItemState.Available
+    )
 
 
 @pytest.mark.parametrize("aliases", [False, True])
-def test_live_unresolved_proof_blocks_clearance_even_when_setup_now_reconstructs_absence(
-    layout, tmp_path, aliases
+@pytest.mark.parametrize("collected", [False, True])
+def test_live_scripted_candidates_use_acquisition_or_agreed_access_when_setup_is_absent(
+    layout, tmp_path, aliases, collected
 ):
-    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    ram = fixture_ram(
+        "slus00551_green_herb_after.sav"
+        if collected
+        else "slus00551_green_herb_before.sav",
+        tmp_path,
+    )
     item = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory).items[0]
     address = 0xB8160 + 12 * item.aot_id
     ram[address] = 9
@@ -396,10 +521,47 @@ def test_live_unresolved_proof_blocks_clearance_even_when_setup_now_reconstructs
         snapshot,
         bytes(ram[0xC86DC:0xC86FC]),
     )
-    assert not tracked.items.list_complete and not tracked.items.items
+    assert tracked.items.list_complete is collected
+    if collected:
+        assert tracked.items.items == (item,)
+    else:
+        assert not tracked.items.items
 
 
-def test_cached_collectible_refresh_uses_fresh_flags_after_reversal(tmp_path):
+@pytest.mark.parametrize("bound", [False, True])
+def test_live_taken_candidates_keep_missing_or_incomplete_source_coverage(
+    layout, tmp_path, bound
+):
+    ram = fixture_ram("slus00551_green_herb_after.sav", tmp_path)
+    ram[0xB819C] = 9
+    observed = observe_room_items(layout, RoomId(0, 9), RamReader(ram).read_memory)
+    assert (
+        observed.ok
+        and observed.scripted_collectibles[0][0].state is RuntimeItemState.Taken
+    )
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    source = next(
+        s for s in profile.room_sources if s.source_rdt == "PSX/STAGE1/ROOM1091.RDT"
+    )
+    program = replace(profile.room_programs[source.source_rdt], coverage_complete=False)
+    profile.room_programs[source.source_rdt] = program
+    snapshot = read_rule_snapshot(
+        profile.tracking_rule_layout, (program,), RamReader(ram).read_memory
+    )
+    result = validate_current_room(
+        profile,
+        observed,
+        (source,) if bound else (),
+        snapshot,
+        bytes(ram[0xC86DC:0xC86FC]),
+    )
+    assert not result.items.list_complete
+
+
+@pytest.mark.parametrize("supported", [False, True])
+def test_cached_collectible_refresh_uses_fresh_flags_after_reversal(
+    tmp_path, supported
+):
     from track import PollStatus, poll_once
 
     from games.re1.tracking_engine import refresh_visited_room
@@ -429,7 +591,7 @@ def test_cached_collectible_refresh_uses_fresh_flags_after_reversal(tmp_path):
         pickup(original.aot_id, original.item_type, original.global_id)
         + setter(original.aot_id, 9, 2, 0)
         + b"\0",
-        event=chain(original.aot_id, 4),
+        event=chain(original.aot_id, 4) if supported else indexed(bytes((1, 0xFF))),
     )
     for source in cached.sources:
         profile.room_programs[source.source_rdt] = program
@@ -441,10 +603,51 @@ def test_cached_collectible_refresh_uses_fresh_flags_after_reversal(tmp_path):
         tracked = refresh_visited_room(
             profile, cached, cached.context, snapshot, bytes(ram[0xC86DC:0xC86FC])
         )
-        assert tracked.items.list_complete and len(tracked.items.items) == 1
-        assert tracked.items.items[0].state is (
-            RuntimeItemState.Taken if taken else RuntimeItemState.Available
-        )
+        assert tracked.items.list_complete is (supported or taken)
+        if supported or taken:
+            assert len(tracked.items.items) == 1
+            assert tracked.items.items[0].state is (
+                RuntimeItemState.Taken if taken else RuntimeItemState.Available
+            )
+        else:
+            assert not tracked.items.items
+
+
+@pytest.mark.parametrize("taken", [False, True])
+def test_poll_retries_when_scripted_acquisition_changes_between_snapshots(
+    tmp_path, taken
+):
+    from track import PollStatus, poll_once
+
+    from tracker.exploration_state import Tracker
+
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram(
+        "slus00551_green_herb_after.sav"
+        if taken
+        else "slus00551_green_herb_before.sav",
+        tmp_path,
+    )
+    layout = profile.runtime_room_layout
+    ram[0xB819C] = 9
+    reader = RamReader(ram)
+    calls = 0
+
+    def read(address, width):
+        nonlocal calls
+        if (address, width) == (layout.acquisition_flags_address, 32):
+            calls += 1
+            if calls == 3:
+                # The observer completed its two coherent reads before the
+                # poll's later snapshot sees an earlier/later acquisition bit.
+                ram[0xC86EA] ^= 1
+        return reader.read_memory(address, width)
+
+    tracker = Tracker()
+    result = poll_once(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "pickup changed during room read"
+    assert not tracker.rooms
 
 
 def test_full_record_chain_and_reused_child_records_cannot_grant_access(rules):

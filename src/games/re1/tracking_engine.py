@@ -58,7 +58,9 @@ def validate_current_room(
     items = list(observation.items)
     unresolved_scripted_collectible = False
     for item, record, entry in observation.scripted_collectibles:
-        if all(
+        # The coherent observer already read this source's acquisition flag.
+        # A taken item needs no access proof; an uncollected alias still does.
+        if item.state is RuntimeItemState.Taken or all(
             scripted_collectible_access(
                 profile.room_programs[source.source_rdt].event_program,
                 item.aot_id,

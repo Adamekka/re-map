@@ -1647,8 +1647,15 @@ def evaluate_room_program(
             _, item_type, _, gid, _ = args
             if item_type == 0 or item_type >= 0x54:
                 return "absent", None  # Documents are excluded from room completion.
+            acquisition_flag = layout.acquisition.flag(item_type, gid)
+            remaining = not layout.acquisition.collected(
+                acquisition_flag, flags, values
+            )
             if handler == 9:
-                if (
+                # RE1-COLLECT-003: fresh acquisition resolves a taken item even
+                # when its interaction is unsupported. Access matters only
+                # while the source-bound item remains uncollected.
+                if remaining and (
                     parameters is RegistryParameterState.Unreconstructed
                     or not scripted_collectible_access(
                         program.event_program,
@@ -1659,8 +1666,6 @@ def evaluate_room_program(
                     )
                 ):
                     return "unresolved", None
-                # Access is proven by the source route. Acquisition still comes
-                # from the current game flags, including earlier save loads.
                 handler = 15 if item_type >= 0x4E else 4
             if (
                 handler not in (0, 3, 4, 15)
@@ -1670,10 +1675,6 @@ def evaluate_room_program(
                 and item_type < 0x4E
             ):
                 return "unresolved", None
-            acquisition_flag = layout.acquisition.flag(item_type, gid)
-            remaining = not layout.acquisition.collected(
-                acquisition_flag, flags, values
-            )
             if remaining and handler in (0, 3) and slot in program.award_slots:
                 # A dormant descriptor can still be awarded by an event. Its
                 # current availability needs event progress, not just a pickup bit.
