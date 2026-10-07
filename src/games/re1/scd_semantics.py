@@ -91,9 +91,7 @@ ZERO_RETURN_OPCODES = frozenset({0x00, 0x2D})
 # Each predicate only reads its condition and advances the script pointer.
 # Inventory, buttons, geometry and enemy state have no supported past-room
 # snapshot; retain both outcomes rather than read another room's temporary state.
-UNRESOLVED_PREDICATE_OPCODES = frozenset(
-    {0x10, 0x11, 0x1A, 0x1D, 0x22, 0x36, 0x38, 0x3C, 0x3F}
-)
+UNRESOLVED_PREDICATE_OPCODES = frozenset({0x1A, 0x1D, 0x22, 0x36, 0x38, 0x3C, 0x3F})
 
 # Indirect/native writes can overlap local flag banks. Forget those physical
 # bits even though the command's return is one. Current RAM cannot supply the

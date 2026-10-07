@@ -175,6 +175,12 @@ Run `python3 -m pytest -q tests/test_acquisition_state.py tests/test_native_call
 
 The tests cover both tracking epochs, same-pass activation writes and physical aliases, separate flags of both polarities, earlier-state reversal, observed/reconstructed caches, changing/failed reads and dormant forced awards. The unchanged twelve-step captured save/load replay and 2,004 paired source evaluations preserve prior item/door payloads. Complete item projections increase from 259/271 to 263/275 for current/reentry under the three captured flag configurations; door coverage remains 256/287. These are offline checks. A natural Radio pickup and its before/after normal saves still need validation before the separate flag can be called runtime-confirmed.
 
+## Shared item-interaction predicates
+
+Run `python3 -m pytest -q tests/test_item_interactions.py` for RE1-SCD-021/022. The 52 synthetic cases cover unsigned item-use/acquisition comparisons after supported script writes, byte-setter truncation, physical flag aliases, changed quantity inputs, map-callback invalidation and fresh acquisition reversal in both tracking epochs. Unknown interaction values remain unresolved even when current RAM matches the requested value. Values from initialization or a separate runner cannot exclude later player actions; synchronous event procedures retain their same-run writes. Truncated commands prevent clearance.
+
+Two identical regenerations map 132 commands in 72 source variants to existing byte-comparison rules. The 4,676 paired projections preserve published item/door results against the preceding implementation, with no coverage gains. The unchanged twelve-step captured save/load replay passes, including earlier acquisition reversal and reveal only for entered rooms. These checks perform no new gameplay and do not validate natural item-use puzzles or full-playthrough tracking.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:

@@ -1460,6 +1460,15 @@ def evaluate_room_program(
             joined_bits = []
             for bit in sorted(bits):
                 address, mask = bit
+                if address in (
+                    layout.byte_variables_base + 18,
+                    layout.byte_variables_base + 19,
+                ):
+                    # RE1-SCD-021: native tick resets and player interactions
+                    # can replace these bytes between separate runners. Keep
+                    # same-run writes, but never join them into an invariant.
+                    joined_bits.append((bit, None))
+                    continue
                 # A missing local shadow is unknown. A missing saved-bit
                 # shadow still has its fresh snapshot value, when read.
                 initial = (

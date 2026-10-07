@@ -462,6 +462,8 @@ def main() -> int:
                         "RE1-SCD-018",
                         "RE1-SCD-019",
                         "RE1-SCD-020",
+                        "RE1-SCD-021",
+                        "RE1-SCD-022",
                         "RE1-NATIVE-001",
                         "RE1-NATIVE-002",
                         "RE1-EVENT-001",

@@ -42,6 +42,10 @@ def build_tracking_program(
             args = list(raw[1:4])
         elif op == 6:
             kind, args = "byte-test", list(raw[1:4])
+        elif op in (0x10, 0x11):
+            # RE1-SCD-021: these compare transient interaction bytes at
+            # variable indices 18/19, rather than search held inventory.
+            kind, args = "byte-test", [18 if op == 0x10 else 19, 0, raw[1]]
         elif op == 7:
             kind, args = (
                 "word-test",
