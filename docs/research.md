@@ -3578,3 +3578,80 @@ Limits: two Main Hall map views do not confirm the other nine floor plans, adjoi
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; opened and captured both native map views, compared their context and visible geometry, replayed all seven publications exactly, and recorded the interrupted adjoining-room attempt separately.
+
+
+## RE1-MAP-010: adjoining Mansion 2F rooms reveal on entry and retain history
+
+Status: Confirmed for this revision, limited to the recorded Main Hall, Terrace Entry and Terrace route
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Training Jill
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned CUE from the user's Games directory, ordinary keyboard controls through computer use, GDB localhost:2345, production tracker at `8c692b1`, private preview on port 8766
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: natural room transitions, rendered map observations, ten coherent paused RAM captures and exact replay through the shared tracker
+Claim: the existing map reveals Terrace Entry `01-11` and Terrace `01-12` only upon entering them. Leaving Terrace and returning preserves all three observed 2F outlines and the supported collected-item state. This extends RE1-MAP-008/009's live coverage by two adjoining rooms, without adding production rules or geometry.
+
+Evidence and test log:
+
+| Action | Expected | Observed |
+| --- | --- | --- |
+| Start a fresh tracker in the retained Main Hall 2F gameplay state | Reveal current room only | `mansion2f:03` only, complete zero-item state and four supported exits |
+| Descend and ascend through the central stairs, then use the right side stairs | Preserve logical Main Hall identity on the side balcony | Main Hall 1F visit recorded; back upstairs, only region `03` outlined; side-stair movement kept `01-03` and its completion unchanged |
+| Walk to and enter Terrace Entry | Reveal one adjoining corridor | `01-11`, regions `03` and `11` only; zero items, `CLEARED`; two no-lock exits, with unentered Terrace unnamed |
+| Enter Terrace normally | Reveal its outline and supported item | `01-12`, regions `03`, `11`, `12` only; one item, quantity 6, `INCOMPLETE`; no-lock exit to Terrace Entry |
+| Confirm Barry's scripted Bazooka grant | Reevaluate current room | One item collected, `CLEARED`; acquisition evidence is recorded separately in RE1-PICKUP-005 |
+| Leave Terrace for Terrace Entry and re-enter | Keep entered-room history and collected state | Same three outlines; Terrace remains `CLEARED`, its item taken and exit supported; settled native gameplay observed after each return |
+| Replay all ten new captures with one profile/cache and tracker | Match complete published state | Exact payload equality, including quantities, room colors, door access and visit-dependent destination labels |
+
+Changed navigation conditions after RE1-MAP-009: inspected the owned `ROOM2030.RDT` collision section and active stair interactions, then used confirm at the right side stairs instead of walking through the railing. The [pinned reevengi collision reader](https://github.com/pmandin/reevengi/blob/8130d5fd029a7548135bdbbff19b0b8e338bd42d/src/g_re1/rdt_sca.c#L37-L71) supplied a format lead. The original file's five counts are `(11,3,4,2,0)`; its 20 collision records match the loaded room bytes exactly. Loaded header fields are relocated pointers, so reading them as file offsets or counts was rejected. This was private route preparation, not a new collision API or confirmation of universal floor/type semantics. Ordinary confirm input visibly started the side-stair animation and reached the balcony. Timed turn assumptions were also corrected using short paused position reads. One input was rejected after a GDB pause/resume changed the window state; refreshing the current view allowed input to proceed.
+
+Each new capture verifies the running executable signatures and reads all 2 MiB while paused. Existing room Main/Sub/camera at PS1 virtual `0x800C8660`/`0x800C8661`/`0x800C8662` remain unsigned bytes. The four automatic entry captures caught door animation; `g-entry-controlled` and `g-terrace-return`, plus native and browser observations, distinguish settled gameplay. Polling briefly rejected inconsistent room/source or camera reads during transitions and the cutscene, then recovered on the same connection. No guest RAM writes, teleports, executable changes or injected events were used.
+
+Private evidence under `/tmp/tasks/re-map/multi-area-gameplay/`:
+
+| RAM capture | UTC time, 2026-10-07 | SHA256 |
+| --- | --- | --- |
+| `g-balcony-start.bin` | 20:08:46 | `716f0872e7d9cf018ac2d70525398a282fb68a75c523969728c4fb2c6e46a906` |
+| `g-side-balcony.bin` | 20:13:12 | `1d47bb7c5ca86c2bb5a9ed40d508023408a040392db00b1474c7c3c8e49ae76a` |
+| `g-floor-1.bin` | 20:15:20 | `4efb168a62bdf41c7609e7c65d235a06c7fc79c8ec81da0ba30777e1094c5548` |
+| `g-entry-controlled.bin` | 20:17:04 | `64b6f4b2ea198aea1d5bf74031be94f1ce2c09feaaae5ede1297872ab045c494` |
+| `g-floor-2.bin` | 20:18:21 | `681502ef3863419115058e16a40d6fc5fc0378802582ffb52e4d1e7d69283b3e` |
+| `g-terrace-grant-prompt.bin` | 20:21:12 | `3063615c723aed864a55d307c2b2ae697b13fe4dcb42138622994bf2425641db` |
+| `g-terrace-collected.bin` | 20:22:40 | `e1b3db62d6c52cba400228bc7a9af746c0802495730fd7767a2302d7eff3231b` |
+| `g-floor-3.bin` | 20:24:38 | `789375145496bb47b58722bb992899aec7cc458e51c4140cac325184b952ade8` |
+| `g-floor-4.bin` | 20:26:02 | `f4e14e9ace669932f248df34409d6609f15e0794dede290774afdeaf8612d6c4` |
+| `g-terrace-return.bin` | 20:27:26 | `f45a2d7aa95fc51ef933fbd63f85689bc4b55dd118bda22796343f5a32e97e91` |
+
+Adjacent `.json` files contain complete live publications. `live-floors-g2.jsonl` SHA256 is `4404f68ca108cdda62d2f4f32b0aa810c67d9473977a22afe754bc3baacd9384`. Reproduce with `python /tmp/tasks/re-map/multi-area-gameplay/audit_adjoining_g.py`; script SHA256 is `1801ede31602fe95cbcfb0f4ce900d458e6b33776474213ac760989ed6a1ae00`, output `adjoining-room-audit.json` SHA256 `7d37d8b1f76169be5658976cba0c2e8d9c4c616f2aa937ce1845c100bbfab20b`. The private watcher `floor_g.py` SHA256 is `338a395e569c2c4b6b0f6d9c9018bcf991289968f1bdc5395100b071f9223381`. An intervening Main Hall 1F visit was journaled without a new full RAM capture. Replay reuses RE1-MAP-009's `f-main1-before-map.bin` to prime that source and visit, and checks its resulting complete publication against the actual G-session journal. That prior capture is excluded from the ten new captures and from new gameplay coverage. Final observed visits are exactly `mansion1f:06`, `mansion2f:03`, `mansion2f:11`, `mansion2f:12`.
+
+A new private checkpoint `g-terrace-collected.sav`, SHA256 `21d29e6a52c093f291e4b5760746de0f07eb53b780fb24275d0cc596dc699936`, preserves progress at the returned Terrace without overwriting any existing slot. Extracted checkpoint RAM SHA256 is `af08a2e37f070391a6f03c62222067c578ec5b15be987a091e3359aae6b0ce17`; the audit verifies room `01-12`, the cleared acquisition bit and inventory item/quantity. Extraction does not validate a savestate reload. The GDB/HTTP watcher ended normally, the temporary browser tab closed, and the isolated game closed without saving another state. RAM, game files, saves and private scripts remain outside Git.
+
+Limits: this adds two rooms on an already tested floor, not live coverage of another area or the remaining nine floor plans. It does not confirm all Mansion door-wall positions, all cameras, other scenarios, map acquisition, pickup reversal, normal save/load of this item or a whole-game playthrough. Item/door source coverage is unchanged. Production code and profile data were unchanged.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; prepared the side-stair route, entered both adjoining rooms naturally, observed entry-only outlines and return history, replayed all ten captures exactly and preserved a separate checkpoint. No external implementation review was performed because this work changes research documentation only.
+
+## RE1-PICKUP-005: Terrace scripted Bazooka grant clears its acquisition bit
+
+Status: Confirmed for this revision, limited to this scripted grant and one natural exit/re-entry
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Training Jill, Terrace `01-12`, loaded source `PSX/STAGE2/ROOM2121.RDT`
+Environment: same isolated DuckStation and captured session as RE1-MAP-010
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: native grant prompt and inventory display, coherent before/after/return RAM, shared event/item tracking and exact publication replay
+Claim: confirming Barry's scripted Bazooka grant clears GlobalId 6's bit at PS1 virtual `0x800C86DF`, u8 mask `0x02`, from set to clear. The existing tracker reports its single Terrace collectible taken and the room cleared, including after leaving and returning. The observed item type is `0x07`, quantity 6; `Bazooka Acid` is the existing profile label, while the native prompt says `BAZOOKA`.
+
+Evidence and test log:
+
+| Capture/action | Acquisition byte and active item | Inventory and tracker |
+| --- | --- | --- |
+| `g-floor-2`, first Terrace entry | `0xBF`; item AOT slot 1 handler 4 | Inventory has no type `0x07`; item available, quantity 6, `0/1`, `INCOMPLETE` |
+| `g-terrace-grant-prompt`, before confirming native grant | `0xBF`; handler 4 remains active; event slot 0 points to the grant-prompt phase | Native grant screen shown; inventory still lacks type `0x07`; tracker remains `INCOMPLETE` |
+| Confirm with Cross, then capture `g-terrace-collected` | `0xBD`; AOT handler becomes 0; event slot 0 inactive | Inventory slot 3 gains bytes `07 06`; native inventory shows Bazooka with 6; tracker reports `1/1`, taken, `CLEARED` |
+| Leave to `01-11`, re-enter, then capture `g-terrace-return` | `0xBD`; item AOT handler remains 0 | Inventory retains `07 06`; tracker remains `1/1`, taken, `CLEARED` |
+
+The 32-byte acquisition bank at PS1 virtual `0x800C86DC` changes in exactly one byte between the grant-prompt and collected captures, `0x800C86DF: 0xBF -> 0xBD`. GlobalId 6 is opcode byte 22, matching RE1-FLAG-001's existing word/byte calculation. AOT slot 1 is the 12-byte record at `0x800B816C`; its opcode-plus-two pointer at record offset 8 is `0x80145B36`. The retained opcode has type `0x07` at byte 10, quantity 6 at byte 11 and GlobalId 6 at byte 22. Its before/after handler byte changes `4 -> 0`. Inventory pointer `0x800BA008` holds `0x800C8784` in these captures; slot 3 at that base plus 6 contains type/quantity bytes `07 06` after confirmation. These experimental inventory reads corroborate the pickup rather than introducing inventory-based acquisition inference.
+
+Capture hashes and reproduction are in RE1-MAP-010. Its audit checks the exact acquisition-bank diff, item handler, inventory bytes, incomplete/cleared publications and re-entry result. The setup retained health candidate 150 and Chemical byte `0xFF`; neither is a new tracker address claim.
+
+Limits: no earlier-save or savestate reversal, normal in-game save/load, ordinary ground-pickup alternative, other character/mode or later story branch was tested. The native prompt does not independently name the acid ammunition variant. This validates one scripted grant through the existing shared system, not every event grant or every Terrace scenario. No production item exception was added.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; observed Barry's grant, captured the pending prompt and confirmed acquisition, compared the flag bank and inventory, left and returned normally, and replayed the complete states. Preserved prior formula and profile-label authorship.
