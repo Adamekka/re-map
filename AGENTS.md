@@ -154,6 +154,12 @@ Build shared tracking systems for RE1 collectibles, doors, and puzzle/story avai
 
 Use individual pickups, puzzles, and doors as validation cases for the shared system.
 
+## Playthrough progress
+
+- Measure progress by resolved item and door outcomes, supported map areas, and new gameplay validation. Keep offline source coverage separate from runtime coverage. Commit, test, and supported-opcode counts alone do not establish playthrough readiness.
+- Before extending script interpretation, identify a reproduced tracking failure or correctness defect that the change addresses. If an experiment brings no demonstrated improvement, reconsider its priority against missing maps and gameplay validation instead of continuing through unsupported commands by default.
+- Revisit a rejected experiment only when new evidence or a relevant changed condition gives a reason to expect a different result. Record that reason and compare against the same baseline.
+
 ## Preferred implementation strategy
 
 Start outside DuckStation.

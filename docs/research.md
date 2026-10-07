@@ -3296,3 +3296,61 @@ History:
 - 2026-10-07; Gemini 3.8 Flash High via agy, conversation `2f032974-12c9-445c-99bf-9fc4fa6fd2aa`; reviewed the complete implementation diff, regenerated numeric metadata, compiler/scanner/proof interfaces, physical shadow interpreter, new regressions, existing helper/event/reentry contracts and pinned native findings. Returned "No findings." Process exit zero, final agent response DONE, terminal result SUCCESS and empty stderr; no tools or gameplay. The redacted packet was 344,199 bytes, SHA256 `70969d376d665145912cd74edb429179320477a6db1ba06087bf089b2c65e8e6`. Root completed the direct inspection and validation before consulting this advisory review.
 - 2026-10-07; Gemini 3.1 Pro High review request; automatic approval review rejected uploading the redacted internal implementation/research snapshot without specific authorization for that payload and destination. The call did not start and no Pro payload was sent. The user was asked to authorize the upload; no approval had arrived before this record. No Pro review or endorsement is claimed. The parallel Flash upload was separately approved and completed.
 - 2026-10-07; Claude Opus 5.5 High via agy; remained unavailable under RE1-EVENT-011's quota exhaustion reported on 2026-10-05, with reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.
+
+## RE1-ANALYSIS-010: playthrough progress audit after interaction predicates
+
+Status: Candidate for playthrough readiness; recorded offline comparisons and a fresh diagnostic, no new gameplay
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; commits `860e905` through `f0f4102`, all 334 source variants
+Environment: Python 3.14.8; existing DuckStation captures only, no emulator actions or RAM writes
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: recorded paired comparisons, repeated gap classification, and direct inspection of the current map UI
+Claim: recent shared rules have improved offline item and door coverage, but the latest interaction-predicate change has no demonstrated whole-source gain. Map coverage and natural runtime validation have not advanced with those changes. Selecting more unsupported commands without a reproduced tracking outcome risks repeating work that does not improve a playthrough.
+
+Comparable reentry results under the unchanged Herb-before capture are below. Each denominator is 334 room-file variants, including alternate source files, not 334 independently validated playable rooms. Current-room projection counts are separate and are not used in this comparison.
+
+| Commit | Evidence | Complete item lists | Complete door results |
+| --- | --- | ---: | ---: |
+| `860e905` | RE1-DOORS-004 | 271 | 287 |
+| `3c7ae4b` | RE1-FLAG-003 | 275 | 287 |
+| `2caa0c4` | RE1-ANALYSIS-006 | 287 | 301 |
+| `0b60d9e` | RE1-DOORS-006 | 287 | 312 |
+| `1d79e8a` | RE1-COLLECT-002 | 291 | 312 |
+| `d1a8cf4` | RE1-COLLECT-004 | 291 | 312 |
+| `f0f4102` | RE1-SCD-022 | 291 | 312 |
+
+Evidence and interpretation:
+
+- The comparable baseline improves by 20 complete item variants and 25 complete door variants. Current reentry figures are 87.1% and 93.4% respectively. These are source interpretation measurements under a captured flag configuration. They do not establish the percentage of the game that works during normal play.
+- RE1-COLLECT-004 resolves two additional source variants under a synthetic acquired-GlobalId-27 state even though the unchanged capture has no gain. It fixes a specific acquisition-dependent result. RE1-SCD-022 preserves all tested results across seven configurations but gains no complete item or door result in any of them. Its 132 newly interpreted commands and 52 new tests therefore do not increase demonstrated playthrough coverage.
+- Reran RE1-ANALYSIS-009's gap diagnostic against `f0f4102` using Herb-before RAM SHA256 `d819fbd41abea6537bf9ce9f4967b479ea1f6278024b9f4e018290343c0bc8d4`. The same 43 item gaps and 22 door gaps remain, with eight overlaps and 57 unresolved variants in total. Categories remain 51 condition/descriptor ambiguities, four reached invalid event starts and two structural source failures. No new rejected hypothesis was tested and no analysis bound was relaxed.
+- `src/ui/map_view.py` still loads only the Mansion 1F floor plan, selects only `mansion1f:` visits and same-stage-0 doors, and displays an unmapped-room message elsewhere. The seven commits in the table add no mapped area. RE1-MAP-003 separately inspects whether the owned disc can supply other floor plans.
+- RE1-REENTRY-004's normal-save, walked-return and reversal captures remain useful evidence. Replaying that same twelve-step sequence tests regressions; it does not add new gameplay coverage. Later-area progression and natural execution of the recently interpreted interactions remain unvalidated.
+- The next candidate is a shared multi-area floor-plan system for this revision, with automatic area selection, room-entry-only reveal and the existing item/door interpretation. It addresses an observable missing part of a playthrough. Native area/region bindings and map-specific marker encodings must be checked before publication. Implementation approval has not been granted for this candidate.
+
+Private diagnostic artifacts under `/tmp/tasks/re-map/post-interaction-inspection/`: `gaps.py`, SHA256 `5d65f3888e95586b8f36c2cdc0aaebd1afc89623d9df994d333796742cd8a0f3`; `gaps.json`, SHA256 `d591cff5c5fea5b2725d0df1de1c53258e2679fd6acb2edfc62af3755bc47a13`; `coverage-summary.json`, SHA256 `ebdf617d03f2eecf63b02198148c99542adcbdab1b91156b88df63c00f8f713f`. Run the private diagnostic with the named Python environment to reproduce classification. The historical rows retain their original attribution and artifacts in the linked finding IDs.
+Limits: no end-to-end playthrough or new runtime experiment establishes overall readiness. A rough readiness estimate is a planning judgment, not a calculation from source percentages, test counts or commit counts. Production behavior and generated metadata are unchanged by this audit.
+History:
+
+- 2026-10-07; human user; requested a readiness estimate and an audit for repeated work without progress.
+- 2026-10-07; Codex root, GPT-6.1 Sol; compared the same reentry epoch and unchanged capture across recorded milestones, recomputed remaining gaps, inspected the map limitation and recorded concrete work-selection criteria in project instructions. Corrected an interim user-facing comparison that mixed current and reentry counts. No earlier finding's authorship or validation state was changed.
+
+## RE1-MAP-003: other disc map files expose limits of the Mansion-only extractor
+
+Status: Candidate; numeric extraction experiment only, no live area or region validation
+Scope: pinned SLUS-00551 executable from RE1-ANALYSIS-010; `PSX/ITEM_M2/MAP00.TIM` through `MAP0E.TIM`
+Environment: owned MODE2/2352 disc, Python 3.14.8; existing extractor at `f0f4102`
+Authored: 2026-10-07; Codex root; model: GPT-6.1 Sol
+Basis: disc-directory inventory, hash-verified executable identity and calls to RE1-MAP-002's existing numeric extractor
+Claim: fifteen files with map names exist on this disc. The unmodified Mansion extractor accepts five, including Mansion 1F, and rejects ten. Four additional accepted files establish a practical starting point for broader geometry support. Filename count does not establish fifteen playable floors, and extraction success does not establish a live room mapping.
+
+Evidence:
+
+- `python tools/list_psx_files.py <owned CUE> --filter MAP` lists fifteen map files. MAP00 is at LBA 11759 with 41504 bytes; MAP01 through MAP0B are eleven 29216-byte files at LBAs 11780 through 11930; MAP0C through MAP0E are three 41504-byte files at LBAs 11945, 11966 and 11987. The private report records each full SHA256.
+- Reproduced MAP01's 32 regions and 28 door pairs. Additional accepted files are MAP02 with 26 regions and 24 pairs, MAP05 with 12 and 10, MAP07 with three and two, and MAP0B with five and four. These are numeric contours and marker pairs under the existing encoding rules, with no new mapping assumptions.
+- MAP03, MAP04, MAP06, MAP08, MAP09 and MAP0A fail the existing reciprocal-half-door requirement. MAP00, MAP0C, MAP0D and MAP0E fail contour ambiguity checks. Those failures show that the current extractor cannot simply be applied to every file. No check was disabled, marker dropped or floor outline guessed to obtain success.
+- Private script `map_inventory.py` verifies the disc executable SHA256, reads all fifteen files, calls the committed extractor and writes only metadata, counts and explicit failures. A second execution produces an identical `map-extraction-audit.json`, SHA256 `2978f58f8609f2328092deef93e23d329d391e4d94bc834db30c66b64fbc9a31`, under `/tmp/tasks/re-map/post-interaction-inspection/`.
+
+Limits: native file-selector tables, runtime stage/room/camera bindings, map names, cross-floor doors and alternative marker encodings have not been newly traced. The four larger files may contain other map UI content; they must not be treated as playable floor plans on filename alone. No additional plan is shipped, and the existing entry-only reveal behavior is unchanged. Disc bytes and private extraction artifacts remain outside Git.
+History:
+
+- 2026-10-07; Codex root, GPT-6.1 Sol; inventoried map files, pinned the executable identity, tested the existing extractor without modification and reran the metadata report. Original extraction-method authorship remains in RE1-MAP-002.
