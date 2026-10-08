@@ -3787,6 +3787,7 @@ Limits: no online checkpoint has been loaded through the game's menu, no new are
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; obtained the public archive, extracted raw card payloads without changing saves, inspected directory labels, verified achievements were disabled before boot, recorded native-control failure and restored temporary settings. Manually reviewed this documentation; no external implementation review applies to this research-only change.
+- 2026-10-08; Codex root, GPT-6.1 Sol; completed normal in-game loads from four entries with controllable characters and pinned runtime signatures. RE1-SAVE-005 records the successful follow-up; this entry preserves the earlier failed setup and its limits.
 
 ## RE1-SOURCE-003: native event relocation wraps at 32 bits
 
@@ -3825,3 +3826,134 @@ History:
 - 2026-10-08; Gemini 3.1 Pro High via agy, conversation `0b974ec0-e726-40ae-b870-745b5b19734f`; reviewed the full fix, regression file and supplied interfaces/contracts, returning "No findings." Process exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool use. It did not run tests or reproduce gameplay.
 - 2026-10-08; Gemini 3.8 Flash High via agy, conversation `22b1db80-cbc8-46a8-a8df-b28e13688ed2`; completed the same supplied-snapshot review, returning "No findings." Process exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool use. It did not run tests or reproduce gameplay.
 - 2026-10-08; Claude Opus 5.5 High via agy; remains unavailable under RE1-EVENT-011's quota exhaustion reported on 2026-10-05, with reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.
+
+## RE1-SAVE-005: four public card entries load through the native game menu
+
+Status: Confirmed for this revision and the four named entries; save origin, mode labels and normal-save persistence retain their limits
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; public `SCEVMC1.mcd` from RE1-SAVE-004
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, owned disc, separate native game window, temporary shared memory card, ordinary input through computer use and read-only GDB localhost:2345
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: native Load Game selection, controllable characters, executable signature checks, captured Main/Sub/camera and exact save-block comparison
+Claim: the public card provides usable later-area checkpoints on the pinned owned disc. These native saves were loaded through RE1's Load Game menu, rather than using downloaded emulator savestates or editing guest RAM.
+
+| Card identifier | Native character | Initial Main/Sub | Observed location | First capture |
+| --- | --- | --- | --- | --- |
+| `BASLUS-005511` | Chris | `04-0e` | Laboratory B3 Save | `i-floor-1` |
+| `BASLUS-005513` | Chris | `04-0e` | Laboratory B3 Save | `i-floor-5` |
+| `BASLUS-005512` | Jill | `02-0e` | Courtyard B1 Save | `j-floor-1` |
+| `BASLUS-005510` | Chris | `03-03` | Guardhouse 1F Save | `l-floor-1` |
+
+RE1-MAP-012/013 preserve capture hashes, UTC times and gameplay results. Initial raw little-endian u32 values at PS1 virtual `0x800C3000` were respectively `0x90000000`, `0x50000000`, `0x50800000`, `0x90000000`. These words also change during room loading and status screens. The Original/Advanced directory labels in RE1-SAVE-004 remain source labels; this test does not independently establish their mode-bit meaning. Jill's native status displayed Poison; Chris's Guardhouse status displayed Fine. The Guardhouse inventory included a bonus Colt Python with an infinite-ammunition display, so this checkpoint is not evidence for fresh-game inventory behavior or the source author's no-cheats claim.
+
+The follow-up used a separate render window, paused startup and a persistent GDB resume after boot. An automatic updater prompt was dismissed through the native UI. This setup permitted access after RE1-SAVE-004's timeout, but several setup conditions changed together, so no single cause is confirmed. One earlier boot process disappeared without a crash report; its cause is unresolved. Temporary controller bindings used Shift for aim and P for status. The isolated app was closed normally after the completed run, with Save State For Resume unchecked, then render, startup, card and controller settings were restored. The user's installed emulator was untouched.
+
+Before loading any checkpoint, the isolated native Achievements settings showed Enable Achievements unchecked, Hardcore disabled and Not Logged In. `Achievements.Enabled = false` remained set through all restarts and cleanup. No achievement account was used.
+
+Both original raw cards retain their RE1-SAVE-004 hashes. The working `working-card-paused.mcd` SHA256 is `478262def290e9c37bd6bcb7e6a2e75f94f394783e826715c36bee4bddac8a8e`. Its only differences from `SCEVMC1.mcd` are administrative bytes `0x1F80`, `0x1F81`, `0x1FFF`; all fifteen save blocks at offsets `8192..131071` are byte-identical. A new private DuckStation checkpoint was saved after the natural Guardhouse return, `m-guardhouse-return.sav`, 1599582 bytes, SHA256 `d0290deabf10fa9efa7bae80be3b71288b1bf16c05be1306b31dd19f97423249`. The native Save As dialog treated the entered absolute path as a filename containing colons in its previous folder; that agent-created file was renamed into the private evidence directory after checking the destination did not exist. This new checkpoint has not yet been loaded.
+
+Reproduction: keep achievements disabled, mount a fresh private copy of RE1-SAVE-004's card, boot the owned disc and use Load Game to select the listed entry. Wait for gameplay, verify executable signatures and capture the runtime Main/Sub/camera before interpreting the area. Use ordinary door controls for RE1-MAP-012/013's routes. Do not reuse the poisoned Jill route without first preparing a viable health state through normal gameplay.
+
+Limits: entry `BASLUS-005514` remains untested. Successful loads do not establish save provenance, every scenario, a new normal-save write, persistence of a newly changed pickup flag, or the safety of every later route. Archive/card/savestate data stay private outside Git.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; selected and loaded the four entries, verified native character control and pinned signatures, compared unchanged save blocks, retained a new checkpoint and restored the temporary isolated settings. RE1-SAVE-004 retains its original source and failed-setup evidence.
+
+## RE1-MAP-012: Laboratory B3 and Courtyard B1 reveal rooms on natural entry
+
+Status: Confirmed for this revision for the named routes and publications; whole-floor and item-rule validation remain incomplete
+Scope: SLUS-00551 executable identity in RE1-SAVE-005; Chris Laboratory route from `BASLUS-005511`, Jill Courtyard route from `BASLUS-005512`
+Environment: RE1-SAVE-005's isolated DuckStation, production tracker at `055a94d`, native keyboard input, read-only GDB, private browser preview on port 8766; final captures replayed with RE1-SOURCE-003's correction
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: normal checkpoint loads, natural room entries/return, browser floor-plan observation and exact replay of captured map publications
+Claim: Laboratory B3 Save → Elevator Entry → O-Room and Courtyard B1 Save → Straight Passage → Black Tiger → Straight Passage select their proper plans and reveal only entered outlines. The Courtyard return retains all three entered outlines.
+
+| Capture | Room | Visible regions | Published item/door result |
+| --- | --- | --- | --- |
+| `i-floor-1` | `04-0e` | `0E` | Incomplete; Green Herb taken, Blue Herb available, Magnum Rounds available ×6, Ink Ribbon available ×3; exit `04-0c` has no lock |
+| `i-floor-2` | `04-0c` | `0C,0E` | Cleared, zero items; five doors have no lock |
+| `i-floor-3`, `i-o-room-settled` | `04-05` | `05,0C,0E` | Cleared, zero items; after settling, five resolved doors, including unlocked exits `04-07` and `04-0c` |
+| `j-floor-1`, `j-floor-2` | `02-0e` | `0E` | Cleared; Blue Herb, First Aid Spray and Ink Ribbon already taken |
+| `j-floor-3`, `j-straight-settled` | `02-0d` | `0D,0E` | Cleared, zero items; after settling, three doors have no lock |
+| `j-floor-4`, `j-black-status` | `02-0c` | `0C,0D,0E` | Incomplete; Combat Knife taken, Ink Ribbon available ×2; after settling, two doors have no lock |
+| `j-floor-5` | `02-0d` | `0C,0D,0E` | Return retains the Black Tiger outline and remaining-item state |
+
+Each private RAM capture is exactly 2097152 bytes. Times below are UTC on 2026-10-07; the local research date is 2026-10-08. The private audit checks pinned executable signatures, capture hashes and exact equality with the full live map JSON for all eleven captures, using a fresh tracker for each route.
+
+| Capture | UTC time | RAM SHA256 |
+| --- | --- | --- |
+| `i-floor-1` | 21:53:34 | `c2ffb00bfc745154ddd62b254c1163c32c85a627db13bdee31eb90d2504a0a75` |
+| `i-floor-2` | 21:56:31 | `d4624da29768d493b97484236d176e13e91e1cd8582ef85093f9569080b2667d` |
+| `i-floor-3` | 21:58:16 | `19c8d059595afd5ffad4fa3e2c7bc2b5e1a2186d29c455cd88710a14e97331de` |
+| `i-o-room-settled` | 21:59:02 | `e4c0e541ab798fde62ead595a28ef5fe989ba02bb886406f82b59304959c55d7` |
+| `j-floor-1` | 22:06:44 | `ffa461f53b231db8b28686e63f2b80bf6d85bbcbeeadf8a4f1f5b9c86b675d54` |
+| `j-floor-2` | 22:07:17 | `76c02b54b4ff6b1295e5c448f4b2fcd7012127adaed346d548afa391c5af07ee` |
+| `j-floor-3` | 22:07:48 | `74f72111ccc48693ea48d1913d75895a579186bfd5cd463be221199dd51c0ff8` |
+| `j-straight-settled` | 22:08:25 | `03690b828734ed765ab436e1d6e7005e7029f05aa39fde3dfa860e6fad64debf` |
+| `j-floor-4` | 22:09:50 | `06795fc00e734b273f3a3bee4d44c8458fc30cc49a33cf73f0cfb461abd91c1f` |
+| `j-black-status` | 22:10:31 | `a1b9e26f961f698d5fe3fd91b735cc2f1c0600aeb9d6216d2a189d1b3d25aa50` |
+| `j-floor-5` | 22:11:31 | `608d592f0e815ed790ecb8496be33d82a9d818049eeb8a5657eb720b9a3a65f1` |
+
+Original tracker screenshots are `i-lab-initial-map.jpg`, SHA256 `89b8805fc06f0a7781aaa43498aa1528299013555d0fe7350e950e7388faa07a`, and `j-courtyard-return-map.jpg`, SHA256 `5add4114071d2d65c99b5a7e86a4859d0aee97767cd05567d7b2a69df7f4a79b`. The latter shows the three retained outlines and Black Tiger's remaining-item color. Private journals `live-online-i.jsonl` and `live-online-j2.jsonl` have SHA256 `c362a01d981c2935561dbf4ce50a39189c76cfa400c5c54af7c06338f8b6fbb9` and `2ca54372976b92fc9a52b205f4dfcfbd4c4d216b958cfce29763fad5b78d5e21`.
+
+Failure/limits: Chris died to Chimeras while attempting O-Room → Laboratory B2 stairs; no B2 entry was completed. Jill's checkpoint was already poisoned. The candidate little-endian u16 at PS1 virtual `0x800C51AC` fell from 96 through 90, 10, 8 to 2, and native status showed Poison. The return to Straight Passage succeeded, but a subsequent attempt to reach Save ended at the title sequence. No cure, pickup, unlock, normal-save write or successful Save-room return was observed. This value is a navigation/health lead, not a newly confirmed profile field. These routes establish map publication, not independent proof of every displayed item or door rule. Native map-screen comparisons outside the Mansion are still untested.
+
+The alternate Chris Lab load `i-floor-5` at 22:04:22 UTC, SHA256 `5384e2593262d92ce067082c24425123e8d1050124009ae92ce90fba8f3fd643`, displays Green/Blue Herbs and Ink Ribbon available with Magnum Rounds taken. Only its current identity/detail replay is compared, because uncaptured demo rooms had already entered the same tracker history. It adds no new room coverage. RE1-LIFECYCLE-001 records that defect.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; loaded both checkpoints, observed six rooms with ordinary passage between them, observed the Courtyard return, captured exact publications and browser plans, replayed eleven full states, and recorded the deaths and uncompleted routes without counting them as coverage.
+
+## RE1-MAP-013: Guardhouse and Courtyard switch areas on passage and return
+
+Status: Confirmed for this revision for the named entries and crossing; unresolved Guardhouse coverage remains unfinished work
+Scope: SLUS-00551 executable identity in RE1-SAVE-005; Chris from `BASLUS-005510`, rooms `03-03`, `03-00`, `02-04`
+Environment: RE1-SAVE-005's isolated DuckStation, production tracker baseline `055a94d` and then RE1-SOURCE-003's one-line correction, native controls, read-only GDB and private browser preview on port 8766
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: normal checkpoint load, reproduced source failure, successful natural area crossing/return, browser observation and exact captured-publication replay
+Claim: the Guardhouse Save outline reveals alone after load. With RE1-SOURCE-003 corrected, a fresh tracker in Guardhouse Entry follows the player to Courtyard Gate and back, selects the correct floor plan and retains both observed visits without revealing other rooms.
+
+| Capture | Room/area | Visible regions | Publication |
+| --- | --- | --- | --- |
+| `l-floor-1` | `03-03`, Guardhouse 1F | `03` | Cleared; Handgun ammo and First Aid Spray taken; exit `03-00` has no lock |
+| `m-floor-1` | `03-00`, Guardhouse 1F | `00` | Incomplete; three Blue Herbs available; item conditions and door coverage unresolved |
+| `m-floor-2`, `m-gate-settled` | `02-04`, Courtyard 1F | `04` | Cleared; two Green Herbs and two Blue Herbs taken; two exits have no lock |
+| `m-floor-3`, `m-return-settled` | `03-00`, Guardhouse 1F | `00` | Return retains Entry and Gate visits; three herbs still available; coverage still unresolved |
+
+| Capture | UTC time, 2026-10-07 | RAM SHA256 |
+| --- | --- | --- |
+| `l-floor-1` | 22:15:07 | `79af0b648805983cc10f20fdbc4ace5d8ee6359353ae806554ee28155cb5805d` |
+| `m-floor-1` | 22:21:05 | `7d5bf038450a2944fb1416f36d7ab790ef41a4cabc067631d623ad21cda5dbb3` |
+| `m-floor-2` | 22:22:30 | `90c5a0053f5a787cc292525fdb174ee0ef9373ba8d418bd0fee91519a4d396cd` |
+| `m-gate-settled` | 22:23:16 | `5309e7b1301af55a14d060d50338a68417f38662ea2779596bd5610c5de10ae6` |
+| `m-floor-3` | 22:23:53 | `17009d72084eb7a3ac9b7f0669745a733bee7c0a72d53c8f536b02ce678a7a38` |
+| `m-return-settled` | 22:25:44 | `352aeb93f754fa0b44769765723b0f3a6643c160d4a3c03190a60766750121ed` |
+
+The private audit exactly replays all six full publications, with a fresh tracker for the Save capture and another for the five corrected Entry/Gate captures. The latter final history is exactly `courtyard1f:04` and `guardhouse1f:00`; the current map contains only Entry, while its Gate exit retains `target_visited = true`. At Gate the reciprocal Entry exit already reports visited. Native Chris remained controllable on both sides and on return. The candidate health word in RE1-MAP-012 stayed 53 throughout this crossing.
+
+Private tracker screenshot `m-courtyard-first-map.jpg`, SHA256 `57db5065bd8ff6a047c9dcd57f3bac96fc1c96584dcfcbdeb55f5a1fe7aa8335`, shows only the entered Gate outline on Courtyard 1F. Journals `live-online-l.jsonl` and `live-online-m.jsonl` have SHA256 `26016ca74a7e1a0fc72227affe39588450e236d950dea19d048cddf972833277` and `97edf3bc00bb0cafdfd1a5570307c363d404bb0d95eb34b2fbc0c3dd93c631b6`. The new return checkpoint is recorded in RE1-SAVE-005.
+
+Shared audit evidence for RE1-MAP-012/013 and RE1-SOURCE-003 is private `audit_online.py`, SHA256 `c858eddbdf5ee21878584beef875c647f878de19095fd4b476bb57fc81bb38b9`, and `online-audit.json`, SHA256 `15b325c6cc384432dc9ac954dadb452cc8e6cc904857cc60de7172c4989c4ed0`. It checks seventeen exact full publications, two explicitly limited current-detail comparisons and baseline-versus-corrected source identity. The baseline comparison pins `055a94d` so a later commit cannot change its meaning.
+
+Together, RE1-MAP-012/013 add nine rooms across four floor plans. Scoped live map checks now exist on six of eleven plans, including Mansion 1F/2F. Mansion B1, Guardhouse B1 and Laboratory B1/B2/B4 still lack completed live entry checks. Six of eleven is map-area coverage, not a whole-game readiness percentage. No new item pickup, key use, story condition or normal-save persistence was validated here. Guardhouse Entry's unresolved item conditions and door coverage remain concrete unfinished detection work.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; loaded Save, reproduced the Entry failure, resumed a fresh tracker after the shared correction, crossed to Gate and back, checked area titles and entry-only outlines, replayed all six full publications and preserved the return checkpoint. The source fix and external code reviews are recorded separately in RE1-SOURCE-003.
+
+## RE1-LIFECYCLE-001: attract-mode playback records false playthrough visits
+
+Status: Confirmed reproduced tracking defect in the named sessions; detection fix and mode-bit interpretation remain unimplemented
+Scope: SLUS-00551 executable identity in RE1-SAVE-005, title-screen attract playback after the Laboratory death and during a later menu setup
+Environment: RE1-SAVE-005's isolated DuckStation and production tracker at `055a94d`, native title/demo observation, read-only GDB and live journals
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: native demo observation, journaled publications and captured demo RAM with pinned executable signatures
+Claim: the current tracker accepts attract-mode rooms as ordinary visited playthrough rooms. A game identity/source match alone does not distinguish player gameplay from demo playback.
+
+After Chris's Laboratory death, the native title sequence entered demo playback. `live-online-i.jsonl` recorded `00-07` at 22:01:06 UTC, later camera region `mansion1f:1D`, and `01-07` at 22:02:39. Capture `i-floor-4` at 22:02:45, SHA256 `ce0bee2f1914af521dfc76e026558947cd5037cac2c6cc0fc67870564c684fd7`, publishes `01-07` as cleared and visited with zero items. A fresh tracker replay verifies its current identity/detail only; prior demo history was not fully captured. The raw little-endian u32 at PS1 virtual `0x800C3000` is `0x40000000` in that capture. This single value is a candidate discriminator, not a confirmed demo mask.
+
+A separate menu/setup session `live-online-k.jsonl` recorded another demo `00-07` publication at 22:13:29 UTC, with native demo animation observed. No second RAM capture was taken there. All demo entries are excluded from new gameplay room coverage. Their retained history is why `i-floor-5` uses only a current-detail replay in RE1-MAP-012.
+
+Reproduction: start a tracker, reach the title screen after gameplay, allow attract playback to begin and compare native demo control with the journal's Display and region visits. A future fix must distinguish playable state across fresh boot, menus, death, demo, normal load and savestate restore before suppressing visits. Do not guess the discriminator from this one word or clear genuine visits as a workaround.
+
+Limits: no production lifecycle gating was added. Title/death behavior, all demo routes and the relevant mode-bit semantics require controlled comparison. This defect is separate from the source relocation correction.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; observed demo playback twice, preserved its journal/capture evidence, reproduced the captured current publication and excluded false visits from coverage. Manually reviewed the final documentation and passed `git diff --check`; no Markdown formatter/linter is configured. This research-only continuation adds no implementation beyond RE1-SOURCE-003.
