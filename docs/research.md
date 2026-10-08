@@ -3957,3 +3957,63 @@ Limits: no production lifecycle gating was added. Title/death behavior, all demo
 History:
 
 - 2026-10-08; Codex root, GPT-6.1 Sol; observed demo playback twice, preserved its journal/capture evidence, reproduced the captured current publication and excluded false visits from coverage. Manually reviewed the final documentation and passed `git diff --check`; no Markdown formatter/linter is configured. This research-only continuation adds no implementation beyond RE1-SOURCE-003.
+
+## RE1-CHEAT-003: temporary health lock for isolated map validation
+
+Status: Confirmed observed health write in this setup; combat and poison survival remain untested
+Scope: SLUS-00551 executable identity in RE1-SAVE-005; Chris, private Guardhouse checkpoint `m-guardhouse-return.sav`
+Environment: isolated DuckStation 0.1-11894-gc66b2694d, commit `c66b2694da65cece8886ed3d4a069098831f8358`; RetroAchievements disabled and not logged in; native cheat editor, ordinary controls and read-only GDB
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: user-authorized test patch, earlier health leads RE1-CHEAT-001/RE1-MAP-012, native enablement and captured RAM comparison
+Claim: the custom GameShark code `800C51AC 008C`, activated at frame end, holds the little-endian u16 at PS1 virtual `0x800C51AC`, RAM offset `0xC51AC`, at 140 during the recorded Guardhouse route. This is a test patch, not a new production profile field or proof of general invincibility.
+
+The first unpatched attempt entered Room 001 `03-01` and then died before reaching B1. `n-room001-settled.bin`, SHA256 `711dfe0c4bc4d5180d8ab7a697825c6f29d3ba3d31d8291e796dd4bc2568329c`, contains the health word 65529; the native Capcom/title sequence followed. This attempt adds no new floor-plan coverage. The subsequent attempt restored the same checkpoint and used a direct route through Passage and Room 002, with the health patch enabled. The patch and changed route are the changed conditions for this retry.
+
+The bundled Invincibility patch `A7038CCA 10402400` was tried first. Its effect was not established, and it was disabled before the custom health lock was enabled. The native editor and emulator log then reported only `Validation health lock` enabled. Private custom file `n2-validation-cheats.cht`, 203 bytes, SHA256 `23a323e04c53d54f1880a986afb2430fc96b381a331dea678894dc31730b3bf9`, records the exact code, description and activation.
+
+At 15:16:17 UTC, `n2-floor-1` reads health 53. After enabling the custom lock, `n2-health-lock-active` at 15:20:46 reads 140. The bytes at PS1 RAM offsets `0xC86B4..0xC8723` are identical in those two captures. Entry still publishes the same three available Blue Herbs and unresolved coverage. All eight captures in RE1-MAP-014 preserve the profile's full 32-byte acquisition bank at PS1 virtual `0x800C86DC`, and all captures after activation read health 140. Each capture still passes the pinned executable identity checks.
+
+No infinite-ammunition patch was enabled, no weapon was fired, and no combat or poison damage was deliberately tested. A frame-end health write does not establish protection from instant-death scripts. The isolated emulator was closed afterward, its global settings restored byte-for-byte from the pre-test backup, and its new cheat/per-game settings archived with private evidence so the patch is no longer enabled by default. The user's normal emulator settings were untouched.
+History:
+
+- 2026-10-08; human user; authorized temporary infinite-health and infinite-ammunition patches to avoid repeated test deaths.
+- 2026-10-08; Codex root, GPT-6.1 Sol; recorded the failed route, configured and observed the scoped health lock, compared captured flags, kept achievements disabled, and restored the temporary setup. No broader health-address validation state was promoted.
+
+## RE1-MAP-014: Guardhouse basement ladder selects its plan and returns
+
+Status: Confirmed for this revision for the named route and exact publications; whole-floor and independent item-rule validation remain incomplete
+Scope: SLUS-00551 executable identity in RE1-SAVE-005; Chris from private `m-guardhouse-return.sav`, rooms `03-00`, `03-05`, `03-06`, `03-0d`
+Environment: RE1-CHEAT-003's isolated emulator and health lock; production tracker at `dc7a360`, native keyboard input, read-only GDB and private browser preview on port 8766
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: natural doors/ladder passage, native basement movement, browser floor-plan observation and exact replay of eight captured publications
+Claim: Entry → Passage → Room 002 → Water Tank Entry → Room 002 automatically selects Guardhouse 1F/B1 on the ladder crossing and return. B1 initially reveals only the entered Water Tank Entry outline, and returning retains all four observed region visits.
+
+Reproduction: restore the private Guardhouse return checkpoint before attaching a fresh tracker. Keep RetroAchievements disabled. Enable the scoped health lock in RE1-CHEAT-003. Walk from Entry through the unlocked Passage door into Room 002. Use its already exposed ladder through the normal interaction prompt, walk away from the ladder in B1, then return and climb back. Do not load a savestate between the entry and return or change position, inventory, story or acquisition flags directly.
+
+| Capture | Room/area | Visible regions | Published result |
+| --- | --- | --- | --- |
+| `n2-floor-1`, `n2-health-lock-active` | `03-00`, Guardhouse 1F | `00` | Incomplete; three Blue Herbs available; coverage unresolved |
+| `n2-floor-2` | `03-05`, Guardhouse 1F | `00,05` | Cleared; three Green Herbs taken; Room 002 exit unlocked |
+| `n2-floor-3` | `03-06`, Guardhouse 1F | `00,05,06` | Incomplete; Shotgun shells available ×7 and Map available; three exits have no lock |
+| `n2-floor-4`, `n2-basement-settled` | `03-0d`, Guardhouse B1 | `0D` | Cleared; two Green Herbs taken; Room 002 and Water Tank exits have no lock |
+| `n2-floor-5`, `n2-return-settled` | `03-06`, Guardhouse 1F | `00,05,06` | Return retains items and visits; the B1 exit now reports its destination visited |
+
+| Capture | UTC time, 2026-10-08 | RAM SHA256 |
+| --- | --- | --- |
+| `n2-floor-1` | 15:16:17 | `cb20c4175bcc0e45e832ef4d970278e67c44dfd80feb2c15a2c97c47b83d3b0d` |
+| `n2-health-lock-active` | 15:20:46 | `9d4041e976f9178cebf471e99bc3018f44fa51031e258fdccbea826df1011260` |
+| `n2-floor-2` | 15:22:52 | `207df0c02b66b0e16f18a1adaca979fc750573e7eac59db26e474eaae610b78b` |
+| `n2-floor-3` | 15:30:02 | `e023f31b3f60bac001d6a902a3c0affa77d0e6541d3073b81d7bb4b6a319ff2b` |
+| `n2-floor-4` | 15:36:10 | `7c1d1f29607cd01253a59ba18090a275265708ed42de0e73b8fa4b121f4d2a2a` |
+| `n2-basement-settled` | 15:36:50 | `7616d4df30a799ea801aa8807cfc7448bbcade9813d1c5a6626d458048ae243c` |
+| `n2-floor-5` | 15:38:00 | `f2fd960521301b0c5ada2c09ffc802fa2ec04d96800b7e433fdd17161e4d0b83` |
+| `n2-return-settled` | 15:38:39 | `1528a3e71f7f3b32b7afd6b6a579b95fe82faac6883c48f46627bc2eaebae6a7` |
+
+Every private RAM capture is 2097152 bytes. `audit_health_route.py`, SHA256 `03d3e5ddf11a03c5837f3187c68761295fbd551dcc05b6be7b9a1f742c865f02`, verifies their hashes, pinned executable signatures, exact live JSON, four region visits, reciprocal ladder visit state and unchanged acquisition bank. Its `health-route-audit.json` has SHA256 `5bf7861d27a86fd34d39254ced01ca5ade35d50e284d33082f1766953ef50e4f`. Journal `live-online-n2.jsonl` has SHA256 `8658cb7ce66293126edc5b4c427f43b5198ea0b3feb8fb760d0a7b3ab8637ad3`.
+
+Private browser image `n2-guardhouse-b1-map.jpg`, SHA256 `256c08e4c5e40f572436067f17476e8073a02c3c6b6fbe2a3bf1fa02a8d20e89`, shows the spatial Water Tank Entry outline alone, its cleared color, two collected herbs and two exits. The native screenshot/movement check showed Chris controllable beside the basement ladder. Private return checkpoint `n2-guardhouse-b1-return.sav` is 1581315 bytes, SHA256 `e15b1c250cdec88bb1abcd417990e931ed9530912eb8a18d68703406772fa6fc`. It contains the health-patched test state and must not be described as an unmodified playthrough save.
+
+This adds three rooms and one new floor plan to RE1-MAP-012/013. Scoped live entry checks now cover seven of eleven floor plans. Mansion B1 and Laboratory B1/B2/B4 remain unvalidated. Seven of eleven describes map-area coverage, not whole-game readiness. Guardhouse Entry's unresolved conditions remain unfinished work. The other Guardhouse B1 rooms, native in-game map comparison, new pickups, unlocks, story changes and normal-save persistence were not tested. A later Laboratory retry did not obtain a valid checkpoint load; no tracker was attached and it adds no coverage.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; entered three additional rooms through native controls, checked B1 movement and browser geometry, completed the ladder return, replayed eight exact publications and preserved the scoped checkpoint. This continuation changes no production tracking code.

@@ -193,6 +193,19 @@ Run `python3 -m pytest -q tests/test_item_interactions.py` for RE1-SCD-021/022. 
 
 Two identical regenerations map 132 commands in 72 source variants to existing byte-comparison rules. The 4,676 paired projections preserve published item/door results against the preceding implementation, with no coverage gains. The unchanged twelve-step captured save/load replay passes, including earlier acquisition reversal and reveal only for entered rooms. These checks perform no new gameplay and do not validate natural item-use puzzles or full-playthrough tracking.
 
+## Guardhouse basement map validation
+
+RE1-MAP-014 records the tested Chris ladder round trip on SLUS-00551:
+
+1. Use the isolated emulator/version in RE1-SAVE-005 and verify RetroAchievements is disabled before loading. Restore the private Guardhouse return checkpoint, then attach a fresh tracker after gameplay resumes.
+2. For this route, enable the temporary frame-end health lock `800C51AC 008C` described in RE1-CHEAT-003. It holds a 16-bit health word at 140; combat and instant-death protection are untested. Record whether the patch is enabled for any repeat.
+3. Walk Entry `03-00` → Passage `03-05` → Room 002 `03-06` through ordinary doors. Expect Guardhouse 1F to reveal only regions `00,05,06`. Room 002 should show Shotgun shells ×7 and Map available, with incomplete completion.
+4. Use Room 002's already exposed ladder through its interaction prompt. Expect Water Tank Entry `03-0d`, Guardhouse B1, to reveal alone and show cleared with two Green Herbs already collected. Move away from the ladder to check character control.
+5. Climb back normally. Expect Guardhouse 1F to retain regions `00,05,06`, Room 002's available items and a visited destination on its B1 exit. Do not load a savestate during the round trip.
+6. Disable the temporary patch after testing. Keep private saves, RAM and screenshots out of Git.
+
+Eight captured publications replay exactly with pinned executable checks and unchanged acquisition flags. This is a map entry/return check using a health patch, not new pickup, story or normal-save persistence validation. Scoped live checks cover seven of eleven plans; Mansion B1 and Laboratory B1/B2/B4 still need entry checks. A Laboratory retry did not reach a valid checkpoint load and is excluded.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:
