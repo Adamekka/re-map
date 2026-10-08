@@ -4310,3 +4310,28 @@ Limits: no destination correction is implemented; no Tea Room shortcut unlock, K
 History:
 
 - 2026-10-09; Codex root, GPT-6.1 Sol; reproduced both wrong targets through native crossings, recorded their effect on visited labels and identified the shared decoder as an investigation lead. No inferred remapping rule was promoted to confirmed.
+
+## RE1-CHEAT-004: bundled Invincibility patch does not match the pinned executable
+
+Status: Rejected for this revision and the named validation setup
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Jill Original, Tea Room `05-04`
+Environment: RE1-MAP-017's isolated DuckStation 0.1-11894-gc66b2694d, session `x`, RetroAchievements disabled, RE1-CHEAT-003 health lock still active
+Authored: 2026-10-09; Codex root; model: GPT-6.1 Sol
+Basis: bundled code inspection, native cheat-list enable/disable, captured RAM and native hunter stagger; pinned emulator source inspection explains the failed comparison
+Claim: enabling the bundled SLUS-00551 Invincibility code did not change its target instruction or remove the hunter stagger that blocked this route. It is not a usable validation patch for this pinned executable.
+
+The app's `Contents/Resources/cheats.zip` entry `SLUS-00551.cht` supplies an EndFrame Gameshark code `A7038CCA 10402400`. Archive SHA256 is `4d1fa520de5d656aa3c08c8bd1106991e0e1774fb2141fdc8ec49ff3119f6c42`; the complete entry's SHA256 is `98b94a2370a0c7abcb731a7d1144f8f0b6d91670708844822fb69bcee6d17419`. No game or cheat archive is added to Git.
+
+Reproduction: after the native Tea Room shortcut refuses passage and repeated hunter attacks block movement, select the bundled Invincibility entry through the isolated emulator's Cheats dialog. Verify its enabled checkbox and per-game configuration, resume the native encounter, then capture RAM. Hunters still interrupt Jill. Disable the entry through the same dialog and verify the per-game configuration contains only the health lock before resetting and normally loading session `y`. The isolated setup was restored after testing as recorded in RE1-MAP-017.
+
+| Capture | Patch state | PS1 RAM word at offset `0x38CC8`, width 4, little endian | RAM SHA256 |
+| --- | --- | --- | --- |
+| `x-tea-blocked` | Not enabled | `0xA422AB00` | `f17fb605231479b8e4fda340de03898fd532f26a03c191c116a05d4b22e8243f` |
+| `x-invincibility-attempt` | Enabled | `0xA422AB00` | `f7bc0e9c8f7348059c44bd632732c1883f96eaa91a6bad23701164c3f3db8b95` |
+
+DuckStation's pinned `ExtConstantWriteIfMatchWithRestore16` execution checks a 16-bit value against the upper half of the code's value and writes its lower half only on a match. See [cheats.cpp, lines 2447–2458](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/cheats.cpp#L2447-L2458) and [the A7 instruction enum](https://github.com/stenzek/duckstation/blob/c66b2694da65cece8886ed3d4a069098831f8358/src/core/cheats_private.h#L92). This code expects `0x1040` at PS1 RAM offset `0x38CCA`, width 2, little endian, before writing `0x2400`. Both captures contain `0xA422` there. The nonmatching value explains the lack of instruction replacement; the native stagger independently shows that the attempted setup did not solve this gameplay blocker.
+
+Limits: the failed code is not evidence for an alternative invincibility address or for other executable revisions. No replacement immunity or ammunition patch was introduced. The working health lock continued to hold captured health at 140 but did not prevent grabs, stagger or poison poses.
+History:
+
+- 2026-10-09; Codex root, GPT-6.1 Sol; tested and disabled the bundled patch, compared its unchanged target word and checked the pinned conditional-write implementation. Rejected this setup and obtained B1 validation through the eastern Mansion route instead.
