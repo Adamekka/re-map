@@ -1607,6 +1607,7 @@ Limits: normalization authorizes source identity, not event execution or item co
 History:
 
 - 2026-10-01; Codex root, GPT-6.1 Sol; extended source metadata/matching to indexed events, inspected relocation stores and added exact corruption regressions. RE1-SOURCE-001 retains its original authorship and item-mutation evidence.
+- 2026-10-08; Codex root, GPT-6.1 Sol; reproduced a Guardhouse source rejection and corrected the formula's arithmetic to unsigned 32-bit addition in RE1-SOURCE-003. The original source inspection remains recorded; unbounded Python addition was insufficient for this loaded table.
 
 
 ## RE1-SELECT-001: complete source choices for supported logical rooms
@@ -3786,3 +3787,41 @@ Limits: no online checkpoint has been loaded through the game's menu, no new are
 History:
 
 - 2026-10-07; Codex root, GPT-6.1 Sol; obtained the public archive, extracted raw card payloads without changing saves, inspected directory labels, verified achievements were disabled before boot, recorded native-control failure and restored temporary settings. Manually reviewed this documentation; no external implementation review applies to this research-only change.
+
+## RE1-SOURCE-003: native event relocation wraps at 32 bits
+
+Status: Confirmed for this revision in the named Guardhouse source; other rooms and event execution retain their existing limits
+Scope: Resident Evil Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Chris, loaded `PSX/STAGEB/ROOMB000.RDT`, logical room `03-00`
+Environment: isolated official DuckStation `0.1-11894-gc66b2694d`, commit `c66b2694da65cece8886ed3d4a069098831f8358`; owned disc, normal Load Game from the public card in RE1-SAVE-004, ordinary controls through computer use, read-only GDB localhost:2345
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: reproduced live failure, pinned executable instruction, unchanged-capture comparison, synthetic regressions and successful natural passage after the correction
+Claim: RE1-SOURCE-002's expected relocation is `(loaded_rdt_base + events_offset + original_u32) & 0xFFFFFFFF`. Python's unbounded addition rejected the game's exact wrapped values. The fix changes only this equality; section bounds, source hashes and all other audited mutations remain mandatory.
+
+Evidence:
+
+- Chris naturally left Guardhouse Save `03-03` and reached Entry `03-00`. The baseline tracker at `055a94d` repeatedly returned `room ID and loaded script identity disagree` while the native character was controllable. Private capture `l-entrance-failure.bin`, 2097152 bytes, SHA256 `3b91816bb53af983d579b08e246b73bce4951873cfe59de794b734e606465d96`, preserves that state.
+- The loaded RDT pointer is `0x80132400`. Its little-endian u32 header fields at base offsets `0x60/0x64/0x68/0x6C` are `0x8017B098`, `0x8017B330`, `0x8017B420`, `0x8017B43C`. These are PS1 virtual addresses. The source init offset/size is `298136/664`, main `298800/240`, events `299040/28`; live init and main bytes match their exact generated SHA256 values.
+- The pinned loader at `0x80044BA4..0x80044BD8` reads nonzero little-endian u32 table entries, adds the event-section base and stores them until the zero sentinel. At `0x80044BC4`, instruction word `0x00431021` is MIPS `addu v0,v0,v1`, with 32-bit register arithmetic. No guest memory was changed to produce this evidence.
+
+| Event-section offset | Original u32 | Loaded u32 | Wraps |
+| --- | --- | --- | --- |
+| 0 | `0x01FFFF10` | `0x8217B330` | no |
+| 4 | `0x2B0E000F` | `0xAB25B42F` | no |
+| 8 | `0x86807FA3` | `0x069833C3` | yes |
+| 12 | `0xFD249483` | `0x7D3C48A3` | yes |
+| 16 | `0x00006000` | `0x80181420` | no |
+
+- A private audit executes the unchanged baseline matcher and corrected matcher against the same capture: baseline rejects source identity; correction selects exactly `ROOMB000.RDT` and publishes `03-00`, incomplete with three available Blue Herbs. The source is matched without permitting arbitrary event-table changes. The owned extracted RDT SHA256 is `ec18a440ed196602b381f70ebaa3800fe055e561b4056c1a6c8f9ecdefb16113`.
+- A fresh live tracker using the correction then followed Guardhouse Entry → Courtyard Gate `02-04` → Guardhouse Entry through ordinary door interactions. RE1-MAP-013 records those captures and the retained visits. This demonstrates improvement over the reproduced baseline failure, not just additional offline opcode coverage.
+- `tests/test_room_cache.py::test_event_source_identity_uses_native_u32_relocation` supplies explicit synthetic normal/wrapping table words. Twelve cases accept only exact relocation and reject unrelocated words, a one-bit wrong pointer and unrelated payload corruption. The final focused command is `python -m pytest -q tests/test_room_cache.py tests/test_tracking_rules.py` using the private Python environment; 74 cases pass. Scoped Ruff lint/format and `git diff --check` pass. No project formatter/linter configuration or Markdown checks exist.
+
+Private evidence is under `/tmp/tasks/re-map/online-saves/`: the failure RAM, adjacent JSON, `audit_online.py`, `online-audit.json` and separate review streams. No RAM, disc data, saves or scripts from the game are committed.
+
+Limits: a relocated table can contain unused or malformed event entries. Exact source identity does not prove those events are executable, reachable or fully understood. Guardhouse Entry still reports unresolved item conditions and incomplete door coverage. This finding does not validate every source, another revision, normal-save persistence, pickups or story conditions.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; captured the live rejection, verified unchanged init/main identity and both wrapping words, checked the pinned `addu`, corrected the shared matcher, compared old/new behavior on identical RAM, and completed the direct review and checks before consulting external models.
+- 2026-10-08; human user; authorized sending the new 41086-byte redacted code/test/numeric-metadata snapshot to Gemini Pro and Flash. Snapshot SHA256 `8293c892678e5dd6df47ef431a72c1cff10949677e3e306ae5a16c36a2518c5b`; no game files, RAM, saves, credentials or personal paths.
+- 2026-10-08; Gemini 3.1 Pro High via agy, conversation `0b974ec0-e726-40ae-b870-745b5b19734f`; reviewed the full fix, regression file and supplied interfaces/contracts, returning "No findings." Process exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool use. It did not run tests or reproduce gameplay.
+- 2026-10-08; Gemini 3.8 Flash High via agy, conversation `22b1db80-cbc8-46a8-a8df-b28e13688ed2`; completed the same supplied-snapshot review, returning "No findings." Process exit zero, final agent response DONE, terminal result SUCCESS, empty stderr and no tool use. It did not run tests or reproduce gameplay.
+- 2026-10-08; Claude Opus 5.5 High via agy; remains unavailable under RE1-EVENT-011's quota exhaustion reported on 2026-10-05, with reset in 110 hours, 53 minutes, 55 seconds. No retry before reset, substitution, review or endorsement.

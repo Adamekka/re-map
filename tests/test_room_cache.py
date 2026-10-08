@@ -226,6 +226,58 @@ def test_source_identity_accepts_only_audited_runtime_mutations(
     assert result.retry == (not accepted)
 
 
+@pytest.mark.parametrize("original_pointer", [8, 0x86807FA3, 0xFD249483])
+@pytest.mark.parametrize(
+    "mutation", ["none", "unrelocated", "wrong-pointer", "payload"]
+)
+def test_event_source_identity_uses_native_u32_relocation(original_pointer, mutation):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    layout = profile.runtime_room_layout
+    ram = bytearray(layout.ram_size)
+    base = layout.ram_base + 0x1000
+    struct.pack_into(
+        "<I", ram, layout.loaded_rdt_pointer_address - layout.ram_base, base
+    )
+    struct.pack_into(
+        "<4I", ram, 0x1060, base + 0x100, base + 0x104, base + 0x108, base + 0x114
+    )
+    original = struct.pack("<3I", original_pointer, 0, 0xAABBCCDD)
+    source = RoomScriptSource(
+        room=RoomId(0, 0),
+        source_rdt="synthetic.RDT",
+        init_offset=0x100,
+        init_size=4,
+        init_sha256=hashlib.sha256(bytes(4)).hexdigest(),
+        main_offset=0x104,
+        main_size=4,
+        main_sha256=hashlib.sha256(bytes(4)).hexdigest(),
+        events_offset=0x108,
+        events_size=12,
+        events_sha256=hashlib.sha256(original).hexdigest(),
+        dependencies=(),
+        item_global_ids=(),
+        cache_complete=False,
+        door_cache_complete=False,
+        mutable_fields=(
+            RoomMutableField("events", 0, 4, "event-pointer", original_pointer),
+        ),
+    )
+    relocated = (base + source.events_offset + original_pointer) & 0xFFFFFFFF
+    if mutation == "unrelocated":
+        relocated = original_pointer
+    elif mutation == "wrong-pointer":
+        relocated ^= 1
+    ram[0x1108:0x1114] = struct.pack("<3I", relocated, 0, 0xAABBCCDD)
+    if mutation == "payload":
+        ram[0x1110] ^= 1
+    result = match_room_source(
+        layout, (source,), source.room, RamReader(ram).read_memory
+    )
+    assert result.ok == (mutation == "none")
+    assert result.retry == (mutation != "none")
+    assert result.sources == ((source,) if mutation == "none" else ())
+
+
 @pytest.mark.parametrize("invalid", ["overlap", "out-of-range", "wrong-kind"])
 def test_mutable_field_invariants_are_enforced_at_construction(invalid):
     profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")

@@ -182,9 +182,10 @@ def match_room_source(
                 break
             if (
                 field.kind == "event-pointer"
-                and value != base + source.events_offset + field.original
+                and value != (base + source.events_offset + field.original) & 0xFFFFFFFF
             ):
                 # The pinned loader relocates every nonzero indexed event entry.
+                # Its 32-bit addition can wrap, including unused table entries.
                 # An unrelocated table means that this source is not ready yet.
                 valid = False
                 break
