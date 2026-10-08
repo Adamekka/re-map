@@ -3960,8 +3960,8 @@ History:
 
 ## RE1-CHEAT-003: temporary health lock for isolated map validation
 
-Status: Confirmed observed health write in this setup; combat and poison survival remain untested
-Scope: SLUS-00551 executable identity in RE1-SAVE-005; Chris, private Guardhouse checkpoint `m-guardhouse-return.sav`
+Status: Confirmed observed health write in this setup and the named Laboratory combat observations; poison and instant-death protection remain untested
+Scope: SLUS-00551 executable identity in RE1-SAVE-005; Chris, private Guardhouse checkpoint `m-guardhouse-return.sav` and Laboratory checkpoints in RE1-MAP-015
 Environment: isolated DuckStation 0.1-11894-gc66b2694d, commit `c66b2694da65cece8886ed3d4a069098831f8358`; RetroAchievements disabled and not logged in; native cheat editor, ordinary controls and read-only GDB
 Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
 Basis: user-authorized test patch, earlier health leads RE1-CHEAT-001/RE1-MAP-012, native enablement and captured RAM comparison
@@ -3973,11 +3973,12 @@ The bundled Invincibility patch `A7038CCA 10402400` was tried first. Its effect 
 
 At 15:16:17 UTC, `n2-floor-1` reads health 53. After enabling the custom lock, `n2-health-lock-active` at 15:20:46 reads 140. The bytes at PS1 RAM offsets `0xC86B4..0xC8723` are identical in those two captures. Entry still publishes the same three available Blue Herbs and unresolved coverage. All eight captures in RE1-MAP-014 preserve the profile's full 32-byte acquisition bank at PS1 virtual `0x800C86DC`, and all captures after activation read health 140. Each capture still passes the pinned executable identity checks.
 
-No infinite-ammunition patch was enabled, no weapon was fired, and no combat or poison damage was deliberately tested. A frame-end health write does not establish protection from instant-death scripts. The isolated emulator was closed afterward, its global settings restored byte-for-byte from the pre-test backup, and its new cheat/per-game settings archived with private evidence so the patch is no longer enabled by default. The user's normal emulator settings were untouched.
+In the initial Guardhouse run, no infinite-ammunition patch was enabled, no weapon was fired, and no combat or poison damage was deliberately tested. A frame-end health write does not establish protection from instant-death scripts. The isolated emulator was closed afterward, its global settings restored byte-for-byte from the pre-test backup, and its new cheat/per-game settings archived with private evidence so the patch is no longer enabled by default. The user's normal emulator settings were untouched.
 History:
 
 - 2026-10-08; human user; authorized temporary infinite-health and infinite-ammunition patches to avoid repeated test deaths.
 - 2026-10-08; Codex root, GPT-6.1 Sol; recorded the failed route, configured and observed the scoped health lock, compared captured flags, kept achievements disabled, and restored the temporary setup. No broader health-address validation state was promoted.
+- 2026-10-08; Codex root, GPT-6.1 Sol; reused only this health lock for RE1-MAP-015. Native zombie and Chimera grabs/strikes occurred, and Chris survived repeated Chimera attacks while movement and firing were interrupted. All thirteen successful-route captures read 140 and preserve their route's acquisition bank. A zombie was killed through ordinary aim/fire input. No ammunition patch was enabled; the alternate Chris inventory showed three Colt Python rounds. This establishes the recorded survival and health values, without establishing immunity to stagger, poison or instant death. Closed the emulator and restored its original settings and absent cheat/per-game files afterward.
 
 ## RE1-MAP-014: Guardhouse basement ladder selects its plan and returns
 
@@ -4017,3 +4018,74 @@ This adds three rooms and one new floor plan to RE1-MAP-012/013. Scoped live ent
 History:
 
 - 2026-10-08; Codex root, GPT-6.1 Sol; entered three additional rooms through native controls, checked B1 movement and browser geometry, completed the ladder return, replayed eight exact publications and preserved the scoped checkpoint. This continuation changes no production tracking code.
+
+## RE1-MAP-015: Laboratory B2 stairs and B1 ladder select their plans and return
+
+Status: Confirmed for this revision for the named crossings, publications and B1 locked-door observation; whole-floor and independent item-rule validation remain incomplete
+Scope: RE1 Director's Cut, NTSC-U, SLUS-00551 executable identity in RE1-SAVE-005; Chris from normal card entry `BASLUS-005513`, then its private B2 checkpoint
+Environment: isolated DuckStation 0.1-11894-gc66b2694d, commit `c66b2694da65cece8886ed3d4a069098831f8358`; production tracker at `ab94cc8`, native controller input, RE1-CHEAT-003 health lock, read-only GDB and private browser preview on port 8766; RetroAchievements disabled
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: normal checkpoint load, natural door/stair/ladder crossings, native movement/lock/map observations, browser floor plans and exact captured-publication replay
+Claim: the O-Room → Stairway → O-Room crossing selects Laboratory B3/B2 correctly. A separate Stairway → Ladder Room → Laboratory Entry → Ladder Room route selects B2/B1 correctly. Each new floor initially reveals only its entered room, and both returns retain the observed visits. Laboratory Entry's exit `04-01` reports locked when the game refuses passage.
+
+The first route loaded public card entry 4 through the game's Load Game menu before attaching a fresh tracker. Save `04-0e` → Elevator Entry `04-0c` → O-Room `04-05` used ordinary doors. Run along the O-Room's outer corridor to its stairs, enter Stairway `04-03`, move on the landing, then descend normally. The second route restored private `r-laboratory-b2.sav` before attaching another fresh tracker. Walk around the Stairway's enclosed landing and central corridor to Ladder Room `04-02`, climb its ladder to Laboratory Entry `04-00`, check the locked gate, and climb back. No savestate was loaded during either round trip. No position, inventory, acquisition or story flags were written directly.
+
+| Capture | Room/area | Visible regions | Published result |
+| --- | --- | --- | --- |
+| `r-floor-1` | `04-0e`, Laboratory B3 | `0E` | Incomplete; Green/Blue Herbs and Ink Ribbon ×3 available, Magnum Rounds taken |
+| `r-floor-2` | `04-0c`, Laboratory B3 | `0C,0E` | Cleared, zero items; five exits have no lock |
+| `r-o-entry` | `04-05`, Laboratory B3 | `05,0C,0E` | Cleared, zero items; five resolved exits |
+| `r-floor-3`, `r-b2-settled` | `04-03`, Laboratory B2 | `03` | Incomplete; MODisk and one Green Herb taken, another Green Herb available; three exits have no lock |
+| `r-floor-4`, `r-return-settled` | `04-05`, Laboratory B3 | `05,0C,0E` | Return retains all four route visits; Stairway exit now reports destination visited |
+| `s-floor-1` | `04-03`, Laboratory B2 | `03` | Fresh tracker after restore; same item/door results as the first route |
+| `s-floor-2` | `04-02`, Laboratory B2 | `02,03` | Cleared, zero items; Stairway and Laboratory Entry exits have no lock |
+| `s-floor-3`, `s-b1-locked` | `04-00`, Laboratory B1 | `00` | Cleared, zero items; exit `04-01` locked, other two exits have no lock |
+| `s-floor-4`, `s-return-settled` | `04-02`, Laboratory B2 | `02,03` | Return retains three route visits; Laboratory Entry exit now reports destination visited |
+
+Native movement changes captured positions from `(19100,16600)` to `(18638,16352)` on the first B2 visit, from `(3500,23100)` to `(3500,21735)` after the B3 return, and from `(5300,11200)` to `(5300,10125)` after the B2 ladder return. These are navigation observations using the existing candidate player-coordinate reads, not new production profile fields. The native B2 map shows the L-shaped Stairway and adjoining rectangular Ladder Room in the same arrangement as the two tracker outlines. This is a qualitative comparison of those entered rooms, not a whole-floor geometry audit.
+
+At the B1 gate, the game displayed "The door is tightly locked." Capture `s-b1-locked` still publishes `04-00 → 04-01` as `LOCKED`, labeled Master Key. The refusal independently checks the locked state; the message does not independently establish the key name. No key use, unlock or post-unlock traversal was tested.
+
+Every private RAM capture is 2097152 bytes. All times below are UTC on 2026-10-08.
+
+| Capture | UTC time | RAM SHA256 |
+| --- | --- | --- |
+| `r-floor-1` | 16:39:57 | `bcbadaf76be700d1b16c4ece3f7fab0f9a542461cd3e8786d4e43d65476b3dbc` |
+| `r-floor-2` | 16:40:34 | `36ce2b395efe333d0357f8f8513cd8b72fec6c2fb88ce84cd084a124dcc57323` |
+| `r-o-entry` | 16:47:32 | `cfe69b6fcc435c3fdc53944d0ae36e85f05751c99d77691356368a7c9fd4247b` |
+| `r-floor-3` | 16:50:27 | `f28898ad5f5c0cc723d22944034b7fc60fa49ebb69586736c6bbab29d89a5666` |
+| `r-b2-settled` | 16:51:30 | `99d80d912482a17f0ff9b34e281f2501a867b6e46c338b42c510fbe814b2544a` |
+| `r-floor-4` | 16:53:03 | `50618a4ee4b811ae1bdea62a52e4a16e59e52dbee82a83b5c8796a60625f78d3` |
+| `r-return-settled` | 16:54:23 | `b46fc7eae96bba6e6dd5d606e49f4b8eb8dfd82592a12f1b04f0cdab563da508` |
+| `s-floor-1` | 16:56:08 | `5df5eb5d485f1c65fe31ead01343e1b82a428a995ea8bd047e241e5a8e1d1ccb` |
+| `s-floor-2` | 17:01:22 | `7061a2d2da318952fcacd36a4cbb3af6ca2dd06dff8774a9f51ed3b14fa71041` |
+| `s-floor-3` | 17:02:23 | `e6db614ddafba300432ffc829e3e63c5d1667f627b9119a1404a75460a04ee84` |
+| `s-b1-locked` | 17:04:09 | `c67409cba2cf5df08cfca840144409418a529ae132e6e97be5f515d097b8395a` |
+| `s-floor-4` | 17:05:20 | `864004874a6bac17ef4686b03bc62609157aa376d2a4d7fb7e72cb464219f660` |
+| `s-return-settled` | 17:06:21 | `49c5569416ad9a552358f4d34cbec99ff193e881592ed815ee438a0d8bfdaba0` |
+
+The private audits verify capture hashes, pinned executable signatures, exact equality with all thirteen full live map publications, entry-only outlines, retained region visits and reciprocal destination visits. Each route preserves all 32 acquisition bytes at PS1 virtual `0x800C86DC`, RAM offset `0xC86DC`. Both routes read the patched u16 health value 140 throughout.
+
+| Private evidence | SHA256 |
+| --- | --- |
+| `audit_laboratory_route.py` | `0f65393a4fd85ec093198803e5bb16e849cdb84ffb4a16a10581dd9610aa7380` |
+| `laboratory-route-audit.json` | `25f613adb24735d2558015897fae35cdaed8f5617b1fa6224be8378ff87eb297` |
+| `audit_laboratory_b1_route.py` | `c7801dd636e546f77181a443bb944ccbd63a18d44a449559a12ead24e07e548e` |
+| `laboratory-b1-route-audit.json` | `8fcaff7bc5758c827f342a24db24c07dc5213561d69b4a54a17f8bf880679deb` |
+| `live-online-r.jsonl` | `dc8ac15fa1f4f245f9a9086b39ff7eee3e2a18ab855cb52e87d248bb1beb94bc` |
+| `live-online-s.jsonl` | `aca687bafe1b22063fa3d884b0b83b510f50eca9153e3f3d8a45a6b4a8cb1be0` |
+| `r-lab-b2-map.jpg` | `755468760f6aa90d553b0efd6ea2256a492e29606ce10707e450f5066367d928` |
+| `r-lab-b3-return-map.jpg` | `553a5c373f1c13c309ccc61d3272886fec40faf7fcc7d910dcef64b0931ad113` |
+| `s-lab-b1-map.jpg` | `c787e1a7ba36b082bf14fafe709cde267d6a69009aa23df3298575218cfcc7de` |
+| `s-lab-b2-return-map.jpg` | `44bcb54321d3764caa6afdc44398a4ed90354e9530257b5c0263b9c439825612` |
+| `s-native-lab-b2.jpg` | `eb2a9c717f2df9b2de6120bc85c7a64dac9618c802aed61dda9ebd1aa06325f8` |
+| `s-native-b1-locked.jpg` | `8843f68312f3b4064f245ffb2ed6bd9e5e343da24d2798ab66614f1ef3b74a7e` |
+
+Private `r-laboratory-b2.sav` is 1473437 bytes, SHA256 `0a81a2ef6bd061621196426165cb847336fd9b48f86bc2c7e402871824058b8e`. Its successful restore and second route were observed. It contains the health-patched test state. Restoring this GDB-paused checkpoint required a read-only GDB resume before the native load completed; do not count this as normal in-game save persistence. The two tracker histories are deliberately separate.
+
+Failed routes/limits: preceding sessions `o`, `p` and `q` from card entry `BASLUS-005511` reached only already checked B3 rooms. Repeated Chimera grabs prevented the stair crossing; holding health at 140 did not prevent stagger. Changing to card entry 4 and sustaining ordinary movement eventually reached B2. Both checkpoints still had Chimeras in O-Room. The B4 elevator attempt from entry 4 displayed "There's no reaction" and did not enter B4. Inactive power is an inference from that message; no power flag or simultaneous blocked-elevator RAM capture was established. None of these failed attempts adds floor coverage. Journals and combat captures remain private under the same evidence directory.
+
+This adds three rooms and two floor plans to the scoped live checks, now nine of eleven plans. Mansion B1 and Laboratory B4 still need completed live entries. Nine of eleven describes map-area coverage, not whole-game readiness. New pickups, story changes, unlock reversals, normal-save persistence and other rooms on these floors remain untested. The isolated emulator was closed, original global settings restored byte-for-byte with SHA256 `c1669f45b60c9cdc8ccce4ec66bc616ddee5b8dff2b46e7d299d1fc148250ea3`, and temporary cheat/per-game settings archived so their originally absent files remain absent. The private preview was closed.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; completed both native round trips, observed the B1 lock refusal and B2 native map, replayed thirteen full publications, preserved the private checkpoint, recorded failed attempts and restored the temporary setup. This continuation changes no production tracking code.

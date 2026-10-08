@@ -206,6 +206,20 @@ RE1-MAP-014 records the tested Chris ladder round trip on SLUS-00551:
 
 Eight captured publications replay exactly with pinned executable checks and unchanged acquisition flags. This is a map entry/return check using a health patch, not new pickup, story or normal-save persistence validation. Scoped live checks cover seven of eleven plans; Mansion B1 and Laboratory B1/B2/B4 still need entry checks. A Laboratory retry did not reach a valid checkpoint load and is excluded.
 
+## Laboratory B2 and B1 map validation
+
+RE1-MAP-015 records two Chris round trips on SLUS-00551, using the emulator and temporary health lock in RE1-CHEAT-003:
+
+1. Verify RetroAchievements is disabled before loading. Load public card entry `BASLUS-005513` through Load Game, then attach a fresh tracker after character control returns.
+2. Walk Save `04-0e` → Elevator Entry `04-0c` → O-Room `04-05` → Stairway `04-03`. Expect Laboratory B3 to reveal `0E,0C,05`, then Laboratory B2 to reveal only `03`. Stairway should show MODisk and one Green Herb taken, another Green Herb remaining, and incomplete completion.
+3. Move on the stair landing, then descend normally to O-Room. Expect B3 to retain its three outlines and the Stairway exit to report its destination visited. Keep one tracker throughout this round trip.
+4. For the separate B1 route, restore the private B2 checkpoint recorded in RE1-MAP-015 before attaching another fresh tracker. That checkpoint was saved while GDB-paused; resume it through GDB if the native load waits. Walk Stairway → Ladder Room `04-02` → Laboratory Entry `04-00` using the normal door and ladder prompt.
+5. Expect B2 to reveal only `03,02`, then B1 to reveal only `00`. Ladder Room and Laboratory Entry should report cleared with zero items. At Entry's exit `04-01`, expect locked; normal interaction should produce the game's tightly locked message. This checks the lock state, not the required key's identity or an unlock.
+6. Climb back normally and move away from the ladder. Expect B2 to retain both outlines and Ladder Room's B1 exit to report its destination visited. Do not restore a savestate during either round trip.
+7. Close the isolated emulator and restore its temporary settings after testing. Keep RAM, saves, journals and screenshots out of Git.
+
+All thirteen captured publications replay exactly with pinned executable checks and unchanged acquisition flags within each route. These checks add Laboratory B2/B1 and three rooms, bringing scoped live map entry coverage to nine of eleven plans. Mansion B1 and Laboratory B4 remain unvalidated. The tested B4 elevator refused operation; no power flag was established. Repeated Chimera attacks show that the health lock does not prevent stagger. New pickups, story changes, unlocks and normal-save persistence were not tested.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:
