@@ -4214,3 +4214,99 @@ This adds Laboratory B4 to completed live entry/return checks: ten of eleven flo
 History:
 
 - 2026-10-08; Codex root, GPT-6.1 Sol; completed the native route, checked entry-only B4 expansion and B3 return, recorded the Battery and power outcomes under separate claim IDs, replayed 31 full publications with the stated ordering normalization, preserved the private checkpoint and restored the isolated setup. No production tracking code changed.
+
+## RE1-MAP-017: Mansion B1 entry, four outlined regions and stairway return
+
+Status: Confirmed for this revision for the named floor transitions, entry-only outlines and retained completion publications; door destinations have the defect recorded in RE1-DOORS-009
+Scope: RE1 Director's Cut NTSC-U SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`, Jill Original, public card entry 3 `BASLUS-005512`; Courtyard, returned Mansion and Mansion B1
+Environment: isolated DuckStation 0.1-11894-gc66b2694d, production tracker at `fd0294a`, ordinary controls, read-only GDB and private browser preview on port 8766; RetroAchievements disabled; RE1-CHEAT-003 health lock
+Authored: 2026-10-09; Codex root; model: GPT-6.1 Sol
+Basis: normal card load, native rope/ladder/door/stair interactions, browser observations and captured-publication replay with journal-derived visit history
+Claim: native entry reveals only Underground Passage 1 on Mansion B1. Entering Passage 2, Kitchen and the basement landing adds each outline separately. Ascending and descending the Elevator Stairway switches between Mansion 1F and B1 while retaining all four basement outlines and Passage 2's two remaining Green Herbs.
+
+Reproduction: with achievements disabled, load RE1-SAVE-004's public card entry 3 through the game's Load Game menu. Attach a fresh tracker after Jill is controllable. Session `y` follows `02-0e → 02-0d → 02-0c → 02-0b → 02-07 → 02-02 → 02-00 → 05-1b → 05-1a → 05-0a → 05-0b → 06-07 → 06-0b → 06-0c`. Use the native rope prompt, walk the lower Lesson Room passage, then confirm its ladder prompt. The rope's destination remains room `06-0c` but camera 4 selects Mansion 1F region `1F`; it is not yet Mansion B1. The ladder enters `06-1a`. Walk through `06-1b` and `06-1c`, trigger the Kitchen exit's native zombie event, clear the blocker through ordinary shotgun controls and enter `05-10`. Ascend the stairs, descend again and cross back into the Kitchen. Keep the same tracker throughout this route. No save or savestate was loaded during session `y`; no position, inventory, acquisition, story or enemy flags were written directly. The saved setup already has the Lesson Room access and rope available.
+
+| Capture | Room/floor | Visible regions | Observed publication |
+| --- | --- | --- | --- |
+| `y-floor-12` | `06-07`, Mansion 2F | `07` | Entered East Stairway only |
+| `y-floor-13` | `06-0b`, Mansion 2F | `07,0B` | Entry cleared; Green Herb taken; Lesson Room door unlocked |
+| `y-floor-14` | `06-0c`, Mansion 2F | `07,0B,0C` | Lesson Room cleared; Radio taken |
+| `y-lesson-downstairs` | `06-0c`, Mansion 1F | `0A,0B,1A,1B,1F` | Native rope descent selects the lower passage without revealing B1 |
+| `y-floor-15` | `06-1a`, Mansion B1 | `1A` | Passage 1 cleared; Shotgun shells taken; adjacent rooms hidden |
+| `y-floor-16` | `06-1b`, Mansion B1 | `1A,1B` | Passage 2 incomplete; two Green Herbs available, quantity 1 each |
+| `y-floor-17` | `06-1c`, Mansion B1 | `1A,1B,1C` | Kitchen cleared with zero registered collectibles; stairway exit unavailable |
+| `y-kitchen-exit-event` | `06-1c`, Mansion B1 | `1A,1B,1C` | Kitchen exit now open after the native event; destination label is wrong |
+| `y-floor-18` | `05-10`, Mansion B1 | `1A,1B,1C,1E` | Basement landing revealed; Tea Room shortcut can unlock from this side |
+| `y-stairway-upper` | `05-10`, Mansion 1F | `0A,0B,10,1A,1B,1F` | Native ascent adds the upstairs outline and retains previous 1F exploration |
+| `y-basement-return` | `05-10`, Mansion B1 | `1A,1B,1C,1E` | Native descent retains all four basement outlines and both available herbs |
+| `y-floor-19`, `y-kitchen-return-settled` | `06-1c`, Mansion B1 | `1A,1B,1C,1E` | Reverse Kitchen crossing and settled control retain the four outlines and item states |
+
+Browser observations show original spatial room outlines and wall door markers. The first B1 screenshot contains only Passage 1. Subsequent screenshots contain all four entered regions, with Passage 2 incomplete and the other three cleared. The entire floor was not revealed at startup or on an in-game map pickup. No whole-floor comparison against the game's native map geometry was performed.
+
+The private audit checks 46 full RAM captures across separate `w`, `x` and `y` trackers. Each capture is 2097152 bytes, passes its SHA256 and pinned executable checks, and reproduces its complete recorded map payload exactly. This replay supplies region visits explicitly observed in each live journal before each capture, including camera-only visits omitted by the sparse RAM capture sequence. It is a replay of RAM plus observed journal history, not a claim that sparse RAM captures alone reconstruct every visit. The audit adds no fabricated RAM or cached item/door state. It checks B1 expansion, the upstairs/downstairs switch, two retained herbs, the unchanged 32-byte acquisition bank across session `y`, and both wrong door targets in RE1-DOORS-009.
+
+The earlier `w` route reached Dining Room through the western Mansion rooms. Its capture process ended on an agent-issued `resume` command while already running; this private-tool assertion is not a production tracker failure. Fresh tracker `x` continued to Tea Room, where the native door refused passage and the tracker reported the basement shortcut locked from the other side. Repeated hunter stagger blocked that approach. Session `y` reloaded the same normal card entry and used the eastern stairs instead. These failed approaches are not additional B1 validation. The initially empty no-TTY `w` startup journal is excluded from the audit.
+
+Selected RAM captures below use UTC on 2026-10-08; the authoring date above uses the user's Europe/Prague date. The private audit lists all 46 captures.
+
+| Capture | UTC time | RAM SHA256 |
+| --- | --- | --- |
+| `y-floor-15` | 22:23:57 | `60628a9f2d0686d2f449d4c879d17cf7dd5cc42f897d82faf3084e3e5dd08c52` |
+| `y-floor-16` | 22:25:44 | `12faee4c1265972e48bbbe715c133b211a27df5b9962c18e3e11eff282f1411a` |
+| `y-floor-17` | 22:28:18 | `4f1d6befd0bbc5f79a1d299b09fdad1f092b42d7d7e22052da0ef1c9f893c1ee` |
+| `y-kitchen-exit-event` | 22:30:44 | `43b9e8535bde95eb2bd18e1c05627a5a9e97ddd157c371106d127bd5caf9713e` |
+| `y-floor-18` | 22:34:01 | `c7d5a94012917779ec3ff216724c82df09e6e6d70ae7ad8931a44b4e671e1366` |
+| `y-stairway-upper` | 22:36:43 | `d3b4251ed76ce3e663f90d2fce012ffe2d656c7833f3e853491d6143b2cde0e6` |
+| `y-basement-return` | 22:38:17 | `9733bbcd9df16a6fe7a82721a6e4bce5532a7d0c1e392741acd3eceb338c58b2` |
+| `y-floor-19` | 22:39:22 | `41c7a2b7ef92696536de2b1bbd17cd94f38219edcb7966ffcfb7a4f9fe1a995b` |
+| `y-kitchen-return-settled` | 22:40:39 | `b1e6b3665d29feaf412d85c78cdeb66d1fd1050ecc1c85a347d876c4ded15507` |
+
+| Private evidence under `/tmp/tasks/re-map/online-saves` | SHA256 |
+| --- | --- |
+| `audit_mansion_basement.py` | `d8ef6e1396d79a7ab2be30d8e64df458685a2c3933b6498f577a67b54ed8e9f1` |
+| `mansion-basement-audit.json` | `eee54302f0c6b0b568ea3f957fb7111d2a680d2d6799518363aab8219846ce82` |
+| `live-online-w.jsonl` | `29ffc28ea39137e5274c6ffada953c7ea345a8467886e7f7305ce7cb6438d704` |
+| `live-online-x.jsonl` | `80de587b094bbaee41c1495789594ac3986bbe047750f527938f20bbec768fff` |
+| `live-online-y.jsonl` | `a98e42a622ee7ecd814142e972c6f86a4478fd23d5115aff2ad7949152a2bda5` |
+| `y-basement-first.png` | `b9073a146c5414cb80421ec05cd477094c5b3e5029a215a6c57e5ab131f849c2` |
+| `y-basement-four-rooms.png`, `y-basement-return-map.png` | `fb956f215dc1b5b69d48d178fa78881fb54678ddee8f48d140e2422d752cd553` |
+| `y-stairway-upper-map.png` | `4b0beb1da22318ca084d780f8f6917164bd23916dfd260a5a7e23eae2e4d7b55` |
+| `w-y-validation-settings.ini` | `695a30486f7067dec92c1f340162562f44189290f283264fbb41d161fb92a0f9` |
+| `w-y-validation-cheats.cht` | `23a323e04c53d54f1880a986afb2430fc96b381a331dea678894dc31730b3bf9` |
+| `w-y-validation-gamesettings.ini` | `f8d225066726e91ba5f11a04970ea5c3034c694b69aa969a350f0447ac16835b` |
+| `w-y-cleanup-audit.json` | `72bb9cd42a5fded30cac8df7ea5dfd639285f02a637a3dc7db3b8227b1c9090c` |
+
+Private checkpoints saved through DuckStation's Save To File action are `y-mansion-approach.sav`, 1575313 bytes, SHA256 `4e2a639362dcff7fff634f6c9251bd2c36c353a8d2660035159f99b4b9a0bab1`, and `y-basement-return.sav`, 1647218 bytes, SHA256 `0a2fbf70c5b8953fce6ae45bba12eab3ea65c2692e9be46b64da8d5e42a9bd8a`. Both contain the health-patched validation state and have not been restored. They are not evidence of normal-save persistence.
+
+Mansion B1 completes scoped live entry checks for all eleven supported floor plans. This measures map-area entry coverage, not whole-game readiness. Wrong door destinations, other unresolved outcomes, normal-save persistence, earlier-load reversals and additional scenarios remain. The Kitchen's empty registered item list is an observed publication for this save, not a general proof of every Kitchen scenario. No new pickups or shortcut unlocks were tested. Transitions sometimes produced retry/read-failure publications before recovering. All captured health words read 140; the patch does not prevent poison poses, grabs or stagger.
+
+The private emulator and browser preview were closed. Global settings were restored byte-for-byte to SHA256 `c1669f45b60c9cdc8ccce4ec66bc616ddee5b8dff2b46e7d299d1fc148250ea3`, and temporary cheat/per-game files were archived then removed. Original card `SCEVMC1.mcd` retains SHA256 `21bc80edfdcbdae68d2341256930413306997a3c46765ae9e20b8009b125db7a`. Working card `w-working-card.mcd` has SHA256 `478262def290e9c37bd6bcb7e6a2e75f94f394783e826715c36bee4bddac8a8e`; all fifteen save blocks at offsets `8192..131071` are byte-identical to the original. The user's normal emulator was untouched.
+History:
+
+- 2026-10-09; Codex root, GPT-6.1 Sol; ran the native B1 route and stairway return, recorded four entered outlines and retained herbs, audited 46 publications with actual journal history, preserved two private checkpoints and restored the isolated setup. No production tracking code changed.
+
+## RE1-DOORS-009: returned-Mansion Kitchen exits publish wrong stage IDs
+
+Status: Confirmed for this revision as a reproduced tracking defect; the correction rule and its source remain unresolved
+Scope: RE1-MAP-017's Jill Original setup, Kitchen `06-1c` and Elevator Stairway `05-10`
+Environment: RE1-MAP-017
+Authored: 2026-10-09; Codex root; model: GPT-6.1 Sol
+Basis: full captured map publications and native door crossings in both directions
+Claim: the shared door decoder's published stage IDs disagree with the native Kitchen/Stairway destinations. These aliases also keep already-entered destinations labeled unexplored and prevent a reliable same-floor connection.
+
+| Evidence | Published target | Native result |
+| --- | --- | --- |
+| Kitchen `y-floor-17` | `00-10`, blocked, destination unvisited | Exit interaction starts a native zombie event |
+| Kitchen `y-kitchen-exit-event` | `00-10`, open, destination unvisited | Ordinary movement and confirmation cross into `05-10`, `y-floor-18` |
+| Stairway `y-basement-return` | `01-1c`, open, destination unvisited | Ordinary confirmation crosses into `06-1c`, `y-floor-19` |
+| Kitchen `y-kitchen-return-settled` | `00-10`, open, destination still unvisited | `05-10` was already entered and its B1/1F outlines remain visited |
+
+The access-state change itself follows the native Kitchen event: blocked before the event, open afterward, and a successful crossing without forced flags. The observed story-byte difference between `y-floor-17` and `y-kitchen-exit-event` is PS1 RAM offset `0xC8705`, width 1, `0xE0 → 0xF0`. This comparison does not isolate that bit as the general destination-remapping rule or establish normal-save persistence. The elevator's other published target `06-00` has not been crossed in this experiment and is not validated.
+
+The current decoder in `src/games/re1/door_state.py` uses `source.stage` for an encoded zero and `encoded_stage - 1` otherwise. Source inspection identifies this calculation as the correction lead, not proof of a universal `+5` rule. A shared revision-specific rule must be established from the executable and checked against both native crossings and earlier-stage routes before changing it. Do not repair these two doors with named-room exceptions or guess destination visits from floor membership.
+
+RE1-MAP-017 lists capture, journal, audit and screenshot hashes. The private audit explicitly asserts the wrong published targets and the different native arrival IDs, preserving the defect instead of changing the saved payloads to make them pass.
+Limits: no destination correction is implemented; no Tea Room shortcut unlock, Kitchen elevator crossing, normal-save persistence or other scenario was tested.
+History:
+
+- 2026-10-09; Codex root, GPT-6.1 Sol; reproduced both wrong targets through native crossings, recorded their effect on visited labels and identified the shared decoder as an investigation lead. No inferred remapping rule was promoted to confirmed.

@@ -234,6 +234,20 @@ RE1-PICKUP-006, RE1-DOORS-008 and RE1-MAP-016 record this Jill route on SLUS-005
 
 All 31 captured publications replay with the pinned executable checks and identical payload content after normalizing only door-array ordering; 15 also match without normalization. The final acquisition bank matches the post-Battery capture, and both power bits remain set. B4 completes scoped live entry checks for ten of eleven plans; Mansion B1 remains unvalidated. This is map-area coverage, not a whole-game readiness percentage. Battery reentry, normal in-game save persistence, earlier pickup/power reversals and other scenarios were not tested. The public card already supplied infinite Colt Python ammunition; no ammunition patch was added. The health lock does not prevent grabs or stagger.
 
+## Mansion B1 and Elevator Stairway return
+
+RE1-MAP-017 and RE1-DOORS-009 record this Jill Original route on SLUS-00551:
+
+1. Disable RetroAchievements before loading public card entry 3, `BASLUS-005512`, through Load Game. Attach a fresh tracker after Jill is controllable. Use the RE1-CHEAT-003 temporary health lock only in the isolated validation copy.
+2. Walk Courtyard B1 to the garden ladder and lift, then Mansion Store Room → Roofed Passage → Back Passage → East Stairway 1F/2F → Lesson Entry → Lesson Room. The successful session uses this eastern route; Tea Room's basement shortcut is locked from its other side.
+3. Confirm the native rope descent. Expect room `06-0c` to select Mansion 1F region `1F`, with B1 still hidden. Walk the lower passage and confirm its ladder prompt. Expect `06-1a`, Mansion B1, with only region `1A` revealed.
+4. Enter `06-1b` and `06-1c` normally. Expect B1 regions `1A,1B`, then `1A,1B,1C`. Passage 2 is incomplete with two available Green Herbs, quantity 1 each. Leave them untouched. Passage 1 reports its Shotgun shells taken; Kitchen reports zero registered collectibles in this save.
+5. Interact with the Kitchen stairway exit. Let its native zombie event finish, clear the blocker through ordinary controls and cross the opened door. Expect `05-10`, basement region `1E`, and four visible B1 regions. Record the current defect: Kitchen publishes target `00-10` despite this native arrival.
+6. Ascend and descend the Elevator Stairway normally. Expect Mansion 1F region `10`, then Mansion B1 region `1E`. The return retains all four B1 outlines and Passage 2's two herbs. Cross back into Kitchen and move under player control. Record the reverse defect: Stairway publishes `01-1c`, but the game enters `06-1c`.
+7. Close the isolated emulator and private preview, restore its settings and remove archived temporary cheat/per-game files. Keep the RAM captures, cards, checkpoints and screenshots out of Git.
+
+The private audit verifies 46 captured publications across three separate tracker sessions, using each RAM capture plus visit history explicitly observed in its live journal. All 46 complete payloads match exactly. Camera-only journal visits are supplied where sparse captures omit them; this is not RAM-only reconstruction of visit history. The successful session's 32-byte acquisition bank is unchanged. All eleven floor plans now have scoped live entry coverage, and B1's four outlined regions were entered. This does not establish whole-game readiness: wrong door destinations and broader item/door/save-load outcomes remain. No new pickup, shortcut unlock or normal-save persistence was tested in this route.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:
