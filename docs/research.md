@@ -4089,3 +4089,128 @@ This adds three rooms and two floor plans to the scoped live checks, now nine of
 History:
 
 - 2026-10-08; Codex root, GPT-6.1 Sol; completed both native round trips, observed the B1 lock refusal and B2 native map, replayed thirteen full publications, preserved the private checkpoint, recorded failed attempts and restored the temporary setup. This continuation changes no production tracking code.
+
+## RE1-PICKUP-006: Power Room Battery clears its calculated acquisition bit
+
+Status: Confirmed for this revision for the named pickup and subsequent room exits; reentry, earlier-load reversal and normal-save persistence remain untested
+Scope: RE1 Director's Cut, NTSC-U, SLUS-00551 executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; Jill from public card entry `BASLUS-005514` in RE1-SAVE-005 and its private Power Room checkpoint
+Environment: isolated DuckStation 0.1-11894-gc66b2694d, commit `c66b2694da65cece8886ed3d4a069098831f8358`; production tracker at `631ea2f`, ordinary controls, RE1-CHEAT-003 health lock and read-only GDB; RetroAchievements disabled with no login credentials
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: native pickup prompt, controlled RAM comparison, live item/completion publication and captured-state replay
+Claim: taking the Battery in Power Room `04-11` changes the existing tracker from incomplete, 0/1 collected, to cleared, 1/1 collected. The generic GlobalId calculation selects PS1 virtual `0x800C86E7`, RAM offset `0xC86E7`, u8 mask `0x04`, cleared when acquired. This observation validates another application of the shared acquisition calculation, without adding an item-specific rule.
+
+The runtime source is `PSX/STAGEC/ROOMC111.RDT`: pickup slot 4, item type 39, quantity 1 and GlobalId 69. From the existing acquisition bank at RAM `0xC86DC`, byte offset `4 * (69 // 32) + 3 - (69 % 32) // 8` is 11; mask `0x80 >> (69 % 8)` is `0x04`. The native prompt asked whether to take the Battery. Before confirming Yes, `v-battery-prompt` still reports it available. `v-battery-after` reports it taken with complete item coverage. Only byte `0xC86E7` changes in the 32-byte acquisition bank, from `0xEF` to `0xEB`. An initial private lead at `0xC86E4` mask `0x20` was contradicted by this comparison and is rejected.
+
+| Private capture | UTC, 2026-10-08 | RAM SHA256 |
+| --- | --- | --- |
+| `v-battery-before` | 18:00:09 | `9b4d6294a5b0fc58740a1987e1d18bb35d1c527cf20e96136ecf7e6919f69f50` |
+| `v-battery-prompt` | 18:01:01 | `6182a3ec62b71d39ee6dab9900c1daf1ea551cae0af73108dd4d501e069fb67b` |
+| `v-battery-after` | 18:01:31 | `fe6930c7bfb251b9d837700917b5ef386106961feba12471c5a9f4cb45d85342` |
+| `v-floor-4` | 18:19:32 | `548067bc9b7bb661593e169cab9ba758a46c75c439cfc2f0c2fb4abce253cfd9` |
+
+Walked out through Power Maze 2 `04-10` and Power Maze 1 `04-0f` to Elevator Entry `04-0c`. The acquired bit remains cleared, and the cached Power Room outline still reports Battery taken and cleared. This checks room exits and ongoing state reevaluation; it is not a Power Room reentry test. No savestate was loaded between the pickup and these exits. Private captures are 2097152 bytes each under `/tmp/tasks/re-map/online-saves`; the shared route audit is recorded in RE1-MAP-016.
+
+Setup limits: session `u` loaded the public card through the game's Load Game menu, then saved private `u-powerroom-start.sav` before the pickup. Session `v` restored that checkpoint through DuckStation's official state-file option before attaching a fresh tracker. The two visit histories are separate. The checkpoint is 1618148 bytes, SHA256 `5e44a748480768ffa9f80bbcf4abf33b954d6960f09aab08c4a87526d95acbeb`. It contains the health-patched test state. Before-to-before restoration does not establish acquisition reversal. The card's existing Colt Python inventory displayed infinite ammunition; no ammunition patch was added. Combat used ordinary aim/fire input. The health lock preserves survival but does not prevent Chimera grabs or stagger.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; observed the native prompt and pickup, compared the acquisition bank, replayed the publications, rejected the conflicting byte lead and checked retention through three room exits. Normal-save persistence and earlier-load reversal were not promoted.
+
+## RE1-DOORS-008: Laboratory elevator refusal and two native power switches
+
+Status: Confirmed for this revision for the named refusal, switch actions and subsequent B4 passage; earlier-load reversal and normal-save persistence remain untested
+Scope: RE1-PICKUP-006's Jill setup, Power Room `04-11`, Power Maze 1 `04-0f` and Elevator Entry `04-0c`
+Environment: RE1-PICKUP-006's isolated emulator, production tracker, health lock and disabled achievements
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: native prompt/refusal observations, before/after RAM comparisons and natural elevator passage
+Claim: the elevator remains unavailable after the Power Room's elevator-power switch alone. The native refusal agrees with the tracker's blocked exit. A second power switch and the separate elevator-call interaction lead naturally through `04-15` to B4 `04-14`. These actions validate the existing shared script/door interpretation for this route; they add no named-puzzle exception.
+
+In Power Room, ordinary interaction with slot 1 displayed that elevator power was off and asked whether to connect it. Confirming Yes changed PS1 RAM byte `0xC8706` from `0xC0` to `0xC4`; this is PS1 virtual `0x800C8706`, u8 mask `0x04`. This was the only change in the compared story range `0xC8680..0xC871F`. After returning through both mazes to Elevator Entry, the tracker still published `04-0c → 04-15` as `BLOCKED` with complete door coverage. Native interaction displayed "There's no reaction. It has no power." This supplies the simultaneous refusal/blocked-state evidence missing from RE1-MAP-015's earlier attempt.
+
+Power Maze 1's slot 2 panel displayed that some areas lacked power and asked whether to activate them. Confirming Yes changed the same byte from `0xC4` to `0xC6`, setting u8 mask `0x02`; again it was the sole change in that compared story range. Returning to Elevator Entry still showed the passage blocked until the separate slot 5 call panel was used. Confirming its switch prompt changed RAM `0xC8703` from `0xBC` to `0xFC` and `0xC870F` from `0x52` to `0x5A`. These are u8 masks `0x40` and `0x08` at the corresponding `0x80000000` virtual aliases. The call event checks the two power conditions and writes the first bit. The second changed bit is recorded as an observation without promoting a persistent meaning.
+
+The call starts Barry's cutscene and subsequently crosses `04-0c → 04-15 → 04-14` without direct position or flag writes. The immediate `v-call-panel-after` publication still reports blocked with unresolved door coverage while that event is active; it must not be described as an already-open final publication. After the completed B4 return, `v-floor-9` and `v-b3-return-settled` both publish this elevator exit as open with its destination visited and complete door coverage. Both power bits remain set. RE1-MAP-016 records these floor publications and the intervening route. The Power Room's other transformer text was passive, not another required power activation in this experiment.
+
+| Private capture | UTC, 2026-10-08 | RAM SHA256 |
+| --- | --- | --- |
+| `v-elevator-power-before` | 18:07:30 | `ef0dd422b20431588f9e8b9fba48328d7b4e97914aee41adc3d7da290bb9ec3c` |
+| `v-elevator-power-after` | 18:08:03 | `006dc644b281fd64ce68f86e4b2db8867ffa8dd8d79b57592692dbf271742873` |
+| `v-elevator-refusal` | 18:21:26 | `1e6699a5e564eb3de2dd4d48bd955e2666dfbc9ac47a79a44e09b21e677cde3a` |
+| `v-maze-power-before` | 18:28:25 | `59406413f2eb3bccbda219bf15a05ee166b4f61c1e0340993baf6bdd65d789de` |
+| `v-maze-power-after` | 18:29:05 | `65516c4ac56980cab3964b91e6b4bcd9611e54cfe1b7c3fb903dd0ff787b725d` |
+| `v-call-panel-before` | 18:32:40 | `f31432f469534ad7cc1438f89ff370c2f6399292cd5998143866868ee2944ea7` |
+| `v-call-panel-after` | 18:33:08 | `fc9bbd8f862522bd5fc8fab9f93035e2594b13e996fc5796e89946b82c6ffe73` |
+
+The compared range is bounded; these statements do not claim that no other RAM changed. Neither normal-save persistence nor an earlier-state reversal was tested. No result is generalized to another character, scenario or revision.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; reproduced a simultaneous native no-power refusal and blocked tracker publication, activated both panels through ordinary Yes prompts, compared the bounded story bytes and observed subsequent native passage into B4.
+
+## RE1-MAP-016: Laboratory power route enters B4 and returns with retained state
+
+Status: Confirmed for this revision for the named route, entry-only outlines and return publications; whole-game readiness remains incomplete
+Scope: RE1-PICKUP-006's Jill setup, rooms `04-0e`, `04-0c`, `04-0f`, `04-10`, `04-11`, `04-15`, `04-14`, `04-13`
+Environment: isolated DuckStation 0.1-11894-gc66b2694d; production tracker at `631ea2f`, RE1-CHEAT-003 health lock, ordinary controls, read-only GDB and private browser preview on port 8766; RetroAchievements disabled
+Authored: 2026-10-08; Codex root; model: GPT-6.1 Sol
+Basis: normal card load, native room crossings, pickup/power interactions, native encounter and movement, browser map observations and captured-publication replay
+Claim: the Laboratory route reveals Power Maze 1, Power Maze 2 and Power Room as they are entered, then switches to B4 for the elevator and returns to B3 with visits, collected Battery and open elevator retained. B4 reveals Main Lab Entry first and Main Lab only when the native sequence enters it.
+
+Reproduction: load public card entry 5 (`BASLUS-005514`) through the game's Load Game menu with achievements disabled. Attach a fresh tracker after Jill is controllable. Walk Save → Elevator Entry → Power Maze 1 → Power Maze 2 → Power Room. Session `u` stops at a private checkpoint before the Battery. Restore that checkpoint before attaching a separate fresh tracker for session `v`. Take the Battery and use both power panels and the elevator call as recorded in RE1-PICKUP-006/RE1-DOORS-008. Let the native Barry/Wesker sequence enter Main Lab. Defeat the Tyrant through ordinary aim/fire controls, interact with Barry, walk the opened exit corridor, and let the native return sequence use the elevator. No savestate was restored during session `v`'s pickup, power changes or B4 round trip. No position, inventory, acquisition, story or enemy flags were written directly.
+
+| Capture | Room/floor | Visible regions | Observed publication |
+| --- | --- | --- | --- |
+| `u-floor-1` | `04-0e`, B3 | `0E` | Incomplete; Green/Blue Herbs taken, Flame Rounds ×6 and Ink Ribbon ×3 available |
+| `u-floor-2` | `04-0c`, B3 | `0C,0E` | Cleared, zero items; elevator blocked, four other exits open |
+| `u-floor-3` | `04-0f`, B3 | `0C,0E,0F` | Power Maze 1 cleared, zero items; both exits open |
+| `u-floor-4` | `04-10`, B3 | `0C,0E,0F,10` | Power Maze 2 cleared, zero items; transient incomplete door coverage during entry |
+| `u-floor-5` | `04-11`, B3 | `0C,0E,0F,10,11` | Power Room incomplete; Battery available; maze exit open |
+| `v-floor-1` | `04-11`, B3 | `11` | Fresh tracker after checkpoint restore; Battery still available |
+| `v-floor-6` | `04-15`, B4 | none | Declared unoutlined elevator; B4 selected without revealing its rooms |
+| `v-floor-7` | `04-14`, B4 | `14` | Main Lab Entry cleared, zero items; both exits open; Main Lab still hidden |
+| `v-mainlab-arrival`, `v-mainlab-settled` | `04-13`, B4 | `13,14` | Main Lab cleared, zero items; exit unavailable, including after the encounter |
+| `v-mainlab-after-barry` | `04-13`, B4 | `13,14` | Exit now open, complete door coverage; no active event or registered interaction |
+| `v-floor-8` | `04-14`, B4 | `13,14` | Native exit return retains both B4 outlines |
+| `v-floor-9`, `v-b3-return-settled` | `04-0c`, B3 | `0C,0F,10,11` | Retained four B3 outlines and taken Battery; elevator open with destination visited |
+
+Main Lab's blocked-to-open exit is an observed consequence of the native encounter and Barry interaction, not a new inferred flag address. The native corpse and subsequent movement establish that the encounter was completed. An initial navigation attempt treated the Barry interaction as a terminal lead; the native conversation contradicted that interpretation. Barry's radio pose continued after player control returned, so its appearance alone did not establish an ongoing cutscene. The final B3 capture has no active event or registered interaction and complete door coverage.
+
+The browser observations show original spatial outlines and wall door markers: B4 initially displays the L-shaped Entry alone, adds the adjoining Main Lab on entry, and B3 restores the four explored outlines on return. Private images and their hashes are listed below. No whole-floor native-map geometry comparison was performed. The elevator has no polygon in the supported map metadata; its room ID and floor selection remain available.
+
+The shared private audit replays all 31 RAM captures across separate `u` and `v` trackers, verifies each 2097152-byte capture's SHA256 and pinned executable signatures, and checks every full live map payload. Fifteen payloads match exactly. All 31 match after sorting only the door array by source/target: continuous live polling populated cached doors in a different order from the sparse replay, with otherwise identical content. The audit preserves both counts; it does not claim byte-for-byte equality for all payloads. It also asserts pickup/power byte changes, blocked refusal, B4 entry-only reveal, main-lab exit change, six retained outlined-region visits in session `v`, and the open/visited B3 elevator. The final capture's complete 32-byte acquisition bank matches `v-battery-after`.
+
+Selected route captures below complement the pickup/power tables above. All times are UTC on 2026-10-08. The private audit lists every capture, hash, room, visible region set and replay result.
+
+| Capture | UTC time | RAM SHA256 |
+| --- | --- | --- |
+| `u-floor-3` | 17:26:13 | `9cf7884a86705827e119a53e481906b7c7d9b0958e4dea0bfdcb3689d2990281` |
+| `u-floor-4` | 17:32:47 | `dcef367365274efd40f47197c9312fc66f6d5ff4afae31ea570cbcada28587d3` |
+| `u-floor-5` | 17:34:41 | `c2f9839eb27584897d8b6deabbc8ee5c57ba13871386628cfdfdc35c5a9fcb92` |
+| `v-floor-6` | 18:33:33 | `b438db5044b56f0081e5a903a7ad44b450067591e77145942c7c2ae5ab435341` |
+| `v-floor-7` | 18:35:14 | `5c4b3211d044e0d14c891aae506d4ae47c819ae633a12bd3d56e11d08abd5636` |
+| `v-mainlab-arrival` | 18:48:05 | `3d109ee938564e45115926ab39227575c76dd586f65bd4aa29d91336425bb6b4` |
+| `v-mainlab-settled` | 18:51:05 | `55405f5dfa9a43554084565060897a9667899286ce86d78669c03b11ecee4cb3` |
+| `v-mainlab-after-barry` | 18:58:26 | `81f47872b7e25ba87f3af2dba1678efe04e323790e430463386726a243018532` |
+| `v-floor-8` | 19:02:10 | `35bed9da36b271c6d584ce224fccfa04dd45691c8dec31c2e54937c9f1fe68fe` |
+| `v-floor-9` | 19:03:37 | `b835af73ac5ca806a9c785bdf125cb482958405860ef7f4bee9c82a710f37b3b` |
+| `v-b3-return-settled` | 19:06:26 | `f61a347bf9b30f99a2567cff4f8153f3fe9fa2ba0e6a938339aae219ad0a9460` |
+
+| Private evidence under `/tmp/tasks/re-map/online-saves` | SHA256 |
+| --- | --- |
+| `audit_laboratory_power_route.py` | `a5bfda67726296a594fe8f644c5d52c6f489f9fc61c7b6022ccc10c114ff0fd3` |
+| `laboratory-power-route-audit.json` | `bcb865e4d3f89c3bffe40d832955736d6cc8cb9ba1af12bad20f8aaa1a844615` |
+| `live-online-u.jsonl` | `87d3b9867f47cab3daad6dfe52317a37f12c7265e5947e2c6a2f1e4308e2015f` |
+| `live-online-v.jsonl` | `b7819db5d81e9e776febd31ee7f092adcb4c7f27b1f04bde9f1cb6d6c7127820` |
+| `v-b4-entry-map.png` | `d6c4f4499969859283b1026065ab5c29255bf7711deaa257c13adc31d4044414` |
+| `v-b4-mainlab-map.png` | `dea96b5f47686086e84b458877d80808728a7d13806f65ca47c6f21445d5eb1e` |
+| `v-b3-return-map.png` | `52ded19cd46dc307b1fcfc96685eb99189af02872486e161f0a58587377ec9ac` |
+| `v-validation-settings.ini` | `eb76d4dbc937d9009c6a63a2e1473a7c464b1c668bb172110135cd4e22b0ab2d` |
+| `v-validation-cheats.cht` | `23a323e04c53d54f1880a986afb2430fc96b381a331dea678894dc31730b3bf9` |
+| `v-validation-gamesettings.ini` | `f8d225066726e91ba5f11a04970ea5c3034c694b69aa969a350f0447ac16835b` |
+
+Private return checkpoint `v-laboratory-b4-return.sav` is 1661208 bytes, SHA256 `47613e244a80d3886c974bdaa5ff21194534b8bc63f6c8f28e4059805ee639e9`. It was saved through DuckStation's Save To File action, contains the health-patched test state, and has not been restored. It is not evidence of normal in-game save persistence.
+
+Limits and failed setup observations: uppercase `U` sent an added Shift modifier, which was also bound to aim, and did not provide the intended run input. Lowercase controller macro keys resolved that navigation issue. Chimera grabs still interrupted movement with health held at 140; ordinary sustained aim/fire cleared the visible blockers. Entry transitions sometimes produced retry/read-failure publications before recovering to the correct room; `u-floor-4`'s incomplete door coverage also resolved later. These temporary observations were preserved, not counted as independently established parser defects. All captured health words read 140.
+
+This adds Laboratory B4 to completed live entry/return checks: ten of eleven floor plans have scoped live entry coverage. Mansion B1 remains unvalidated. This count measures map-area coverage only. Other room outcomes, unresolved conditions, additional scenarios, normal-save persistence and pickup/power reversals still require gameplay validation before claiming whole-game readiness. The emulator and private preview were closed; global settings were restored byte-for-byte with SHA256 `c1669f45b60c9cdc8ccce4ec66bc616ddee5b8dff2b46e7d299d1fc148250ea3`. Temporary cheat/per-game files were archived and removed, restoring their original absence. The user's normal emulator was untouched.
+History:
+
+- 2026-10-08; Codex root, GPT-6.1 Sol; completed the native route, checked entry-only B4 expansion and B3 return, recorded the Battery and power outcomes under separate claim IDs, replayed 31 full publications with the stated ordering normalization, preserved the private checkpoint and restored the isolated setup. No production tracking code changed.

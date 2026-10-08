@@ -220,6 +220,20 @@ RE1-MAP-015 records two Chris round trips on SLUS-00551, using the emulator and 
 
 All thirteen captured publications replay exactly with pinned executable checks and unchanged acquisition flags within each route. These checks add Laboratory B2/B1 and three rooms, bringing scoped live map entry coverage to nine of eleven plans. Mansion B1 and Laboratory B4 remain unvalidated. The tested B4 elevator refused operation; no power flag was established. Repeated Chimera attacks show that the health lock does not prevent stagger. New pickups, story changes, unlocks and normal-save persistence were not tested.
 
+## Laboratory power and B4 elevator round trip
+
+RE1-PICKUP-006, RE1-DOORS-008 and RE1-MAP-016 record this Jill route on SLUS-00551 with RE1-CHEAT-003's temporary health lock:
+
+1. Keep RetroAchievements disabled before loading. Load public card entry `BASLUS-005514` through Load Game, then attach a fresh tracker after Jill is controllable. Walk Save `04-0e` → Elevator Entry `04-0c` → Power Maze 1 `04-0f` → Power Maze 2 `04-10` → Power Room `04-11`. Expect each outline to appear only on entry.
+2. The recorded second session restores the private pre-pickup Power Room checkpoint before attaching a separate fresh tracker. Keep that tracker throughout the remaining route. Take the Battery through the native Yes prompt. Expect incomplete 0/1 → cleared 1/1, Battery available → taken, and acquisition byte RAM `0xC86E7` changing `0xEF → 0xEB` (mask `0x04`).
+3. Connect elevator power in Power Room. Expect story byte RAM `0xC8706` changing `0xC0 → 0xC4`. Return through both mazes to Elevator Entry and check the elevator: expect blocked, matching the native no-power refusal.
+4. Use Power Maze 1's panel to activate the blacked-out areas. Expect `0xC8706` changing `0xC4 → 0xC6`. Return to Elevator Entry and use its separate call switch. Let the native sequence enter Elevator `04-15`, then Main Lab Entry `04-14` and Main Lab `04-13`.
+5. Expect B4 initially to reveal no outline for the unoutlined elevator, then only Entry `14`, then both `13,14` when Main Lab is entered. Main Lab has zero relevant collectibles in this observed state; its exit remains unavailable after the encounter until the native Barry interaction completes.
+6. Defeat the native encounter through ordinary controls, interact with Barry, and walk the newly opened exit corridor. Follow the native elevator return to B3. Expect the earlier four B3 outlines, Battery taken, and the elevator open with destination visited and complete door coverage. No savestate should be restored during this pickup/power/return sequence.
+7. Close the isolated emulator and private preview. Restore the temporary settings and remove the test-only cheat/per-game files after archiving them. Keep saves, game assets, RAM and private journals out of Git.
+
+All 31 captured publications replay with the pinned executable checks and identical payload content after normalizing only door-array ordering; 15 also match without normalization. The final acquisition bank matches the post-Battery capture, and both power bits remain set. B4 completes scoped live entry checks for ten of eleven plans; Mansion B1 remains unvalidated. This is map-area coverage, not a whole-game readiness percentage. Battery reentry, normal in-game save persistence, earlier pickup/power reversals and other scenarios were not tested. The public card already supplied infinite Colt Python ammunition; no ammunition patch was added. The health lock does not prevent grabs or stagger.
+
 # Diagnosing failures
 
 File logging is enabled automatically. The terminal shows the absolute path to `logs/tracker.log`. To watch it in another terminal:
