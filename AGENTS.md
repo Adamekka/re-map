@@ -394,6 +394,8 @@ After a game, save, or savestate change, reread game-derived state before presen
 
 Keep RetroAchievements disabled in emulator instances used for agent testing. Verify this before loading a game or save so validation cannot unlock achievements on the user's account.
 
+Agent tests may use temporary infinite-health and infinite-ammunition patches to avoid repeated gameplay deaths. Record the enabled patches with the validation evidence.
+
 Every discovered address or rule needs a reproducible test.
 
 At minimum test:
