@@ -4373,3 +4373,18 @@ Evidence:
 Limits: the replay reuses the RE1-MAP-017 naturally traversed states through the fixed code path; it is not a fresh traversal under the fixed build. Thirteen of the fourteen both-known pairs remain unverified in gameplay, as does flag-clear behavior for these doors. Other characters, modes, and revisions remain untested.
 History:
 - 2026-10-09; opencode with model opencode/muse-spark-1.3-contributor-free; decoded the recorded Courtyard door bytes, replayed both captures through the fixed live path, and ran the full-variant projection comparison. No game bytes, captures, or disc files added to Git.
+
+## RE1-DOORS-012: all-recorded-capture door sweep shows no unknown targets under the remap rule
+
+Status: Candidate; recorded-state sweep across prior sessions, not new gameplay
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; all 133 private 2 MiB RAM captures across sessions `i` through `y` from isolated DuckStation `0.1-11894-gc66b2694d`
+Environment: offline `poll_once` replay with a fresh tracker per capture on macOS, Python 3.14.8; no new emulator boot, gameplay, or memory writes
+Authored: 2026-10-09; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: recorded runtime door descriptors decoded through the fixed live path
+Claim: every door the fixed tracker publishes in every recorded capture resolves to a known logical room. Of 77 consecutive same-session room changes, 71 are covered by a decoded door target; the 6 gaps match documented non-door phenomena, not decoder defects.
+Evidence:
+- All 133 captures poll Display with the pinned executable signature verified and zero unknown door targets against the profile's 159 logical rooms. Before RE1-DOORS-010, the same sweep would have reported the `00-10`/`01-1c` unknowns from RE1-DOORS-009.
+- Uncovered transitions, each explained: `i: 04-05 -> 01-07` and `i: 01-07 -> 04-0e` cross areas with different story bytes (`i-floor-4` remap byte `0x00` versus `0xDC`/`0xBC` elsewhere), i.e. savestate loads between branches, not walks. `o/p: 04-0c -> 04-05` publish no doors from Elevator Entry in those captures (scripted elevator passage per RE1-DOORS-008, not a Door_set walk). `v: 04-14 -> 04-0c` is the native elevator return sequence from RE1-MAP-016. `u: 04-10 -> 04-11` is the documented transient: `u-floor-4` carries incomplete door coverage during entry per RE1-MAP-016, while the arrived `u-floor-5` publishes the return door `04-11 -> 04-10` OPEN. The sweep script and its JSON are scratch outside Git; captures and journals remain outside Git.
+Limits: this reuses recorded states through the fixed code path; it is not fresh traversal under the fixed build. Transient entry states and scripted elevator rides are outside Door_set coverage by design. Other characters, modes, revisions, flag-clear door behavior, and normal-save persistence of door targets remain untested.
+History:
+- 2026-10-09; opencode with model opencode/muse-spark-1.3-contributor-free; ran the 133-capture sweep and classified all six uncovered transitions against existing session evidence. No production code changed.
