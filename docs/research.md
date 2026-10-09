@@ -290,12 +290,6 @@ Limits: RA pages return 403 to this project's fetcher, so new notes arrive throu
 History:
 - 2026-09-25; human user; provided; raw table paste, later confirmed as RetroAchievements code notes.
 - 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; filed; saved verbatim to docs/re1_ram_map_user_provided.md, still Candidate.
-Claim: RAM offsets around 0x0c8660 Main Location, 0x0c8661 SubLocation, 0x0c8662 Camera, and 0x0c8663 Previous Location form the room identity. Offsets 0x0c86dc onward are Item Collected bitfields. Offsets 0x0c8710 onward are Map Visited bits. Full table is filed at docs/re1_ram_map_user_provided.md. Add 0x80000000 for GDB virtual addresses.
-Evidence: local file docs/re1_ram_map_user_provided.md transcribed from user paste. Health offset 0x0c51ac matches the independent cheat anchor 0x800C51AC from RE1-CHEAT-001, which raises confidence but does not confirm.
-Limits: original source unknown, no revision string, no DuckStation version, no widths for every row, no proof these apply to SLUS-00551 Director's Cut. Requires live GDB reads on both revisions before any promotion.
-History:
-- 2026-09-25; human user; provided; raw table paste, source unknown.
-- 2026-09-25; opencode with model opencode/muse-spark-1.3-contributor-free; filed; saved verbatim to docs/re1_ram_map_user_provided.md, still Candidate.
 
 ## RE1-RUNTIME-001: room bytes live on SLUS-00551, CLI extraction works
 
@@ -4390,3 +4384,20 @@ Evidence:
 Limits: this reuses recorded states through the fixed code path; it is not fresh traversal under the fixed build. Transient entry states and scripted elevator rides are outside Door_set coverage by design. Other characters, modes, revisions, flag-clear door behavior, and normal-save persistence of door targets remain untested.
 History:
 - 2026-10-09; opencode with model opencode/muse-spark-1.3-contributor-free; ran the 133-capture sweep and classified all six uncovered transitions against existing session evidence. No production code changed.
+
+## RE1-DOORS-013: committed offline door projection guards the remap rule
+
+Status: Candidate; static projection from committed data through the production decoder, no new gameplay
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; 343 unique init/main doors across the 334 source variants in `data/room_manifest_slus00551.json`
+Environment: Python 3.14.8, pytest 9.1.1; committed manifest and production `decode_door_target` only, no emulator boot, gameplay, or memory writes
+Authored: 2026-10-09; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: static manifest inspection through the shared decoder, plus the recorded RE1-DOORS-010/011 evidence as expected values
+Claim: the RE1-DOORS-011 static counts now have a committed, runnable form. `python3 tools/door_map.py` decodes every unique init/main door with the remap flag clear and set, and `tests/test_door_projection.py` locks the three properties that matter: the Kitchen `06-1c -> 0x30` and Stairway `05-10 -> 0x5C` crossings resolve to known rooms only under remap, the Courtyard `02-00 -> 0x3B` crossing disambiguates between two known rooms, and enabling the flag moves zero doors from a known target to an unknown one. The previous `tools/door_map.py` Mansion-1F ASCII graph used raw encoded stage bytes from the pre-remap item table and is replaced; `data/mansion1f.dot` is unchanged.
+Evidence:
+- `python3 tools/door_map.py --affected-only` prints 343 unique init/main doors, 16 remap-affected, 8 unknown with remap clear, 6 unknown with remap set, matching RE1-DOORS-011. The two fixed crossings read `06-1c -> 0x30: clear 00-10 (unknown) | remap 05-10 (known)` and `05-10 -> 0x5C: clear 01-1c (unknown) | remap 06-1c (known)`; the Courtyard row reads `02-00 -> 0x3B: clear 00-1b (known) | remap 05-1b (known)`.
+- New `tests/test_door_projection.py` has four offline tests covering projection counts, both late-game resolutions, the Courtyard disambiguation, and the zero known-to-unknown regression property. Full suite passes 1544 tests (1540 before plus 4 new); scoped Ruff lint and format checks pass for the three touched Python files, and `git diff --check` passes. The 37 remaining repo-wide Ruff findings predate this change and were left untouched.
+- Event procedures stay out of scope, matching RE1-DOORS-011; the one recorded event-only pair is unaffected by design.
+Limits: a static count through one flag configuration, not gameplay validation. The six unknown-under-remap targets remain detection work, not decoder defects. Flag-clear behavior for these doors, other characters/modes/revisions, and normal-save persistence of door targets remain untested. This entry does not promote RE1-DOORS-012 or establish whole-game readiness.
+History:
+- 2026-10-09; opencode with model opencode/muse-spark-1.3-contributor-free; reproduced the 343/16/8/6 projection from committed data, replaced the stale pre-remap graph tool, added the offline regression, fixed the stale Mansion-only help text and testing.md coverage wording, and removed a duplicated block in RE1-USERMAP-001. No game bytes, captures, or disc files added to Git.
+- 2026-10-09; opencode with model opencode/muse-spark-1.3-contributor-free; obtained independent reviews: Gemini 3.1 Pro High via agy (conversation `8c34f8ac-8ada-4db4-9018-b98cb3f2f52c`, SUCCESS) and Gemini 3.8 Flash High via agy (conversation `26f35abc-9488-41fc-9bea-69a7279e31f0`, SUCCESS), without tests or gameplay. Two findings were accepted and implemented: the counts test now also asserts the 159-room set size, and the Kitchen/Stairway test asserts remap-target membership in that set. A High claim that encoded-stage-0 doors are remap-affected was rejected against `decode_door_target`, which returns before the remap branch for encoded zero; a High claim that the rewritten tool lacks a `__main__` entry block was rejected by the committed guard and a direct run. Claude Opus 5.5 High via agy did not complete (exit 1, invalid model selection against the available list); not retried per review rules. No review reproduces gameplay; reviews do not expand runtime validation.

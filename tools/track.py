@@ -486,7 +486,7 @@ def main() -> int:
     ap.add_argument(
         "--map",
         action="store_true",
-        help="serve the live Mansion 1F map on localhost:8765",
+        help="serve the live multi-area map on localhost:8765",
     )
     ap.add_argument(
         "--log-file",
