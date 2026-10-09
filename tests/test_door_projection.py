@@ -10,33 +10,34 @@ a door from a known room to an unknown one.
 """
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO / "src"))
+# The CLI lives in the source tree; import its collector to test the code it runs.
+sys.path[:0] = [str(REPO / "src"), str(REPO / "tools")]
+
+from door_map import collect_doors
 
 from games.re1.door_state import decode_door_target
 
 
 def load_projection():
     manifest = json.loads((REPO / "data/room_manifest_slus00551.json").read_text())
-    rooms = {(row["room_main"], row["room_sub"]) for row in manifest["rooms"]}
-    unique = set()
-    for row in manifest["rooms"]:
-        program = row["tracking_program"]
-        for procedure in program["procedures"] + program["main_procedures"]:
-            for command in procedure["commands"]:
-                if command["kind"] == "door":
-                    unique.add(
-                        ((row["room_main"], row["room_sub"]), command["args"][7])
-                    )
-    return rooms, unique
+    return collect_doors(manifest)
 
 
 def test_projection_counts_match_recorded_static_audit():
     rooms, unique = load_projection()
-    affected = {(s, b) for s, b in unique if (b >> 5) in (1, 2)}
+    affected = {
+        (source, byte)
+        for source, byte in unique
+        if decode_door_target(byte, source[0], False)
+        != decode_door_target(byte, source[0], True)
+    }
     assert len(rooms) == 159
     assert len(unique) == 343
     assert len(affected) == 16
@@ -83,3 +84,32 @@ def test_remap_never_moves_known_target_to_unknown():
         not in rooms
     ]
     assert regressed == []
+
+
+@pytest.mark.parametrize("affected_only", [False, True])
+def test_cli_reports_static_counts_and_filters_rows(affected_only):
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(REPO / "tools/door_map.py"),
+            *(["--affected-only"] if affected_only else []),
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    lines = result.stdout.splitlines()
+    assert lines[:4] == [
+        "unique init/main doors: 343",
+        "remap-affected (encoded stage 1/2): 16",
+        "unknown targets with remap clear: 8",
+        "unknown targets with remap set: 6",
+    ]
+    assert sum(" | remap " in line for line in lines) == (16 if affected_only else 343)
+    for expected in (
+        "02-00 -> 0x3b: clear 00-1b (known) | remap 05-1b (known)",
+        "05-10 -> 0x5c: clear 01-1c (unknown) | remap 06-1c (known)",
+        "06-1C -> 0x30: clear 00-10 (unknown) | remap 05-10 (known)",
+    ):
+        assert "  " + expected in lines

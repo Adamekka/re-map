@@ -62,28 +62,23 @@ def main() -> int:
     def known(target: RoomId) -> bool:
         return (target.stage, target.room) in rooms
 
-    affected = sorted(
-        (source, byte) for source, byte in unique if (byte >> 5) in (1, 2)
-    )
-    unknown_clear = sorted(
-        (source, byte)
-        for source, byte in unique
-        if not known(decode_door_target(byte, source[0], False))
-    )
-    unknown_remap = sorted(
-        (source, byte)
-        for source, byte in unique
-        if not known(decode_door_target(byte, source[0], True))
-    )
+    projection = []
+    for source, byte in sorted(unique):
+        clear = decode_door_target(byte, source[0], False)
+        remapped = decode_door_target(byte, source[0], True)
+        projection.append((source, byte, clear, remapped))
+    # Compare decoder results so filtering shares the native rule rather than
+    # maintaining a second encoded-stage predicate beside it.
+    affected = [row for row in projection if row[2] != row[3]]
+    unknown_clear = [row for row in projection if not known(row[2])]
+    unknown_remap = [row for row in projection if not known(row[3])]
     print(f"unique init/main doors: {len(unique)}")
     print(f"remap-affected (encoded stage 1/2): {len(affected)}")
     print(f"unknown targets with remap clear: {len(unknown_clear)}")
     print(f"unknown targets with remap set: {len(unknown_remap)}")
 
-    rows = affected if args.affected_only else sorted(unique)
-    for source, byte in rows:
-        clear = decode_door_target(byte, source[0], False)
-        remapped = decode_door_target(byte, source[0], True)
+    rows = affected if args.affected_only else projection
+    for source, byte, clear, remapped in rows:
         clear_mark = "known" if known(clear) else "unknown"
         remap_mark = "known" if known(remapped) else "unknown"
         print(
@@ -93,7 +88,7 @@ def main() -> int:
     if args.affected_only:
         return 0
     print("unknown with remap set:")
-    for source, byte in unknown_remap:
+    for source, byte, _, _ in unknown_remap:
         print(f"  {source[0]:02X}-{source[1]:02X} -> {byte:#04x}")
     return 0
 
