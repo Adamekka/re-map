@@ -484,8 +484,6 @@ Automatically commit completed, verified work for the current request without as
 
 Stage only changes belonging to the request. Keep unrelated user changes, secrets, game files, RAM dumps, and savestates out of the commit. Split independent changes into separate commits and use concise Conventional Commit messages. Automatic commits do not authorize pushing, publishing, or rewriting existing commits.
 
-Put the authoring model on its own line in every agent-authored commit body, for example `Model: GPT-6 Sol`. Use the model identity exposed by the runtime or explicitly confirmed by the user for the current session. Never write `Model: unknown`; if the model identity is unavailable, ask the user before committing or writing research attribution. Do not attribute another agent's contribution to the current model unless its identity is established.
-
 ## Progress notes
 
 Keep a `docs/research.md` file.
