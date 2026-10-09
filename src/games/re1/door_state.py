@@ -59,6 +59,25 @@ def decode_door_target(
     return RoomId(stage, packed_target & 0x1F)
 
 
+def stage_remap_flag(rule_layout) -> tuple[int, int]:
+    """Return the (address, mask) of the door stage-remap flag.
+
+    Why a helper: the remap coordinate (script flag group 0 index 0) is
+    game-specific knowledge owned here, so callers read it through the
+    profile layout instead of naming the group and index themselves.
+    """
+    return rule_layout.flag(0, 0)
+
+
+def stage_remap_from_window(rule_layout, window: bytes) -> bool:
+    """Read the remap flag from a 32-byte window starting at flag_bases[0]."""
+    address, mask = stage_remap_flag(rule_layout)
+    base = rule_layout.flag_bases[0]
+    if not base <= address < base + len(window):
+        raise ValueError("door stage remap flag is outside its flag window")
+    return bool(window[address - base] & mask)
+
+
 def parse_door(
     record_id: int,
     opcode: bytes,

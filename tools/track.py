@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import DuckStationGdb
 from games.re1.acquisition_state import AcquisitionFlag
-from games.re1.door_state import parse_door
+from games.re1.door_state import parse_door, stage_remap_flag
 from games.re1.event_state import read_event_snapshot
 from games.re1.map_layout import MapLocation, MapUnavailable
 from games.re1.re1_profile import MemoryResult, Re1Profile
@@ -135,7 +135,7 @@ def poll_once(
     flags = door_values[3]
     # Door targets remap stage 0/1 to 5/6 when this story flag is set; see
     # door_state.decode_door_target and the pinned transition at 0x8002A6E0.
-    remap_address, remap_mask = rule_layout.flag(0, 0)
+    remap_address, remap_mask = stage_remap_flag(rule_layout)
     remap_result = read_memory(remap_address, 1)
     if not remap_result.ok or len(remap_result.data) != 1:
         return PollResult(

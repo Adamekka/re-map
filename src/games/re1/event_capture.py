@@ -8,7 +8,11 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 
 from games.game_profile import RoomId
-from games.re1.door_state import DoorObservation, parse_door
+from games.re1.door_state import (
+    DoorObservation,
+    parse_door,
+    stage_remap_from_window,
+)
 from games.re1.event_state import EventSnapshot, read_event_snapshot
 from games.re1.re1_profile import MemoryResult, Re1Profile
 from games.re1.room_cache import RoomScriptSource, match_room_source
@@ -272,14 +276,13 @@ def read_event_capture(
         return CaptureFailure("configuration", "Profile lacks tracking rules.")
     # Door targets remap stage 0/1 to 5/6 when this story flag is set; see
     # door_state.decode_door_target and the pinned transition at 0x8002A6E0.
-    remap_address, remap_mask = rule_layout.flag(0, 0)
-    remap_base = rule_layout.flag_bases[0]
     remap_bytes = values.get("script-flags-0")
-    if remap_bytes is None or not remap_base <= remap_address < remap_base + len(
-        remap_bytes
-    ):
+    if remap_bytes is None:
         return CaptureFailure("read-failure", "Door stage remap flag is missing.")
-    stage_remap = bool(remap_bytes[remap_address - remap_base] & remap_mask)
+    try:
+        stage_remap = stage_remap_from_window(rule_layout, remap_bytes)
+    except ValueError as error:
+        return CaptureFailure("read-failure", str(error))
     doors = []
     try:
         for disabled, records in (
