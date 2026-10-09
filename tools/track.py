@@ -133,6 +133,16 @@ def poll_once(
             )
         door_values.append(result.data)
     flags = door_values[3]
+    # Door targets remap stage 0/1 to 5/6 when this story flag is set; see
+    # door_state.decode_door_target and the pinned transition at 0x8002A6E0.
+    remap_address, remap_mask = rule_layout.flag(0, 0)
+    remap_result = read_memory(remap_address, 1)
+    if not remap_result.ok or len(remap_result.data) != 1:
+        return PollResult(
+            PollStatus.ReadFailure,
+            f"state read failed: {remap_result.error or 'short read'}",
+        )
+    stage_remap = bool(remap_result.data[0] & remap_mask)
 
     context, error = read_cache_context(source_query.sources, read_memory)
     if error:
@@ -269,6 +279,7 @@ def poll_once(
                     door_values[0],
                     door_values[1][0],
                     door_values[2][0],
+                    stage_remap,
                 )
             except ValueError as exc:
                 return PollResult(
@@ -331,8 +342,9 @@ def poll_once(
             (doors_layout.player_state_address, 1),
             (doors_layout.special_flag_address, 1),
             (layout.acquisition_flags_address, layout.acquisition_flags_width),
+            (remap_address, 1),
         ),
-        door_values,
+        (*door_values, remap_result.data),
         strict=True,
     ):
         result = read_memory(address, width)

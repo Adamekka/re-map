@@ -267,6 +267,19 @@ def read_event_capture(
         return CaptureFailure("read-failure", snapshot.error)
     if snapshot.positions != watch.positions:
         return CaptureFailure("changed", "Event position changed during capture.")
+    rule_layout = profile.tracking_rule_layout
+    if rule_layout is None:
+        return CaptureFailure("configuration", "Profile lacks tracking rules.")
+    # Door targets remap stage 0/1 to 5/6 when this story flag is set; see
+    # door_state.decode_door_target and the pinned transition at 0x8002A6E0.
+    remap_address, remap_mask = rule_layout.flag(0, 0)
+    remap_base = rule_layout.flag_bases[0]
+    remap_bytes = values.get("script-flags-0")
+    if remap_bytes is None or not remap_base <= remap_address < remap_base + len(
+        remap_bytes
+    ):
+        return CaptureFailure("read-failure", "Door stage remap flag is missing.")
+    stage_remap = bool(remap_bytes[remap_address - remap_base] & remap_mask)
     doors = []
     try:
         for disabled, records in (
@@ -283,6 +296,7 @@ def read_event_capture(
                             values["unlock"],
                             values["player-state"][0],
                             values["special-flag"][0],
+                            stage_remap,
                         ),
                         disabled,
                     )

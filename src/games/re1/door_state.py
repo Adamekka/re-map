@@ -33,6 +33,32 @@ class DoorObservation:
     mode: int
 
 
+def decode_door_target(
+    packed_target: int, source_stage: int, stage_remap: bool
+) -> RoomId:
+    """Decode a Door_set target byte to its runtime room.
+
+    Why: the pinned executable's room transition at 0x8002A6E0..0x8002A73C
+    keeps the current stage for encoded zero, otherwise uses encoded minus
+    one, then adds five when the stage-remap flag (script flag group 0 index
+    0, byte 0x800C8703 mask 0x80) is set and the result is 0 or 1. This maps
+    late-game doors targeting 0/1 to returned-Mansion stages 5/6.
+    """
+    if not 0 <= packed_target <= 0xFF or not 0 <= source_stage <= 0xFF:
+        raise ValueError("door target fields must fit one byte")
+    if not isinstance(stage_remap, bool):
+        # Why ValueError: callers model every door interpretation problem as
+        # ValueError so live polling returns a read failure instead of crashing.
+        raise ValueError("door stage remap must be an explicit boolean")  # noqa: TRY004
+    encoded_stage = packed_target >> 5
+    if encoded_stage == 0:
+        return RoomId(source_stage, packed_target & 0x1F)
+    stage = encoded_stage - 1
+    if stage_remap and stage < 2:
+        stage += 5
+    return RoomId(stage, packed_target & 0x1F)
+
+
 def parse_door(
     record_id: int,
     opcode: bytes,
@@ -40,11 +66,15 @@ def parse_door(
     unlock_flags: bytes,
     player_state: int,
     special_flag: int,
+    stage_remap: bool,
 ) -> DoorObservation:
     """Parse one active handler-1 AOT whose pointer the caller has validated.
 
     ValueError models malformed external data. The caller supplies the pinned
-    profile's eight unlock bytes and the two independently read state bytes.
+    profile's eight unlock bytes, the two independently read state bytes, and
+    the explicit stage-remap flag (script flag group 0 index 0); see
+    decode_door_target. There is no default remap because guessing it would
+    hide a wrong destination.
     """
     if len(opcode) != 26 or opcode[0] != 0x0C:
         raise ValueError("door requires a complete 26-byte Door_set opcode")
@@ -58,12 +88,7 @@ def parse_door(
         raise ValueError("door source room values must fit one byte")
 
     packed_target = opcode[15]
-    encoded_stage = packed_target >> 5
-    # Stage zero preserves the current Main; other values encode Main plus one.
-    target = RoomId(
-        source.stage if encoded_stage == 0 else encoded_stage - 1,
-        packed_target & 0x1F,
-    )
+    target = decode_door_target(packed_target, source.stage, stage_remap)
     lock_id, lock_type = opcode[14], opcode[24]
     flag_index = lock_id & 0x3F
     # The executable numbers bits from the high end of little-endian words.

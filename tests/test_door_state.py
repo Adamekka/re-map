@@ -60,6 +60,7 @@ def test_active_fixture_doors(pickup: str, after: bool, tmp_path: Path):
             ram[0xC86B4:0xC86BC],
             ram[0xC5125],
             ram[0xC870C],
+            bool(ram[0xC8703] & 0x80),
         )
         assert observation.mode == record[1] == 0x81
         observations.append(observation)
@@ -97,25 +98,25 @@ def test_unlock_bits_use_word_order_and_reverse_on_load(
 ):
     opcode = door_opcode(0x80 | index, 0x34, 0x14)
     flags = bytearray(8)
-    before = parse_door(2, opcode, RoomId(0, 9), bytes(flags), 1, 8)
+    before = parse_door(2, opcode, RoomId(0, 9), bytes(flags), 1, 8, False)
     assert before.state == DoorState.LOCKED
 
     flags[byte] = mask
-    unlocked = parse_door(2, opcode, RoomId(0, 9), bytes(flags), 1, 8)
+    unlocked = parse_door(2, opcode, RoomId(0, 9), bytes(flags), 1, 8, False)
     assert unlocked.state == DoorState.OPEN
     assert unlocked.reason == "Unlocked"
 
-    restored = parse_door(2, opcode, RoomId(0, 9), bytes(8), 1, 8)
+    restored = parse_door(2, opcode, RoomId(0, 9), bytes(8), 1, 8, False)
     assert restored.state == DoorState.LOCKED
 
 
 def test_reciprocal_unlock_sides_share_the_bit():
     from_this_side = door_opcode(0x92, 0xFE, 4)
     from_other_side = door_opcode(0x92, 0xFF, 3)
-    assert parse_door(2, from_this_side, RoomId(0, 3), bytes(8), 1, 8).state == (
+    assert parse_door(2, from_this_side, RoomId(0, 3), bytes(8), 1, 8, False).state == (
         DoorState.UNLOCKABLE
     )
-    other = parse_door(2, from_other_side, RoomId(0, 4), bytes(8), 1, 8)
+    other = parse_door(2, from_other_side, RoomId(0, 4), bytes(8), 1, 8, False)
     assert other.state == DoorState.BLOCKED
     assert other.reason == "Locked from the other side"
 
@@ -125,13 +126,16 @@ def test_reciprocal_unlock_sides_share_the_bit():
         (from_this_side, RoomId(0, 3)),
         (from_other_side, RoomId(0, 4)),
     ):
-        assert parse_door(2, opcode, source, bytes(flags), 1, 8).state == DoorState.OPEN
+        assert (
+            parse_door(2, opcode, source, bytes(flags), 1, 8, False).state
+            == DoorState.OPEN
+        )
 
 
 @pytest.mark.parametrize("lock_id", [0x40, 0xC4])
 def test_player_gate_precedes_even_an_unlocked_flag(lock_id: int):
     opcode = door_opcode(lock_id, 0x34, 0x14)
-    blocked = parse_door(2, opcode, RoomId(0, 9), b"\xff" * 8, 3, 8)
+    blocked = parse_door(2, opcode, RoomId(0, 9), b"\xff" * 8, 3, 8, False)
     assert blocked.state == DoorState.BLOCKED
     assert blocked.reason == "Cannot use this door in the current state"
 
@@ -145,13 +149,14 @@ def test_special_sword_path_is_not_an_inventory_inference(
 ):
     opcode = door_opcode(0x89, 0x33, 8)
     assert (
-        parse_door(2, opcode, RoomId(0, 7), bytes(8), player, special).state == expected
+        parse_door(2, opcode, RoomId(0, 7), bytes(8), player, special, False).state
+        == expected
     )
 
 
 def test_puzzle_lock_has_no_required_key():
     observation = parse_door(
-        2, door_opcode(0x80, 0, 9), RoomId(0, 0x15), bytes(8), 1, 8
+        2, door_opcode(0x80, 0, 9), RoomId(0, 0x15), bytes(8), 1, 8, False
     )
     assert observation.state == DoorState.BLOCKED
     assert observation.lock_type == 0
@@ -160,26 +165,54 @@ def test_puzzle_lock_has_no_required_key():
 
 def test_target_stage_zero_preserves_main_and_other_stages_decode():
     source = RoomId(3, 2)
-    same_stage = parse_door(2, door_opcode(0, 0, 7), source, bytes(8), 1, 8)
+    same_stage = parse_door(2, door_opcode(0, 0, 7), source, bytes(8), 1, 8, False)
     assert same_stage.target == RoomId(3, 7)
-    other_stage = parse_door(2, door_opcode(0, 0, 0x46), source, bytes(8), 1, 8)
+    other_stage = parse_door(2, door_opcode(0, 0, 0x46), source, bytes(8), 1, 8, False)
     assert other_stage.target == RoomId(1, 6)
     assert (same_stage.x, same_stage.z) == (-1200, 900)
 
 
+def test_returned_mansion_remap_adds_five_to_stage_zero_and_one():
+    # RE1-DOORS-009: the pinned transition at 0x8002A6E0 remaps 0/1 to 5/6
+    # when script flag group 0 index 0 is set; other stages are unchanged.
+    kitchen = RoomId(6, 0x1C)
+    stairway = RoomId(5, 0x10)
+    assert parse_door(
+        2, door_opcode(0, 0, 0x30), kitchen, bytes(8), 1, 8, False
+    ).target == RoomId(0, 0x10)
+    assert parse_door(
+        2, door_opcode(0, 0, 0x30), kitchen, bytes(8), 1, 8, True
+    ).target == RoomId(5, 0x10)
+    assert parse_door(
+        2, door_opcode(0, 0, 0x5C), stairway, bytes(8), 1, 8, False
+    ).target == RoomId(1, 0x1C)
+    assert parse_door(
+        2, door_opcode(0, 0, 0x5C), stairway, bytes(8), 1, 8, True
+    ).target == RoomId(6, 0x1C)
+    # Encoded zero keeps the source stage even when the remap flag is set,
+    # and encoded stages yielding 2+ never gain five.
+    assert parse_door(
+        2, door_opcode(0, 0, 7), kitchen, bytes(8), 1, 8, True
+    ).target == RoomId(6, 7)
+    assert parse_door(
+        2, door_opcode(0, 0, 0x66), RoomId(3, 2), bytes(8), 1, 8, True
+    ).target == RoomId(2, 6)
+
+
 @pytest.mark.parametrize(
-    ("record_id", "opcode", "flags", "player", "special", "message"),
+    ("record_id", "opcode", "flags", "player", "special", "remap", "message"),
     [
-        (2, b"", bytes(8), 1, 8, "26-byte"),
-        (2, bytes(26), bytes(8), 1, 8, "26-byte"),
-        (1, door_opcode(0, 0, 7), bytes(8), 1, 8, "active AOT"),
-        (2, door_opcode(0, 0, 7), bytes(7), 1, 8, "eight unlock"),
-        (2, door_opcode(0, 0, 7), bytes(8), 256, 8, "one byte"),
-        (2, door_opcode(0, 0, 7), bytes(8), 1, -1, "one byte"),
+        (2, b"", bytes(8), 1, 8, False, "26-byte"),
+        (2, bytes(26), bytes(8), 1, 8, False, "26-byte"),
+        (1, door_opcode(0, 0, 7), bytes(8), 1, 8, False, "active AOT"),
+        (2, door_opcode(0, 0, 7), bytes(7), 1, 8, False, "eight unlock"),
+        (2, door_opcode(0, 0, 7), bytes(8), 256, 8, False, "one byte"),
+        (2, door_opcode(0, 0, 7), bytes(8), 1, -1, False, "one byte"),
+        (2, door_opcode(0, 0, 7), bytes(8), 1, 8, 0, "explicit boolean"),
     ],
 )
 def test_invalid_reads_are_explicit_failures(
-    record_id, opcode, flags, player, special, message
+    record_id, opcode, flags, player, special, remap, message
 ):
     with pytest.raises(ValueError, match=message):
-        parse_door(record_id, opcode, RoomId(0, 9), flags, player, special)
+        parse_door(record_id, opcode, RoomId(0, 9), flags, player, special, remap)

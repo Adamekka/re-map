@@ -73,7 +73,9 @@ def test_confirmed_delegation_preserves_geometry_and_real_lock_state(
     ):
         flags = bytearray(8)
         flags[3] = 4 if unlocked else 0
-        observed = parse_door(2, result.doors[0][1], RoomId(0, 9), bytes(flags), 0, 0)
+        observed = parse_door(
+            2, result.doors[0][1], RoomId(0, 9), bytes(flags), 0, 0, False
+        )
         assert observed.state is expected
         assert (observed.x, observed.z, observed.width, observed.depth) == (
             -100,
