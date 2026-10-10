@@ -181,7 +181,17 @@ def test_live_log_records_item_changes_and_read_failures(tmp_path, monkeypatch):
     reader = LoggedReader(before)
     log = tmp_path / "tracker.log"
     monkeypatch.setattr(track, "DuckStationGdb", lambda host, port: reader)
-    monkeypatch.setattr(sys, "argv", ["track.py", "--log-file", str(log)])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "track.py",
+            "--log-file",
+            str(log),
+            "--history-file",
+            str(tmp_path / "visits.json"),
+        ],
+    )
     sleeps = 0
 
     def advance_state(period):
@@ -313,7 +323,14 @@ def test_live_tracker_reconnects_after_startup_or_runtime_failure(
     monkeypatch.setattr(
         sys,
         "argv",
-        ["track.py", *(["--map"] if map_enabled else []), "--log-file", str(log)],
+        [
+            "track.py",
+            *(["--map"] if map_enabled else []),
+            "--log-file",
+            str(log),
+            "--history-file",
+            str(tmp_path / "visits.json"),
+        ],
     )
     now = 0.0
     snapshots = []

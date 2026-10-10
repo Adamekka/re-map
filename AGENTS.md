@@ -33,7 +33,7 @@
 - Prefer game acquisition flags over visual detection or transient object lists. Generate room/item metadata from owned game data when practical.
 - Handle failed or incoherent memory reads explicitly. A successful read alone does not establish valid game state.
 - After a game or savestate change, reread item, door and story state before displaying results. Earlier savestates must reverse acquisition and access state; do not carry cached completion forward.
-- Persist only information that cannot be reconstructed from game RAM. Isolate histories by game, revision and playthrough identity. Define whether visits follow the loaded savestate or accumulate across the playthrough before adding persistence.
+- Persist exploration across tracker sessions. Visits accumulate throughout the playthrough, including after earlier savestate loads. Isolate histories by game, revision and playthrough identity; reread game-derived item and door states.
 - Poll roughly 10 to 30 Hz unless evidence calls for another rate. Avoid continuous full-RAM scans once stable addresses are known.
 
 ## Research and validation
@@ -51,6 +51,7 @@
 
 ## Emulator testing
 
+- Use a separate exploration history for agent tests so test visits do not reveal rooms in the user's playthrough.
 - Verify RetroAchievements are disabled before loading any game or save in an agent test instance.
 - Temporary infinite-health and infinite-ammunition patches are allowed for agent testing. Record enabled patches with the validation evidence.
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
+from games.game_profile import RoomId
 from games.re1.room_cache import (
     CachedRoomObservation,
     RoomScriptSource,
@@ -206,13 +207,7 @@ def refresh_visited_room(
             "Door access needs another visit.",
         )
     room = cached.sources[0].room
-    selected_name = profile.room_source_choices.get(
-        (
-            room,
-            int(bool(values[layout.variant_address] & layout.variant_mask)),
-            int(bool(values[layout.alternate_address] & layout.alternate_mask)),
-        )
-    )
+    selected_name = _selected_source(profile, room, snapshot)
     if selected_name is None:
         return TrackedRoom(
             RuntimeRoomItems(
@@ -271,6 +266,53 @@ def refresh_visited_room(
         )
     )
     assert rule_sources, "validated source choices must reference a source"
+    reconstructed = _reconstruct_sources(profile, rule_sources, snapshot, flags)
+    return TrackedRoom(
+        observed if observed.list_complete else reconstructed.items,
+        cached.observation.active_doors if reuse_doors else reconstructed.doors,
+        cached.observation.disabled_doors
+        if reuse_doors
+        else reconstructed.disabled_doors,
+        reuse_doors or reconstructed.doors_complete,
+        "" if reuse_doors else reconstructed.door_reason,
+    )
+
+
+def reconstruct_visited_room(
+    profile: Re1Profile,
+    room: RoomId,
+    snapshot: RuleSnapshot,
+    flags: bytes,
+) -> TrackedRoom:
+    """Refresh a persisted visit using fresh flags, without a retained RAM cache."""
+    layout = profile.tracking_rule_layout
+    assert layout is not None
+    selected_name = _selected_source(profile, room, snapshot)
+    if selected_name is None:
+        return TrackedRoom(
+            RuntimeRoomItems(
+                ok=True, coverage_reason="Room source selection is unsupported."
+            ),
+            (),
+            (),
+            False,
+            "Door access needs another visit.",
+        )
+    sources = tuple(
+        source for source in profile.room_sources if source.source_rdt == selected_name
+    )
+    assert sources, "validated source choices must reference a source"
+    return _reconstruct_sources(profile, sources, snapshot, flags)
+
+
+def _reconstruct_sources(
+    profile: Re1Profile,
+    rule_sources: tuple[RoomScriptSource, ...],
+    snapshot: RuleSnapshot,
+    flags: bytes,
+) -> TrackedRoom:
+    layout, room_layout = profile.tracking_rule_layout, profile.runtime_room_layout
+    assert layout is not None and room_layout is not None and rule_sources
     evaluations = []
     for source in rule_sources:
         program = profile.room_programs[source.source_rdt]
@@ -305,54 +347,44 @@ def refresh_visited_room(
             result,
         )
         evaluations.append(result)
-    if observed.list_complete:
-        items = observed
-    else:
-        common = set(evaluations[0].items.items)
-        for evaluation in evaluations[1:]:
-            common.intersection_update(evaluation.items.items)
-        complete = all(
-            evaluation.items.list_complete for evaluation in evaluations
-        ) and all(
-            evaluation.items.items == evaluations[0].items.items
+    common = set(evaluations[0].items.items)
+    for evaluation in evaluations[1:]:
+        common.intersection_update(evaluation.items.items)
+    complete = all(
+        evaluation.items.list_complete for evaluation in evaluations
+    ) and all(
+        evaluation.items.items == evaluations[0].items.items
+        for evaluation in evaluations
+    )
+    reasons = sorted(
+        {
+            evaluation.items.coverage_reason
             for evaluation in evaluations
-        )
-        reasons = sorted(
-            {
-                evaluation.items.coverage_reason
-                for evaluation in evaluations
-                if evaluation.items.coverage_reason
-            }
-        )
-        if not complete and not reasons:
-            reasons.append("Matching room variants disagree about items.")
-        items = RuntimeRoomItems(
-            ok=True,
-            items=tuple(sorted(common, key=lambda item: item.aot_id)),
-            list_complete=complete,
-            coverage_reason=" ".join(reasons),
-        )
-    if reuse_doors:
-        doors = cached.observation.active_doors
-        disabled_doors = cached.observation.disabled_doors
-    else:
-        common_doors = set(evaluations[0].doors)
-        common_disabled = set(evaluations[0].disabled_doors)
-        for evaluation in evaluations[1:]:
-            common_doors.intersection_update(evaluation.doors)
-            common_disabled.intersection_update(evaluation.disabled_doors)
-        doors = tuple(sorted(common_doors))
-        disabled_doors = tuple(sorted(common_disabled))
-    doors_complete = reuse_doors or (
-        all(
-            not evaluation.unresolved_door_slots and evaluation.coverage_complete
-            for evaluation in evaluations
-        )
-        and all(
-            (evaluation.doors, evaluation.disabled_doors)
-            == (evaluations[0].doors, evaluations[0].disabled_doors)
-            for evaluation in evaluations
-        )
+            if evaluation.items.coverage_reason
+        }
+    )
+    if not complete and not reasons:
+        reasons.append("Matching room variants disagree about items.")
+    items = RuntimeRoomItems(
+        ok=True,
+        items=tuple(sorted(common, key=lambda item: item.aot_id)),
+        list_complete=complete,
+        coverage_reason=" ".join(reasons),
+    )
+    common_doors = set(evaluations[0].doors)
+    common_disabled = set(evaluations[0].disabled_doors)
+    for evaluation in evaluations[1:]:
+        common_doors.intersection_update(evaluation.doors)
+        common_disabled.intersection_update(evaluation.disabled_doors)
+    doors = tuple(sorted(common_doors))
+    disabled_doors = tuple(sorted(common_disabled))
+    doors_complete = all(
+        not evaluation.unresolved_door_slots and evaluation.coverage_complete
+        for evaluation in evaluations
+    ) and all(
+        (evaluation.doors, evaluation.disabled_doors)
+        == (evaluations[0].doors, evaluations[0].disabled_doors)
+        for evaluation in evaluations
     )
     return TrackedRoom(
         items,
@@ -360,4 +392,19 @@ def refresh_visited_room(
         disabled_doors,
         doors_complete,
         "" if doors_complete else "Door access needs another visit.",
+    )
+
+
+def _selected_source(
+    profile: Re1Profile, room: RoomId, snapshot: RuleSnapshot
+) -> str | None:
+    layout = profile.tracking_rule_layout
+    assert layout is not None
+    values = dict(snapshot.values)
+    return profile.room_source_choices.get(
+        (
+            room,
+            int(bool(values[layout.variant_address] & layout.variant_mask)),
+            int(bool(values[layout.alternate_address] & layout.alternate_mask)),
+        )
     )

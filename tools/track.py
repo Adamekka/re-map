@@ -22,6 +22,7 @@ from threading import Thread
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import DuckStationGdb
+from games.game_profile import RoomId
 from games.re1.acquisition_state import AcquisitionFlag
 from games.re1.door_state import parse_door, stage_remap_flag
 from games.re1.event_state import read_event_snapshot
@@ -33,9 +34,14 @@ from games.re1.room_cache import (
     read_cache_context,
 )
 from games.re1.room_items import RuntimeItemState, observe_room_items
-from games.re1.tracking_engine import refresh_visited_room, validate_current_room
+from games.re1.tracking_engine import (
+    reconstruct_visited_room,
+    refresh_visited_room,
+    validate_current_room,
+)
 from games.re1.tracking_rules import read_rule_snapshot
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
+from tracker.visit_history import HistoryError, HistoryIdentity, VisitHistory
 from ui.debug_view import render
 from ui.map_view import MAP_PROFILE_ID, MapServer, map_state
 
@@ -166,9 +172,9 @@ def poll_once(
     if error:
         return PollResult(PollStatus.ReadFailure, error)
     visited_rooms = {
-        room
-        for room in profile.room_observations
-        if room != rid and str(room) in tracker.rooms
+        RoomId(int(key.split("-")[0]), int(key.split("-")[1], 16))
+        for key in tracker.rooms
+        if key != str(rid)
     }
     # The loader can select another file after a story or character change.
     # Capture every possible source for visited rooms before selecting its rules.
@@ -272,16 +278,20 @@ def poll_once(
     past_contexts = {}
     raw_sources = {rid: observation.active_doors}
     disabled_sources = {rid: observation.disabled_doors}
-    for room, cached in profile.room_observations.items():
-        if room == rid or str(room) not in tracker.rooms:
-            continue
-        past_context, error = read_cache_context(cached.sources, read_memory)
-        if error:
-            return PollResult(PollStatus.ReadFailure, error)
-        past_contexts[room] = past_context
-        evaluated = refresh_visited_room(
-            profile, cached, past_context, rule_snapshot, flags
-        )
+    for room in sorted(visited_rooms, key=str):
+        cached = profile.room_observations.get(room)
+        if cached is None:
+            # Persistence stores visits only. Reconstruct prior rooms from fresh
+            # flags instead of inventing or restoring a live RAM observation.
+            evaluated = reconstruct_visited_room(profile, room, rule_snapshot, flags)
+        else:
+            past_context, error = read_cache_context(cached.sources, read_memory)
+            if error:
+                return PollResult(PollStatus.ReadFailure, error)
+            past_contexts[room] = past_context
+            evaluated = refresh_visited_room(
+                profile, cached, past_context, rule_snapshot, flags
+            )
         refreshed[room] = evaluated.items
         raw_sources[room] = evaluated.doors
         disabled_sources[room] = evaluated.disabled_doors
@@ -478,7 +488,7 @@ def poll_once(
         for door in tracker.doors
         if door.source == rid
     )
-    details.append("Visited scope: this tracker session")
+    details.append("Visited scope: this playthrough")
     if record.door_reason:
         details.append(record.door_reason)
     details.append(
@@ -522,6 +532,17 @@ def main() -> int:
         type=Path,
         default=Path(__file__).resolve().parents[1] / "logs/tracker.log",
         help="diagnostic log path (default: logs/tracker.log in the repository)",
+    )
+    ap.add_argument(
+        "--history-file",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / ".local/visit-history.json",
+        help="exploration history to resume across tracker sessions",
+    )
+    ap.add_argument(
+        "--new-playthrough",
+        action="store_true",
+        help="start a fresh exploration history for the selected history file",
     )
     args = ap.parse_args()
     log_path = args.log_file.expanduser().resolve()
@@ -588,13 +609,44 @@ def main() -> int:
         profile.runtime_signature.concatenated_sha256,
     )
 
-    tracker = Tracker()
+    assert profile.map_layout is not None, "persistent visits require map bindings"
+    region_rooms = {
+        f"{plan['id']}:{room['id']}": set(room["room_ids"])
+        for plan in profile.map_layout.document["areas"]
+        for room in plan["rooms"]
+    }
+    try:
+        history = VisitHistory(
+            args.history_file.expanduser().resolve(),
+            HistoryIdentity(
+                profile.profile_id,
+                profile.runtime_signature.concatenated_sha256,
+                # Jill is the supported delivery scenario. Keep its history
+                # separate when another character gains a supported profile.
+                "jill",
+            ),
+            region_rooms,
+            args.new_playthrough,
+        )
+    except HistoryError as exc:
+        logger.error("%s", exc)
+        print(str(exc), file=sys.stderr)
+        return 1
+    tracker = history.restore()
+    logger.info(
+        "Exploration history: file=%s playthrough=%s rooms=%s regions=%s",
+        history.path,
+        history.playthrough_id,
+        len(tracker.rooms),
+        len(tracker.region_visits),
+    )
     gdb = DuckStationGdb(args.host, args.port)
     err = gdb.connect()
     if err:
         logger.error("GDB connection failed: %s", err)
         print(err, file=sys.stderr)
         if not args.map:
+            history.close()
             return 1
     else:
         logger.info("GDB connected")
@@ -604,6 +656,7 @@ def main() -> int:
             logger.error("GDB resume failed: %s", err)
             print(f"resume failed: {err}", file=sys.stderr)
             if not args.map:
+                history.close()
                 return 1
         else:
             logger.info("GDB resume sent")
@@ -675,6 +728,13 @@ def main() -> int:
                 next_reconnect_at = time.monotonic() + 1.0
             reads.clear()
             result = poll_once(profile, tracker, read_for_log)
+            if result.status == PollStatus.Display:
+                try:
+                    history.save(tracker)
+                except HistoryError as exc:
+                    logger.error("%s", exc)
+                    print(str(exc), file=sys.stderr)
+                    return 1
             if map_server is not None:
                 snapshot = (
                     map_state(tracker)
@@ -770,6 +830,7 @@ def main() -> int:
                     map_server.server_close()
         finally:
             gdb.close()
+            history.close()
             logger.info("GDB closed")
 
 

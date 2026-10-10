@@ -135,7 +135,7 @@ Once the character is controllable, first check the selected profile:
 
 ```sh
 python3 tools/track.py --once --host 127.0.0.1 --port 2345 \
-  --log-file "$run_dir/tracker-smoke.log"
+  --log-file "$run_dir/tracker-smoke.log" --history-file "$run_dir/visits.json"
 ```
 
 Expect the pinned profile to be verified and a current room to be reported. A socket connection alone does not prove the correct game is running. Read any profile or source-rejection diagnostic before treating the room state as valid.
@@ -144,10 +144,10 @@ Then start the live map:
 
 ```sh
 python3 tools/track.py --map --host 127.0.0.1 --port 2345 \
-  --log-file "$run_dir/tracker.log"
+  --log-file "$run_dir/tracker.log" --history-file "$run_dir/visits.json"
 ```
 
-The map is served at `http://127.0.0.1:8765/`. Muse can inspect the terminal and log without opening a browser. Keep the tracker terminal running and use Ctrl+C to stop it. Start a fresh tracker after loading the test setup if the experiment requires a fresh visit history.
+The map is served at `http://127.0.0.1:8765/`. Muse can inspect the terminal and log without opening a browser. Keep the tracker terminal running and use Ctrl+C to stop it. Exploration resumes from the selected history file across restarts. Add `--new-playthrough` if the experiment requires fresh visits. Always use the isolated run's history file so agent tests do not alter the user's exploration.
 
 The lifecycle gate now suppresses visits in the tested title and attract-mode states, as recorded in RE1-LIFECYCLE-002/003. Start a gameplay validation run after character control returns so its initial state is clear. Jill's gameplay menus, cutscenes and death/game-over phases remain unvalidated.
 
