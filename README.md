@@ -2,6 +2,10 @@
 
 A companion map for Resident Evil in DuckStation, showing explored rooms, remaining items and doors.
 
+![Explored rooms, remaining items and doors](docs/images/map.jpg)
+
+Recorded gameplay session.
+
 ## Setup
 
 You need Python 3, DuckStation, your own BIOS and Resident Evil Director's Cut USA, SLUS-00551. Currently supports Jill using DuckStation savestates.
@@ -34,6 +38,8 @@ Keep the terminal running while you play. Press Ctrl+C there to stop the tracker
 
 Rooms appear as you enter them. Red means items remain; blue means cleared. The white outline marks your current room. Click a room to see its items and doors.
 
-Visit history resets when you restart the tracker.
+Explored rooms are saved automatically and stay revealed after restarts or earlier savestate loads. Items and doors update to match the loaded game.
+
+For a new playthrough, run `python3 tools/track.py --map --new-playthrough`. Use `--history-file <path>` to keep another playthrough separate.
 
 If something goes wrong, report what happened and include `logs/tracker.log` from the project folder.
