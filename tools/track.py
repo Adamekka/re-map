@@ -47,6 +47,7 @@ class PollStatus(Enum):
     ReadFailure = "read-failure"
     Retry = "retry"
     WrongGame = "wrong-game"
+    NonGameplay = "non-gameplay"
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,23 @@ def poll_once(
             PollStatus.WrongGame,
             f"running game does not match profile {profile.profile_id}",
         )
+
+    lifecycle = None
+    if profile.lifecycle_address is not None:
+        # Title, demo, and other non-gameplay states read 0x00 here on the
+        # pinned revision (RE1-LIFECYCLE-002). Suppressing only that value
+        # keeps the gate fail-open for untested gameplay phases.
+        lifecycle = read_memory(profile.lifecycle_address, 1)
+        if not lifecycle.ok or len(lifecycle.data) != 1:
+            return PollResult(
+                PollStatus.ReadFailure,
+                f"lifecycle read failed: {lifecycle.error or 'short read'}",
+            )
+        if lifecycle.data[0] == 0x00:
+            return PollResult(
+                PollStatus.NonGameplay,
+                "Title or demo playback; visits not recorded",
+            )
 
     current = profile.read_current_room(read_memory)
     if not current.ok or current.room is None:
@@ -357,6 +375,15 @@ def poll_once(
             return PollResult(
                 PollStatus.Retry, "item or door state changed during read; retry"
             )
+    if lifecycle is not None and profile.lifecycle_address is not None:
+        result = read_memory(profile.lifecycle_address, 1)
+        if not result.ok or len(result.data) != 1:
+            return PollResult(
+                PollStatus.ReadFailure,
+                f"state recheck failed: {result.error or 'short read'}",
+            )
+        if result.data != lifecycle.data:
+            return PollResult(PollStatus.Retry, "lifecycle changed during read; retry")
     pool_again = read_memory(
         event_layout.pool_address, event_layout.capacity * event_layout.stride
     )
@@ -657,6 +684,8 @@ def main() -> int:
                         "error": (
                             "Changing rooms..."
                             if result.status == PollStatus.Retry
+                            else "Title or demo playback. Load or start gameplay to track."
+                            if result.status == PollStatus.NonGameplay
                             else "Waiting for Resident Evil Director's Cut."
                             if result.status == PollStatus.WrongGame
                             else "Game connection interrupted. Check DuckStation and its GDB server."
@@ -700,6 +729,15 @@ def main() -> int:
                 if args.once:
                     print(result.text, file=sys.stderr)
                     return 1
+                time.sleep(period)
+                continue
+            if result.status == PollStatus.NonGameplay:
+                if args.once:
+                    print(result.text, file=sys.stderr)
+                    return 1
+                if result.text != last_wait_reason:
+                    print("\x1b[2J\x1b[H" + result.text + map_line)
+                    last_wait_reason = result.text
                 time.sleep(period)
                 continue
             if result.status == PollStatus.ReadFailure:

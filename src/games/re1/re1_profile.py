@@ -103,6 +103,7 @@ class Re1Profile:
     stage_address: int | None = None
     room_address: int | None = None
     camera_address: int | None = None
+    lifecycle_address: int | None = None
     map_layout: Re1MapLayout | None = None
     revision: str = "unknown"
     runtime_signature: RuntimeSignature | None = None
@@ -541,11 +542,24 @@ class Re1Profile:
                         "floor plans must cover every supported room source"
                     )
 
+        lifecycle_address = _addr("lifecycle_address_ps1")
+        if (
+            lifecycle_address is not None
+            and runtime_layout is not None
+            and not (
+                runtime_layout.ram_base
+                <= lifecycle_address
+                < runtime_layout.ram_base + runtime_layout.ram_size
+            )
+        ):
+            raise ValueError("lifecycle address is outside configured PS1 RAM")
+
         return Re1Profile(
             profile_id=str(raw.get("profile_id", path.stem)),
             stage_address=_addr("stage_address_ps1"),
             room_address=_addr("room_address_ps1"),
             camera_address=_addr("camera_address_ps1"),
+            lifecycle_address=lifecycle_address,
             map_layout=map_layout,
             revision=str(raw.get("revision", "unknown")),
             runtime_signature=signature,
