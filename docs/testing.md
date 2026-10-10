@@ -4,6 +4,8 @@ For shell-only emulator setup, see [Starting DuckStation from a terminal](duckst
 
 The current playthrough target is Jill using DuckStation savestates. Chris support and normal in-game memory-card save/load are outside the delivery requirements. Existing normal-save experiments below remain evidence, but are not completion gates.
 
+This tracker is for personal use. A complete playthrough by an agent and exhaustive coverage are not required before using it. Play with the tracker, report mismatches, and use logs or savestates for targeted diagnosis and fixes. The validation limits below describe the available evidence.
+
 Use DuckStation with the tested RE1 Director's Cut USA disc, SLUS-00551. Enable its GDB server on port 2345, then boot the game and load a playable room.
 
 From the repository directory:

@@ -8,6 +8,8 @@ The tested combination is Resident Evil Director's Cut USA, **SLUS-00551**, and 
 
 The current delivery target is Jill using DuckStation savestates. Chris support and normal in-game memory-card save/load are outside the requirements.
 
+The tracker is for the user's personal playthrough. Prioritize useful tracking and fix encountered problems using logs and savestates. A full campaign played by an agent is not required before the user starts playing.
+
 ## 1. Select the existing isolated copy
 
 Use a prepared portable test copy, with its own settings, BIOS, memory cards and savestates. The installed app at `/Applications/DuckStation.app` is a reference location, not the test instance. Do not change the user's installed emulator settings or cards.

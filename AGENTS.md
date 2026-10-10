@@ -2,7 +2,7 @@
 
 ## Project goal
 
-Build an exploration and room-clear tracker for the original PlayStation versions of Resident Evil 1, Resident Evil 2, and Resident Evil 3.
+Build an exploration and room-clear tracker for the user's personal playthroughs of the original PlayStation versions of Resident Evil 1, Resident Evil 2, and Resident Evil 3.
 
 The target behavior is similar to the map in Resident Evil Remake:
 
@@ -84,6 +84,12 @@ Do not begin RE2 or RE3 until RE1 has a repeatable solution.
 - Use DuckStation savestates for restoring playthrough state. Normal in-game saving and loading through memory cards are not required.
 - Savestate loads must restore item, door and story interpretation from the loaded game state, including earlier-state reversal. Assess readiness against this scope.
 
+## Personal use
+
+- The user has completed Resident Evil Remake and knows the broad game progression. The tracker is an aid for their own playthrough.
+- Deliver a useful core tracker with enough accuracy for that playthrough. Known coverage gaps and occasional bugs can be fixed as the user encounters them. Exhaustive item, door and story coverage and a full playthrough completed by an agent are not prerequisites for personal use.
+- The agent owns reproducing and fixing reported problems. Use logs and savestates to investigate concrete failures, apply targeted fixes and verify them with relevant regressions. Prioritize problems that interrupt or confuse the user's playthrough.
+
 ## Game version handling
 
 Never assume RAM addresses are universal.
@@ -162,6 +168,7 @@ Use individual pickups, puzzles, and doors as validation cases for the shared sy
 
 ## Playthrough progress
 
+- Assess readiness against practical personal use and known blockers. A full game validation run is optional and must not delay the user's playthrough once the core tracker is useful.
 - Measure progress by resolved item and door outcomes, supported map areas, and new gameplay validation. Keep offline source coverage separate from runtime coverage. Commit, test, and supported-opcode counts alone do not establish playthrough readiness.
 - Before extending script interpretation, identify a reproduced tracking failure or correctness defect that the change addresses. If an experiment brings no demonstrated improvement, reconsider its priority against missing maps and gameplay validation instead of continuing through unsupported commands by default.
 - Revisit a rejected experiment only when new evidence or a relevant changed condition gives a reason to expect a different result. Record that reason and compare against the same baseline.
@@ -345,7 +352,7 @@ The player-facing map should match the useful behavior of RE2 Remake where pract
 - Draw spatial floor plans with room outlines, corridors, and door markers on walls. A graph of room nodes and connecting lines does not satisfy the map requirement.
 - Track door access from game state, including locked and unlocked doors, and distinguish observed passage when useful.
 - Show specific remaining items when their identity is established; otherwise a reliable remaining-item indication is acceptable.
-- Resolve unknown room and door states as unfinished detection work. Do not accept pervasive unknown states as the finished product or replace them with guessed clearance.
+- Prioritize unknown room and door states that affect the user's playthrough. Known unresolved conditions may remain in the version for personal use; do not replace them with guessed clearance.
 
 Start with a developer/debug UI.
 
@@ -403,7 +410,7 @@ Agent tests may use temporary infinite-health and infinite-ammunition patches to
 
 Every discovered address or rule needs a reproducible test.
 
-At minimum test:
+Use focused reproduction and regression checks for each fix. The following scenarios guide validation when relevant to a change; completing them across the whole game is not a prerequisite for personal use:
 
 - Fresh game
 - Entering an unvisited room
@@ -613,7 +620,7 @@ Only after this milestone should the project consider RE2.
 
 ## Success condition
 
-The RE1 implementation is successful when a player can play normally as Jill in DuckStation using savestates and the tracker reliably answers:
+The target for personal use is met when the core tracker is useful during the user's Jill playthrough in DuckStation using savestates and helps answer:
 
 ```text
 Have I already been in this room?
@@ -622,3 +629,5 @@ Have I cleared this room?
 ```
 
 without requiring manual bookkeeping and without modifying the original game files.
+
+Known gaps may remain at this point. Address tracking failures as they occur during the user's playthrough; a complete campaign played by an agent is not an acceptance requirement.
