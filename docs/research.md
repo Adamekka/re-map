@@ -4433,6 +4433,8 @@ Evidence:
 Limits: the tail decode assumes the file bytes following each event section are the bytes the VM would read in RAM. Whole-section RAM/disc equality is established for tested rooms in RE1-COVER-001 and RE1-SOURCE-002, but no RAM capture of these nine rooms was inspected, so trailing-byte contiguity in RAM is unverified. None of the nine entries was observed activating in gameplay, so the benign tail does not prove these events are harmless in ordinary play and grants no coverage, clearance, or production rule change. Other revisions need their own checks. The audit script is scratch at `/tmp/re-map-review/tail_audit.py`, outside Git.
 History:
 - 2026-10-09; opencode with model opencode/muse-spark-1.3-contributor-free; extracted the nine RDTs read-only to scratch, reproduced all nine failures with the repo scanner, tail-decoded each exit path, and verified the state-0 disable and state-1 default instructions in the pinned executable. No production code changed.
+- 2026-10-09; Codex root, GPT-6.1 Sol; independently matched the nine extracted files to manifest hashes, reproduced all nine scanner failures and tail states, and rechecked the state-0 disable and state-1 default instructions in the pinned executable. Added missing file hashes and distinguished PS1 virtual instruction addresses, executable file offsets and RDT file offsets. No live activation or RAM-tail check was performed; the finding remains Candidate.
+- 2026-10-10; Codex root, gpt-6.1-sol; restored the unchanged preceding contribution to RE1-EVENT-018 after the new lifecycle entries had displaced it into RE1-LIFECYCLE-003 history. This corrects attribution only and adds no event evidence.
 
 ## RE1-LIFECYCLE-002: lifecycle byte gates visit recording
 
@@ -4470,7 +4472,6 @@ Evidence:
 Limits: the endurance log alone does not prove which demo scenes were on screen mid-run; scene coverage for the `0x00` value comes from RE1-LIFECYCLE-002. The absent demo event starts are a two-minute negative in three demo rooms, not proof that demo playback never starts events. Tracker, capture, disc, and emulator artifacts stay outside Git. Chris, in-gameplay transients, and other revisions remain untested as in RE1-LIFECYCLE-002.
 History:
 - 2026-10-10; opencode with model opencode/muse-spark-1.3-contributor-free; ran the continuous tracker endurance check and the demo event-activity capture in the isolated copy, then stopped the emulator. No production code changed.
-- 2026-10-09; Codex root, GPT-6.1 Sol; independently matched the nine extracted files to manifest hashes, reproduced all nine scanner failures and tail states, and rechecked the state-0 disable and state-1 default instructions in the pinned executable. Added missing file hashes and distinguished PS1 virtual instruction addresses, executable file offsets and RDT file offsets. No live activation or RAM-tail check was performed; the finding remains Candidate.
 
 ## RE1-EMU-009: gameplay endurance and reconnect recovery
 
