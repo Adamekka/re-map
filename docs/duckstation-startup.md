@@ -145,7 +145,7 @@ python3 tools/track.py --map --host 127.0.0.1 --port 2345 \
 
 The map is served at `http://127.0.0.1:8765/`. Muse can inspect the terminal and log without opening a browser. Keep the tracker terminal running and use Ctrl+C to stop it. Start a fresh tracker after loading the test setup if the experiment requires a fresh visit history.
 
-Do not leave the tracker running at the title screen: the known attract-mode issue records demo rooms as visits. Starting only after character control returns avoids including those visits in a gameplay test.
+The lifecycle gate now suppresses visits in the tested title and attract-mode states, as recorded in RE1-LIFECYCLE-002/003. Start a gameplay validation run after character control returns so its initial state is clear. Chris, gameplay menus, cutscenes and death/game-over phases remain unvalidated.
 
 ## Troubleshooting and cleanup
 

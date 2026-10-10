@@ -375,15 +375,6 @@ def poll_once(
             return PollResult(
                 PollStatus.Retry, "item or door state changed during read; retry"
             )
-    if lifecycle is not None and profile.lifecycle_address is not None:
-        result = read_memory(profile.lifecycle_address, 1)
-        if not result.ok or len(result.data) != 1:
-            return PollResult(
-                PollStatus.ReadFailure,
-                f"state recheck failed: {result.error or 'short read'}",
-            )
-        if result.data != lifecycle.data:
-            return PollResult(PollStatus.Retry, "lifecycle changed during read; retry")
     pool_again = read_memory(
         event_layout.pool_address, event_layout.capacity * event_layout.stride
     )
@@ -434,6 +425,17 @@ def poll_once(
         )
     if final_room.room != rid:
         return PollResult(PollStatus.Retry, "room changed during final read; retry")
+    if lifecycle is not None and profile.lifecycle_address is not None:
+        # Recheck after the final room/source reads so a late switch to demo
+        # playback cannot publish a visit from this poll (RE1-LIFECYCLE-002).
+        result = read_memory(profile.lifecycle_address, 1)
+        if not result.ok or len(result.data) != 1:
+            return PollResult(
+                PollStatus.ReadFailure,
+                f"lifecycle recheck failed: {result.error or 'short read'}",
+            )
+        if result.data != lifecycle.data:
+            return PollResult(PollStatus.Retry, "lifecycle changed during read; retry")
     tracker.mark_current(rid)
     selection = (
         profile.map_layout.select(rid, camera.data[0])
