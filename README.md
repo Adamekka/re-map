@@ -4,8 +4,6 @@ A companion map for Resident Evil in DuckStation, showing explored rooms, remain
 
 ![Explored rooms, remaining items and doors](docs/images/map.jpg)
 
-Recorded gameplay session.
-
 ## Setup
 
 You need Python 3, DuckStation, your own BIOS and Resident Evil Director's Cut USA, SLUS-00551. Currently supports Jill using DuckStation savestates.
@@ -16,9 +14,6 @@ With DuckStation closed, add or update these settings in its `settings.ini`:
 [Debug]
 EnableGDBServer = true
 GDBServerPort = 2345
-
-[Achievements]
-Enabled = false
 ```
 
 The GDB server is built into DuckStation. You do not need to install or start a separate debugger.
