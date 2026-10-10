@@ -3,8 +3,9 @@
 Decodes every unique init/main Door_set target byte from
 data/room_manifest_slus00551.json through the shared
 games.re1.door_state.decode_door_target rule, with the stage-remap flag
-clear and set. Event procedures are out of scope here; RE1-DOORS-011
-counts one additional event-only pair separately.
+clear and set. Compiled event procedures contribute one additional
+event-only pair (RE1-DOORS-011); the tool reports it separately so the
+init/main counts stay comparable with the recorded static audit.
 
 Usage:
   python3 tools/door_map.py [--affected-only]
@@ -47,6 +48,25 @@ def collect_doors(
     return rooms, unique
 
 
+def collect_event_doors(
+    manifest: dict,
+) -> set[tuple[tuple[int, int], int]]:
+    """Return unique (source, target byte) doors from event procedures only."""
+    unique: set[tuple[tuple[int, int], int]] = set()
+    for row in manifest["rooms"]:
+        program = row["tracking_program"]
+        source = (row["room_main"], row["room_sub"])
+        for block in program["event_blocks"]:
+            for procedure in block:
+                for command in procedure["commands"]:
+                    if command["kind"] == "door":
+                        unique.add((source, command["args"][7]))
+        for command in program["event_commands"] + program["event_effects"]:
+            if command["kind"] == "door":
+                unique.add((source, command["args"][7]))
+    return unique
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -58,6 +78,8 @@ def main() -> int:
 
     manifest = json.loads(MANIFEST.read_text())
     rooms, unique = collect_doors(manifest)
+    event_unique = collect_event_doors(manifest)
+    event_only = sorted(pair for pair in event_unique if pair not in unique)
 
     def known(target: RoomId) -> bool:
         return (target.stage, target.room) in rooms
@@ -76,6 +98,8 @@ def main() -> int:
     print(f"remap-affected (encoded stage 1/2): {len(affected)}")
     print(f"unknown targets with remap clear: {len(unknown_clear)}")
     print(f"unknown targets with remap set: {len(unknown_remap)}")
+    print(f"unique event doors: {len(event_unique)}")
+    print(f"event-only doors: {len(event_only)}")
 
     rows = affected if args.affected_only else projection
     for source, byte, clear, remapped in rows:
@@ -90,6 +114,14 @@ def main() -> int:
     print("unknown with remap set:")
     for source, byte, _, _ in unknown_remap:
         print(f"  {source[0]:02X}-{source[1]:02X} -> {byte:#04x}")
+    print("event-only doors:")
+    for source, byte in event_only:
+        clear = decode_door_target(byte, source[0], False)
+        remapped = decode_door_target(byte, source[0], True)
+        print(
+            f"  {source[0]:02X}-{source[1]:02X} -> {byte:#04x}: "
+            f"clear {clear} | remap {remapped}"
+        )
     return 0
 
 

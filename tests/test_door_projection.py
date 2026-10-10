@@ -1,12 +1,13 @@
 """Offline door-target projection regression for the stage-remap rule.
 
 RE1-DOORS-010/011 record the shared decode and the static 343-door
-projection. This test replays that projection from the committed room
-manifest through the production decoder, with no emulator, game bytes,
-or private captures. It guards the three recorded properties: the two
-late-game crossings resolve under the remap flag, the Courtyard crossing
-disambiguates between two known rooms, and enabling the flag never moves
-a door from a known room to an unknown one.
+projection, plus one event-only pair for 344 overall. This test replays
+that projection from the committed room manifest through the production
+decoder, with no emulator, game bytes, or private captures. It guards
+the recorded properties: the two late-game crossings resolve under the
+remap flag, the Courtyard crossing disambiguates between two known
+rooms, enabling the flag never moves a door from a known room to an
+unknown one, and the single event-only pair is unaffected by the flag.
 """
 
 import json
@@ -20,7 +21,7 @@ REPO = Path(__file__).resolve().parents[1]
 # The CLI lives in the source tree; import its collector to test the code it runs.
 sys.path[:0] = [str(REPO / "src"), str(REPO / "tools")]
 
-from door_map import collect_doors
+from door_map import collect_doors, collect_event_doors
 
 from games.re1.door_state import decode_door_target
 
@@ -28,6 +29,11 @@ from games.re1.door_state import decode_door_target
 def load_projection():
     manifest = json.loads((REPO / "data/room_manifest_slus00551.json").read_text())
     return collect_doors(manifest)
+
+
+def load_event_doors():
+    manifest = json.loads((REPO / "data/room_manifest_slus00551.json").read_text())
+    return collect_event_doors(manifest)
 
 
 def test_projection_counts_match_recorded_static_audit():
@@ -86,6 +92,18 @@ def test_remap_never_moves_known_target_to_unknown():
     assert regressed == []
 
 
+def test_single_event_only_pair_is_unaffected_by_remap():
+    rooms, unique = load_projection()
+    event_unique = load_event_doors()
+    event_only = sorted(pair for pair in event_unique if pair not in unique)
+    assert event_only == [((3, 15), 0x0C)]
+    clear = decode_door_target(0x0C, 3, False)
+    remapped = decode_door_target(0x0C, 3, True)
+    assert (clear.stage, clear.room) == (3, 0x0C)
+    assert (remapped.stage, remapped.room) == (3, 0x0C)
+    assert (clear.stage, clear.room) in rooms
+
+
 @pytest.mark.parametrize("affected_only", [False, True])
 def test_cli_reports_static_counts_and_filters_rows(affected_only):
     result = subprocess.run(
@@ -100,16 +118,20 @@ def test_cli_reports_static_counts_and_filters_rows(affected_only):
         check=True,
     )
     lines = result.stdout.splitlines()
-    assert lines[:4] == [
+    assert lines[:6] == [
         "unique init/main doors: 343",
         "remap-affected (encoded stage 1/2): 16",
         "unknown targets with remap clear: 8",
         "unknown targets with remap set: 6",
+        "unique event doors: 7",
+        "event-only doors: 1",
     ]
-    assert sum(" | remap " in line for line in lines) == (16 if affected_only else 343)
+    assert sum(" | remap " in line for line in lines) == (16 if affected_only else 344)
     for expected in (
         "02-00 -> 0x3b: clear 00-1b (known) | remap 05-1b (known)",
         "05-10 -> 0x5c: clear 01-1c (unknown) | remap 06-1c (known)",
         "06-1C -> 0x30: clear 00-10 (unknown) | remap 05-10 (known)",
     ):
         assert "  " + expected in lines
+    if not affected_only:
+        assert "  03-0F -> 0x0c: clear 03-0c | remap 03-0c" in lines
