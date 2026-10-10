@@ -1,5 +1,7 @@
 # Running the live tracker
 
+For shell-only emulator setup, see [Starting DuckStation from a terminal](duckstation-startup.md).
+
 Use DuckStation with the tested RE1 Director's Cut USA disc, SLUS-00551. Enable its GDB server on port 2345, then boot the game and load a playable room.
 
 From the repository directory:
