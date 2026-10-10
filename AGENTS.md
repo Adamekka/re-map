@@ -60,7 +60,7 @@ Do not require these unless game data proves otherwise:
 
 Story-dependent or conditional item spawns must be handled carefully. A room must not be marked incomplete because of an item that is not currently available.
 
-Reevaluate completion when game state changes. A cleared room can become incomplete when a new item becomes available or an earlier save or savestate is loaded.
+Reevaluate completion when game state changes. A cleared room can become incomplete when a new item becomes available or an earlier DuckStation savestate is loaded.
 
 If the game stores an "item acquired" bit or equivalent persistent flag, prefer that flag over heuristics.
 
@@ -77,6 +77,12 @@ Work in this order:
 7. Optional native modification of the in-game map
 
 Do not begin RE2 or RE3 until RE1 has a repeatable solution.
+
+## RE1 playthrough scope
+
+- Support Jill only for the current RE1 delivery target. Chris support is outside scope.
+- Use DuckStation savestates for restoring playthrough state. Normal in-game saving and loading through memory cards are not required.
+- Savestate loads must restore item, door and story interpretation from the loaded game state, including earlier-state reversal. Assess readiness against this scope.
 
 ## Game version handling
 
@@ -221,11 +227,10 @@ Prefer persistent game flags over scanning the active room object list.
 Validate candidate flags against the expected game state after:
 
 - Leaving and re-entering the room
-- Saving and loading normally
 - A DuckStation savestate reload
 - Story progression where applicable
 
-Test loads from both before and after a pickup. Loading an earlier save or savestate must restore the earlier acquisition state. A savestate restoring a value proves restore behavior, not that the value is a persistent acquisition flag; verify persistence through normal in-game saving/loading and room transitions too.
+Test savestates from both before and after a pickup. Loading an earlier savestate must restore the earlier acquisition state. Verify flags across room transitions as well. Savestate restoration alone does not prove persistence through normal in-game saving/loading; that persistence is outside the current delivery requirements.
 
 ### Mapping items to rooms
 
@@ -388,7 +393,7 @@ External save data must include enough game identity to avoid mixing:
 
 Avoid storing a second copy of data that can be reconstructed from game RAM.
 
-After a game, save, or savestate change, reread game-derived state before presenting completion. Do not carry cached completion into the new state. Define and document whether external visit history follows the loaded save or records all tracker-observed visits in the playthrough before implementing persistence.
+After a game or savestate change, reread game-derived state before presenting completion. Do not carry cached completion into the new state. Define and document whether external visit history follows the loaded savestate or records all tracker-observed visits in the playthrough before implementing persistence.
 
 ## Testing
 
@@ -405,10 +410,8 @@ At minimum test:
 - Leaving and returning
 - Picking up one of several items
 - Picking up the last item
-- Saving/loading
 - DuckStation savestate load
 - Story-driven item changes
-- Character/scenario differences where applicable
 
 For a room with three items, verify:
 
@@ -604,13 +607,13 @@ Expand the RE1 implementation to:
 - Conditional items
 - Visited-room tracking
 - A basic visual map
-- Reliable save/load behavior
+- Reliable DuckStation savestate restoration
 
 Only after this milestone should the project consider RE2.
 
 ## Success condition
 
-The RE1 implementation is successful when a player can play normally in DuckStation and the tracker reliably answers:
+The RE1 implementation is successful when a player can play normally as Jill in DuckStation using savestates and the tracker reliably answers:
 
 ```text
 Have I already been in this room?

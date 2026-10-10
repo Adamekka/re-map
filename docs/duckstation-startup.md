@@ -6,6 +6,8 @@ DuckStation supplies the GDB server. The Python tracker connects to it; there is
 
 The tested combination is Resident Evil Director's Cut USA, **SLUS-00551**, and the isolated DuckStation **0.1-11894-gc66b2694d** used in the research notes. Other emulator builds and game revisions are not interchangeable validation environments.
 
+The current delivery target is Jill using DuckStation savestates. Chris support and normal in-game memory-card save/load are outside the requirements.
+
 ## 1. Select the existing isolated copy
 
 Use a prepared portable test copy, with its own settings, BIOS, memory cards and savestates. The installed app at `/Applications/DuckStation.app` is a reference location, not the test instance. Do not change the user's installed emulator settings or cards.
@@ -145,7 +147,7 @@ python3 tools/track.py --map --host 127.0.0.1 --port 2345 \
 
 The map is served at `http://127.0.0.1:8765/`. Muse can inspect the terminal and log without opening a browser. Keep the tracker terminal running and use Ctrl+C to stop it. Start a fresh tracker after loading the test setup if the experiment requires a fresh visit history.
 
-The lifecycle gate now suppresses visits in the tested title and attract-mode states, as recorded in RE1-LIFECYCLE-002/003. Start a gameplay validation run after character control returns so its initial state is clear. Chris, gameplay menus, cutscenes and death/game-over phases remain unvalidated.
+The lifecycle gate now suppresses visits in the tested title and attract-mode states, as recorded in RE1-LIFECYCLE-002/003. Start a gameplay validation run after character control returns so its initial state is clear. Jill's gameplay menus, cutscenes and death/game-over phases remain unvalidated.
 
 ## Troubleshooting and cleanup
 
