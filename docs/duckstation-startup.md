@@ -85,7 +85,7 @@ test -f "$state_file" || { echo 'Missing checkpoint'; exit 1; }
 duckstation_pid=$!
 ```
 
-Keep the copy's BIOS and memory-card paths valid. Existing private checkpoints include `r-laboratory-b2.sav`, `u-powerroom-start.sav` and `y-basement-return.sav`; their existence and compatibility must be checked locally. Some contain the documented temporary health patch. Record enabled patches when using them for validation.
+Keep the copy's BIOS and memory-card paths valid. [Versioned reproduction saves](../tests/fixtures/re1/README.md) include `r-laboratory-b2.sav`, `u-powerroom-start.sav` and `y-basement-return.sav` under `tests/fixtures/re1/savestates/later-areas/`. Check their recorded emulator compatibility before loading. Some contain the documented temporary health patch. Record enabled patches when using them for validation.
 
 Loading a DuckStation checkpoint checks savestate restoration. It does not count as saving and loading through RE1's own menus.
 
@@ -168,4 +168,4 @@ Stop your own tracker or capture process before closing the emulator. For a shel
 kill -TERM "$duckstation_pid"
 ```
 
-Keep logs, RAM, discs, BIOS, cards and checkpoints outside Git. See [testing.md](testing.md) for the existing capture commands and validation routes, and research entries RE1-AUTO-001, RE1-EMU-007/008 and RE1-SAVE-005 for the recorded launch, debugger and load behavior.
+Keep logs, raw RAM, discs and BIOS outside Git. Approved reproduction saves are versioned under `tests/fixtures/re1/`; test with writable copies of its memory cards. See [testing.md](testing.md) for the existing capture commands and validation routes, and research entries RE1-AUTO-001, RE1-EMU-007/008 and RE1-SAVE-005 for the recorded launch, debugger and load behavior.

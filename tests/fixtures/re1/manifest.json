@@ -1,0 +1,485 @@
+{
+  "schema": 1,
+  "archived_on": "2026-10-10",
+  "archive_author": {
+    "agent": "Codex",
+    "model": "gpt-6.1-sol"
+  },
+  "game": {
+    "title": "Resident Evil Director's Cut",
+    "region": "NTSC-U",
+    "serial": "SLUS-00551",
+    "executable_sha256": "0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6"
+  },
+  "compatibility_note": "The game identity above is the tracker target. User checkpoints are archived from matching serial headers; their runtime executable identity and load compatibility were not newly tested. State format version does not identify the creating emulator build.",
+  "approval": "User requested copying DuckStation savestates and in-game saves into the repository for reproducibility on 2026-10-10.",
+  "public_card_source": {
+    "author": "Tehppyd",
+    "page": "https://tehppyddistrict.blogspot.com/2017/12/resident-evil-directors-cut-dual-shock.html",
+    "archive": "https://drive.google.com/file/d/1-B5iFXICLz1Qcca4cf6BfNEApk4GtAQR/view",
+    "research_finding": "RE1-SAVE-004"
+  },
+  "tracker_history_note": "No matching external visit-history snapshot is available for these older checkpoints. Exploration continues to accumulate unless a separate test history or --new-playthrough is selected.",
+  "files": [
+    {
+      "path": "tests/fixtures/re1/memory-cards/art-map/before-only-card.mcd",
+      "bytes": 131072,
+      "sha256": "0d9a76d4f834e46464e681956cebc2dfee1a848af264b4431c5627932563b2ea",
+      "description": "Art Room normal-save experiment with the earlier save only.",
+      "source_files": [
+        "agent-tests/map-save-load/before-only-card.mcd"
+      ],
+      "research_findings": [
+        "RE1-SAVE-003"
+      ],
+      "kind": "ps1-memory-card",
+      "directory_files": [
+        "BASLUS-005510"
+      ]
+    },
+    {
+      "path": "tests/fixtures/re1/memory-cards/art-map/both-saves-card.mcd",
+      "bytes": 131072,
+      "sha256": "28734147c3547009d6da5290098beca6cc7500aa952e11d2eb1acede17d77761",
+      "description": "Art Room normal-save experiment with before and after saves.",
+      "source_files": [
+        "agent-tests/map-save-load/both-saves-card.mcd"
+      ],
+      "research_findings": [
+        "RE1-SAVE-003"
+      ],
+      "kind": "ps1-memory-card",
+      "directory_files": [
+        "BASLUS-005510",
+        "BASLUS-005511"
+      ]
+    },
+    {
+      "path": "tests/fixtures/re1/memory-cards/art-map/private-card.mcd",
+      "bytes": 131072,
+      "sha256": "0477d308bdb7441d28ddb2b8ad0cc699d14fcf89f89494501d540d654e6d952f",
+      "description": "Working copy after later room-entry validation; same save payloads as both-saves-card.",
+      "source_files": [
+        "agent-tests/map-save-load/private-card.mcd",
+        "agent-tests/away-room-validation/private-card.mcd"
+      ],
+      "research_findings": [
+        "RE1-SAVE-003",
+        "RE1-CLEAR-003"
+      ],
+      "kind": "ps1-memory-card",
+      "directory_files": [
+        "BASLUS-005510",
+        "BASLUS-005511"
+      ]
+    },
+    {
+      "path": "tests/fixtures/re1/memory-cards/online/SCEVMC0.mcd",
+      "bytes": 131072,
+      "sha256": "8a9d5c774f45584ec84d19af6fc4bc5cc28e75fb6afefd6772c8becb6b2e2236",
+      "description": "Original raw public memory card 0.",
+      "source_files": [
+        "agent-tests/online-saves/SCEVMC0.mcd"
+      ],
+      "research_findings": [
+        "RE1-SAVE-004"
+      ],
+      "kind": "ps1-memory-card",
+      "directory_files": [
+        "BASLUS-005514",
+        "BASLUS-005513",
+        "BASLUS-005511",
+        "BASLUS-005510"
+      ]
+    },
+    {
+      "path": "tests/fixtures/re1/memory-cards/online/SCEVMC1.mcd",
+      "bytes": 131072,
+      "sha256": "21bc80edfdcbdae68d2341256930413306997a3c46765ae9e20b8009b125db7a",
+      "description": "Original raw public memory card 1 with Courtyard, Guardhouse and Laboratory saves.",
+      "source_files": [
+        "agent-tests/online-saves/SCEVMC1.mcd"
+      ],
+      "research_findings": [
+        "RE1-SAVE-004",
+        "RE1-SAVE-005"
+      ],
+      "kind": "ps1-memory-card",
+      "directory_files": [
+        "BASLUS-005514",
+        "BASLUS-005511",
+        "BASLUS-005512",
+        "BASLUS-005510",
+        "BASLUS-005513"
+      ]
+    },
+    {
+      "path": "tests/fixtures/re1/memory-cards/online/working-card.mcd",
+      "bytes": 131072,
+      "sha256": "478262def290e9c37bd6bcb7e6a2e75f94f394783e826715c36bee4bddac8a8e",
+      "description": "Working copy of SCEVMC1; administrative bytes differ, all fifteen save blocks unchanged.",
+      "source_files": [
+        "agent-tests/online-saves/working-card.mcd",
+        "agent-tests/online-saves/working-card-paused.mcd",
+        "agent-tests/online-saves/w-working-card.mcd"
+      ],
+      "research_findings": [
+        "RE1-SAVE-004",
+        "RE1-SAVE-005",
+        "RE1-MAP-017"
+      ],
+      "kind": "ps1-memory-card",
+      "directory_files": [
+        "BASLUS-005514",
+        "BASLUS-005511",
+        "BASLUS-005512",
+        "BASLUS-005510",
+        "BASLUS-005513"
+      ]
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/art-map/art-map-after.sav",
+      "bytes": 1690386,
+      "sha256": "193780b5fd8941bcb70066b5e5061c833696b1761cd763eb2f5eb3f2ad468bd2",
+      "description": "Training Jill Art Room after Map pickup; Ink Ribbon untouched.",
+      "source_files": [
+        "agent-tests/item-event-validation/art-map-after.sav",
+        "agent-tests/event-activation/DuckStation.app/Contents/MacOS/savestates/SLUS-00551_3.sav"
+      ],
+      "research_findings": [
+        "RE1-EVENT-015"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "No test patch recorded."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/art-map/art-map-before.sav",
+      "bytes": 1695172,
+      "sha256": "609184b9bef7eab045790b5a3873e1eb73957954be33a9303192945379465e76",
+      "description": "Training Jill Art Room before Map pickup.",
+      "source_files": [
+        "agent-tests/item-event-validation/art-map-before.sav",
+        "agent-tests/event-activation/DuckStation.app/Contents/MacOS/savestates/SLUS-00551_2.sav"
+      ],
+      "research_findings": [
+        "RE1-EVENT-015",
+        "RE1-MAP-007"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "No test patch recorded."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/art-map/art-map-positioned-before.sav",
+      "bytes": 1682558,
+      "sha256": "e5b06502d95a22d260f8bc4fdc9e4cb2c07eacb4137f36e3537b2712caee6141",
+      "description": "Training Jill Art Room with steps positioned; Map and Ink Ribbon untouched.",
+      "source_files": [
+        "agent-tests/item-event-validation/art-map-positioned-before.sav",
+        "agent-tests/event-activation/DuckStation.app/Contents/MacOS/savestates/SLUS-00551_5.sav"
+      ],
+      "research_findings": [
+        "RE1-EVENT-015"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "No test patch recorded."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/event-activation/SLUS-00551_1.sav",
+      "bytes": 1473574,
+      "sha256": "cd1ab70d53d853403ff5657786139bffe2acf46aa0546b34f548baf14bfc1f52",
+      "description": "Training Jill opening-event checkpoint, isolated slot 1.",
+      "source_files": [
+        "agent-tests/event-activation/DuckStation.app/Contents/MacOS/savestates/SLUS-00551_1.sav"
+      ],
+      "research_findings": [
+        "RE1-EVENT-013"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "No test patch recorded."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/event-activation/SLUS-00551_4.sav",
+      "bytes": 1682621,
+      "sha256": "44913e33658bf6ab3affd8c4e0651a39ba8a7bc854aa1eda4bc087cc85bfa66b",
+      "description": "Training Jill event-validation checkpoint, isolated slot 4.",
+      "source_files": [
+        "agent-tests/event-activation/DuckStation.app/Contents/MacOS/savestates/SLUS-00551_4.sav"
+      ],
+      "research_findings": [
+        "RE1-EVENT-015"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "No test patch recorded."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/m-guardhouse-return.sav",
+      "bytes": 1599582,
+      "sha256": "d0290deabf10fa9efa7bae80be3b71288b1bf16c05be1306b31dd19f97423249",
+      "description": "Chris Guardhouse return; retained for existing map-validation evidence.",
+      "source_files": [
+        "agent-tests/online-saves/m-guardhouse-return.sav"
+      ],
+      "research_findings": [
+        "RE1-SAVE-005",
+        "RE1-MAP-013"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Saved before the temporary health-lock validation. Public card inventory includes a Colt Python with infinite ammunition."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/n2-guardhouse-b1-return.sav",
+      "bytes": 1581315,
+      "sha256": "e15b1c250cdec88bb1abcd417990e931ed9530912eb8a18d68703406772fa6fc",
+      "description": "Chris Guardhouse basement ladder return; retained for existing map-validation evidence.",
+      "source_files": [
+        "agent-tests/online-saves/n2-guardhouse-b1-return.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-014"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation state, RE1-CHEAT-003. Public card inventory includes a Colt Python with infinite ammunition."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/o-laboratory-start.sav",
+      "bytes": 1240687,
+      "sha256": "5b79fca201a31915c79d77b798189f63fcc04f67f7f5aaf62287937e7e67d32b",
+      "description": "Chris Laboratory starting checkpoint; retained for existing map-validation evidence.",
+      "source_files": [
+        "agent-tests/online-saves/o-laboratory-start.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-015"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation session, RE1-CHEAT-003."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/r-laboratory-b2.sav",
+      "bytes": 1473437,
+      "sha256": "0a81a2ef6bd061621196426165cb847336fd9b48f86bc2c7e402871824058b8e",
+      "description": "Chris Laboratory B2 checkpoint; retained for existing map-validation evidence.",
+      "source_files": [
+        "agent-tests/online-saves/r-laboratory-b2.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-015"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation state, RE1-CHEAT-003."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/u-powerroom-start.sav",
+      "bytes": 1618148,
+      "sha256": "5e44a748480768ffa9f80bbcf4abf33b954d6960f09aab08c4a87526d95acbeb",
+      "description": "Jill Power Room before Battery pickup.",
+      "source_files": [
+        "agent-tests/online-saves/u-powerroom-start.sav"
+      ],
+      "research_findings": [
+        "RE1-PICKUP-006",
+        "RE1-MAP-016"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation state, RE1-CHEAT-003. Public card inventory includes a Colt Python with infinite ammunition."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/v-laboratory-b4-return.sav",
+      "bytes": 1661208,
+      "sha256": "47613e244a80d3886c974bdaa5ff21194534b8bc63f6c8f28e4059805ee639e9",
+      "description": "Jill Laboratory return after the power route and B4 visit.",
+      "source_files": [
+        "agent-tests/online-saves/v-laboratory-b4-return.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-016"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation state, RE1-CHEAT-003."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/y-basement-return.sav",
+      "bytes": 1647218,
+      "sha256": "0a2fbf70c5b8953fce6ae45bba12eab3ea65c2692e9be46b64da8d5e42a9bd8a",
+      "description": "Jill Mansion basement return after Kitchen and stairs.",
+      "source_files": [
+        "agent-tests/online-saves/y-basement-return.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-017"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation state, RE1-CHEAT-003."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/later-areas/y-mansion-approach.sav",
+      "bytes": 1575313,
+      "sha256": "4e2a639362dcff7fff634f6c9251bd2c36c353a8d2660035159f99b4b9a0bab1",
+      "description": "Jill checkpoint on the route from Courtyard to Mansion.",
+      "source_files": [
+        "agent-tests/online-saves/y-mansion-approach.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-017"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "Temporary health-lock validation state, RE1-CHEAT-003."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/mansion/g-terrace-collected.sav",
+      "bytes": 1632582,
+      "sha256": "21d29e6a52c093f291e4b5760746de0f07eb53b780fb24275d0cc596dc699936",
+      "description": "Training Jill returned to Terrace after the Bazooka grant.",
+      "source_files": [
+        "agent-tests/multi-area-gameplay/g-terrace-collected.sav"
+      ],
+      "research_findings": [
+        "RE1-MAP-010",
+        "RE1-PICKUP-005",
+        "RE1-DOORS-007"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "0.1-11894-gc66b2694d",
+      "patch_record": "No test patch recorded."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/user/SLUS-00551_1.sav",
+      "bytes": 1631421,
+      "sha256": "b8807bcf5587496c06a3f908a5be37461a0a6c6117ec16d7f3d5899fdca104a9",
+      "description": "User checkpoint; room, character and load compatibility not newly validated.",
+      "source_files": [
+        "duckstation-data/savestates/SLUS-00551_1.sav"
+      ],
+      "research_findings": [],
+      "kind": "duckstation-savestate",
+      "state_format_version": 83,
+      "emulator_build_record": "Creating build was not recorded. Installed build at archival time: 0.1-12074-g697599c47.",
+      "patch_record": "Patch history was not recorded with this checkpoint."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/user/SLUS-00551_9.sav",
+      "bytes": 1595489,
+      "sha256": "e9439befa8bacf55ae4d82e9e59228e986c9fc26dce3840d71e52028044fbd96",
+      "description": "User checkpoint; room, character and load compatibility not newly validated.",
+      "source_files": [
+        "duckstation-data/savestates/SLUS-00551_9.sav"
+      ],
+      "research_findings": [],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "Creating build was not recorded. Installed build at archival time: 0.1-12074-g697599c47.",
+      "patch_record": "Patch history was not recorded with this checkpoint."
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/user/SLUS-00551_resume.sav",
+      "bytes": 1666119,
+      "sha256": "479a3b07fbbe1cbf339c9101838b7312030cabf49dc5f80e4228f8d911d5389e",
+      "description": "User checkpoint; room, character and load compatibility not newly validated.",
+      "source_files": [
+        "duckstation-data/savestates/SLUS-00551_resume.sav"
+      ],
+      "research_findings": [],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "Creating build was not recorded. Installed build at archival time: 0.1-12074-g697599c47.",
+      "patch_record": "Patch history was not recorded with this checkpoint."
+    },
+    {
+      "path": "tests/fixtures/slus00551_chemical_after.sav",
+      "bytes": 1626103,
+      "sha256": "b5de7d17f76a6f2812c3761008f118d0d35e165d655dd24d737fb104e344085b",
+      "description": "User-provided Training Jill chemical pickup, after.",
+      "source_files": [
+        "existing-fixtures/slus00551_chemical_after.sav",
+        "duckstation-data/savestates/SLUS-00551_5.sav"
+      ],
+      "research_findings": [
+        "RE1-PICKUP-003",
+        "RE1-SAVE-001"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "DuckStation 0.1-11894 dev, as recorded in the original pickup finding. Exact creating commit was not recorded with the donation.",
+      "patch_record": "No test patch recorded with the original donation."
+    },
+    {
+      "path": "tests/fixtures/slus00551_chemical_before.sav",
+      "bytes": 1630171,
+      "sha256": "5eeef607419e49ab3b36be49363c601d63523410a68755dabef0a15dcf178f2b",
+      "description": "User-provided Training Jill chemical pickup, before.",
+      "source_files": [
+        "existing-fixtures/slus00551_chemical_before.sav",
+        "duckstation-data/savestates/SLUS-00551_4.sav"
+      ],
+      "research_findings": [
+        "RE1-PICKUP-003",
+        "RE1-SAVE-001"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "DuckStation 0.1-11894 dev, as recorded in the original pickup finding. Exact creating commit was not recorded with the donation.",
+      "patch_record": "No test patch recorded with the original donation."
+    },
+    {
+      "path": "tests/fixtures/slus00551_green_herb_after.sav",
+      "bytes": 1608794,
+      "sha256": "f7fda842f192b453b89c3282abfda72609bd65bbf86df48fd10b3a6f5c7403c9",
+      "description": "User-provided Training Jill green herb pickup, after.",
+      "source_files": [
+        "existing-fixtures/slus00551_green_herb_after.sav",
+        "duckstation-data/savestates/SLUS-00551_3.sav"
+      ],
+      "research_findings": [
+        "RE1-PICKUP-002"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "DuckStation 0.1-11894 dev, as recorded in the original pickup finding. Exact creating commit was not recorded with the donation.",
+      "patch_record": "No test patch recorded with the original donation."
+    },
+    {
+      "path": "tests/fixtures/slus00551_green_herb_before.sav",
+      "bytes": 1625392,
+      "sha256": "837ee1d0a752538a4cf7e74b20d3991f0d403015ba19407b2e6f7972e9b67112",
+      "description": "User-provided Training Jill green herb pickup, before.",
+      "source_files": [
+        "existing-fixtures/slus00551_green_herb_before.sav",
+        "duckstation-data/savestates/SLUS-00551_2.sav"
+      ],
+      "research_findings": [
+        "RE1-PICKUP-002"
+      ],
+      "kind": "duckstation-savestate",
+      "state_format_version": 87,
+      "emulator_build_record": "DuckStation 0.1-11894 dev, as recorded in the original pickup finding. Exact creating commit was not recorded with the donation.",
+      "patch_record": "No test patch recorded with the original donation."
+    }
+  ]
+}

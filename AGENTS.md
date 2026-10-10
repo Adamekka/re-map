@@ -57,8 +57,8 @@
 
 ## Repository hygiene
 
-- Do not commit or distribute BIOS files, disc images, copyrighted assets, credentials or user saves. User saves may be included only when intentionally approved as safe test fixtures.
-- Keep RAM dumps and savestates out of Git unless explicitly approved. Commit code, parsers, metadata, offsets and hashes instead.
+- Do not commit or distribute BIOS files, disc images, standalone copyrighted assets, credentials or unrelated user saves.
+- Keep selected RE1 savestates and memory-card saves in Git as reproducibility fixtures, with provenance, checksums and emulator compatibility. Keep raw RAM dumps out of Git.
 
 ## Commits
 
