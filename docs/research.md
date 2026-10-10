@@ -4451,4 +4451,19 @@ Limits: only Training Jill gameplay states were observed; Chris values are unkno
 History:
 - 2026-10-10; human user; authorized emulator use and pointed to the startup guide; the isolated copy, disc, and checkpoints used here follow it.
 - 2026-10-10; opencode with model opencode/muse-spark-1.3-contributor-free; ran the boot/demo poll cycle, the gameplay-load comparison, the checkpoint diff, both live `--once` verifications, and implemented the gate with regressions. No game files, captures, or disc bytes added to Git.
+
+## RE1-LIFECYCLE-003: gate holds through continuous attract playback
+
+Status: Confirmed for the tested SLUS-00551 attract sequence; same revision and environment as RE1-LIFECYCLE-002, same untested limits
+Scope: Resident Evil Director's Cut USA SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`; continuous attract-mode demo with the RE1-LIFECYCLE-002 gate in the polling loop
+Environment: the RE1-LIFECYCLE-002 isolated DuckStation 0.1-11894-gc66b2694d copy, GDB port 2345, achievements disabled, owned SLUS-00551 CUE; tracker at the gated commit; Python 3.14.8; no game files, captures, or disc bytes added to Git
+Authored: 2026-10-10; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
+Basis: a ten-minute continuous live tracker run plus a two-minute native event-activity capture during the same attract sequence
+Claim: over about ten minutes of uninterrupted attract playback, all 20 logged polls returned `NonGameplay` and none returned `Display`, so no demo room entered visit history. A follow-up two-minute watchpoint capture recorded no indexed event starts in the demo rooms and one eight-slot activity clear through the room-loader path during a demo room transition.
+Evidence:
+- `tools/track.py` in continuous mode logged `Poll non-gameplay` 20 times with no other poll status; the demo was confirmed active in room `00-07` immediately before the run and again right after it. Multi-scene `0x00` readings across rooms `00-07`, `01-07`, and `00-01` rest on the RE1-LIFECYCLE-002 poll cycle, not on this run's log, which does not record room bytes for non-gameplay polls.
+- `tools/capture_events.py --breakpoints` over 120 seconds of the same attract sequence recorded 8 breakpoint hits and 0 snapshots: near-simultaneous activity writes across all eight event slots at about 28 seconds with `native_pc_after_write` `0x800441C0`, inside the room-loader reset region, each followed by a source-unavailable gap during the transition. No indexed entry start was captured in roughly two minutes of demo Art Room playback. Capture file `/tmp/re-map-events-demo.jsonl` (14 records) stays outside Git.
+Limits: the endurance log alone does not prove which demo scenes were on screen mid-run; scene coverage for the `0x00` value comes from RE1-LIFECYCLE-002. The absent demo event starts are a two-minute negative in three demo rooms, not proof that demo playback never starts events. Tracker, capture, disc, and emulator artifacts stay outside Git. Chris, in-gameplay transients, and other revisions remain untested as in RE1-LIFECYCLE-002.
+History:
+- 2026-10-10; opencode with model opencode/muse-spark-1.3-contributor-free; ran the continuous tracker endurance check and the demo event-activity capture in the isolated copy, then stopped the emulator. No production code changed.
 - 2026-10-09; Codex root, GPT-6.1 Sol; independently matched the nine extracted files to manifest hashes, reproduced all nine scanner failures and tail states, and rechecked the state-0 disable and state-1 default instructions in the pinned executable. Added missing file hashes and distinguished PS1 virtual instruction addresses, executable file offsets and RDT file offsets. No live activation or RAM-tail check was performed; the finding remains Candidate.
