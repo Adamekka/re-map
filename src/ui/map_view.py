@@ -38,6 +38,14 @@ def map_state(tracker: Tracker) -> dict:
         }
 
     region = tracker.current_region.split(":", 1)[-1]
+    # An entered elevator can put the current floor on screen before any of
+    # its outlined rooms have been visited. Keep that floor selectable too.
+    explored_areas = {area: []}
+    for region_key, key in sorted(tracker.region_visits.items()):
+        visited_area, visited_region = region_key.split(":", 1)
+        explored_areas.setdefault(visited_area, []).append(
+            room_detail(key, visited_region)
+        )
     return {
         "status": "display",
         "current": str(current),
@@ -45,11 +53,8 @@ def map_state(tracker: Tracker) -> dict:
         "area": area,
         "map_error": tracker.map_error,
         "current_detail": room_detail(str(current), region),
-        "rooms": [
-            room_detail(key, region.split(":", 1)[1])
-            for region, key in sorted(tracker.region_visits.items())
-            if region.startswith(area + ":")
-        ],
+        "rooms": explored_areas[area],
+        "explored_areas": explored_areas,
         "doors": [
             {
                 "source": str(door.source),
@@ -153,6 +158,9 @@ body { margin:0; }
 header { padding:22px 28px 16px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
 h1 { margin:0; font-size:21px; font-weight:600; }
 #place { color:#b0beca; }
+#map-controls { padding:0 28px 14px; display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+select,button { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
+select:disabled,button:disabled { opacity:.55; }
 #status { padding:0 28px 14px; min-height:20px; color:#abb9c5; }
 main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; border:1px solid #303d48; background:#151e27; }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
@@ -183,11 +191,12 @@ li span:last-child { color:#94a7b6; text-align:right; }
 .key { display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-2px; }
 .key.door-key { height:3px; vertical-align:3px; }
 #note { color:#91a5b4; font-size:13px; line-height:1.5; }
-@media(max-width:760px) { header { padding:18px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } svg { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } }
+@media(max-width:760px) { header { padding:18px; } #map-controls { padding:0 18px 12px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } svg { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } }
 </style>
 </head>
 <body>
 <header><h1>Resident Evil</h1><span id="place"></span></header>
+<nav id="map-controls" aria-label="Map floors"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" disabled>Current room</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
 <div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms"></svg></div>
@@ -209,8 +218,21 @@ const svg = document.getElementById('map');
 const ns = 'http://www.w3.org/2000/svg';
 let selected = null;
 let selectedArea = null;
+let floorView = {mode:'follow'};
 let lastState = null;
 let lastReportedError = '';
+const floorSelect = document.getElementById('floor');
+const currentRoomButton = document.getElementById('current-room');
+floorSelect.addEventListener('change',()=>{
+  floorView={mode:'browse',area:floorSelect.value};
+  selected=null;
+  draw(lastState);
+});
+currentRoomButton.addEventListener('click',()=>{
+  floorView={mode:'follow'};
+  selected=null;
+  draw(lastState);
+});
 function reportError(source,error) {
   const details = {source,message:(error instanceof Error ? error.message : String(error)).slice(0,500),stack:(error instanceof Error && typeof error.stack === 'string' ? error.stack : '').slice(0,2000)};
   const key = JSON.stringify([source,details.message]);
@@ -232,6 +254,8 @@ function draw(state) {
   const status=document.getElementById('status');
   lastState=state;
   if(state.status!=='display') {
+    floorSelect.disabled=true;
+    currentRoomButton.disabled=true;
     status.textContent=state.error || 'Waiting for a readable game.';
     // Retain visit geometry; completion colors need a fresh game read after a load or reconnect.
     svg.querySelectorAll('.room').forEach(room=>{
@@ -243,19 +267,43 @@ function draw(state) {
     document.getElementById('completion').textContent='Tracking interrupted';
     document.getElementById('items').replaceChildren();
     document.getElementById('doors').replaceChildren();
+    document.getElementById('note').textContent='';
     return;
   }
+  if(floorView.mode==='browse' && !Object.hasOwn(state.explored_areas,floorView.area)) {
+    // A new playthrough can remove the browsed floor. Resume following instead
+    // of retaining geometry or verdicts from the previous exploration history.
+    floorView={mode:'follow'};
+    selected=null;
+  }
+  const displayedArea=floorView.mode==='browse' ? floorView.area : state.area;
+  const showingCurrentFloor=displayedArea===state.area;
+  const floorIds=Object.keys(state.explored_areas).sort();
+  // Polling must not replace a focused select every half second; keep native
+  // keyboard navigation intact until the explored-floor list actually changes.
+  if(JSON.stringify(floorIds)!==JSON.stringify([...floorSelect.options].map(option=>option.value))) {
+    floorSelect.replaceChildren();
+    for(const id of floorIds) {
+      const option=document.createElement('option');
+      option.value=id;
+      option.textContent=areas.has(id) ? areas.get(id).name : 'Room '+state.current;
+      floorSelect.append(option);
+    }
+  }
+  floorSelect.value=displayedArea;
+  floorSelect.disabled=false;
   svg.replaceChildren();
-  const plan=areas.get(state.area);
-  if(selectedArea!==state.area) {selected=null;selectedArea=state.area;}
+  const plan=areas.get(displayedArea);
+  if(selectedArea!==displayedArea) {selected=null;selectedArea=displayedArea;}
+  currentRoomButton.disabled=floorView.mode==='follow' && selected===null;
   const byId=new Map((plan ? plan.rooms : []).map(room=>[room.id,room]));
   document.getElementById('place').textContent=plan ? plan.name : 'Room '+state.current;
   svg.setAttribute('aria-label',plan ? 'Explored '+plan.name : 'Explored rooms');
-  const visible=new Map(state.rooms.filter(room=>byId.has(room.id)).map(room=>[room.id,room]));
-  const currentId=state.map_region;
-  const picked=selected && visible.has(selected) ? selected : currentId;
+  const visible=new Map(state.explored_areas[displayedArea].filter(room=>byId.has(room.id)).map(room=>[room.id,room]));
+  const currentId=showingCurrentFloor ? state.map_region : null;
+  const picked=selected && visible.has(selected) ? selected : showingCurrentFloor ? currentId : visible.keys().next().value;
   status.textContent=plan ? visible.size+' '+(visible.size===1?'room':'rooms')+' explored' : state.map_error;
-  if(plan && !byId.has(currentId)) status.textContent+=' · This room has no outline on the game map.';
+  if(plan && showingCurrentFloor && !byId.has(currentId)) status.textContent+=' · This room has no outline on the game map.';
   for(const [id,visit] of visible) {
     const room=byId.get(id);
     const group=element('g',{class:'room '+visit.state+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name});
@@ -293,10 +341,11 @@ function draw(state) {
     const width=Math.max(68,right-left+18),height=Math.max(44,bottom-top+18);
     svg.setAttribute('viewBox',[(left+right-width)/2,(top+bottom-height)/2,width,height].join(' '));
   }
-  const visit=visible.get(picked) || state.current_detail;
+  const visit=showingCurrentFloor && picked===currentId ? state.current_detail : visible.get(picked);
+  if(!visit) throw new Error('Explored floor has no selected room');
   const room=byId.get(picked) || (plan ? plan.unoutlined_rooms.find(room=>room.id===picked) : null);
   document.getElementById('room-name').textContent=room ? room.name : 'Room '+visit.room;
-  document.getElementById('room-id').textContent='Room '+visit.room+(visit.room===state.current?' · Current room':'');
+  document.getElementById('room-id').textContent='Room '+visit.room+(showingCurrentFloor && picked===currentId?' · Current room':'');
   const completion={INCOMPLETE:'Items remain',CLEARED:'All available items collected',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   document.getElementById('completion').textContent=completion[visit.state];
   const items=document.getElementById('items');items.replaceChildren();

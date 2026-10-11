@@ -11,7 +11,8 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
-from tracker.exploration_state import Tracker
+from games.game_profile import RoomId
+from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from ui.map_view import MapRequestHandler, MapServer, map_state
 
 
@@ -36,6 +37,53 @@ def test_map_starts_without_revealed_rooms():
         "current": None,
         "rooms": [],
     }
+
+
+def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
+    tracker = Tracker()
+    herb_room, upper_room = RoomId(0, 9), RoomId(1, 3)
+    for room, region in (
+        (herb_room, "mansion1f:09"),
+        (upper_room, "mansion2f:03"),
+    ):
+        tracker.mark_current(room)
+        tracker.region_visits[region] = str(room)
+        tracker.update_room_items(room, 1, 0, True, True, False)
+        tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "available", 1),)
+    tracker.current_region = "mansion2f:03"
+    tracker.doors = (DoorDetail(herb_room, upper_room, "LOCKED", "Locked"),)
+
+    state = map_state(tracker)
+    assert set(state["explored_areas"]) == {"mansion1f", "mansion2f"}
+    assert state["rooms"] == state["explored_areas"]["mansion2f"]
+    assert [room["id"] for room in state["explored_areas"]["mansion1f"]] == ["09"]
+    assert [room["id"] for room in state["explored_areas"]["mansion2f"]] == ["03"]
+    assert state["explored_areas"]["mansion1f"][0]["state"] == "INCOMPLETE"
+    assert state["doors"][0]["state"] == "LOCKED"
+
+    # A loaded game's fresh verdicts must update a browsable departed floor too.
+    tracker.update_room_items(herb_room, 1, 1, True, False, False)
+    tracker.rooms[str(herb_room)].items = (ItemDetail("Green Herb", "taken", 1),)
+    tracker.doors = (DoorDetail(herb_room, upper_room, "OPEN", "Unlocked"),)
+    state = map_state(tracker)
+    previous_floor = state["explored_areas"]["mansion1f"][0]
+    assert previous_floor["state"] == "CLEARED"
+    assert previous_floor["items"][0]["state"] == "taken"
+    assert state["doors"][0]["state"] == "OPEN"
+
+
+def test_unoutlined_current_floor_can_follow_without_revealing_rooms():
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 9))
+    tracker.region_visits = {"mansion1f:09": "00-09"}
+    tracker.mark_current(RoomId(4, 0x15))
+    tracker.current_region = "laboratoryb4:15"
+    state = map_state(tracker)
+    assert state["area"] == "laboratoryb4"
+    assert state["explored_areas"]["laboratoryb4"] == []
+    assert len(state["explored_areas"]["mansion1f"]) == 1
+    assert state["current_detail"]["room"] == "04-15"
+    assert state["rooms"] == []
 
 
 def test_map_server_serves_page_and_current_snapshot(caplog):

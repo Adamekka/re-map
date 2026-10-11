@@ -12,6 +12,7 @@
 
 - Use RE2 Remake's map behavior where practical, with RE1 Remake's room-clear map as the minimum. Draw spatial floor plans, room outlines, corridors and door markers on walls. A graph of room nodes does not satisfy this requirement.
 - Reveal rooms only after the player enters them. Startup and collecting an in-game map must not reveal unexplored rooms.
+- Let the player browse explored floors without revealing unvisited rooms. Follow the current floor by default and provide a control to return to the current room.
 - Keep visit history separate from completion. Visually distinguish the current room, incomplete, cleared and unresolved states. Being current or visited does not imply clearance.
 - Track locked and unlocked doors from game state. Keep observed passage separate from unlock knowledge.
 - Show specific remaining items when their identity is established. A reliable generic collectible indicator is acceptable when only presence is known.
@@ -59,6 +60,10 @@
 
 - Do not commit or distribute BIOS files, disc images, standalone copyrighted assets, credentials or unrelated user saves.
 - Keep selected RE1 savestates and memory-card saves in Git as reproducibility fixtures, with provenance, checksums and emulator compatibility. Keep raw RAM dumps out of Git.
+
+## Documentation
+
+- Update the README screenshot whenever the UI changes.
 
 ## Commits
 

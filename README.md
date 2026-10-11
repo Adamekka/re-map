@@ -2,7 +2,7 @@
 
 A companion map for Resident Evil in DuckStation, showing explored rooms, remaining items and doors.
 
-![Explored rooms, remaining items and doors](docs/images/map.jpg)
+![Explored floors, remaining items and doors](docs/images/map.jpg)
 
 ## Setup
 
@@ -32,6 +32,8 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
 Rooms appear as you enter them. Red means items remain; blue means cleared. The white outline marks your current room. Click a room to see its items and doors.
+
+Use **Floor** to browse explored floors. Click **Current room** to return to your location and follow it again.
 
 Explored rooms are saved automatically and stay revealed after restarts or earlier savestate loads. Items and doors update to match the loaded game.
 
