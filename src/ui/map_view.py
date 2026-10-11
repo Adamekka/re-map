@@ -236,6 +236,7 @@ let floorView = {mode:'follow'};
 let lastState = null;
 let lastReportedError = '';
 let overviewKey = '';
+const labelLayouts = new Map();
 const floorSelect = document.getElementById('floor');
 const currentRoomButton = document.getElementById('current-room');
 floorSelect.addEventListener('change',()=>{
@@ -338,10 +339,73 @@ function draw(state) {
     const path=room.rings.map(ring=>'M'+ring.map(point=>point.join(',')).join('L')+'Z').join('');
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
     const title=element('title',{});title.textContent=room.name;group.append(title);
-    const label=element('text',{x:room.label[0],y:room.label[1]+.8});label.textContent=id;group.append(label);
+    const label=element('text',{});group.append(label);svg.append(group);
+    function setLines(lines) {
+      label.replaceChildren();
+      for(const [index,line] of lines.entries()) {
+        const span=element('tspan',{x:0,y:(index-(lines.length-1)/2)*3.1});
+        span.textContent=line;label.append(span);
+      }
+    }
+    const labelKey=displayedArea+':'+id+':'+(id===currentId);
+    let layout=labelLayouts.get(labelKey);
+    if(!layout) {
+      const words=room.name.split(' '),variants=[];
+      for(let count=words.length;count>=1;count--) {
+        const lines=[];
+        for(let start=0;start<words.length;start+=count) lines.push(words.slice(start,start+count).join(' '));
+        setLines(lines);
+        variants.push({lines,bounds:label.getBBox()});
+      }
+      const outline=group.querySelector('path');
+      const points=room.rings.flat();
+      const xs=[...new Set(points.map(point=>point[0]))].sort((a,b)=>a-b);
+      const ys=[...new Set(points.map(point=>point[1]))].sort((a,b)=>a-b);
+      const centers=[];
+      // The original anchor fits a short ID, but may sit beside a door notch.
+      // Rectangle centers offer nearby positions inside the same room.
+      for(let x=1;x<xs.length;x++) {
+        for(let y=1;y<ys.length;y++) {
+          const center=[(xs[x-1]+xs[x])/2,(ys[y-1]+ys[y])/2];
+          if(outline.isPointInFill(new DOMPoint(...center))) centers.push(center);
+        }
+      }
+      centers.sort((a,b)=>Math.hypot(a[0]-room.label[0],a[1]-room.label[1])-Math.hypot(b[0]-room.label[0],b[1]-room.label[1]));
+      centers.unshift(room.label);
+      const baseSize=parseFloat(getComputedStyle(label).fontSize);
+      // Room shapes are irregular. Fit the whole name inside the entered
+      // outline, turning labels along narrow passages when that fits better.
+      fitting: for(let tenths=Math.round(baseSize*10);tenths>=5;tenths--) {
+        for(const angle of [0,-90]) {
+          for(const {lines,bounds} of variants) {
+            const scale=tenths/10/baseSize;
+            const width=(angle===0 ? bounds.width : bounds.height)*scale+.8;
+            const height=(angle===0 ? bounds.height : bounds.width)*scale+.8;
+            for(const center of centers) {
+              if(![-1,1].every(x=>[-1,1].every(y=>outline.isPointInFill(new DOMPoint(center[0]+x*width/2,center[1]+y*height/2))))) continue;
+              const columns=Math.ceil(width/.5),rows=Math.ceil(height/.5);
+              let fits=true;
+              // Native outlines use a one-unit grid; sampling every half unit
+              // also catches corridor bends and interior gaps between corners.
+              for(let x=0;x<=columns && fits;x++) {
+                for(let y=0;y<=rows;y++) {
+                  if(!outline.isPointInFill(new DOMPoint(center[0]-width/2+x*width/columns,center[1]-height/2+y*height/rows))) {fits=false;break;}
+                }
+              }
+              if(fits) {layout={lines,angle,scale,center,offset:[-bounds.x-bounds.width/2,-bounds.y-bounds.height/2]};break fitting;}
+            }
+          }
+        }
+      }
+      if(!layout) throw new Error('Room name does not fit its outline: '+room.name);
+      // Geometry and names are fixed. Reuse their layout during polling;
+      // current-room weight has its own entry because bold text is wider.
+      labelLayouts.set(labelKey,layout);
+    }
+    label.setAttribute('transform','translate('+layout.center.join(' ')+') rotate('+layout.angle+') scale('+layout.scale+') translate('+layout.offset.join(' ')+')');
+    setLines(layout.lines);
     group.addEventListener('click',()=>{selected=id;draw(lastState);});
     group.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();selected=id;draw(lastState);}});
-    svg.append(group);
   }
   for(const marker of plan ? plan.doors : []) {
     if(!marker.rooms.some(id=>visible.has(id))) continue;

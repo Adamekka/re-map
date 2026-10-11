@@ -61,7 +61,15 @@ enter(5, 0x10, 'mansion1f', '10')
 tracker.update_room_items(RoomId(5, 0x10), 1, 0, True, True, False)
 tracker.rooms['05-10'].items = (ItemDetail('Green Herb', 'available', 1),)
 states['camera_alias'] = map_state(tracker)
-document = map_page(json.loads(Path('data/floor_plans_slus00551.json').read_text())).decode()
+catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
+# Explicit test exploration checks label placement across every native outline.
+tracker = Tracker()
+for plan in catalog['areas']:
+    for region in plan['rooms']:
+        stage, room = region['room_ids'][0].split('-')
+        enter(int(stage), int(room, 16), plan['id'], region['id'])
+states['labels'] = map_state(tracker)
+document = map_page(catalog).decode()
 print(json.dumps({'document': document, 'states': states}))
 `], {
   cwd: fileURLToPath(new URL('..', import.meta.url)),
@@ -89,6 +97,8 @@ try {
   const remaining = page.locator('#remaining-items');
   const checks = page.locator('#incomplete-checks');
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f');
+  assert.equal(await page.locator('#map .room text').count(), 1, 'names must not reveal unvisited rooms');
+  assert.equal(await page.locator('#map .room text').textContent(), 'Main Hall 2F');
   assert.match(await remaining.textContent(), /Mansion · 1FWinding PassageGreen Herb/);
   assert.doesNotMatch(await remaining.textContent(), /Red Herb|Battery|Main Hall/);
   assert.match(await checks.textContent(), /Main Hall 2F/);
@@ -119,6 +129,7 @@ try {
   await floor.selectOption('mansion1f');
   assert.equal(await page.locator('#room-id').textContent(), 'Room 00-09');
   assert.equal(await page.locator('.room').count(), 1);
+  assert.equal(await page.locator('.room text').locator('tspan').allTextContents().then(lines => lines.join(' ')), 'Winding Passage');
   assert.equal(await page.locator('.room.current').count(), 0);
   assert.equal(await page.locator('.door.LOCKED').count(), 1);
   assert.match(await page.locator('#items').textContent(), /Green HerbRemaining/);
@@ -185,8 +196,42 @@ try {
   assert.equal(await page.locator('#room-id').textContent(), 'Room 05-10');
   await current.click();
   assert.equal(await page.locator('.room.current').count(), 1);
+  state = states.labels;
+  const labelCount = await page.evaluate(fixture => {
+    let count = 0;
+    floorView = { mode: 'follow' };
+    selected = null;
+    for (const plan of catalog.areas) {
+      const visits = fixture.explored_areas[plan.id];
+      // Every outline is checked as current too, since bold names need more room.
+      for (const visit of visits) {
+        draw({ ...fixture, area: plan.id, map_region: visit.id, current: visit.room, current_detail: visit, rooms: visits });
+        const group = document.querySelector('.room.current');
+        const text = group.querySelector('text');
+        const name = [...text.querySelectorAll('tspan')].map(span => span.textContent).join(' ');
+        if (name !== group.getAttribute('aria-label')) throw new Error('Missing visible room name: ' + name);
+        const outline = group.querySelector('path');
+        const matrix = outline.getCTM().inverse().multiply(text.getCTM());
+        // Check actual glyph rectangles, independently of the layout's box scan.
+        for (const span of text.querySelectorAll('tspan')) {
+          for (let index = 0; index < span.getNumberOfChars(); index++) {
+            const box = span.getExtentOfChar(index);
+            for (const x of [box.x, box.x + box.width / 2, box.x + box.width]) {
+              for (const y of [box.y, box.y + box.height / 2, box.y + box.height]) {
+                const point = new DOMPoint(x, y).matrixTransform(matrix);
+                if (!outline.isPointInFill(point)) throw new Error('Room name crosses its wall: ' + name);
+              }
+            }
+          }
+        }
+        count++;
+      }
+    }
+    return count;
+  }, states.labels);
+  assert(labelCount > 100, 'label checks must cover all floor plans');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
+  console.log('Browser checks passed: room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
 } finally {
   await browser.close();
 }
