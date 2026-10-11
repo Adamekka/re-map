@@ -35,6 +35,8 @@ Rooms appear as you enter them. Red means items remain; blue means cleared. The 
 
 Use **Floor** to browse explored floors. Click **Current room** to return to your location and follow it again.
 
+Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again.
+
 Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. **Incomplete item checks** lists rooms the tracker cannot fully check.
 
 Explored rooms are saved automatically and stay revealed after restarts or earlier savestate loads. Items and doors update to match the loaded game.

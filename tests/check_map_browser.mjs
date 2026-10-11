@@ -61,6 +61,11 @@ enter(5, 0x10, 'mansion1f', '10')
 tracker.update_room_items(RoomId(5, 0x10), 1, 0, True, True, False)
 tracker.rooms['05-10'].items = (ItemDetail('Green Herb', 'available', 1),)
 states['camera_alias'] = map_state(tracker)
+tracker = Tracker()
+enter(0, 9, 'mansion1f', '09')
+enter(1, 3, 'mansion2f', '03')
+enter(0, 5, 'mansion1f', '05')
+states['expanded'] = map_state(tracker)
 catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
 # Explicit test exploration checks label placement across every native outline.
 tracker = Tracker()
@@ -99,6 +104,106 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f');
   assert.equal(await page.locator('#map .room text').count(), 1, 'names must not reveal unvisited rooms');
   assert.equal(await page.locator('#map .room text').textContent(), 'Main Hall 2F');
+  const map = page.locator('#map');
+  const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
+  const zoomOut = page.getByRole('button', { name: 'Zoom out', exact: true });
+  const fit = page.getByRole('button', { name: 'Fit explored rooms', exact: true });
+  const initialBox = await map.getAttribute('viewBox');
+  assert(await zoomOut.isDisabled());
+  await zoomIn.focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#zoom-level').textContent(), '125%');
+  assert(Number((await map.getAttribute('viewBox')).split(' ')[2]) < Number(initialBox.split(' ')[2]));
+  assert(!(await current.isDisabled()), 'Current room must be available after zooming');
+  await zoomOut.click();
+  assert.equal(await page.locator('#zoom-level').textContent(), '100%');
+  await fit.focus();
+  await page.keyboard.press('Space');
+  assert.equal(await map.getAttribute('viewBox'), initialBox);
+
+  const bounds = await map.boundingBox();
+  const cursor = { x: Math.round(bounds.x + bounds.width * .6), y: Math.round(bounds.y + bounds.height * .4) };
+  const before = await map.evaluate((svg, point) => {
+    const world = new DOMPoint(point.x, point.y).matrixTransform(svg.getScreenCTM().inverse());
+    return [world.x, world.y];
+  }, cursor);
+  await page.mouse.move(cursor.x, cursor.y);
+  await page.mouse.wheel(0, -200);
+  await page.waitForFunction(() => document.getElementById('zoom-level').textContent !== '100%');
+  const after = await map.evaluate((svg, point) => {
+    const world = new DOMPoint(point.x, point.y).matrixTransform(svg.getScreenCTM().inverse());
+    return [world.x, world.y];
+  }, cursor);
+  assert(before.every((value, index) => Math.abs(value - after[index]) < 1e-5), 'wheel zoom must keep the point under the cursor');
+  const wheelBox = await map.getAttribute('viewBox');
+  await map.dispatchEvent('wheel', { deltaY: -200, ctrlKey: true, clientX: cursor.x, clientY: cursor.y });
+  assert.equal(await map.getAttribute('viewBox'), wheelBox, 'Ctrl+wheel belongs to browser zoom');
+  for (let count = 0; count < 6; count++) await map.dispatchEvent('wheel', { deltaY: -1000, clientX: cursor.x, clientY: cursor.y });
+  assert.equal(await page.locator('#zoom-level').textContent(), '800%');
+  assert(await zoomIn.isDisabled());
+  for (let count = 0; count < 6; count++) await map.dispatchEvent('wheel', { deltaY: 1000, clientX: cursor.x, clientY: cursor.y });
+  assert.equal(await page.locator('#zoom-level').textContent(), '100%');
+  assert(await zoomOut.isDisabled());
+  await fit.click();
+  assert.equal(await map.getAttribute('viewBox'), initialBox);
+  await floor.selectOption('mansion1f');
+  const firstFloorBox = await map.getAttribute('viewBox');
+  assert.notEqual(firstFloorBox, initialBox, 'a floor switch must fit the displayed floor');
+  await zoomIn.click();
+  const chosenBox = await map.getAttribute('viewBox');
+  await page.waitForTimeout(1100);
+  assert.equal(await map.getAttribute('viewBox'), chosenBox, 'polling must preserve zoom');
+  state = states.expanded;
+  await page.waitForFunction(() => document.querySelectorAll('#map .room').length === 2);
+  assert.equal(await map.getAttribute('viewBox'), chosenBox, 'entering another room on the same floor must preserve the chosen view');
+  await fit.click();
+  const expandedBox = await map.getAttribute('viewBox');
+  assert(Number(expandedBox.split(' ')[2]) > Number(firstFloorBox.split(' ')[2]), 'Fit must include newly entered rooms');
+
+  const herbName = map.getByRole('button', { name: 'Winding Passage', exact: true }).locator('text');
+  const herbBounds = await herbName.boundingBox();
+  await page.mouse.move(herbBounds.x + herbBounds.width / 2, herbBounds.y + herbBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(herbBounds.x + herbBounds.width / 2 - 50, herbBounds.y + herbBounds.height / 2 + 20, { steps: 5 });
+  const draggedBox = await map.getAttribute('viewBox');
+  assert.notEqual(draggedBox, expandedBox);
+  assert.equal(draggedBox.split(' ').slice(2).join(' '), expandedBox.split(' ').slice(2).join(' '), 'panning must preserve scale');
+  await page.waitForTimeout(1100);
+  assert.equal(await map.getAttribute('viewBox'), draggedBox, 'polling must preserve an active drag');
+  await page.mouse.up();
+  assert.equal(await page.locator('#room-id').textContent(), 'Room 00-05 · Current room', 'dragging a different room must not select it');
+  assert.equal(await map.evaluate(() => pan.mode), 'idle');
+  await fit.click();
+  const nextHerbBounds = await herbName.boundingBox();
+  await page.mouse.move(nextHerbBounds.x + nextHerbBounds.width / 2, nextHerbBounds.y + nextHerbBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(nextHerbBounds.x + nextHerbBounds.width / 2 + 25, nextHerbBounds.y + nextHerbBounds.height / 2 + 10);
+  await page.mouse.wheel(0, -60);
+  await page.waitForFunction(() => pan.mode === 'idle');
+  await page.mouse.up();
+  assert.equal(await page.locator('#room-id').textContent(), 'Room 00-05 · Current room', 'zooming during a drag must not turn its release into a room click');
+  await fit.click();
+  await map.getByRole('button', { name: 'Winding Passage', exact: true }).click();
+  assert.equal(await page.locator('#room-id').textContent(), 'Room 00-09', 'a normal click after dragging must still select a room');
+  await zoomIn.click();
+  await current.click();
+  assert.equal(await map.getAttribute('viewBox'), expandedBox, 'Current room must restore a view containing the current room');
+  assert(await current.isDisabled());
+
+  await page.mouse.move(bounds.x + 20, bounds.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + 40, bounds.y + 40);
+  state = { status: 'waiting', error: 'Interrupted during drag' };
+  await page.waitForFunction(() => document.getElementById('floor').disabled);
+  assert.equal(await map.evaluate(() => pan.mode), 'idle');
+  assert.equal(await page.locator('#map.panning').count(), 0);
+  assert(await zoomIn.isDisabled());
+  assert(await zoomOut.isDisabled());
+  assert(await fit.isDisabled());
+  await page.mouse.up();
+  state = states.initial;
+  await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f' && !document.getElementById('floor').disabled);
+  assert.equal(await map.getAttribute('viewBox'), initialBox);
   assert.match(await remaining.textContent(), /Mansion · 1FWinding PassageGreen Herb/);
   assert.doesNotMatch(await remaining.textContent(), /Red Herb|Battery|Main Hall/);
   assert.match(await checks.textContent(), /Main Hall 2F/);
@@ -175,6 +280,9 @@ try {
   state = states.unoutlined;
   await page.waitForFunction(() => document.getElementById('floor').value === 'laboratoryb4');
   assert.equal(await page.locator('.room').count(), 0);
+  assert(await zoomIn.isDisabled());
+  assert(await zoomOut.isDisabled());
+  assert(await fit.isDisabled());
   assert.match(await page.locator('#room-id').textContent(), /04-15.*Current room/);
   const unoutlinedLink = checks.getByRole('button', { name: 'Elevator B3/B4', exact: true });
   assert(await unoutlinedLink.isVisible());
@@ -231,7 +339,7 @@ try {
   }, states.labels);
   assert(labelCount > 100, 'label checks must cover all floor plans');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
+  console.log('Browser checks passed: zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
 } finally {
   await browser.close();
 }

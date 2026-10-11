@@ -160,12 +160,17 @@ header { padding:22px 28px 16px; display:flex; justify-content:space-between; al
 h1 { margin:0; font-size:21px; font-weight:600; }
 #place { color:#b0beca; }
 #map-controls { padding:0 28px 14px; display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+#zoom-controls { display:inline-flex; align-items:center; gap:10px; }
 select,button { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
 select:disabled,button:disabled { opacity:.55; }
 #status { padding:0 28px 14px; min-height:20px; color:#abb9c5; }
 main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; border:1px solid #303d48; background:#151e27; }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
 svg { display:block; width:100%; height:65vh; min-height:410px; }
+#map { user-select:none; }
+#map.navigable { cursor:grab; touch-action:none; }
+#map.panning,#map.panning .room { cursor:grabbing; }
+#zoom-level { min-width:4ch; text-align:center; font-size:13px; color:#abb9c5; }
 .room { cursor:pointer; }
 .room path { stroke:#8a9ca9; stroke-width:.65; fill:#42515d; stroke-linejoin:miter; }
 .room.INCOMPLETE path { fill:#743e40; }
@@ -206,10 +211,10 @@ li span:last-child { color:#94a7b6; text-align:right; }
 </head>
 <body>
 <header><h1>Resident Evil</h1><span id="place"></span></header>
-<nav id="map-controls" aria-label="Map floors"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" disabled>Current room</button></nav>
+<nav id="map-controls" aria-label="Map controls"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" disabled>Current room</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
-<div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms"></svg></div>
+<div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms" aria-description="Use the zoom buttons or mouse wheel to zoom. Drag to move the map."></svg></div>
 <aside><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
 </main>
 <div id="legend">
@@ -237,8 +242,14 @@ let lastState = null;
 let lastReportedError = '';
 let overviewKey = '';
 const labelLayouts = new Map();
+let viewport = {mode:'empty'};
+let pan = {mode:'idle'};
+let suppressMapClick = false;
 const floorSelect = document.getElementById('floor');
 const currentRoomButton = document.getElementById('current-room');
+const zoomIn = document.getElementById('zoom-in');
+const zoomOut = document.getElementById('zoom-out');
+const fitRooms = document.getElementById('fit-rooms');
 floorSelect.addEventListener('change',()=>{
   floorView={mode:'browse',area:floorSelect.value};
   selected=null;
@@ -247,8 +258,99 @@ floorSelect.addEventListener('change',()=>{
 currentRoomButton.addEventListener('click',()=>{
   floorView={mode:'follow'};
   selected=null;
+  endPan();
+  // Refit the current floor so a zoomed or panned view cannot hide our return.
+  viewport={mode:'empty'};
   draw(lastState);
 });
+function applyViewport() {
+  const ready=lastState!==null && lastState.status==='display';
+  const navigable=ready && viewport.mode!=='empty';
+  currentRoomButton.disabled=!ready || floorView.mode==='follow' && selected===null && viewport.mode!=='manual';
+  zoomIn.disabled=!navigable || viewport.zoom>=8;
+  zoomOut.disabled=!navigable || viewport.zoom<=1;
+  fitRooms.disabled=!navigable;
+  document.getElementById('zoom-level').textContent=navigable ? Math.round(viewport.zoom*100)+'%' : '';
+  svg.classList.toggle('navigable',navigable);
+  if(viewport.mode!=='empty') {
+    if(!viewport.box.every(Number.isFinite) || viewport.box[2]<=0 || viewport.box[3]<=0) throw new Error('Invalid map viewport');
+    svg.setAttribute('viewBox',viewport.box.join(' '));
+  }
+}
+function zoomMap(factor,point) {
+  if(viewport.mode==='empty') throw new Error('Cannot zoom an empty map');
+  // Bound wheel zoom so the view cannot collapse to a point after repeated input.
+  const zoom=Math.max(1,Math.min(8,viewport.zoom/factor));
+  if(zoom===viewport.zoom) return;
+  const ratio=viewport.zoom/zoom,[x,y,width,height]=viewport.box;
+  viewport={...viewport,mode:'manual',zoom,box:[point.x+(x-point.x)*ratio,point.y+(y-point.y)*ratio,width*ratio,height*ratio]};
+  applyViewport();
+}
+for(const [button,factor] of [[zoomIn,.8],[zoomOut,1.25]]) {
+  button.addEventListener('click',()=>{
+    endPan();
+    const [x,y,width,height]=viewport.box;
+    zoomMap(factor,new DOMPoint(x+width/2,y+height/2));
+  });
+}
+fitRooms.addEventListener('click',()=>{
+  endPan();
+  viewport={...viewport,mode:'fit',zoom:1,box:viewport.fitBox};
+  applyViewport();
+});
+svg.addEventListener('wheel',event=>{
+  // Keep browser zoom available and leave page scrolling alone without a map.
+  if(event.ctrlKey || event.deltaY===0 || lastState===null || lastState.status!=='display' || viewport.mode==='empty') return;
+  event.preventDefault();
+  endPan();
+  // Line and page wheel events need pixel-sized steps for the same zoom curve.
+  const unit=event.deltaMode===1 ? 16 : event.deltaMode===2 ? svg.clientHeight : 1;
+  const factor=Math.exp(Math.max(-1,Math.min(1,event.deltaY*unit/400)));
+  const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  zoomMap(factor,point);
+},{passive:false});
+function endPan() {
+  if(pan.mode==='idle') return;
+  // Cancellation can still be followed by a browser click on the original room.
+  suppressMapClick=suppressMapClick || pan.mode==='panning';
+  const pointerId=pan.pointerId;
+  pan={mode:'idle'};
+  svg.classList.remove('panning');
+  if(svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
+}
+svg.addEventListener('pointerdown',event=>{
+  if(event.button!==0 || !event.isPrimary || lastState===null || lastState.status!=='display' || viewport.mode==='empty') return;
+  endPan();
+  suppressMapClick=false;
+  pan={mode:'pending',pointerId:event.pointerId,start:[event.clientX,event.clientY],matrix:svg.getScreenCTM().inverse(),box:viewport.box,zoom:viewport.zoom};
+});
+window.addEventListener('pointermove',event=>{
+  if(pan.mode==='idle' || event.pointerId!==pan.pointerId) return;
+  if(event.buttons===0) {endPan();return;}
+  if(pan.mode==='pending') {
+    // A small movement is still a room click; capture only an actual drag.
+    if(Math.hypot(event.clientX-pan.start[0],event.clientY-pan.start[1])<4) return;
+    pan={...pan,mode:'panning'};
+    svg.setPointerCapture(event.pointerId);
+    svg.classList.add('panning');
+  }
+  const start=new DOMPoint(...pan.start).matrixTransform(pan.matrix);
+  const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(pan.matrix);
+  const [x,y,width,height]=pan.box;
+  viewport={...viewport,mode:'manual',zoom:pan.zoom,box:[x+start.x-point.x,y+start.y-point.y,width,height]};
+  applyViewport();
+});
+window.addEventListener('pointerup',event=>{
+  if(pan.mode==='idle' || event.pointerId!==pan.pointerId) return;
+  suppressMapClick=pan.mode==='panning';
+  endPan();
+});
+window.addEventListener('pointercancel',event=>{if(pan.mode!=='idle' && event.pointerId===pan.pointerId) endPan();});
+svg.addEventListener('lostpointercapture',event=>{if(pan.mode!=='idle' && event.pointerId===pan.pointerId) endPan();});
+window.addEventListener('blur',endPan);
+svg.addEventListener('click',event=>{
+  if(suppressMapClick && event.detail>0) {suppressMapClick=false;event.preventDefault();event.stopPropagation();}
+},{capture:true});
 function reportError(source,error) {
   const details = {source,message:(error instanceof Error ? error.message : String(error)).slice(0,500),stack:(error instanceof Error && typeof error.stack === 'string' ? error.stack : '').slice(0,2000)};
   const key = JSON.stringify([source,details.message]);
@@ -276,7 +378,8 @@ function draw(state) {
   lastState=state;
   if(state.status!=='display') {
     floorSelect.disabled=true;
-    currentRoomButton.disabled=true;
+    endPan();
+    applyViewport();
     status.textContent=state.error || 'Waiting for a readable game.';
     // Retain visit geometry; completion colors need a fresh game read after a load or reconnect.
     svg.querySelectorAll('.room').forEach(room=>{
@@ -324,7 +427,6 @@ function draw(state) {
   svg.replaceChildren();
   const plan=areas.get(displayedArea);
   if(selectedArea!==displayedArea) {selected=null;selectedArea=displayedArea;}
-  currentRoomButton.disabled=floorView.mode==='follow' && selected===null;
   const byId=new Map((plan ? plan.rooms : []).map(room=>[room.id,room]));
   document.getElementById('place').textContent=plan ? plan.name : 'Room '+state.current;
   svg.setAttribute('aria-label',plan ? 'Explored '+plan.name : 'Explored rooms');
@@ -431,8 +533,19 @@ function draw(state) {
     const left=Math.min(...points.map(p=>p[0])),right=Math.max(...points.map(p=>p[0]));
     const top=Math.min(...points.map(p=>p[1])),bottom=Math.max(...points.map(p=>p[1]));
     const width=Math.max(68,right-left+18),height=Math.max(44,bottom-top+18);
-    svg.setAttribute('viewBox',[(left+right-width)/2,(top+bottom-height)/2,width,height].join(' '));
+    const fitBox=[(left+right-width)/2,(top+bottom-height)/2,width,height];
+    if(viewport.mode==='empty' || viewport.area!==displayedArea) {
+      endPan();
+      viewport={mode:'fit',area:displayedArea,zoom:1,box:fitBox,fitBox};
+    } else {
+      // Item changes and newly entered rooms must not reframe a chosen view.
+      viewport={...viewport,fitBox,box:viewport.mode==='fit' ? fitBox : viewport.box};
+    }
+  } else {
+    endPan();
+    viewport={mode:'empty'};
   }
+  applyViewport();
   const visit=showingCurrentFloor && picked===currentId ? state.current_detail : visible.get(picked);
   if(!visit) throw new Error('Explored floor has no selected room');
   document.getElementById('room-name').textContent=roomName(displayedArea,visit);
