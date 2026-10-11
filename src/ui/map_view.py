@@ -28,6 +28,7 @@ def map_state(tracker: Tracker) -> dict:
             "id": region,
             "room": key,
             "state": record.completion.value,
+            "items_complete": record.list_complete,
             "items": [
                 {"label": item.label, "state": item.state, "quantity": item.quantity}
                 for item in record.items
@@ -191,7 +192,16 @@ li span:last-child { color:#94a7b6; text-align:right; }
 .key { display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-2px; }
 .key.door-key { height:3px; vertical-align:3px; }
 #note { color:#91a5b4; font-size:13px; line-height:1.5; }
-@media(max-width:760px) { header { padding:18px; } #map-controls { padding:0 18px 12px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } svg { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } }
+#overview { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:0 28px 28px; }
+#overview h2 { margin:0 0 12px; }
+#overview h3 { margin:18px 0 8px; font-size:14px; font-weight:500; }
+#overview p { margin:0; font-size:13px; color:#91a5b4; }
+#overview li { padding:0; border:0; margin-bottom:6px; }
+.room-link { display:block; width:100%; text-align:left; cursor:pointer; }
+.room-link:hover,.room-link:focus-visible { border-color:#d9f6ff; }
+#overview .room-link span { display:block; text-align:left; color:inherit; }
+#overview .room-link span+span { margin-top:4px; color:#94a7b6; }
+@media(max-width:760px) { header { padding:18px; } #map-controls { padding:0 18px 12px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } svg { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } #overview { margin:0 18px 18px; grid-template-columns:1fr; gap:22px; } }
 </style>
 </head>
 <body>
@@ -200,7 +210,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <div id="status" role="status">Waiting for game.</div>
 <main>
 <div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms"></svg></div>
-<aside><div id="room-name">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
+<aside><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
 </main>
 <div id="legend">
 <span><i class="key" style="background:#743e40"></i>Items remain</span>
@@ -210,6 +220,10 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key door-key" style="background:#e9b85e"></i>Unlock from this side</span>
 <span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
 </div>
+<section id="overview" aria-label="Explored room items">
+<section aria-labelledby="remaining-heading"><h2 id="remaining-heading">Remaining items</h2><p id="remaining-status">Waiting for game.</p><div id="remaining-items"></div></section>
+<section aria-labelledby="checks-heading"><h2 id="checks-heading">Incomplete item checks</h2><p id="checks-status">Waiting for game.</p><div id="incomplete-checks"></div></section>
+</section>
 <script>
 const catalog = __GRAPH__;
 const areas = new Map(catalog.areas.map(plan => [plan.id,plan]));
@@ -221,6 +235,7 @@ let selectedArea = null;
 let floorView = {mode:'follow'};
 let lastState = null;
 let lastReportedError = '';
+let overviewKey = '';
 const floorSelect = document.getElementById('floor');
 const currentRoomButton = document.getElementById('current-room');
 floorSelect.addEventListener('change',()=>{
@@ -250,6 +265,11 @@ function element(tag,attrs) {
   for(const [name,value] of Object.entries(attrs)) node.setAttribute(name,value);
   return node;
 }
+function roomName(area,visit) {
+  const plan=areas.get(area);
+  const room=plan && [...plan.rooms,...plan.unoutlined_rooms].find(room=>room.id===visit.id);
+  return room ? room.name : 'Room '+visit.room;
+}
 function draw(state) {
   const status=document.getElementById('status');
   lastState=state;
@@ -268,6 +288,14 @@ function draw(state) {
     document.getElementById('items').replaceChildren();
     document.getElementById('doors').replaceChildren();
     document.getElementById('note').textContent='';
+    overviewKey='';
+    document.getElementById('remaining-items').replaceChildren();
+    document.getElementById('incomplete-checks').replaceChildren();
+    for(const id of ['remaining-status','checks-status']) {
+      const message=document.getElementById(id);
+      message.hidden=false;
+      message.textContent='Tracking interrupted.';
+    }
     return;
   }
   if(floorView.mode==='browse' && !Object.hasOwn(state.explored_areas,floorView.area)) {
@@ -343,8 +371,7 @@ function draw(state) {
   }
   const visit=showingCurrentFloor && picked===currentId ? state.current_detail : visible.get(picked);
   if(!visit) throw new Error('Explored floor has no selected room');
-  const room=byId.get(picked) || (plan ? plan.unoutlined_rooms.find(room=>room.id===picked) : null);
-  document.getElementById('room-name').textContent=room ? room.name : 'Room '+visit.room;
+  document.getElementById('room-name').textContent=roomName(displayedArea,visit);
   document.getElementById('room-id').textContent='Room '+visit.room+(showingCurrentFloor && picked===currentId?' · Current room':'');
   const completion={INCOMPLETE:'Items remain',CLEARED:'All available items collected',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   document.getElementById('completion').textContent=completion[visit.state];
@@ -360,6 +387,62 @@ function draw(state) {
     detail.textContent=door.label;row.append(name,detail);doors.append(row);
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');
+  // Camera outlines share a logical room's items. Prefer its current outline
+  // for navigation, then retain one observed outline for each departed room.
+  const observed=new Map([[state.current_detail.room,{area:state.area,visit:state.current_detail}]]);
+  for(const area of floorIds) {
+    for(const visit of state.explored_areas[area]) {
+      if(!observed.has(visit.room)) observed.set(visit.room,{area,visit});
+    }
+  }
+  const remaining=[],checks=[];
+  for(const {area,visit} of observed.values()) {
+    if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
+    const entry={area,id:visit.id,room:visit.room,name:roomName(area,visit),labels:[]};
+    const labels=visit.items.filter(item=>item.state==='available').map(item=>item.label);
+    if(labels.length) remaining.push({...entry,labels});
+    // A remaining item makes the room red even when other item checks are
+    // incomplete. Completion color alone cannot identify those gaps.
+    if(!visit.items_complete) checks.push(entry);
+  }
+  const key=JSON.stringify([remaining,checks]);
+  // Keep focused overview links intact during unchanged game polls.
+  if(key!==overviewKey) {
+    overviewKey=key;
+    function showEntries(containerId,messageId,entries,emptyMessage) {
+      const container=document.getElementById(containerId);
+      container.replaceChildren();
+      const message=document.getElementById(messageId);
+      message.hidden=entries.length>0;
+      message.textContent=emptyMessage;
+      const groups=new Map();
+      for(const entry of entries.sort((a,b)=>a.area.localeCompare(b.area)||a.name.localeCompare(b.name)||a.room.localeCompare(b.room))) {
+        if(!groups.has(entry.area)) {
+          const heading=document.createElement('h3'),list=document.createElement('ul');
+          heading.textContent=areas.has(entry.area) ? areas.get(entry.area).name : 'Room '+entry.room;
+          container.append(heading,list);groups.set(entry.area,list);
+        }
+        const row=document.createElement('li'),link=document.createElement('button'),name=document.createElement('span');
+        link.type='button';link.className='room-link';name.textContent=entry.name;link.append(name);
+        if(entry.labels.length) {
+          const labels=document.createElement('span');labels.textContent=entry.labels.join(', ');link.append(labels);
+        }
+        link.addEventListener('click',()=>{
+          floorView={mode:'browse',area:entry.area};
+          // A floor switch otherwise clears selection at the start of draw.
+          selectedArea=entry.area;selected=entry.id;
+          draw(lastState);
+          document.querySelector('main').scrollIntoView({block:'start'});
+          // An unoutlined current room has details but no SVG focus target.
+          const target=svg.querySelector('.room.selected') || document.getElementById('room-name');
+          target.focus({preventScroll:true});
+        });
+        row.append(link);groups.get(entry.area).append(row);
+      }
+    }
+    showEntries('remaining-items','remaining-status',remaining,'No known remaining items.');
+    showEntries('incomplete-checks','checks-status',checks,'No incomplete item checks.');
+  }
 }
 async function refresh() {
   try {

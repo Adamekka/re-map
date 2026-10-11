@@ -59,6 +59,7 @@ def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
     assert [room["id"] for room in state["explored_areas"]["mansion1f"]] == ["09"]
     assert [room["id"] for room in state["explored_areas"]["mansion2f"]] == ["03"]
     assert state["explored_areas"]["mansion1f"][0]["state"] == "INCOMPLETE"
+    assert state["explored_areas"]["mansion1f"][0]["items_complete"] is True
     assert state["doors"][0]["state"] == "LOCKED"
 
     # A loaded game's fresh verdicts must update a browsable departed floor too.
@@ -84,6 +85,21 @@ def test_unoutlined_current_floor_can_follow_without_revealing_rooms():
     assert len(state["explored_areas"]["mansion1f"]) == 1
     assert state["current_detail"]["room"] == "04-15"
     assert state["rooms"] == []
+
+
+def test_remaining_items_do_not_imply_complete_item_checks():
+    tracker = Tracker()
+    room = RoomId(0, 9)
+    tracker.mark_current(room)
+    tracker.current_region = "mansion1f:09"
+    tracker.region_visits[tracker.current_region] = str(room)
+    tracker.update_room_items(room, 1, 0, False, True, True)
+    tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "available", 1),)
+    tracker.rooms[str(room)].reason = "Other item conditions remain unresolved."
+    detail = map_state(tracker)["explored_areas"]["mansion1f"][0]
+    assert detail["state"] == "INCOMPLETE"
+    assert detail["items_complete"] is False
+    assert detail["items"][0]["state"] == "available"
 
 
 def test_map_server_serves_page_and_current_snapshot(caplog):

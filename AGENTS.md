@@ -16,6 +16,7 @@
 - Keep visit history separate from completion. Visually distinguish the current room, incomplete, cleared and unresolved states. Being current or visited does not imply clearance.
 - Track locked and unlocked doors from game state. Keep observed passage separate from unlock knowledge.
 - Show specific remaining items when their identity is established. A reliable generic collectible indicator is acceptable when only presence is known.
+- Provide a grouped overview of remaining items in explored rooms, with room navigation and separate incomplete item checks.
 - Use original visuals or simple geometry derived from legally accessible game data. Do not copy Remake assets.
 
 ## Room completion
