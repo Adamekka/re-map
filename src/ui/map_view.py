@@ -179,6 +179,8 @@ svg { display:block; width:100%; height:65vh; min-height:410px; }
 .room.selected:not(.current) path { stroke:#f0cf8c; }
 .room text { fill:#dce7ee; font:2.6px system-ui,sans-serif; pointer-events:none; text-anchor:middle; }
 .room.current text { font-weight:700; fill:#fff; }
+.room path.map-detail { fill:none; stroke:#bed0dd; stroke-width:1; stroke-linecap:square; pointer-events:none; }
+.room .map-detail+text { paint-order:stroke; stroke:#151e27; stroke-width:.5; stroke-linejoin:round; }
 .door line { stroke-width:1.1; stroke-linecap:square; }
 .door.OPEN line { stroke:#71b6cf; }
 .door.LOCKED line,.door.BLOCKED line { stroke:#ed6965; }
@@ -447,6 +449,8 @@ function draw(state) {
     const path=room.rings.map(ring=>'M'+ring.map(point=>point.join(',')).join('L')+'Z').join('');
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
     const title=element('title',{});title.textContent=room.name;group.append(title);
+    const detail=room.detail_segments.map(([a,b])=>'M'+a.join(',')+'L'+b.join(',')).join('');
+    if(detail) group.append(element('path',{class:'map-detail',d:detail}));
     const label=element('text',{});group.append(label);svg.append(group);
     function setLines(lines) {
       label.replaceChildren();

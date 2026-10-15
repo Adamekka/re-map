@@ -162,6 +162,9 @@ def test_map_acquisition_never_reveals_other_regions(tmp_path):
         "overlap",
         "missing-region",
         "coordinate",
+        "detail-coordinate",
+        "detail-segment",
+        "missing-details",
         "empty-bindings",
         "wrong-alias",
     ],
@@ -179,6 +182,12 @@ def test_invalid_catalog_fails_startup(layout, tmp_path, defect):
         raw["locations"][0]["default"]["region"] = "FF"
     elif defect == "coordinate":
         raw["areas"][0]["rooms"][0]["rings"][0][0] = [float("inf"), 0]
+    elif defect == "detail-coordinate":
+        raw["areas"][0]["rooms"][0]["detail_segments"] = [[[0, 0], [float("inf"), 1]]]
+    elif defect == "detail-segment":
+        raw["areas"][0]["rooms"][0]["detail_segments"] = [[[0, 0]]]
+    elif defect == "missing-details":
+        del raw["areas"][0]["rooms"][0]["detail_segments"]
     elif defect == "empty-bindings":
         raw["locations"] = []
     elif defect == "wrong-alias":

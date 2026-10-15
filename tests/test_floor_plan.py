@@ -65,6 +65,21 @@ def test_door_pairs_preserve_room_ownership_and_wall_orientation():
     ]
 
 
+def test_interior_stair_geometry_survives_floor_union():
+    """RE1-MAP-019: shade detail must survive the otherwise unchanged floor union."""
+    cells = {(x, y): 16 for y in range(1, 6) for x in range(1, 6)}
+    cells.update({(x, y): 14 for y in (2, 4) for x in range(2, 5)})
+    cells[2, 3] = 14
+    plan = extract_floor_plan(tim(8, 8, cells))
+    room = plan["rooms"][0]
+    assert room["rings"] == [[(1, 1), (6, 1), (6, 6), (1, 6)]]
+    assert room["detail_segments"] == [
+        [[2.5, 2.5], [4.5, 2.5]],
+        [[2.5, 3.5], [2.5, 3.5]],
+        [[2.5, 4.5], [4.5, 4.5]],
+    ]
+
+
 def test_unpaired_door_is_an_explicit_failure():
     data = tim(8, 8, {(2, 2): 16, (3, 2): 13})
     with pytest.raises(ValueError, match="unpaired door marker"):

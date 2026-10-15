@@ -4501,3 +4501,17 @@ Reproduce with `bun tests/check_map_browser.mjs <python>`: the Helmet Key test s
 Contributions:
 - 2026-10-15; human user; reported gray Helmet Key doors at Lesson Room Entry and Back Passage.
 - 2026-10-15; Codex root, `gpt-6.1-sol`; inspected log publications and catalog identities, implemented shared stage normalization for marker matching and added browser regressions. README screenshot uses the recorded explored state, with no emulator interaction or visit-history writes.
+
+## RE1-MAP-019: retain native interior map geometry
+
+Status: Candidate; numeric source extraction and browser checks, no new gameplay.
+
+Game and executable identity are unchanged from RE1-MAP-018. Read the owner's pinned disc with `tools/build_floor_plans.py`; no emulator was started. The existing parser already includes CLUT index `14 + 6*region` in floor membership but discarded its distinction from the main floor shade when constructing outline unions. This loses the stair treads/rails visible in both Main Halls and East/West Stairways, along with other interior features.
+
+Preserve contiguous horizontal runs of that shade as numeric center-line segments, owned by each outlined region. Square-ended strokes retain singleton runs. The generated catalog adds 388 segments across eleven plans and 118 outlines. Removing only the new `detail_segments` properties from the regenerated document reproduces the entire preceding catalog exactly. No palette colors or texture files are exported. Browser rendering uses original neutral strokes and reveals details only with their entered room. Current-room/completion styles must not override the detail stroke.
+
+Reproduce extraction with `python3 tools/build_floor_plans.py <owned-cue> <output>`. Run `python3 -m pytest -q tests/test_floor_plan.py tests/test_multi_area_maps.py` for a synthetic floor whose stair shading disappears in an outline union, singleton geometry, and malformed/missing detail records. The browser check verifies interior geometry and its stroke on all 118 outlined rooms, alongside the existing glyph-within-outline checks. These source/UI checks do not establish additional runtime map coverage or stairs' gameplay accessibility.
+
+Contributions:
+- 2026-10-15; human user; reported missing stair indications.
+- 2026-10-15; Codex root, `gpt-6.1-sol`; inspected native numeric shade runs, extended extraction and catalog validation, regenerated geometry from the owned disc and added extraction/browser regressions. No guest-memory, emulator, or exploration-history changes.

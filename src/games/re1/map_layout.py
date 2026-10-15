@@ -89,14 +89,27 @@ class Re1MapLayout:
                             points = [
                                 entry["label"],
                                 *(point for ring in entry["rings"] for point in ring),
+                                *(
+                                    point
+                                    for segment in entry["detail_segments"]
+                                    for point in segment
+                                ),
                             ]
-                            if any(len(ring) < 3 for ring in entry["rings"]) or any(
-                                len(point) != 2
-                                or any(
-                                    type(v) not in (int, float) or not math.isfinite(v)
-                                    for v in point
+                            if (
+                                any(
+                                    len(segment) != 2
+                                    for segment in entry["detail_segments"]
                                 )
-                                for point in points
+                                or any(len(ring) < 3 for ring in entry["rings"])
+                                or any(
+                                    len(point) != 2
+                                    or any(
+                                        type(v) not in (int, float)
+                                        or not math.isfinite(v)
+                                        for v in point
+                                    )
+                                    for point in points
+                                )
                             ):
                                 raise ValueError("invalid map outline coordinates")
                         regions[region] = MapLocation(plan["id"], region, outlined)

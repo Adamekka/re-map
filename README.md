@@ -33,6 +33,8 @@ Keep the terminal running while you play. Press Ctrl+C there to stop the tracker
 
 Rooms appear as you enter them. Red means items remain; blue means cleared. The white outline marks your current room. Click a room to see its items and doors.
 
+Stair treads and rails appear inside explored room outlines.
+
 Use **Floor** to browse explored floors. Click **Current room** to return to your location and follow it again.
 
 Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again.

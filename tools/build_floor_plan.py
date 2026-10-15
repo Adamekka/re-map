@@ -174,8 +174,23 @@ def extract_floor_plan(
                 "rings": [ring for _, ring in rings],
                 "ring_roles": ["outer" if area > 0 else "hole" for area, _ in rings],
                 "label": [coordinate + 0.5 for coordinate in label_pixel],
+                # Preserve interior shade geometry separately: merging it into
+                # the floor contour erases the native stair treads and rails.
+                "detail_segments": [],
             }
         )
+        for y in range(height):
+            x = 0
+            while x < width:
+                if pixels[y * width + x] != palette_base + 2:
+                    x += 1
+                    continue
+                start = x
+                while x < width and pixels[y * width + x] == palette_base + 2:
+                    x += 1
+                rooms[-1]["detail_segments"].append(
+                    [[start + 0.5, y + 0.5], [x - 0.5, y + 0.5]]
+                )
         for marker in components(door_pixels):
             markers.append(
                 {

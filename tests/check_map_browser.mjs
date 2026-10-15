@@ -69,6 +69,7 @@ states['expanded'] = map_state(tracker)
 tracker = Tracker()
 enter(0, 10, 'mansion1f', '0A')
 enter(1, 11, 'mansion2f', '0B')
+# RE1-MAP-018: original-stage doors can target returned-Mansion outline aliases.
 tracker.doors = (
     DoorDetail(RoomId(0, 10), RoomId(0, 25), 'LOCKED', 'Locked · Helmet Key'),
     DoorDetail(RoomId(1, 11), RoomId(1, 12), 'LOCKED', 'Locked · Helmet Key'),
@@ -114,6 +115,7 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f');
   assert.equal(await page.locator('#map .room text').count(), 1, 'names must not reveal unvisited rooms');
   assert.equal(await page.locator('#map .room text').textContent(), 'Main Hall 2F');
+  assert.equal(await page.locator('.map-detail').count(), 1, 'the explored Main Hall must retain its stairs');
   const map = page.locator('#map');
   const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
   const zoomOut = page.getByRole('button', { name: 'Zoom out', exact: true });
@@ -341,6 +343,10 @@ try {
         const name = [...text.querySelectorAll('tspan')].map(span => span.textContent).join(' ');
         if (name !== group.getAttribute('aria-label')) throw new Error('Missing visible room name: ' + name);
         const outline = group.querySelector('path');
+        const detail = group.querySelector('.map-detail');
+        const region = plan.rooms.find(room => room.id === visit.id);
+        if (Boolean(detail) !== Boolean(region.detail_segments.length)) throw new Error('Missing room interior geometry');
+        if (detail && (getComputedStyle(detail).fill !== 'none' || getComputedStyle(detail).strokeWidth !== '1px')) throw new Error('Current-room styling obscures stairs');
         const matrix = outline.getCTM().inverse().multiply(text.getCTM());
         // Check actual glyph rectangles, independently of the layout's box scan.
         for (const span of text.querySelectorAll('tspan')) {
@@ -361,7 +367,7 @@ try {
   }, states.labels);
   assert(labelCount > 100, 'label checks must cover all floor plans');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
+  console.log('Browser checks passed: stair geometry and Helmet Key door states, zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
 } finally {
   await browser.close();
 }
