@@ -35,6 +35,8 @@ Rooms appear as you enter them. Red means items remain; blue means cleared. The 
 
 Stair treads and rails appear inside explored room outlines.
 
+Door colors show access. Key symbols identify Sword, Armor, Shield and Helmet locks; hover for the key's name. Other named keys use a key symbol.
+
 Use **Floor** to browse explored floors. Click **Current room** to return to your location and follow it again.
 
 Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again.

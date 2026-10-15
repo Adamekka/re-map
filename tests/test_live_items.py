@@ -87,6 +87,7 @@ def test_live_poll_reads_all_room_doors(tmp_path):
     armor = next(door for door in tracker.doors if door.target.room == 0x14)
     assert armor.state == "LOCKED"
     assert armor.label == "Locked · Armor Key"
+    assert armor.key_label == "Armor Key"
     ram[0xC86B7] |= 8
     assert (
         poll_once(profile, tracker, RamReader(ram).read_memory).status
@@ -94,6 +95,7 @@ def test_live_poll_reads_all_room_doors(tmp_path):
     )
     armor = next(door for door in tracker.doors if door.target.room == 0x14)
     assert armor.state == "OPEN"
+    assert armor.key_label == "Armor Key"
     ram[0xC86B7] &= ~8
     assert (
         poll_once(profile, tracker, RamReader(ram).read_memory).status
@@ -101,6 +103,8 @@ def test_live_poll_reads_all_room_doors(tmp_path):
     )
     armor = next(door for door in tracker.doors if door.target.room == 0x14)
     assert armor.state == "LOCKED"
+    assert armor.key_label == "Armor Key"
+    assert all(not door.key_label for door in tracker.doors if door.label == "No lock")
 
 
 def test_live_poll_rejects_wrong_game_and_read_failure(tmp_path):

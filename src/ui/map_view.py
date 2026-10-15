@@ -63,6 +63,7 @@ def map_state(tracker: Tracker) -> dict:
                 "target_visited": str(door.target) in tracker.rooms,
                 "state": door.state,
                 "label": door.label,
+                "key_label": door.key_label,
             }
             for door in tracker.doors
         ],
@@ -187,6 +188,12 @@ svg { display:block; width:100%; height:65vh; min-height:410px; }
 .door.UNLOCKABLE line { stroke:#e9b85e; }
 .door.UNCHECKED line { stroke:#d0d9de; }
 .door title { pointer-events:none; }
+.key-symbol { pointer-events:all; }
+.key-symbol rect { fill:#14202a; stroke-width:.4; }
+.key-symbol path { fill:none; stroke:#f3e7cd; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.door.OPEN .key-symbol rect { stroke:#71b6cf; }
+.door.LOCKED .key-symbol rect,.door.BLOCKED .key-symbol rect { stroke:#ed6965; }
+.door.UNLOCKABLE .key-symbol rect { stroke:#e9b85e; }
 aside { border-left:1px solid #303d48; padding:22px; }
 #room-name { font-size:18px; font-weight:600; margin:0 0 8px; }
 #room-id { color:#91a5b4; font-size:13px; margin-bottom:18px; }
@@ -381,6 +388,22 @@ function mapRoomId(room) {
   const [stage,id]=room.split('-');
   return (parseInt(stage,16)%catalog.stage_modulus).toString(16).padStart(2,'0')+'-'+id;
 }
+const keySymbols=new Map([
+  ['Sword Key','M10 2H14V6L6 14L2 10ZM5 7L11 13M5 12L2 15'],
+  ['Armor Key','M5 2L8 4L11 2L15 5L12 8V14H4V8L1 5ZM5 2V5L8 7L11 5V2M4 11H12'],
+  ['Shield Key','M2 2H14V7Q14 12 8 15Q2 12 2 7ZM8 3V12M4 7H12'],
+  ['Helmet Key','M3 10V7A5 5 0 0 1 13 7V14H9L7 10ZM8 2V6M3 7H10M10 7V10H13'],
+]);
+function keySymbol(label) {
+  const group=element('g',{class:'key-symbol',role:'img','aria-label':label});
+  group.append(element('rect',{x:-2,y:-2,width:4,height:4,rx:.5}));
+  // Other named keys share a key silhouette; their exact names remain in the
+  // tooltip and door list instead of assigning them a Mansion emblem.
+  const path=keySymbols.has(label) ? keySymbols.get(label) : 'M7 5a3 3 0 1 1-6 0a3 3 0 1 1 6 0ZM7 5h8m-3 0v3m3-3v3';
+  group.append(element('path',{d:path,transform:'scale(.2) translate(-8 -8)'}));
+  const title=element('title',{});title.textContent=label;group.append(title);
+  return group;
+}
 function draw(state) {
   const status=document.getElementById('status');
   lastState=state;
@@ -532,11 +555,16 @@ function draw(state) {
     const candidates=observations.filter(door=>door.source===pickedSource);
     const currentCandidates=observations.filter(door=>door.source===state.current);
     const chosen=candidates.length ? candidates : currentCandidates.length ? currentCandidates : observations;
-    const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state&&door.label===chosen[0].label) ? chosen[0] : null;
+    const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state&&door.label===chosen[0].label&&door.key_label===chosen[0].key_label) ? chosen[0] : null;
     const access=observed ? observed.state : 'UNCHECKED';
     const group=element('g',{class:'door '+access,'data-door':marker.id});
     const [a,b]=marker.segment;
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
+    if(observed && observed.key_label) {
+      const symbol=keySymbol(observed.key_label);
+      symbol.setAttribute('transform','translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')');
+      group.append(symbol);
+    }
     const title=element('title',{});title.textContent=observed ? observed.label : 'Door';group.append(title);svg.append(group);
   }
   if(visible.size) {
@@ -572,7 +600,7 @@ function draw(state) {
   for(const door of state.doors.filter(door=>door.source===visit.room)) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
     name.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';
-    detail.textContent=door.label;row.append(name,detail);doors.append(row);
+    detail.textContent=door.label+(door.key_label && !door.label.includes(door.key_label) ? ' · '+door.key_label : '');row.append(name,detail);doors.append(row);
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');
   // Camera outlines share a logical room's items. Prefer its current outline

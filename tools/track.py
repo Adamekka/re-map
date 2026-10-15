@@ -329,6 +329,7 @@ def poll_once(
                     door.target,
                     "BLOCKED" if disabled else door.state.name,
                     label,
+                    key_label=key_name if door.lock_id & 0x80 and key_name else "",
                 )
             )
     camera = (

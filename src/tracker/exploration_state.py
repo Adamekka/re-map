@@ -40,6 +40,9 @@ class DoorDetail:
     target: RoomId
     state: str
     label: str
+    # Empty means no key identity is established. A named key describes the
+    # lock type even after unlocking; access still comes from state/label.
+    key_label: str = ""
 
 
 @dataclass

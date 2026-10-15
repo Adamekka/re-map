@@ -71,11 +71,11 @@ enter(0, 10, 'mansion1f', '0A')
 enter(1, 11, 'mansion2f', '0B')
 # RE1-MAP-018: original-stage doors can target returned-Mansion outline aliases.
 tracker.doors = (
-    DoorDetail(RoomId(0, 10), RoomId(0, 25), 'LOCKED', 'Locked · Helmet Key'),
-    DoorDetail(RoomId(1, 11), RoomId(1, 12), 'LOCKED', 'Locked · Helmet Key'),
+    DoorDetail(RoomId(0, 10), RoomId(0, 25), 'LOCKED', 'Locked · Helmet Key', key_label='Helmet Key'),
+    DoorDetail(RoomId(1, 11), RoomId(1, 12), 'LOCKED', 'Locked · Helmet Key', key_label='Helmet Key'),
 )
 states['helmet_doors'] = map_state(tracker)
-tracker.doors = tuple(DoorDetail(d.source, d.target, 'OPEN', 'Unlocked') for d in tracker.doors)
+tracker.doors = tuple(DoorDetail(d.source, d.target, 'OPEN', 'Unlocked', key_label=d.key_label) for d in tracker.doors)
 states['helmet_unlocked'] = map_state(tracker)
 catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
 # Explicit test exploration checks label placement across every native outline.
@@ -319,15 +319,27 @@ try {
   state = states.helmet_doors;
   await page.waitForFunction(() => document.getElementById('room-id').textContent.includes('01-0b'));
   assert.equal(await page.locator('.door[data-door="0B-0C"].LOCKED').count(), 1, 'Lesson Room must match its returned-Mansion outline before the return');
+  assert.equal(await page.locator('.door .key-symbol').getAttribute('aria-label'), 'Helmet Key');
   assert.equal(await page.locator('.room').count(), 1, 'a locked target must stay hidden');
   await floor.selectOption('mansion1f');
   assert.equal(await page.locator('.door[data-door="0A-19"].LOCKED').count(), 1, 'Back Passage must match its returned-Mansion destination');
   state = states.helmet_unlocked;
   await page.waitForFunction(() => document.querySelector('.door[data-door="0A-19"].OPEN'));
+  assert.equal(await page.locator('.door .key-symbol').getAttribute('aria-label'), 'Helmet Key', 'unlocking must retain the lock emblem');
   state = states.helmet_doors;
   await page.waitForFunction(() => document.querySelector('.door[data-door="0A-19"].LOCKED'));
   await current.click();
   assert.equal(await page.locator('.door[data-door="0B-0C"].LOCKED').count(), 1);
+  for (const key of ['Sword Key', 'Armor Key', 'Shield Key', 'Helmet Key', 'Small Key']) {
+    await page.evaluate(key => {
+      const fixture = lastState;
+      draw({ ...fixture, doors: fixture.doors.map(door => ({ ...door, label: 'Locked', key_label: key })) });
+    }, key);
+    assert.equal(await page.locator('.door .key-symbol').getAttribute('aria-label'), key);
+    assert.match(await page.locator('#doors').textContent(), new RegExp(key));
+  }
+  await page.evaluate(() => draw({ ...lastState, doors: lastState.doors.map(door => ({ ...door, key_label: '', label: 'Locked by a puzzle or event' })) }));
+  assert.equal(await page.locator('.door .key-symbol').count(), 0, 'a puzzle lock must not acquire an invented key emblem');
   state = states.labels;
   const labelCount = await page.evaluate(fixture => {
     let count = 0;
@@ -367,7 +379,7 @@ try {
   }, states.labels);
   assert(labelCount > 100, 'label checks must cover all floor plans');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: stair geometry and Helmet Key door states, zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
+  console.log('Browser checks passed: stair geometry, key symbols and Helmet Key door states, zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
 } finally {
   await browser.close();
 }
