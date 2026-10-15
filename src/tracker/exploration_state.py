@@ -62,6 +62,8 @@ class RoomRecord:
 class Tracker:
     rooms: dict[str, RoomRecord] = field(default_factory=dict)
     current: RoomId | None = None
+    # No heading exists until a coherent gameplay poll supplies it.
+    player_heading: float | None = None
     region_visits: dict[str, str] = field(default_factory=dict)
     current_region: str = ""
     map_error: str = ""

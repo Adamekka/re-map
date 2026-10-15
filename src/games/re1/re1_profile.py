@@ -103,6 +103,7 @@ class Re1Profile:
     stage_address: int | None = None
     room_address: int | None = None
     camera_address: int | None = None
+    player_facing_address: int | None = None
     lifecycle_address: int | None = None
     map_layout: Re1MapLayout | None = None
     revision: str = "unknown"
@@ -246,14 +247,21 @@ class Re1Profile:
                     for key, value in runtime_raw.items()
                 },
             )
-            for key in ("stage_address_ps1", "room_address_ps1", "camera_address_ps1"):
+            for key in (
+                "stage_address_ps1",
+                "room_address_ps1",
+                "camera_address_ps1",
+                "player_facing_address_ps1",
+            ):
                 address = _addr(key)
                 if address is None:
                     raise ValueError(f"runtime room profile requires {key}")
                 if (
                     not runtime_layout.ram_base
                     <= address
-                    < runtime_layout.ram_base + runtime_layout.ram_size
+                    <= runtime_layout.ram_base
+                    + runtime_layout.ram_size
+                    - (2 if key == "player_facing_address_ps1" else 1)
                 ):
                     raise ValueError(f"{key} is outside configured PS1 RAM")
         door_raw = raw.get("door_state_layout")
@@ -559,6 +567,7 @@ class Re1Profile:
             stage_address=_addr("stage_address_ps1"),
             room_address=_addr("room_address_ps1"),
             camera_address=_addr("camera_address_ps1"),
+            player_facing_address=_addr("player_facing_address_ps1"),
             lifecycle_address=lifecycle_address,
             map_layout=map_layout,
             revision=str(raw.get("revision", "unknown")),

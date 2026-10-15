@@ -40,7 +40,7 @@ def test_map_starts_without_revealed_rooms():
 
 
 def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
-    tracker = Tracker()
+    tracker = Tracker(player_heading=90.0)
     herb_room, upper_room = RoomId(0, 9), RoomId(1, 3)
     for room, region in (
         (herb_room, "mansion1f:09"),
@@ -77,7 +77,7 @@ def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
 
 
 def test_unoutlined_current_floor_can_follow_without_revealing_rooms():
-    tracker = Tracker()
+    tracker = Tracker(player_heading=90.0)
     tracker.mark_current(RoomId(0, 9))
     tracker.region_visits = {"mansion1f:09": "00-09"}
     tracker.mark_current(RoomId(4, 0x15))
@@ -91,7 +91,7 @@ def test_unoutlined_current_floor_can_follow_without_revealing_rooms():
 
 
 def test_remaining_items_do_not_imply_complete_item_checks():
-    tracker = Tracker()
+    tracker = Tracker(player_heading=90.0)
     room = RoomId(0, 9)
     tracker.mark_current(room)
     tracker.current_region = "mansion1f:09"

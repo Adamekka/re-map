@@ -502,7 +502,7 @@ History:
 
 ## RE1-PLAYER-001: player position and facing next to health
 
-Status: Candidate
+Status: Superseded for the direct-facing interpretation by RE1-PLAYER-002; position observations remain Candidate
 Scope: SLUS-00551 Training Jill, live GDB plus input
 Environment: windowed DuckStation 0.1-11894 dev on 2026-09-25, agent driven with keyboard and screenshots
 Authored: 2026-09-25; agent/tool: opencode; model: opencode/muse-spark-1.3-contributor-free
@@ -4515,3 +4515,43 @@ Reproduce extraction with `python3 tools/build_floor_plans.py <owned-cue> <outpu
 Contributions:
 - 2026-10-15; human user; reported missing stair indications.
 - 2026-10-15; Codex root, `gpt-6.1-sol`; inspected native numeric shade runs, extended extraction and catalog validation, regenerated geometry from the owned disc and added extraction/browser regressions. No guest-memory, emulator, or exploration-history changes.
+
+## RE1-PLAYER-002: live yaw and a directional room marker
+
+Status: Confirmed for the named SLUS-00551 Jill captures in Chemical Storage and Winding Passage; floor-wide compass alignment remains Candidate outside those rooms and the static door comparisons.
+
+Game: Resident Evil Director's Cut USA, SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`. Runtime: isolated official DuckStation `0.1-12083-g00e299795 (dev)`, Python 3.14.8, the committed Chemical-before and Herb-before savestates, ordinary keyboard turns/walking. Both `[Achievements] Enabled=false` and `[Cheevos] Enabled=false` were explicit before the successful validation loads, with no account or per-game overrides. No cheats or guest-memory writes. A first setup attempt reached the wizard and is not gameplay evidence.
+
+The actual yaw is the little-endian u16 at PS1 virtual `0x800C5198`, RAM offset `0xC5198`. Rotation uses mask `0x0FFF`, 4,096 units per turn. The observed component at `0x800C5148` is not a direct angle: its signed 16-bit values follow a sine-shaped component and cannot distinguish all headings. This supersedes that part of RE1-PLAYER-001, preserving its original authorship and observations. For motion validation only, X at PS1 virtual `0x800C5158` and Z at `0x800C5160` were read as signed little-endian 32-bit values, with all bits retained. These position reads are not new production tracking fields.
+
+Pinned executable inspection: the door transition at `0x8002A660..0x8002A668` copies its arrival angle into `0x800C5198`; turn code `0x8003EC18..0x8003EC70` increments/decrements that same halfword. `0x800376EC..0x80037718` passes actor field `+0x74` to the yaw matrix, and the trig routines at `0x8006CBDC` and `0x8006D0FC` mask inputs to twelve bits. Runtime forward motion follows `(cos(yaw), -sin(yaw))` in world X/Z. Floor-plan door comparisons put +X right and +Z up, so an SVG arrow drawn pointing up rotates by `(90 + (yaw & 0xFFF) * 360 / 4096) % 360` degrees. Source comparisons cover door vectors across the existing plans; geometry distortion and an ambiguous Guardhouse pair prevent treating them as universal runtime confirmation.
+
+Observed sequence:
+
+| Capture | Room | Yaw | X | Z | Result |
+| --- | --- | ---: | ---: | ---: | --- |
+| `chemical-start` | `00-18` | 1480 | 4171 | 3072 | Start from the donated fixture |
+| `chemical-forward-a` | `00-18` | 1480 | 3373 | 3072 | Negative-X motion; wall constrains Z |
+| `chemical-left` | `00-18` | 520 | 3373 | 3072 | Left turn decreases yaw |
+| `chemical-forward-b` | `00-18` | 520 | 4294 | 3072 | Positive-X motion; Z remains constrained |
+| `chemical-left-b` | `00-18` | 2792 | 4294 | 3072 | Left turn wraps through zero |
+| `chemical-forward-c` | `00-18` | 2792 | 3808 | 4111 | Both-axis motion matches yaw within 0.46 degrees |
+| `winding-start` | `00-09` | 1352 | 23850 | 4649 | Independent room and fixture |
+| `winding-left-b` | `00-09` | 3624 | 23850 | 4649 | Left turn wraps; initial shorter input produced no change and is not counted as a successful turn |
+| `winding-forward` | `00-09` | 3624 | 24543 | 5260 | Both-axis motion matches yaw within 0.09 degrees |
+| `winding-restored` | `00-09` | 1352 | 23850 | 4649 | Restore the same earlier fixture; published heading reverses from 48.515625 to 208.828125 degrees |
+| `winding-right` | `00-09` | 2312 | 23850 | 4649 | Right turn increases yaw |
+
+Private numeric observations and capture/publish helpers are in `/tmp/re-map-arrow-test/`. `observations.jsonl` SHA256 is `3847f098452d09c27d3429f303a19f7db3349d9950c6c773b3875fc8d2d97460`; restored `published-state.json` SHA256 is `d6c4a0731621fa2a924f6d8ce0df85f6f0a7dc053f06725b83d851f50b4b32f5`. Each capture verifies the running executable signatures. The README screenshot uses that fresh restored publication with an isolated copy of the existing two-region visit history. The user's history stayed byte-identical, SHA256 `d66fe942858e3c3c1bd00a5c7e321ae418cff8b3cee140822456a2c2399dbb94`. The isolated emulator was closed afterward.
+
+Production polls require the revision's facing address, read the latest heading once before the final room/lifecycle checks, and reject failed/short reads before publishing visits or heading. They do not require a stationary character. Heading is reread after loads and is not persisted in exploration history. The room-level arrow has a fixed screen size, follows the current floor, disappears on an interrupted read and rotates at the tracker's 10 Hz publication rate. Exact within-room X/Z placement is outside this marker's implementation. Heading-only browser updates retain the room click targets and viewport. The separate key-symbol legend was removed at the user's request; the door symbols remain.
+
+Reproduce the source/fixture/UI checks with `python3 -m pytest -q tests/test_player_heading.py tests/test_map_view.py tests/test_multi_area_maps.py` and `bun tests/check_map_browser.mjs <python>`. Quarter turns, high-bit masking, required startup configuration, failed/short reads, earlier-state reversal, absent legends, browser rotation, stable room controls, all 118 outlines and zoom/pan behavior are covered. These checks do not validate other revisions, exact map coordinates, other characters or whole-game gameplay.
+
+Contributions:
+- 2026-10-15; human user; requested a classic arrow rotating with Jill's actual facing and removal of the key legend.
+- 2026-10-15; Codex root, `gpt-6.1-sol`; traced native yaw, superseded the earlier direct-angle candidate, performed the two-room turn/walk/restore experiment, implemented required coherent heading publication and the arrow, added regressions and updated the README screenshot.
+- 2026-10-15; Codex root, `gpt-6.1-sol`; final direct review checked stage-normalized wall matching, key metadata, reveal isolation, heading-read failure handling, final camera/room/lifecycle ordering, restore reversal, stable controls during rotation and fixed arrow sizing. The final Python suite passes 1,597 tests in 80.13 seconds; browser checks pass across all 118 outlines, and scoped Ruff lint/format plus whitespace checks pass. These checks do not extend the two-room runtime scope above.
+- 2026-10-15; Gemini 3.8 Flash (High), configured identifier `gemini-3.8-flash-high`, via agy conversation `3ec74445-b0dd-4023-9ebb-ba91c10511ad`; reviewed the complete final code changes, canonical numeric detail additions, heading regressions, full map renderer, poll flow and extractor. Returned no supported findings. The process exited zero with agent response DONE, terminal SUCCESS, empty stderr and no tool attempts. This is advisory code review, not gameplay validation. Private evidence: `/tmp/re-map-arrow-final-review/`; prompt SHA256 `5f364c5b860e210c611f0969cf2dfd7877c0ab05bcc0baff1f6509a393e55ff4`.
+- 2026-10-15; Codex root, `gpt-6.1-sol`; Claude Opus 5.5 (High), required by the review skill, could not be consulted because agy rejects that model name. A fresh `agy models` listing offers only Claude Opus 4.6 (Thinking) in that family; no model was substituted. Earlier Gemini Pro selection was also unavailable under the preceding skill version, which has since removed Pro. The first Flash snapshot was truncated; the compact retry ended ERROR after a provider failure and supplied no accepted review. Neither failed call is an endorsement. The final successful review above covers the finished implementation. Changes were initially left uncommitted because the required Opus review was unavailable.
+- 2026-10-15; human user; subsequently instructed commit and push, authorizing completion despite the unavailable Opus review.

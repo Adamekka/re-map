@@ -26,7 +26,7 @@ from games.game_profile import RoomId
 from games.re1.acquisition_state import AcquisitionFlag
 from games.re1.door_state import parse_door, stage_remap_flag
 from games.re1.event_state import read_event_snapshot
-from games.re1.map_layout import MapLocation, MapUnavailable
+from games.re1.map_layout import MapLocation, MapUnavailable, decode_player_heading
 from games.re1.re1_profile import MemoryResult, Re1Profile
 from games.re1.room_cache import (
     CachedRoomObservation,
@@ -107,6 +107,7 @@ def poll_once(
         or doors_layout is None
         or rule_layout is None
         or event_layout is None
+        or profile.player_facing_address is None
     ):
         return PollResult(
             PollStatus.ReadFailure,
@@ -423,6 +424,12 @@ def poll_once(
             return PollResult(
                 PollStatus.Retry, "room snapshot changed during read; retry"
             )
+    # Heading may change normally during a poll. Take its latest value once,
+    # then bracket it with the final camera/room/lifecycle checks instead of
+    # requiring a stationary character to pass a heading equality recheck.
+    facing = read_memory(profile.player_facing_address, 2)
+    if not facing.ok or len(facing.data) != 2:
+        return PollResult(PollStatus.ReadFailure, "player facing read failed")
     camera_again = read_memory(profile.camera_address, 1)
     if not camera_again.ok or len(camera_again.data) != 1:
         return PollResult(PollStatus.ReadFailure, "camera recheck failed")
@@ -447,6 +454,7 @@ def poll_once(
             )
         if result.data != lifecycle.data:
             return PollResult(PollStatus.Retry, "lifecycle changed during read; retry")
+    tracker.player_heading = decode_player_heading(facing.data)
     tracker.mark_current(rid)
     selection = (
         profile.map_layout.select(rid, camera.data[0])

@@ -10,6 +10,7 @@
   "stage_address_ps1": "0x800C8660",
   "room_address_ps1": "0x800C8661",
   "camera_address_ps1": "0x800C8662",
+  "player_facing_address_ps1": "0x800C5198",
   "lifecycle_address_ps1": "0x800C866C",
   "floor_plans_path": "../data/floor_plans_slus00551.json",
   "runtime_signature": {

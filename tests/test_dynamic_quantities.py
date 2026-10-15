@@ -251,7 +251,7 @@ def test_quantity_read_is_not_a_descriptor_event_effect(rules):
 
 
 def test_map_payload_reports_remaining_and_collected_with_explicit_amount_state():
-    tracker = Tracker()
+    tracker = Tracker(player_heading=90.0)
     room = RoomId(0, 9)
     tracker.mark_current(room)
     tracker.region_visits["mansion1f:09"] = str(room)

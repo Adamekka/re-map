@@ -11,6 +11,18 @@ from pathlib import Path
 from games.game_profile import RoomId
 
 
+def decode_player_heading(data: bytes) -> float:
+    """Map the pinned player's yaw to clockwise degrees from map-up.
+
+    RE1-PLAYER-002: the game's trig lookup masks yaw to twelve bits. Forward
+    is (cos(yaw), -sin(yaw)) in X/Z; the floor plan puts +Z upward and +X
+    rightward, so yaw zero points right, ninety degrees from map-up.
+    """
+    if len(data) != 2:
+        raise ValueError("player facing requires a complete little-endian halfword")
+    return (90 + (int.from_bytes(data, "little") & 0xFFF) * 360 / 4096) % 360
+
+
 @dataclass(frozen=True)
 class MapLocation:
     area: str

@@ -16,6 +16,9 @@ def map_state(tracker: Tracker) -> dict:
     current = tracker.current
     if current is None:
         return {"status": "waiting", "current": None, "rooms": []}
+    assert tracker.player_heading is not None, (
+        "a displayed player needs a coherent heading"
+    )
     area = (
         tracker.current_region.split(":", 1)[0]
         if tracker.current_region
@@ -50,6 +53,7 @@ def map_state(tracker: Tracker) -> dict:
     return {
         "status": "display",
         "current": str(current),
+        "player_heading": tracker.player_heading,
         "map_region": region,
         "area": area,
         "map_error": tracker.map_error,
@@ -182,6 +186,9 @@ svg { display:block; width:100%; height:65vh; min-height:410px; }
 .room.current text { font-weight:700; fill:#fff; }
 .room path.map-detail { fill:none; stroke:#bed0dd; stroke-width:1; stroke-linecap:square; pointer-events:none; }
 .room .map-detail+text { paint-order:stroke; stroke:#151e27; stroke-width:.5; stroke-linejoin:round; }
+.player { pointer-events:none; }
+.player path { fill:#a5efff; stroke:#10202b; stroke-width:.6; stroke-linejoin:round; }
+.key.player-key { background:#a5efff; clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%); }
 .door line { stroke-width:1.1; stroke-linecap:square; }
 .door.OPEN line { stroke:#71b6cf; }
 .door.LOCKED line,.door.BLOCKED line { stroke:#ed6965; }
@@ -230,6 +237,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key" style="background:#743e40"></i>Items remain</span>
 <span><i class="key" style="background:#244c6e"></i>Cleared</span>
 <span><i class="key" style="border:2px solid #d9f6ff;box-sizing:border-box"></i>Current room</span>
+<span><i class="key player-key"></i>You</span>
 <span><i class="key door-key" style="background:#ed6965"></i>Locked</span>
 <span><i class="key door-key" style="background:#e9b85e"></i>Unlock from this side</span>
 <span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
@@ -285,6 +293,7 @@ function applyViewport() {
     if(!viewport.box.every(Number.isFinite) || viewport.box[2]<=0 || viewport.box[3]<=0) throw new Error('Invalid map viewport');
     svg.setAttribute('viewBox',viewport.box.join(' '));
   }
+  if(lastState && lastState.status==='display') updatePlayerHeading();
 }
 function zoomMap(factor,point) {
   if(viewport.mode==='empty') throw new Error('Cannot zoom an empty map');
@@ -404,6 +413,14 @@ function keySymbol(label) {
   const title=element('title',{});title.textContent=label;group.append(title);
   return group;
 }
+function updatePlayerHeading() {
+  const marker=svg.querySelector('.player path');
+  if(!marker) return;
+  if(lastState.status!=='display' || !Number.isFinite(lastState.player_heading) || lastState.player_heading<0 || lastState.player_heading>=360) throw new Error('Player heading is missing or invalid');
+  // Keep the locator readable at both a whole-floor view and a close zoom.
+  const matrix=svg.getScreenCTM(),scale=3.5/Math.hypot(matrix.a,matrix.b);
+  marker.setAttribute('transform','translate(0 '+(-3.6*scale)+') rotate('+lastState.player_heading+') scale('+scale+')');
+}
 function draw(state) {
   const status=document.getElementById('status');
   lastState=state;
@@ -417,7 +434,7 @@ function draw(state) {
       room.classList.remove('current','INCOMPLETE','CLEARED','VISITED');
       room.classList.add('UNKNOWN');
     });
-    svg.querySelectorAll('.door').forEach(door=>door.remove());
+    svg.querySelectorAll('.door,.player').forEach(marker=>marker.remove());
     document.getElementById('room-id').textContent=document.getElementById('room-id').textContent.replace(' · Current room','');
     document.getElementById('completion').textContent='Tracking interrupted';
     document.getElementById('items').replaceChildren();
@@ -567,6 +584,18 @@ function draw(state) {
     }
     const title=element('title',{});title.textContent=observed ? observed.label : 'Door';group.append(title);svg.append(group);
   }
+  if(visible.has(currentId)) {
+    const room=byId.get(currentId);
+    // Room identity and facing are mapped; exact X/Z placement is not. Keep
+    // the arrow beside the top wall so the room name stays readable.
+    const top=Math.min(...room.rings.flat().map(point=>point[1]));
+    const edge=room.rings.flatMap(ring=>ring.map((a,index)=>[a,ring[(index+1)%ring.length]]))
+      .filter(([a,b])=>a[1]===top && b[1]===top).sort(([a,b],[c,d])=>Math.abs(d[0]-c[0])-Math.abs(b[0]-a[0]))[0];
+    const marker=element('g',{class:'player',transform:'translate('+[(edge[0][0]+edge[1][0])/2,top].join(' ')+')',role:'img','aria-label':'You · '+room.name});
+    marker.append(element('path',{d:'M0,-3 L2.2,2.4 L0,1.2 L-2.2,2.4 Z'}));
+    const title=element('title',{});title.textContent='Your current room · '+room.name;marker.append(title);
+    svg.append(marker);
+  }
   if(visible.size) {
     const points=[...visible.keys()].flatMap(id=>byId.get(id).rings.flat());
     const left=Math.min(...points.map(p=>p[0])),right=Math.max(...points.map(p=>p[0]));
@@ -660,17 +689,25 @@ function draw(state) {
     showEntries('incomplete-checks','checks-status',checks,'No incomplete item checks.');
   }
 }
+let sceneKey='';
 async function refresh() {
   try {
     const response=await fetch('/state',{cache:'no-store'});
     if(!response.ok) throw new Error('Map request failed: HTTP '+response.status);
-    draw(await response.json());lastReportedError='';
+    const state=await response.json();
+    const {player_heading,...scene}=state,key=JSON.stringify(scene);
+    // Rotation polls must not replace room click targets during a press, or
+    // rebuild the whole floor just because Jill turns in place.
+    if(key!==sceneKey) {draw(state);sceneKey=key;}
+    else {lastState=state;updatePlayerHeading();}
+    lastReportedError='';
   } catch(error) {
     reportError('refresh',error);
+    sceneKey='';
     draw({status:'waiting',error:'Map connection interrupted.'});
   }
 }
-refresh();setInterval(refresh,500);
+refresh();setInterval(refresh,100);
 </script>
 </body>
 </html>

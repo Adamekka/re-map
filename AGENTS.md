@@ -12,7 +12,7 @@
 
 - Use RE2 Remake's map behavior where practical, with RE1 Remake's room-clear map as the minimum. Draw spatial floor plans, room outlines, corridors and door markers on walls. A graph of room nodes does not satisfy this requirement.
 - Reveal rooms only after the player enters them. Startup and collecting an in-game map must not reveal unexplored rooms.
-- Show room names directly on explored map outlines.
+- Show room names directly on explored map outlines. Use a classic minimap arrow to make the current room and actual facing direction clear. Retain interior stair geometry and identify key doors with symbols as well as access colors. Omit a separate key-symbol legend.
 - Allow map zoom and pan, preserving the player's chosen view during live updates on the same floor.
 - Let the player browse explored floors without revealing unvisited rooms. Follow the current floor by default and provide a control to return to the current room.
 - Keep visit history separate from completion. Visually distinguish the current room, incomplete, cleared and unresolved states. Being current or visited does not imply clearance.

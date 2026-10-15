@@ -17,6 +17,7 @@ tracker = Tracker()
 def enter(stage, room, area, region, outlined=True):
     rid = RoomId(stage, room)
     tracker.mark_current(rid)
+    tracker.player_heading = 90.0
     tracker.current_region = area + ':' + region
     if outlined:
         tracker.region_visits[tracker.current_region] = str(rid)
@@ -115,16 +116,30 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f');
   assert.equal(await page.locator('#map .room text').count(), 1, 'names must not reveal unvisited rooms');
   assert.equal(await page.locator('#map .room text').textContent(), 'Main Hall 2F');
+  assert.equal(await page.locator('.player').getAttribute('aria-label'), 'You · Main Hall 2F');
+  assert.equal(await page.locator('#key-legend').count(), 0);
+  const initialRoom = await page.locator('.room.current').elementHandle();
+  for (const heading of [0, 90, 180, 270]) {
+    state = { ...states.initial, player_heading: heading };
+    await page.waitForFunction(heading => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(' + heading + ')'), heading);
+    assert(await initialRoom.evaluate(node => node.isConnected), 'turning must preserve room controls');
+  }
+  state = states.initial;
+  await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(90)'));
   assert.equal(await page.locator('.map-detail').count(), 1, 'the explored Main Hall must retain its stairs');
   const map = page.locator('#map');
   const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
   const zoomOut = page.getByRole('button', { name: 'Zoom out', exact: true });
   const fit = page.getByRole('button', { name: 'Fit explored rooms', exact: true });
   const initialBox = await map.getAttribute('viewBox');
+  const arrowSize = await page.locator('.player path').boundingBox();
+  assert(arrowSize.width < 24 && arrowSize.height < 24, 'the locator must not become a large badge on a small explored area');
   assert(await zoomOut.isDisabled());
   await zoomIn.focus();
   await page.keyboard.press('Enter');
   assert.equal(await page.locator('#zoom-level').textContent(), '125%');
+  const zoomedArrowSize = await page.locator('.player path').boundingBox();
+  assert(Math.abs(arrowSize.width - zoomedArrowSize.width) < .1 && Math.abs(arrowSize.height - zoomedArrowSize.height) < .1, 'zooming must preserve the arrow size');
   assert(Number((await map.getAttribute('viewBox')).split(' ')[2]) < Number(initialBox.split(' ')[2]));
   assert(!(await current.isDisabled()), 'Current room must be available after zooming');
   await zoomOut.click();
@@ -160,6 +175,7 @@ try {
   assert.equal(await map.getAttribute('viewBox'), initialBox);
   await floor.selectOption('mansion1f');
   const firstFloorBox = await map.getAttribute('viewBox');
+  assert.equal(await page.locator('.player').count(), 0, 'browsing another floor must hide the player');
   assert.notEqual(firstFloorBox, initialBox, 'a floor switch must fit the displayed floor');
   await zoomIn.click();
   const chosenBox = await map.getAttribute('viewBox');
@@ -276,6 +292,7 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').disabled);
   assert(await current.isDisabled());
   assert.equal(await page.locator('.room.CLEARED,.room.INCOMPLETE,.room.current,.door').count(), 0);
+  assert.equal(await page.locator('.player').count(), 0, 'an interrupted read must clear the player marker');
   assert.equal(await page.locator('#items li,#doors li').count(), 0);
   assert.equal(await page.locator('#note').textContent(), '', 'interruption must clear stale verdict explanations');
   assert.equal(await page.locator('#overview button').count(), 0);
@@ -292,6 +309,7 @@ try {
   state = states.unoutlined;
   await page.waitForFunction(() => document.getElementById('floor').value === 'laboratoryb4');
   assert.equal(await page.locator('.room').count(), 0);
+  assert.equal(await page.locator('.player').count(), 0, 'an unoutlined room must not get an invented player location');
   assert(await zoomIn.isDisabled());
   assert(await zoomOut.isDisabled());
   assert(await fit.isDisabled());
@@ -316,6 +334,7 @@ try {
   assert.equal(await page.locator('#room-id').textContent(), 'Room 05-10');
   await current.click();
   assert.equal(await page.locator('.room.current').count(), 1);
+  assert.equal(await page.locator('.player').getAttribute('aria-label'), 'You · Elevator Stairway');
   state = states.helmet_doors;
   await page.waitForFunction(() => document.getElementById('room-id').textContent.includes('01-0b'));
   assert.equal(await page.locator('.door[data-door="0B-0C"].LOCKED').count(), 1, 'Lesson Room must match its returned-Mansion outline before the return');
@@ -379,7 +398,7 @@ try {
   }, states.labels);
   assert(labelCount > 100, 'label checks must cover all floor plans');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: stair geometry, key symbols and Helmet Key door states, zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
+  console.log('Browser checks passed: player indicator, stair geometry, key symbols and Helmet Key door states, zoom, pan, fit, stable views, room names on ' + labelCount + ' outlines, floor browsing, remaining-items overview and navigation, incomplete checks, fresh state, interruption, new history, unoutlined rooms and camera aliases.');
 } finally {
   await browser.close();
 }

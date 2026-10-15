@@ -99,7 +99,7 @@ def test_undrawn_native_rooms_remain_explicit(layout):
 
 
 def test_floor_history_keeps_only_entered_regions_and_retains_item_door_states(layout):
-    tracker = Tracker()
+    tracker = Tracker(player_heading=90.0)
     for rid in (RoomId(0, 9), RoomId(1, 3), RoomId(3, 5), RoomId(0, 9)):
         selected = layout.select(rid, 0)
         assert isinstance(selected, MapLocation) and selected.outlined
