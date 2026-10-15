@@ -66,6 +66,16 @@ enter(0, 9, 'mansion1f', '09')
 enter(1, 3, 'mansion2f', '03')
 enter(0, 5, 'mansion1f', '05')
 states['expanded'] = map_state(tracker)
+tracker = Tracker()
+enter(0, 10, 'mansion1f', '0A')
+enter(1, 11, 'mansion2f', '0B')
+tracker.doors = (
+    DoorDetail(RoomId(0, 10), RoomId(0, 25), 'LOCKED', 'Locked · Helmet Key'),
+    DoorDetail(RoomId(1, 11), RoomId(1, 12), 'LOCKED', 'Locked · Helmet Key'),
+)
+states['helmet_doors'] = map_state(tracker)
+tracker.doors = tuple(DoorDetail(d.source, d.target, 'OPEN', 'Unlocked') for d in tracker.doors)
+states['helmet_unlocked'] = map_state(tracker)
 catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
 # Explicit test exploration checks label placement across every native outline.
 tracker = Tracker()
@@ -304,6 +314,18 @@ try {
   assert.equal(await page.locator('#room-id').textContent(), 'Room 05-10');
   await current.click();
   assert.equal(await page.locator('.room.current').count(), 1);
+  state = states.helmet_doors;
+  await page.waitForFunction(() => document.getElementById('room-id').textContent.includes('01-0b'));
+  assert.equal(await page.locator('.door[data-door="0B-0C"].LOCKED').count(), 1, 'Lesson Room must match its returned-Mansion outline before the return');
+  assert.equal(await page.locator('.room').count(), 1, 'a locked target must stay hidden');
+  await floor.selectOption('mansion1f');
+  assert.equal(await page.locator('.door[data-door="0A-19"].LOCKED').count(), 1, 'Back Passage must match its returned-Mansion destination');
+  state = states.helmet_unlocked;
+  await page.waitForFunction(() => document.querySelector('.door[data-door="0A-19"].OPEN'));
+  state = states.helmet_doors;
+  await page.waitForFunction(() => document.querySelector('.door[data-door="0A-19"].LOCKED'));
+  await current.click();
+  assert.equal(await page.locator('.door[data-door="0B-0C"].LOCKED').count(), 1);
   state = states.labels;
   const labelCount = await page.evaluate(fixture => {
     let count = 0;

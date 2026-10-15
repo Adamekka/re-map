@@ -4487,3 +4487,17 @@ Evidence:
 Limits: one settled gameplay state and one kill/relaunch cycle only. `SIGTERM` shutdown of a statefile-loaded instance again took over a minute before the process exited; a stuck shutdown would need `SIGKILL` like the RE1-LIFECYCLE-002 setup note. No save, menu, transition, or multi-room traversal was exercised in this run. Chris, other revisions, and other emulator versions remain untested.
 History:
 - 2026-10-10; opencode with model opencode/muse-spark-1.3-contributor-free; ran the endurance, kill, and relaunch sequence in the isolated copy, then stopped both processes. No production code changed.
+
+## RE1-MAP-018: door markers share the floor layout's stage identity
+
+Status: Candidate; reproduced display defect from recorded tracker publications and checked in Chromium. No new gameplay or unlock experiment.
+
+Game: Resident Evil Director's Cut USA, SLUS-00551, pinned executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`. No emulator was started for these UI checks.
+
+The user's October 15 tracker log reports `00-0a → 00-19` and `01-0b → 01-0c` as `LOCKED`, labeled Helmet Key. Their wall markers were gray because the destination outlines list only `05-19` and `06-0c`, respectively. Raw room equality in the browser rejected both observations. Floor selection already normalizes stages modulo the catalog's explicit `stage_modulus`, five, as recorded in RE1-MAP-004. Wall matching now uses the same identity rule, while directional source selection and game-derived door verdicts retain their original runtime IDs.
+
+Reproduce with `bun tests/check_map_browser.mjs <python>`: the Helmet Key test state reveals only Back Passage and Lesson Room Entry, supplies the recorded locked targets, and checks red wall markers on both floors. Synthetic locked/open/locked updates check that the marker refreshes without revealing either destination. Existing checks retain directional selection, floor browsing and interrupted-state clearing. Boundary markers without a destination remain unassigned. This fixes display association and does not change lock decoding, establish a natural unlock, or confirm other revisions.
+
+Contributions:
+- 2026-10-15; human user; reported gray Helmet Key doors at Lesson Room Entry and Back Passage.
+- 2026-10-15; Codex root, `gpt-6.1-sol`; inspected log publications and catalog identities, implemented shared stage normalization for marker matching and added browser regressions. README screenshot uses the recorded explored state, with no emulator interaction or visit-history writes.

@@ -373,6 +373,12 @@ function roomName(area,visit) {
   const room=plan && [...plan.rooms,...plan.unoutlined_rooms].find(room=>room.id===visit.id);
   return room ? room.name : 'Room '+visit.room;
 }
+function mapRoomId(room) {
+  // The original and returned Mansion share floor geometry, including rooms
+  // whose RDT exists only in the later stage. Match the layout's stage modulus.
+  const [stage,id]=room.split('-');
+  return (parseInt(stage,16)%catalog.stage_modulus).toString(16).padStart(2,'0')+'-'+id;
+}
 function draw(state) {
   const status=document.getElementById('status');
   lastState=state;
@@ -515,15 +521,16 @@ function draw(state) {
     const owner=byId.get(marker.rooms[0]),neighbor=byId.get(marker.rooms[1]);
     // Boundary markers encode no destination. Even a unique off-plan exit cannot
     // prove its wall identity; retain its known access in the door list instead.
+    const ownerIds=owner.room_ids.map(mapRoomId),neighborIds=neighbor ? neighbor.room_ids.map(mapRoomId) : [];
     const observations=neighbor ? state.doors.filter(door=>
-      owner.room_ids.includes(door.source)&&neighbor.room_ids.includes(door.target) || neighbor.room_ids.includes(door.source)&&owner.room_ids.includes(door.target)) : [];
+      ownerIds.includes(mapRoomId(door.source))&&neighborIds.includes(mapRoomId(door.target)) || neighborIds.includes(mapRoomId(door.source))&&ownerIds.includes(mapRoomId(door.target))) : [];
     const pickedSource=visible.get(picked)?.room || state.current;
     const candidates=observations.filter(door=>door.source===pickedSource);
     const currentCandidates=observations.filter(door=>door.source===state.current);
     const chosen=candidates.length ? candidates : currentCandidates.length ? currentCandidates : observations;
     const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state&&door.label===chosen[0].label) ? chosen[0] : null;
     const access=observed ? observed.state : 'UNCHECKED';
-    const group=element('g',{class:'door '+access});
+    const group=element('g',{class:'door '+access,'data-door':marker.id});
     const [a,b]=marker.segment;
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
     const title=element('title',{});title.textContent=observed ? observed.label : 'Door';group.append(title);svg.append(group);
