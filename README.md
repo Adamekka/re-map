@@ -31,7 +31,7 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
-Rooms appear as you enter them. Red means items remain; blue means cleared. The cyan arrow identifies your current room and rotates with Jill's facing direction. The white outline also marks the current room. Click a room to see its items and doors.
+Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. The cyan arrow identifies your current room and rotates with Jill's facing direction. The white outline also marks the current room. Click a room to see its items and doors.
 
 Stair treads and rails appear inside explored room outlines.
 

@@ -180,6 +180,9 @@ svg { display:block; width:100%; height:65vh; min-height:410px; }
 .room path { stroke:#8a9ca9; stroke-width:.65; fill:#42515d; stroke-linejoin:miter; }
 .room.INCOMPLETE path { fill:#743e40; }
 .room.CLEARED path { fill:#244c6e; }
+/* Unresolved rooms keep the neutral fill explicitly so a future default
+cannot merge them with a decided state. */
+.room.UNKNOWN path { fill:#42515d; }
 .room.current path { stroke:#d9f6ff; stroke-width:1.05; }
 .room.selected:not(.current) path { stroke:#f0cf8c; }
 .room text { fill:#dce7ee; font:2.6px system-ui,sans-serif; pointer-events:none; text-anchor:middle; }
@@ -236,6 +239,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <div id="legend">
 <span><i class="key" style="background:#743e40"></i>Items remain</span>
 <span><i class="key" style="background:#244c6e"></i>Cleared</span>
+<span><i class="key" style="background:#42515d"></i>Check incomplete</span>
 <span><i class="key" style="border:2px solid #d9f6ff;box-sizing:border-box"></i>Current room</span>
 <span><i class="key player-key"></i>You</span>
 <span><i class="key door-key" style="background:#ed6965"></i>Locked</span>

@@ -119,6 +119,8 @@ def test_map_server_serves_page_and_current_snapshot(caplog):
         page = response.read().decode()
         assert response.status == 200
         assert "Winding Passage" in page
+        assert "Check incomplete" in page
+        assert ".room.UNKNOWN path" in page
         connection.close()
 
         snapshot = {

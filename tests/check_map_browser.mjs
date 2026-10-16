@@ -118,6 +118,8 @@ try {
   assert.equal(await page.locator('#map .room text').textContent(), 'Main Hall 2F');
   assert.equal(await page.locator('.player').getAttribute('aria-label'), 'You · Main Hall 2F');
   assert.equal(await page.locator('#key-legend').count(), 0);
+  assert.match(await page.locator('#legend').textContent(), /Check incomplete/);
+  assert.equal(await page.locator('#map .room.UNKNOWN').count(), 1, 'an unresolved room must keep its explicit state');
   const initialRoom = await page.locator('.room.current').elementHandle();
   for (const heading of [0, 90, 180, 270]) {
     state = { ...states.initial, player_heading: heading };
