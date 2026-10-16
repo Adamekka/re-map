@@ -4555,3 +4555,17 @@ Contributions:
 - 2026-10-15; Gemini 3.8 Flash (High), configured identifier `gemini-3.8-flash-high`, via agy conversation `3ec74445-b0dd-4023-9ebb-ba91c10511ad`; reviewed the complete final code changes, canonical numeric detail additions, heading regressions, full map renderer, poll flow and extractor. Returned no supported findings. The process exited zero with agent response DONE, terminal SUCCESS, empty stderr and no tool attempts. This is advisory code review, not gameplay validation. Private evidence: `/tmp/re-map-arrow-final-review/`; prompt SHA256 `5f364c5b860e210c611f0969cf2dfd7877c0ab05bcc0baff1f6509a393e55ff4`.
 - 2026-10-15; Codex root, `gpt-6.1-sol`; Claude Opus 5.5 (High), required by the review skill, could not be consulted because agy rejects that model name. A fresh `agy models` listing offers only Claude Opus 4.6 (Thinking) in that family; no model was substituted. Earlier Gemini Pro selection was also unavailable under the preceding skill version, which has since removed Pro. The first Flash snapshot was truncated; the compact retry ended ERROR after a provider failure and supplied no accepted review. Neither failed call is an endorsement. The final successful review above covers the finished implementation. Changes were initially left uncommitted because the required Opus review was unavailable.
 - 2026-10-15; human user; subsequently instructed commit and push, authorizing completion despite the unavailable Opus review.
+
+## RE1-MAP-020: name the unresolved room color in the map legend
+
+Status: Candidate; display-only change with served-page and browser checks, no new gameplay.
+
+Game: Resident Evil Director's Cut USA, SLUS-00551, pinned executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`. No emulator was started for these UI checks, so no DuckStation version applies.
+
+Rooms with `UNKNOWN` completion previously fell back to the default room fill with no legend entry, so only the side panel's `Item check incomplete` text and the `Incomplete item checks` overview explained the gray state. The page now pins that fill to an explicit `.room.UNKNOWN` rule so a future default change cannot silently merge unresolved rooms with a decided state, and the legend names it `Check incomplete` beside the red `Items remain` and blue `Cleared` entries. Completion verdicts, visit history, and item/door interpretation are unchanged.
+
+Reproduce with `python3 -m pytest -q tests/test_map_view.py` for the served-page chip and rule assertions, and `bun tests/check_map_browser.mjs <python>` with Playwright and Chromium installed for the legend-text and single `.room.UNKNOWN` node assertions. These checks do not validate room clearance, other revisions, or whole-game gameplay.
+
+Contributions:
+- 2026-10-16; human user; selected the unresolved-legend task over the stale door-defect docs and emulator validation options.
+- 2026-10-16; opencode with model opencode/muse-spark-1.3-contributor-free; authored; added the explicit rule, legend chip, served-page and browser regressions, matching README and testing wording, and refreshed the README screenshot by rendering the recorded `/tmp/re-map-arrow-test/published-state.json` publication in headless Chromium. No emulator interaction and no exploration-history reads or writes. The full suite passes 1,597 tests and the browser checks pass.
