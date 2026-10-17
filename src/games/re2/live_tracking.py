@@ -282,6 +282,8 @@ def poll_re2(
                 unlocked = bool(lock["lock_id"] & 0x80) and flag(
                     layout["key_bank"], lock["lock_id"] & 0x3F
                 )
+                if unlocked:
+                    key_label = ""
                 if observed is None:
                     # Unlock knowledge survives leaving a room. Its current
                     # activation can still depend on unresolved room events.

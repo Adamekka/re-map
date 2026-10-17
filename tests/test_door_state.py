@@ -100,11 +100,13 @@ def test_unlock_bits_use_word_order_and_reverse_on_load(
     flags = bytearray(8)
     before = parse_door(2, opcode, RoomId(0, 9), bytes(flags), 1, 8, False)
     assert before.state == DoorState.LOCKED
+    assert not before.unlocked
 
     flags[byte] = mask
     unlocked = parse_door(2, opcode, RoomId(0, 9), bytes(flags), 1, 8, False)
     assert unlocked.state == DoorState.OPEN
     assert unlocked.reason == "Unlocked"
+    assert unlocked.unlocked
 
     restored = parse_door(2, opcode, RoomId(0, 9), bytes(8), 1, 8, False)
     assert restored.state == DoorState.LOCKED

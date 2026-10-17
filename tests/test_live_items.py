@@ -95,7 +95,16 @@ def test_live_poll_reads_all_room_doors(tmp_path):
     )
     armor = next(door for door in tracker.doors if door.target.room == 0x14)
     assert armor.state == "OPEN"
-    assert armor.key_label == "Armor Key"
+    assert armor.key_label == ""
+    # RE1-MAP-022: temporary blocking must not revive an already used key.
+    ram[profile.runtime_room_layout.aot_base - 0x80000000 + 12] = 2
+    assert (
+        poll_once(profile, tracker, RamReader(ram).read_memory).status
+        is PollStatus.Display
+    )
+    armor = next(door for door in tracker.doors if door.target.room == 0x14)
+    assert armor.state == "BLOCKED" and armor.key_label == ""
+    ram[profile.runtime_room_layout.aot_base - 0x80000000 + 12] = 1
     ram[0xC86B7] &= ~8
     assert (
         poll_once(profile, tracker, RamReader(ram).read_memory).status

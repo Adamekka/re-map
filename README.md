@@ -35,7 +35,7 @@ Rooms appear as you enter them. Red means items remain; blue means cleared; gray
 
 Stair treads and rails appear inside explored room outlines.
 
-Door colors show access. Key symbols identify Sword, Armor, Shield and Helmet locks; hover for the key's name. The RE2 profile uses suit symbols for Spade, Diamond, Heart and Club locks. Other named keys use a key symbol.
+Door colors show access. Key symbols identify Sword, Armor, Shield and Helmet locks; hover for the key's name. A symbol disappears once its door is unlocked and returns if an earlier savestate restores the lock. The RE2 profile uses suit symbols for Spade, Diamond, Heart and Club locks. Other named keys use a key symbol.
 
 Use **Floor** to browse explored floors. Click **Current room** to return to your location and follow it again.
 

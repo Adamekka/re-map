@@ -616,7 +616,7 @@ function draw(state) {
     const group=element('g',{class:'door '+access,'data-door':marker.id});
     const [a,b]=marker.segment;
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
-    if(observed && keyLabels.length===1) {
+    if(observed && access!=='OPEN' && keyLabels.length===1) {
       const symbol=keySymbol(keyLabels[0]);
       symbol.setAttribute('transform','translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')');
       group.append(symbol);

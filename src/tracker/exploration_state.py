@@ -41,8 +41,8 @@ class DoorDetail:
     target: RoomId
     state: str
     label: str
-    # Empty means no key identity is established. A named key describes the
-    # lock type even after unlocking; access still comes from state/label.
+    # Name a key while its lock is still relevant. Empty also represents a
+    # freshly proven unlock; passage access remains separate in state/label.
     key_label: str = ""
     # RE2 has source-offset wall bindings. RE1 retains its established
     # room-pair bindings and therefore supplies no source observation identity.

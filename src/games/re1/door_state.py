@@ -24,6 +24,8 @@ class DoorObservation:
     state: DoorState
     lock_id: int
     lock_type: int
+    # Persistent unlock knowledge survives temporary/scripted passage blocking.
+    unlocked: bool
     reason: str
     x: int
     z: int
@@ -149,6 +151,7 @@ def parse_door(
         state=state,
         lock_id=lock_id,
         lock_type=lock_type,
+        unlocked=unlocked,
         reason=reason,
         x=x,
         z=z,

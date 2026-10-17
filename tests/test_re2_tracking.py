@@ -180,9 +180,11 @@ def test_key_flags_rewind_and_doors_keep_source_id(snapshot):
     put(0x800CCB60, 0x20000000, 4)
     poll_re2(profile, tracker, read)
     assert tracker.doors[0].state == "OPEN"
+    assert tracker.doors[0].key_label == ""
     put(0x800CCB60, 0, 4)
     poll_re2(profile, tracker, read)
     assert tracker.doors[0].state == "LOCKED"
+    assert tracker.doors[0].key_label == "Spade Key"
 
 
 def test_native_map_contexts_select_one_region_without_revealing_it(profile):
@@ -214,11 +216,15 @@ def test_shared_camera_positions_do_not_bind_the_wrong_room(snapshot):
 def test_disabled_door_does_not_become_open_from_a_key_flag(snapshot):
     profile, _, put, read = snapshot
     definition = profile.rooms["00-01"]["doors"][0]
+    pointer = 0x80100000 + definition["offset"] + 2
+    put(pointer + 27, 0x82, 1)
+    put(pointer + 28, 89, 1)
     put(0x80100000 + definition["offset"] + 2, 0, 1)
     put(0x800CCB60, 0xFFFFFFFF, 4)
     tracker = Tracker()
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert tracker.doors[0].state == "BLOCKED"
+    assert tracker.doors[0].key_label == ""
 
 
 @pytest.mark.parametrize(
@@ -287,7 +293,9 @@ def test_departed_door_retains_fresh_unlock_knowledge_without_claiming_access(sn
     door = next(door for door in tracker.doors if door.source == RoomId(0, 0))
     assert door.state == "UNCHECKED"
     assert door.label == "Unlocked; access unconfirmed"
+    assert door.key_label == ""
     put(0x800CCB60, 0, 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     door = next(door for door in tracker.doors if door.source == RoomId(0, 0))
     assert door.label == "Door conditions unresolved"
+    assert door.key_label == "Spade Key"

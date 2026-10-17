@@ -60,7 +60,8 @@ try {
   for (const [index, marker] of markers.entries()) {
     const door = page.locator('[data-door="' + marker.id + '"]');
     assert((await door.getAttribute('class')).includes(index === 0 ? 'LOCKED' : 'OPEN'));
-    assert.equal(await door.locator('.key-symbol title').textContent(), 'Spade Key');
+    if (index === 0) assert.equal(await door.locator('.key-symbol title').textContent(), 'Spade Key');
+    else assert.equal(await door.locator('.key-symbol').count(), 0, 'an open RE2 door must hide its used-key symbol');
   }
   assert.match(await page.locator('#remaining-items').textContent(), /Handgun ammo/);
   assert.match(await page.locator('#incomplete-checks').textContent(), /Gun/);
