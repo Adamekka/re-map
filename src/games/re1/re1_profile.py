@@ -12,6 +12,7 @@ from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQ
 from games.re1.acquisition_state import AcquisitionLayout
 from games.re1.event_state import EventLayout
 from games.re1.map_layout import Re1MapLayout
+from games.re1.player_position import Re1PositionLayout
 from games.re1.room_cache import (
     CachedRoomObservation,
     RoomDependency,
@@ -90,6 +91,8 @@ class Re1Profile:
     room_address: int | None = None
     camera_address: int | None = None
     player_facing_address: int | None = None
+    player_position_address: int | None = None
+    position_layout: Re1PositionLayout | None = None
     lifecycle_address: int | None = None
     map_layout: Re1MapLayout | None = None
     revision: str = "unknown"
@@ -233,11 +236,12 @@ class Re1Profile:
                     for key, value in runtime_raw.items()
                 },
             )
-            for key in (
-                "stage_address_ps1",
-                "room_address_ps1",
-                "camera_address_ps1",
-                "player_facing_address_ps1",
+            for key, width in (
+                ("stage_address_ps1", 1),
+                ("room_address_ps1", 1),
+                ("camera_address_ps1", 1),
+                ("player_facing_address_ps1", 2),
+                ("player_position_address_ps1", 12),
             ):
                 address = _addr(key)
                 if address is None:
@@ -245,9 +249,7 @@ class Re1Profile:
                 if (
                     not runtime_layout.ram_base
                     <= address
-                    <= runtime_layout.ram_base
-                    + runtime_layout.ram_size
-                    - (2 if key == "player_facing_address_ps1" else 1)
+                    <= runtime_layout.ram_base + runtime_layout.ram_size - width
                 ):
                     raise ValueError(f"{key} is outside configured PS1 RAM")
         door_raw = raw.get("door_state_layout")
@@ -518,6 +520,7 @@ class Re1Profile:
                 )
 
         map_layout = None
+        position_layout = None
         if runtime_layout is not None:
             if "floor_plans_path" not in raw:
                 raise ValueError("runtime room profile requires floor_plans_path")
@@ -535,6 +538,11 @@ class Re1Profile:
                     raise ValueError(
                         "floor plans must cover every supported room source"
                     )
+            if "position_bounds_path" not in raw:
+                raise ValueError("runtime room profile requires position_bounds_path")
+            position_layout = Re1PositionLayout.load(
+                path.parent / raw["position_bounds_path"], manifest, map_layout
+            )
 
         lifecycle_address = _addr("lifecycle_address_ps1")
         if (
@@ -554,6 +562,8 @@ class Re1Profile:
             room_address=_addr("room_address_ps1"),
             camera_address=_addr("camera_address_ps1"),
             player_facing_address=_addr("player_facing_address_ps1"),
+            player_position_address=_addr("player_position_address_ps1"),
+            position_layout=position_layout,
             lifecycle_address=lifecycle_address,
             map_layout=map_layout,
             revision=str(raw.get("revision", "unknown")),

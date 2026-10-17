@@ -98,6 +98,8 @@ def poll_once(
         or rule_layout is None
         or event_layout is None
         or profile.player_facing_address is None
+        or profile.player_position_address is None
+        or profile.position_layout is None
     ):
         return PollResult(
             PollStatus.ReadFailure,
@@ -414,12 +416,15 @@ def poll_once(
             return PollResult(
                 PollStatus.Retry, "room snapshot changed during read; retry"
             )
-    # Heading may change normally during a poll. Take its latest value once,
-    # then bracket it with the final camera/room/lifecycle checks instead of
-    # requiring a stationary character to pass a heading equality recheck.
+    # Pose changes normally while playing. Take fresh facing and X/Y/Z reads,
+    # then bracket them with final camera/room/lifecycle checks instead of
+    # requiring a stationary character to pass a pose equality recheck.
     facing = read_memory(profile.player_facing_address, 2)
     if not facing.ok or len(facing.data) != 2:
         return PollResult(PollStatus.ReadFailure, "player facing read failed")
+    position = read_memory(profile.player_position_address, 12)
+    if not position.ok or len(position.data) != 12:
+        return PollResult(PollStatus.ReadFailure, "player position read failed")
     camera_again = read_memory(profile.camera_address, 1)
     if not camera_again.ok or len(camera_again.data) != 1:
         return PollResult(PollStatus.ReadFailure, "camera recheck failed")
@@ -450,6 +455,12 @@ def poll_once(
         profile.map_layout.select(rid, camera.data[0])
         if profile.map_layout is not None and source_query.sources
         else MapUnavailable("This room has no verified map binding.")
+    )
+    tracker.player_position = profile.position_layout.project(
+        tuple(source.source_rdt for source in source_query.sources),
+        camera.data[0],
+        selection,
+        position.data,
     )
     if isinstance(selection, MapLocation):
         tracker.current_region = f"{selection.area}:{selection.region}"

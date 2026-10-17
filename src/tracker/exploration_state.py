@@ -11,6 +11,7 @@ from enum import Enum
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
+from tracker.player_position import ApproximatePosition, RoomOnlyPosition
 
 
 class RoomCompletion(Enum):
@@ -67,6 +68,9 @@ class Tracker:
     current: RoomId | None = None
     # No heading exists until a coherent gameplay poll supplies it.
     player_heading: float | None = None
+    player_position: ApproximatePosition | RoomOnlyPosition = field(
+        default_factory=lambda: RoomOnlyPosition("Only the current room is mapped.")
+    )
     region_visits: dict[str, str] = field(default_factory=dict)
     current_region: str = ""
     map_error: str = ""

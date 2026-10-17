@@ -156,6 +156,12 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re1-map-020-name-the-unresolved-room-color-in-the-map-legend"></a>[RE1-MAP-020](research/re1/map-ui.md#re1-map-020-name-the-unresolved-room-color-in-the-map-legend) | name the unresolved room color in the map legend |
 | [RE1-MAP-021](research/re1/map-ui.md#re1-map-021-matching-access-survives-different-descriptions-on-opposite-sides) | matching access survives different descriptions on opposite sides |
 
+## RE1 approximate player position
+
+| Claim | Finding |
+| --- | --- |
+| [RE1-PLAYER-003](research/re1/player-position.md#re1-player-003-room-local-coordinates-drive-an-explicitly-approximate-marker) | room-local coordinates drive an explicitly approximate marker |
+
 ## RE1 script opcodes research
 
 | Claim | Finding |

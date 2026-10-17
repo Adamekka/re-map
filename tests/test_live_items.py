@@ -232,6 +232,7 @@ def test_profile_rejects_ambiguous_or_invalid_identity_config(tmp_path: Path):
     raw = json.loads((REPO / "profiles/re1_directors_cut_slus00551.json").read_text())
     raw["room_manifest_path"] = str(REPO / "data/room_manifest_slus00551.json")
     raw["floor_plans_path"] = str(REPO / "data/floor_plans_slus00551.json")
+    raw["position_bounds_path"] = str(REPO / "data/position_bounds_slus00551.json")
     raw["pilot_items"][0]["flag_mask"] = "0x01"
     profile_path = tmp_path / "profile.json"
     profile_path.write_text(json.dumps(raw))

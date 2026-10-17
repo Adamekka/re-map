@@ -7,6 +7,7 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from tracker.exploration_state import Tracker
+from tracker.player_position import ApproximatePosition
 
 MAP_PROFILE_ID = "re1_directors_cut_slus00551"
 logger = logging.getLogger(__name__)
@@ -54,6 +55,14 @@ def map_state(tracker: Tracker) -> dict:
         "status": "display",
         "current": str(current),
         "player_heading": tracker.player_heading,
+        "player_position": (
+            {
+                "kind": "approximate",
+                "point": [tracker.player_position.x, tracker.player_position.y],
+            }
+            if isinstance(tracker.player_position, ApproximatePosition)
+            else {"kind": "room", "reason": tracker.player_position.reason}
+        ),
         "map_region": region,
         "area": area,
         "map_error": tracker.map_error,
@@ -251,7 +260,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key" style="background:#244c6e"></i>Cleared</span>
 <span><i class="key" style="background:#42515d"></i>Check incomplete</span>
 <span><i class="key" style="border:2px solid #d9f6ff;box-sizing:border-box"></i>Current room</span>
-<span><i class="key player-key"></i>You</span>
+<span><i class="key player-key"></i><span id="player-label">You</span></span>
 <span><i class="key door-key" style="background:#ed6965"></i>Locked</span>
 <span><i class="key door-key" style="background:#e9b85e"></i>Unlock from this side</span>
 <span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
@@ -307,7 +316,7 @@ function applyViewport() {
     if(!viewport.box.every(Number.isFinite) || viewport.box[2]<=0 || viewport.box[3]<=0) throw new Error('Invalid map viewport');
     svg.setAttribute('viewBox',viewport.box.join(' '));
   }
-  if(lastState && lastState.status==='display') updatePlayerHeading();
+  if(lastState && lastState.status==='display') updatePlayer();
 }
 function zoomMap(factor,point) {
   if(viewport.mode==='empty') throw new Error('Cannot zoom an empty map');
@@ -431,13 +440,21 @@ function keySymbol(label) {
   const title=element('title',{});title.textContent=label;group.append(title);
   return group;
 }
-function updatePlayerHeading() {
-  const marker=svg.querySelector('.player path');
-  if(!marker) return;
+function updatePlayer() {
+  const group=svg.querySelector('.player');
+  if(!group) return;
+  const marker=group.querySelector('path');
   if(lastState.status!=='display' || !Number.isFinite(lastState.player_heading) || lastState.player_heading<0 || lastState.player_heading>=360) throw new Error('Player heading is missing or invalid');
+  const position=lastState.player_position;
+  if(position.kind==='approximate') {
+    if(position.point.length!==2 || !position.point.every(Number.isFinite)) throw new Error('Player position is missing or invalid');
+    group.setAttribute('transform','translate('+position.point.join(' ')+')');
+  } else if(position.kind!=='room') throw new Error('Player position accuracy is invalid');
   // Keep the locator readable at both a whole-floor view and a close zoom.
   const matrix=svg.getScreenCTM(),scale=3.5/Math.hypot(matrix.a,matrix.b);
-  marker.setAttribute('transform','translate(0 '+(-3.6*scale)+') rotate('+lastState.player_heading+') scale('+scale+')');
+  // A room-only arrow sits above the wall. A position estimate is centered
+  // on its projected point, so rotation cannot move it around that point.
+  marker.setAttribute('transform','translate(0 '+(position.kind==='room' ? -3.6*scale : 0)+') rotate('+lastState.player_heading+') scale('+scale+')');
 }
 function draw(state) {
   const status=document.getElementById('status');
@@ -501,6 +518,7 @@ function draw(state) {
   const picked=selected && visible.has(selected) ? selected : showingCurrentFloor ? currentId : visible.keys().next().value;
   status.textContent=plan ? visible.size+' '+(visible.size===1?'room':'rooms')+' explored' : state.map_error;
   if(plan && showingCurrentFloor && !byId.has(currentId)) status.textContent+=' · This room has no outline on the game map.';
+  document.getElementById('player-label').textContent=state.player_position.kind==='approximate' ? 'You · approximate' : 'You · room only';
   for(const [id,visit] of visible) {
     const room=byId.get(id);
     const group=element('g',{class:'room '+visit.state+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name});
@@ -607,14 +625,15 @@ function draw(state) {
   }
   if(visible.has(currentId)) {
     const room=byId.get(currentId);
-    // Room identity and facing are mapped; exact X/Z placement is not. Keep
-    // the arrow beside the top wall so the room name stays readable.
+    // Games or rooms without position support retain an explicitly room-only
+    // marker above the wall. Approximate coordinates update in updatePlayer.
     const top=Math.min(...room.rings.flat().map(point=>point[1]));
     const edge=room.rings.flatMap(ring=>ring.map((a,index)=>[a,ring[(index+1)%ring.length]]))
       .filter(([a,b])=>a[1]===top && b[1]===top).sort(([a,b],[c,d])=>Math.abs(d[0]-c[0])-Math.abs(b[0]-a[0]))[0];
-    const marker=element('g',{class:'player',transform:'translate('+[(edge[0][0]+edge[1][0])/2,top].join(' ')+')',role:'img','aria-label':'You · '+room.name});
+    const approximate=state.player_position.kind==='approximate';
+    const marker=element('g',{class:'player',transform:'translate('+[(edge[0][0]+edge[1][0])/2,top].join(' ')+')',role:'img','aria-label':(approximate ? 'Approximate position · ' : 'You · ')+room.name});
     marker.append(element('path',{d:'M0,-3 L2.2,2.4 L0,1.2 L-2.2,2.4 Z'}));
-    const title=element('title',{});title.textContent='Your current room · '+room.name;marker.append(title);
+    const title=element('title',{});title.textContent=approximate ? 'Approximate position · '+room.name : 'Your current room · '+room.name+' · '+state.player_position.reason;marker.append(title);
     svg.append(marker);
   }
   if(visible.size) {
@@ -716,11 +735,12 @@ async function refresh() {
     const response=await fetch('/state',{cache:'no-store'});
     if(!response.ok) throw new Error('Map request failed: HTTP '+response.status);
     const state=await response.json();
-    const {player_heading,...scene}=state,key=JSON.stringify(scene);
-    // Rotation polls must not replace room click targets during a press, or
-    // rebuild the whole floor just because Jill turns in place.
+    const {player_heading,player_position,...scene}=state;
+    const position=state.status==='display' ? player_position : {kind:'waiting'};
+    const key=JSON.stringify({...scene,player_position:position.kind==='approximate' ? 'approximate' : position});
+    // Pose-only polls must preserve room click targets and the chosen view.
     if(key!==sceneKey) {draw(state);sceneKey=key;}
-    else {lastState=state;updatePlayerHeading();}
+    else {lastState=state;updatePlayer();}
     lastReportedError='';
   } catch(error) {
     reportError('refresh',error);

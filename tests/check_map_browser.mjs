@@ -90,6 +90,9 @@ tracker.doors = (
 )
 states['open_door_descriptions'] = map_state(tracker)
 catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
+upper = next(area for area in catalog['areas'] if area['id'] == 'mansion2f')
+point = next(room['label'] for room in upper['rooms'] if room['id'] == '03')
+states['position'] = {**states['initial'], 'player_position': {'kind': 'approximate', 'point': point}}
 # Explicit test exploration checks label placement across every native outline.
 tracker = Tracker()
 for plan in catalog['areas']:
@@ -139,6 +142,22 @@ try {
   }
   state = states.initial;
   await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(90)'));
+  state = states.position;
+  await page.waitForFunction(() => document.querySelector('.player')?.getAttribute('aria-label') === 'Approximate position · Main Hall 2F');
+  const positionRoom = await page.locator('.room.current').elementHandle();
+  const positionBox = await page.locator('#map').getAttribute('viewBox');
+  assert.equal(await page.locator('#player-label').textContent(), 'You · approximate');
+  for (const delta of [0, .5, 1, 0]) {
+    const point = [states.position.player_position.point[0] + delta, states.position.player_position.point[1]];
+    state = { ...states.position, player_position: { kind: 'approximate', point } };
+    await page.waitForFunction(point => document.querySelector('.player')?.getAttribute('transform') === 'translate(' + point.join(' ') + ')', point);
+    assert(await positionRoom.evaluate(node => node.isConnected), 'walking must preserve room controls');
+    assert.equal(await page.locator('#map').getAttribute('viewBox'), positionBox, 'walking must preserve the chosen view');
+    assert.match(await page.locator('.player path').getAttribute('transform'), /^translate\(0 0\) rotate\(90\)/, 'a positioned marker must rotate around its actual estimate');
+  }
+  state = states.initial;
+  await page.waitForFunction(() => document.querySelector('.player')?.getAttribute('aria-label') === 'You · Main Hall 2F');
+  assert.equal(await page.locator('#player-label').textContent(), 'You · room only');
   assert.equal(await page.locator('.map-detail').count(), 1, 'the explored Main Hall must retain its stairs');
   const map = page.locator('#map');
   const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });

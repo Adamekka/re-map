@@ -11,6 +11,8 @@
   "room_address_ps1": "0x800C8661",
   "camera_address_ps1": "0x800C8662",
   "player_facing_address_ps1": "0x800C5198",
+  "player_position_address_ps1": "0x800C5158",
+  "position_bounds_path": "../data/position_bounds_slus00551.json",
   "lifecycle_address_ps1": "0x800C866C",
   "floor_plans_path": "../data/floor_plans_slus00551.json",
   "runtime_signature": {
