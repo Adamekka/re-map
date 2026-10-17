@@ -370,9 +370,7 @@ def test_normal_room_poll_ignores_radio_ownership_for_map_reveal(tmp_path):
         assert len(map_state(tracker)["rooms"]) == 1
 
 
-def test_poll_records_activation_proof_for_an_absent_separately_flagged_pickup(
-    tmp_path, rules
-):
+def test_poll_keeps_activation_proof_and_separate_collection_facts(tmp_path, rules):
     profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
     ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
     ram[0xC86DF] &= ~128
@@ -395,7 +393,11 @@ def test_poll_records_activation_proof_for_an_absent_separately_flagged_pickup(
     activation = AcquisitionFlag(0x800C86DF, 128, False)
     separate = AcquisitionFlag(0x800C870C, 1, True)
     assert (activation, True) in cached.absent_flags
-    assert (separate, False) in cached.absent_flags
+    assert (separate, False) not in cached.absent_flags
+    assert any(
+        item.item_type == 0x4D and item.state == RuntimeItemState.Uncollected
+        for item in cached.observation.items
+    )
     flags = bytes(ram[0xC86DC:0xC86FC])
     assert refresh_cached_items(
         cached,

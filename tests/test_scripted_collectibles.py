@@ -603,14 +603,15 @@ def test_cached_collectible_refresh_uses_fresh_flags_after_reversal(
         tracked = refresh_visited_room(
             profile, cached, cached.context, snapshot, bytes(ram[0xC86DC:0xC86FC])
         )
-        assert tracked.items.list_complete is (supported or taken)
-        if supported or taken:
-            assert len(tracked.items.items) == 1
-            assert tracked.items.items[0].state is (
-                RuntimeItemState.Taken if taken else RuntimeItemState.Available
-            )
-        else:
-            assert not tracked.items.items
+        assert tracked.items.list_complete
+        assert len(tracked.items.items) == 1
+        assert tracked.items.items[0].state is (
+            RuntimeItemState.Taken
+            if taken
+            else RuntimeItemState.Available
+            if supported
+            else RuntimeItemState.Uncollected
+        )
 
 
 @pytest.mark.parametrize("taken", [False, True])

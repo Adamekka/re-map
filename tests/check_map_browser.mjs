@@ -26,6 +26,7 @@ enter(0, 9, 'mansion1f', '09')
 tracker.update_room_items(RoomId(0, 9), 1, 0, True, True, False)
 tracker.rooms['00-09'].items = (
     ItemDetail('Green Herb', 'available', 1),
+    ItemDetail('Sun Crest', 'uncollected', 1),
     ItemDetail('Red Herb', 'taken', 1),
     ItemDetail('Battery', 'unavailable', 1),
 )
@@ -274,6 +275,7 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f' && !document.getElementById('floor').disabled);
   assert.equal(await map.getAttribute('viewBox'), initialBox);
   assert.match(await remaining.textContent(), /Mansion · 1FWinding PassageGreen Herb/);
+  assert.match(await remaining.textContent(), /Sun Crest/);
   assert.doesNotMatch(await remaining.textContent(), /Red Herb|Battery|Main Hall/);
   assert.match(await checks.textContent(), /Main Hall 2F/);
   assert.doesNotMatch(await checks.textContent(), /Winding Passage/);
@@ -307,6 +309,7 @@ try {
   assert.equal(await page.locator('.room.current').count(), 0);
   assert.equal(await page.locator('.door.LOCKED').count(), 1);
   assert.match(await page.locator('#items').textContent(), /Green HerbRemaining/);
+  assert.match(await page.locator('#items').textContent(), /Sun CrestRemaining/);
   const option = await floor.locator('option').first().elementHandle();
   await page.waitForTimeout(1100);
   assert(await option.evaluate(element => element.isConnected), 'unchanged polling must preserve select options');

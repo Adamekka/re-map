@@ -276,6 +276,8 @@ def refresh_cached_items(
             list_complete=False,
             coverage_reason="Re-enter this room to refresh its items.",
         )
+    # Preserve a known puzzle requirement when only the pickup flag changes;
+    # cached collection facts do not establish that its interaction activated.
     items = tuple(
         replace(
             item,
@@ -285,6 +287,8 @@ def refresh_cached_items(
                 acquisition_flags,
                 extra_flags,
             )
+            else RuntimeItemState.Uncollected
+            if item.state == RuntimeItemState.Uncollected
             else RuntimeItemState.Available,
         )
         if item.state != RuntimeItemState.Unavailable

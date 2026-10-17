@@ -31,7 +31,7 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
-Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. In RE1, the cyan arrow follows your approximate position inside the current room and rotates with your facing direction. Placement is approximate because the original map distorts room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors.
+Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. RE1 puzzle rewards keep their room red until collected, even before the puzzle is solved. In RE1, the cyan arrow follows your approximate position inside the current room and rotates with your facing direction. Placement is approximate because the original map distorts room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors.
 
 Stair treads and rails appear inside explored room outlines.
 

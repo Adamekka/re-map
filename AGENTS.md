@@ -23,10 +23,10 @@
 
 ## Room completion
 
-- Mark a visited room incomplete if at least one relevant collectible is currently available and uncollected.
-- Mark it cleared only when the full relevant item list and conditions are resolved and no collectible is currently available and uncollected.
+- Follow the [room completion rules](docs/room-completion.md). A known puzzle item keeps its visited room incomplete until collected, including before the puzzle is solved.
+- Mark it cleared only when the full relevant item list and conditions are resolved and no required uncollected item remains.
 - Otherwise report `Unknown`. Resolve gaps affecting the user's playthrough; never replace uncertainty with guessed clearance.
-- Distinguish available, collected, absent in this scenario, dormant and unresolved items. Items absent in Jill's scenario or unavailable until a later event do not block clearance.
+- Distinguish collection from activation. Puzzle/event activation does not remove a known item from completion; items established as absent in the current scenario do not block clearance.
 - Enemy kills, every door unlock, files, cutscenes and unrelated future puzzles are not clearance requirements unless game data proves otherwise.
 - Reevaluate completion when items or story conditions change. A cleared room can become incomplete again.
 

@@ -26,6 +26,8 @@ class MemoryResult(Protocol):
 
 class RuntimeItemState(Enum):
     Available = "available"
+    # A verified item and pickup flag establish collection without live access.
+    Uncollected = "uncollected"
     Taken = "taken"
     Unavailable = "unavailable"
 

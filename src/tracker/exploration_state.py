@@ -94,12 +94,12 @@ class Tracker:
         total: int,
         collected: int,
         list_complete: bool,
-        any_available_uncollected: bool,
+        any_required_uncollected: bool,
         any_unknown: bool,
     ) -> RoomCompletion:
         """Apply item counts for a visited room and return its completion.
 
-        Rules: one confirmed available uncollected item forces Incomplete.
+        Rules: one known required uncollected item forces Incomplete.
         Unknown coverage or conditions force Unknown. Cleared needs a
         complete list, zero unknown, and zero remaining.
         """
@@ -109,7 +109,7 @@ class Tracker:
         rec.total_items = total
         rec.collected_items = collected
         rec.list_complete = list_complete
-        if any_available_uncollected:
+        if any_required_uncollected:
             rec.completion = RoomCompletion.Incomplete
         elif any_unknown or not list_complete:
             rec.completion = RoomCompletion.Unknown

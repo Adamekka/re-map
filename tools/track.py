@@ -482,7 +482,10 @@ def poll_once(
             len(normal_items),
             sum(item.state == RuntimeItemState.Taken for item in normal_items),
             result.list_complete,
-            any(item.state == RuntimeItemState.Available for item in normal_items),
+            any(
+                item.state in (RuntimeItemState.Available, RuntimeItemState.Uncollected)
+                for item in normal_items
+            ),
             not result.list_complete,
         )
         record = tracker.room_state(room)

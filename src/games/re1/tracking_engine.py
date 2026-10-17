@@ -57,6 +57,32 @@ def validate_current_room(
         )
     active, disabled = list(observation.active_doors), list(observation.disabled_doors)
     items = list(observation.items)
+    expected_sources = tuple(
+        (
+            source,
+            evaluate_room_program(
+                profile.room_programs[source.source_rdt],
+                source.room,
+                layout,
+                snapshot,
+                flags,
+                room_layout.item_labels,
+            ),
+        )
+        for source in sources
+    )
+    common_items = set(expected_sources[0][1].collection_items.items)
+    for _, expected in expected_sources[1:]:
+        common_items.intersection_update(expected.collection_items.items)
+
+    def identity(item):
+        return item.aot_id, item.item_type, item.global_id
+
+    completion_items = {
+        identity(item): item
+        for item in sorted(common_items, key=lambda item: item.aot_id)
+        if item.state == RuntimeItemState.Uncollected
+    }
     unresolved_scripted_collectible = False
     for item, record, entry in observation.scripted_collectibles:
         # The coherent observer already read this source's acquisition flag.
@@ -79,8 +105,18 @@ def validate_current_room(
                     else RuntimeItemState.Available,
                 )
             )
-        else:
+        elif identity(item) not in completion_items:
             unresolved_scripted_collectible = True
+    live_indices = {identity(item): index for index, item in enumerate(items)}
+    for key, item in completion_items.items():
+        if key not in live_indices:
+            # Puzzle-gated items remain part of completion before the game
+            # exposes their pickup interaction. Fresh source/flag proof supplies
+            # identity without trusting a dormant retained registry pointer.
+            items.append(item)
+        elif items[live_indices[key]].state == RuntimeItemState.Unavailable:
+            index = live_indices[key]
+            items[index] = replace(items[index], state=item.state)
     unresolved_scripted_door = False
     for slot, opcode, entry in observation.scripted_doors:
         accesses = {
@@ -112,7 +148,11 @@ def validate_current_room(
         if unresolved_scripted_collectible
         else observation.coverage_reason,
     )
-    represented = {item.aot_id for item in observation.items}
+    represented = {
+        item.aot_id
+        for item in observation.items
+        if item.state != RuntimeItemState.Unavailable
+    }
     active_doors = {slot for slot, _ in observation.active_doors}
     disabled_doors = {slot for slot, _ in observation.disabled_doors}
     # An enabled message handler with a validated current source proves blocked
@@ -123,20 +163,12 @@ def validate_current_room(
         slot for slot, _ in observation.active_doors + observation.disabled_doors
     }
     doors_complete = not unresolved_scripted_door
-    for source in sources:
+    for source, expected in expected_sources:
         program = profile.room_programs[source.source_rdt]
         # Forced awards ignore the current handler. Noncollectible evidence
         # resolves only current slots without that dormant-award possibility.
         resolved_slots = represented | (
             set(observation.non_collectible_slots) - set(program.award_slots)
-        )
-        expected = evaluate_room_program(
-            program,
-            source.room,
-            layout,
-            snapshot,
-            flags,
-            room_layout.item_labels,
         )
         if (
             set(expected.unresolved_door_slots) - represented_doors
@@ -146,10 +178,22 @@ def validate_current_room(
         ):
             doors_complete = False
         if (
-            expected.unresolved_item_slots
-            and set(expected.unresolved_item_slots) - resolved_slots
+            expected.unresolved_collection_slots
+            and set(expected.unresolved_collection_slots) - resolved_slots
             or not profile.room_programs[source.source_rdt].coverage_complete
+            or any(
+                item.state == RuntimeItemState.Uncollected
+                and not any(
+                    identity(live) == identity(item)
+                    and live.state
+                    in (RuntimeItemState.Available, RuntimeItemState.Uncollected)
+                    for live in observation.items
+                )
+                for item in expected.collection_items.items
+            )
         ):
+            # Conflicting source aliases cannot silently drop a known reward
+            # from the intersection and turn an empty list into clearance.
             observation = replace(
                 observation,
                 list_complete=False,
@@ -158,9 +202,7 @@ def validate_current_room(
         if any(
             item.state == RuntimeItemState.Available
             and not any(
-                live.aot_id == item.aot_id
-                and live.global_id == item.global_id
-                and live.item_type == item.item_type
+                identity(live) == identity(item)
                 and live.state == RuntimeItemState.Available
                 for live in observation.items
             )
@@ -347,20 +389,20 @@ def _reconstruct_sources(
             result,
         )
         evaluations.append(result)
-    common = set(evaluations[0].items.items)
+    common = set(evaluations[0].collection_items.items)
     for evaluation in evaluations[1:]:
-        common.intersection_update(evaluation.items.items)
+        common.intersection_update(evaluation.collection_items.items)
     complete = all(
-        evaluation.items.list_complete for evaluation in evaluations
+        evaluation.collection_items.list_complete for evaluation in evaluations
     ) and all(
-        evaluation.items.items == evaluations[0].items.items
+        evaluation.collection_items.items == evaluations[0].collection_items.items
         for evaluation in evaluations
     )
     reasons = sorted(
         {
-            evaluation.items.coverage_reason
+            evaluation.collection_items.coverage_reason
             for evaluation in evaluations
-            if evaluation.items.coverage_reason
+            if evaluation.collection_items.coverage_reason
         }
     )
     if not complete and not reasons:

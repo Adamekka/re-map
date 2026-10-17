@@ -2,6 +2,8 @@
 
 [Documentation index](../../README.md) · [Claim index](../../research.md)
 
+Earlier findings below retain their historical availability-based verdicts. Current RE1 completion follows the [collection policy](../../room-completion.md), with puzzle rewards covered by [RE1-CLEAR-005](dormant-items.md#re1-clear-005-known-puzzle-rewards-remain-until-collected).
+
 ## RE1-JOIN-001: RA flags joined to RDT rooms, 15 of 24 placed
 
 Status: Candidate

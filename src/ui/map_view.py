@@ -412,6 +412,9 @@ function element(tag,attrs) {
   for(const [name,value] of Object.entries(attrs)) node.setAttribute(name,value);
   return node;
 }
+function itemRemains(item) {
+  return item.state==='available' || item.state==='uncollected';
+}
 function roomName(area,visit) {
   const plan=areas.get(area);
   const room=plan && [...plan.rooms,...plan.unoutlined_rooms].find(room=>room.id===visit.id);
@@ -661,12 +664,12 @@ function draw(state) {
   if(!visit) throw new Error('Explored floor has no selected room');
   document.getElementById('room-name').textContent=roomName(displayedArea,visit);
   document.getElementById('room-id').textContent='Room '+visit.room+(showingCurrentFloor && picked===currentId?' · Current room':'');
-  const completion={INCOMPLETE:'Items remain',CLEARED:'All available items collected',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
+  const completion={INCOMPLETE:'Items remain',CLEARED:'Cleared',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   document.getElementById('completion').textContent=completion[visit.state];
   const items=document.getElementById('items');items.replaceChildren();
   for(const item of visit.items) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
-    name.textContent=item.label;detail.textContent=item.state==='taken'?'Collected':item.state==='available'?'Remaining':item.state==='unknown'?'Unresolved':item.state==='dormant'?'Inactive':'Not available';row.append(name,detail);items.append(row);
+    name.textContent=item.label;detail.textContent=item.state==='taken'?'Collected':itemRemains(item)?'Remaining':item.state==='unknown'?'Unresolved':item.state==='dormant'?'Inactive':'Not available';row.append(name,detail);items.append(row);
   }
   const doors=document.getElementById('doors');doors.replaceChildren();
   for(const door of state.doors.filter(door=>door.source===visit.room)) {
@@ -687,7 +690,7 @@ function draw(state) {
   for(const {area,visit} of observed.values()) {
     if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
     const entry={area,id:visit.id,room:visit.room,name:roomName(area,visit),labels:[]};
-    const labels=visit.items.filter(item=>item.state==='available').map(item=>item.label);
+    const labels=visit.items.filter(itemRemains).map(item=>item.label);
     if(labels.length) remaining.push({...entry,labels});
     // A remaining item makes the room red even when other item checks are
     // incomplete. Completion color alone cannot identify those gaps.

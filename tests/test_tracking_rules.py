@@ -653,8 +653,10 @@ def test_noncollectible_slot_does_not_resolve_dormant_awards(
         poll_once(profile, tracker, RamReader(ram).read_memory).status
         == PollStatus.Display
     )
-    assert not tracker.room_state(RoomId(0, 9)).list_complete
-    assert tracker.room_state(RoomId(0, 9)).completion == RoomCompletion.Unknown
+    assert tracker.room_state(RoomId(0, 9)).list_complete == (award_slot == 6)
+    assert tracker.room_state(RoomId(0, 9)).completion == (
+        RoomCompletion.Unknown if award_slot == 5 else RoomCompletion.Incomplete
+    )
 
 
 @pytest.mark.parametrize(

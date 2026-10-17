@@ -595,9 +595,11 @@ def read_rule_snapshot(
 @dataclass(frozen=True)
 class RuleEvaluation:
     items: RuntimeRoomItems
+    collection_items: RuntimeRoomItems
     doors: tuple[tuple[int, bytes], ...]
     disabled_doors: tuple[tuple[int, bytes], ...]
     unresolved_item_slots: tuple[int, ...]
+    unresolved_collection_slots: tuple[int, ...]
     unresolved_door_slots: tuple[int, ...]
     coverage_complete: bool
 
@@ -1643,11 +1645,11 @@ def evaluate_room_program(
             if not successful:
                 bounded = False
                 break
-    uncertain_items, uncertain_doors = set(), set()
-    items, doors, disabled_doors = [], [], []
+    uncertain_items, uncertain_collection, uncertain_doors = set(), set(), set()
+    items, collection_items, doors, disabled_doors = [], [], [], []
     labels = dict(item_labels)
 
-    def interpret_descriptor(descriptor):
+    def interpret_descriptor(descriptor, *, collection: bool):
         if descriptor is None:
             return "absent", None
         creator, args, handler, mode, parameters, quantity = descriptor
@@ -1674,8 +1676,11 @@ def evaluate_room_program(
                         parameters[1] & 255,
                     )
                 ):
-                    return "unresolved", None
-                handler = 15 if item_type >= 0x4E else 4
+                    if not collection:
+                        return "unresolved", None
+                    handler = 0
+                else:
+                    handler = 15 if item_type >= 0x4E else 4
             if (
                 handler not in (0, 3, 4, 15)
                 or handler == 4
@@ -1684,7 +1689,12 @@ def evaluate_room_program(
                 and item_type < 0x4E
             ):
                 return "unresolved", None
-            if remaining and handler in (0, 3) and slot in program.award_slots:
+            if (
+                not collection
+                and remaining
+                and handler in (0, 3)
+                and slot in program.award_slots
+            ):
                 # A dormant descriptor can still be awarded by an event. Its
                 # current availability needs event progress, not just a pickup bit.
                 return "unresolved", None
@@ -1694,6 +1704,8 @@ def evaluate_room_program(
                 else RuntimeItemState.Available
                 if handler in (4, 15)
                 else RuntimeItemState.Unavailable
+                if not collection
+                else RuntimeItemState.Uncollected
             )
             return (
                 "item",
@@ -1750,6 +1762,42 @@ def evaluate_room_program(
             return "unresolved", None
         return "absent", None
 
+    def meanings_for(choices, *, collection: bool):
+        meanings = {
+            interpret_descriptor(descriptor, collection=collection)
+            for descriptor in choices
+        }
+        if meanings and all(kind == "item" for kind, _ in meanings):
+            # Collection ignores puzzle activation while native availability
+            # keeps that distinction. Both share identity and quantity joining.
+            identities = {
+                replace(
+                    item,
+                    amount=ItemQuantityState.Unreconstructed,
+                    state=RuntimeItemState.Uncollected
+                    if collection and item.state == RuntimeItemState.Available
+                    else item.state,
+                )
+                for _, item in meanings
+            }
+            if len(identities) == 1:
+                amounts = {item.amount for _, item in meanings}
+                amount = (
+                    amounts.pop()
+                    if len(amounts) == 1
+                    else ItemQuantityState.Unreconstructed
+                )
+                item = identities.pop()
+                state = (
+                    RuntimeItemState.Available
+                    if all(
+                        item.state == RuntimeItemState.Available for _, item in meanings
+                    )
+                    else item.state
+                )
+                meanings = {("item", replace(item, amount=amount, state=state))}
+        return meanings
+
     for slot in sorted(set(program.item_slots) | set(program.door_slots)):
         choices = {
             descriptor
@@ -1767,32 +1815,28 @@ def evaluate_room_program(
             exceeded = False
         else:
             choices, exceeded = closure(choices, effects, slot)
-        meanings = {interpret_descriptor(descriptor) for descriptor in choices}
-        if meanings and all(kind == "item" for kind, _ in meanings):
-            # Different amounts do not change the identity, acquisition bit or
-            # registered handler. Join quantity uncertainty independently.
-            identities = {
-                replace(item, amount=ItemQuantityState.Unreconstructed)
-                for _, item in meanings
-            }
-            if len(identities) == 1:
-                amounts = {item.amount for _, item in meanings}
-                amount = (
-                    amounts.pop()
-                    if len(amounts) == 1
-                    else ItemQuantityState.Unreconstructed
-                )
-                meanings = {("item", replace(identities.pop(), amount=amount))}
-        if (
+        invalid = (
             not bounded
             or not source_complete
             or slot in program.mutable_slots
             and slot not in quantity_slots
             or exceeded
             or slot in history_unresolved
-            or len(meanings) != 1
-            or ("unresolved", None) in meanings
-        ):
+        )
+        if slot in program.item_slots:
+            collection_meanings = meanings_for(choices, collection=True)
+            if (
+                invalid
+                or len(collection_meanings) != 1
+                or ("unresolved", None) in collection_meanings
+            ):
+                uncertain_collection.add(slot)
+            else:
+                kind, value = collection_meanings.pop()
+                if kind == "item":
+                    collection_items.append(value)
+        meanings = meanings_for(choices, collection=False)
+        if invalid or len(meanings) != 1 or ("unresolved", None) in meanings:
             if slot in program.item_slots:
                 uncertain_items.add(slot)
             if slot in program.door_slots:
@@ -1805,19 +1849,25 @@ def evaluate_room_program(
             doors.append(value)
         elif kind == "disabled-door":
             disabled_doors.append(value)
-    reason = "" if not uncertain_items else "Some item conditions need a room visit."
-    if not bounded or not source_complete:
-        reason = "Room script coverage is incomplete."
-    return RuleEvaluation(
-        RuntimeRoomItems(
+
+    def item_result(known, unresolved):
+        reason = "Some item conditions need a room visit." if unresolved else ""
+        if not bounded or not source_complete:
+            reason = "Room script coverage is incomplete."
+        return RuntimeRoomItems(
             ok=True,
-            items=tuple(items),
+            items=tuple(known),
             list_complete=not reason,
             coverage_reason=reason,
-        ),
+        )
+
+    return RuleEvaluation(
+        item_result(items, uncertain_items),
+        item_result(collection_items, uncertain_collection),
         tuple(doors),
         tuple(disabled_doors),
         tuple(sorted(uncertain_items)),
+        tuple(sorted(uncertain_collection)),
         tuple(sorted(uncertain_doors)),
         bounded and source_complete,
     )
