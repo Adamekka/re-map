@@ -1,0 +1,28 @@
+{
+  "profile_id": "re2_leon_a_slus00421",
+  "game": "Resident Evil 2",
+  "region": "NTSC-U",
+  "serial": "SLUS-00421",
+  "scenario": "leon-a",
+  "revision": "USA Disc 1; revision pinned by executable SHA256",
+  "executable_identity": "SLUS_004.21 SHA256 1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef",
+  "duckstation_version_tested": "0.1-12083-g00e299795",
+  "address_space": "PS1 virtual address, little-endian",
+  "stage_address_ps1": "0x800CC948",
+  "room_address_ps1": "0x800CC94A",
+  "camera_address_ps1": "0x800CC94C",
+  "room_value_width_bytes": 2,
+  "runtime_signature": {
+    "window_width_bytes": 32,
+    "window_addresses_ps1": [
+      "0x80051570",
+      "0x80051480",
+      "0x80050BF0",
+      "0x80072B30"
+    ],
+    "concatenated_sha256": "712628cd70ecee75e834248085df57ac0b22862fa8e7e486e06cc9833cae5d5a"
+  },
+  "research_ids": [
+    "RE2-IDENTITY-001"
+  ]
+}

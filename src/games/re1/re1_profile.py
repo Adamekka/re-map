@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Protocol
 
 from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQuery
 from games.re1.acquisition_state import AcquisitionLayout
@@ -26,12 +24,7 @@ from games.re1.tracking_rules import (
     RoomProgram,
     TrackingRuleLayout,
 )
-
-
-class MemoryResult(Protocol):
-    ok: bool
-    data: bytes
-    error: str
+from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
 class PilotItemState(Enum):
@@ -46,13 +39,6 @@ class PilotItemState(Enum):
 class PilotItemObservation:
     state: PilotItemState
     reason: str = ""
-
-
-@dataclass(frozen=True)
-class RuntimeSignature:
-    window_addresses: tuple[int, ...]
-    window_width: int
-    concatenated_sha256: str
 
 
 @dataclass(frozen=True)
@@ -602,22 +588,7 @@ class Re1Profile:
                 value=False,
                 error="runtime signature unavailable for this profile",
             )
-        windows = []
-        for address in signature.window_addresses:
-            result = read_memory(address, signature.window_width)
-            if not result.ok:
-                return ItemQuery(
-                    ok=False,
-                    value=False,
-                    error=f"signature read at {address:#x}: {result.error}",
-                )
-            if len(result.data) != signature.window_width:
-                return ItemQuery(
-                    ok=False, value=False, error=f"short signature read at {address:#x}"
-                )
-            windows.append(result.data)
-        digest = hashlib.sha256(b"".join(windows)).hexdigest()
-        return ItemQuery(ok=True, value=digest == signature.concatenated_sha256)
+        return signature.verify(read_memory)
 
     def read_current_room(
         self, read_memory: Callable[[int, int], MemoryResult]

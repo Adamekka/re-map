@@ -4569,3 +4569,27 @@ Reproduce with `python3 -m pytest -q tests/test_map_view.py` for the served-page
 Contributions:
 - 2026-10-16; human user; selected the unresolved-legend task over the stale door-defect docs and emulator validation options.
 - 2026-10-16; opencode with model opencode/muse-spark-1.3-contributor-free; authored; added the explicit rule, legend chip, served-page and browser regressions, matching README and testing wording, and refreshed the README screenshot by rendering the recorded `/tmp/re-map-arrow-test/published-state.json` publication in headless Chromium. No emulator interaction and no exploration-history reads or writes. The full suite passes 1,597 tests and the browser checks pass.
+
+
+## RE2-IDENTITY-001: Leon A disc identity and candidate room layout
+
+Status: Candidate for runtime room tracking; owned disc metadata checked statically.
+
+Game: Resident Evil 2 USA, Leon Disc 1, SLUS-00421. The boot executable `SLUS_004.21` is 987136 bytes with SHA256 `1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef`. The PS-X EXE loads `0xF0800` bytes at PS1 virtual `0x80010000`. The original disc has no explicit revision label in the inspected boot configuration; the executable hash pins this profile. Isolated test emulator: official DuckStation `0.1-12083-g00e299795 (dev)`.
+
+The human selected Leon A and approved RE1-equivalent map, item completion, door access and savestate behavior on 2026-10-17. See [RE2 scope](re2.md).
+
+Candidate addresses are PS1 virtual, little-endian. Stage, room and camera are unsigned 16-bit values at `0x800CC948`, `0x800CC94A` and `0x800CC94C`, respectively, with full mask `0xFFFF`. The native map caller at `0x8006990C..0x80069948` loads stage and room from these locations. These raw reads do not establish gameplay, scenario, loaded source or snapshot coherence.
+
+Runtime revision checking hashes four 32-byte code windows at `0x80051570`, `0x80051480`, `0x80050BF0` and `0x80072B30` in that order. Their concatenated SHA256 is `712628cd70ecee75e834248085df57ac0b22862fa8e7e486e06cc9833cae5d5a`. They cover the ordinary item creator, door creator, script flag predicate and shared flag test. For each window, original executable offset is `0x800 + address - 0x80010000`. Reproduce by extracting the executable with `tools/extract_psx_file.py`, checking its full hash, concatenating the named windows and hashing them. A mismatch is a wrong revision; failed or short memory reads are separate failures.
+
+Source leads: Megan Grass's [RE2 Starter Kit](https://github.com/MeganGrass/Resident-Evil-2-Starter-Kit/tree/447bc6cc5388bf943616f54d50e5c20781003b71), particularly `source/bio2/data.h`, `source/assembly/directive.s` and room names in `source/overlay/room_jump/bio2/room_info.h`, describe the later SLUS-00748 release. They are not evidence that its addresses work on SLUS-00421. IntelOrca's [biohazard-utils](https://github.com/biorand/biohazard-utils/tree/5d0d523cc0e228b5c9eea269149853cda5f266bd), `Room/Rdt2.cs` and `Script/Bio2ConstantTable.cs`, provides RDT and SCD format leads. The current disc independently supplies 125 `PL0/RDT` files.
+
+Evidence and limits: extracted executable, original map pixels and exploratory RAM remain private under `/tmp/re-map-re2-live/`. Both achievement settings were explicitly false before boot; there are no per-game overrides or account credentials. No guest-memory patches were enabled. An unpaused opening experiment reached death/title while inspecting memory and is rejected as gameplay-state evidence. Synthetic tests check halfword bounds, profile/scenario isolation, wrong-code signatures and failed/short reads. Item flags, lifecycle gating, map selection, actual facing and door locks still require controlled observations.
+
+Contributions:
+
+- 2026-10-17; author and static inspection: Codex root, exact model `gpt-6.1-sol`, verified from this session's current turn metadata. Implemented shared revision hashing and the initial RE2 identity/room reader. This entry does not claim runtime confirmation.
+
+- 2026-10-17; synthetic validation: `gpt-6.1-sol` ran 27 passing tests across RE2 profile reads, existing RE1 profiles, lifecycle and logging. Scoped Ruff lint and format checks and `git diff --check` passed. A controlled paused opening RAM capture matched the configured signature and raw room `00-00`; this single situation does not meet the runtime-confirmation threshold.
+- 2026-10-17; external snapshot reviews: CLI-returned identifiers `Claude Opus 4.6 (Thinking)` and `Gemini 3.8 Flash (High)` reviewed the shared identity extraction, new profile reader, configuration and synthetic tests. Both processes exited successfully with completed response events and nonblank successful results, and empty stderr. Gemini returned no findings. Direct inspection found no actionable defect among Opus's candidates. These prose reviews do not validate gameplay. The requested `Claude Opus 5.5 (High)` was unavailable due to invalid model selection; the human explicitly approved using Opus 4.6 instead.
