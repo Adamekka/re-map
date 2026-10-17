@@ -1,0 +1,328 @@
+"""Bounded RE2 SCD decoding for room metadata. See RE2-SCD-001."""
+
+from __future__ import annotations
+
+import hashlib
+import struct
+
+# The pinned PS1 Endif consumes its padding byte. The PC format's one-byte
+# width would turn that byte into an unrelated NOP (RE2-SCD-001).
+OPCODE_WIDTHS = (
+    1,
+    2,
+    1,
+    4,
+    4,
+    2,
+    4,
+    4,
+    2,
+    4,
+    3,
+    1,
+    1,
+    6,
+    2,
+    4,
+    2,
+    4,
+    2,
+    4,
+    6,
+    2,
+    2,
+    6,
+    2,
+    2,
+    2,
+    6,
+    1,
+    4,
+    1,
+    1,
+    1,
+    4,
+    4,
+    6,
+    4,
+    3,
+    6,
+    4,
+    1,
+    2,
+    1,
+    6,
+    20,
+    38,
+    3,
+    4,
+    1,
+    1,
+    8,
+    8,
+    4,
+    3,
+    12,
+    4,
+    3,
+    8,
+    16,
+    32,
+    2,
+    3,
+    6,
+    4,
+    8,
+    10,
+    1,
+    4,
+    22,
+    5,
+    10,
+    2,
+    16,
+    8,
+    2,
+    3,
+    5,
+    22,
+    22,
+    4,
+    4,
+    6,
+    6,
+    6,
+    22,
+    6,
+    4,
+    8,
+    4,
+    4,
+    2,
+    2,
+    3,
+    2,
+    2,
+    2,
+    14,
+    4,
+    2,
+    1,
+    16,
+    2,
+    1,
+    28,
+    40,
+    30,
+    6,
+    4,
+    1,
+    4,
+    6,
+    2,
+    1,
+    1,
+    16,
+    8,
+    4,
+    22,
+    3,
+    4,
+    6,
+    1,
+    16,
+    16,
+    6,
+    6,
+    6,
+    6,
+    2,
+    3,
+    3,
+    1,
+    2,
+    6,
+    1,
+    1,
+    3,
+    1,
+    6,
+    6,
+    8,
+    24,
+    24,
+)
+
+
+def decode_room(data: bytes, source: str) -> dict:
+    if len(data) < 100 or data[1] == 0:
+        raise ValueError("RE2 room needs a complete header and cameras")
+    offsets = struct.unpack_from("<23I", data, 8)
+    if any(value and not 100 <= value <= len(data) for value in offsets):
+        raise ValueError("RE2 room section outside the source")
+    camera = offsets[7]
+    if camera + data[1] * 32 > len(data):
+        raise ValueError("RE2 camera table outside the source")
+    proofs = [
+        {
+            "offset": camera + index * 32 + 4,
+            "width": 24,
+            "sha256": hashlib.sha256(
+                data[camera + index * 32 + 4 : camera + index * 32 + 28]
+            ).hexdigest(),
+        }
+        for index in range(min(data[1], 3))
+    ]
+    items, doors, programs = {}, {}, {}
+    complete = True
+    for section in (16, 17):
+        begin = offsets[section]
+        if not begin:
+            raise ValueError("RE2 room lacks required script sections")
+        end = min([value for value in offsets if value > begin] + [len(data)])
+        first = struct.unpack_from("<H", data, begin)[0]
+        if first < 2 or first % 2 or begin + first > end:
+            raise ValueError("invalid RE2 procedure table")
+        entries = struct.unpack_from(f"<{first // 2}H", data, begin)
+        if list(entries) != sorted(set(entries)) or any(
+            begin + value >= end for value in entries
+        ):
+            raise ValueError("invalid RE2 procedure offsets")
+        for number, entry in enumerate(entries):
+            start = begin + entry
+            stop = begin + entries[number + 1] if number + 1 < len(entries) else end
+            pending, commands = [start], {}
+            while pending:
+                position = pending.pop()
+                if position in commands:
+                    continue
+                if not start <= position < stop:
+                    raise ValueError("RE2 script branch outside its procedure")
+                opcode = data[position]
+                if (
+                    opcode >= len(OPCODE_WIDTHS)
+                    or position + OPCODE_WIDTHS[opcode] > stop
+                ):
+                    raise ValueError("unsupported or truncated RE2 script command")
+                packet = data[position : position + OPCODE_WIDTHS[opcode]]
+                following = position + len(packet)
+                command = {
+                    "offset": position,
+                    "next": following,
+                    "kind": "other",
+                    "opcode": opcode,
+                }
+                if opcode in (1, 0x19):
+                    command["kind"] = "end"
+                elif opcode == 6:
+                    command.update(
+                        kind="if",
+                        target=following + struct.unpack_from("<H", packet, 2)[0],
+                    )
+                    pending.append(command["target"])
+                elif opcode in (7, 0x17):
+                    jump = struct.unpack_from(
+                        "<H" if opcode == 7 else "<h", packet, 2 if opcode == 7 else 4
+                    )[0]
+                    command.update(kind="jump", target=position + jump)
+                    pending.append(command["target"])
+                elif opcode == 0x18:
+                    command.update(kind="call", procedure=packet[1])
+                elif opcode == 0x21:
+                    command.update(
+                        kind="flag_check",
+                        bank=packet[1],
+                        bit=packet[2],
+                        expected=packet[3],
+                    )
+                elif opcode == 0x22:
+                    command.update(
+                        kind="flag_write",
+                        bank=packet[1],
+                        bit=packet[2],
+                        operation=packet[3],
+                    )
+                elif opcode in (0x4E, 0x69):
+                    operand = 14 if opcode == 0x4E else 22
+                    item_type, amount, global_id = struct.unpack_from(
+                        "<3H", packet, operand
+                    )
+                    items[position] = {
+                        "offset": position,
+                        "slot": packet[1],
+                        "type": item_type,
+                        "amount": amount,
+                        "global_id": global_id,
+                        "four_point": opcode == 0x69,
+                    }
+                    command.update(kind="item", item=position)
+                elif opcode in (0x3B, 0x68):
+                    operand = 22 if opcode == 0x3B else 30
+                    doors[position] = {
+                        "offset": position,
+                        "slot": packet[1],
+                        "stage": packet[operand],
+                        "room": packet[operand + 1],
+                        "floor": packet[operand + 3],
+                        "lock_id": packet[operand + 7],
+                        "lock_type": packet[operand + 8],
+                        "four_point": opcode == 0x68,
+                    }
+                    doors[position]["center"] = (
+                        [
+                            sum(
+                                struct.unpack_from("<h", packet, 6 + index * 4)[0]
+                                for index in range(4)
+                            )
+                            / 4,
+                            sum(
+                                struct.unpack_from("<h", packet, 8 + index * 4)[0]
+                                for index in range(4)
+                            )
+                            / 4,
+                        ]
+                        if opcode == 0x68
+                        else [
+                            struct.unpack_from("<h", packet, 6)[0]
+                            + struct.unpack_from("<H", packet, 10)[0] / 2,
+                            struct.unpack_from("<h", packet, 8)[0]
+                            + struct.unpack_from("<H", packet, 12)[0] / 2,
+                        ]
+                    )
+                    command.update(kind="door", door=position)
+                elif opcode in (0x2C, 0x67):
+                    command.update(
+                        kind="interaction", slot=packet[1], interaction=packet[2]
+                    )
+                elif opcode == 0x46:
+                    command.update(
+                        kind="reset",
+                        slot=packet[1],
+                        interaction=packet[2],
+                        data=list(packet[4:]),
+                    )
+                elif opcode == 0x76:
+                    command.update(kind="award", item_type=packet[1], amount=packet[2])
+                elif opcode in (0x13, 0x14, 0x15, 0x16):
+                    # Switch branches need their own reachability proof. Do not
+                    # call this room's candidate pickup list complete yet.
+                    complete = False
+                commands[position] = command
+                if command["kind"] not in ("end", "jump"):
+                    pending.append(following)
+            programs[f"{section}:{number}"] = {
+                "entry": start,
+                "commands": sorted(commands.values(), key=lambda row: row["offset"]),
+            }
+    return {
+        "source": source,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "size": len(data),
+        "cameras": data[1],
+        "section_offsets": list(offsets),
+        "proofs": proofs,
+        "items": list(items.values()),
+        "doors": list(doors.values()),
+        "programs": programs,
+        "candidate_list_complete": complete,
+    }

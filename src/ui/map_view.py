@@ -1,4 +1,4 @@
-"""Browser floor plans for explored rooms across RE1 areas."""
+"""Browser floor plans for explored rooms across supported game profiles."""
 
 from __future__ import annotations
 
@@ -68,6 +68,7 @@ def map_state(tracker: Tracker) -> dict:
                 "state": door.state,
                 "label": door.label,
                 "key_label": door.key_label,
+                "observation_id": door.observation_id,
             }
             for door in tracker.doors
         ],
@@ -76,7 +77,16 @@ def map_state(tracker: Tracker) -> dict:
 
 def map_page(graph: dict) -> bytes:
     graph_json = json.dumps(graph).replace("<", "\\u003c")
-    return _PAGE.replace("__GRAPH__", graph_json).encode("utf-8")
+    title = (
+        "Resident Evil 2"
+        if graph["profile_id"] == "re2_leon_a_slus00421"
+        else "Resident Evil"
+    )
+    return (
+        _PAGE.replace("__GRAPH__", graph_json)
+        .replace("__GAME_TITLE__", title)
+        .encode("utf-8")
+    )
 
 
 class MapRequestHandler(BaseHTTPRequestHandler):
@@ -157,7 +167,7 @@ _PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Resident Evil room map</title>
+<title>__GAME_TITLE__ room map</title>
 <style>
 :root { color-scheme:dark; font:15px system-ui,sans-serif; background:#10151b; color:#e7edf2; }
 body { margin:0; }
@@ -229,7 +239,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 </style>
 </head>
 <body>
-<header><h1>Resident Evil</h1><span id="place"></span></header>
+<header><h1>__GAME_TITLE__</h1><span id="place"></span></header>
 <nav id="map-controls" aria-label="Map controls"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" disabled>Current room</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
@@ -402,6 +412,10 @@ function mapRoomId(room) {
   return (parseInt(stage,16)%catalog.stage_modulus).toString(16).padStart(2,'0')+'-'+id;
 }
 const keySymbols=new Map([
+  ['Spade Key','M8 1C5 5 1 6 1 10C1 14 6 14 8 11C10 14 15 14 15 10C15 6 11 5 8 1ZM8 10V15M5 15H11'],
+  ['Diamond Key','M8 1L14 8L8 15L2 8Z'],
+  ['Heart Key','M8 15C5 11 1 9 1 5C1 0 6 0 8 4C10 0 15 0 15 5C15 9 11 11 8 15Z'],
+  ['Club Key','M8 8C3 10 0 8 1 5C2 2 5 3 6 5C3 0 11 0 11 4C11 5 10 6 9 7C13 3 17 7 14 10C12 12 9 10 8 8ZM8 8V15M5 15H11'],
   ['Sword Key','M10 2H14V6L6 14L2 10ZM5 7L11 13M5 12L2 15'],
   ['Armor Key','M5 2L8 4L11 2L15 5L12 8V14H4V8L1 5ZM5 2V5L8 7L11 5V2M4 11H12'],
   ['Shield Key','M2 2H14V7Q14 12 8 15Q2 12 2 7ZM8 3V12M4 7H12'],
@@ -570,7 +584,7 @@ function draw(state) {
     // Boundary markers encode no destination. Even a unique off-plan exit cannot
     // prove its wall identity; retain its known access in the door list instead.
     const ownerIds=owner.room_ids.map(mapRoomId),neighborIds=neighbor ? neighbor.room_ids.map(mapRoomId) : [];
-    const observations=neighbor ? state.doors.filter(door=>
+    const observations=marker.observation_id ? state.doors.filter(door=>door.observation_id===marker.observation_id) : neighbor ? state.doors.filter(door=>
       ownerIds.includes(mapRoomId(door.source))&&neighborIds.includes(mapRoomId(door.target)) || neighborIds.includes(mapRoomId(door.source))&&ownerIds.includes(mapRoomId(door.target))) : [];
     const pickedSource=visible.get(picked)?.room || state.current;
     const candidates=observations.filter(door=>door.source===pickedSource);
@@ -627,7 +641,7 @@ function draw(state) {
   const items=document.getElementById('items');items.replaceChildren();
   for(const item of visit.items) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
-    name.textContent=item.label;detail.textContent=item.state==='taken'?'Collected':item.state==='available'?'Remaining':'Not available';row.append(name,detail);items.append(row);
+    name.textContent=item.label;detail.textContent=item.state==='taken'?'Collected':item.state==='available'?'Remaining':item.state==='unknown'?'Unresolved':item.state==='dormant'?'Inactive':'Not available';row.append(name,detail);items.append(row);
   }
   const doors=document.getElementById('doors');doors.replaceChildren();
   for(const door of state.doors.filter(door=>door.source===visit.room)) {
@@ -652,7 +666,7 @@ function draw(state) {
     if(labels.length) remaining.push({...entry,labels});
     // A remaining item makes the room red even when other item checks are
     // incomplete. Completion color alone cannot identify those gaps.
-    if(!visit.items_complete) checks.push(entry);
+    if(!visit.items_complete || visit.items.some(item=>item.state==='unknown')) checks.push(entry);
   }
   const key=JSON.stringify([remaining,checks]);
   // Keep focused overview links intact during unchanged game polls.

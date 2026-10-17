@@ -6,7 +6,7 @@ A companion map for Resident Evil in DuckStation, showing explored rooms, remain
 
 ## Setup
 
-You need Python 3, DuckStation, your own BIOS and Resident Evil Director's Cut USA, SLUS-00551. Currently supports Jill using DuckStation savestates.
+You need Python 3, DuckStation, your own BIOS and Resident Evil Director's Cut USA, SLUS-00551. Supports Jill using DuckStation savestates. An initial [RE2 Leon A profile](docs/re2.md) is also available for USA Disc 1, SLUS-00421. Its gameplay validation is still limited.
 
 With DuckStation closed, add or update these settings in its `settings.ini`:
 
@@ -31,11 +31,11 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
-Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. The cyan arrow identifies your current room and rotates with Jill's facing direction. The white outline also marks the current room. Click a room to see its items and doors.
+Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. The cyan arrow identifies your current room and rotates with your facing direction. The white outline also marks the current room. Click a room to see its items and doors.
 
 Stair treads and rails appear inside explored room outlines.
 
-Door colors show access. Key symbols identify Sword, Armor, Shield and Helmet locks; hover for the key's name. Other named keys use a key symbol.
+Door colors show access. Key symbols identify Sword, Armor, Shield and Helmet locks; hover for the key's name. The RE2 profile uses suit symbols for Spade, Diamond, Heart and Club locks. Other named keys use a key symbol.
 
 Use **Floor** to browse explored floors. Click **Current room** to return to your location and follow it again.
 
@@ -48,3 +48,15 @@ Explored rooms are saved automatically and stay revealed after restarts or earli
 For a new playthrough, run `python3 tools/track.py --map --new-playthrough`. Use `--history-file <path>` to keep another playthrough separate.
 
 If something goes wrong, report what happened and include `logs/tracker.log` from the project folder.
+
+## Resident Evil 2
+
+Start Leon A on the pinned USA Disc 1, then run:
+
+```sh
+python3 tools/track.py --profile profiles/re2_leon_a_slus00421.json --history-file .local/re2-leon-a.json --map
+```
+
+The [RE2 guide](docs/re2.md) lists coverage and unresolved checks. Keep its exploration history separate from Jill's.
+
+![RE2 opening street from a controlled gameplay capture](docs/images/re2-map.png)

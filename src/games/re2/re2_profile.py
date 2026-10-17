@@ -1,4 +1,4 @@
-"""SLUS-00421 Leon A identity and room reads. See RE2-IDENTITY-001."""
+"""SLUS-00421 Leon A identity, bounded memory layout and required metadata."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
+from games.re2.map_layout import Re2MapLayout
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
@@ -20,6 +21,11 @@ class Re2Profile:
     room_address: int
     camera_address: int
     runtime_signature: RuntimeSignature
+    runtime_layout: dict
+    flag_banks: dict[int, tuple[int, int]]
+    rooms: dict[str, dict]
+    names: dict
+    map_layout: Re2MapLayout
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
@@ -55,12 +61,112 @@ class Re2Profile:
             )
         ):
             raise ValueError("invalid RE2 runtime identity or room addresses")
+        layout = raw["runtime_layout"]
+        if layout["aot_capacity"] != 32 or any(
+            not 0x80000000 <= int(value, 0) < 0x80200000
+            for key, value in layout.items()
+            if key.endswith("_address_ps1")
+        ):
+            raise ValueError("invalid RE2 runtime memory layout")
+        banks = {
+            row["bank"]: (int(row["address_ps1"], 0), row["width"])
+            for row in raw["flag_banks"]
+        }
+        blocks = [
+            (int(layout[f"{kind}_block_address_ps1"], 0), layout[f"{kind}_block_width"])
+            for kind in ("player", "save")
+        ]
+        if any(
+            not 0x80000000 <= address <= 0x80200000 - size or not 1 <= size <= 4096
+            for address, size in blocks
+        ) or any(
+            not any(
+                base <= address and address + width <= base + size
+                for base, size in blocks
+            )
+            for address, width in banks.values()
+        ):
+            raise ValueError("RE2 state banks must fit the bounded read blocks")
+        document = json.loads((path.parent / raw["room_metadata_path"]).read_text())
+        if (
+            document["schema"] != 1
+            or document["profile_id"] != raw["profile_id"]
+            or document["executable_identity"] != raw["executable_identity"]
+        ):
+            raise ValueError("RE2 room metadata disagrees with the pinned revision")
+        rooms = {row["id"]: row for row in document["rooms"]}
+        if len(rooms) != 125 or len(rooms) != len(document["rooms"]):
+            raise ValueError("RE2 metadata needs 125 unique room sources")
+        for key, room in rooms.items():
+            if (
+                "event_awards" not in room
+                or "candidate_list_complete" not in room
+                or type(room["event_awards"]) is not list
+                or type(room["candidate_list_complete"]) is not bool
+            ):
+                raise ValueError(
+                    "RE2 source requires explicit event awards and coverage"
+                )
+            if any(
+                type(award) is not dict
+                or not {"offset", "item_type", "amount"} <= award.keys()
+                or not all(
+                    type(award[field]) is int
+                    for field in ("offset", "item_type", "amount")
+                )
+                or not 0 <= award["offset"] < room["size"]
+                or not 0 <= award["item_type"] <= 255
+                or not 0 <= award["amount"] <= 255
+                for award in room["event_awards"]
+            ):
+                raise ValueError("invalid RE2 event award metadata")
+            if key != str(RoomId(room["stage"], room["room"])) or not room["proofs"]:
+                raise ValueError("invalid RE2 room source identity")
+            if (
+                not 100 <= room["size"] <= 0x200000
+                or len(room["section_offsets"]) != 23
+                or any(
+                    offset and not 100 <= offset <= room["size"]
+                    for offset in room["section_offsets"]
+                )
+            ):
+                raise ValueError("invalid RE2 source section bounds")
+            bank = (
+                layout["item_bank_early"]
+                if room["stage"] < layout["item_bank_stage_boundary"]
+                else layout["item_bank_late"]
+            )
+            if any(
+                not 0 <= item["global_id"] < banks[bank][1] * 8
+                for item in room["items"]
+            ):
+                raise ValueError("RE2 pickup flag outside its bank")
+            if any(
+                not 0 <= proof["offset"] <= room["size"] - proof["width"]
+                for proof in room["proofs"]
+            ):
+                raise ValueError("RE2 source proof outside its room")
+            if any(
+                not 0 <= row["slot"] < layout["aot_capacity"]
+                for row in room["items"] + room["doors"]
+            ):
+                raise ValueError("RE2 interaction outside its registry")
         return Re2Profile(
             raw["profile_id"],
             raw["revision"],
             raw["executable_identity"],
             *room_addresses,
             RuntimeSignature(addresses, width, digest),
+            layout,
+            banks,
+            rooms,
+            json.loads((path.parent / raw["names_path"]).read_text()),
+            Re2MapLayout.load(
+                path.parent / raw["floor_plans_path"],
+                raw["profile_id"],
+                raw["executable_identity"],
+                rooms,
+            ),
         )
 
     def verify_runtime(

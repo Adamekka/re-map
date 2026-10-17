@@ -13,8 +13,7 @@ import logging
 import sys
 import time
 from collections.abc import Callable
-from dataclasses import dataclass, replace
-from enum import Enum
+from dataclasses import replace
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from threading import Thread
@@ -40,7 +39,10 @@ from games.re1.tracking_engine import (
     validate_current_room,
 )
 from games.re1.tracking_rules import read_rule_snapshot
+from games.re2.live_tracking import poll_re2
+from games.re2.re2_profile import Re2Profile
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
+from tracker.polling import PollResult, PollStatus
 from tracker.visit_history import HistoryError, HistoryIdentity, VisitHistory
 from ui.debug_view import render
 from ui.map_view import MAP_PROFILE_ID, MapServer, map_state
@@ -48,25 +50,13 @@ from ui.map_view import MAP_PROFILE_ID, MapServer, map_state
 logger = logging.getLogger(__name__)
 
 
-class PollStatus(Enum):
-    Display = "display"
-    ReadFailure = "read-failure"
-    Retry = "retry"
-    WrongGame = "wrong-game"
-    NonGameplay = "non-gameplay"
-
-
-@dataclass(frozen=True)
-class PollResult:
-    status: PollStatus
-    text: str
-
-
 def poll_once(
-    profile: Re1Profile,
+    profile: Re1Profile | Re2Profile,
     tracker: Tracker,
     read_memory: Callable[[int, int], MemoryResult],
 ) -> PollResult:
+    if isinstance(profile, Re2Profile):
+        return poll_re2(profile, tracker, read_memory)
     identity = profile.verify_runtime(read_memory)
     if not identity.ok:
         return PollResult(
@@ -545,8 +535,8 @@ def main() -> int:
     ap.add_argument(
         "--history-file",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / ".local/visit-history.json",
-        help="exploration history to resume across tracker sessions",
+        default=argparse.SUPPRESS,
+        help="exploration history to resume (default: a separate file for each game)",
     )
     ap.add_argument(
         "--new-playthrough",
@@ -586,11 +576,22 @@ def main() -> int:
         print("the live map needs continuous tracking; omit --once", file=sys.stderr)
         return 2
 
-    profile = Re1Profile.load(args.profile)
+    profile_id = json.loads(args.profile.read_text())["profile_id"]
+    is_re2 = profile_id == "re2_leon_a_slus00421"
+    profile = Re2Profile.load(args.profile) if is_re2 else Re1Profile.load(args.profile)
+    # Preserve existing Jill histories while giving Leon his own default file.
+    # Explicit --history-file selections still belong to the caller.
+    history_path = (
+        args.history_file
+        if hasattr(args, "history_file")
+        else Path(__file__).resolve().parents[1]
+        / ".local"
+        / ("re2-leon-a.json" if is_re2 else "visit-history.json")
+    )
     logger.info(
         "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision
     )
-    if not profile.has_room_addresses():
+    if not is_re2 and not profile.has_room_addresses():
         logger.error("Profile %s has no validated room addresses", profile.profile_id)
         print(
             f"profile {profile.profile_id} has no validated room addresses; refusing to guess"
@@ -603,13 +604,15 @@ def main() -> int:
             f"profile {profile.profile_id} has no runtime identity check; refusing live reads"
         )
         return 2
-    if profile.runtime_room_layout is None or profile.door_state_layout is None:
+    if not is_re2 and (
+        profile.runtime_room_layout is None or profile.door_state_layout is None
+    ):
         print(
             f"profile {profile.profile_id} has no runtime room/door layout",
             file=sys.stderr,
         )
         return 2
-    if args.map and profile.profile_id != MAP_PROFILE_ID:
+    if args.map and profile.profile_id not in (MAP_PROFILE_ID, "re2_leon_a_slus00421"):
         logger.error("Map unavailable for profile %s", profile.profile_id)
         print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
         return 2
@@ -626,13 +629,12 @@ def main() -> int:
     }
     try:
         history = VisitHistory(
-            args.history_file.expanduser().resolve(),
+            history_path.expanduser().resolve(),
             HistoryIdentity(
                 profile.profile_id,
                 profile.runtime_signature.concatenated_sha256,
-                # Jill is the supported delivery scenario. Keep its history
-                # separate when another character gains a supported profile.
-                "jill",
+                # Scenario identity keeps supported runs separate within a revision.
+                "leon-a" if is_re2 else "jill",
             ),
             region_rooms,
             args.new_playthrough,
@@ -757,7 +759,9 @@ def main() -> int:
                             if result.status == PollStatus.Retry
                             else "Title or demo playback. Load or start gameplay to track."
                             if result.status == PollStatus.NonGameplay
-                            else "Waiting for Resident Evil Director's Cut."
+                            else "Waiting for Resident Evil 2, Leon A."
+                            if is_re2 and result.status == PollStatus.WrongGame
+                            else "Waiting for Resident Evil Director's Cut, Jill."
                             if result.status == PollStatus.WrongGame
                             else "Game connection interrupted. Check DuckStation and its GDB server."
                         ),

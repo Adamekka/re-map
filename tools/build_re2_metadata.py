@@ -1,0 +1,387 @@
+"""Generate numeric RE2 metadata from the pinned owned CUE. No artwork is exported.
+
+Generation needs Unicorn (pip package `unicorn`) to execute the two bounded
+native map selectors. The running tracker uses only the generated JSON.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import itertools
+import json
+import re
+import struct
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from build_item_table import _read_file
+from extract_psx_file import _find
+from list_psx_files import _read_dir, _sector_data
+from map_geometry import trace_floor_cells
+
+from games.re2.room_data import decode_room
+
+AREA_NAMES = (
+    "City streets west",
+    "City streets east",
+    "Police station 1F",
+    "Police station 2F",
+    "Police station 3F",
+    "Police station B1",
+    "Sewer entrance",
+    "Sewers upper level",
+    "Sewers lower level",
+    "Factory 1F",
+    "Factory B1",
+    "Factory B2",
+    "Factory B3",
+    "Laboratory B1",
+    "Laboratory B2",
+    "Laboratory elevator",
+    "Laboratory B3",
+    "Laboratory B4",
+    "Escape platform",
+    "Escape train",
+)
+
+
+def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
+    from unicorn import UC_ARCH_MIPS, UC_MODE_LITTLE_ENDIAN, UC_MODE_MIPS32, Uc
+    from unicorn.mips_const import (
+        UC_MIPS_REG_A0,
+        UC_MIPS_REG_A1,
+        UC_MIPS_REG_PC,
+        UC_MIPS_REG_RA,
+        UC_MIPS_REG_SP,
+        UC_MIPS_REG_V0,
+    )
+
+    match = re.search(r'FILE\s+"([^"]+)"', cue.read_text())
+    if match is None:
+        raise ValueError("CUE lacks its data track")
+    with (cue.parent / match[1]).open("rb") as stream:
+        pvd = _sector_data(stream, 16)
+        if pvd[:7] != b"\x01CD001\x01":
+            raise ValueError("data track lacks an ISO9660 primary volume")
+        root = struct.unpack_from("<I", pvd, 158)[0]
+        root_size = struct.unpack_from("<I", pvd, 166)[0]
+        extent, size = _find(stream, root, root_size, "SLUS_004.21")
+        executable = _read_file(stream, extent, size)
+        identity = "SLUS_004.21 SHA256 " + hashlib.sha256(executable).hexdigest()
+        if identity != profile["executable_identity"]:
+            raise ValueError("disc executable does not match the RE2 profile")
+        extent, size = _find(stream, root, root_size, "COMMON/DATA/MAPS.PIX")
+        pixels = _read_file(stream, extent, size)
+        if len(pixels) != 20 * 32768:
+            raise ValueError("unsupported RE2 map pixel layout")
+        directory, directory_size = root, root_size
+        for component in ("PL0", "RDT"):
+            row = next(
+                (
+                    row
+                    for row in _read_dir(stream, directory, directory_size)
+                    if row[0] == component and row[3]
+                ),
+                None,
+            )
+            if row is None:
+                raise ValueError("disc lacks Leon room data")
+            directory, directory_size = row[1:3]
+        rooms = []
+        for name, extent, size, is_directory in _read_dir(
+            stream, directory, directory_size
+        ):
+            if is_directory:
+                continue
+            match = re.fullmatch(r"ROOM([1-7])([0-9A-F]{2})0\.RDT", name)
+            if match is None:
+                raise ValueError(f"unexpected Leon room source {name}")
+            try:
+                room = decode_room(_read_file(stream, extent, size), "PL0/RDT/" + name)
+            except ValueError as error:
+                raise ValueError(f"{name}: {error}") from error
+            room["event_awards"] = [
+                command
+                for program in room.pop("programs").values()
+                for command in program["commands"]
+                if command["kind"] == "award"
+            ]
+            room.update(stage=int(match[1]) - 1, room=int(match[2], 16))
+            room["id"] = f"{room['stage']:02d}-{room['room']:02x}"
+            rooms.append(room)
+    if len(rooms) != 125:
+        raise ValueError("pinned Leon disc must contain 125 room sources")
+    machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
+    machine.mem_map(0, 0x200000)
+    load = struct.unpack_from("<I", executable, 0x18)[0]
+    machine.mem_write(load & 0x1FFFFF, executable[0x800:])
+    layout = profile["metadata_layout"]
+
+    def native(address: int, first: int, second: int) -> int:
+        machine.reg_write(UC_MIPS_REG_SP, 0x801FF000)
+        machine.reg_write(UC_MIPS_REG_RA, 0x801F0000)
+        machine.reg_write(UC_MIPS_REG_A0, first)
+        machine.reg_write(UC_MIPS_REG_A1, second)
+        machine.emu_start(address, 0x801F0000, count=10000)
+        if machine.reg_read(UC_MIPS_REG_PC) != 0x801F0000:
+            raise ValueError("native RE2 map selector exceeded its bound")
+        return machine.reg_read(UC_MIPS_REG_V0)
+
+    plans = []
+    anchors = {}
+    for area in range(20):
+        table = int(layout["map_info_address_ps1"], 0) - load + 0x800 + area * 8
+        address, count, _page, file_number = struct.unpack_from(
+            "<IBBH", executable, table
+        )
+        if not 1 <= count <= 32 or not 0 <= file_number < 20:
+            raise ValueError("invalid native RE2 map descriptor")
+        plan = {
+            "id": f"re2-{area:02d}",
+            "name": AREA_NAMES[area],
+            "rooms": [],
+            "unoutlined_rooms": [],
+            "doors": [],
+        }
+        for region in range(count):
+            descriptor = struct.unpack_from(
+                "<4B4h4B", executable, address - load + 0x800 + region * 16
+            )
+            u, v, width, height, x, y, bx, by, *_ = descriptor
+            if not width or not height:
+                raise ValueError("invalid native RE2 map rectangle")
+            cells, interior = set(), set()
+            for dy in range(height):
+                for dx in range(width):
+                    # PS1 texture coordinates wrap at the 256-pixel page edge.
+                    index = ((v + dy) % 256) * 256 + (u + dx) % 256
+                    value = (
+                        pixels[file_number * 32768 + index // 2] >> (4 * (index % 2))
+                    ) & 15
+                    if value:
+                        cells.add((x + dx, y + dy))
+                    if value == 2:
+                        interior.add((x + dx, y + dy))
+            rings, label = trace_floor_cells(cells)
+            details = []
+            for axis in (0, 1):
+                points = sorted(
+                    (point[1 - axis], point[axis])
+                    for point in interior
+                    if all(
+                        other in cells
+                        for other in (
+                            (point[0] - 1, point[1]),
+                            (point[0] + 1, point[1]),
+                            (point[0], point[1] - 1),
+                            (point[0], point[1] + 1),
+                        )
+                    )
+                )
+                for fixed, group in itertools.groupby(
+                    points, key=lambda point: point[0]
+                ):
+                    runs = []
+                    for _, coordinate in group:
+                        if runs and coordinate == runs[-1][-1] + 1:
+                            runs[-1].append(coordinate)
+                        else:
+                            runs.append([coordinate])
+                    for run in runs:
+                        if len(run) >= 2:
+                            segment = [
+                                [run[0] + 0.5, fixed + 0.5],
+                                [run[-1] + 0.5, fixed + 0.5],
+                            ]
+                            details.append(
+                                segment
+                                if axis == 0
+                                else [point[::-1] for point in segment]
+                            )
+            entry = {
+                "id": f"{region:02X}",
+                "name": "",
+                "room_ids": [],
+                "rings": [ring for _, ring in rings],
+                "ring_roles": [
+                    "outer" if signed > 0 else "hole" for signed, _ in rings
+                ],
+                "label": [value + 0.5 for value in label],
+                "detail_segments": details,
+                "world_origin": [bx, by],
+            }
+            plan["rooms"].append(entry)
+            anchors[area, region] = (bx, by)
+        plans.append(plan)
+    locations = []
+    area_selector = int(layout["area_selector_ps1"], 0)
+    region_selector = int(layout["region_selector_ps1"], 0)
+    for room in rooms:
+        stage, number = room["stage"], room["room"]
+        # These are the data dependencies read by the pinned selector, not a
+        # port of its branch logic. Generate each supported alternative natively.
+        dependencies = [
+            field
+            for context in layout["selector_contexts"]
+            if room["id"] in context["rooms"]
+            for field in context["fields"]
+        ]
+        for values in itertools.product(*(field["samples"] for field in dependencies)):
+            old_tests = []
+            for field, (value, expected, negate) in zip(dependencies, values):
+                address, mask = int(field["address_ps1"], 0), field["mask"]
+                machine.mem_write(
+                    address & 0x1FFFFF,
+                    value.to_bytes((mask.bit_length() + 7) // 8, "little"),
+                )
+                old_tests.append([address, mask, expected, negate])
+            outcomes = []
+            for floor in range(256):
+                machine.mem_write(
+                    int(layout["floor_address_ps1"], 0) & 0x1FFFFF, bytes([floor])
+                )
+                area = native(area_selector, stage, number)
+                region = native(region_selector, area, number)
+                outcomes.append((area, region))
+            for (area, region), group in itertools.groupby(
+                enumerate(outcomes), key=lambda entry: entry[1]
+            ):
+                floors = [entry[0] for entry in group]
+                if area >= len(plans) or region >= len(plans[area]["rooms"]):
+                    # The disc includes unreachable/debug room files. Keep
+                    # their missing native outline explicit in the catalog.
+                    locations.append(
+                        {
+                            "room": room["id"],
+                            "floor_min": floors[0],
+                            "floor_max": floors[-1],
+                            "conditions": old_tests,
+                            "area": "unmapped",
+                            "region": room["id"],
+                        }
+                    )
+                    continue
+                locations.append(
+                    {
+                        "room": room["id"],
+                        "floor_min": floors[0],
+                        "floor_max": floors[-1],
+                        "conditions": old_tests,
+                        "area": plans[area]["id"],
+                        "region": f"{region:02X}",
+                    }
+                )
+                entry = plans[area]["rooms"][region]
+                if room["id"] not in entry["room_ids"]:
+                    entry["room_ids"].append(room["id"])
+                    if not entry["name"]:
+                        entry["name"] = names["rooms"].get(
+                            room["id"], "Room " + room["id"]
+                        )
+    for plan in plans:
+        # Extra native shapes can belong exclusively to Claire or an unsupported
+        # scenario. They stay outside this profile's revealable geometry.
+        plan["rooms"] = [entry for entry in plan["rooms"] if entry["room_ids"]]
+        for entry in plan["rooms"]:
+            for room in rooms:
+                if room["id"] not in entry["room_ids"]:
+                    continue
+                for door in room["doors"]:
+                    bx, by = entry["world_origin"]
+                    wx, wz = door["center"]
+                    # The native marker maps world X/Z using this translation
+                    # and scale (RE2-MAP-001), before adding the room's origin.
+                    projection = profile["map_projection"]
+                    bias, scale = (
+                        projection["world_bias"],
+                        projection["units_per_pixel"],
+                    )
+                    x, y = bx + (wx + bias) / scale, by - (wz + bias) / scale
+                    candidates = []
+                    for ring in entry["rings"]:
+                        for first, last in zip(ring, ring[1:] + ring[:1]):
+                            dx, dy = last[0] - first[0], last[1] - first[1]
+                            length = (dx * dx + dy * dy) ** 0.5
+                            if length < 2:
+                                continue
+                            along = max(
+                                0,
+                                min(
+                                    length,
+                                    ((x - first[0]) * dx + (y - first[1]) * dy)
+                                    / length,
+                                ),
+                            )
+                            px, py = (
+                                first[0] + along * dx / length,
+                                first[1] + along * dy / length,
+                            )
+                            distance = (px - x) ** 2 + (py - y) ** 2
+                            midpoint = max(1, min(length - 1, along))
+                            segment = [
+                                [
+                                    round(
+                                        first[0] + (midpoint + shift) * dx / length, 3
+                                    ),
+                                    round(
+                                        first[1] + (midpoint + shift) * dy / length, 3
+                                    ),
+                                ]
+                                for shift in (-1, 1)
+                            ]
+                            candidates.append((distance, segment))
+                    candidates.sort(key=lambda candidate: candidate[0])
+                    if not candidates or candidates[0][0] > 64:
+                        continue
+                    if (
+                        len(candidates) > 1
+                        and abs(candidates[0][0] - candidates[1][0]) < 1e-8
+                        and candidates[0][1] != candidates[1][1]
+                    ):
+                        # A corner does not establish which wall owns the door.
+                        continue
+                    observation_id = f"{room['id']}:{door['offset']}"
+                    plan["doors"].append(
+                        {
+                            "id": observation_id + ":" + entry["id"],
+                            "observation_id": observation_id,
+                            "rooms": [entry["id"]],
+                            "segment": candidates[0][1],
+                        }
+                    )
+    header = {
+        "schema": 1,
+        "profile_id": profile["profile_id"],
+        "executable_identity": identity,
+        "research_ids": ["RE2-SCD-001", "RE2-MAP-001"],
+        "validation": "Candidate; runtime coverage is listed in docs/research.md",
+    }
+    return (
+        {**header, "rooms": rooms},
+        {**header, "stage_modulus": 256, "areas": plans, "locations": locations},
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("cue", type=Path)
+    parser.add_argument("room_output", type=Path)
+    parser.add_argument("map_output", type=Path)
+    args = parser.parse_args()
+    try:
+        profile = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+        names = json.loads((ROOT / "data/re2_names.json").read_text())
+        rooms, maps = build(args.cue, profile, names)
+        for path, document in ((args.room_output, rooms), (args.map_output, maps)):
+            path.write_text(json.dumps(document, indent=2) + "\n")
+    except (OSError, ValueError, ImportError, KeyError, struct.error) as error:
+        parser.exit(1, f"Cannot generate RE2 metadata: {error}\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

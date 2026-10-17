@@ -23,6 +23,340 @@
     "concatenated_sha256": "712628cd70ecee75e834248085df57ac0b22862fa8e7e486e06cc9833cae5d5a"
   },
   "research_ids": [
-    "RE2-IDENTITY-001"
-  ]
+    "RE2-IDENTITY-001",
+    "RE2-SCD-001",
+    "RE2-MAP-001",
+    "RE2-LIVE-001"
+  ],
+  "metadata_layout": {
+    "map_info_address_ps1": "0x800A2DF4",
+    "area_selector_ps1": "0x80069FC0",
+    "region_selector_ps1": "0x8006A2B8",
+    "floor_address_ps1": "0x800C7E2A",
+    "selector_contexts": [
+      {
+        "rooms": [
+          "04-05"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800CC997",
+            "mask": 2,
+            "samples": [
+              [
+                0,
+                0,
+                false
+              ],
+              [
+                2,
+                2,
+                false
+              ]
+            ]
+          },
+          {
+            "address_ps1": "0x800CC98F",
+            "mask": 16,
+            "samples": [
+              [
+                0,
+                0,
+                false
+              ],
+              [
+                16,
+                16,
+                false
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "rooms": [
+          "06-00",
+          "06-01",
+          "06-02",
+          "06-03",
+          "06-04"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800CC992",
+            "mask": 64,
+            "samples": [
+              [
+                0,
+                0,
+                false
+              ],
+              [
+                64,
+                64,
+                false
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "rooms": [
+          "05-0e"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800CCE80",
+            "mask": 255,
+            "samples": [
+              [
+                0,
+                1,
+                true
+              ],
+              [
+                1,
+                1,
+                false
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "rooms": [
+          "05-01"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800CC94E",
+            "mask": 65535,
+            "samples": [
+              [
+                0,
+                1538,
+                true
+              ],
+              [
+                1538,
+                1538,
+                false
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "room_metadata_path": "../data/rooms_slus00421.json",
+  "floor_plans_path": "../data/floor_plans_slus00421.json",
+  "names_path": "../data/re2_names.json",
+  "runtime_layout": {
+    "player_block_address_ps1": "0x800C7CE0",
+    "player_block_width": 352,
+    "save_block_address_ps1": "0x800CC800",
+    "save_block_width": 1792,
+    "system_flags_address_ps1": "0x800C7CE4",
+    "status_flags_address_ps1": "0x800C7D04",
+    "player_active_address_ps1": "0x800C7D24",
+    "player_facing_address_ps1": "0x800C7D9A",
+    "floor_address_ps1": "0x800C7E2A",
+    "loaded_rdt_address_ps1": "0x800C6494",
+    "aot_table_address_ps1": "0x800C66C8",
+    "aot_capacity": 32,
+    "gameplay_mask": 1073741824,
+    "demo_mask": 8192,
+    "transition_mask": 33554432,
+    "game_over_mask": 67108864,
+    "scenario_mask": 3254779904,
+    "scenario_value": 0,
+    "item_bank_early": 8,
+    "item_bank_late": 34,
+    "item_bank_stage_boundary": 4,
+    "key_bank": 31,
+    "file_type_min": 104,
+    "heading_offset_degrees": 90,
+    "heading_direction": 1
+  },
+  "flag_banks": [
+    {
+      "bank": 0,
+      "address_ps1": "0x800C7CE4",
+      "width": 4
+    },
+    {
+      "bank": 1,
+      "address_ps1": "0x800C7D04",
+      "width": 4
+    },
+    {
+      "bank": 2,
+      "address_ps1": "0x800C7D08",
+      "width": 4
+    },
+    {
+      "bank": 3,
+      "address_ps1": "0x800CC960",
+      "width": 32
+    },
+    {
+      "bank": 4,
+      "address_ps1": "0x800CC980",
+      "width": 32
+    },
+    {
+      "bank": 5,
+      "address_ps1": "0x800CC9A0",
+      "width": 8
+    },
+    {
+      "bank": 6,
+      "address_ps1": "0x800CC9A8",
+      "width": 32
+    },
+    {
+      "bank": 7,
+      "address_ps1": "0x800CC9C8",
+      "width": 32
+    },
+    {
+      "bank": 8,
+      "address_ps1": "0x800CC9E8",
+      "width": 32
+    },
+    {
+      "bank": 9,
+      "address_ps1": "0x800CCA38",
+      "width": 16
+    },
+    {
+      "bank": 10,
+      "address_ps1": "0x800C7D0C",
+      "width": 4
+    },
+    {
+      "bank": 12,
+      "address_ps1": "0x800C7D20",
+      "width": 4
+    },
+    {
+      "bank": 13,
+      "address_ps1": "0x800CCA54",
+      "width": 16
+    },
+    {
+      "bank": 14,
+      "address_ps1": "0x800CCA64",
+      "width": 16
+    },
+    {
+      "bank": 15,
+      "address_ps1": "0x800CCA74",
+      "width": 16
+    },
+    {
+      "bank": 16,
+      "address_ps1": "0x800CCA84",
+      "width": 16
+    },
+    {
+      "bank": 17,
+      "address_ps1": "0x800CCA94",
+      "width": 16
+    },
+    {
+      "bank": 18,
+      "address_ps1": "0x800CCAA4",
+      "width": 16
+    },
+    {
+      "bank": 19,
+      "address_ps1": "0x800CCAB4",
+      "width": 16
+    },
+    {
+      "bank": 20,
+      "address_ps1": "0x800CCAC4",
+      "width": 16
+    },
+    {
+      "bank": 21,
+      "address_ps1": "0x800CCAD4",
+      "width": 16
+    },
+    {
+      "bank": 22,
+      "address_ps1": "0x800CCAE4",
+      "width": 16
+    },
+    {
+      "bank": 23,
+      "address_ps1": "0x800CCAF4",
+      "width": 16
+    },
+    {
+      "bank": 24,
+      "address_ps1": "0x800CCB04",
+      "width": 16
+    },
+    {
+      "bank": 25,
+      "address_ps1": "0x800CCB14",
+      "width": 16
+    },
+    {
+      "bank": 26,
+      "address_ps1": "0x800CCB24",
+      "width": 16
+    },
+    {
+      "bank": 27,
+      "address_ps1": "0x800CCB34",
+      "width": 16
+    },
+    {
+      "bank": 28,
+      "address_ps1": "0x800CCB44",
+      "width": 16
+    },
+    {
+      "bank": 29,
+      "address_ps1": "0x800CCB58",
+      "width": 4
+    },
+    {
+      "bank": 30,
+      "address_ps1": "0x800C7CE0",
+      "width": 4
+    },
+    {
+      "bank": 31,
+      "address_ps1": "0x800CCB60",
+      "width": 8
+    },
+    {
+      "bank": 32,
+      "address_ps1": "0x800CCA4C",
+      "width": 8
+    },
+    {
+      "bank": 33,
+      "address_ps1": "0x800CCA50",
+      "width": 4
+    },
+    {
+      "bank": 34,
+      "address_ps1": "0x800CCA08",
+      "width": 16
+    },
+    {
+      "bank": 35,
+      "address_ps1": "0x800CCA34",
+      "width": 4
+    }
+  ],
+  "map_projection": {
+    "world_bias": 28000,
+    "units_per_pixel": 450
+  }
 }

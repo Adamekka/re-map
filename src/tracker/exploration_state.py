@@ -43,6 +43,9 @@ class DoorDetail:
     # Empty means no key identity is established. A named key describes the
     # lock type even after unlocking; access still comes from state/label.
     key_label: str = ""
+    # RE2 has source-offset wall bindings. RE1 retains its established
+    # room-pair bindings and therefore supplies no source observation identity.
+    observation_id: str = ""
 
 
 @dataclass

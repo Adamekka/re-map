@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_item_table import _read_file
 from extract_psx_file import _find
 from list_psx_files import _sector_data
+from map_geometry import trace_floor_cells
 
 
 class DoorMarkerPolicy(Enum):
@@ -93,81 +94,7 @@ def extract_floor_plan(
                 raise ValueError(f"Region {room_id:02X} has doors without a floor")
             continue
         floor_owners.update((point, f"{room_id:02X}") for point in floor_pixels)
-        edges = set()
-        for x, y in floor_pixels:
-            for a, b in (
-                ((x, y), (x + 1, y)),
-                ((x + 1, y), (x + 1, y + 1)),
-                ((x + 1, y + 1), (x, y + 1)),
-                ((x, y + 1), (x, y)),
-            ):
-                if (b, a) in edges:
-                    edges.remove((b, a))
-                else:
-                    edges.add((a, b))
-        rings = []
-        while edges:
-            a, b = min(edges)
-            start = a
-            ring = [a]
-            while True:
-                edges.remove((a, b))
-                if b == start:
-                    break
-                ring.append(b)
-                successors = [end for begin, end in edges if begin == b]
-                if len(successors) != 1:
-                    raise ValueError(f"Region {room_id:02X} has an ambiguous contour")
-                a, b = b, successors[0]
-            # Collapse only collinear cell edges. Smoothing would invent room shape.
-            ring = [
-                point
-                for i, point in enumerate(ring)
-                if (point[0] - ring[i - 1][0])
-                * (ring[(i + 1) % len(ring)][1] - point[1])
-                != (point[1] - ring[i - 1][1])
-                * (ring[(i + 1) % len(ring)][0] - point[0])
-            ]
-            area = (
-                sum(
-                    a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:] + ring[:1])
-                )
-                / 2
-            )
-            rings.append((area, ring))
-        rings.sort(key=lambda entry: abs(entry[0]), reverse=True)
-        if sum(area for area, _ in rings) != len(floor_pixels):
-            raise ValueError(
-                f"Region {room_id:02X} contour does not preserve floor area"
-            )
-        center = tuple(
-            sum(point[axis] + 0.5 for point in floor_pixels) / len(floor_pixels)
-            for axis in (0, 1)
-        )
-        # Concave-room centroids can land on a wall. Keep labels in the largest
-        # interior space, using distance from the centroid only to break ties.
-        clearance = {
-            (x, y): 0
-            for x, y in floor_pixels
-            if any(
-                point not in floor_pixels
-                for point in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))
-            )
-        }
-        queue = sorted(clearance)
-        for x, y in queue:
-            for point in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
-                if point in floor_pixels and point not in clearance:
-                    clearance[point] = clearance[(x, y)] + 1
-                    queue.append(point)
-        label_pixel = min(
-            floor_pixels,
-            key=lambda point: (
-                -clearance[point],
-                sum((point[axis] + 0.5 - center[axis]) ** 2 for axis in (0, 1)),
-                point,
-            ),
-        )
+        rings, label_pixel = trace_floor_cells(floor_pixels)
         rooms.append(
             {
                 "id": f"{room_id:02X}",

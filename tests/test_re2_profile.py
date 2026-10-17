@@ -89,3 +89,22 @@ def test_revision_signature_distinguishes_wrong_game_and_failed_read():
         lambda address, width: MemRead(False, b"", "disconnected")
     )
     assert not failure.ok and "disconnected" in failure.error
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [("event_awards", None), ("event_awards", [{}]), ("candidate_list_complete", 1)],
+)
+def test_re2_room_metadata_fails_during_load(tmp_path, key, value):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    document["rooms"][0][key] = value
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2.*(coverage|award)"):
+        Re2Profile.load(profile)
