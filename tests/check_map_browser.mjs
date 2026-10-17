@@ -78,6 +78,17 @@ tracker.doors = (
 states['helmet_doors'] = map_state(tracker)
 tracker.doors = tuple(DoorDetail(d.source, d.target, 'OPEN', 'Unlocked', key_label=d.key_label) for d in tracker.doors)
 states['helmet_unlocked'] = map_state(tracker)
+tracker = Tracker()
+for room in (3, 0x0e, 9, 0x15, 0x0c):
+    enter(0, room, 'mansion1f', f'{room:02X}')
+# RE1-MAP-021: both sides are open despite different lock descriptions.
+tracker.doors = (
+    DoorDetail(RoomId(0, 3), RoomId(0, 0x0e), 'OPEN', 'Unlocked', key_label='Sword Key'),
+    DoorDetail(RoomId(0, 0x0e), RoomId(0, 3), 'OPEN', 'No lock'),
+    DoorDetail(RoomId(0, 9), RoomId(0, 0x15), 'OPEN', 'No lock'),
+    DoorDetail(RoomId(0, 0x15), RoomId(0, 9), 'OPEN', 'Unlocked'),
+)
+states['open_door_descriptions'] = map_state(tracker)
 catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
 # Explicit test exploration checks label placement across every native outline.
 tracker = Tracker()
@@ -361,6 +372,41 @@ try {
   }
   await page.evaluate(() => draw({ ...lastState, doors: lastState.doors.map(door => ({ ...door, key_label: '', label: 'Locked by a puzzle or event' })) }));
   assert.equal(await page.locator('.door .key-symbol').count(), 0, 'a puzzle lock must not acquire an invented key emblem');
+  state = states.open_door_descriptions;
+  await page.waitForFunction(() => document.getElementById('room-id').textContent.includes('00-0c'));
+  const keeperDoor = page.locator('.door[data-door="03-0E"]');
+  const trapDoor = page.locator('.door[data-door="09-15"]');
+  for (const door of [keeperDoor, trapDoor]) {
+    assert.match(await door.getAttribute('class'), /\bOPEN\b/, 'matching access must survive different descriptions on opposite sides');
+    assert.equal(await door.locator('line').evaluate(line => getComputedStyle(line).stroke), 'rgb(113, 182, 207)');
+    assert.match(await door.locator(':scope > title').textContent(), /No lock/);
+    assert.match(await door.locator(':scope > title').textContent(), /Unlocked/);
+  }
+  assert.equal(await keeperDoor.locator('.key-symbol').getAttribute('aria-label'), 'Sword Key');
+  assert.equal(await trapDoor.locator('.key-symbol').count(), 0);
+  await page.evaluate(() => draw({ ...lastState, doors: [...lastState.doors].reverse() }));
+  assert.match(await keeperDoor.getAttribute('class'), /\bOPEN\b/);
+  assert.equal(await keeperDoor.locator('.key-symbol').getAttribute('aria-label'), 'Sword Key', 'key metadata must not depend on observation order');
+  state = { ...states.open_door_descriptions, doors: states.open_door_descriptions.doors.map(door => door.source === '00-03' ? { ...door, key_label: 'Armor Key' } : door.source === '00-0e' ? { ...door, key_label: 'Sword Key' } : door) };
+  await page.waitForFunction(() => document.querySelector('.door[data-door="03-0E"] .key-symbol') === null);
+  assert.match(await keeperDoor.getAttribute('class'), /\bOPEN\b/);
+  assert.equal(await keeperDoor.locator('.key-symbol').count(), 0, 'conflicting key identities must not invent an emblem');
+  for (const name of ["Keeper's Room", 'Central Corridor']) {
+    await map.getByRole('button', { name, exact: true }).focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await keeperDoor.locator('.key-symbol').count(), 0, 'selecting a direction must not hide conflicting key metadata');
+  }
+  await current.click();
+  state = { ...states.open_door_descriptions, doors: states.open_door_descriptions.doors.map(door => door.source === '00-03' ? { ...door, state: 'LOCKED', label: 'Locked' } : door) };
+  await page.waitForFunction(() => document.querySelector('.door[data-door="03-0E"].UNCHECKED'));
+  assert.match(await keeperDoor.getAttribute('class'), /\bUNCHECKED\b/, 'conflicting access must remain unresolved while neither side is selected');
+  await map.getByRole('button', { name: "Keeper's Room", exact: true }).focus();
+  await page.keyboard.press('Enter');
+  assert.match(await keeperDoor.getAttribute('class'), /\bOPEN\b/, 'selecting a side must retain its directional access');
+  assert.equal(await keeperDoor.locator('.key-symbol').getAttribute('aria-label'), 'Sword Key', 'the reverse side must retain a known lock identity');
+  await map.getByRole('button', { name: 'Central Corridor', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  assert.match(await keeperDoor.getAttribute('class'), /\bLOCKED\b/);
   state = states.labels;
   const labelCount = await page.evaluate(fixture => {
     let count = 0;

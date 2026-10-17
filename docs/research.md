@@ -154,6 +154,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re1-map-019-retain-native-interior-map-geometry"></a>[RE1-MAP-019](research/re1/map-ui.md#re1-map-019-retain-native-interior-map-geometry) | retain native interior map geometry |
 | <a id="re1-player-002-live-yaw-and-a-directional-room-marker"></a>[RE1-PLAYER-002](research/re1/map-ui.md#re1-player-002-live-yaw-and-a-directional-room-marker) | live yaw and a directional room marker |
 | <a id="re1-map-020-name-the-unresolved-room-color-in-the-map-legend"></a>[RE1-MAP-020](research/re1/map-ui.md#re1-map-020-name-the-unresolved-room-color-in-the-map-legend) | name the unresolved room color in the map legend |
+| [RE1-MAP-021](research/re1/map-ui.md#re1-map-021-matching-access-survives-different-descriptions-on-opposite-sides) | matching access survives different descriptions on opposite sides |
 
 ## RE1 script opcodes research
 

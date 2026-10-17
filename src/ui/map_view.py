@@ -590,17 +590,20 @@ function draw(state) {
     const candidates=observations.filter(door=>door.source===pickedSource);
     const currentCandidates=observations.filter(door=>door.source===state.current);
     const chosen=candidates.length ? candidates : currentCandidates.length ? currentCandidates : observations;
-    const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state&&door.label===chosen[0].label&&door.key_label===chosen[0].key_label) ? chosen[0] : null;
+    // Opposite sides can agree on access while saying "No lock"/"Unlocked".
+    // Resolve access and known key identity independently of that wording.
+    const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state) ? chosen[0] : null;
     const access=observed ? observed.state : 'UNCHECKED';
+    const keyLabels=[...new Set(observations.map(door=>door.key_label).filter(Boolean))];
     const group=element('g',{class:'door '+access,'data-door':marker.id});
     const [a,b]=marker.segment;
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
-    if(observed && observed.key_label) {
-      const symbol=keySymbol(observed.key_label);
+    if(observed && keyLabels.length===1) {
+      const symbol=keySymbol(keyLabels[0]);
       symbol.setAttribute('transform','translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')');
       group.append(symbol);
     }
-    const title=element('title',{});title.textContent=observed ? observed.label : 'Door';group.append(title);svg.append(group);
+    const title=element('title',{});title.textContent=observed ? [...new Set(chosen.map(door=>door.label))].join(' / ') : 'Door';group.append(title);svg.append(group);
   }
   if(visible.has(currentId)) {
     const room=byId.get(currentId);
