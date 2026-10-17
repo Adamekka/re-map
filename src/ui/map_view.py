@@ -187,6 +187,7 @@ h1 { margin:0; font-size:21px; font-weight:600; }
 #zoom-controls { display:inline-flex; align-items:center; gap:10px; }
 select,button { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
 select:disabled,button:disabled { opacity:.55; }
+#current-room[aria-pressed="true"] { border-color:#71b6cf; background:#244c6e; }
 #status { padding:0 28px 14px; min-height:20px; color:#abb9c5; }
 main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; border:1px solid #303d48; background:#151e27; }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
@@ -249,7 +250,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 </head>
 <body>
 <header><h1>__GAME_TITLE__</h1><span id="place"></span></header>
-<nav id="map-controls" aria-label="Map controls"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" disabled>Current room</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
+<nav id="map-controls" aria-label="Map controls"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
 <div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms" aria-description="Use the zoom buttons or mouse wheel to zoom. Drag to move the map."></svg></div>
@@ -306,7 +307,9 @@ currentRoomButton.addEventListener('click',()=>{
 function applyViewport() {
   const ready=lastState!==null && lastState.status==='display';
   const navigable=ready && viewport.mode!=='empty';
-  currentRoomButton.disabled=!ready || floorView.mode==='follow' && selected===null && viewport.mode!=='manual';
+  const following=ready && floorView.mode==='follow' && selected===null;
+  currentRoomButton.setAttribute('aria-pressed',String(following));
+  currentRoomButton.disabled=!ready || following && viewport.mode!=='manual';
   zoomIn.disabled=!navigable || viewport.zoom>=8;
   zoomOut.disabled=!navigable || viewport.zoom<=1;
   fitRooms.disabled=!navigable;

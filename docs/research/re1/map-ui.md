@@ -128,3 +128,15 @@ Contributions:
 - 2026-10-17; human user; requested removal of a key symbol after use.
 - 2026-10-17; Codex root, `gpt-6.1-sol`; preserved independent unlock knowledge, removed obsolete key requirements, updated browser/polling regressions and refreshed the README screenshot.
 - 2026-10-17; Claude Opus 4.6 (Thinking), agy conversation `711df6c2-c916-4f8a-8892-900433b37fd0`, and Gemini 3.8 Flash (High), conversation `0d0d23c2-ea17-4b61-883d-83c164405e17`; reviewed both the used-key policy and Follow player control, including fresh flag callers, explicit unlock knowledge, shared rendering and browser/polling regressions. Both returned no findings, exited zero with agent response DONE and terminal SUCCESS, and had empty stderr and no tool attempts. Codex root, `gpt-6.1-sol`, directly checked those contracts and added explicit blocked/inactive-door assertions. The final complete Python suite passes 1,650 tests; both browser suites and scoped Ruff checks pass. These reviews and checks add no gameplay validation. Private evidence is in `/tmp/re-map-keys-follow-review/`, prompt SHA256 `d102f94c7384ae680c5e4b0eebd99ed58384e836e36717521911573967da516b`.
+
+## RE1-MAP-023: follow player explicitly resumes room selection
+
+Status: Candidate; shared browser checks, no new gameplay.
+
+Scope: the same pinned RE1 and RE2 profiles named in RE1-MAP-022. No emulator was started or version-verified. The former Current room action already cleared manual selection and browsing, but its label did not explain automatic following. It is now named Follow player, with a highlighted pressed state when the readable map is following the player. Selecting a room or floor turns that state off. Activating the action clears the static selection, recenters the current floor and follows subsequent room/floor entries. A panned view can still be recentered while following. An interrupted read clears the pressed state and disables the control until a coherent publication returns.
+
+The shared browser regression checks manual selection, resuming, consecutive room changes, floor browsing, recentering and interruption. This changes the control's presentation and makes its established behavior visible; it does not change exploration or item/door interpretation.
+
+Contributions:
+- 2026-10-17; human user; requested a button to leave a static room selection and continue following entered rooms.
+- 2026-10-17; Codex root, `gpt-6.1-sol`; clarified the existing action, exposed following state, added browser assertions and refreshed the README screenshot.

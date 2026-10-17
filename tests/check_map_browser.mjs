@@ -126,7 +126,7 @@ try {
   });
   await page.goto('http://map.test/');
   const floor = page.getByLabel('Floor', { exact: true });
-  const current = page.getByRole('button', { name: 'Current room', exact: true });
+  const current = page.getByRole('button', { name: 'Follow player', exact: true });
   const remaining = page.locator('#remaining-items');
   const checks = page.locator('#incomplete-checks');
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f');
@@ -247,10 +247,17 @@ try {
   await fit.click();
   await map.getByRole('button', { name: 'Winding Passage', exact: true }).click();
   assert.equal(await page.locator('#room-id').textContent(), 'Room 00-09', 'a normal click after dragging must still select a room');
+  assert.equal(await current.getAttribute('aria-pressed'), 'false');
   await zoomIn.click();
   await current.click();
   assert.equal(await map.getAttribute('viewBox'), expandedBox, 'Current room must restore a view containing the current room');
   assert(await current.isDisabled());
+  assert.equal(await current.getAttribute('aria-pressed'), 'true');
+  state = { ...states.expanded, current: '00-09', map_region: '09', current_detail: states.expanded.rooms.find(room => room.id === '09') };
+  await page.waitForFunction(() => document.getElementById('room-id').textContent === 'Room 00-09 · Current room');
+  assert.equal(await current.getAttribute('aria-pressed'), 'true', 'following must select newly entered rooms');
+  state = states.expanded;
+  await page.waitForFunction(() => document.getElementById('room-id').textContent === 'Room 00-05 · Current room');
 
   await page.mouse.move(bounds.x + 20, bounds.y + 20);
   await page.mouse.down();

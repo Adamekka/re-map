@@ -156,6 +156,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re1-map-020-name-the-unresolved-room-color-in-the-map-legend"></a>[RE1-MAP-020](research/re1/map-ui.md#re1-map-020-name-the-unresolved-room-color-in-the-map-legend) | name the unresolved room color in the map legend |
 | [RE1-MAP-021](research/re1/map-ui.md#re1-map-021-matching-access-survives-different-descriptions-on-opposite-sides) | matching access survives different descriptions on opposite sides |
 | [RE1-MAP-022](research/re1/map-ui.md#re1-map-022-remove-a-key-symbol-after-fresh-unlock-proof) | remove a key symbol after fresh unlock proof |
+| [RE1-MAP-023](research/re1/map-ui.md#re1-map-023-follow-player-explicitly-resumes-room-selection) | follow player explicitly resumes room selection |
 
 ## RE1 approximate player position
 
