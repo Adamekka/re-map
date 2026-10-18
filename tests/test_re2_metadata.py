@@ -56,6 +56,7 @@ def test_conditional_return_does_not_hide_later_pickup():
             "slot": 8,
             "type": 20,
             "amount": 15,
+            "amounts": [15],
             "global_id": 9,
             "four_point": False,
         }
@@ -117,7 +118,7 @@ def test_init_gosub_uses_main_table_and_returns_to_its_caller():
     [
         (bytes([2]), b""),  # Unsupported task control.
         (bytes([0x21, 4, 0, 1]), b""),  # Predicate outside a supported if.
-        (b"", bytes([0x46, 8, 2, 0, 20, 0, 15, 0, 9, 0])),  # Identity reset.
+        (b"", bytes([0x46, 8, 2, 0, 21, 0, 15, 0, 9, 0])),  # Identity reset.
         (b"", bytes([0x2C, 8, 0, 0]) + bytes(16)),  # Slot repurposed.
     ],
 )
@@ -210,6 +211,79 @@ def test_item_initializer_with_an_unresolved_interaction_is_not_a_presence_proof
         ]
         == []
     )
+
+
+def test_unrelated_resets_and_matching_reward_activation_preserve_identity():
+    script = (
+        bytes([0x46, 0, 5, 0x31, 255, 0, 24, 1, 0, 0])
+        + item_command(20, 15, 9)
+        + bytes([0x46, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+        + bytes([1, 0])
+    )
+    activation = bytes([0x46, 8, 2, 0x31, 20, 0, 4, 0, 9, 0, 1, 0])
+    data = synthetic_room(script, (bytes([1, 0]), activation))
+    result = decode_room(data, "synthetic")
+    assert result["collection_item_ids"] == [9]
+    assert result["items"][0]["amounts"] == [4, 15]
+
+
+@pytest.mark.parametrize(
+    "interaction,item_type,gid", [(2, 21, 9), (2, 20, 10), (5, 20, 9)]
+)
+def test_later_identity_reset_cannot_authorize_an_earlier_reward(
+    interaction, item_type, gid
+):
+    reset = bytes([0x46, 8, interaction, 0]) + struct.pack("<3H", item_type, 1, gid)
+    data = synthetic_room(
+        item_command(20, 15, 9) + bytes([1, 0]),
+        (bytes([1, 0]), reset + bytes([1, 0])),
+    )
+    assert decode_room(data, "synthetic")["collection_item_ids"] == []
+
+
+def test_automatic_task_does_not_make_its_items_mandatory():
+    data = synthetic_room(
+        bytes([4, 255, 0x18, 1]) + item_command(20, 15, 9) + bytes([1, 0]),
+        (bytes([1, 0]), item_command(30, 1, 10, slot=9) + bytes([1, 0])),
+    )
+    assert decode_room(data, "synthetic")["collection_item_ids"] == [9]
+
+
+def test_reset_without_a_matching_creator_leaves_coverage_unresolved():
+    data = synthetic_room(
+        item_command(20, 15, 9) + bytes([1, 0]),
+        (bytes([1, 0]), bytes([0x46, 9, 2, 0, 30, 0, 1, 0, 10, 0, 1, 0])),
+    )
+    result = decode_room(data, "synthetic")
+    assert not result["candidate_list_complete"]
+    assert result["collection_item_ids"] == []
+
+
+def test_event_slot_replacement_does_not_erase_unrelated_item_proof():
+    data = synthetic_room(
+        bytes([4, 255, 0x18, 1])
+        + item_command(20, 15, 9)
+        + item_command(30, 1, 10, slot=9)
+        + bytes([1, 0]),
+        (bytes([1, 0]), bytes([0x2C, 8, 5, 0]) + bytes(16) + bytes([1, 0])),
+    )
+    assert decode_room(data, "synthetic")["collection_item_ids"] == [10]
+
+
+@pytest.mark.parametrize("task,procedure", [(0, 1), (1, 1), (9, 1), (255, 255)])
+def test_explicit_or_missing_tasks_do_not_prove_startup_execution(task, procedure):
+    data = synthetic_room(
+        bytes([4, task, 0x18, procedure]) + item_command(20, 15, 9) + bytes([1, 0])
+    )
+    assert decode_room(data, "synthetic")["collection_item_ids"] == []
+
+
+def test_audited_actor_setup_does_not_block_later_reward_declaration():
+    setup = bytes.fromhex(
+        "2e0300 3d1000 260005100400 350010 3200bec1000089c6 4b0007 6e000b020000"
+    )
+    data = synthetic_room(setup + item_command(20, 15, 9) + bytes([1, 0]))
+    assert decode_room(data, "synthetic")["collection_item_ids"] == [9]
 
 
 def test_truncated_script_and_branch_outside_procedure_are_rejected():

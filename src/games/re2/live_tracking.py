@@ -236,7 +236,7 @@ def poll_re2(
                 amounts = (
                     {live_items[item["offset"]][1] for item in available}
                     if available
-                    else {item["amount"] for item in variants}
+                    else {amount for item in variants for amount in item["amounts"]}
                 )
                 quantity = (
                     next(iter(amounts))

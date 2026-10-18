@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from emulator.duckstation_gdb import MemRead
 from games.game_profile import RoomId
+from games.item_quantity import ItemQuantityState
 from games.re2.live_tracking import poll_re2
 from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import RuntimeSignature
@@ -33,6 +34,9 @@ def profile():
 @pytest.fixture
 def snapshot(profile):
     room = copy.deepcopy(profile.rooms["00-01"])
+    # These generic reader cases deliberately model an unproven source. The
+    # actual scripted reward's generated proof is checked separately below.
+    room["collection_item_ids"] = []
     for proof in room["proofs"]:
         proof["sha256"] = hashlib.sha256(bytes(proof["width"])).hexdigest()
     profile = replace(
@@ -114,6 +118,40 @@ def test_disabled_candidates_do_not_establish_presence_or_clearance(snapshot):
     put(0x800C66C8 + 11 * 4, 0, 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
+
+
+def test_generated_scripted_reward_tracks_activation_collection_and_rewind(snapshot):
+    profile, _, put, read = snapshot
+    room = copy.deepcopy(profile.rooms["00-01"])
+    room["collection_item_ids"] = Re2Profile.load(
+        ROOT / "profiles/re2_leon_a_slus00421.json"
+    ).rooms["00-01"]["collection_item_ids"]
+    assert room["collection_item_ids"] == [0, 1, 15]
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    reward = next(item for item in room["items"] if item["global_id"] == 15)
+    pointer = 0x80100000 + reward["offset"] + 2
+    tracker = Tracker()
+    for kind, flags, expected in (
+        (0, 0xC0000000, "uncollected"),
+        (2, 0xC0000000, "available"),
+        (0, 0xC0010000, "taken"),
+        (0, 0xC0000000, "uncollected"),
+    ):
+        for item in room["items"]:
+            put(0x80100000 + item["offset"] + 2, 0, 1)
+        put(pointer, kind, 1)
+        put(pointer + 14, 4, 2)
+        put(0x800CC9E8, flags, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-01"]
+        detail = next(item for item in record.items if item.label == "Shotgun")
+        assert detail.state == expected
+        assert detail.quantity == (
+            4 if kind == 2 else ItemQuantityState.Unreconstructed
+        )
+        assert record.completion is (
+            RoomCompletion.Cleared if expected == "taken" else RoomCompletion.Incomplete
+        )
 
 
 @pytest.mark.parametrize("departed", [False, True])

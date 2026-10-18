@@ -127,3 +127,25 @@ def test_re2_collection_proofs_are_required_validated_metadata(tmp_path, proof):
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="RE2.*collection"):
         Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "amounts", [None, [], [True], ["5"], [5, 5], [5, 4], [4], [-1, 5], [5, 65536]]
+)
+def test_re2_quantity_alternatives_are_required_validated_metadata(tmp_path, amounts):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    item = next(room for room in document["rooms"] if room["items"])["items"][0]
+    if amounts is None:
+        del item["amounts"]
+    else:
+        item["amounts"] = amounts
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 source quantity"):
+        Re2Profile.load(path)

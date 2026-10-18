@@ -315,6 +315,38 @@ def decode_room(data: bytes, source: str) -> dict:
                 "commands": sorted(commands.values(), key=lambda row: row["offset"]),
             }
 
+    resets = [
+        command
+        for program in programs.values()
+        for command in program["commands"]
+        if command["kind"] == "reset"
+    ]
+    for item in items.values():
+        item["amounts"] = sorted(
+            {item["amount"]}
+            | {
+                struct.unpack("<3H", bytes(command["data"]))[1]
+                for command in resets
+                if command["interaction"] == 2
+                and command["slot"] == item["slot"]
+                and struct.unpack("<3H", bytes(command["data"]))[::2]
+                == (item["type"], item["global_id"])
+            }
+        )
+    if any(
+        command["interaction"] == 2
+        and not any(
+            item["slot"] == command["slot"]
+            and (item["type"], item["global_id"])
+            == struct.unpack("<3H", bytes(command["data"]))[::2]
+            for item in items.values()
+        )
+        for command in resets
+    ):
+        # A reset can introduce an item absent from the creator catalog.
+        # Withhold full-list knowledge until that identity is reconstructed.
+        complete = False
+
     def collection_items() -> list[int]:
         # RE2-COLLECT-001: prove presence independently of activation. A catalog
         # entry alone may belong to a conditional or never-started procedure.
@@ -332,6 +364,32 @@ def decode_room(data: bytes, source: str) -> dict:
             )
             > 1
         }
+        # An event can reuse the registry slot after startup. A creator for
+        # another interaction cannot establish the original item's lifetime.
+        ambiguous_slots.update(
+            doors[command["door"]]["slot"]
+            if command["kind"] == "door"
+            else command["slot"]
+            for program in programs.values()
+            for command in program["commands"]
+            if command["kind"] in ("door", "interaction")
+        )
+        for command in resets:
+            identities = {
+                (item["type"], item["global_id"])
+                for item in items.values()
+                if item["slot"] == command["slot"]
+            }
+            if not identities:
+                continue
+            payload = bytes(command["data"])
+            if command["interaction"] == 0 and not any(payload):
+                continue
+            item_type, _amount, gid = struct.unpack("<3H", payload)
+            # RE2-COLLECT-003: a later reset can change identity even when
+            # its event is not part of startup. Quantity is not identity.
+            if command["interaction"] != 2 or identities != {(item_type, gid)}:
+                ambiguous_slots.add(command["slot"])
         commands = {
             key: {command["offset"]: command for command in program["commands"]}
             for key, program in programs.items()
@@ -399,23 +457,36 @@ def decode_room(data: bytes, source: str) -> dict:
                         found = found | {(item["global_id"], item["type"])}
                     position = command["next"]
                 elif kind == "reset":
-                    # A zeroed inactive record hides a previously declared
-                    # reward. Other resets can replace its identity operands.
-                    if command["interaction"] != 0 or any(command["data"]):
+                    # Reset writes only its registered slot. The room-wide
+                    # check above excludes identities that it can replace.
+                    position = command["next"]
+                elif opcode == 4:
+                    # Automatic tasks run after the two startup tasks. Do not
+                    # count their conditional declarations as startup proof.
+                    packet = data[position : command["next"]]
+                    if packet[1] < 10 or f"17:{packet[3]}" not in programs:
                         return []
                     position = command["next"]
                 elif kind in ("door", "interaction"):
-                    slot = (
-                        doors[command["door"]]["slot"]
-                        if kind == "door"
-                        else command["slot"]
-                    )
-                    if any(item["slot"] == slot for item in items.values()):
-                        return []
+                    # These creators' slots were excluded above, including
+                    # creators reached only by an asynchronous event.
                     position = command["next"]
-                elif opcode in (0, 0x22, 0x2D, 0x44):
+                elif opcode in (
+                    0,
+                    0x22,
+                    0x26,
+                    0x2D,
+                    0x2E,
+                    0x32,
+                    0x35,
+                    0x3D,
+                    0x44,
+                    0x4B,
+                    0x6E,
+                ):
                     # Audited fall-through commands: padding, flag writes,
-                    # object setup and enemy setup do not declare collectibles.
+                    # scalar/actor setup and camera replacement do not declare
+                    # collectibles or yield the executing startup task.
                     position = command["next"]
                 else:
                     return []

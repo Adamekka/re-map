@@ -275,5 +275,6 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re2-live-003-controlled-route-pickups-and-reentry"></a>[RE2-LIVE-003](research/re2.md#re2-live-003-controlled-route-pickups-and-reentry) | controlled route, pickups, reentry and restored exploration |
 | <a id="re2-collect-001-source-established-items-remain-until-collected"></a>[RE2-COLLECT-001](research/re2.md#re2-collect-001-source-established-items-remain-until-collected) | source-established items remain until collected |
 | <a id="re2-collect-002-conflicting-slots-preserve-unrelated-item-proofs"></a>[RE2-COLLECT-002](research/re2.md#re2-collect-002-conflicting-slots-preserve-unrelated-item-proofs) | conflicting slots preserve unrelated item proofs |
+| <a id="re2-collect-003-scripted-activation-preserves-collection-identity"></a>[RE2-COLLECT-003](research/re2.md#re2-collect-003-scripted-activation-preserves-collection-identity) | scripted activation preserves collection identity and quantity uncertainty |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.

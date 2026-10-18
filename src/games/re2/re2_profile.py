@@ -146,6 +146,19 @@ class Re2Profile:
                     "RE2 source requires explicit collection identity proofs"
                 )
             required = room["collection_item_ids"]
+            for item in room["items"]:
+                if (
+                    "amounts" not in item
+                    or type(item["amounts"]) is not list
+                    or not item["amounts"]
+                    or any(
+                        type(amount) is not int or not 0 <= amount <= 0xFFFF
+                        for amount in item["amounts"]
+                    )
+                    or item["amounts"] != sorted(set(item["amounts"]))
+                    or item["amount"] not in item["amounts"]
+                ):
+                    raise ValueError("invalid RE2 source quantity alternatives")
             if (
                 type(required) is not list
                 or any(type(gid) is not int for gid in required)
