@@ -5,7 +5,8 @@
   "research_ids": [
     "RE2-SCD-001",
     "RE2-MAP-001",
-    "RE2-COLLECT-001"
+    "RE2-COLLECT-001",
+    "RE2-COLLECT-002"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "rooms": [
@@ -3851,7 +3852,10 @@
         }
       ],
       "candidate_list_complete": true,
-      "collection_item_ids": [],
+      "collection_item_ids": [
+        35,
+        153
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 3,
@@ -6128,7 +6132,11 @@
         }
       ],
       "candidate_list_complete": true,
-      "collection_item_ids": [],
+      "collection_item_ids": [
+        62,
+        64,
+        65
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 20,

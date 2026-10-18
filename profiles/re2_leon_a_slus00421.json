@@ -27,7 +27,8 @@
     "RE2-SCD-001",
     "RE2-MAP-001",
     "RE2-LIVE-001",
-    "RE2-COLLECT-001"
+    "RE2-COLLECT-001",
+    "RE2-COLLECT-002"
   ],
   "metadata_layout": {
     "map_info_address_ps1": "0x800A2DF4",

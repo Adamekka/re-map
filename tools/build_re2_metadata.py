@@ -363,7 +363,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     return (
         {
             **header,
-            "research_ids": [*header["research_ids"], "RE2-COLLECT-001"],
+            "research_ids": [
+                *header["research_ids"],
+                "RE2-COLLECT-001",
+                "RE2-COLLECT-002",
+            ],
             "rooms": rooms,
         },
         {**header, "stage_modulus": 256, "areas": plans, "locations": locations},

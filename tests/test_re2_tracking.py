@@ -1,6 +1,7 @@
 """RE2-LIVE-001 / RE2-COLLECT-001: coherent collection and flag rewind.
 
 These tests exercise interpretation contracts; they are not gameplay evidence.
+RE2-COLLECT-002 checks known items alongside unresolved slot identities.
 """
 
 import copy
@@ -193,6 +194,49 @@ def test_ambiguous_item_identity_stays_unknown_even_with_acquisition_flag(snapsh
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
     assert any(item.state == "unknown" for item in tracker.rooms["00-01"].items)
+
+
+@pytest.mark.parametrize("departed", [False, True])
+def test_unrelated_proven_items_survive_ambiguity_collection_and_rewind(
+    snapshot, departed
+):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    # Synthetic source: two mandatory identities and one conflicting identity.
+    # Decoder regressions separately establish the slot-local presence proof.
+    source["items"].append({**source["items"][0], "type": 20, "offset": 100})
+    source["collection_item_ids"] = [0, 1]
+    rooms = {**profile.rooms, "00-01": source}
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 1))
+    if departed:
+        rooms["00-00"] = {**source, "stage": 0, "room": 0}
+        put(profile.room_address, 0, 2)
+    profile = replace(profile, rooms=rooms)
+    for definition in source["items"]:
+        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+    visits = None
+    for flags, expected in (
+        (0, RoomCompletion.Incomplete),
+        (0xC0010000, RoomCompletion.Unknown),
+        (0, RoomCompletion.Incomplete),
+    ):
+        put(0x800CC9E8, flags, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-01"]
+        assert record.completion is expected
+        assert record.collected_items == (2 if flags else 0)
+        states = [item.state for item in record.items]
+        assert states.count("unknown") == 1
+        assert states.count("taken" if flags else "uncollected") == 2
+        assert record.reason
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    fresh = Tracker()
+    fresh.mark_current(RoomId(0, 1))
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms["00-01"].completion is RoomCompletion.Incomplete
 
 
 @pytest.mark.parametrize(

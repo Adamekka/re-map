@@ -320,8 +320,10 @@ def decode_room(data: bytes, source: str) -> dict:
         # entry alone may belong to a conditional or never-started procedure.
         if not complete:
             return []
-        if any(
-            len(
+        ambiguous_slots = {
+            slot
+            for slot in {item["slot"] for item in items.values()}
+            if len(
                 {
                     (item["global_id"], item["type"])
                     for item in items.values()
@@ -329,11 +331,7 @@ def decode_room(data: bytes, source: str) -> dict:
                 }
             )
             > 1
-            for slot in {item["slot"] for item in items.values()}
-        ):
-            # Reusing one interaction for different items needs a descriptor
-            # history proof; counting every creator would invent collectibles.
-            return []
+        }
         commands = {
             key: {command["offset"]: command for command in program["commands"]}
             for key, program in programs.items()
@@ -395,7 +393,10 @@ def decode_room(data: bytes, source: str) -> dict:
                     item = items[command["item"]]
                     if data[item["offset"] + 2] not in (0, 2):
                         return []
-                    found = found | {(item["global_id"], item["type"])}
+                    # RE2-COLLECT-002: conflicting slot identities need their
+                    # own history proof; they cannot erase unrelated items.
+                    if item["slot"] not in ambiguous_slots:
+                        found = found | {(item["global_id"], item["type"])}
                     position = command["next"]
                 elif kind == "reset":
                     # A zeroed inactive record hides a previously declared

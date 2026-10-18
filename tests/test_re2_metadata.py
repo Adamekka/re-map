@@ -1,4 +1,7 @@
-"""RE2-SCD-001 / RE2-MAP-001 / RE2-COLLECT-001: source contracts, not gameplay."""
+"""RE2-SCD-001 / RE2-MAP-001 / RE2-COLLECT-001: source contracts, not gameplay.
+
+RE2-COLLECT-002 covers independent presence proofs for unrelated slots.
+"""
 
 import hashlib
 import json
@@ -137,6 +140,65 @@ def test_replaced_item_slot_does_not_turn_both_initializers_into_required_items(
         item_command(20, 15, 9) + item_command(30, 1, 10) + bytes([1, 0])
     )
     assert decode_room(data, "synthetic")["collection_item_ids"] == []
+
+
+@pytest.mark.parametrize("unrelated_first", [False, True])
+@pytest.mark.parametrize("replacement_type,replacement_gid", [(20, 10), (30, 9)])
+def test_conflicting_slot_does_not_discard_an_unrelated_item(
+    unrelated_first, replacement_type, replacement_gid
+):
+    conflict = item_command(20, 15, 9) + item_command(
+        replacement_type, 1, replacement_gid
+    )
+    unrelated = item_command(38, 1, 11, slot=9)
+    script = unrelated + conflict if unrelated_first else conflict + unrelated
+    result = decode_room(synthetic_room(script + bytes([1, 0])), "synthetic")
+    assert result["collection_item_ids"] == [11]
+
+
+def test_branch_conflicts_leave_an_unconditional_item_proven():
+    script = (
+        bytes([6, 0, 30, 0, 0x21, 4, 0, 1])
+        + item_command(20, 15, 9)
+        + bytes([7, 0, 28, 0])
+        + item_command(30, 1, 10)
+        + bytes([0, 0])
+        + item_command(38, 1, 11, slot=9)
+        + bytes([1, 0])
+    )
+    assert decode_room(synthetic_room(script), "synthetic")["collection_item_ids"] == [
+        11
+    ]
+
+
+def test_conflicting_acquisition_identity_across_slots_stays_unproven():
+    script = (
+        item_command(20, 15, 9)
+        + item_command(30, 1, 9, slot=9)
+        + item_command(38, 1, 11, slot=10)
+        + bytes([1, 0])
+    )
+    assert decode_room(synthetic_room(script), "synthetic")["collection_item_ids"] == [
+        11
+    ]
+
+
+def test_uncalled_conflict_does_not_create_an_item_or_erase_unrelated_proof():
+    data = synthetic_room(
+        item_command(20, 15, 9) + item_command(38, 1, 11, slot=9) + bytes([1, 0]),
+        (bytes([1, 0]), item_command(30, 1, 10) + bytes([1, 0])),
+    )
+    assert decode_room(data, "synthetic")["collection_item_ids"] == [11]
+
+
+def test_unsupported_control_flow_still_discards_independent_item_proofs():
+    script = (
+        item_command(38, 1, 11, slot=9)
+        + item_command(20, 15, 9)
+        + item_command(30, 1, 10)
+        + bytes([2, 1, 0])
+    )
+    assert decode_room(synthetic_room(script), "synthetic")["collection_item_ids"] == []
 
 
 def test_item_initializer_with_an_unresolved_interaction_is_not_a_presence_proof():
