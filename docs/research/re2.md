@@ -91,6 +91,8 @@ Contributions:
 
 Status: Confirmed for the two observed ammunition acquisition flags and the listed DuckStation restores on SLUS-00421. Other item IDs, shotgun availability, door unlocks and the route to the RPD remain Candidate or untested. This is partial validation of the approved opening-route work, not completion of that route.
 
+The later controlled route observations are recorded in RE2-LIVE-003 below. The limits in this entry describe the earlier shop-only pass.
+
 Game, region, disc and executable identity are pinned in RE2-IDENTITY-001. Tests used the same isolated DuckStation `0.1-12083-g00e299795 (dev)` portable copy on 2026-10-18. Before boot, both `[Achievements] Enabled` and `[Cheevos] Enabled` were false, the copy had no account credentials or per-game overrides, and both memory-card slots were `None`. A private in-memory `Tracker` accumulated observations; the user's history file was never opened. These observations do not test history-file persistence or normal memory-card saves.
 
 ### Observed pickups
@@ -140,3 +142,73 @@ Contributions:
 
 - 2026-10-18; human user; approved opening-route pickup, door-access and savestate-rewind validation and scoped fixes.
 - 2026-10-18; Codex root, exact model `gpt-6.1-sol`, verified from the matching session's latest turn metadata; performed the controller-driven pickups, recorded setup edits and captures, restored the listed checkpoints, replayed the bounded production reader and authored this evidence. Direct checks compared flag bytes, collected counts, capture hashes and retained room visits. The existing focused RE2 Python suite passed 36 tests. Those synthetic tests do not extend the runtime claims above.
+
+## RE2-LIVE-003: controlled route, pickups and reentry
+
+Status: Confirmed for the listed ammunition acquisitions, open-door transitions and savestate reversals on SLUS-00421. The observations cover selected interactions through the RPD entrance. They do not establish an uninterrupted route using ordinary navigation, every item condition or campaign-wide readiness. Key-unlock reversal remains untested.
+
+Game, region, disc and executable identity are pinned in RE2-IDENTITY-001. The isolated emulator was official DuckStation `0.1-12083-g00e299795 (dev)` on 2026-10-18. Both achievement settings were false before each boot, both memory-card slots were `None`, and the copy had no credentials or per-game overrides. The user's normal history was never opened.
+
+### Setup and pickup observations
+
+The human provided an agent-instance checkpoint in room `00-02` after leaving the shop. Its inherited health and infinite-magazine setup are documented in RE2-LIVE-002. No acquisition, key, story or enemy-state flags were written for this pass. Further position/facing writes used the same fields documented there and were recorded in `position-edits.jsonl`. No enemy-freeze or invulnerability patch was enabled.
+
+The first additional ammunition pickup followed ordinary controller navigation from that checkpoint. Later pickups and door interactions used position edits within the loaded room, followed by controller input through the native computer-use tool. Each pickup changed a separate reserve-ammunition stack by 15. The observed branch containing ID 154 was rewound before continuing the later route; the three gains did not accumulate in one uninterrupted inventory sequence.
+
+All three flags below are unsigned 32-bit little-endian words in bank 8, at PS1 virtual addresses. The native acquisition interpretation is shared with RE2-SCD-001.
+
+| Room | Acquisition ID | Word address | Mask | Observed word change | Reader result after collection |
+| --- | --- | --- | --- | --- | --- |
+| `00-02` | 154 | `0x800CC9F8` | `0x00000020` | `0x00000000` to `0x00000020` | Collected 1; Unknown because list coverage is incomplete |
+| `00-18` | 161 | `0x800CC9FC` | `0x40000000` | `0x00000000` to `0x40000000` | Collected 1; Unknown because list coverage is incomplete |
+| `00-1a` | 195 | `0x800CCA00` | `0x10000000` | `0x00000000` to `0x10000000` | Incomplete to Cleared under the current candidate completion policy |
+
+Before each pickup, the reader reported one available 15-round item and collected count 0. Loading the earlier `00-02` checkpoint reset ID 154, restored that pickup to Available and returned the room to Incomplete. The item prompt captured as `bus-pickup-prompt` temporarily failed the loaded-source layout check. Replaying it after an accepted capture returned Retry without changing visits, items, doors or map state.
+
+### Transitions and reentry
+
+Controller-driven transitions reached `00-02 -> 00-18 -> 00-19 -> 00-1a -> 00-1b -> 00-03 -> 01-00`. Each selected source descriptor was reported Open before the successful interaction, and the reader accepted the destination's revision and relocated source proofs afterward. Position edits prepared these interactions; this does not validate the walking path between them or the projected door-marker position.
+
+After the initial entrance sequence finished, `01-00 -> 00-03 -> 01-00` also succeeded. The reader returned from native map selection `re2-02:00` to `re2-00:03` and back. The native trigger-floor byte at PS1 virtual `0x800C7E2A`, unsigned 8-bit with mask `0xFF`, was 1 inside and 3 outside. These observations do not confirm conditional multi-floor selections or visual heading alignment. Bank 31 remained all zero throughout, so no actual key unlock or unlock rewind is claimed.
+
+### Actual loads and exploration persistence
+
+The same in-memory tracker handled actual earlier and later DuckStation loads. `route-rewind-outside` returned to `00-02`, cleared IDs 161 and 195, and changed the departed `00-1a` from Cleared to Unknown with collected count 0. The later `entrance-ready.sav` restore returned to `01-00`, restored both flags and the departed room's collected count 1 and Cleared result. Its full RAM was byte-identical to `entrance-ready.ram`.
+
+An additional replay used one fresh tracker and the unchanged pinned profile across the opening, shop and accepted route captures, then the earlier and later loads. It retained exactly nine room IDs and nine native map-region visits. The production `VisitHistory` writer saved these visits to the private `captured-route-history.json` with the RE2 revision, Leon A scenario and a new agent playthrough identity. Closing and reopening that file preserved its identity and visits, initialized completion to Unknown, then reconstructed the reversed and restored acquisition results from the actual load captures. This is a real file round trip using runtime-derived visits and captured memory; it is not a live runner restart or a normal memory-card save test.
+
+### Private evidence and reproduction
+
+Evidence remains under `/tmp/re-map-re2-route-20261018/`. These are local temporary references, not portable public fixtures. Raw RAM, savestates, executable bytes and original game assets remain outside Git. `capture-audit.json` lists every replayed capture and its hash; `audit_captures.py` runs the unmodified production reader and history writer/reader without replacing signatures or source proofs.
+
+| Capture | SHA256 |
+| --- | --- |
+| `user-outside.ram` | `dd0608342c984754f76b8c1241364f2294d44a05aa183f4dea0c7857422ed37b` |
+| `alley-ammo-taken.ram` | `a38cdcf961b0597e55d3a969a862e0ef75b49b92c47cdde51813a128e8afefbf` |
+| `alley-rewind.ram` | `99d47c8984da972dfcefc1d1dfecf64f2d58417dc0d06e9e546e12e78e8b50d9` |
+| `street18-entry.ram` | `7c9de05146105afde6942fd78df27e9d5394089ea4685ccfbc3563d6a073ee4a` |
+| `street18-ammo-taken.ram` | `598cecb96a65cb31ddb7e594f051ce0f4311fc3d969876febc5b15a1a1968d55` |
+| `bus-entry.ram` | `f6c0455e43d957368bd67a03ff9e05f32f0c4ca50249e73c83a80198d362bf0d` |
+| `bus-ammo-taken-controlled.ram` | `76830f7263dbdf14272f1272cd07ab9c766bbfd7c1567e922da78b5dfa34b46f` |
+| `courtyard-accepted.ram` | `3f746ff99afa4e20f8490ced7b7a971ffa18b6e546bc9467354d5213de11cbad` |
+| `entrance-ready.ram` and `route-restore-later.ram` | `2a486cc56163659f199f045b40d43b1529d88734f45e58c0c4b8aff18ec2c75f` |
+| `courtyard-return.ram` | `9f6258b551a6a0d5468fbc40d5dea4160d8c9bc06ebe3697b4e64b6b73e51059` |
+| `entrance-reentry.ram` | `91294a1d81af1dbbd9191d4550937f3c0a94a75b1da5db1f770652dbc4c86594` |
+| `route-rewind-outside.ram` | `b8e102b633e6605df841d67c5936af1de188b0b7c914a16645f86a98e4dee737` |
+
+The human-provided `user-outside-172650.sav` has SHA256 `995bb0ff5df6eb6b254d87ea9c6af5386105a50bfd50cdab018da50465965bfa`. The later `entrance-ready.sav` has SHA256 `156a026d3bce5b039b48f0f5f3a14f78a551e8b3be10ce5afcb4c0e1d0ce0c73`. The intermediate `bus-ammo.sav` has SHA256 `dabf821457d8d90462d8f817133b69adc95f695bc41aa2a3fa4707a54ccce0ee`.
+
+Reproduce with the pinned disc and isolated settings. Load the human checkpoint, capture before and after collecting ID 154, then load the earlier state again. For later position-assisted interactions, use the recorded coordinates and writes in `position-edits.jsonl`, allow player initialization to finish, and pause between actions. A fresh native-control connection, a 700 ms unbound-input interval after unpausing and the existing repeated-Cross macro produced the successful final interactions. These are test-control observations, not a confirmed explanation of every missed input. Load the earlier and later checkpoints while paused, capture full RAM, then run the private audit. Do not substitute metadata proofs or synthetic bytes for these snapshots.
+
+To avoid exposing gameplay, the isolated copy used a temporary display shader whose `main` calls `SetOutput(float4(0.0, 0.0, 0.0, 1.0))`. The format follows DuckStation's pinned [GLSL example](https://github.com/stenzek/duckstation/blob/00e299795/data/resources/shaders/simple-brightness.glsl); its [post-processing configuration](https://github.com/stenzek/duckstation/blob/00e299795/src/util/postprocessing.cpp#L278-L346) enabled one stage in `PostProcessing`. A private screenshot's central half had zero minimum and maximum channel values. No game screenshots were emitted to chat after the human requested spoiler-free testing. The test emulator was stopped, its original controls restored and the human-provided checkpoint returned to the test slot afterward.
+
+### Excluded attempts and limits
+
+`bus-reentry-controlled`, `courtyard-entry-controlled` and `courtyard-reentry-accepted` did not reach the destinations their provisional filenames suggested. They are excluded as successful transitions. Earlier coordinate, grab-animation and missed-input attempts also establish no passage or collection. Two diagnostic breakpoint attempts did not observe the expected input/door call and supplied no new gameplay contract. They do not justify changing access interpretation. The later accepted captures and explicit current-room checks supply the successful evidence above.
+
+No production code changed. The current pass does not resolve shotgun activation, scenario-dependent absence, every door condition, key unlocks, conditional floors, visual map alignment or normal-save persistence. It does not validate a complete campaign.
+
+Contributions:
+
+- 2026-10-18; human user; supplied the isolated checkpoint after the shop and clarified that test preparation must not spoil the game or require playing ahead.
+- 2026-10-18; Codex root, exact model `gpt-6.1-sol`, verified from the matching session's latest turn metadata; performed the additional controller interactions, position setups, captures, loads and reentry; created the temporary black display; replayed the production reader and performed the private history-file round trip; authored this entry and updated the coverage guides. Direct checks verified all three flag masks, inventory deltas, accepted source identities, unchanged state on the captured item prompt, restored counts and completion, nine retained visits and byte-identical later RAM. The focused Python suite passed 36 tests. Those synthetic regressions do not extend the listed runtime coverage.

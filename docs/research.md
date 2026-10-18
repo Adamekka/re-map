@@ -272,5 +272,6 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re2-map-001-native-leon-floor-selectors-and-numeric-contours"></a>[RE2-MAP-001](research/re2.md#re2-map-001-native-leon-floor-selectors-and-numeric-contours) | native Leon floor selectors and numeric contours |
 | <a id="re2-live-001-coherent-opening-room-reads-and-explicit-runtime-limits"></a>[RE2-LIVE-001](research/re2.md#re2-live-001-coherent-opening-room-reads-and-explicit-runtime-limits) | coherent opening-room reads and explicit runtime limits |
 | <a id="re2-live-002-gun-shop-ammunition-and-savestate-reversal"></a>[RE2-LIVE-002](research/re2.md#re2-live-002-gun-shop-ammunition-and-savestate-reversal) | gun-shop ammunition and savestate reversal |
+| <a id="re2-live-003-controlled-route-pickups-and-reentry"></a>[RE2-LIVE-003](research/re2.md#re2-live-003-controlled-route-pickups-and-reentry) | controlled route, pickups, reentry and restored exploration |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.

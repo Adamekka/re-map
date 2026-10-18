@@ -55,6 +55,7 @@
 
 ## Emulator testing
 
+- Keep RE2 test gameplay out of view and chat reports free of game screenshots and progression spoilers. Do not ask the user to play ahead to prepare tests.
 - Use a separate exploration history for agent tests so test visits do not reveal rooms in the user's playthrough.
 - Verify RetroAchievements are disabled before loading any game or save in an agent test instance.
 - Temporary infinite-health and infinite-ammunition patches are allowed for agent testing. Record enabled patches with the validation evidence.
