@@ -1,4 +1,4 @@
-"""RE2-LIVE-001: synthetic coherence, revision isolation and flag rewind.
+"""RE2-LIVE-001 / RE2-COLLECT-001: coherent collection and flag rewind.
 
 These tests exercise interpretation contracts; they are not gameplay evidence.
 """
@@ -102,17 +102,97 @@ def test_pickups_rewind_without_erasing_visits(snapshot):
     assert map_state(tracker)["current_detail"]["items"][0]["state"] == "unknown"
 
 
-def test_disabled_pickups_are_dormant_and_missing_ones_remain_unknown(snapshot):
+def test_disabled_candidates_do_not_establish_presence_or_clearance(snapshot):
     profile, _, put, read = snapshot
     tracker = Tracker()
     for definition in profile.rooms["00-01"]["items"]:
         put(0x80100000 + definition["offset"] + 2, 0, 1)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
-    assert tracker.rooms["00-01"].completion is RoomCompletion.Cleared
-    assert all(item.state == "dormant" for item in tracker.rooms["00-01"].items)
+    assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
+    assert all(item.state == "unknown" for item in tracker.rooms["00-01"].items)
     put(0x800C66C8 + 11 * 4, 0, 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
+
+
+@pytest.mark.parametrize("departed", [False, True])
+def test_source_established_items_remain_required_until_fresh_collection(
+    snapshot, departed
+):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    # This synthetic source has a complete presence proof. The real source's
+    # unsupported startup scripts are covered by the metadata regressions.
+    source["collection_item_ids"] = [0, 1, 15]
+    rooms = {**profile.rooms, "00-01": source}
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 1))
+    if departed:
+        rooms["00-00"] = {**source, "stage": 0, "room": 0}
+        put(profile.room_address, 0, 2)
+    profile = replace(profile, rooms=rooms)
+    for definition in source["items"]:
+        # Model a reset that destroys mutable item operands, then a missing
+        # registry. Neither changes the source-established acquisition identity.
+        pointer = 0x80100000 + definition["offset"] + 2
+        put(pointer, 0, 1)
+        put(pointer + 12, 0, 6)
+        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+    visits = None
+    for flags, expected in (
+        (0, RoomCompletion.Incomplete),
+        (0xC0010000, RoomCompletion.Cleared),
+        (0, RoomCompletion.Incomplete),
+    ):
+        put(0x800CC9E8, flags, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-01"]
+        assert record.completion is expected
+        assert record.total_items == 3
+        assert record.collected_items == (3 if flags else 0)
+        assert {item.state for item in record.items} == (
+            {"taken"} if flags else {"uncollected"}
+        )
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    # A fresh tracker reconstructs collection from metadata and flags, without
+    # retaining an earlier item list, clearance verdict or observation cache.
+    fresh = Tracker()
+    fresh.mark_current(RoomId(0, 1))
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms["00-01"].completion is RoomCompletion.Incomplete
+
+
+def test_known_remaining_item_wins_over_unresolved_coverage(snapshot):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    source["collection_item_ids"] = [0]
+    source["candidate_list_complete"] = False
+    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    for definition in source["items"]:
+        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    record = tracker.rooms["00-01"]
+    assert record.completion is RoomCompletion.Incomplete
+    assert not record.list_complete
+    assert {item.state for item in record.items} == {"uncollected", "unknown"}
+    assert record.reason
+
+
+def test_ambiguous_item_identity_stays_unknown_even_with_acquisition_flag(snapshot):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    source["items"].append({**source["items"][0], "type": 20, "offset": 100})
+    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    for definition in source["items"]:
+        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+    put(0x800CC9E8, 0xC0010000, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
+    assert any(item.state == "unknown" for item in tracker.rooms["00-01"].items)
 
 
 @pytest.mark.parametrize(

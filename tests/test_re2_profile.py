@@ -1,4 +1,4 @@
-"""RE2-IDENTITY-001: revision isolation and complete halfword room reads."""
+"""RE2-IDENTITY-001 / RE2-COLLECT-001: revision and required metadata checks."""
 
 import hashlib
 import json
@@ -108,3 +108,22 @@ def test_re2_room_metadata_fails_during_load(tmp_path, key, value):
     profile.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="RE2.*(coverage|award)"):
         Re2Profile.load(profile)
+
+
+@pytest.mark.parametrize("proof", [None, [True], ["9"], [0, 0], [999]])
+def test_re2_collection_proofs_are_required_validated_metadata(tmp_path, proof):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    if proof is None:
+        del document["rooms"][0]["collection_item_ids"]
+    else:
+        document["rooms"][0]["collection_item_ids"] = proof
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2.*collection"):
+        Re2Profile.load(path)

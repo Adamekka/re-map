@@ -1,7 +1,7 @@
 """Coherent bounded Leon A observations. RE2-LIVE-001, RE2-SCD-001.
 
-Inactive source candidates remain unresolved until their activation rules are
-understood. A missing live interaction alone never proves scenario absence.
+Collection proofs establish required items independently of activation. A
+missing live interaction alone never proves scenario absence or item presence.
 """
 
 from __future__ import annotations
@@ -180,9 +180,7 @@ def poll_re2(
                     unresolved_registry = True
                     continue
                 live_items[offset] = ("available", amount)
-            elif kind == 0 and definition in room["items"]:
-                live_items[offset] = ("dormant", definition["amount"])
-            elif kind == 0:
+            elif kind == 0 and definition in room["doors"]:
                 live_doors[offset] = {**definition, "inactive": True}
             elif kind == 1:
                 # Mutable descriptor payload controls current targets and locks.
@@ -225,16 +223,14 @@ def poll_re2(
                 types = {item["type"] for item in available or variants}
                 item_type = next(iter(types)) if len(types) == 1 else None
                 label = profile.names["items"].get(str(item_type), "Collectible")
-                if taken:
+                if item_type is None:
+                    state = "unknown"
+                elif taken:
                     state = "taken"
                 elif available:
                     state = "available"
-                elif visited == key and all(
-                    item["offset"] in live_items
-                    and live_items[item["offset"]][0] == "dormant"
-                    for item in variants
-                ):
-                    state = "dormant"
+                elif gid in source["collection_item_ids"]:
+                    state = "uncollected"
                 else:
                     state = "unknown"
                 amounts = (
@@ -356,16 +352,16 @@ def poll_re2(
     if area != "unmapped":
         tracker.region_visits[tracker.current_region] = key
     for source_id, details, complete in evaluations:
-        available = any(item.state == "available" for item in details)
+        remaining = any(item.state in ("available", "uncollected") for item in details)
         unknown = any(item.state == "unknown" for item in details)
-        # Dormant candidates remain visible in the item list but are outside
-        # the currently relevant collectible count used for clearance.
+        # A source-established reward remains required while its interaction
+        # is inactive, including after departure and earlier savestate loads.
         tracker.update_room_items(
             source_id,
-            sum(item.state not in ("dormant", "unavailable") for item in details),
+            len(details),
             sum(item.state == "taken" for item in details),
             complete,
-            available,
+            remaining,
             unknown,
         )
         record = tracker.rooms[str(source_id)]

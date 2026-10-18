@@ -361,7 +361,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         "validation": "Candidate; runtime coverage is listed in docs/research.md",
     }
     return (
-        {**header, "rooms": rooms},
+        {
+            **header,
+            "research_ids": [*header["research_ids"], "RE2-COLLECT-001"],
+            "rooms": rooms,
+        },
         {**header, "stage_modulus": 256, "areas": plans, "locations": locations},
     )
 

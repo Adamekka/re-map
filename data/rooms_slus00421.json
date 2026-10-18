@@ -4,7 +4,8 @@
   "executable_identity": "SLUS_004.21 SHA256 1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef",
   "research_ids": [
     "RE2-SCD-001",
-    "RE2-MAP-001"
+    "RE2-MAP-001",
+    "RE2-COLLECT-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "rooms": [
@@ -73,6 +74,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 0,
@@ -182,6 +184,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 1,
@@ -283,6 +286,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 2,
@@ -370,6 +374,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 3,
@@ -440,6 +445,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 4,
@@ -533,6 +539,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 5,
@@ -650,6 +657,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 6,
@@ -734,6 +742,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 7,
@@ -843,6 +852,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 8,
@@ -988,6 +998,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 9,
@@ -1100,6 +1111,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 10,
@@ -1219,6 +1231,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 11,
@@ -1334,6 +1347,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 12,
@@ -1435,6 +1449,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 13,
@@ -1522,6 +1537,10 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [
+        105,
+        106
+      ],
       "event_awards": [],
       "stage": 0,
       "room": 14,
@@ -1667,6 +1686,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 15,
@@ -1802,6 +1822,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 16,
@@ -1895,6 +1916,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 17,
@@ -2010,6 +2032,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 18,
@@ -2171,6 +2194,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 19,
@@ -2311,6 +2335,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 20,
@@ -2454,6 +2479,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 21,
@@ -2563,6 +2589,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 22,
@@ -2647,6 +2674,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 23,
@@ -2740,6 +2768,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 24,
@@ -2824,6 +2853,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 25,
@@ -2917,6 +2947,9 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [
+        195
+      ],
       "event_awards": [],
       "stage": 0,
       "room": 26,
@@ -3001,6 +3034,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 27,
@@ -3085,6 +3119,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 28,
@@ -3169,6 +3204,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 0,
       "room": 29,
@@ -3392,6 +3428,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 0,
@@ -3529,6 +3566,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 1,
@@ -3684,6 +3722,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [
         {
           "offset": 8944,
@@ -3812,6 +3851,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 3,
@@ -3935,6 +3975,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 4,
@@ -4033,6 +4074,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 5,
@@ -4152,6 +4194,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 6,
@@ -4309,6 +4352,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 7,
@@ -4466,6 +4510,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 8,
@@ -4591,6 +4636,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 9,
@@ -4726,6 +4772,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 10,
@@ -4895,6 +4942,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 11,
@@ -5048,6 +5096,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 12,
@@ -5159,6 +5208,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 13,
@@ -5340,6 +5390,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 14,
@@ -5471,6 +5522,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 15,
@@ -5582,6 +5634,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 16,
@@ -5759,6 +5812,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 17,
@@ -5852,6 +5906,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 18,
@@ -5947,6 +6002,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 19,
@@ -6072,6 +6128,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 20,
@@ -6151,6 +6208,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 21,
@@ -6244,6 +6302,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 22,
@@ -6359,6 +6418,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 25,
@@ -6488,6 +6548,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 26,
@@ -6631,6 +6692,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 1,
       "room": 27,
@@ -6715,6 +6777,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 0,
@@ -6826,6 +6889,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 1,
@@ -6910,6 +6974,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 2,
@@ -7022,6 +7087,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 3,
@@ -7120,6 +7186,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 4,
@@ -7218,6 +7285,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 5,
@@ -7297,6 +7365,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 6,
@@ -7404,6 +7473,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 7,
@@ -7488,6 +7558,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 8,
@@ -7572,6 +7643,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 9,
@@ -7656,6 +7728,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 10,
@@ -7793,6 +7866,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 11,
@@ -7888,6 +7962,10 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [
+        134,
+        140
+      ],
       "event_awards": [],
       "stage": 2,
       "room": 12,
@@ -7953,6 +8031,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 2,
       "room": 13,
@@ -8068,6 +8147,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 0,
@@ -8265,6 +8345,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 1,
@@ -8366,6 +8447,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 2,
@@ -8541,6 +8623,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 3,
@@ -8667,6 +8750,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 4,
@@ -8790,6 +8874,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 5,
@@ -8888,6 +8973,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 7,
@@ -9013,6 +9099,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 8,
@@ -9130,6 +9217,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 9,
@@ -9214,6 +9302,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 10,
@@ -9298,6 +9387,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 11,
@@ -9353,6 +9443,7 @@
       "items": [],
       "doors": [],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 12,
@@ -9437,6 +9528,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 13,
@@ -9552,6 +9644,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 14,
@@ -9607,6 +9700,7 @@
       "items": [],
       "doors": [],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 15,
@@ -9766,6 +9860,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 3,
       "room": 16,
@@ -9836,6 +9931,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 0,
@@ -9929,6 +10025,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 1,
@@ -10030,6 +10127,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 2,
@@ -10175,6 +10273,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 3,
@@ -10276,6 +10375,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 4,
@@ -10443,6 +10543,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 5,
@@ -10544,6 +10645,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 6,
@@ -10655,6 +10757,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 7,
@@ -10792,6 +10895,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 8,
@@ -10862,6 +10966,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 4,
       "room": 9,
@@ -10946,6 +11051,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 0,
@@ -11044,6 +11150,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 1,
@@ -11145,6 +11252,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 2,
@@ -11284,6 +11392,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 3,
@@ -11363,6 +11472,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 4,
@@ -11433,6 +11543,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 5,
@@ -11573,6 +11684,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 6,
@@ -11690,6 +11802,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 7,
@@ -11788,6 +11901,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 8,
@@ -11883,6 +11997,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 9,
@@ -12008,6 +12123,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 10,
@@ -12134,6 +12250,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 11,
@@ -12269,6 +12386,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 12,
@@ -12364,6 +12482,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 13,
@@ -12488,6 +12607,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 14,
@@ -12575,6 +12695,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 15,
@@ -12692,6 +12813,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 16,
@@ -12790,6 +12912,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 17,
@@ -12874,6 +12997,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 18,
@@ -12944,6 +13068,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 19,
@@ -13051,6 +13176,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 20,
@@ -13170,6 +13296,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 21,
@@ -13293,6 +13420,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 22,
@@ -13377,6 +13505,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 5,
       "room": 23,
@@ -13461,6 +13590,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 6,
       "room": 0,
@@ -13562,6 +13692,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 6,
       "room": 1,
@@ -13641,6 +13772,7 @@
         }
       ],
       "candidate_list_complete": false,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 6,
       "room": 2,
@@ -13739,6 +13871,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 6,
       "room": 3,
@@ -13826,6 +13959,7 @@
         }
       ],
       "candidate_list_complete": true,
+      "collection_item_ids": [],
       "event_awards": [],
       "stage": 6,
       "room": 4,

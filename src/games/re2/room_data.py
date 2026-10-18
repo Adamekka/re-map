@@ -314,6 +314,122 @@ def decode_room(data: bytes, source: str) -> dict:
                 "entry": start,
                 "commands": sorted(commands.values(), key=lambda row: row["offset"]),
             }
+
+    def collection_items() -> list[int]:
+        # RE2-COLLECT-001: prove presence independently of activation. A catalog
+        # entry alone may belong to a conditional or never-started procedure.
+        if not complete:
+            return []
+        if any(
+            len(
+                {
+                    (item["global_id"], item["type"])
+                    for item in items.values()
+                    if item["slot"] == slot
+                }
+            )
+            > 1
+            for slot in {item["slot"] for item in items.values()}
+        ):
+            # Reusing one interaction for different items needs a descriptor
+            # history proof; counting every creator would invent collectibles.
+            return []
+        commands = {
+            key: {command["offset"]: command for command in program["commands"]}
+            for key, program in programs.items()
+        }
+        outcomes = []
+        steps = 0
+        for root in ("16:0", "17:0"):
+            pending = [
+                (root, programs[root]["entry"], (), (), frozenset(), frozenset())
+            ]
+            finished = []
+            while pending:
+                key, position, returns, conditions, found, seen = pending.pop()
+                state = (key, position, returns, conditions)
+                steps += 1
+                # Unsupported paths and nontermination cannot prove that a
+                # later initializer runs. Discard the whole presence proof.
+                if steps > 4096 or state in seen or position not in commands[key]:
+                    return []
+                seen = seen | {state}
+                command = commands[key][position]
+                opcode, kind = command["opcode"], command["kind"]
+                if kind == "end":
+                    if returns:
+                        key, position, conditions = returns[-1]
+                        returns = returns[:-1]
+                    elif opcode == 1:
+                        finished.append(found)
+                        continue
+                    else:
+                        return []
+                elif kind == "call":
+                    # Native Gosub uses the main procedure table even when the
+                    # caller is the separately scheduled init task.
+                    target = f"17:{command['procedure']}"
+                    if target not in programs or len(returns) >= 4:
+                        return []
+                    returns = returns + ((key, command["next"], conditions),)
+                    key, position, conditions = target, programs[target]["entry"], ()
+                elif kind == "if":
+                    pending.append(
+                        (key, command["target"], returns, conditions, found, seen)
+                    )
+                    position = command["next"]
+                    conditions = conditions + (command["target"],)
+                elif opcode == 7:
+                    if not conditions:
+                        return []
+                    position, conditions = command["target"], conditions[:-1]
+                elif opcode == 8:
+                    if not conditions:
+                        return []
+                    position, conditions = command["next"], conditions[:-1]
+                elif kind == "flag_check":
+                    if not conditions:
+                        return []
+                    position = command["next"]
+                elif kind == "item":
+                    item = items[command["item"]]
+                    if data[item["offset"] + 2] not in (0, 2):
+                        return []
+                    found = found | {(item["global_id"], item["type"])}
+                    position = command["next"]
+                elif kind == "reset":
+                    # A zeroed inactive record hides a previously declared
+                    # reward. Other resets can replace its identity operands.
+                    if command["interaction"] != 0 or any(command["data"]):
+                        return []
+                    position = command["next"]
+                elif kind in ("door", "interaction"):
+                    slot = (
+                        doors[command["door"]]["slot"]
+                        if kind == "door"
+                        else command["slot"]
+                    )
+                    if any(item["slot"] == slot for item in items.values()):
+                        return []
+                    position = command["next"]
+                elif opcode in (0, 0x22, 0x2D, 0x44):
+                    # Audited fall-through commands: padding, flag writes,
+                    # object setup and enemy setup do not declare collectibles.
+                    position = command["next"]
+                else:
+                    return []
+                pending.append((key, position, returns, conditions, found, seen))
+            if not finished:
+                return []
+            outcomes.append(set.intersection(*(set(result) for result in finished)))
+        required = outcomes[0] | outcomes[1]
+        return sorted(
+            gid
+            for gid, item_type in required
+            if {item["type"] for item in items.values() if item["global_id"] == gid}
+            == {item_type}
+        )
+
     return {
         "source": source,
         "sha256": hashlib.sha256(data).hexdigest(),
@@ -325,4 +441,5 @@ def decode_room(data: bytes, source: str) -> dict:
         "doors": list(doors.values()),
         "programs": programs,
         "candidate_list_complete": complete,
+        "collection_item_ids": collection_items(),
     }

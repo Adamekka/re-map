@@ -141,6 +141,28 @@ class Re2Profile:
                 for item in room["items"]
             ):
                 raise ValueError("RE2 pickup flag outside its bank")
+            if "collection_item_ids" not in room:
+                raise ValueError(
+                    "RE2 source requires explicit collection identity proofs"
+                )
+            required = room["collection_item_ids"]
+            if (
+                type(required) is not list
+                or any(type(gid) is not int for gid in required)
+                or len(required) != len(set(required))
+                or any(
+                    len(
+                        {
+                            item["type"]
+                            for item in room["items"]
+                            if item["global_id"] == gid
+                        }
+                    )
+                    != 1
+                    for gid in required
+                )
+            ):
+                raise ValueError("invalid RE2 collection identity proof")
             if any(
                 not 0 <= proof["offset"] <= room["size"] - proof["width"]
                 for proof in room["proofs"]
