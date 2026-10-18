@@ -86,3 +86,57 @@ Contributions:
 - 2026-10-17; Codex root, `gpt-6.1-sol`; final direct review verified revision/source binding, lifecycle and scenario gates, word-level flag polarity, snapshot publication, dormant versus missing items, source-specific wall matching, earlier-state reversal and separate history defaults. It added regressions for unknown history rooms and unbound door coverage. Metadata regeneration is byte-identical, SHA256 `7a04a85c799484e328a55aaa55a495b202eea434f29313d30a5111d28e1a2765` for room metadata and `40b5599e5558237c5986aba310bbc7bfebb376fce48a3700ee1b75e3070da93c` for plans. Browser regressions pass for all 118 RE1 outlines and all 133 RE2 outlines. The final full Python suite passed 1,633 tests; scoped Ruff lint/format and whitespace checks also pass. These checks do not extend gameplay coverage beyond the controlled opening.
 - 2026-10-17; returned model identifier `Claude Opus 4.6 (Thinking)`, via agy conversation `a3533a2c-cd3d-4ca5-b343-cd6b852a0dbe`; reviewed the complete RE2 generator, catalog, profile, reader, runner, shared map changes and relevant interfaces/tests. Root accepted the separate default-history and required-metadata validation findings and verified the changes with regressions. Other candidates were checked against the actual RE1 multi-area catalog and the bounded key-bit mask; retracted or unsupported suggestions were not treated as defects. Process exit 0, final agent response DONE, terminal SUCCESS, empty stderr, no tool attempts. Prompt SHA256 `f6d5c57dc41b21faf221dc4f1b9d2db97d9b53784131263400a0bf8ed60b20a2`. The user explicitly approved this installed Opus version in place of unavailable Opus 5.5. Advisory review is not gameplay confirmation.
 - 2026-10-17; returned model identifier `Gemini 3.8 Flash (High)`, via agy conversation `c6c87bac-47a8-491a-802b-05093847a17a`; reviewed the complete updated changes, generated data, contracts and tests. Root reproduced and fixed the missing unresolved-item overview entry, retained fresh departed-door unlock knowledge without guessing activation, and rejected the byte-order proposal after direct native inspection and twelve literal emulated cases. Process exit 0, final agent response DONE, terminal SUCCESS, empty stderr, no tool attempts. Retry prompt SHA256 `553ace897111457da3fc5754038d7ddc318580f3316290b2c07952aaa3c03ede`. The original Flash call ended ERROR after exceeding its output-token limit and supplied no accepted review. Its partial response is diagnostic only; one shorter-context retry completed. Private review evidence is under `/tmp/re-map-re2-final-review/`. These reviews checked code and supplied metadata, not new gameplay.
+
+## RE2-LIVE-002: gun-shop ammunition and savestate reversal
+
+Status: Confirmed for the two observed ammunition acquisition flags and the listed DuckStation restores on SLUS-00421. Other item IDs, shotgun availability, door unlocks and the route to the RPD remain Candidate or untested. This is partial validation of the approved opening-route work, not completion of that route.
+
+Game, region, disc and executable identity are pinned in RE2-IDENTITY-001. Tests used the same isolated DuckStation `0.1-12083-g00e299795 (dev)` portable copy on 2026-10-18. Before boot, both `[Achievements] Enabled` and `[Cheevos] Enabled` were false, the copy had no account credentials or per-game overrides, and both memory-card slots were `None`. A private in-memory `Tracker` accumulated observations; the user's history file was never opened. These observations do not test history-file persistence or normal memory-card saves.
+
+### Observed pickups
+
+Ordinary controller navigation reached the shop, room `00-01`, from the opening street. The bounded production reader accepted its revision, relocated source proofs and native region `re2-00:01`. With Kendo alive, it listed two available handgun-ammo boxes, each containing 15 bullets, and a dormant shotgun candidate. Both item bits were initially clear.
+
+The first observed pickup was the shop's acquisition ID 1. Leon reached it through ordinary navigation and collected it through the game's Yes prompt. The inventory gained 15 bullets and the box disappeared. The second observed pickup was acquisition ID 0. To prepare that interaction, the agent positioned Leon at PS1 world X/Z `-24120/-20314`, facing `2048`, within the already loaded shop, then used the same game prompt. Collision settled X to `-23710` in the resulting capture. The inventory count increased to 30 bullets and the second box disappeared. No acquisition, key or story flags were written by the agent.
+
+Both flags use the first unsigned 32-bit little-endian word of bank 8 at PS1 virtual `0x800CC9E8`. ID 0 has mask `0x80000000`; ID 1 has mask `0x40000000`. Before either pickup, the word bytes were `00 00 00 00`. After ID 1 they were `00 00 00 40`; after both they were `00 00 00 C0`. The reader reported collected counts 0, 1 and 2, respectively. Completion remained Incomplete after the first pickup and became Cleared after both under the current RE2 availability policy. That clearance result does not establish that the dormant-shotgun policy is correct throughout this event.
+
+### Actual earlier/later loads
+
+The following states were restored through DuckStation's load-state hotkey, then paused before full RAM capture. The same tracker instance handled these restores.
+
+| Restore | Expected and observed result |
+| --- | --- |
+| Earlier `shop-ready.sav` | Both bits clear; both ammunition pickups available; shop Incomplete with collected count 0. The restored RAM was byte-identical to the earlier `shop-ready` capture. |
+| Later `ammo-both.sav` | Both bits set; both ammunition pickups taken; shop Cleared under the candidate availability policy, with collected count 2. The restored RAM was byte-identical to `ammo-both-taken`. |
+| Original `street-before.sav` | Opening street current, both item bits clear, and the shop visit retained. The departed shop became Unknown with unresolved item availability. Its cached Cleared result did not survive the rewind. |
+
+All observed bank 31 bytes remained zero. These loads therefore establish pickup reversal and retained in-memory exploration, not key-unlock reversal. The opening exit was observed as Open, and the shop back exit was reported Open, but no successful shop-back-exit transition or later reentry was captured.
+
+### Private evidence and reproduction
+
+Files are under `/tmp/re-map-re2-route-20261018/`. These temporary paths are local evidence references, not portable public fixtures. BIOS, disc files, executable bytes and RAM remain outside Git.
+
+| Evidence | SHA256 |
+| --- | --- |
+| `shop-ready.ram` and `rewind-before-pickups.ram` | `4a2f15e046453d13d83d1b51b3489ce4a0aa10dba23031606eaa68e978e7e4ad` |
+| `ammo-one-taken.ram` | `4211f21c788f3f5f08a7fda17aa4ebe5e353db3bd5c1ee5475933861df4431fc` |
+| `ammo-both-taken.ram` and `restore-both-pickups.ram` | `d5e8ef3230dba0ec4086f607da8af021da147e0cfae278e143ea11ceea068af0` |
+| `rewind-opening.ram` | `f30db8fa544f164c11e6f63fdc1ee3e7732078e28a0e5c0337f278b4fab0a034` |
+| `shop-ready.sav` | `e91351c6e55f6db2c87c4d0cca0a38c32197238097c0d57c69054cd696093528` |
+| `ammo-both.sav` | `89e6315c5c8138784c9a27b138e90c78d4520107d1467b2f6b79d8f7baa7e570` |
+
+Reproduce with the pinned owned disc and isolated emulator settings above. Load `shop-ready.sav`, collect the box near world X/Z `-15922/-23234`, then collect the other box near `-24911/-20314`. Pause and capture after each completed prompt. Load the earlier and later checkpoints, capture again, and replay the captures in that order through `poll_re2` using one fresh tracker. A replay reader returns the requested slice at RAM offset `address & 0x1FFFFF` as `MemRead`; it must not replace the pinned runtime signature or source proofs. Load the original opening checkpoint last and verify that both visited room IDs remain while acquired state reverses. The JSON alongside each capture records its publication and numeric state.
+
+Agent-only setup edits were enabled. Signed 16-bit little-endian health at PS1 virtual `0x800C7E7A`, full mask `0xFFFF`, was set to 32767 and later decreased through damage. The unsigned one-byte handgun magazine count at `0x800CCB69`, mask `0xFF`, was set to 255; the game's inventory displayed infinite ammunition. The observed pickups added a separate reserve-ammo stack. For coordinate setups, `position-edits.jsonl` records every write. X/Z at `0x800C7D5C/0x800C7D64` are signed 32-bit little-endian, full mask `0xFFFFFFFF`. Facing at `0x800C7D9A` is 16-bit little-endian with full write mask `0xFFFF`. Candidate previous/collision X/Z fields at `0x800C7D68/0x800C7D6C`, `0x800C7D6E/0x800C7D72` and `0x800C7E3C/0x800C7E3E` received signed 16-bit little-endian coordinates, full mask `0xFFFF`. Those setup writes do not confirm the fields' interpretation.
+
+Controller macros were configured only in the test copy to hold aim, repeat fire and combine movement with running. Their configuration follows DuckStation's pinned [macro loader and toggle implementation](https://github.com/stenzek/duckstation/blob/00e299795/src/util/input_manager.cpp#L1908-L2042). Input was sent through the native computer-use tool. No original game files were changed.
+
+### Rejected observations and remaining limits
+
+The initial resumed opening attempt reached a death animation during setup; `baseline` and `street-walk` are excluded from validation. Later coordinate-assisted body and back-door attempts did not establish shotgun collection or a room transition and are also excluded from those claims. The scripted shop attack was observed, but the reader still listed the shotgun as dormant in the recorded captures. This does not resolve its activation contract or justify a completion-policy change. The remaining opening route, door-unlock before/after observations, reentry and conditional floors still need controlled evidence. No production code changed in this validation pass.
+
+Contributions:
+
+- 2026-10-18; human user; approved opening-route pickup, door-access and savestate-rewind validation and scoped fixes.
+- 2026-10-18; Codex root, exact model `gpt-6.1-sol`, verified from the matching session's latest turn metadata; performed the controller-driven pickups, recorded setup edits and captures, restored the listed checkpoints, replayed the bounded production reader and authored this evidence. Direct checks compared flag bytes, collected counts, capture hashes and retained room visits. The existing focused RE2 Python suite passed 36 tests. Those synthetic tests do not extend the runtime claims above.
