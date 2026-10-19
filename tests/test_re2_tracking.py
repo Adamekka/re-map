@@ -427,7 +427,14 @@ def test_unbound_event_awards_remain_separate_unresolved_checks(snapshot):
         **profile.rooms["00-01"],
         "items": [],
         "collection_item_ids": [],
-        "event_awards": [award, {**award, "collection": {"kind": "unresolved"}}],
+        "event_awards": [
+            award,
+            {
+                **award,
+                "collection": {"kind": "unresolved"},
+                "presence": {"kind": "unresolved"},
+            },
+        ],
     }
     profile = replace(profile, rooms={**profile.rooms, "00-01": source})
     for slot in range(32):
@@ -830,3 +837,87 @@ def test_departed_door_retains_fresh_unlock_knowledge_without_claiming_access(sn
     door = next(door for door in tracker.doors if door.source == RoomId(0, 0))
     assert door.label == "Door conditions unresolved"
     assert door.key_label == "Spade Key"
+
+
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("coverage", [False, True])
+def test_required_event_item_remains_until_collection_and_rewinds(
+    snapshot, departed, coverage
+):
+    profile, _, put, read = snapshot
+    award = profile.rooms["01-02"]["event_awards"][0]
+    source = "01-02" if departed else "00-01"
+    room = {
+        **profile.rooms[source],
+        "items": [],
+        "collection_item_ids": [],
+        "event_awards": [award],
+        "candidate_list_complete": coverage,
+    }
+    profile = replace(profile, rooms={**profile.rooms, source: room})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    if departed:
+        tracker.mark_current(RoomId(1, 2))
+    visits = None
+    for acquired, story, expected in [
+        (0, 0, "uncollected"),
+        (0, 0x01000000, "unknown"),
+        (0x04000000, 0x01000000, "taken"),
+        (0x04000000, 0, "taken"),
+        (0, 0, "uncollected"),
+    ]:
+        put(0x800CC9E8, acquired, 4)
+        put(0x800CC980, story, 4)
+        # The event may be inactive; only the source proof and fresh gate matter.
+        put(0x800C7D08, 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source]
+        assert record.items[0].state == expected
+        assert record.items[0].label == (
+            "Event collectible"
+            if expected == "unknown"
+            else profile.names["items"]["53"]
+        )
+        assert record.completion is (
+            RoomCompletion.Incomplete
+            if expected == "uncollected"
+            else RoomCompletion.Cleared
+            if expected == "taken" and coverage
+            else RoomCompletion.Unknown
+        )
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    fresh = Tracker()
+    if departed:
+        fresh.mark_current(RoomId(1, 2))
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms[source].completion is RoomCompletion.Incomplete
+
+
+@pytest.mark.parametrize("failure", ["changed", "short"])
+def test_event_presence_gate_participates_in_snapshot_coherence(snapshot, failure):
+    profile, _, put, read = snapshot
+    room = {
+        **profile.rooms["00-01"],
+        "event_awards": profile.rooms["01-02"]["event_awards"],
+    }
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changed(address, width):
+        if address == 0x800CC980:
+            if failure == "short":
+                return MemRead(True, b"\0")
+            put(address, 0x01000000, 4)
+        return read(address, width)
+
+    result = poll_re2(profile, tracker, changed)
+    assert result.status is (
+        PollStatus.Retry if failure == "changed" else PollStatus.ReadFailure
+    )
+    assert tracker == before

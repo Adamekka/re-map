@@ -96,7 +96,7 @@ def test_event_award_requires_an_exclusive_post_delivery_item_flag(case, bound):
     )
 
 
-def test_generated_event_award_has_a_collection_rule_without_a_presence_proof():
+def test_generated_event_award_has_collection_and_conditional_presence_proofs():
     rooms = json.loads((ROOT / "data/rooms_slus00421.json").read_text())["rooms"]
     awards = [(room["id"], award) for room in rooms for award in room["event_awards"]]
     assert len(awards) == 1
@@ -104,6 +104,12 @@ def test_generated_event_award_has_a_collection_rule_without_a_presence_proof():
     assert source == "01-02"
     assert (award["offset"], award["item_type"], award["amount"]) == (8944, 53, 1)
     assert award["collection"] == {"kind": "flag", "bank": 8, "bit": 5}
+    assert award["presence"] == {
+        "kind": "conditions",
+        "any_of": [
+            [{"bank": 1, "bit": 1, "expected": 0}, {"bank": 4, "bit": 7, "expected": 0}]
+        ],
+    }
 
 
 def test_conditional_return_does_not_hide_later_pickup():
@@ -417,3 +423,183 @@ def test_native_split_room_door_markers_belong_to_their_trigger_floor():
         ("re2-02", "01-0b:12160:0B", [[251, 161.913], [251, 163.913]]),
     ):
         assert markers[area, marker]["segment"] == segment
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "direct",
+        "guarded",
+        "unconditional",
+        "opaque-bypass",
+        "startup-write",
+        "abort-delivery",
+        "recursive",
+        "deep",
+    ],
+)
+def test_event_presence_proves_scheduling_and_every_supported_delivery_path(case):
+    from games.re2.event_presence import event_presence
+
+    schedule = bytes([4, 255, 0x18, 1])
+    startup = schedule + bytes([1, 0])
+    if case == "guarded":
+        startup = bytes([6, 0, 10, 0, 0x21, 4, 7, 0]) + schedule + bytes([8, 0, 1, 0])
+    elif case == "opaque-bypass":
+        startup = (
+            bytes([6, 0, 12, 0, 0x3E, 0, 0, 0, 0, 0]) + schedule + bytes([8, 0, 1, 0])
+        )
+    elif case == "startup-write":
+        startup = bytes([0x22, 4, 7, 0]) + startup
+    elif case == "direct":
+        startup = bytes([1, 0])
+    elif case == "deep":
+        startup = bytes(300) + startup
+    delivery = bytes([0x76, 53, 1, 0x22, 8, 5, 1, 1, 0])
+    if case == "abort-delivery":
+        delivery = bytes([5, 0]) + delivery
+    elif case == "recursive":
+        delivery = bytes([0x18, 1]) + delivery
+    data = synthetic_room(bytes([1, 0]), (startup, delivery))
+    room = decode_room(data, "synthetic")
+    award = next(
+        c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
+    )
+    result = event_presence(data, room["programs"], "17:1", award["offset"])
+    assert result == (
+        {"kind": "conditions", "any_of": [[{"bank": 4, "bit": 7, "expected": 0}]]}
+        if case == "guarded"
+        else {"kind": "required"}
+        if case == "unconditional"
+        else {"kind": "unresolved"}
+    )
+
+
+def test_event_presence_joins_both_scheduling_branches_without_an_unrelated_gate():
+    from games.re2.event_presence import event_presence
+
+    schedule = bytes([4, 255, 0x18, 1])
+    startup = (
+        bytes([6, 0, 12, 0, 0x21, 4, 7, 0])
+        + schedule
+        + bytes([7, 0, 10, 0])
+        + schedule
+        + bytes([0, 0, 1, 0])
+    )
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(data, "synthetic")
+    award = room["programs"]["17:1"]["entry"]
+    assert event_presence(data, room["programs"], "17:1", award) == {"kind": "required"}
+
+
+@pytest.mark.parametrize("wait_change", [False, True])
+def test_event_presence_preserves_a_waiting_award_but_rejects_changed_wait_effects(
+    wait_change,
+):
+    from games.re2.event_presence import event_presence
+
+    startup = bytes([4, 255, 0x18, 1, 1, 0])
+    delivery = bytes([0x18, 2, 0x76, 53, 1, 1, 0])
+    wait = bytes([0x11, 0, 8, 0, 2, 0, 0x12, 4, 0x21, 5, 33, 0, 1, 0])
+    if wait_change:
+        wait = bytes([5, 0, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, delivery, wait))
+    room = decode_room(data, "synthetic")
+    award = next(
+        c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
+    )
+    assert event_presence(data, room["programs"], "17:1", award["offset"]) == (
+        {"kind": "unresolved"} if wait_change else {"kind": "required"}
+    )
+
+
+def test_event_presence_rejects_a_delivery_path_that_can_finish_without_awarding():
+    from games.re2.event_presence import event_presence
+
+    startup = bytes([4, 255, 0x18, 1, 1, 0])
+    delivery = bytes([6, 0, 7, 0, 0x21, 4, 7, 0, 0x76, 53, 1, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, delivery))
+    room = decode_room(data, "synthetic")
+    award = next(
+        c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
+    )
+    assert event_presence(data, room["programs"], "17:1", award["offset"]) == {
+        "kind": "unresolved"
+    }
+
+
+def test_startup_write_cannot_make_an_unexecuted_branch_look_required():
+    from games.re2.event_presence import event_presence
+
+    # If the clear branch sets its own guard and skips scheduling, the final
+    # set bit cannot prove that the scheduling branch ran.
+    startup = bytes(
+        [
+            6,
+            0,
+            12,
+            0,
+            0x21,
+            4,
+            7,
+            0,
+            0x22,
+            4,
+            7,
+            1,
+            7,
+            0,
+            10,
+            0,
+            4,
+            255,
+            0x18,
+            1,
+            0,
+            0,
+            1,
+            0,
+        ]
+    )
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(data, "synthetic")
+    assert event_presence(
+        data, room["programs"], "17:1", room["programs"]["17:1"]["entry"]
+    ) == {"kind": "unresolved"}
+
+
+def test_compound_predicates_need_a_native_join_proof_before_exporting_conditions():
+    from games.re2.event_presence import event_presence
+
+    startup = bytes(
+        [6, 0, 14, 0, 0x21, 4, 7, 0, 0x21, 6, 28, 0, 4, 255, 0x18, 1, 8, 0, 1, 0]
+    )
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(data, "synthetic")
+    assert event_presence(
+        data, room["programs"], "17:1", room["programs"]["17:1"]["entry"]
+    ) == {"kind": "unresolved"}
+
+
+def test_later_task_cancellation_invalidates_an_earlier_scheduling_proof():
+    from games.re2.event_presence import event_presence
+
+    startup = bytes([4, 255, 0x18, 1, 5, 10, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(data, "synthetic")
+    assert event_presence(
+        data, room["programs"], "17:1", room["programs"]["17:1"]["entry"]
+    ) == {"kind": "unresolved"}
+
+
+def test_startup_must_finish_after_queuing_the_award_task():
+    from games.re2.event_presence import event_presence
+
+    # Aot_on can transition away before queued tasks run. It is deliberately
+    # outside the synchronous initializer proof even after the fork succeeds.
+    startup = bytes([4, 255, 0x18, 1, 0x47, 0, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(data, "synthetic")
+    assert event_presence(
+        data, room["programs"], "17:1", room["programs"]["17:1"]["entry"]
+    ) == {"kind": "unresolved"}

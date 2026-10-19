@@ -265,17 +265,31 @@ def poll_re2(
                 taken = collection["kind"] == "flag" and flag(
                     collection["bank"], collection["bit"]
                 )
-                # A bound post-delivery bit proves collection, even after use.
-                # Its clear value alone cannot prove a conditional event exists.
+                presence = award["presence"]
+                required = not taken and (
+                    presence["kind"] == "required"
+                    or presence["kind"] == "conditions"
+                    and any(
+                        all(
+                            flag(test["bank"], test["bit"]) == test["expected"]
+                            for test in clause
+                        )
+                        for clause in presence["any_of"]
+                    )
+                )
+                # Acquisition wins after delivery and use. Presence conditions
+                # are sufficient only; a mismatch cannot establish absence.
                 details.append(
                     ItemDetail(
                         profile.names["items"].get(
                             str(award["item_type"]), "Collectible"
                         )
-                        if taken
+                        if taken or required
                         else "Event collectible",
-                        "taken" if taken else "unknown",
-                        award["amount"] if taken else ItemQuantityState.Unreconstructed,
+                        "taken" if taken else "uncollected" if required else "unknown",
+                        award["amount"]
+                        if taken or required
+                        else ItemQuantityState.Unreconstructed,
                     )
                 )
             complete = source["candidate_list_complete"] and not (

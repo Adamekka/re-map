@@ -167,6 +167,46 @@ class Re2Profile:
                     if identity in award_flags:
                         raise ValueError("aliased RE2 event award collection rule")
                     award_flags.add(identity)
+                presence = award.get("presence")
+                if type(presence) is not dict or presence.get("kind") not in (
+                    "unresolved",
+                    "required",
+                    "conditions",
+                ):
+                    raise ValueError(
+                        "RE2 event award requires an explicit presence rule"
+                    )
+                if presence["kind"] in ("unresolved", "required"):
+                    valid = presence.keys() == {"kind"}
+                else:
+                    clauses = presence.get("any_of")
+                    valid = (
+                        presence.keys() == {"kind", "any_of"}
+                        and type(clauses) is list
+                        and 1 <= len(clauses) <= 32
+                        and all(
+                            type(clause) is list
+                            and 1 <= len(clause) <= 32
+                            and all(
+                                type(test) is dict
+                                and test.keys() == {"bank", "bit", "expected"}
+                                and type(test["bank"]) is int
+                                and test["bank"] in banks
+                                and type(test["bit"]) is int
+                                and 0 <= test["bit"] < banks[test["bank"]][1] * 8
+                                and type(test["expected"]) is int
+                                and test["expected"] in (0, 1)
+                                for test in clause
+                            )
+                            and len({(test["bank"], test["bit"]) for test in clause})
+                            == len(clause)
+                            for clause in clauses
+                        )
+                    )
+                if not valid or (
+                    presence["kind"] != "unresolved" and collection["kind"] != "flag"
+                ):
+                    raise ValueError("invalid or unbound RE2 event award presence rule")
             if key != str(RoomId(room["stage"], room["room"])) or not room["proofs"]:
                 raise ValueError("invalid RE2 room source identity")
             if (

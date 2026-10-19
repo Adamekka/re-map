@@ -210,3 +210,50 @@ def test_re2_event_collection_rules_are_required_and_reject_aliases(
         ValueError, match="RE2 event award.*collection|aliased RE2 event award"
     ):
         Re2Profile.load(profile)
+
+
+@pytest.mark.parametrize(
+    "presence",
+    [
+        None,
+        {},
+        {"kind": "other"},
+        {"kind": "required", "any_of": []},
+        {"kind": "conditions"},
+        {"kind": "conditions", "any_of": []},
+        {"kind": "conditions", "any_of": [[]]},
+        {"kind": "conditions", "any_of": [[{"bank": True, "bit": 7, "expected": 0}]]},
+        {"kind": "conditions", "any_of": [[{"bank": 11, "bit": 7, "expected": 0}]]},
+        {"kind": "conditions", "any_of": [[{"bank": 4, "bit": 256, "expected": 0}]]},
+        {"kind": "conditions", "any_of": [[{"bank": 4, "bit": 7, "expected": True}]]},
+        {"kind": "conditions", "any_of": [[{"bank": 4, "bit": 7, "expected": 2}]]},
+        {
+            "kind": "conditions",
+            "any_of": [
+                [
+                    {"bank": 4, "bit": 7, "expected": 0},
+                    {"bank": 4, "bit": 7, "expected": 1},
+                ]
+            ],
+        },
+    ],
+)
+def test_re2_event_presence_metadata_is_required_and_validated(tmp_path, presence):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    award = next(room for room in document["rooms"] if room["event_awards"])[
+        "event_awards"
+    ][0]
+    if presence is None:
+        del award["presence"]
+    else:
+        award["presence"] = presence
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 event award.*presence"):
+        Re2Profile.load(profile)

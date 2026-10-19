@@ -9,7 +9,8 @@
     "RE2-COLLECT-001",
     "RE2-COLLECT-002",
     "RE2-COLLECT-003",
-    "RE2-COLLECT-004"
+    "RE2-COLLECT-004",
+    "RE2-COLLECT-005"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "rooms": [
@@ -4058,6 +4059,23 @@
             "kind": "flag",
             "bank": 8,
             "bit": 5
+          },
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 1,
+                  "expected": 0
+                },
+                {
+                  "bank": 4,
+                  "bit": 7,
+                  "expected": 0
+                }
+              ]
+            ]
           }
         }
       ],

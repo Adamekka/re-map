@@ -390,6 +390,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-002",
                 "RE2-COLLECT-003",
                 "RE2-COLLECT-004",
+                "RE2-COLLECT-005",
             ],
             "rooms": rooms,
         },

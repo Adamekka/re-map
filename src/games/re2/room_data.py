@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import struct
 
+from games.re2.event_presence import INITIALIZER_FALLTHROUGH, event_presence
+
 
 def bind_event_awards(
     rooms: list[dict], sources: dict[str, bytes], item_banks: dict[int, int]
@@ -15,12 +17,16 @@ def bind_event_awards(
     result = {}
     for room in rooms:
         awards = []
-        for program in room["programs"].values():
+        for key, program in room["programs"].items():
             commands = {row["offset"]: row for row in program["commands"]}
             for command in commands.values():
                 if command["kind"] != "award":
                     continue
-                award = {**command, "collection": {"kind": "unresolved"}}
+                award = {
+                    **command,
+                    "collection": {"kind": "unresolved"},
+                    "presence": {"kind": "unresolved"},
+                }
                 following = commands.get(command["next"])
                 if (
                     following is not None
@@ -62,6 +68,12 @@ def bind_event_awards(
                     )
                     if hits == [(room["id"], following["offset"])] and not aliased:
                         award["collection"] = {"kind": "flag", "bank": bank, "bit": bit}
+                        award["presence"] = event_presence(
+                            sources[room["id"]],
+                            room["programs"],
+                            key,
+                            command["offset"],
+                        )
                 awards.append(award)
         result[room["id"]] = awards
     return result
@@ -534,19 +546,7 @@ def decode_room(data: bytes, source: str) -> dict:
                     # These creators' slots were excluded above, including
                     # creators reached only by an asynchronous event.
                     position = command["next"]
-                elif opcode in (
-                    0,
-                    0x22,
-                    0x26,
-                    0x2D,
-                    0x2E,
-                    0x32,
-                    0x35,
-                    0x3D,
-                    0x44,
-                    0x4B,
-                    0x6E,
-                ):
+                elif opcode in INITIALIZER_FALLTHROUGH:
                     # Audited fall-through commands: padding, flag writes,
                     # scalar/actor setup and camera replacement do not declare
                     # collectibles or yield the executing startup task.
