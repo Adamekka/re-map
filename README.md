@@ -31,7 +31,7 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
-Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. RE1 puzzle rewards keep their room red until collected, even before the puzzle is solved. In RE1, the cyan arrow follows your approximate position inside the current room and rotates with your facing direction. Placement is approximate because the original map distorts room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors.
+Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. RE1 puzzle rewards keep their room red until collected, even before the puzzle is solved. In RE1 and RE2, the cyan arrow follows your approximate position where placement is established and rotates with your facing direction. Placement is approximate because the original maps distort room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors.
 
 Stair treads and rails appear inside explored room outlines.
 
@@ -59,4 +59,4 @@ python3 tools/track.py --profile profiles/re2_leon_a_slus00421.json --history-fi
 
 The [RE2 guide](docs/re2.md) lists coverage and unresolved checks. Keep its exploration history separate from Jill's.
 
-![RE2 opening street from a controlled gameplay capture](docs/images/re2-map.png)
+![RE2 opening map with approximate player position](docs/images/re2-map.png)

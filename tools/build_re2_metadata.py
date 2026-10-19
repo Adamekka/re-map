@@ -23,6 +23,7 @@ from extract_psx_file import _find
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
 
+from games.re2.map_layout import Re2MapProjection
 from games.re2.room_data import decode_room
 
 AREA_NAMES = (
@@ -50,6 +51,7 @@ AREA_NAMES = (
 
 
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
+    projection = Re2MapProjection(**profile["map_projection"])
     from unicorn import UC_ARCH_MIPS, UC_MODE_LITTLE_ENDIAN, UC_MODE_MIPS32, Uc
     from unicorn.mips_const import (
         UC_MIPS_REG_A0,
@@ -291,16 +293,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 if room["id"] not in entry["room_ids"]:
                     continue
                 for door in room["doors"]:
-                    bx, by = entry["world_origin"]
                     wx, wz = door["center"]
                     # The native marker maps world X/Z using this translation
                     # and scale (RE2-MAP-001), before adding the room's origin.
-                    projection = profile["map_projection"]
-                    bias, scale = (
-                        projection["world_bias"],
-                        projection["units_per_pixel"],
-                    )
-                    x, y = bx + (wx + bias) / scale, by - (wz + bias) / scale
+                    x, y = projection.project(tuple(entry["world_origin"]), wx, wz)
                     candidates = []
                     for ring in entry["rings"]:
                         for first, last in zip(ring, ring[1:] + ring[:1]):

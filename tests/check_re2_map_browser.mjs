@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const { measurements } = JSON.parse(readFileSync('tests/fixtures/re2/heading-movements.json', 'utf8'));
+const { observations } = JSON.parse(readFileSync('tests/fixtures/re2/position-observations.json', 'utf8'));
 assert(process.argv[2], 'Pass the Python executable used for tracker tests');
 const setup = spawnSync(process.argv[2], ['-c', `
 import sys,json
@@ -81,8 +82,42 @@ try {
     const motion = (Math.atan2(movement.dx, movement.dz) * 180 / Math.PI + 360) % 360;
     assert(Math.abs((heading - motion + 540) % 360 - 180) < 2, movement.after);
   }
+  const positions = ['first-earlier', 'first-later'].map(label => {
+    const matches = observations.filter(row => row.label === label);
+    assert.equal(matches.length, 1);
+    return matches[0];
+  });
+  state.player_position = positions[0].marker;
+  state.player_heading = positions[0].published_heading;
+  await page.waitForFunction(point => document.querySelector('.player')?.getAttribute('transform') === 'translate(' + point.join(' ') + ')', positions[0].marker.point);
+  assert.equal(await page.locator('#player-label').textContent(), 'You · approximate');
+  assert.match(await page.locator('.player path').getAttribute('transform'), /^translate\(0 0\)/);
+  const player = await page.locator('.player').elementHandle();
+  assert(player);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  const map = page.locator('#map'), bounds = await map.boundingBox();
+  assert(bounds);
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width / 2 + 30, bounds.y + bounds.height / 2 + 20, { steps: 4 });
+  await page.mouse.up();
+  const chosenView = await map.getAttribute('viewBox');
+  state.player_position = positions[1].marker;
+  await page.waitForFunction(point => document.querySelector('.player')?.getAttribute('transform') === 'translate(' + point.join(' ') + ')', positions[1].marker.point);
+  assert(await player.evaluate(node => node.isConnected), 'walking must retain the player node');
+  assert.equal(await map.getAttribute('viewBox'), chosenView, 'walking must retain pan and zoom');
+  const unplaced = observations.find(row => row.label === 'first-unplaced');
+  assert(unplaced);
+  state.player_position = unplaced.marker;
+  await page.waitForFunction(() => document.getElementById('player-label').textContent === 'You · room only');
+  assert.notEqual(await page.locator('.player').getAttribute('transform'), 'translate(' + positions[1].marker.point.join(' ') + ')');
+  assert.equal(await map.getAttribute('viewBox'), chosenView, 'room-only placement must retain pan and zoom');
+  state.status = 'waiting';
+  state.error = 'Waiting for game.';
+  await page.waitForFunction(() => !document.querySelector('.player'));
+  assert(await floor.isDisabled(), 'an interrupted read must disable floor controls');
   assert.deepEqual(errors, []);
-  console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, exact door bindings and eight measured headings.');
+  console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, eight headings and moving-marker view/state handling.');
 } finally {
   await browser.close();
 }

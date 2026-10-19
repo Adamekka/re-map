@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "profile_id": "re2_leon_a_slus00421",
+  "research_id": "RE2-PLAYER-002",
+  "observations": [
+    {
+      "label": "first-unplaced",
+      "room": [
+        0,
+        1
+      ],
+      "area": "re2-00",
+      "region": "01",
+      "world_position": [
+        -16222,
+        0,
+        -12512
+      ],
+      "published_heading": 158.466796875,
+      "marker": {
+        "kind": "room",
+        "reason": "The position falls outside this room's mapped floor."
+      },
+      "evidence_kind": "consumed-read-transcript",
+      "evidence_sha256": "076f19a312bc712eda5e8c1839a4e62c22861faea4f16010fc27485f6c3544cf"
+    },
+    {
+      "label": "first-earlier",
+      "room": [
+        0,
+        1
+      ],
+      "area": "re2-00",
+      "region": "01",
+      "world_position": [
+        -16012,
+        0,
+        -13488
+      ],
+      "published_heading": 158.466796875,
+      "marker": {
+        "kind": "approximate",
+        "point": [
+          97.64,
+          79.7511111111111
+        ]
+      },
+      "evidence_kind": "ram",
+      "evidence_sha256": "3e39021fc5dfb93baf86ec540049bd094ff8f15383c661906147b2289f7e28ad"
+    },
+    {
+      "label": "first-later",
+      "room": [
+        0,
+        1
+      ],
+      "area": "re2-00",
+      "region": "01",
+      "world_position": [
+        -16192,
+        0,
+        -13729
+      ],
+      "published_heading": 158.466796875,
+      "marker": {
+        "kind": "approximate",
+        "point": [
+          97.24,
+          80.28666666666666
+        ]
+      },
+      "evidence_kind": "ram",
+      "evidence_sha256": "875fc1120549357cb8c07ea6d9a0e39225953d4ff92b0b2bc7e5cd3b0869b86e"
+    },
+    {
+      "label": "second-earlier",
+      "room": [
+        1,
+        0
+      ],
+      "area": "re2-02",
+      "region": "00",
+      "world_position": [
+        -13349,
+        -1800,
+        1812
+      ],
+      "published_heading": 184.21875,
+      "marker": {
+        "kind": "approximate",
+        "point": [
+          150.55777777777777,
+          102.75111111111111
+        ]
+      },
+      "evidence_kind": "ram",
+      "evidence_sha256": "05a27fb7b59979e77ae61d645d9c4251728c4bb5bec91f4aeb205d7544e7a282"
+    },
+    {
+      "label": "second-later",
+      "room": [
+        1,
+        0
+      ],
+      "area": "re2-02",
+      "region": "00",
+      "world_position": [
+        -13423,
+        -1800,
+        302
+      ],
+      "published_heading": 184.21875,
+      "marker": {
+        "kind": "approximate",
+        "point": [
+          150.39333333333332,
+          106.10666666666667
+        ]
+      },
+      "evidence_kind": "ram",
+      "evidence_sha256": "e8d7b43ef987fa227b1fde8da14096279f86f7a424d9cff13b537a0d14c8fa12"
+    }
+  ]
+}

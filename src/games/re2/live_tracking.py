@@ -53,6 +53,12 @@ def poll_re2(
         return result.data
 
     try:
+        # Bind the initial pose block to the same room used for interpretation,
+        # even if a whole transition finishes between the two block reads.
+        pose_room = tuple(
+            int.from_bytes(read(address, 2), "little")
+            for address in (profile.stage_address, profile.room_address)
+        )
         blocks = []
         for kind in ("player", "save"):
             address = int(layout[f"{kind}_block_address_ps1"], 0)
@@ -87,6 +93,8 @@ def poll_re2(
         if system & layout["transition_mask"]:
             return PollResult(PollStatus.Retry, "Changing rooms...")
         rid = RoomId(value(profile.stage_address, 2), value(profile.room_address, 2))
+        if (rid.stage, rid.room) != pose_room:
+            return PollResult(PollStatus.Retry, "Player room changed during pose read")
         key = str(rid)
         if key not in profile.rooms:
             return PollResult(PollStatus.Retry, "Room identity is not yet available")
@@ -114,10 +122,16 @@ def poll_re2(
                 )
         floor = value(int(layout["floor_address_ps1"], 0), 1)
         yaw = value(int(layout["player_facing_address_ps1"], 0), 2)
-        # Facing may change every frame; its complete halfword belongs to the
-        # initial coherent snapshot and need not freeze normal turning.
+        position_address = int(layout["player_position_address_ps1"], 0)
+        x, _, z = struct.unpack(
+            "<3i", value(position_address, 12).to_bytes(12, "little")
+        )
+        # Position and facing share the initial player block. Requiring them to
+        # remain stationary through the final checks would reject normal motion.
         del markers[int(layout["player_facing_address_ps1"], 0), 2]
+        del markers[position_address, 12]
         area, region = profile.map_layout.select(key, floor, value)
+        position = profile.map_layout.project(area, region, x, z)
 
         def flag(bank: int, bit: int) -> bool:
             address, width = profile.flag_banks[bank]
@@ -341,6 +355,7 @@ def poll_re2(
     except ValueError as error:
         return PollResult(PollStatus.Retry, str(error))
     tracker.mark_current(rid)
+    tracker.player_position = position
     tracker.player_heading = (
         layout["heading_offset_degrees"]
         + layout["heading_direction"] * (yaw & 0xFFF) * 360 / 4096

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
-from games.re2.map_layout import Re2MapLayout
+from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
@@ -76,6 +76,17 @@ class Re2Profile:
             (int(layout[f"{kind}_block_address_ps1"], 0), layout[f"{kind}_block_width"])
             for kind in ("player", "save")
         ]
+        player_base, player_width = blocks[0]
+        if any(
+            not player_base
+            <= int(layout[field], 0)
+            <= player_base + player_width - size
+            for field, size in (
+                ("player_position_address_ps1", 12),
+                ("player_facing_address_ps1", 2),
+            )
+        ):
+            raise ValueError("RE2 player pose must fit the initial player block")
         if any(
             not 0x80000000 <= address <= 0x80200000 - size or not 1 <= size <= 4096
             for address, size in blocks
@@ -201,6 +212,7 @@ class Re2Profile:
                 raw["profile_id"],
                 raw["executable_identity"],
                 rooms,
+                Re2MapProjection(**raw["map_projection"]),
             ),
         )
 

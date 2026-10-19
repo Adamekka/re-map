@@ -1,4 +1,4 @@
-"""Pinned RE2 native map selections, independent of in-game map ownership."""
+"""RE2-MAP-001 / RE2-PLAYER-002: pinned native selections and guarded placement."""
 
 from __future__ import annotations
 
@@ -8,15 +8,48 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from tracker.player_position import ApproximatePosition, RoomOnlyPosition
+
+
+@dataclass(frozen=True)
+class Re2MapProjection:
+    world_bias: int
+    units_per_pixel: int
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.world_bias) is not int
+            or not -0x80000000 <= self.world_bias <= 0x7FFFFFFF
+            or type(self.units_per_pixel) is not int
+            or not 1 <= self.units_per_pixel <= 0x7FFFFFFF
+        ):
+            raise ValueError("invalid RE2 map projection bias or scale")
+
+    def project(
+        self, origin: tuple[int, int], x: float, z: float
+    ) -> tuple[float, float]:
+        # Preserve subpixel motion for the approximate tracker marker. The
+        # original game's integer draw coordinates quantize this projection.
+        return (
+            origin[0] + (x + self.world_bias) / self.units_per_pixel,
+            origin[1] - (z + self.world_bias) / self.units_per_pixel,
+        )
+
 
 @dataclass(frozen=True)
 class Re2MapLayout:
     document: dict
     locations: dict[str, tuple[dict, ...]]
+    regions: dict[tuple[str, str], dict]
+    projection: Re2MapProjection
 
     @staticmethod
     def load(
-        path: Path, profile_id: str, executable_identity: str, rooms: dict
+        path: Path,
+        profile_id: str,
+        executable_identity: str,
+        rooms: dict,
+        projection: Re2MapProjection,
     ) -> Re2MapLayout:
         document = json.loads(path.read_text())
         if (
@@ -32,6 +65,16 @@ class Re2MapLayout:
                 raise ValueError("invalid or duplicate RE2 map area")
             regions[area["id"]] = {}
             for entry in area["rooms"]:
+                if (
+                    "world_origin" not in entry
+                    or type(entry["world_origin"]) is not list
+                    or len(entry["world_origin"]) != 2
+                    or any(
+                        type(value) is not int or not -32768 <= value <= 32767
+                        for value in entry["world_origin"]
+                    )
+                ):
+                    raise ValueError("RE2 map region requires a signed native origin")
                 if (
                     entry["id"] in regions[area["id"]]
                     or not entry["name"]
@@ -83,8 +126,47 @@ class Re2MapLayout:
         if set(locations) != set(rooms):
             raise ValueError("RE2 map selections must cover the room catalog")
         return Re2MapLayout(
-            document, {key: tuple(rows) for key, rows in locations.items()}
+            document,
+            {key: tuple(rows) for key, rows in locations.items()},
+            {
+                (area["id"], entry["id"]): entry
+                for area in document["areas"]
+                for entry in area["rooms"]
+            },
+            projection,
         )
+
+    def project(
+        self, area: str, region: str, x: int, z: int
+    ) -> ApproximatePosition | RoomOnlyPosition:
+        if area == "unmapped":
+            return RoomOnlyPosition("This room has no map outline for positioning.")
+        entry = self.regions[area, region]
+        px, py = self.projection.project(tuple(entry["world_origin"]), x, z)
+        inside = False
+        for ring in entry["rings"]:
+            for first, last in zip(ring, ring[1:] + ring[:1]):
+                # Even/odd filling preserves holes and disconnected floor
+                # islands. A boundary point cannot establish interior placement.
+                if (
+                    (px - first[0]) * (last[1] - first[1])
+                    == (py - first[1]) * (last[0] - first[0])
+                    and min(first[0], last[0]) <= px <= max(first[0], last[0])
+                    and min(first[1], last[1]) <= py <= max(first[1], last[1])
+                ):
+                    return RoomOnlyPosition(
+                        "The position is on this room's mapped boundary."
+                    )
+                if (first[1] > py) != (last[1] > py) and px < (
+                    (last[0] - first[0]) * (py - first[1]) / (last[1] - first[1])
+                    + first[0]
+                ):
+                    inside = not inside
+        if not inside:
+            return RoomOnlyPosition(
+                "The position falls outside this room's mapped floor."
+            )
+        return ApproximatePosition(px, py)
 
     def select(
         self, room: str, floor: int, value: Callable[[int, int], int]

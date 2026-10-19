@@ -26,6 +26,7 @@ from games.re2.live_tracking import poll_re2
 from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import RuntimeSignature
 from tracker.exploration_state import RoomCompletion, Tracker
+from tracker.player_position import ApproximatePosition, RoomOnlyPosition
 from tracker.polling import PollStatus
 from ui.map_view import map_state
 
@@ -56,6 +57,104 @@ def test_heading_rewinds_from_fresh_yaw_without_resetting_visits(snapshot):
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
         assert map_state(tracker)["player_heading"] == movement["published_heading"]
         assert set(tracker.rooms) == {"00-00", "00-01"}
+
+
+def test_position_and_heading_share_the_initial_moving_snapshot(snapshot):
+    profile, _, put, read = snapshot
+    put(0x800C7D5C, -16523 & 0xFFFFFFFF, 4)
+    put(0x800C7D64, -13300 & 0xFFFFFFFF, 4)
+    put(0x800C7D9A, 779, 2)
+
+    def moving_read(address, width):
+        result = read(address, width)
+        if address == 0x800C7CE0:
+            put(0x800C7D5C, -16600 & 0xFFFFFFFF, 4)
+            put(0x800C7D64, -14000 & 0xFFFFFFFF, 4)
+            put(0x800C7D9A, 1739, 2)
+        return result
+
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, moving_read).status is PollStatus.Display
+    assert isinstance(tracker.player_position, ApproximatePosition)
+    assert (tracker.player_position.x, tracker.player_position.y) == pytest.approx(
+        (96.50444444444445, 79.33333333333334)
+    )
+    assert tracker.player_heading == 158.466796875
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.player_position != ApproximatePosition(
+        96.50444444444445, 79.33333333333334
+    )
+    assert tracker.player_heading == 242.841796875
+
+
+def test_unplaced_pose_replaces_the_previous_position(snapshot):
+    profile, _, put, read = snapshot
+    put(0x800C7D5C, -16523 & 0xFFFFFFFF, 4)
+    put(0x800C7D64, -13300 & 0xFFFFFFFF, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert isinstance(tracker.player_position, ApproximatePosition)
+    put(0x800C7D5C, 0, 4)
+    put(0x800C7D64, 0, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert isinstance(tracker.player_position, RoomOnlyPosition)
+    assert map_state(tracker)["player_position"]["kind"] == "room"
+
+
+def test_complete_room_change_during_pose_read_cannot_publish(snapshot):
+    profile, _, put, read = snapshot
+    put(0x800C7D5C, -16523 & 0xFFFFFFFF, 4)
+    put(0x800C7D64, -13300 & 0xFFFFFFFF, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changed_room(address, width):
+        result = read(address, width)
+        if address == 0x800C7CE0:
+            put(profile.room_address, 0, 2)
+        return result
+
+    result = poll_re2(profile, tracker, changed_room)
+    assert result.status is PollStatus.Retry
+    assert "Player room changed during pose read" in result.text
+    assert tracker == before
+
+
+def test_floor_change_during_pose_read_cannot_publish(snapshot):
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changed_floor(address, width):
+        result = read(address, width)
+        if address == 0x800C7CE0:
+            put(0x800C7E2A, 1, 1)
+        return result
+
+    result = poll_re2(profile, tracker, changed_floor)
+    assert result.status is PollStatus.Retry
+    assert "Game state changed during read" in result.text
+    assert tracker == before
+
+
+@pytest.mark.parametrize("short", [True, False])
+def test_failed_pose_snapshot_preserves_the_previous_publication(snapshot, short):
+    profile, _, put, read = snapshot
+    put(0x800C7D5C, -16523 & 0xFFFFFFFF, 4)
+    put(0x800C7D64, -13300 & 0xFFFFFFFF, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def failed_read(address, width):
+        if address == 0x800C7CE0:
+            return MemRead(True, b"x") if short else MemRead(False, b"", "disconnected")
+        return read(address, width)
+
+    assert poll_re2(profile, tracker, failed_read).status is PollStatus.ReadFailure
+    assert tracker == before
 
 
 @pytest.fixture(scope="module")
