@@ -277,5 +277,6 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re2-collect-002-conflicting-slots-preserve-unrelated-item-proofs"></a>[RE2-COLLECT-002](research/re2.md#re2-collect-002-conflicting-slots-preserve-unrelated-item-proofs) | conflicting slots preserve unrelated item proofs |
 | <a id="re2-collect-003-scripted-activation-preserves-collection-identity"></a>[RE2-COLLECT-003](research/re2.md#re2-collect-003-scripted-activation-preserves-collection-identity) | scripted activation preserves collection identity and quantity uncertainty |
 | <a id="re2-door-001-event-driven-unlock-and-savestate-reversal"></a>[RE2-DOOR-001](research/re2.md#re2-door-001-event-driven-unlock-and-savestate-reversal) | event-driven unlock, paired passage and fresh access after restores |
+| <a id="re2-door-002-named-key-use-and-savestate-reversal"></a>[RE2-DOOR-002](research/re2.md#re2-door-002-named-key-use-and-savestate-reversal) | native key pickup/use, carrying versus unlocking and fresh state after restores |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.

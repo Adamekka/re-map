@@ -2,7 +2,7 @@
 
 These tests exercise interpretation contracts; they are not gameplay evidence.
 RE2-COLLECT-002 checks known items alongside unresolved slot identities.
-RE2-DOOR-001 records separate runtime evidence for the door flag contracts.
+RE2-DOOR-001/002 record separate event/key-use runtime evidence for door flags.
 """
 
 import copy
