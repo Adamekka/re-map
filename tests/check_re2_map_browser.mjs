@@ -1,9 +1,11 @@
-// Explicit synthetic visits test the RE2 catalog and shared browser, not gameplay.
+// Synthetic visits and RE2-PLAYER-001 heading references test the shared browser.
 // NODE_PATH=<bundled node_modules> bun tests/check_re2_map_browser.mjs <python>
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
+const { measurements } = JSON.parse(readFileSync('tests/fixtures/re2/heading-movements.json', 'utf8'));
 assert(process.argv[2], 'Pass the Python executable used for tracker tests');
 const setup = spawnSync(process.argv[2], ['-c', `
 import sys,json
@@ -65,8 +67,22 @@ try {
   }
   assert.match(await page.locator('#remaining-items').textContent(), /Handgun ammo/);
   assert.match(await page.locator('#incomplete-checks').textContent(), /Gun/);
+  for (const movement of measurements) {
+    state.player_heading = movement.published_heading;
+    await page.waitForFunction(heading => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(' + heading + ')'), state.player_heading);
+    const heading = await page.locator('.player path').evaluate(marker => {
+      const matrix = marker.getScreenCTM();
+      // Compare the actual arrow tip in screen coordinates, so a reversed
+      // glyph or SVG transform cannot pass on the rotation attribute alone.
+      const origin = new DOMPoint(0, 0).matrixTransform(matrix);
+      const tip = marker.getPointAtLength(0).matrixTransform(matrix);
+      return (Math.atan2(tip.x - origin.x, origin.y - tip.y) * 180 / Math.PI + 360) % 360;
+    });
+    const motion = (Math.atan2(movement.dx, movement.dz) * 180 / Math.PI + 360) % 360;
+    assert(Math.abs((heading - motion + 540) % 360 - 180) < 2, movement.after);
+  }
   assert.deepEqual(errors, []);
-  console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines and exact door bindings.');
+  console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, exact door bindings and eight measured headings.');
 } finally {
   await browser.close();
 }

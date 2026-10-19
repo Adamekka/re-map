@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "profile_id": "re2_leon_a_slus00421",
+  "research_id": "RE2-PLAYER-001",
+  "measurements": [
+    {
+      "before": "hall-facing-2",
+      "after": "hall-walk-2",
+      "room": [
+        1,
+        0
+      ],
+      "yaw": 4208,
+      "dx": 1578,
+      "dz": -287,
+      "published_heading": 99.84375,
+      "before_evidence_sha256": "26a541e953484595b7c186a9246569b2ad194547f4e8cb4aea83ce77ea899d98",
+      "after_evidence_sha256": "10a82a83a292bc6a23eccd2acec2a2d55a8c4457c7784d6df0226de6a85b264b"
+    },
+    {
+      "before": "hall-facing-3b",
+      "after": "hall-walk-3",
+      "room": [
+        1,
+        0
+      ],
+      "yaw": 5328,
+      "dx": -494,
+      "dz": -1411,
+      "published_heading": 198.28125,
+      "before_evidence_sha256": "20f99cd58dad00d52521ebb61c3cc7d6a95e101565e2fbc9207b8cddf2a75118",
+      "after_evidence_sha256": "245ff2800898acab9211e1008bff25ca64965905860e5f56bfdd341bf181bb6d"
+    },
+    {
+      "before": "hall-facing-4",
+      "after": "hall-walk-4",
+      "room": [
+        1,
+        0
+      ],
+      "yaw": 6288,
+      "dx": -554,
+      "dz": 119,
+      "published_heading": 282.65625,
+      "before_evidence_sha256": "44cc040d36c04c6379ee3c9a4ac16c8ea23bfb099253be7ebb2d183b94924b71",
+      "after_evidence_sha256": "64e8a57686cbf2010b79a0fb021488c5b2b4e4edf4c6139794bd3005d91032e4"
+    },
+    {
+      "before": "hall-facing-5",
+      "after": "hall-walk-5",
+      "room": [
+        1,
+        0
+      ],
+      "yaw": 7248,
+      "dx": 65,
+      "dz": 556,
+      "published_heading": 7.03125,
+      "before_evidence_sha256": "b0b7b3682c2a6c6437671e98bf827256666acca6acc6bb476185ebb7eebf9334",
+      "after_evidence_sha256": "b024183754d1f5bcca48232c51cb354bfae3ce100411baf6c04023abbf8328ca"
+    },
+    {
+      "before": "shop2-facing-0",
+      "after": "shop2-walk-0",
+      "room": [
+        0,
+        1
+      ],
+      "yaw": 779,
+      "dx": 204,
+      "dz": -528,
+      "published_heading": 158.466796875,
+      "before_evidence_sha256": "6ceac031d948743defcba31e030b1e0f23d359e6c90c78f964a97f902873c904",
+      "after_evidence_sha256": "9a922cc579cbcf9eb036e3a3981cb859c4b65ef6d82e5e5e99165e42af45070e"
+    },
+    {
+      "before": "shop2-facing-1",
+      "after": "shop2-walk-1",
+      "room": [
+        0,
+        1
+      ],
+      "yaw": 1739,
+      "dx": -505,
+      "dz": -260,
+      "published_heading": 242.841796875,
+      "before_evidence_sha256": "9c867394894a2dc4fea3844505ba3958c5ca83930f1fbee612c290e2107c3701",
+      "after_evidence_sha256": "8184faa7cd2372ac0a4bb275251451c7c9891ca8badbf1d50e92e58a8cd97253"
+    },
+    {
+      "before": "shop2-facing-2",
+      "after": "shop2-walk-2",
+      "room": [
+        0,
+        1
+      ],
+      "yaw": 2699,
+      "dx": -352,
+      "dz": 536,
+      "published_heading": 327.216796875,
+      "before_evidence_sha256": "249700963e3ba7e1863cdb0793699bdab9145b75b07e3ae6f4a644e857a1cbdd",
+      "after_evidence_sha256": "144d9ac627fc048d4c28a569962d08d7175d09c024902a893e0d127ff0c3fdfc"
+    },
+    {
+      "before": "shop2-facing-3",
+      "after": "shop2-walk-3",
+      "room": [
+        0,
+        1
+      ],
+      "yaw": 3739,
+      "dx": 479,
+      "dz": 289,
+      "published_heading": 58.623046875,
+      "before_evidence_sha256": "3d5afb9020bf9967cea8eda301bd6d1482898f691bba272c05102995dfc74af1",
+      "after_evidence_sha256": "e1ae686b18ed5661608a8fef25ac75e838e444cda7fc440a08c9e67f9ba635f3"
+    }
+  ]
+}

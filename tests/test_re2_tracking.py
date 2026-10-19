@@ -3,10 +3,13 @@
 These tests exercise interpretation contracts; they are not gameplay evidence.
 RE2-COLLECT-002 checks known items alongside unresolved slot identities.
 RE2-DOOR-001/002/003 record separate runtime evidence for door flag contracts.
+RE2-PLAYER-001 supplies measured movement references for heading regressions.
 """
 
 import copy
 import hashlib
+import json
+import math
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -25,6 +28,34 @@ from games.runtime_identity import RuntimeSignature
 from tracker.exploration_state import RoomCompletion, Tracker
 from tracker.polling import PollStatus
 from ui.map_view import map_state
+
+HEADING_MOVEMENTS = json.loads(
+    (ROOT / "tests/fixtures/re2/heading-movements.json").read_text()
+)["measurements"]
+
+
+@pytest.mark.parametrize("movement", HEADING_MOVEMENTS, ids=lambda row: row["after"])
+def test_heading_agrees_with_native_forward_displacement(snapshot, movement):
+    profile, _, put, read = snapshot
+    put(0x800C7D9A, movement["yaw"], 2)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.player_heading == movement["published_heading"]
+    # Native forward displacement is an independent reference for the sign and
+    # offset; a two-degree bound covers the observed native motion differences.
+    motion_heading = math.degrees(math.atan2(movement["dx"], movement["dz"])) % 360
+    assert abs((tracker.player_heading - motion_heading + 180) % 360 - 180) < 2
+
+
+def test_heading_rewinds_from_fresh_yaw_without_resetting_visits(snapshot):
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 0))
+    for movement in [HEADING_MOVEMENTS[index] for index in (0, 3, 0, 3)]:
+        put(0x800C7D9A, movement["yaw"], 2)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        assert map_state(tracker)["player_heading"] == movement["published_heading"]
+        assert set(tracker.rooms) == {"00-00", "00-01"}
 
 
 @pytest.fixture(scope="module")
