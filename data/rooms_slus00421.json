@@ -8,7 +8,8 @@
     "RE2-MAP-002",
     "RE2-COLLECT-001",
     "RE2-COLLECT-002",
-    "RE2-COLLECT-003"
+    "RE2-COLLECT-003",
+    "RE2-COLLECT-004"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "rooms": [
@@ -4052,7 +4053,12 @@
           "kind": "award",
           "opcode": 118,
           "item_type": 53,
-          "amount": 1
+          "amount": 1,
+          "collection": {
+            "kind": "flag",
+            "bank": 8,
+            "bit": 5
+          }
         }
       ],
       "stage": 1,

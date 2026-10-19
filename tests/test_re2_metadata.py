@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from map_geometry import trace_floor_cells
 
-from games.re2.room_data import decode_room
+from games.re2.room_data import bind_event_awards, decode_room
 
 
 def synthetic_room(init, main_procedures=(b"\x01\0",)):
@@ -40,6 +40,70 @@ def item_command(item_type, amount, gid, slot=8):
     item[0:4] = bytes([0x4E, slot, 2, 0x31])
     struct.pack_into("<3H", item, 14, item_type, amount, gid)
     return bytes(item)
+
+
+@pytest.mark.parametrize(
+    "case,bound",
+    [
+        ("exclusive", True),
+        ("clear", False),
+        ("toggle", False),
+        ("story-bank", False),
+        ("not-adjacent", False),
+        ("ordinary-alias", False),
+        ("reset-alias", False),
+        ("other-source-writer", False),
+        ("undecoded-writer", False),
+        ("branch-bypass", False),
+    ],
+)
+def test_event_award_requires_an_exclusive_post_delivery_item_flag(case, bound):
+    write = bytes(
+        [
+            0x22,
+            4 if case == "story-bank" else 8,
+            5,
+            0 if case == "clear" else 2 if case == "toggle" else 1,
+        ]
+    )
+    delivery = (
+        bytes([0x76, 53, 1]) + (bytes([0]) if case == "not-adjacent" else b"") + write
+    )
+    if case == "branch-bypass":
+        # The false branch enters the flag write without delivering anything.
+        delivery = bytes([6, 0, 7, 0, 0x21, 4, 7, 0]) + delivery
+    data = synthetic_room(bytes([1, 0]), (delivery + bytes([1, 0]),))
+    first = {**decode_room(data, "synthetic"), "id": "01-02", "stage": 1}
+    other_data = synthetic_room(
+        item_command(20, 15, 5) + bytes([1, 0])
+        if case == "ordinary-alias"
+        else bytes([0x46, 9, 2, 0, 20, 0, 1, 0, 5, 0, 1, 0])
+        if case == "reset-alias"
+        else bytes([0x22, 8, 5, 1, 1, 0])
+        if case == "other-source-writer"
+        else bytes([1, 0])
+    )
+    if case == "undecoded-writer":
+        # Conservatively reject a writer even beyond an early script return.
+        other_data += bytes([0x22, 8, 5, 2])
+    other = {**decode_room(other_data, "synthetic"), "id": "00-01", "stage": 0}
+    result = bind_event_awards(
+        [first, other], {"01-02": data, "00-01": other_data}, {0: 8, 1: 8}
+    )
+    assert result["00-01"] == []
+    assert result["01-02"][0]["collection"] == (
+        {"kind": "flag", "bank": 8, "bit": 5} if bound else {"kind": "unresolved"}
+    )
+
+
+def test_generated_event_award_has_a_collection_rule_without_a_presence_proof():
+    rooms = json.loads((ROOT / "data/rooms_slus00421.json").read_text())["rooms"]
+    awards = [(room["id"], award) for room in rooms for award in room["event_awards"]]
+    assert len(awards) == 1
+    source, award = awards[0]
+    assert source == "01-02"
+    assert (award["offset"], award["item_type"], award["amount"]) == (8944, 53, 1)
+    assert award["collection"] == {"kind": "flag", "bank": 8, "bit": 5}
 
 
 def test_conditional_return_does_not_hide_later_pickup():

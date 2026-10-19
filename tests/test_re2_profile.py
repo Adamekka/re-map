@@ -169,3 +169,44 @@ def test_re2_door_activation_floor_is_required_validated_metadata(tmp_path, floo
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="RE2 door activation floor"):
         Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "collection",
+    [
+        None,
+        {},
+        {"kind": "other"},
+        {"kind": "unresolved", "bit": 5},
+        {"kind": "flag"},
+        {"kind": "flag", "bank": True, "bit": 5},
+        {"kind": "flag", "bank": 8, "bit": True},
+        {"kind": "flag", "bank": 4, "bit": 5},
+        {"kind": "flag", "bank": 8, "bit": -1},
+        {"kind": "flag", "bank": 8, "bit": 256},
+        {"kind": "flag", "bank": 8, "bit": 0},
+    ],
+)
+def test_re2_event_collection_rules_are_required_and_reject_aliases(
+    tmp_path, collection
+):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    award = next(room for room in document["rooms"] if room["event_awards"])[
+        "event_awards"
+    ][0]
+    if collection is None:
+        del award["collection"]
+    else:
+        award["collection"] = collection
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps(raw))
+    with pytest.raises(
+        ValueError, match="RE2 event award.*collection|aliased RE2 event award"
+    ):
+        Re2Profile.load(profile)

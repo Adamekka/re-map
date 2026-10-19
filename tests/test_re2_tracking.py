@@ -371,6 +371,104 @@ def test_ambiguous_item_identity_stays_unknown_even_with_acquisition_flag(snapsh
 
 
 @pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("coverage", [False, True])
+def test_event_collection_rewinds_without_inventory_or_activation(
+    snapshot, departed, coverage
+):
+    profile, _, put, read = snapshot
+    award = profile.rooms["01-02"]["event_awards"][0]
+    source = "01-02" if departed else "00-01"
+    room = {
+        **profile.rooms[source],
+        "items": [],
+        "collection_item_ids": [],
+        "event_awards": [award],
+        "candidate_list_complete": coverage,
+    }
+    profile = replace(profile, rooms={**profile.rooms, source: room})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    if departed:
+        tracker.mark_current(RoomId(1, 2))
+    visits = None
+    for acquired in (False, True, False, True):
+        put(0x800CC9E8, 0x04000000 if acquired else 0, 4)
+        # Activation/completion and inventory possession are separate facts.
+        put(0x800CC980, 0x01000000 if not acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source]
+        assert record.completion is (
+            RoomCompletion.Cleared if acquired and coverage else RoomCompletion.Unknown
+        )
+        assert record.total_items == 1
+        assert record.collected_items == int(acquired)
+        assert record.items[0].state == ("taken" if acquired else "unknown")
+        assert record.items[0].label == (
+            profile.names["items"]["53"] if acquired else "Event collectible"
+        )
+        assert record.items[0].quantity == (
+            1 if acquired else ItemQuantityState.Unreconstructed
+        )
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    fresh = Tracker()
+    if departed:
+        fresh.mark_current(RoomId(1, 2))
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms[source].collected_items == 1
+
+
+def test_unbound_event_awards_remain_separate_unresolved_checks(snapshot):
+    profile, _, put, read = snapshot
+    award = profile.rooms["01-02"]["event_awards"][0]
+    source = {
+        **profile.rooms["00-01"],
+        "items": [],
+        "collection_item_ids": [],
+        "event_awards": [award, {**award, "collection": {"kind": "unresolved"}}],
+    }
+    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    put(0x800CC9E8, 0xFFFFFFFF, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    record = tracker.rooms["00-01"]
+    assert record.completion is RoomCompletion.Unknown
+    assert [item.state for item in record.items] == ["taken", "unknown"]
+    assert record.total_items == 2 and record.collected_items == 1
+
+
+@pytest.mark.parametrize("failure", ["changed", "short"])
+def test_event_flag_checks_are_part_of_final_snapshot_coherence(snapshot, failure):
+    profile, _, put, read = snapshot
+    award = copy.deepcopy(profile.rooms["01-02"]["event_awards"][0])
+    # A separate word makes this check depend on the event reader rather than
+    # an ordinary pickup that already happens to consume the same word.
+    award["collection"]["bit"] = 40
+    room = {**profile.rooms["00-01"], "event_awards": [award]}
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changed(address, width):
+        if address == 0x800CC9EC:
+            if failure == "short":
+                return MemRead(True, b"\0")
+            put(address, 0x00800000, 4)
+        return read(address, width)
+
+    result = poll_re2(profile, tracker, changed)
+    assert result.status is (
+        PollStatus.Retry if failure == "changed" else PollStatus.ReadFailure
+    )
+    assert tracker == before
+
+
+@pytest.mark.parametrize("departed", [False, True])
 def test_unrelated_proven_items_survive_ambiguity_collection_and_rewind(
     snapshot, departed
 ):

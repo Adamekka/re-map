@@ -258,25 +258,29 @@ def poll_re2(
                     else ItemQuantityState.Unreconstructed
                 )
                 details.append(ItemDetail(label, state, quantity))
-            has_awards = any(
-                command["item_type"] < layout["file_type_min"]
-                for command in source["event_awards"]
-            )
-            complete = (
-                source["candidate_list_complete"]
-                and not has_awards
-                and not (visited == key and unresolved_registry)
-            )
-            # Unbound event deliveries can add collectibles. The current
-            # implementation deliberately withholds clearance in those rooms.
-            if has_awards:
+            for award in source["event_awards"]:
+                if award["item_type"] >= layout["file_type_min"]:
+                    continue
+                collection = award["collection"]
+                taken = collection["kind"] == "flag" and flag(
+                    collection["bank"], collection["bit"]
+                )
+                # A bound post-delivery bit proves collection, even after use.
+                # Its clear value alone cannot prove a conditional event exists.
                 details.append(
                     ItemDetail(
-                        "Event collectible",
-                        "unknown",
-                        ItemQuantityState.Unreconstructed,
+                        profile.names["items"].get(
+                            str(award["item_type"]), "Collectible"
+                        )
+                        if taken
+                        else "Event collectible",
+                        "taken" if taken else "unknown",
+                        award["amount"] if taken else ItemQuantityState.Unreconstructed,
                     )
                 )
+            complete = source["candidate_list_complete"] and not (
+                visited == key and unresolved_registry
+            )
             evaluations.append((source_id, tuple(details), complete))
             for definition in source["doors"]:
                 observed = (

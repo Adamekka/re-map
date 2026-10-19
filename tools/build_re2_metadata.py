@@ -24,7 +24,7 @@ from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
 
 from games.re2.map_layout import Re2MapProjection
-from games.re2.room_data import decode_room
+from games.re2.room_data import bind_event_awards, decode_room
 
 AREA_NAMES = (
     "City streets west",
@@ -93,7 +93,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             if row is None:
                 raise ValueError("disc lacks Leon room data")
             directory, directory_size = row[1:3]
-        rooms = []
+        rooms, sources = [], {}
         for name, extent, size, is_directory in _read_dir(
             stream, directory, directory_size
         ):
@@ -102,21 +102,33 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             match = re.fullmatch(r"ROOM([1-7])([0-9A-F]{2})0\.RDT", name)
             if match is None:
                 raise ValueError(f"unexpected Leon room source {name}")
+            data = _read_file(stream, extent, size)
             try:
-                room = decode_room(_read_file(stream, extent, size), "PL0/RDT/" + name)
+                room = decode_room(data, "PL0/RDT/" + name)
             except ValueError as error:
                 raise ValueError(f"{name}: {error}") from error
-            room["event_awards"] = [
-                command
-                for program in room.pop("programs").values()
-                for command in program["commands"]
-                if command["kind"] == "award"
-            ]
+            # Fill this field after the corpus check without reordering JSON keys.
+            room["event_awards"] = []
             room.update(stage=int(match[1]) - 1, room=int(match[2], 16))
             room["id"] = f"{room['stage']:02d}-{room['room']:02x}"
             rooms.append(room)
+            sources[room["id"]] = data
     if len(rooms) != 125:
         raise ValueError("pinned Leon disc must contain 125 room sources")
+    layout = profile["runtime_layout"]
+    awards = bind_event_awards(
+        rooms,
+        sources,
+        {
+            room["stage"]: layout["item_bank_early"]
+            if room["stage"] < layout["item_bank_stage_boundary"]
+            else layout["item_bank_late"]
+            for room in rooms
+        },
+    )
+    for room in rooms:
+        room["event_awards"] = awards[room["id"]]
+        del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
     load = struct.unpack_from("<I", executable, 0x18)[0]
@@ -377,6 +389,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-001",
                 "RE2-COLLECT-002",
                 "RE2-COLLECT-003",
+                "RE2-COLLECT-004",
             ],
             "rooms": rooms,
         },

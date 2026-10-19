@@ -108,7 +108,13 @@ class Re2Profile:
         rooms = {row["id"]: row for row in document["rooms"]}
         if len(rooms) != 125 or len(rooms) != len(document["rooms"]):
             raise ValueError("RE2 metadata needs 125 unique room sources")
+        award_flags, pickup_flags = set(), set()
         for key, room in rooms.items():
+            bank = (
+                layout["item_bank_early"]
+                if room["stage"] < layout["item_bank_stage_boundary"]
+                else layout["item_bank_late"]
+            )
             if (
                 "event_awards" not in room
                 or "candidate_list_complete" not in room
@@ -131,6 +137,36 @@ class Re2Profile:
                 for award in room["event_awards"]
             ):
                 raise ValueError("invalid RE2 event award metadata")
+            if len({award["offset"] for award in room["event_awards"]}) != len(
+                room["event_awards"]
+            ):
+                raise ValueError("duplicate RE2 event award")
+            for award in room["event_awards"]:
+                collection = award.get("collection")
+                if type(collection) is not dict or collection.get("kind") not in (
+                    "unresolved",
+                    "flag",
+                ):
+                    raise ValueError(
+                        "RE2 event award requires an explicit collection rule"
+                    )
+                if collection["kind"] == "unresolved":
+                    valid = collection == {"kind": "unresolved"}
+                else:
+                    valid = (
+                        collection.keys() == {"kind", "bank", "bit"}
+                        and type(collection["bank"]) is int
+                        and collection["bank"] == bank
+                        and type(collection["bit"]) is int
+                        and 0 <= collection["bit"] < banks[bank][1] * 8
+                    )
+                if not valid:
+                    raise ValueError("invalid RE2 event award collection rule")
+                if collection["kind"] == "flag":
+                    identity = bank, collection["bit"]
+                    if identity in award_flags:
+                        raise ValueError("aliased RE2 event award collection rule")
+                    award_flags.add(identity)
             if key != str(RoomId(room["stage"], room["room"])) or not room["proofs"]:
                 raise ValueError("invalid RE2 room source identity")
             if (
@@ -142,16 +178,12 @@ class Re2Profile:
                 )
             ):
                 raise ValueError("invalid RE2 source section bounds")
-            bank = (
-                layout["item_bank_early"]
-                if room["stage"] < layout["item_bank_stage_boundary"]
-                else layout["item_bank_late"]
-            )
             if any(
                 not 0 <= item["global_id"] < banks[bank][1] * 8
                 for item in room["items"]
             ):
                 raise ValueError("RE2 pickup flag outside its bank")
+            pickup_flags.update((bank, item["global_id"]) for item in room["items"])
             if "collection_item_ids" not in room:
                 raise ValueError(
                     "RE2 source requires explicit collection identity proofs"
@@ -204,6 +236,8 @@ class Re2Profile:
                 for door in room["doors"]
             ):
                 raise ValueError("invalid RE2 door activation floor")
+        if award_flags & pickup_flags:
+            raise ValueError("aliased RE2 event award and pickup collection rules")
         return Re2Profile(
             raw["profile_id"],
             raw["revision"],

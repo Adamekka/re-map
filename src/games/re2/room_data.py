@@ -5,6 +5,68 @@ from __future__ import annotations
 import hashlib
 import struct
 
+
+def bind_event_awards(
+    rooms: list[dict], sources: dict[str, bytes], item_banks: dict[int, int]
+) -> dict[str, list[dict]]:
+    """Bind exclusive post-delivery acquisition writes. See RE2-COLLECT-004."""
+    assert len({room["id"] for room in rooms}) == len(rooms)
+    assert sources.keys() == {room["id"] for room in rooms}, "all sources are required"
+    result = {}
+    for room in rooms:
+        awards = []
+        for program in room["programs"].values():
+            commands = {row["offset"]: row for row in program["commands"]}
+            for command in commands.values():
+                if command["kind"] != "award":
+                    continue
+                award = {**command, "collection": {"kind": "unresolved"}}
+                following = commands.get(command["next"])
+                if (
+                    following is not None
+                    and following["kind"] == "flag_write"
+                    and following["operation"] == 1
+                    and following["bank"] == item_banks[room["stage"]]
+                    and not any(
+                        other["entry"] == following["offset"]
+                        or any(
+                            row.get("target") == following["offset"]
+                            for row in other["commands"]
+                        )
+                        for other in room["programs"].values()
+                    )
+                ):
+                    bank, bit = following["bank"], following["bit"]
+                    # Scan raw sources too: unsupported script paths must not
+                    # hide a second writer and manufacture exclusive ownership.
+                    needle = bytes((0x22, bank, bit))
+                    hits = [
+                        (key, offset)
+                        for key, data in sources.items()
+                        for offset in range(len(data) - 2)
+                        if data[offset : offset + 3] == needle
+                    ]
+                    aliased = any(
+                        item_banks[other["stage"]] == bank
+                        and (
+                            any(item["global_id"] == bit for item in other["items"])
+                            or any(
+                                row["kind"] == "reset"
+                                and row["interaction"] == 2
+                                and struct.unpack("<3H", bytes(row["data"]))[2] == bit
+                                for program in other["programs"].values()
+                                for row in program["commands"]
+                            )
+                        )
+                        for other in rooms
+                    )
+                    if hits == [(room["id"], following["offset"])] and not aliased:
+                        award["collection"] = {"kind": "flag", "bank": bank, "bit": bit}
+                awards.append(award)
+        result[room["id"]] = awards
+    return result
+
+
 # The pinned PS1 Endif consumes its padding byte. The PC format's one-byte
 # width would turn that byte into an unrelated NOP (RE2-SCD-001).
 OPCODE_WIDTHS = (
