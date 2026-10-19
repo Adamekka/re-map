@@ -197,6 +197,13 @@ class Re2Profile:
                 for row in room["items"] + room["doors"]
             ):
                 raise ValueError("RE2 interaction outside its registry")
+            if any(
+                "activation_floor" not in door
+                or type(door["activation_floor"]) is not int
+                or not 0 <= door["activation_floor"] <= 255
+                for door in room["doors"]
+            ):
+                raise ValueError("invalid RE2 door activation floor")
         return Re2Profile(
             raw["profile_id"],
             raw["revision"],

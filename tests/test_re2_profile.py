@@ -149,3 +149,23 @@ def test_re2_quantity_alternatives_are_required_validated_metadata(tmp_path, amo
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="RE2 source quantity"):
         Re2Profile.load(path)
+
+
+@pytest.mark.parametrize("floor", [None, True, "0", -1, 256])
+def test_re2_door_activation_floor_is_required_validated_metadata(tmp_path, floor):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    door = document["rooms"][0]["doors"][0]
+    if floor is None:
+        del door["activation_floor"]
+    else:
+        door["activation_floor"] = floor
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 door activation floor"):
+        Re2Profile.load(path)

@@ -322,3 +322,34 @@ def test_generated_catalog_has_unique_room_proofs_and_only_numeric_map_data():
         for area in maps["areas"]
         for door in area["doors"]
     )
+
+
+@pytest.mark.parametrize("opcode,size,operand", [(0x3B, 32, 22), (0x68, 40, 30)])
+@pytest.mark.parametrize("activation_floor", [4, 0x84])
+def test_door_trigger_floor_is_separate_from_destination(
+    opcode, size, operand, activation_floor
+):
+    packet = bytearray(size)
+    packet[:6] = bytes([opcode, 0, 1, 0x31, activation_floor, 0])
+    packet[operand + 3] = 1
+    door = decode_room(synthetic_room(packet + b"\x01\0"), "synthetic")["doors"][0]
+    assert door["activation_floor"] == activation_floor
+    assert door["floor"] == 1
+
+
+def test_native_split_room_door_markers_belong_to_their_trigger_floor():
+    """RE2-MAP-002: both source sides have captured native crossings."""
+    maps = json.loads((ROOT / "data/floor_plans_slus00421.json").read_text())
+    markers = {
+        (area["id"], door["id"]): door
+        for area in maps["areas"]
+        for door in area["doors"]
+    }
+    assert ("re2-03", "00-16:2522:0D") not in markers
+    for area, marker, segment in (
+        ("re2-03", "00-09:8432:01", [[240, 159.756], [240, 157.756]]),
+        ("re2-03", "00-16:2554:0D", [[248, 159.524], [248, 157.524]]),
+        ("re2-02", "00-16:2522:11", [[251, 164.598], [251, 162.598]]),
+        ("re2-02", "01-0b:12160:0B", [[251, 161.913], [251, 163.913]]),
+    ):
+        assert markers[area, marker]["segment"] == segment

@@ -134,10 +134,14 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
   assert.equal(await floor.locator('option').count(), 1, 'another floor must stay hidden until entered');
   assert.equal(await page.locator('#map .room').count(), 1);
+  assert.equal(await page.locator('[data-door="00-16:2554:0D"]').count(), 1);
+  assert.equal(await page.locator('[data-door="00-16:2522:0D"]').count(), 0, 'a lower-floor trigger must not appear on the upper outline');
   Object.assign(state, floorStates['lower-later']);
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-02');
   assert.deepEqual(await floor.locator('option').evaluateAll(options => options.map(option => option.value)), ['re2-02', 're2-03']);
   assert.equal(await page.locator('#map .room').count(), 1, 'a floor change must reveal only its visited region');
+  assert.equal(await page.locator('[data-door="00-16:2522:11"]').count(), 1);
+  assert.equal(await page.locator('[data-door="00-16:2554:0D"]').count(), 0);
   await floor.selectOption('re2-03');
   assert.equal(await page.locator('.player').count(), 0, 'browsing another floor must hide the player');
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
@@ -157,6 +161,8 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
   assert.equal(await page.locator('#map .room').count(), 1);
   assert.equal(await floor.locator('option').count(), 2);
+  assert.equal(await page.locator('[data-door="00-16:2554:0D"]').count(), 1);
+  assert.equal(await page.locator('[data-door="00-16:2522:0D"]').count(), 0);
   assert.deepEqual(errors, []);
   console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');
 } finally {

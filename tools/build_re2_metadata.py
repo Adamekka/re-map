@@ -293,6 +293,19 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 if room["id"] not in entry["room_ids"]:
                     continue
                 for door in room["doors"]:
+                    # The trigger floor belongs to this side of the door. Its
+                    # destination floor can select a different outlined region.
+                    # Bit 7 bypasses the native floor comparison on every floor.
+                    if not door["activation_floor"] & 0x80 and not any(
+                        location["room"] == room["id"]
+                        and location["area"] == plan["id"]
+                        and location["region"] == entry["id"]
+                        and location["floor_min"]
+                        <= door["activation_floor"]
+                        <= location["floor_max"]
+                        for location in locations
+                    ):
+                        continue
                     wx, wz = door["center"]
                     # The native marker maps world X/Z using this translation
                     # and scale (RE2-MAP-001), before adding the room's origin.
@@ -353,7 +366,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         "schema": 1,
         "profile_id": profile["profile_id"],
         "executable_identity": identity,
-        "research_ids": ["RE2-SCD-001", "RE2-MAP-001"],
+        "research_ids": ["RE2-SCD-001", "RE2-MAP-001", "RE2-MAP-002"],
         "validation": "Candidate; runtime coverage is listed in docs/research.md",
     }
     return (

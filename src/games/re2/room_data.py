@@ -261,6 +261,7 @@ def decode_room(data: bytes, source: str) -> dict:
                     doors[position] = {
                         "offset": position,
                         "slot": packet[1],
+                        "activation_floor": packet[4],
                         "stage": packet[operand],
                         "room": packet[operand + 1],
                         "floor": packet[operand + 3],
