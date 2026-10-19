@@ -744,3 +744,78 @@ Contributions:
 - 2026-10-19; `gpt-6.1-sol`; all 133 focused RE2 tests, scoped Ruff lint/format checks and RE2 browser checks passed. The browser covers all 133 outlines plus the new floor following/browsing/restore cases. The private audit passed thirty paused publications, one unchanged-publication doorway rejection, all 200 sequential live outcomes, four exact native restores, unchanged health/inventory/acquisition/key checks and the separate one-source/two-region history-file round trip. These checks do not extend the stated runtime coverage.
 - 2026-10-19; returned identifier `Gemini 3.8 Flash (High)`, conversation `2f02123f-b210-4952-ac74-cfe19a47fd26`; reviewed the complete tracked diff/new numeric fixture, full affected tests, unchanged reader/profile/map/tracker/history/UI contracts, private original setup/capture/live-probe/audit code, numerical paused/live outcomes, restart metadata and cleanup/black-display evidence. It returned no findings. The process exited zero, completed an agent response and terminal SUCCESS with a nonblank response, had empty stderr and attempted no tools. `Claude Opus 4.6 (Thinking)` remained unavailable because the preceding RE2-DOOR-001 call exhausted its individual quota, reporting a reset in 133h36m38s on 2026-10-18. The known quota failure was not retried and supplied no perspective on this snapshot; it is not an endorsement. Prompt SHA256 `2da886705d141fb258b135c1bc076dc1cffc67f2b08c773dbd6bbcf0c05e6c77`; private review evidence is under `/tmp/re-map-re2-floors-20261019/review/`. Only this review provenance and the human review exception below were added after the reviewed snapshot. Local document links/anchors and whitespace checks also passed. The prose review did not perform runtime validation.
 - 2026-10-19; human user; explicitly approved committing this natural-floor-transition validation increment using the completed Gemini review alone while Opus remained quota-blocked. This review exception applies only to this increment.
+
+
+## RE2-SESSION-001: live tracker restarts and restores
+
+Status: Confirmed for the listed item, named door and two floor contexts across four clean tracker restarts and eleven native loads on SLUS-00421. This confirms running CLI/history/HTTP integration for these cases. It does not confirm crash recovery, normal saves, other locks or other conditional floors. No production or UI change was needed.
+
+Game: Resident Evil 2 USA Disc 1, Leon A, SLUS-00421, executable `SLUS_004.21`, SHA256 `1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef`. DuckStation `0.1-12083-g00e299795`; the bundle version was reread. Runtime signature SHA256 remains `712628cd70ecee75e834248085df57ac0b22862fa8e7e486e06cc9833cae5d5a`. Identity is pinned in [RE2-IDENTITY-001](#re2-identity-001-leon-a-disc-identity-and-candidate-room-layout). Earlier offline history round trips in [RE2-COLLECT-003](#re2-collect-003-scripted-activation-preserves-collection-identity), [RE2-DOOR-002](#re2-door-002-named-key-use-and-savestate-reversal) and [RE2-FLOOR-001](#re2-floor-001-native-same-room-floor-changes-and-restores) did not test an actual tracker restart. This pass addresses that gap using their existing checkpoints.
+
+### Running tracker observations
+
+Five distinct OS processes run the unchanged `tools/track.py` with the real RE2 profile, test GDB port 2346, requested 10 Hz, `--map`, an explicit private log and the same private `--history-file`. No tracker, history, memory reader or HTTP implementation is patched in these native runs. The helper reads the actual `/state` endpoint. Each process ends with SIGINT, exit zero, normal GDB shutdown and release of the history lock/map port before the next start. These are four clean process restarts, not four calls to `main()` within one interpreter.
+
+The helper samples HTTP state at roughly 10 Hz until twenty consecutive responses match the expected loaded case. Fourteen stages produce 281 responses: 280 matching settled samples and one initial `waiting` response with no current room. Repeated responses may describe the same gameplay state; neither this count nor the requested tracker frequency proves distinct polls, sustained update frequency or atomic publication during every load transition. The first waiting response is retained, not counted as a gameplay match.
+
+| Process | Observation | Loaded case | Current source / area:region | Source / region visits |
+| --- | --- | --- | --- | --- |
+| 1 | `initial-item` | `item-before` | `00-01` / `re2-00:01` | 1 / 1 |
+| 1 | `item-later` | `item-after` | `00-01` / `re2-00:01` | 1 / 1 |
+| 2 | `item-later-restarted` | `item-after` | `00-01` / `re2-00:01` | 1 / 1 |
+| 2 | `item-earlier-restarted` | `item-before` | `00-01` / `re2-00:01` | 1 / 1 |
+| 2 | `door-earlier` | `door-before` | `01-04` / `re2-02:04` | 2 / 2 |
+| 2 | `door-later` | `door-after` | `01-04` / `re2-02:04` | 2 / 2 |
+| 3 | `door-earlier-restarted` | `door-before` | `01-04` / `re2-02:04` | 2 / 2 |
+| 3 | `floor-upper` | `upper` | `00-16` / `re2-03:0D` | 3 / 3 |
+| 3 | `floor-lower` | `lower` | `00-16` / `re2-02:11` | 3 / 4 |
+| 4 | `floor-lower-restarted` | `lower` | `00-16` / `re2-02:11` | 3 / 4 |
+| 4 | `floor-upper-restarted` | `upper` | `00-16` / `re2-03:0D` | 3 / 4 |
+| 5 | `item-earlier-after-floors` | `item-before` | `00-01` / `re2-00:01` | 3 / 4 |
+| 5 | `item-later-after-floors` | `item-after` | `00-01` / `re2-00:01` | 3 / 4 |
+| 5 | `door-later-after-floors` | `door-after` | `01-04` / `re2-02:04` | 3 / 4 |
+
+The item case is the source-proven reward in `00-01`. Before collection, the published item is Uncollected and the room Incomplete; after collection it is Taken/Cleared. Both states recur after tracker restarts. Its departed-room publication also rebuilds from the loaded flags when another source is current. Earlier door/floor checkpoints predate that reward's collection, so they correctly return the already-explored item room to Incomplete.
+
+The named door is `01-04:6430`. The pre-use state publishes Locked with its key symbol; the later state publishes Open/Unlocked without that symbol. Process 3 starts after the earlier state was loaded while the tracker was stopped and correctly reconstructs Locked. In this pass, departed observations remain Unchecked with the key symbol because those loaded checkpoints have the unlock bit clear. Unlocked departed labeling was separately verified in RE2-DOOR-002; this pass does not repeat that case. Observed access is never inferred from persisted exploration.
+
+The floor cases retain source `00-16`. Upper selects `re2-03:0D`, lower selects `re2-02:11`. The upper region appears on its first accepted publication, and the lower appears only after its own first accepted publication. Process 4 starts on the lower context with both region visits intact, then an actual earlier load switches the current selection to upper. Process 5 starts after loading the earlier item state while the tracker was stopped; both floor regions and the door room remain explored. Later item/door loads again change their game-derived states without changing those visits.
+
+Every settled sample's `explored_areas` agrees exactly with the history's entered regions. The final history contains exactly sources `00-01`, `01-04`, `00-16` and regions `re2-00:01`, `re2-02:04`, `re2-03:0D`, `re2-02:11`. Its schema has only version, profile/revision/scenario identity, one unchanged playthrough UUID, source visits and region visits. Items, completion, doors, current location and player pose are absent. Decoded history remains identical between stages with unchanged visits; the audit hashes a consistent reserialization of each captured history document rather than historical file bytes. No new room source extends the prior twenty-seven-source runtime union.
+
+### Evidence, reproduction and limits
+
+Private evidence is under `/tmp/re-map-re2-restart-20261019/`. `setup.py` verifies the isolated emulator/settings and boots `item-before`; `runner.py` starts/stops actual tracker processes, prepares selected slots after checking both achievement settings, and captures HTTP/history snapshots. Native F1 performs each of the eleven loads. `events.jsonl`, `run-1` through `run-5` logs/stdout, each observation's JSON and `.samples.json`, `author-metadata.json`, `black-check.json`, `cleanup.json` and `audit.json` preserve the pass. `audit.py` checks distinct process IDs, successful exits, checkpoint hashes, exact accumulated visits, identity/schema, every settled sample, current/departed item/door results, floor selection and unchanged-history groups. It checks all five logs for successful connection/resume/shutdown and absence of warning/error entries.
+
+Use these pre-existing private savestates; their original preparation and assistance are recorded in the linked claims above. Checkpoint hashes identify the files loaded here, not new byte-identical full-RAM captures.
+
+| Helper case | Existing checkpoint | Savestate SHA256 |
+| --- | --- | --- |
+| `item-before` | `re-map-re2-route-20261018/ammo-both.sav` | `89e6315c5c8138784c9a27b138e90c78d4520107d1467b2f6b79d8f7baa7e570` |
+| `item-after` | `re-map-re2-scripted-pickup/after-collection.sav` | `0c0454888cb50cdbc72c5052801b9836a14b42c2deb651d0b74786ccbb0c1971` |
+| `door-before` | `re-map-re2-key-door-20261019/key-present-locked.sav` | `e530308cd0b06eb0a9353790b9f7c3bfe9fc02f62d00c256c8c88a4dab827818` |
+| `door-after` | `re-map-re2-key-door-20261019/key-used-unlocked.sav` | `361435efcb9330a8fb1e4a712ec08b966eab81fe5c6e2448a4a5079f31b581e7` |
+| `upper` | `re-map-re2-floors-20261019/native-upper-approach.sav` | `ae5ba79981c64fb0a997713c1a1945c4aebbea1bdd1c8db7e6ac22b22b9d8450` |
+| `lower` | `re-map-re2-floors-20261019/lower-later.sav` | `1852313fa915bebe22db8e17c14296fbfd7931282bcecec1c44f407a1d2ecee7` |
+
+For independent expected item/door results, the audit reads the earlier named claims' unchanged private RAM captures: `rewind-before-activation`, `pickup-confirmed`, `key-present-locked-ready`, `key-use-complete`, `native-upper-approach` and `lower-later`. Their hashes are retained in `audit.json`. These reference captures are not newly observed RAM images. Acquisition ID 15 is a PS1 virtual unsigned 32-bit little-endian word at `0x800CC9E8`, mask `0x00010000`. The named door's bit 5 uses the same representation at `0x800CCB60`, mask `0x04000000`. Floor is an unsigned byte at PS1 virtual `0x800C7E2A`, mask `0xFF`. This pass adds no new address interpretation.
+
+Before boot and every selected-slot load, Cheevos and Achievements were disabled. Memory cards were None, audio muted, per-game overrides absent and the existing black shader hash-checked. A private suppressed screenshot's central half was entirely black. No game image was emitted. Agent history/log paths were explicit; the user's history was not opened. Checkpoints retain their earlier high-health, infinite-magazine and position/floor preparation assistance. This pass sends no debugger RAM writes or new health/ammunition/position/floor/acquisition/key/inventory/story patches. It uses native savestate loads, not new pickup, unlock or movement interactions.
+
+After testing, all five tracker processes and the isolated emulator were stopped. Settings and the selected slot were restored byte for byte, SHA256 `792443989dc8f5f8ee3dabcc2a20dd71a3e61cc0a44de8a84266d51e6e889069` and `995bb0ff5df6eb6b254d87ea9c6af5386105a50bfd50cdab018da50465965bfa`. Raw RAM, owned game data and savestates remain outside Git.
+
+The added `test_cli_restarts_rebuild_item_and_door_state` uses synthetic memory and four production CLI initializations with the same disk history. It checks acquisition/completion and named-key access reversal, preserved identity/visits and exclusion of derived state from persistence. It does not launch a subprocess or emulator. An initial test setup incorrectly retained active item descriptors while setting acquired bits; the reader rejected that incoherent combination. The corrected setup removes/restores registry entries with the explicit synthetic acquisition state. This was a test-data error, not a production mismatch. The actual five-process pass is independent of that regression.
+
+No UI changed, so the README screenshot remains unchanged. Other item/door/floor contexts, uninterrupted ordinary navigation, crash/power-loss recovery, memory-card persistence and user-history migration are outside this confirmation. Test/publication counts do not measure campaign readiness.
+
+Contributions:
+
+- 2026-10-19; human user; approved the named live tracker restart-and-restore validation increment, hidden existing checkpoints and fixes only for confirmed mismatches.
+- 2026-10-19; Codex root, exact model `gpt-6.1-sol`, verified from matching current-turn metadata; ran five actual tracker processes, four clean restarts and eleven native F1 loads, audited HTTP/history observations and reference flags, restored the isolated setup, added the synthetic CLI regression and authored this entry. No production mismatch was found.
+- 2026-10-19; `gpt-6.1-sol`; the focused RE2/history/logging suite passed 153 tests. Scoped Ruff lint/format checks passed. These checks do not extend the runtime scope above.
+
+Private audit SHA256: `8fc6277c8d9e244437f9780fbf5c12d459a61fbad1cd14f458cf079e60d5b319`.
+
+- 2026-10-19; `gpt-6.1-sol`; the full repository suite passed 1,763 tests in 185.87 seconds, exit zero. Scoped Ruff lint/format, 272 local document links/anchors and whitespace checks passed. No browser rerun is claimed for this unchanged UI.
+- 2026-10-19; returned identifier `Gemini 3.8 Flash (High)`, conversation `4700327c-debe-44f7-b0c5-a1fb4760d6fc`; reviewed the complete tracked diff, full affected and history/logging tests, unchanged CLI/GDB/reader/profile/map/history/tracker/HTTP contracts, private setup/runner/audit helpers and numeric event/audit/cleanup/black-display metadata. It returned No findings, exited zero, completed an agent response and terminal SUCCESS with a nonblank response, had empty stderr and attempted no tools. Prompt SHA256 `e0e8fbcac3714d05459aef3983a721c2ee6e6a1347404da2c76a6ff9868416b4`; private review evidence is under `/tmp/re-map-re2-restart-20261019/review/`. After the snapshot was collected, primary review narrowed the departed-door claim to the observed clear-bit case and described history comparison as decoded equality, not historical byte equality. No test or production code changed after that snapshot. This review provenance and full-suite results were also added afterward. The prose review did not perform runtime validation. `Claude Opus 4.6 (Thinking)` remains unavailable because RE2-DOOR-001's preceding call exhausted its individual quota, reporting a reset in 133h36m38s on 2026-10-18. The known quota failure was not retried and supplied no perspective on this snapshot; it is not an endorsement.
+- 2026-10-19; human user; explicitly approved committing this live tracker restart-and-restore validation increment using the completed Gemini review alone while Opus remained quota-blocked. This review exception applies only to this increment.

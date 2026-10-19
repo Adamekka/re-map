@@ -10,6 +10,7 @@ RE2-FLOOR-001 supplies native floor changes within one room source.
 import copy
 import hashlib
 import json
+import logging
 import math
 import sys
 from dataclasses import replace
@@ -590,6 +591,109 @@ def test_cli_defaults_isolate_game_histories(monkeypatch, tmp_path, name, filena
     )
     assert track.main() == 1
     assert paths == [ROOT / ".local" / filename]
+
+
+def test_cli_restarts_rebuild_item_and_door_state(snapshot, monkeypatch, tmp_path):
+    """RE2-SESSION-001: synthetic CLI regression, separate from native evidence."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import track
+
+    profile, _, put, read = snapshot
+    definition = profile.rooms["00-01"]["doors"][0]
+    pointer = 0x80100000 + definition["offset"] + 2
+    put(pointer + 27, 0x82, 1)
+    put(pointer + 28, 89, 1)
+
+    class LocalReader:
+        connected = True  # The synthetic reader owns memory, not a connection.
+        read_memory = staticmethod(read)
+
+        def connect(self):
+            return ""
+
+        def resume(self):
+            return ""
+
+        def close(self):
+            pass  # Test memory has no external resource to release.
+
+    publications = []
+    poll = track.poll_once
+
+    def observe_poll(profile, tracker, read_memory):
+        result = poll(profile, tracker, read_memory)
+        if result.status is PollStatus.Display:
+            publications.append(map_state(tracker))
+        return result
+
+    monkeypatch.setattr(track, "poll_once", observe_poll)
+    monkeypatch.setattr(track, "DuckStationGdb", lambda *args: LocalReader())
+    monkeypatch.setattr(track.Re2Profile, "load", lambda path: profile)
+    path = tmp_path / "agent-history.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "track.py",
+            "--profile",
+            str(ROOT / "profiles/re2_leon_a_slus00421.json"),
+            "--once",
+            "--history-file",
+            str(path),
+            "--log-file",
+            str(tmp_path / "tracker.log"),
+        ],
+    )
+    root = logging.getLogger()
+    handlers, level = root.handlers[:], root.level
+    root.handlers = []
+    histories = []
+    try:
+        for acquired in (False, True, False, True):
+            put(0x800CC9E8, 0xC0010000 if acquired else 0, 4)
+            put(0x800CCB60, 0x20000000 if acquired else 0, 4)
+            for item in profile.rooms["00-01"]["items"]:
+                # Model collected items with missing descriptors. Keeping an
+                # active item with its acquisition bit set models a torn read.
+                put(
+                    0x800C66C8 + item["slot"] * 4,
+                    0 if acquired else 0x80100000 + item["offset"] + 2,
+                    4,
+                )
+            assert track.main() == 0
+            histories.append(json.loads(path.read_text()))
+            state = publications[-1]
+            assert state["current"] == "00-01"
+            assert state["current_detail"]["state"] == (
+                "CLEARED" if acquired else "INCOMPLETE"
+            )
+            assert {item["state"] for item in state["current_detail"]["items"]} == {
+                "taken" if acquired else "available"
+            }
+            door = next(
+                door
+                for door in state["doors"]
+                if door["observation_id"] == "00-01:6050"
+            )
+            assert (door["state"], door["key_label"]) == (
+                ("OPEN", "") if acquired else ("LOCKED", "Spade Key")
+            )
+    finally:
+        for handler in root.handlers:
+            handler.close()
+        root.handlers = handlers
+        root.setLevel(level)
+    assert len(publications) == 4
+    assert all(history == histories[0] for history in histories)
+    assert histories[0]["rooms"] == ["00-01"]
+    assert histories[0]["regions"] == {"re2-00:01": "00-01"}
+    assert set(histories[0]) == {
+        "schema",
+        "identity",
+        "playthrough_id",
+        "rooms",
+        "regions",
+    }
 
 
 def test_unbound_live_door_withholds_door_coverage(snapshot):
