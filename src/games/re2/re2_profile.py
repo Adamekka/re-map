@@ -108,6 +108,62 @@ class Re2Profile:
         rooms = {row["id"]: row for row in document["rooms"]}
         if len(rooms) != 125 or len(rooms) != len(document["rooms"]):
             raise ValueError("RE2 metadata needs 125 unique room sources")
+
+        supported = raw.get("presence_condition_flags")
+        if (
+            type(supported) is not list
+            or not supported
+            or any(
+                type(row) is not dict
+                or row.keys() != {"bank", "bit"}
+                or type(row["bank"]) is not int
+                or row["bank"] not in banks
+                or type(row["bit"]) is not int
+                or not 0 <= row["bit"] < banks[row["bank"]][1] * 8
+                for row in supported
+            )
+            or len({(row["bank"], row["bit"]) for row in supported}) != len(supported)
+        ):
+            raise ValueError("invalid or missing RE2 stable presence flags")
+        condition_flags = frozenset((row["bank"], row["bit"]) for row in supported)
+
+        def valid_presence(presence):
+            if type(presence) is not dict or presence.get("kind") not in (
+                "unresolved",
+                "required",
+                "conditions",
+            ):
+                return False
+            if presence["kind"] in ("unresolved", "required"):
+                valid = presence.keys() == {"kind"}
+            else:
+                clauses = presence.get("any_of")
+                valid = (
+                    presence.keys() == {"kind", "any_of"}
+                    and type(clauses) is list
+                    and 1 <= len(clauses) <= 32
+                    and all(
+                        type(clause) is list
+                        and 1 <= len(clause) <= 32
+                        and all(
+                            type(test) is dict
+                            and test.keys() == {"bank", "bit", "expected"}
+                            and type(test["bank"]) is int
+                            and test["bank"] in banks
+                            and type(test["bit"]) is int
+                            and 0 <= test["bit"] < banks[test["bank"]][1] * 8
+                            and (test["bank"], test["bit"]) in condition_flags
+                            and type(test["expected"]) is int
+                            and test["expected"] in (0, 1)
+                            for test in clause
+                        )
+                        and len({(test["bank"], test["bit"]) for test in clause})
+                        == len(clause)
+                        for clause in clauses
+                    )
+                )
+            return valid
+
         award_flags, pickup_flags = set(), set()
         for key, room in rooms.items():
             bank = (
@@ -168,42 +224,7 @@ class Re2Profile:
                         raise ValueError("aliased RE2 event award collection rule")
                     award_flags.add(identity)
                 presence = award.get("presence")
-                if type(presence) is not dict or presence.get("kind") not in (
-                    "unresolved",
-                    "required",
-                    "conditions",
-                ):
-                    raise ValueError(
-                        "RE2 event award requires an explicit presence rule"
-                    )
-                if presence["kind"] in ("unresolved", "required"):
-                    valid = presence.keys() == {"kind"}
-                else:
-                    clauses = presence.get("any_of")
-                    valid = (
-                        presence.keys() == {"kind", "any_of"}
-                        and type(clauses) is list
-                        and 1 <= len(clauses) <= 32
-                        and all(
-                            type(clause) is list
-                            and 1 <= len(clause) <= 32
-                            and all(
-                                type(test) is dict
-                                and test.keys() == {"bank", "bit", "expected"}
-                                and type(test["bank"]) is int
-                                and test["bank"] in banks
-                                and type(test["bit"]) is int
-                                and 0 <= test["bit"] < banks[test["bank"]][1] * 8
-                                and type(test["expected"]) is int
-                                and test["expected"] in (0, 1)
-                                for test in clause
-                            )
-                            and len({(test["bank"], test["bit"]) for test in clause})
-                            == len(clause)
-                            for clause in clauses
-                        )
-                    )
-                if not valid or (
+                if not valid_presence(presence) or (
                     presence["kind"] != "unresolved" and collection["kind"] != "flag"
                 ):
                     raise ValueError("invalid or unbound RE2 event award presence rule")
@@ -259,6 +280,29 @@ class Re2Profile:
                 )
             ):
                 raise ValueError("invalid RE2 collection identity proof")
+            conditional = room.get("conditional_item_presence")
+            if (
+                type(conditional) is not list
+                or any(
+                    type(rule) is not dict
+                    or rule.keys() != {"global_id", "presence"}
+                    or type(rule["global_id"]) is not int
+                    or rule["global_id"] in required
+                    or len(
+                        {
+                            item["type"]
+                            for item in room["items"]
+                            if item["global_id"] == rule["global_id"]
+                        }
+                    )
+                    != 1
+                    or not valid_presence(rule["presence"])
+                    or rule["presence"]["kind"] == "unresolved"
+                    for rule in conditional
+                )
+                or len({rule["global_id"] for rule in conditional}) != len(conditional)
+            ):
+                raise ValueError("invalid or missing RE2 conditional pickup presence")
             if any(
                 not 0 <= proof["offset"] <= room["size"] - proof["width"]
                 for proof in room["proofs"]

@@ -5,11 +5,14 @@ from __future__ import annotations
 import hashlib
 import struct
 
-from games.re2.event_presence import INITIALIZER_FALLTHROUGH, event_presence
+from games.re2.event_presence import INITIALIZER_FALLTHROUGH, source_presence
 
 
 def bind_event_awards(
-    rooms: list[dict], sources: dict[str, bytes], item_banks: dict[int, int]
+    rooms: list[dict],
+    sources: dict[str, bytes],
+    item_banks: dict[int, int],
+    condition_flags: frozenset[tuple[int, int]],
 ) -> dict[str, list[dict]]:
     """Bind exclusive post-delivery acquisition writes. See RE2-COLLECT-004."""
     assert len({room["id"] for room in rooms}) == len(rooms)
@@ -68,11 +71,12 @@ def bind_event_awards(
                     )
                     if hits == [(room["id"], following["offset"])] and not aliased:
                         award["collection"] = {"kind": "flag", "bank": bank, "bit": bit}
-                        award["presence"] = event_presence(
+                        award["presence"] = source_presence(
                             sources[room["id"]],
                             room["programs"],
-                            key,
-                            command["offset"],
+                            {(key, command["offset"])},
+                            "scheduled",
+                            condition_flags,
                         )
                 awards.append(award)
         result[room["id"]] = awards
@@ -228,7 +232,9 @@ OPCODE_WIDTHS = (
 )
 
 
-def decode_room(data: bytes, source: str) -> dict:
+def decode_room(
+    data: bytes, source: str, condition_flags: frozenset[tuple[int, int]]
+) -> dict:
     if len(data) < 100 or data[1] == 0:
         raise ValueError("RE2 room needs a complete header and cameras")
     offsets = struct.unpack_from("<23I", data, 8)
@@ -422,49 +428,48 @@ def decode_room(data: bytes, source: str) -> dict:
         # Withhold full-list knowledge until that identity is reconstructed.
         complete = False
 
+    ambiguous_slots = {
+        slot
+        for slot in {item["slot"] for item in items.values()}
+        if len(
+            {
+                (item["global_id"], item["type"])
+                for item in items.values()
+                if item["slot"] == slot
+            }
+        )
+        > 1
+    }
+    # An event can reuse the registry slot after startup. A creator for
+    # another interaction cannot establish the original item's lifetime.
+    ambiguous_slots.update(
+        doors[command["door"]]["slot"] if command["kind"] == "door" else command["slot"]
+        for program in programs.values()
+        for command in program["commands"]
+        if command["kind"] in ("door", "interaction")
+    )
+    for command in resets:
+        identities = {
+            (item["type"], item["global_id"])
+            for item in items.values()
+            if item["slot"] == command["slot"]
+        }
+        if not identities:
+            continue
+        payload = bytes(command["data"])
+        if command["interaction"] == 0 and not any(payload):
+            continue
+        item_type, _amount, gid = struct.unpack("<3H", payload)
+        # RE2-COLLECT-003: a later reset can change identity even when
+        # its event is not part of startup. Quantity is not identity.
+        if command["interaction"] != 2 or identities != {(item_type, gid)}:
+            ambiguous_slots.add(command["slot"])
+
     def collection_items() -> list[int]:
         # RE2-COLLECT-001: prove presence independently of activation. A catalog
         # entry alone may belong to a conditional or never-started procedure.
         if not complete:
             return []
-        ambiguous_slots = {
-            slot
-            for slot in {item["slot"] for item in items.values()}
-            if len(
-                {
-                    (item["global_id"], item["type"])
-                    for item in items.values()
-                    if item["slot"] == slot
-                }
-            )
-            > 1
-        }
-        # An event can reuse the registry slot after startup. A creator for
-        # another interaction cannot establish the original item's lifetime.
-        ambiguous_slots.update(
-            doors[command["door"]]["slot"]
-            if command["kind"] == "door"
-            else command["slot"]
-            for program in programs.values()
-            for command in program["commands"]
-            if command["kind"] in ("door", "interaction")
-        )
-        for command in resets:
-            identities = {
-                (item["type"], item["global_id"])
-                for item in items.values()
-                if item["slot"] == command["slot"]
-            }
-            if not identities:
-                continue
-            payload = bytes(command["data"])
-            if command["interaction"] == 0 and not any(payload):
-                continue
-            item_type, _amount, gid = struct.unpack("<3H", payload)
-            # RE2-COLLECT-003: a later reset can change identity even when
-            # its event is not part of startup. Quantity is not identity.
-            if command["interaction"] != 2 or identities != {(item_type, gid)}:
-                ambiguous_slots.add(command["slot"])
         commands = {
             key: {command["offset"]: command for command in program["commands"]}
             for key, program in programs.items()
@@ -565,6 +570,38 @@ def decode_room(data: bytes, source: str) -> dict:
             == {item_type}
         )
 
+    required = collection_items()
+    conditional = []
+    for gid in sorted({item["global_id"] for item in items.values()} - set(required)):
+        variants = [item for item in items.values() if item["global_id"] == gid]
+        if (
+            not complete
+            or len({item["type"] for item in variants}) != 1
+            or any(
+                item["slot"] in ambiguous_slots
+                or data[item["offset"] + 2] not in (0, 2)
+                for item in variants
+            )
+        ):
+            continue
+        # Reuse the award proof's guarded startup paths. Identity/lifetime
+        # exclusions still apply even if one creator can be reached reliably.
+        presence = source_presence(
+            data,
+            programs,
+            {
+                (key, command["offset"])
+                for key, program in programs.items()
+                for command in program["commands"]
+                if command["kind"] == "item"
+                and items[command["item"]]["global_id"] == gid
+            },
+            "startup",
+            condition_flags,
+        )
+        if presence["kind"] != "unresolved":
+            conditional.append({"global_id": gid, "presence": presence})
+
     return {
         "source": source,
         "sha256": hashlib.sha256(data).hexdigest(),
@@ -576,5 +613,6 @@ def decode_room(data: bytes, source: str) -> dict:
         "doors": list(doors.values()),
         "programs": programs,
         "candidate_list_complete": complete,
-        "collection_item_ids": collection_items(),
+        "collection_item_ids": required,
+        "conditional_item_presence": conditional,
     }

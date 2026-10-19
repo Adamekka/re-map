@@ -921,3 +921,109 @@ def test_event_presence_gate_participates_in_snapshot_coherence(snapshot, failur
         PollStatus.Retry if failure == "changed" else PollStatus.ReadFailure
     )
     assert tracker == before
+
+
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("coverage", [False, True])
+def test_conditional_pickup_survives_departure_and_fresh_flag_reversal(
+    snapshot, departed, coverage
+):
+    profile, _, put, read = snapshot
+    source = "01-07" if departed else "00-01"
+    original = profile.rooms["01-07"]
+    item = original["items"][0]
+    # Use a mutable story gate here; the native case's gate is also in the
+    # Leon A scenario mask, whose opposite correctly rejects the whole game.
+    rule = {
+        "global_id": item["global_id"],
+        "presence": {
+            "kind": "conditions",
+            "any_of": [[{"bank": 4, "bit": 7, "expected": 0}]],
+        },
+    }
+    room = {
+        **profile.rooms[source],
+        "items": [item],
+        "collection_item_ids": [],
+        "conditional_item_presence": [rule],
+        "event_awards": [],
+        "candidate_list_complete": coverage,
+    }
+    profile = replace(profile, rooms={**profile.rooms, source: room})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    if departed:
+        tracker.mark_current(RoomId(1, 7))
+    visits = None
+    address, _ = profile.flag_banks[8]
+    word_address = address + item["global_id"] // 32 * 4
+    mask = 0x80000000 >> (item["global_id"] % 32)
+    for acquired, gate, state in [
+        (False, 0, "uncollected"),
+        (False, 0x01000000, "unknown"),
+        (True, 0x01000000, "taken"),
+        (True, 0, "taken"),
+        (False, 0, "uncollected"),
+    ]:
+        put(word_address, mask if acquired else 0, 4)
+        put(0x800CC980, gate, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source]
+        assert record.items[0].state == state
+        assert record.completion is (
+            RoomCompletion.Incomplete
+            if state == "uncollected"
+            else RoomCompletion.Cleared
+            if state == "taken" and coverage
+            else RoomCompletion.Unknown
+        )
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    fresh = Tracker()
+    if departed:
+        fresh.mark_current(RoomId(1, 7))
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms[source].items == tracker.rooms[source].items
+
+
+@pytest.mark.parametrize("failure", ["changed", "short"])
+def test_conditional_pickup_gate_is_part_of_coherent_publication(snapshot, failure):
+    profile, _, put, read = snapshot
+    original = profile.rooms["01-07"]
+    item = original["items"][0]
+    room = {
+        **profile.rooms["00-01"],
+        "items": [item],
+        "collection_item_ids": [],
+        "event_awards": [],
+        "conditional_item_presence": [
+            {
+                "global_id": item["global_id"],
+                "presence": {
+                    "kind": "conditions",
+                    "any_of": [[{"bank": 5, "bit": 1, "expected": 0}]],
+                },
+            }
+        ],
+    }
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changed(address, width):
+        if address == 0x800CC9A0:
+            if failure == "short":
+                return MemRead(True, b"\0")
+            put(address, 0x40000000, 4)
+        return read(address, width)
+
+    result = poll_re2(profile, tracker, changed)
+    assert result.status is (
+        PollStatus.Retry if failure == "changed" else PollStatus.ReadFailure
+    )
+    assert tracker == before

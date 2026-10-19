@@ -1,6 +1,9 @@
-"""Sufficient flag conditions for scheduled awards. See RE2-COLLECT-005."""
+"""Sufficient source conditions for pickups and awards. RE2-COLLECT-005/006."""
 
 from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Literal
 
 # Audited initializer effects shared with ordinary collection proofs. These
 # commands neither declare pickups nor yield the synchronous startup task.
@@ -19,9 +22,15 @@ INITIALIZER_FALLTHROUGH = (
 )
 
 
-def event_presence(
-    data: bytes, programs: dict, award_program: str, award_offset: int
+def source_presence(
+    data: bytes,
+    programs: dict,
+    targets: set[tuple[str, int]],
+    mode: Literal["startup", "scheduled"],
+    condition_flags: frozenset[tuple[int, int]],
 ) -> dict:
+    assert mode in ("startup", "scheduled")
+    assert targets and all(key in programs for key, _ in targets)
     # An empty set means no sufficient condition was proved. The empty
     # conjunction means unconditional reachability, as in ordinary Boolean DNF.
     unconditional = frozenset((frozenset(),))
@@ -180,10 +189,17 @@ def event_presence(
                     return unresolved
                 yes = walk(key, position, returns)
                 no = walk(key, row["target"], returns)
+                # Only explicitly supported stable flags become predicates.
+                # Lifecycle/input flags can change outside the source during
+                # room initialization, so their fresh values prove neither path.
                 # Only single native flag predicates are interpreted here.
                 # Compound condition encodings need their own native proof;
                 # requiring both branches is safe without guessing the join.
-                if symbolic_flags and len(tests) == 1:
+                if (
+                    symbolic_flags
+                    and len(tests) == 1
+                    and tests[0][:2] in condition_flags
+                ):
                     success = frozenset((frozenset(tests),))
                     failure = frozenset(
                         frozenset(((b, i, 1 - v),)) for b, i, v in tests
@@ -222,23 +238,28 @@ def event_presence(
             return {"kind": "unresolved"}
 
     conditions = unresolved
-    for key, program in programs.items():
-        for row in program["commands"]:
-            if row["opcode"] != 4:
-                continue
-            packet = data[row["offset"] : row["next"]]
-            target = f"17:{packet[3]}"
-            if packet[1:3] != b"\xff\x18" or target not in programs:
-                continue
-            if (
-                required_before((award_program, award_offset), target, False)
-                != unconditional
-            ):
-                continue
+    if mode == "startup":
+        for target in sorted(targets):
             for root in ("16:0", "17:0"):
-                conditions = simplify(
-                    conditions | required_before((key, row["offset"]), root, True)
-                )
+                conditions = simplify(conditions | required_before(target, root, True))
+    else:
+        for key, program in programs.items():
+            for row in program["commands"]:
+                if row["opcode"] != 4:
+                    continue
+                packet = data[row["offset"] : row["next"]]
+                target = f"17:{packet[3]}"
+                if packet[1:3] != b"\xff\x18" or target not in programs:
+                    continue
+                if not any(
+                    required_before(goal, target, False) == unconditional
+                    for goal in sorted(targets)
+                ):
+                    continue
+                for root in ("16:0", "17:0"):
+                    conditions = simplify(
+                        conditions | required_before((key, row["offset"]), root, True)
+                    )
     if conditions == unconditional:
         return {"kind": "required"}
     if not conditions:
@@ -253,3 +274,17 @@ def event_presence(
             for clause in sorted(conditions, key=lambda clause: sorted(clause))
         ],
     }
+
+
+def presence_matches(presence: dict, flag: Callable[[int, int], bool]) -> bool:
+    assert presence["kind"] in ("unresolved", "required", "conditions")
+    # Conditions are sufficient only. A mismatch withholds presence; it does
+    # not prove absence or override an independently observed acquisition.
+    return (
+        presence["kind"] == "required"
+        or presence["kind"] == "conditions"
+        and any(
+            all(flag(test["bank"], test["bit"]) == test["expected"] for test in clause)
+            for clause in presence["any_of"]
+        )
+    )

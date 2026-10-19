@@ -12,6 +12,7 @@ from collections.abc import Callable
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
+from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import MemoryResult
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
@@ -221,6 +222,10 @@ def poll_re2(
                     continue
                 grouped.setdefault(item["global_id"], []).append(item)
             details = []
+            conditional = {
+                rule["global_id"]: rule["presence"]
+                for rule in source["conditional_item_presence"]
+            }
             for gid, variants in grouped.items():
                 available = [
                     item
@@ -243,7 +248,9 @@ def poll_re2(
                     state = "taken"
                 elif available:
                     state = "available"
-                elif gid in source["collection_item_ids"]:
+                elif gid in source["collection_item_ids"] or (
+                    gid in conditional and presence_matches(conditional[gid], flag)
+                ):
                     state = "uncollected"
                 else:
                     state = "unknown"
@@ -266,17 +273,7 @@ def poll_re2(
                     collection["bank"], collection["bit"]
                 )
                 presence = award["presence"]
-                required = not taken and (
-                    presence["kind"] == "required"
-                    or presence["kind"] == "conditions"
-                    and any(
-                        all(
-                            flag(test["bank"], test["bit"]) == test["expected"]
-                            for test in clause
-                        )
-                        for clause in presence["any_of"]
-                    )
-                )
+                required = not taken and presence_matches(presence, flag)
                 # Acquisition wins after delivery and use. Presence conditions
                 # are sufficient only; a mismatch cannot establish absence.
                 details.append(

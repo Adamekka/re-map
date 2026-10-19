@@ -257,3 +257,83 @@ def test_re2_event_presence_metadata_is_required_and_validated(tmp_path, presenc
     profile.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="RE2 event award.*presence"):
         Re2Profile.load(profile)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "shape",
+        "unknown-id",
+        "boolean-id",
+        "duplicate",
+        "legacy-duplicate",
+        "unresolved",
+        "bad-bank",
+        "empty-clause",
+        "contradictory",
+    ],
+)
+def test_conditional_pickup_rules_require_valid_explicit_metadata(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(room for room in document["rooms"] if room["id"] == "01-07")
+    rules = room["conditional_item_presence"]
+    if case == "missing":
+        del room["conditional_item_presence"]
+    elif case == "shape":
+        room["conditional_item_presence"] = {}
+    elif case == "unknown-id":
+        rules[0]["global_id"] = 255
+    elif case == "boolean-id":
+        rules[0]["global_id"] = True
+    elif case == "duplicate":
+        rules.append(rules[0])
+    elif case == "legacy-duplicate":
+        room["collection_item_ids"].append(rules[0]["global_id"])
+    elif case == "unresolved":
+        rules[0]["presence"] = {"kind": "unresolved"}
+    elif case == "bad-bank":
+        rules[0]["presence"]["any_of"][0][0]["bank"] = 11
+    elif case == "empty-clause":
+        rules[0]["presence"]["any_of"] = [[]]
+    elif case == "contradictory":
+        rules[0]["presence"]["any_of"][0].append({"bank": 1, "bit": 6, "expected": 1})
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 conditional pickup presence"):
+        Re2Profile.load(profile)
+
+
+@pytest.mark.parametrize(
+    "case",
+    ["missing", "empty", "duplicate", "bad-bank", "boolean-bit", "unsupported-rule"],
+)
+def test_presence_condition_flags_are_explicit_and_bound_to_metadata(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    if case == "missing":
+        del raw["presence_condition_flags"]
+    elif case == "empty":
+        raw["presence_condition_flags"] = []
+    elif case == "duplicate":
+        raw["presence_condition_flags"].append(raw["presence_condition_flags"][0])
+    elif case == "bad-bank":
+        raw["presence_condition_flags"][0]["bank"] = 11
+    elif case == "boolean-bit":
+        raw["presence_condition_flags"][0]["bit"] = True
+    elif case == "unsupported-rule":
+        raw["presence_condition_flags"] = [{"bank": 1, "bit": 1}]
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(
+        ValueError,
+        match="RE2 stable presence flags|RE2 conditional pickup presence|RE2 event award presence",
+    ):
+        Re2Profile.load(path)

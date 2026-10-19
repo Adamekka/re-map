@@ -52,6 +52,9 @@ AREA_NAMES = (
 
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     projection = Re2MapProjection(**profile["map_projection"])
+    condition_flags = frozenset(
+        (row["bank"], row["bit"]) for row in profile["presence_condition_flags"]
+    )
     from unicorn import UC_ARCH_MIPS, UC_MODE_LITTLE_ENDIAN, UC_MODE_MIPS32, Uc
     from unicorn.mips_const import (
         UC_MIPS_REG_A0,
@@ -104,7 +107,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 raise ValueError(f"unexpected Leon room source {name}")
             data = _read_file(stream, extent, size)
             try:
-                room = decode_room(data, "PL0/RDT/" + name)
+                room = decode_room(data, "PL0/RDT/" + name, condition_flags)
             except ValueError as error:
                 raise ValueError(f"{name}: {error}") from error
             # Fill this field after the corpus check without reordering JSON keys.
@@ -125,6 +128,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             else layout["item_bank_late"]
             for room in rooms
         },
+        condition_flags,
     )
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
@@ -391,6 +395,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-003",
                 "RE2-COLLECT-004",
                 "RE2-COLLECT-005",
+                "RE2-COLLECT-006",
             ],
             "rooms": rooms,
         },
