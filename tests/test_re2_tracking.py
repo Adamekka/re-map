@@ -4,6 +4,7 @@ These tests exercise interpretation contracts; they are not gameplay evidence.
 RE2-COLLECT-002 checks known items alongside unresolved slot identities.
 RE2-DOOR-001/002/003 record separate runtime evidence for door flag contracts.
 RE2-PLAYER-001 supplies measured movement references for heading regressions.
+RE2-FLOOR-001 supplies native floor changes within one room source.
 """
 
 import copy
@@ -162,9 +163,10 @@ def profile():
     return Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
 
 
-@pytest.fixture
-def snapshot(profile):
-    room = copy.deepcopy(profile.rooms["00-01"])
+@pytest.fixture(params=["00-01"])
+def snapshot(request, profile):
+    source = request.param
+    room = copy.deepcopy(profile.rooms[source])
     # These generic reader cases deliberately model an unproven source. The
     # actual scripted reward's generated proof is checked separately below.
     room["collection_item_ids"] = []
@@ -172,7 +174,7 @@ def snapshot(profile):
         proof["sha256"] = hashlib.sha256(bytes(proof["width"])).hexdigest()
     profile = replace(
         profile,
-        rooms={**profile.rooms, "00-01": room},
+        rooms={**profile.rooms, source: room},
         runtime_signature=RuntimeSignature(
             (0x80010000,), 32, hashlib.sha256(bytes(32)).hexdigest()
         ),
@@ -186,7 +188,9 @@ def snapshot(profile):
 
     put(0x800C7CE4, 0x40000000, 4)
     put(0x800C7D24, 1, 4)
-    put(profile.room_address, 1, 2)
+    stage, number = source.split("-")
+    put(profile.stage_address, int(stage), 2)
+    put(profile.room_address, int(number, 16), 2)
     put(0x800C6494, 0x80100000, 4)
     for index, offset in enumerate(room["section_offsets"]):
         put(0x80100008 + index * 4, 0x80100000 + offset if offset else 0, 4)
@@ -494,6 +498,38 @@ def test_native_map_contexts_select_one_region_without_revealing_it(profile):
                 lambda address, width, values=values: values[address],
             ) == (row["area"], row["region"])
     assert Tracker().region_visits == {}
+
+
+@pytest.mark.parametrize("snapshot", ["00-16"], indirect=True)
+def test_native_floor_changes_and_restores_keep_both_region_visits(snapshot):
+    profile, _, put, read = snapshot
+    references = json.loads(
+        (ROOT / "tests/fixtures/re2/floor-transitions.json").read_text()
+    )
+    assert references["profile_id"] == profile.profile_id
+    assert references["research_id"] == "RE2-FLOOR-001"
+    tracker = Tracker()
+    explored = {}
+    for observation in references["observations"]:
+        assert observation["room"] == [0, 22]
+        put(0x800C7E2A, observation["floor"], 1)
+        for offset, coordinate in enumerate(observation["world_position"]):
+            put(0x800C7D5C + offset * 4, coordinate & 0xFFFFFFFF, 4)
+        put(0x800C7D9A, observation["yaw"], 2)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        area, region = observation["area"], observation["region"]
+        explored[f"{area}:{region}"] = "00-16"
+        assert tracker.current_region == f"{area}:{region}"
+        assert tracker.region_visits == explored
+        assert set(tracker.rooms) == {"00-16"}
+        state = map_state(tracker)
+        assert (state["area"], state["map_region"]) == (area, region)
+        assert {
+            f"{area_id}:{visit['id']}": visit["room"]
+            for area_id, visits in state["explored_areas"].items()
+            for visit in visits
+        } == explored
+    assert len(explored) == 2
 
 
 def test_shared_camera_positions_do_not_bind_the_wrong_room(snapshot):

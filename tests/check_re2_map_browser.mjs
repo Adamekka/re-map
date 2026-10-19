@@ -17,6 +17,18 @@ from games.re2.re2_profile import Re2Profile
 from tracker.exploration_state import Tracker,RoomRecord,RoomCompletion,ItemDetail,DoorDetail
 from ui.map_view import map_page,map_state
 p=Re2Profile.load(Path('profiles/re2_leon_a_slus00421.json'))
+floor_states={}
+floor_tracker=Tracker()
+for observation in json.loads(Path('tests/fixtures/re2/floor-transitions.json').read_text())['observations']:
+    room=RoomId(*observation['room'])
+    area,region=observation['area'],observation['region']
+    floor_tracker.mark_current(room)
+    floor_tracker.current_region=area+':'+region
+    floor_tracker.region_visits[floor_tracker.current_region]=str(room)
+    floor_tracker.player_heading=observation['published_heading']
+    x,_,z=observation['world_position']
+    floor_tracker.player_position=p.map_layout.project(area,region,x,z)
+    floor_states[observation['label']]=map_state(floor_tracker)
 t=Tracker()
 counts={}
 for area in p.map_layout.document['areas']:
@@ -35,10 +47,10 @@ assert len(markers)==2
 # Both observations intentionally share a room pair. Only source IDs can bind
 # the two different access states to their proper walls.
 t.doors=tuple(DoorDetail(RoomId(0,1),RoomId(0,0),access,access,key_label='Spade Key',observation_id=marker['observation_id']) for marker,access in zip(markers,('LOCKED','OPEN')))
-print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers}))
+print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
-const { document, state, counts, markers } = JSON.parse(setup.stdout);
+const { document, state, counts, markers, floorStates } = JSON.parse(setup.stdout);
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
@@ -116,8 +128,37 @@ try {
   state.error = 'Waiting for game.';
   await page.waitForFunction(() => !document.querySelector('.player'));
   assert(await floor.isDisabled(), 'an interrupted read must disable floor controls');
+  // Fresh display publications omit the interrupted-read error field.
+  delete state.error;
+  Object.assign(state, floorStates['native-upper-approach']);
+  await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
+  assert.equal(await floor.locator('option').count(), 1, 'another floor must stay hidden until entered');
+  assert.equal(await page.locator('#map .room').count(), 1);
+  Object.assign(state, floorStates['lower-later']);
+  await page.waitForFunction(() => document.getElementById('floor').value === 're2-02');
+  assert.deepEqual(await floor.locator('option').evaluateAll(options => options.map(option => option.value)), ['re2-02', 're2-03']);
+  assert.equal(await page.locator('#map .room').count(), 1, 'a floor change must reveal only its visited region');
+  await floor.selectOption('re2-03');
+  assert.equal(await page.locator('.player').count(), 0, 'browsing another floor must hide the player');
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  const browsedView = await map.getAttribute('viewBox');
+  Object.assign(state, floorStates['upper-return']);
+  await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(270)'));
+  Object.assign(state, floorStates['lower-restore']);
+  await page.waitForFunction(() => !document.querySelector('.player'));
+  assert.equal(await floor.inputValue(), 're2-03', 'floor browsing must survive a player floor change');
+  assert.equal(await map.getAttribute('viewBox'), browsedView);
+  const follow = page.getByRole('button', { name: 'Follow player', exact: true });
+  assert.equal(await follow.getAttribute('aria-pressed'), 'false');
+  await follow.click();
+  await page.waitForFunction(() => document.getElementById('floor').value === 're2-02');
+  assert.equal(await follow.getAttribute('aria-pressed'), 'true');
+  Object.assign(state, floorStates['upper-restore']);
+  await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
+  assert.equal(await page.locator('#map .room').count(), 1);
+  assert.equal(await floor.locator('option').count(), 2);
   assert.deepEqual(errors, []);
-  console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, eight headings and moving-marker view/state handling.');
+  console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');
 } finally {
   await browser.close();
 }
