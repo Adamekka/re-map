@@ -756,3 +756,144 @@ def test_unapproved_flag_checks_are_opaque_to_pickup_presence(bank, bit):
     )
     assert room["collection_item_ids"] == []
     assert room["conditional_item_presence"] == []
+
+
+@pytest.mark.parametrize(
+    "case,excluded",
+    [
+        ("fixed-false", True),
+        ("fixed-true", False),
+        ("story", False),
+        ("lifecycle", False),
+        ("compound", False),
+        ("uncalled-creator", False),
+        ("second-variant", False),
+        ("type-alias", False),
+        ("write", False),
+        ("reset", False),
+        ("generic-item", False),
+        ("unsupported", False),
+        ("spawn", False),
+        ("non-leaf-call", False),
+        ("goto-bypass", False),
+        ("raw-writer", False),
+        ("geometry-pattern", True),
+        ("incomplete", False),
+        ("budget", False),
+        ("cycle", False),
+        ("endif-underflow", False),
+        ("conditional-depth", False),
+    ],
+)
+def test_scenario_exclusion_proves_every_creator_impossible(case, excluded):
+    from games.re2.scenario_items import scenario_absent_items
+
+    pickup = item_command(20, 15, 9)
+    checks = bytes([0x21, 1, 1, 0 if case == "fixed-true" else 1])
+    if case == "story":
+        checks = bytes([0x21, 4, 7, 1])
+    elif case == "lifecycle":
+        checks = bytes([0x21, 0, 25, 1])
+    elif case == "compound":
+        checks += bytes([0x21, 4, 7, 1])
+    guarded = (
+        bytes([6, 0, len(checks) + len(pickup) + 2, 0])
+        + checks
+        + pickup
+        + bytes([8, 0])
+    )
+    startup = guarded + bytes([1, 0])
+    extra = ()
+    if case == "uncalled-creator":
+        extra = (pickup + bytes([1, 0]),)
+    elif case == "second-variant":
+        startup = guarded + item_command(20, 15, 9, slot=9) + bytes([1, 0])
+    elif case == "type-alias":
+        startup = (
+            guarded
+            + bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+            + item_command(30, 1, 9, slot=9)
+            + bytes([8, 0, 1, 0])
+        )
+    elif case == "write":
+        startup = bytes([0x22, 1, 1, 1]) + startup
+    elif case == "reset":
+        extra = (bytes([0x46, 8, 2, 0, 20, 0, 15, 0, 9, 0, 1, 0]),)
+    elif case == "generic-item":
+        extra = (bytes([0x2C, 9, 2, 0]) + bytes(16) + bytes([1, 0]),)
+    elif case == "unsupported":
+        extra = (bytes([0x47, 8, 1, 0]),)
+    elif case == "spawn":
+        startup = bytes([4, 255, 0x18, 1]) + startup
+        extra = (bytes([1, 0]),)
+    elif case == "non-leaf-call":
+        extra = (bytes([0x18, 2, 1, 0]), bytes([1, 0]))
+        startup = bytes([0x18, 1]) + startup
+    elif case == "goto-bypass":
+        startup = bytes([7, 0, 12, 0]) + startup
+    elif case == "raw-writer":
+        startup += bytes([0x22, 1, 1, 1])
+    elif case == "budget":
+        startup = bytes(4096) + startup
+    elif case == "cycle":
+        extra = (bytes([7, 0, 0, 0]),)
+    elif case == "endif-underflow":
+        extra = (bytes([8, 0, 1, 0]),)
+    elif case == "conditional-depth":
+        # Unknown predicates explore true paths too. Exceeding the stack bound
+        # in another procedure withholds the entire source's negative proof.
+        nested = bytes([1, 0])
+        for _ in range(5):
+            nested = (
+                bytes([6, 0, len(nested) + 6, 0, 0x21, 4, 7, 1])
+                + nested
+                + bytes([8, 0, 1, 0])
+            )
+        extra = (nested,)
+    data = synthetic_room(bytes([1, 0]), (startup, *extra))
+    if case == "geometry-pattern":
+        # These bytes lie in the camera section, outside every SCD procedure.
+        data = data[:108] + bytes([0x22, 1, 1]) + data[111:]
+    room = decode_room(data, "synthetic", PRESENCE_FLAGS)
+    if case == "incomplete":
+        room["candidate_list_complete"] = False
+    assert scenario_absent_items(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}]
+    ) == ([9] if excluded else [])
+
+
+@pytest.mark.parametrize("fixed,excluded", [(0, True), (1, False)])
+def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded):
+    from games.re2.scenario_items import scenario_absent_items
+
+    # An opaque nested condition takes either path. Its Else must pop only
+    # that frame, leaving the outer fixed guard intact until the outer Else.
+    nested = bytes([6, 0, 9, 0, 0x21, 4, 7, 1, 0, 7, 0, 6, 0, 0, 0])
+    pickup = item_command(20, 15, 9)
+    guarded = (
+        bytes([6, 0, len(nested) + 8, 0, 0x21, 1, 1, 0])
+        + nested
+        + bytes([7, 0, len(pickup) + 4, 0])
+        + pickup
+        + bytes([1, 0])
+    )
+    data = synthetic_room(bytes([1, 0]), (guarded,))
+    room = decode_room(data, "synthetic", PRESENCE_FLAGS)
+    assert scenario_absent_items(
+        data, room, [{"bank": 1, "bit": 1, "expected": fixed}]
+    ) == ([9] if excluded else [])
+
+
+def test_scenario_exclusions_remain_distinct_from_failed_presence_conditions():
+    rooms = {
+        room["id"]: room
+        for room in json.loads((ROOT / "data/rooms_slus00421.json").read_text())[
+            "rooms"
+        ]
+    }
+    assert rooms["00-0f"]["scenario_absent_item_ids"] == [157]
+    assert rooms["01-03"]["scenario_absent_item_ids"] == [36]
+    # These opposite-scenario candidates remain unproven because their sources
+    # contain effects outside the stricter negative proof's audited subset.
+    assert rooms["01-02"]["scenario_absent_item_ids"] == []
+    assert rooms["01-08"]["scenario_absent_item_ids"] == []

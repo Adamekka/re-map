@@ -234,6 +234,15 @@ def poll_re2(
                     and item["offset"] in live_items
                     and live_items[item["offset"]][0] == "available"
                 ]
+                if gid in source["scenario_absent_item_ids"]:
+                    if available:
+                        return PollResult(
+                            PollStatus.Retry,
+                            "Pickup disagrees with fixed scenario proof",
+                        )
+                    # The fixed-scenario proof covers every creator. A shared
+                    # acquisition bit cannot introduce this forbidden pickup.
+                    continue
                 taken = flag(bank, gid)
                 if taken and available:
                     return PollResult(

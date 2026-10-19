@@ -393,6 +393,8 @@ def decode_room(
                     pending.append(following)
             programs[f"{section}:{number}"] = {
                 "entry": start,
+                # Negative proofs also scan unreachable bytes inside this procedure.
+                "limit": stop,
                 "commands": sorted(commands.values(), key=lambda row: row["offset"]),
             }
 

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
+from games.re2.scenario_items import scenario_flags
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
@@ -105,6 +106,19 @@ class Re2Profile:
             or document["executable_identity"] != raw["executable_identity"]
         ):
             raise ValueError("RE2 room metadata disagrees with the pinned revision")
+        fixed = document.get("fixed_scenario_flags")
+        if (
+            type(fixed) is not list
+            or any(
+                type(test) is not dict
+                or test.keys() != {"bank", "bit", "expected"}
+                or any(type(test[key]) is not int for key in test)
+                for test in fixed
+            )
+            or fixed != scenario_flags(raw)
+        ):
+            raise ValueError("RE2 exclusion proof disagrees with fixed scenario flags")
+        fixed_values = {(test["bank"], test["bit"]): test["expected"] for test in fixed}
         rooms = {row["id"]: row for row in document["rooms"]}
         if len(rooms) != 125 or len(rooms) != len(document["rooms"]):
             raise ValueError("RE2 metadata needs 125 unique room sources")
@@ -303,6 +317,43 @@ class Re2Profile:
                 or len({rule["global_id"] for rule in conditional}) != len(conditional)
             ):
                 raise ValueError("invalid or missing RE2 conditional pickup presence")
+            absent = room.get("scenario_absent_item_ids")
+            if (
+                type(absent) is not list
+                or bool(absent)
+                and not room["candidate_list_complete"]
+                or any(
+                    type(gid) is not int
+                    or gid in required
+                    or len(
+                        {
+                            item["type"]
+                            for item in room["items"]
+                            if item["global_id"] == gid
+                        }
+                    )
+                    != 1
+                    for gid in absent
+                )
+                or len(set(absent)) != len(absent)
+                or any(
+                    rule["global_id"] in absent
+                    and (
+                        rule["presence"]["kind"] == "required"
+                        or any(
+                            not any(
+                                (test["bank"], test["bit"]) in fixed_values
+                                and fixed_values[test["bank"], test["bit"]]
+                                != test["expected"]
+                                for test in clause
+                            )
+                            for clause in rule["presence"]["any_of"]
+                        )
+                    )
+                    for rule in conditional
+                )
+            ):
+                raise ValueError("invalid or missing RE2 scenario pickup exclusions")
             if any(
                 not 0 <= proof["offset"] <= room["size"] - proof["width"]
                 for proof in room["proofs"]

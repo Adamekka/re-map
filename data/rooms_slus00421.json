@@ -11,9 +11,27 @@
     "RE2-COLLECT-003",
     "RE2-COLLECT-004",
     "RE2-COLLECT-005",
-    "RE2-COLLECT-006"
+    "RE2-COLLECT-006",
+    "RE2-COLLECT-007"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
+  "fixed_scenario_flags": [
+    {
+      "bank": 1,
+      "bit": 0,
+      "expected": 0
+    },
+    {
+      "bank": 1,
+      "bit": 1,
+      "expected": 0
+    },
+    {
+      "bank": 1,
+      "bit": 6,
+      "expected": 0
+    }
+  ],
   "rooms": [
     {
       "source": "PL0/RDT/ROOM1000.RDT",
@@ -86,7 +104,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 0,
-      "id": "00-00"
+      "id": "00-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1010.RDT",
@@ -213,7 +232,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 1,
-      "id": "00-01"
+      "id": "00-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1020.RDT",
@@ -324,7 +344,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 2,
-      "id": "00-02"
+      "id": "00-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1030.RDT",
@@ -420,7 +441,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 3,
-      "id": "00-03"
+      "id": "00-03",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1040.RDT",
@@ -493,7 +515,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 4,
-      "id": "00-04"
+      "id": "00-04",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1050.RDT",
@@ -593,7 +616,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 5,
-      "id": "00-05"
+      "id": "00-05",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1060.RDT",
@@ -729,7 +753,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 6,
-      "id": "00-06"
+      "id": "00-06",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1070.RDT",
@@ -817,7 +842,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 7,
-      "id": "00-07"
+      "id": "00-07",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1080.RDT",
@@ -939,7 +965,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 8,
-      "id": "00-08"
+      "id": "00-08",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1090.RDT",
@@ -1102,7 +1129,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 9,
-      "id": "00-09"
+      "id": "00-09",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM10A0.RDT",
@@ -1220,7 +1248,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 10,
-      "id": "00-0a"
+      "id": "00-0a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM10B0.RDT",
@@ -1360,7 +1389,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 11,
-      "id": "00-0b"
+      "id": "00-0b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM10C0.RDT",
@@ -1486,7 +1516,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 12,
-      "id": "00-0c"
+      "id": "00-0c",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM10D0.RDT",
@@ -1597,7 +1628,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 13,
-      "id": "00-0d"
+      "id": "00-0d",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM10E0.RDT",
@@ -1696,7 +1728,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 14,
-      "id": "00-0e"
+      "id": "00-0e",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM10F0.RDT",
@@ -1925,7 +1958,10 @@
       "event_awards": [],
       "stage": 0,
       "room": 15,
-      "id": "00-0f"
+      "id": "00-0f",
+      "scenario_absent_item_ids": [
+        157
+      ]
     },
     {
       "source": "PL0/RDT/ROOM1100.RDT",
@@ -2070,7 +2106,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 16,
-      "id": "00-10"
+      "id": "00-10",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1110.RDT",
@@ -2170,7 +2207,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 17,
-      "id": "00-11"
+      "id": "00-11",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1120.RDT",
@@ -2296,7 +2334,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 18,
-      "id": "00-12"
+      "id": "00-12",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1130.RDT",
@@ -2481,7 +2520,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 19,
-      "id": "00-13"
+      "id": "00-13",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1140.RDT",
@@ -2629,7 +2669,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 20,
-      "id": "00-14"
+      "id": "00-14",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1150.RDT",
@@ -2802,7 +2843,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 21,
-      "id": "00-15"
+      "id": "00-15",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1160.RDT",
@@ -2924,7 +2966,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 22,
-      "id": "00-16"
+      "id": "00-16",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1170.RDT",
@@ -3012,7 +3055,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 23,
-      "id": "00-17"
+      "id": "00-17",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1180.RDT",
@@ -3112,7 +3156,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 24,
-      "id": "00-18"
+      "id": "00-18",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM1190.RDT",
@@ -3200,7 +3245,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 25,
-      "id": "00-19"
+      "id": "00-19",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM11A0.RDT",
@@ -3302,7 +3348,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 26,
-      "id": "00-1a"
+      "id": "00-1a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM11B0.RDT",
@@ -3390,7 +3437,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 27,
-      "id": "00-1b"
+      "id": "00-1b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM11C0.RDT",
@@ -3478,7 +3526,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 28,
-      "id": "00-1c"
+      "id": "00-1c",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM11D0.RDT",
@@ -3566,7 +3615,8 @@
       "event_awards": [],
       "stage": 0,
       "room": 29,
-      "id": "00-1d"
+      "id": "00-1d",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2000.RDT",
@@ -3817,7 +3867,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 0,
-      "id": "01-00"
+      "id": "01-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2010.RDT",
@@ -3969,7 +4020,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 1,
-      "id": "01-01"
+      "id": "01-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2020.RDT",
@@ -4215,7 +4267,8 @@
       ],
       "stage": 1,
       "room": 2,
-      "id": "01-02"
+      "id": "01-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2030.RDT",
@@ -4374,7 +4427,10 @@
       "event_awards": [],
       "stage": 1,
       "room": 3,
-      "id": "01-03"
+      "id": "01-03",
+      "scenario_absent_item_ids": [
+        36
+      ]
     },
     {
       "source": "PL0/RDT/ROOM2040.RDT",
@@ -4511,7 +4567,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 4,
-      "id": "01-04"
+      "id": "01-04",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2050.RDT",
@@ -4614,7 +4671,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 5,
-      "id": "01-05"
+      "id": "01-05",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2060.RDT",
@@ -4754,7 +4812,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 6,
-      "id": "01-06"
+      "id": "01-06",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2070.RDT",
@@ -4956,7 +5015,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 7,
-      "id": "01-07"
+      "id": "01-07",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2080.RDT",
@@ -5167,7 +5227,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 8,
-      "id": "01-08"
+      "id": "01-08",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2090.RDT",
@@ -5313,7 +5374,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 9,
-      "id": "01-09"
+      "id": "01-09",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM20A0.RDT",
@@ -5458,7 +5520,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 10,
-      "id": "01-0a"
+      "id": "01-0a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM20B0.RDT",
@@ -5654,7 +5717,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 11,
-      "id": "01-0b"
+      "id": "01-0b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM20C0.RDT",
@@ -5828,7 +5892,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 12,
-      "id": "01-0c"
+      "id": "01-0c",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM20D0.RDT",
@@ -5957,7 +6022,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 13,
-      "id": "01-0d"
+      "id": "01-0d",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM20E0.RDT",
@@ -6178,7 +6244,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 14,
-      "id": "01-0e"
+      "id": "01-0e",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM20F0.RDT",
@@ -6326,7 +6393,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 15,
-      "id": "01-0f"
+      "id": "01-0f",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2100.RDT",
@@ -6457,7 +6525,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 16,
-      "id": "01-10"
+      "id": "01-10",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2110.RDT",
@@ -6647,7 +6716,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 17,
-      "id": "01-11"
+      "id": "01-11",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2120.RDT",
@@ -6747,7 +6817,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 18,
-      "id": "01-12"
+      "id": "01-12",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2130.RDT",
@@ -6854,7 +6925,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 19,
-      "id": "01-13"
+      "id": "01-13",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2140.RDT",
@@ -7002,7 +7074,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 20,
-      "id": "01-14"
+      "id": "01-14",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2150.RDT",
@@ -7089,7 +7162,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 21,
-      "id": "01-15"
+      "id": "01-15",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2160.RDT",
@@ -7189,7 +7263,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 22,
-      "id": "01-16"
+      "id": "01-16",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM2190.RDT",
@@ -7315,7 +7390,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 25,
-      "id": "01-19"
+      "id": "01-19",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM21A0.RDT",
@@ -7456,7 +7532,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 26,
-      "id": "01-1a"
+      "id": "01-1a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM21B0.RDT",
@@ -7612,7 +7689,8 @@
       "event_awards": [],
       "stage": 1,
       "room": 27,
-      "id": "01-1b"
+      "id": "01-1b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3000.RDT",
@@ -7700,7 +7778,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 0,
-      "id": "02-00"
+      "id": "02-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3010.RDT",
@@ -7829,7 +7908,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 1,
-      "id": "02-01"
+      "id": "02-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3020.RDT",
@@ -7917,7 +7997,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 2,
-      "id": "02-02"
+      "id": "02-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3030.RDT",
@@ -8035,7 +8116,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 3,
-      "id": "02-03"
+      "id": "02-03",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3040.RDT",
@@ -8138,7 +8220,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 4,
-      "id": "02-04"
+      "id": "02-04",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3050.RDT",
@@ -8241,7 +8324,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 5,
-      "id": "02-05"
+      "id": "02-05",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3060.RDT",
@@ -8326,7 +8410,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 6,
-      "id": "02-06"
+      "id": "02-06",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3070.RDT",
@@ -8441,7 +8526,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 7,
-      "id": "02-07"
+      "id": "02-07",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3080.RDT",
@@ -8529,7 +8615,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 8,
-      "id": "02-08"
+      "id": "02-08",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM3090.RDT",
@@ -8617,7 +8704,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 9,
-      "id": "02-09"
+      "id": "02-09",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM30A0.RDT",
@@ -8705,7 +8793,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 10,
-      "id": "02-0a"
+      "id": "02-0a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM30B0.RDT",
@@ -8857,7 +8946,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 11,
-      "id": "02-0b"
+      "id": "02-0b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM30C0.RDT",
@@ -8967,7 +9057,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 12,
-      "id": "02-0c"
+      "id": "02-0c",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM30D0.RDT",
@@ -9035,7 +9126,8 @@
       "event_awards": [],
       "stage": 2,
       "room": 13,
-      "id": "02-0d"
+      "id": "02-0d",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4000.RDT",
@@ -9161,7 +9253,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 0,
-      "id": "03-00"
+      "id": "03-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4010.RDT",
@@ -9387,7 +9480,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 1,
-      "id": "03-01"
+      "id": "03-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4020.RDT",
@@ -9498,7 +9592,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 2,
-      "id": "03-02"
+      "id": "03-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4030.RDT",
@@ -9698,7 +9793,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 3,
-      "id": "03-03"
+      "id": "03-03",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4040.RDT",
@@ -9831,7 +9927,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 4,
-      "id": "03-04"
+      "id": "03-04",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4050.RDT",
@@ -9968,7 +10065,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 5,
-      "id": "03-05"
+      "id": "03-05",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4070.RDT",
@@ -10071,7 +10169,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 7,
-      "id": "03-07"
+      "id": "03-07",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4080.RDT",
@@ -10215,7 +10314,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 8,
-      "id": "03-08"
+      "id": "03-08",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4090.RDT",
@@ -10348,7 +10448,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 9,
-      "id": "03-09"
+      "id": "03-09",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM40A0.RDT",
@@ -10436,7 +10537,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 10,
-      "id": "03-0a"
+      "id": "03-0a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM40B0.RDT",
@@ -10524,7 +10626,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 11,
-      "id": "03-0b"
+      "id": "03-0b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM40C0.RDT",
@@ -10581,7 +10684,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 12,
-      "id": "03-0c"
+      "id": "03-0c",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM40D0.RDT",
@@ -10669,7 +10773,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 13,
-      "id": "03-0d"
+      "id": "03-0d",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM40E0.RDT",
@@ -10795,7 +10900,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 14,
-      "id": "03-0e"
+      "id": "03-0e",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM40F0.RDT",
@@ -10852,7 +10958,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 15,
-      "id": "03-0f"
+      "id": "03-0f",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM4100.RDT",
@@ -11030,7 +11137,8 @@
       "event_awards": [],
       "stage": 3,
       "room": 16,
-      "id": "03-10"
+      "id": "03-10",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5000.RDT",
@@ -11103,7 +11211,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 0,
-      "id": "04-00"
+      "id": "04-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5010.RDT",
@@ -11203,7 +11312,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 1,
-      "id": "04-01"
+      "id": "04-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5020.RDT",
@@ -11314,7 +11424,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 2,
-      "id": "04-02"
+      "id": "04-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5030.RDT",
@@ -11477,7 +11588,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 3,
-      "id": "04-03"
+      "id": "04-03",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5040.RDT",
@@ -11588,7 +11700,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 4,
-      "id": "04-04"
+      "id": "04-04",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5050.RDT",
@@ -11777,7 +11890,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 5,
-      "id": "04-05"
+      "id": "04-05",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5060.RDT",
@@ -11888,7 +12002,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 6,
-      "id": "04-06"
+      "id": "04-06",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5070.RDT",
@@ -12017,7 +12132,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 7,
-      "id": "04-07"
+      "id": "04-07",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5080.RDT",
@@ -12169,7 +12285,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 8,
-      "id": "04-08"
+      "id": "04-08",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM5090.RDT",
@@ -12242,7 +12359,8 @@
       "event_awards": [],
       "stage": 4,
       "room": 9,
-      "id": "04-09"
+      "id": "04-09",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6000.RDT",
@@ -12330,7 +12448,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 0,
-      "id": "05-00"
+      "id": "05-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6010.RDT",
@@ -12433,7 +12552,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 1,
-      "id": "05-01"
+      "id": "05-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6020.RDT",
@@ -12544,7 +12664,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 2,
-      "id": "05-02"
+      "id": "05-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6030.RDT",
@@ -12703,7 +12824,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 3,
-      "id": "05-03"
+      "id": "05-03",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6040.RDT",
@@ -12788,7 +12910,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 4,
-      "id": "05-04"
+      "id": "05-04",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6050.RDT",
@@ -12861,7 +12984,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 5,
-      "id": "05-05"
+      "id": "05-05",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6060.RDT",
@@ -13009,7 +13133,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 6,
-      "id": "05-06"
+      "id": "05-06",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6070.RDT",
@@ -13142,7 +13267,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 7,
-      "id": "05-07"
+      "id": "05-07",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6080.RDT",
@@ -13245,7 +13371,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 8,
-      "id": "05-08"
+      "id": "05-08",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6090.RDT",
@@ -13352,7 +13479,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 9,
-      "id": "05-09"
+      "id": "05-09",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM60A0.RDT",
@@ -13496,7 +13624,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 10,
-      "id": "05-0a"
+      "id": "05-0a",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM60B0.RDT",
@@ -13629,7 +13758,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 11,
-      "id": "05-0b"
+      "id": "05-0b",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM60C0.RDT",
@@ -13774,7 +13904,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 12,
-      "id": "05-0c"
+      "id": "05-0c",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM60D0.RDT",
@@ -13881,7 +14012,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 13,
-      "id": "05-0d"
+      "id": "05-0d",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM60E0.RDT",
@@ -14017,7 +14149,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 14,
-      "id": "05-0e"
+      "id": "05-0e",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM60F0.RDT",
@@ -14113,7 +14246,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 15,
-      "id": "05-0f"
+      "id": "05-0f",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6100.RDT",
@@ -14246,7 +14380,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 16,
-      "id": "05-10"
+      "id": "05-10",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6110.RDT",
@@ -14349,7 +14484,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 17,
-      "id": "05-11"
+      "id": "05-11",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6120.RDT",
@@ -14437,7 +14573,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 18,
-      "id": "05-12"
+      "id": "05-12",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6130.RDT",
@@ -14510,7 +14647,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 19,
-      "id": "05-13"
+      "id": "05-13",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6140.RDT",
@@ -14625,7 +14763,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 20,
-      "id": "05-14"
+      "id": "05-14",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6150.RDT",
@@ -14765,7 +14904,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 21,
-      "id": "05-15"
+      "id": "05-15",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6160.RDT",
@@ -14902,7 +15042,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 22,
-      "id": "05-16"
+      "id": "05-16",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM6170.RDT",
@@ -14990,7 +15131,8 @@
       "event_awards": [],
       "stage": 5,
       "room": 23,
-      "id": "05-17"
+      "id": "05-17",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM7000.RDT",
@@ -15078,7 +15220,8 @@
       "event_awards": [],
       "stage": 6,
       "room": 0,
-      "id": "06-00"
+      "id": "06-00",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM7010.RDT",
@@ -15189,7 +15332,8 @@
       "event_awards": [],
       "stage": 6,
       "room": 1,
-      "id": "06-01"
+      "id": "06-01",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM7020.RDT",
@@ -15274,7 +15418,8 @@
       "event_awards": [],
       "stage": 6,
       "room": 2,
-      "id": "06-02"
+      "id": "06-02",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM7030.RDT",
@@ -15377,7 +15522,8 @@
       "event_awards": [],
       "stage": 6,
       "room": 3,
-      "id": "06-03"
+      "id": "06-03",
+      "scenario_absent_item_ids": []
     },
     {
       "source": "PL0/RDT/ROOM7040.RDT",
@@ -15473,7 +15619,8 @@
       "event_awards": [],
       "stage": 6,
       "room": 4,
-      "id": "06-04"
+      "id": "06-04",
+      "scenario_absent_item_ids": []
     }
   ]
 }

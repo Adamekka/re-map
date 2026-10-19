@@ -1027,3 +1027,115 @@ def test_conditional_pickup_gate_is_part_of_coherent_publication(snapshot, failu
         PollStatus.Retry if failure == "changed" else PollStatus.ReadFailure
     )
     assert tracker == before
+
+
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("unproven", [False, True])
+@pytest.mark.parametrize("shared_acquisition", [False, True])
+def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
+    snapshot, departed, unproven, shared_acquisition
+):
+    profile, _, put, read = snapshot
+    source = "00-0f" if departed else "00-01"
+    actual = profile.rooms["00-0f"]
+    candidates = list(actual["items"])
+    conditions = list(actual["conditional_item_presence"])
+    if unproven:
+        candidates.append(profile.rooms["01-02"]["items"][0])
+        conditions.append(
+            next(
+                rule
+                for rule in profile.rooms["01-02"]["conditional_item_presence"]
+                if rule["global_id"] == 249
+            )
+        )
+    room = {
+        **profile.rooms[source],
+        "items": candidates,
+        "collection_item_ids": [],
+        "conditional_item_presence": conditions,
+        "scenario_absent_item_ids": [157],
+        "event_awards": [],
+        "candidate_list_complete": True,
+    }
+    profile = replace(profile, rooms={**profile.rooms, source: room})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    if departed:
+        tracker.mark_current(RoomId(0, 15))
+    visits = None
+    for count in [0, 1, 2, 0, 2]:
+        put(0x800CC9EC, 0x02000000 if count >= 1 else 0, 4)  # ID 38.
+        put(
+            0x800CC9F8,
+            (0x00100000 if count == 2 else 0) | (4 if shared_acquisition else 0),
+            4,
+        )  # IDs 139 and 157.
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source]
+        assert record.total_items == 2 + int(unproven)
+        assert record.collected_items == count
+        assert len(record.items) == 2 + int(unproven)
+        assert record.completion is (
+            RoomCompletion.Incomplete
+            if count < 2
+            else RoomCompletion.Unknown
+            if unproven
+            else RoomCompletion.Cleared
+        )
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    fresh = Tracker()
+    if departed:
+        fresh.mark_current(RoomId(0, 15))
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms[source] == tracker.rooms[source]
+
+
+def test_scenario_exclusion_cannot_hide_a_live_pickup(snapshot):
+    profile, _, _, read = snapshot
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    room = {
+        **profile.rooms["00-01"],
+        "scenario_absent_item_ids": [
+            item["global_id"] for item in profile.rooms["00-01"]["items"]
+        ],
+    }
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Pickup disagrees with fixed scenario proof"
+    assert tracker == before
+
+
+def test_scenario_exclusions_require_the_same_coherent_scenario_snapshot(snapshot):
+    profile, _, put, read = snapshot
+    room = {
+        **profile.rooms["00-01"],
+        "items": profile.rooms["00-0f"]["items"],
+        "collection_item_ids": [],
+        "conditional_item_presence": profile.rooms["00-0f"][
+            "conditional_item_presence"
+        ],
+        "scenario_absent_item_ids": [157],
+    }
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changing(address, width):
+        if address == 0x800C7D04:
+            put(address, 0x40000000, 4)
+        return read(address, width)
+
+    assert poll_re2(profile, tracker, changing).status is PollStatus.Retry
+    assert tracker == before
+    assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
+    assert tracker == before

@@ -25,6 +25,7 @@ from map_geometry import trace_floor_cells
 
 from games.re2.map_layout import Re2MapProjection
 from games.re2.room_data import bind_event_awards, decode_room
+from games.re2.scenario_items import scenario_absent_items, scenario_flags
 
 AREA_NAMES = (
     "City streets west",
@@ -52,6 +53,7 @@ AREA_NAMES = (
 
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     projection = Re2MapProjection(**profile["map_projection"])
+    fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
         (row["bank"], row["bit"]) for row in profile["presence_condition_flags"]
     )
@@ -132,6 +134,9 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     )
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
+        room["scenario_absent_item_ids"] = scenario_absent_items(
+            sources[room["id"]], room, fixed_flags
+        )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -396,7 +401,9 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-004",
                 "RE2-COLLECT-005",
                 "RE2-COLLECT-006",
+                "RE2-COLLECT-007",
             ],
+            "fixed_scenario_flags": fixed_flags,
             "rooms": rooms,
         },
         {**header, "stage_modulus": 256, "areas": plans, "locations": locations},

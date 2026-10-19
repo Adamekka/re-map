@@ -337,3 +337,62 @@ def test_presence_condition_flags_are_explicit_and_bound_to_metadata(tmp_path, c
         match="RE2 stable presence flags|RE2 conditional pickup presence|RE2 event award presence",
     ):
         Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing-flags",
+        "changed-flags",
+        "boolean-flags",
+        "mask-mismatch",
+        "unmasked-value",
+        "missing-ids",
+        "duplicate",
+        "unknown-id",
+        "boolean-id",
+        "required-overlap",
+        "conditional-overlap",
+        "incomplete",
+    ],
+)
+def test_scenario_exclusion_metadata_is_required_and_bound_to_configuration(
+    tmp_path, case
+):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(room for room in document["rooms"] if room["id"] == "00-0f")
+    if case == "missing-flags":
+        del document["fixed_scenario_flags"]
+    elif case == "changed-flags":
+        document["fixed_scenario_flags"][0]["expected"] = 1
+    elif case == "boolean-flags":
+        document["fixed_scenario_flags"][0]["expected"] = False
+    elif case == "mask-mismatch":
+        raw["runtime_layout"]["scenario_mask"] = 0x40000000
+    elif case == "unmasked-value":
+        raw["runtime_layout"]["scenario_value"] = 1
+    elif case == "missing-ids":
+        del room["scenario_absent_item_ids"]
+    elif case == "duplicate":
+        room["scenario_absent_item_ids"] = [157, 157]
+    elif case == "unknown-id":
+        room["scenario_absent_item_ids"] = [255]
+    elif case == "boolean-id":
+        room["scenario_absent_item_ids"] = [True]
+    elif case == "required-overlap":
+        other = next(row for row in document["rooms"] if row["id"] == "01-03")
+        other["scenario_absent_item_ids"].append(35)
+    elif case == "conditional-overlap":
+        room["conditional_item_presence"][-1]["presence"] = {"kind": "required"}
+    elif case == "incomplete":
+        room["candidate_list_complete"] = False
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2.*scenario|RE2 scenario"):
+        Re2Profile.load(path)
