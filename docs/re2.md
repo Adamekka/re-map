@@ -30,6 +30,8 @@ Inactive descriptors can contain overwritten item fields; a missing descriptor e
 
 [RE2-COLLECT-008](research/re2.md#re2-collect-008-scenario-exclusions-through-audited-script-effects) extends the conservative proof through audited unrelated script effects. All three affected sources now have native ordinary-pickup, departure/reentry and savestate-restore checks. One reaches full clearance after both real pickups and retains it through departure/reentry and restores. A second still has a required item remaining; the latest case remains Unknown after three available pickups because another conditional check is unresolved. [RE2-QUANTITY-001](research/re2.md#re2-quantity-001-native-pickup-award-amount-differs-from-catalog) records the shared native pickup-quantity rule. The tracker now reconstructs the two-unit award from fresh mode flags before pickup, after collection and after departure. Other script quantity alternatives remain explicit when unresolved; the flag-clear branch has offline validation only.
 
+[RE2-COLLECT-009](research/re2.md#re2-collect-009-native-pickup-and-use-keep-acquisition-identities-separate) follows up the remaining activation check. A native pickup elsewhere, two native uses, departure/reentry and four byte-identical restores preserve separate acquisition identities. Consuming that inventory item does not satisfy the remaining room check, which stays Incomplete. The other conditional check remains unresolved. These observations add no clearance rule or new runtime room source.
+
 The catalog and floor plans contain numeric metadata and contours, not original game pixels or executable bytes. To regenerate them from the pinned owned disc, install `unicorn` in a development environment and run:
 
 ```sh
