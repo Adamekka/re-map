@@ -159,6 +159,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | [RE1-MAP-021](research/re1/map-ui.md#re1-map-021-matching-access-survives-different-descriptions-on-opposite-sides) | matching access survives different descriptions on opposite sides |
 | [RE1-MAP-022](research/re1/map-ui.md#re1-map-022-remove-a-key-symbol-after-fresh-unlock-proof) | remove a key symbol after fresh unlock proof |
 | [RE1-MAP-023](research/re1/map-ui.md#re1-map-023-follow-player-explicitly-resumes-room-selection) | follow player explicitly resumes room selection |
+| [RE1-MAP-024](research/re1/map-ui.md#re1-map-024-retain-the-native-ladder-shade) | retain the native ladder shade, including Room 002 |
 
 ## RE1 approximate player position
 

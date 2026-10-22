@@ -106,14 +106,17 @@ def extract_floor_plan(
                 "detail_segments": [],
             }
         )
+        # Stairs use shade +2; ladders use +3. Both belong to the floor union,
+        # so retain their strokes separately or their interior geometry vanishes.
+        detail_indices = {palette_base + 2, palette_base + 3}
         for y in range(height):
             x = 0
             while x < width:
-                if pixels[y * width + x] != palette_base + 2:
+                if pixels[y * width + x] not in detail_indices:
                     x += 1
                     continue
                 start = x
-                while x < width and pixels[y * width + x] == palette_base + 2:
+                while x < width and pixels[y * width + x] in detail_indices:
                     x += 1
                 rooms[-1]["detail_segments"].append(
                     [[start + 0.5, y + 0.5], [x - 0.5, y + 0.5]]

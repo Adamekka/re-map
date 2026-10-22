@@ -187,7 +187,7 @@ def build_catalog(cue: Path) -> dict:
         "profile_id": "re1_directors_cut_slus00551",
         "executable_identity": f"SLUS_005.51 SHA256 {EXE_SHA256}",
         "authored": "2026-10-07; Codex root; Model: GPT-6.1 Sol",
-        "research_ids": ["RE1-MAP-002", "RE1-MAP-004", "RE1-MAP-005"],
+        "research_ids": ["RE1-MAP-002", "RE1-MAP-004", "RE1-MAP-005", "RE1-MAP-024"],
         "validation": "Candidate; native selector and numeric encoding checked statically; later-area gameplay unvalidated",
         "stage_modulus": 5,
         "locations": locations,

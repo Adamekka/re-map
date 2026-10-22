@@ -92,6 +92,11 @@ tracker.doors = (
 states['open_door_descriptions'] = map_state(tracker)
 tracker.doors = tuple(DoorDetail(d.source, d.target, 'LOCKED', 'Locked', key_label=d.key_label) for d in tracker.doors)
 states['locked_door_descriptions'] = map_state(tracker)
+tracker = Tracker()
+enter(3, 0, 'guardhouse1f', '00')
+states['before_room002'] = map_state(tracker)
+enter(3, 6, 'guardhouse1f', '06')
+states['room002'] = map_state(tracker)
 catalog = json.loads(Path('data/floor_plans_slus00551.json').read_text())
 upper = next(area for area in catalog['areas'] if area['id'] == 'mansion2f')
 point = next(room['label'] for room in upper['rooms'] if room['id'] == '03')
@@ -443,6 +448,18 @@ try {
   await page.keyboard.press('Enter');
   assert.match(await keeperDoor.getAttribute('class'), /\bLOCKED\b/);
   assert.equal(await keeperDoor.locator('.key-symbol').getAttribute('aria-label'), 'Sword Key');
+  state = states.before_room002;
+  await page.waitForFunction(() => document.getElementById('floor').value === 'guardhouse1f');
+  assert.equal(await map.getByRole('button', { name: 'Room 002', exact: true }).count(), 0, 'a ladder must not reveal an unentered room');
+  state = states.room002;
+  const room002 = map.getByRole('button', { name: 'Room 002', exact: true });
+  await room002.waitFor();
+  assert(await room002.locator('.map-detail').evaluate(path => {
+    // Singleton shade runs must paint both rails, with gaps between the rungs.
+    const painted = (x, y) => path.isPointInStroke(new DOMPoint(x, y));
+    return painted(89.5, 28.5) && painted(91.5, 28.5)
+      && painted(90.5, 29.5) && !painted(90.5, 28.5);
+  }), 'Room 002 must visibly retain the native ladder rails and rungs');
   state = states.labels;
   const labelCount = await page.evaluate(fixture => {
     let count = 0;

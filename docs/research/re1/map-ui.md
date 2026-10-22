@@ -140,3 +140,23 @@ The shared browser regression checks manual selection, resuming, consecutive roo
 Contributions:
 - 2026-10-17; human user; requested a button to leave a static room selection and continue following entered rooms.
 - 2026-10-17; Codex root, `gpt-6.1-sol`; clarified the existing action, exposed following state, added browser assertions and refreshed the README screenshot.
+
+## RE1-MAP-024: retain the native ladder shade
+
+Status: Candidate; pinned numeric source extraction and production-page browser checks. No new gameplay or ladder traversal.
+
+Game: Resident Evil Director's Cut USA, SLUS-00551, executable SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`. This experiment did not start an RE1 emulator or verify its version. RE1-MAP-014 retains the earlier runtime traversal evidence and its separate limits.
+
+The user reported that Room 002 lacked its ladder. RE1-MAP-019 retained shade index `14 + 6*region` for stairs, while ladders use `15 + 6*region`. Both were already part of the floor union, so the ladder shade disappeared into the room fill. Extract horizontal runs of either detail shade with the existing numeric center-line representation and square-ended renderer.
+
+`PSX/ITEM_M2/MAP0A.TIM`, LBA 11915, 29216 bytes, SHA256 `1832969a69837396c80aab2e22de029e9aa9705bd609c272d60c90f7414bb431`, contains twelve cells of index 51 in region `06`, Room 002. Their bounds are X89..91 and Y28..32 in TIM-local cells, X right and Y down. They encode two vertical rails and two connecting rungs. Eight numeric segments preserve these cells. The same shared extraction restores twelve cells each in the Lesson Room and Falls, adding four and eight segments respectively. All other room geometry, labels, door markers and bindings remain byte-equivalent after removing the new segments and research ID. No texture or palette colors are exported.
+
+Reproduce with `python3 tools/build_floor_plans.py <owned-cue> <output-json>` and compare with the production catalog. Run `python3 -m pytest -q tests/test_floor_plan.py tests/test_multi_area_maps.py tests/test_map_view.py` and `bun tests/check_map_browser.mjs <python>`. The focused checks cover a synthetic ladder's rails, rungs and unchanged outline, the exact Room 002 coordinates, and browser stroke hits in both singleton rails and a rung with an empty gap between them. The browser also checks that Room 002 and its ladder stay hidden before entry and validates all 118 room outlines. These are source and UI checks, not new runtime confirmation of accessibility or story state.
+
+Private evidence is under `/tmp/re-map-re1-room002-ladder-20261022/`. The README screenshot renders a read-only publication from the existing tracker with the corrected catalog, browsed to Guardhouse 1F and Room 002. Its current room remains on B1. No exploration history, game state or running tracker process was changed. The pre-existing `docs/images/map.jpg` worktree edit is preserved separately.
+
+Contributions:
+- 2026-10-22; human user; reported the missing Room 002 ladder and corrected the game name to RE1.
+- 2026-10-22; Codex root, `gpt-6.1-sol`; verified the pinned executable and native map shade, corrected shared extraction, regenerated the production catalog, added focused regressions and refreshed the README screenshot. Original extraction authorship remains in RE1-MAP-002 and RE1-MAP-019.
+- 2026-10-22; returned identifier `Gemini 3.8 Flash (High)`, agy conversation `5175da4e-5da2-4c8e-a759-4a5562e57cb0`; reviewed the complete scoped textual diff, extraction/generation modules, focused and browser tests, catalog loader and relevant renderer. Returned No findings, exited zero, completed agent response DONE and terminal SUCCESS, had empty stderr and attempted no tools. Duration 134.320535 seconds; prompt SHA256 `c2eb4b37cb12ec4712c0a7ceca45e31ea60230fa672da2f141e65c72378079c1`. This prose review is not gameplay validation. The earlier `Claude Opus 4.6 (Thinking)` quota exhaustion recorded in RE2-DOOR-001 remains active and was not retried; it supplies no review of this fix. Committing remains pending the required review or a scope-specific human exception.
+- 2026-10-22; human user; explicitly approved committing this Room 002 ladder fix using the completed Gemini review alone while Claude remains unavailable. This exception applies only to this fix.

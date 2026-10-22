@@ -80,6 +80,45 @@ def test_interior_stair_geometry_survives_floor_union():
     ]
 
 
+def test_ladder_shade_retains_rails_and_rungs_without_changing_the_floor():
+    """RE1-MAP-024: ladders have a different shade from stair geometry."""
+    cells = {(x, y): 16 for y in range(1, 8) for x in range(1, 6)}
+    cells.update(
+        {(x, y): 15 for y in range(2, 7) for x in range(2, 5) if x != 3 or y % 2}
+    )
+    plan = extract_floor_plan(tim(8, 10, cells))
+    room = plan["rooms"][0]
+    assert room["rings"] == [[(1, 1), (6, 1), (6, 8), (1, 8)]]
+    assert room["detail_segments"] == [
+        [[2.5, 2.5], [2.5, 2.5]],
+        [[4.5, 2.5], [4.5, 2.5]],
+        [[2.5, 3.5], [4.5, 3.5]],
+        [[2.5, 4.5], [2.5, 4.5]],
+        [[4.5, 4.5], [4.5, 4.5]],
+        [[2.5, 5.5], [4.5, 5.5]],
+        [[2.5, 6.5], [2.5, 6.5]],
+        [[4.5, 6.5], [4.5, 6.5]],
+    ]
+
+
+def test_room002_keeps_the_native_ladder_inside_its_outline():
+    """RE1-MAP-024: the reported room must retain all twelve ladder cells."""
+    catalog = json.loads((REPO / "data/floor_plans_slus00551.json").read_text())
+    area = next(area for area in catalog["areas"] if area["id"] == "guardhouse1f")
+    room = next(room for room in area["rooms"] if room["id"] == "06")
+    assert room["room_ids"] == ["03-06"]
+    assert room["detail_segments"] == [
+        [[89.5, 28.5], [89.5, 28.5]],
+        [[91.5, 28.5], [91.5, 28.5]],
+        [[89.5, 29.5], [91.5, 29.5]],
+        [[89.5, 30.5], [89.5, 30.5]],
+        [[91.5, 30.5], [91.5, 30.5]],
+        [[89.5, 31.5], [91.5, 31.5]],
+        [[89.5, 32.5], [89.5, 32.5]],
+        [[91.5, 32.5], [91.5, 32.5]],
+    ]
+
+
 def test_unpaired_door_is_an_explicit_failure():
     data = tim(8, 8, {(2, 2): 16, (3, 2): 13})
     with pytest.raises(ValueError, match="unpaired door marker"):

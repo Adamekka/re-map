@@ -2,7 +2,7 @@
 
 A companion map for Resident Evil in DuckStation, showing explored rooms, remaining items and doors.
 
-![Explored floors, remaining items and doors](docs/images/map.jpg)
+![Explored Guardhouse rooms, ladder, remaining items and doors](docs/images/re1-guardhouse-map.jpg)
 
 ## Setup
 
@@ -33,7 +33,7 @@ Keep the terminal running while you play. Press Ctrl+C there to stop the tracker
 
 Rooms appear as you enter them. Red means items remain; blue means cleared; gray means the item check is incomplete. RE1 puzzle rewards keep their room red until collected, even before the puzzle is solved. In RE1 and RE2, the cyan arrow follows your approximate position where placement is established and rotates with your facing direction. Placement is approximate because the original maps distort room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors.
 
-Stair treads and rails appear inside explored room outlines.
+Stair treads, rails and ladders appear inside explored room outlines.
 
 Door colors show access. Key symbols identify Sword, Armor, Shield and Helmet locks; hover for the key's name. A symbol disappears once its door is unlocked and returns if an earlier savestate restores the lock. The RE2 profile uses suit symbols for Spade, Diamond, Heart and Club locks. Other named keys use a key symbol.
 
