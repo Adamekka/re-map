@@ -12,7 +12,8 @@
     "RE2-COLLECT-004",
     "RE2-COLLECT-005",
     "RE2-COLLECT-006",
-    "RE2-COLLECT-007"
+    "RE2-COLLECT-007",
+    "RE2-COLLECT-008"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -4268,7 +4269,9 @@
       "stage": 1,
       "room": 2,
       "id": "01-02",
-      "scenario_absent_item_ids": []
+      "scenario_absent_item_ids": [
+        249
+      ]
     },
     {
       "source": "PL0/RDT/ROOM2030.RDT",
@@ -5228,7 +5231,9 @@
       "stage": 1,
       "room": 8,
       "id": "01-08",
-      "scenario_absent_item_ids": []
+      "scenario_absent_item_ids": [
+        158
+      ]
     },
     {
       "source": "PL0/RDT/ROOM2090.RDT",
@@ -5375,7 +5380,9 @@
       "stage": 1,
       "room": 9,
       "id": "01-09",
-      "scenario_absent_item_ids": []
+      "scenario_absent_item_ids": [
+        70
+      ]
     },
     {
       "source": "PL0/RDT/ROOM20A0.RDT",

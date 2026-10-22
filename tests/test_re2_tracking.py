@@ -1032,21 +1032,31 @@ def test_conditional_pickup_gate_is_part_of_coherent_publication(snapshot, failu
 @pytest.mark.parametrize("departed", [False, True])
 @pytest.mark.parametrize("unproven", [False, True])
 @pytest.mark.parametrize("shared_acquisition", [False, True])
+@pytest.mark.parametrize(
+    "excluded_source,excluded_gid",
+    [("00-0f", 157), ("01-02", 249), ("01-08", 158), ("01-09", 70)],
+)
 def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
-    snapshot, departed, unproven, shared_acquisition
+    snapshot, departed, unproven, shared_acquisition, excluded_source, excluded_gid
 ):
     profile, _, put, read = snapshot
     source = "00-0f" if departed else "00-01"
     actual = profile.rooms["00-0f"]
-    candidates = list(actual["items"])
-    conditions = list(actual["conditional_item_presence"])
+    candidates = [item for item in actual["items"] if item["global_id"] != 157]
+    candidates.extend(
+        item
+        for item in profile.rooms[excluded_source]["items"]
+        if item["global_id"] == excluded_gid
+    )
+    conditions = [
+        rule for rule in actual["conditional_item_presence"] if rule["global_id"] != 157
+    ]
     if unproven:
-        candidates.append(profile.rooms["01-02"]["items"][0])
-        conditions.append(
+        candidates.append(
             next(
-                rule
-                for rule in profile.rooms["01-02"]["conditional_item_presence"]
-                if rule["global_id"] == 249
+                item
+                for item in profile.rooms["01-02"]["items"]
+                if item["global_id"] == 116
             )
         )
     room = {
@@ -1054,7 +1064,7 @@ def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
         "items": candidates,
         "collection_item_ids": [],
         "conditional_item_presence": conditions,
-        "scenario_absent_item_ids": [157],
+        "scenario_absent_item_ids": [excluded_gid],
         "event_awards": [],
         "candidate_list_complete": True,
     }
@@ -1069,9 +1079,13 @@ def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
         put(0x800CC9EC, 0x02000000 if count >= 1 else 0, 4)  # ID 38.
         put(
             0x800CC9F8,
-            (0x00100000 if count == 2 else 0) | (4 if shared_acquisition else 0),
+            0x00100000 if count == 2 else 0,
             4,
-        )  # IDs 139 and 157.
+        )  # ID 139.
+        address = profile.flag_banks[8][0] + excluded_gid // 32 * 4
+        mask = 0x80000000 >> (excluded_gid % 32)
+        word = int.from_bytes(read(address, 4).data, "little") & ~mask
+        put(address, word | (mask if shared_acquisition else 0), 4)
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
         record = tracker.rooms[source]
         assert record.total_items == 2 + int(unproven)

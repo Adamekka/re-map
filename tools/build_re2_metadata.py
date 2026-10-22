@@ -135,7 +135,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
         room["scenario_absent_item_ids"] = scenario_absent_items(
-            sources[room["id"]], room, fixed_flags
+            sources[room["id"]], room, fixed_flags, profile["flag_banks"]
         )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
@@ -402,6 +402,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-005",
                 "RE2-COLLECT-006",
                 "RE2-COLLECT-007",
+                "RE2-COLLECT-008",
             ],
             "fixed_scenario_flags": fixed_flags,
             "rooms": rooms,

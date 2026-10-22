@@ -758,6 +758,13 @@ def test_unapproved_flag_checks_are_opaque_to_pickup_presence(bank, bit):
     assert room["conditional_item_presence"] == []
 
 
+@pytest.fixture
+def scenario_banks():
+    return json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())[
+        "flag_banks"
+    ]
+
+
 @pytest.mark.parametrize(
     "case,excluded",
     [
@@ -773,8 +780,8 @@ def test_unapproved_flag_checks_are_opaque_to_pickup_presence(bank, bit):
         ("reset", False),
         ("generic-item", False),
         ("unsupported", False),
-        ("spawn", False),
-        ("non-leaf-call", False),
+        ("spawn", True),
+        ("non-leaf-call", True),
         ("goto-bypass", False),
         ("raw-writer", False),
         ("geometry-pattern", True),
@@ -785,7 +792,9 @@ def test_unapproved_flag_checks_are_opaque_to_pickup_presence(bank, bit):
         ("conditional-depth", False),
     ],
 )
-def test_scenario_exclusion_proves_every_creator_impossible(case, excluded):
+def test_scenario_exclusion_proves_every_creator_impossible(
+    case, excluded, scenario_banks
+):
     from games.re2.scenario_items import scenario_absent_items
 
     pickup = item_command(20, 15, 9)
@@ -822,7 +831,7 @@ def test_scenario_exclusion_proves_every_creator_impossible(case, excluded):
     elif case == "generic-item":
         extra = (bytes([0x2C, 9, 2, 0]) + bytes(16) + bytes([1, 0]),)
     elif case == "unsupported":
-        extra = (bytes([0x47, 8, 1, 0]),)
+        extra = (bytes([0x47, 30, 1, 0]),)
     elif case == "spawn":
         startup = bytes([4, 255, 0x18, 1]) + startup
         extra = (bytes([1, 0]),)
@@ -858,12 +867,12 @@ def test_scenario_exclusion_proves_every_creator_impossible(case, excluded):
     if case == "incomplete":
         room["candidate_list_complete"] = False
     assert scenario_absent_items(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}]
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
     ) == ([9] if excluded else [])
 
 
 @pytest.mark.parametrize("fixed,excluded", [(0, True), (1, False)])
-def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded):
+def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_banks):
     from games.re2.scenario_items import scenario_absent_items
 
     # An opaque nested condition takes either path. Its Else must pop only
@@ -880,11 +889,173 @@ def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded):
     data = synthetic_room(bytes([1, 0]), (guarded,))
     room = decode_room(data, "synthetic", PRESENCE_FLAGS)
     assert scenario_absent_items(
-        data, room, [{"bank": 1, "bit": 1, "expected": fixed}]
+        data, room, [{"bank": 1, "bit": 1, "expected": fixed}], scenario_banks
     ) == ([9] if excluded else [])
 
 
-def test_scenario_exclusions_remain_distinct_from_failed_presence_conditions():
+@pytest.mark.parametrize(
+    "case,excluded",
+    [
+        ("unrelated-write", True),
+        ("same-bank-other-bit", True),
+        ("aliased-bank-write", False),
+        ("unknown-bank-write", False),
+        ("out-of-bank-write", False),
+        ("unknown-operation", False),
+        ("unrelated-reset", True),
+        ("reset-alias", False),
+        ("bound-item-call", True),
+        ("bound-item-status-write", False),
+        ("bound-door-status-write", False),
+        ("unbound-call", False),
+        ("unsupported-dispatch", False),
+        ("camera-unrelated", True),
+        ("camera-fixed-bit", False),
+        ("audio-fixed-bit", False),
+        ("message-fixed-bit", False),
+        ("opaque-check", True),
+        ("opaque-creator", False),
+        ("wait", True),
+        ("actor-wait", True),
+        ("wait-creator", False),
+        ("wait-bound", False),
+        ("wait-predicate-width", False),
+        ("wait-hidden-creator", False),
+        ("wait-conditional", False),
+        ("unsupported-work", False),
+        ("last-actor", True),
+        ("out-of-table-actor", False),
+        ("negative-actor", False),
+        ("negative-object", False),
+        ("unresolved-effect", False),
+    ],
+)
+def test_scripted_scenario_exclusion_audits_mutations_and_all_creators(
+    scenario_banks, case, excluded
+):
+    from games.re2.scenario_items import scenario_absent_items
+
+    pickup = item_command(20, 15, 9)
+    guarded = bytes([6, 0, 28, 0, 0x21, 1, 1, 1]) + pickup + bytes([8, 0, 1, 0])
+    extra = bytes([1, 0])
+    fixed = [{"bank": 1, "bit": 1, "expected": 0}]
+    if case in ("unrelated-write", "aliased-bank-write"):
+        extra = bytes([0x22, 5, 1, 1, 1, 0])
+        if case == "aliased-bank-write":
+            next(row for row in scenario_banks if row["bank"] == 5)["address_ps1"] = (
+                "0x800C7D04"
+            )
+    elif case == "same-bank-other-bit":
+        extra = bytes([0x22, 1, 27, 1, 1, 0])
+    elif case == "unknown-bank-write":
+        extra = bytes([0x22, 255, 0, 1, 1, 0])
+    elif case == "out-of-bank-write":
+        extra = bytes([0x22, 1, 32, 1, 1, 0])
+    elif case == "unknown-operation":
+        extra = bytes([0x22, 5, 1, 2, 1, 0])
+    elif case in ("unrelated-reset", "reset-alias"):
+        extra = (
+            b"" if case == "reset-alias" else item_command(20, 15, 10, slot=9)
+        ) + bytes(
+            [
+                0x46,
+                8 if case == "reset-alias" else 9,
+                2,
+                0,
+                20,
+                0,
+                15,
+                0,
+                9 if case == "reset-alias" else 10,
+                0,
+                1,
+                0,
+            ]
+        )
+    elif case in ("bound-item-call", "bound-item-status-write"):
+        extra = bytes([0x47, 8, 1, 0])
+        if case == "bound-item-status-write":
+            fixed.append({"bank": 1, "bit": 16, "expected": 0})
+    elif case == "bound-door-status-write":
+        extra = bytes([0x3B, 9, 1, 0]) + bytes(28) + bytes([0x47, 9, 1, 0])
+        fixed.append({"bank": 2, "bit": 0, "expected": 0})
+    elif case == "unbound-call":
+        extra = bytes([0x47, 30, 1, 0])
+    elif case == "unsupported-dispatch":
+        extra = bytes([0x2C, 9, 6, 0]) + bytes(16) + bytes([0x47, 9, 1, 0])
+    elif case.startswith("camera"):
+        extra = bytes([0x3C, 0, 1, 0])
+        if case == "camera-fixed-bit":
+            fixed.append({"bank": 1, "bit": 23, "expected": 0})
+    elif case == "audio-fixed-bit":
+        extra = bytes([0x59, 0, 0, 0, 1, 0])
+        fixed.append({"bank": 1, "bit": 26, "expected": 0})
+    elif case == "message-fixed-bit":
+        extra = bytes([0x2B, 0, 0, 0, 0, 1, 1, 0])
+        fixed.append({"bank": 2, "bit": 7, "expected": 0})
+    elif case in ("opaque-check", "opaque-creator"):
+        extra = (
+            bytes([6, 0, 30, 0, 0x23, 0, 0, 0, 0, 0])
+            + (pickup if case == "opaque-creator" else item_command(30, 1, 10))
+            + bytes([8, 0, 1, 0])
+        )
+    elif case.startswith("wait") or case == "actor-wait":
+        predicate = (
+            bytes([0x3E, 0, 0, 0, 0, 0])
+            if case == "actor-wait"
+            else bytes([0x21, 5, 1, 0])
+        )
+        body = pickup if case == "wait-creator" else bytes([2, 0])
+        if case == "wait-hidden-creator":
+            predicate = pickup
+        end = len(body) + 2 + len(predicate)
+        extra = (
+            bytes([0x11, 0, end, 0])
+            + body
+            + bytes([0x12, len(predicate)])
+            + predicate
+            + bytes([1, 0])
+        )
+        if case == "wait-bound":
+            extra = extra[:2] + bytes([end - 1, 0]) + extra[4:]
+        elif case == "wait-predicate-width":
+            position = 4 + len(body) + 1
+            extra = (
+                extra[:position] + bytes([len(predicate) + 2]) + extra[position + 1 :]
+            )
+        elif case == "wait-conditional":
+            extra = guarded[:-2] + extra + bytes([1, 0])
+    elif case == "unsupported-work":
+        extra = bytes([0x2E, 6, 0, 1, 0])
+    elif case in (
+        "last-actor",
+        "out-of-table-actor",
+        "negative-actor",
+        "negative-object",
+    ):
+        extra = bytes(
+            [
+                0x2E,
+                4 if case == "negative-object" else 3,
+                31
+                if case == "last-actor"
+                else 32
+                if case == "out-of-table-actor"
+                else 255,
+                1,
+                0,
+            ]
+        )
+    elif case == "unresolved-effect":
+        extra = bytes([0x58, 0, 0, 0, 0x17, 0, 0, 0, 0, 0, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (guarded, extra))
+    room = decode_room(data, "synthetic", PRESENCE_FLAGS)
+    assert scenario_absent_items(data, room, fixed, scenario_banks) == (
+        [9] if excluded else []
+    )
+
+
+def test_scenario_exclusions_require_independent_creator_proofs():
     rooms = {
         room["id"]: room
         for room in json.loads((ROOT / "data/rooms_slus00421.json").read_text())[
@@ -893,7 +1064,9 @@ def test_scenario_exclusions_remain_distinct_from_failed_presence_conditions():
     }
     assert rooms["00-0f"]["scenario_absent_item_ids"] == [157]
     assert rooms["01-03"]["scenario_absent_item_ids"] == [36]
-    # These opposite-scenario candidates remain unproven because their sources
-    # contain effects outside the stricter negative proof's audited subset.
-    assert rooms["01-02"]["scenario_absent_item_ids"] == []
-    assert rooms["01-08"]["scenario_absent_item_ids"] == []
+    assert rooms["01-02"]["scenario_absent_item_ids"] == [249]
+    assert rooms["01-08"]["scenario_absent_item_ids"] == [158]
+    assert rooms["01-09"]["scenario_absent_item_ids"] == [70]
+    # An opaque lifecycle guard still does not prove absence. The native
+    # reward can become available without changing its acquisition identity.
+    assert 116 not in rooms["01-02"]["scenario_absent_item_ids"]
