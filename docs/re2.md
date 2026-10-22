@@ -28,6 +28,8 @@ Inactive descriptors can contain overwritten item fields; a missing descriptor e
 
 [RE2-COLLECT-007](research/re2.md#re2-collect-007-fixed-scenario-proof-excludes-impossible-pickups) separately proves that two catalog identities cannot be created in the pinned Leon A scenario. Only that complete-source proof removes them from completion checks. Failed presence conditions still remain Unknown. A hidden native case verifies both real pickups, clearance, ordinary departure/reentry and repeated earlier/later restores; the other excluded identity has earlier capture replay only. Unsupported sources retain their unresolved checks.
 
+[RE2-COLLECT-008](research/re2.md#re2-collect-008-scenario-exclusions-through-audited-script-effects) extends the conservative proof through audited unrelated script effects. One affected source now has a native entry/departure comparison and two byte-identical savestate restores; only its impossible item check disappears, while real items and unresolved checks retain their states. Ordinary pickups, successful reentry and the other two affected sources still need gameplay validation.
+
 The catalog and floor plans contain numeric metadata and contours, not original game pixels or executable bytes. To regenerate them from the pinned owned disc, install `unicorn` in a development environment and run:
 
 ```sh
