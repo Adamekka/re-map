@@ -78,6 +78,24 @@ def validate_current_room(
     def identity(item):
         return item.aot_id, item.item_type, item.global_id
 
+    excluded_items = {
+        identity(item)
+        for item in common_items
+        if item.state is RuntimeItemState.Unavailable
+    }
+    # A complete source can permanently disable another scenario's item.
+    # Keep a contradictory live pickup visible and its coverage unresolved.
+    collection_conflict = any(
+        identity(item) in excluded_items and item.state is RuntimeItemState.Available
+        for item in items
+    )
+    items = [
+        replace(item, state=RuntimeItemState.Unavailable)
+        if identity(item) in excluded_items
+        and item.state is not RuntimeItemState.Available
+        else item
+        for item in items
+    ]
     completion_items = {
         identity(item): item
         for item in sorted(common_items, key=lambda item: item.aot_id)
@@ -143,9 +161,11 @@ def validate_current_room(
         # Consume candidates once, but retain unresolved access in coverage
         # even when current static conditions reconstruct no door at that slot.
         scripted_doors=(),
-        list_complete=observation.list_complete and not unresolved_scripted_collectible,
+        list_complete=observation.list_complete
+        and not unresolved_scripted_collectible
+        and not collection_conflict,
         coverage_reason="Room item conditions are unresolved."
-        if unresolved_scripted_collectible
+        if unresolved_scripted_collectible or collection_conflict
         else observation.coverage_reason,
     )
     represented = {

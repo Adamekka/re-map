@@ -710,6 +710,28 @@ def evaluate_room_program(
     def targets_slot(command, slot):
         return command.args[1 if command.kind == "quantity-transfer" else 0] == slot
 
+    init_offsets = {c.offset for p in program.procedures for c in p.commands}
+    later_slot_commands = tuple(
+        c
+        for c in all_commands + program.event_effects
+        if c.offset not in init_offsets
+        and c.kind
+        in (
+            "item",
+            "door",
+            "aot-create",
+            "aot-handler",
+            "award",
+            "aot-callback",
+            "quantity-transfer",
+        )
+    )
+    later_collection_slots = {
+        slot
+        for slot in program.item_slots
+        if any(targets_slot(c, slot) for c in later_slot_commands)
+    }
+
     def start_interaction(slot, slots):
         descriptors = dict(slots).get(slot, frozenset({None}))
         targets = set()
@@ -736,7 +758,7 @@ def evaluate_room_program(
             if descriptor is None or descriptor[0] != "item":
                 history_unresolved.add(args[1])
                 return descriptor
-            return (*descriptor[:5], quantity)
+            return (*descriptor[:5], quantity, descriptor[6])
         # Generic creators and extended setters provide known u16 parameters.
         # Other creators have no reconstructed parameter contract for callback 9.
         parameters = registry_parameters.get(
@@ -756,9 +778,17 @@ def evaluate_room_program(
             # Acquisition and activation can use different flags. A creator
             # whose ordinary bit is clear registers handler zero, not a pickup.
             handler = (15 if args[1] >= 0x4E else 4) if flags[index] & mask else 0
-            return kind, args, handler, args[4], parameters, amount
+            return kind, args, handler, args[4], parameters, amount, False
         if kind == "door":
-            return kind, args, 1, args[9], parameters, ItemQuantityState.Unreconstructed
+            return (
+                kind,
+                args,
+                1,
+                args[9],
+                parameters,
+                ItemQuantityState.Unreconstructed,
+                False,
+            )
         if kind == "aot-create":
             return (
                 kind,
@@ -767,11 +797,12 @@ def evaluate_room_program(
                 args[2],
                 parameters,
                 ItemQuantityState.Unreconstructed,
+                False,
             )
         assert kind == "aot-handler"
         if descriptor is None:
             return None  # Setters preserve pointers; no modeled creator supplies one.
-        creator, fields, _, _, retained_parameters, retained_quantity = descriptor
+        creator, fields, _, _, retained_parameters, retained_quantity, _ = descriptor
         return (
             creator,
             fields,
@@ -781,6 +812,9 @@ def evaluate_room_program(
             if command.offset in registry_parameters
             else retained_parameters,
             retained_quantity,
+            # A zero creator handler can reflect acquisition or puzzle state.
+            # Only an explicit setter proves that initialization disabled it.
+            args[1] == 0,
         )
 
     event_updates = tuple(
@@ -1430,6 +1464,45 @@ def evaluate_room_program(
                 enqueue(command.next, stack, slots, true_writes)
         return successful, list(finished)
 
+    permanently_disabled = set()
+    candidates = {
+        c.args[0]
+        for p in program.procedures
+        for c in p.commands
+        if c.kind == "aot-handler"
+        and c.args[1] == 0
+        and c.args[0] in program.item_slots
+        and c.args[0] not in later_collection_slots
+    }
+    if candidates and program.coverage_complete:
+        # Fresh story flags describe this entry, not every future entry.
+        # Reuse the historical initializer interpreter to cover both outcomes
+        # of mutable guards, while retaining the actual room and character.
+        earlier_started, earlier_unresolved = started, history_unresolved
+        started, history_unresolved = set(), set()
+        proof_paths, proof_complete = [((), ())], True
+        for procedure in program.procedures:
+            proof_complete, proof_paths = run_procedure(procedure, proof_paths, True)
+            if not proof_complete:
+                break
+        if proof_complete and proof_paths:
+            for slot in candidates - history_unresolved:
+                choices = {
+                    d
+                    for slots, _ in proof_paths
+                    for d in dict(slots).get(slot, frozenset({None}))
+                }
+                if choices and all(
+                    d is not None and d[0] == "item" and d[2] == 0 and d[6]
+                    for d in choices
+                ):
+                    identities = {(d[1][0], d[1][1], d[1][3]) for d in choices}
+                    if len(identities) == 1:
+                        permanently_disabled.update(identities)
+        # Proof-only event starts and uncertainty must not change the actual
+        # current/reentry evaluation's scheduling or coverage.
+        started, history_unresolved = earlier_started, earlier_unresolved
+
     if reentry:
         resets = {
             layout.flag(group, index): False
@@ -1652,7 +1725,11 @@ def evaluate_room_program(
     def interpret_descriptor(descriptor, *, collection: bool):
         if descriptor is None:
             return "absent", None
-        creator, args, handler, mode, parameters, quantity = descriptor
+        creator, args, handler, mode, parameters, quantity, explicitly_disabled = (
+            descriptor
+        )
+        assert type(explicitly_disabled) is bool
+        assert not explicitly_disabled or handler == 0
         slot = args[0]
         if creator == "item":
             _, item_type, _, gid, _ = args
@@ -1698,8 +1775,12 @@ def evaluate_room_program(
                 # A dormant descriptor can still be awarded by an event. Its
                 # current availability needs event progress, not just a pickup bit.
                 return "unresolved", None
+            # RE1-CLEAR-007: a final explicit disable with no later slot writer
+            # or forced award proves absence; ordinary puzzle dormancy does not.
             state = (
-                RuntimeItemState.Taken
+                RuntimeItemState.Unavailable
+                if collection and (slot, item_type, gid) in permanently_disabled
+                else RuntimeItemState.Taken
                 if not remaining
                 else RuntimeItemState.Available
                 if handler in (4, 15)

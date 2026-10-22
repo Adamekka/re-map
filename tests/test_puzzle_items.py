@@ -48,6 +48,8 @@ def dormant_room(tmp_path, request):
     main = guard(bytes((4, 4, 65, 0)), bytes((0x13, 5, 4, 193))) + b"\0"
     if scenario == "forced":
         main = bytes((0x24, 5, 4, 0, 0))
+    elif scenario == "permanent":
+        main = b"\0"
     rdt = source(init, main, bytes(4))
     name = "PSX/STAGE1/ROOM1091.RDT"
     row = scan_cache_rdt(rdt, name, json.loads(profile_path.read_text()))
