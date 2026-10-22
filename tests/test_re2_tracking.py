@@ -290,6 +290,118 @@ def test_generated_scripted_reward_tracks_activation_collection_and_rewind(snaps
         )
 
 
+@pytest.mark.parametrize("snapshot", ["01-08", "00-0f"], indirect=True)
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("alternatives", [False, True])
+def test_native_pickup_quantities_reconstruct_from_fresh_mode_and_collection_flags(
+    snapshot, departed, alternatives
+):
+    # RE2-QUANTITY-001: the same native rule applies to both observed creators,
+    # including before prompt entry, after departure and with no cached amount.
+    profile, _, put, read = snapshot
+    source_key = str(profile.read_current_room(read).room)
+    source = copy.deepcopy(profile.rooms[source_key])
+    item = next(item for item in source["items"] if item["type"] == 30)
+    assert item["amount"] == 3
+    item["amounts"] = [3, 4] if alternatives else [3]
+    source.update(
+        items=[item],
+        collection_item_ids=[item["global_id"]],
+        conditional_item_presence=[],
+        scenario_absent_item_ids=[],
+        event_awards=[],
+        candidate_list_complete=True,
+    )
+    rooms = {**profile.rooms, source_key: source}
+    if departed:
+        # Reuse the synthetic source binding to exercise a departed room
+        # without claiming another real room shares these source bytes.
+        rooms[f"{source['stage']:02x}-00"] = {**source, "room": 0, "items": []}
+        put(profile.room_address, 0, 2)
+    profile = replace(profile, rooms=rooms)
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    pointer = 0x80100000 + item["offset"] + 2
+    put(pointer + 14, 4 if alternatives else 3, 2)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(source["stage"], source["room"]))
+    for mode in (0, 0x40, 0, 0x40):
+        put(0x800C7CE4, 0x40000000 | mode, 4)
+        for active, acquired in ((True, False), (False, True), (False, False)):
+            put(
+                0x800C66C8 + item["slot"] * 4,
+                pointer if active and not departed else 0,
+                4,
+            )
+            flag_address = 0x800CC9E8 + item["global_id"] // 32 * 4
+            put(
+                flag_address,
+                0x80000000 >> (item["global_id"] % 32) if acquired else 0,
+                4,
+            )
+            fresh = Tracker()
+            fresh.mark_current(RoomId(source["stage"], source["room"]))
+            for observation in (tracker, fresh):
+                assert poll_re2(profile, observation, read).status is PollStatus.Display
+                record = observation.rooms[source_key]
+                detail = record.items[0]
+                assert detail.state == (
+                    "taken"
+                    if acquired
+                    else "available"
+                    if active and not departed
+                    else "uncollected"
+                )
+                assert detail.quantity == (
+                    2
+                    if mode
+                    else 4
+                    if alternatives and active and not departed
+                    else ItemQuantityState.Unreconstructed
+                    if alternatives
+                    else 3
+                )
+                assert record.completion is (
+                    RoomCompletion.Cleared if acquired else RoomCompletion.Incomplete
+                )
+
+
+@pytest.mark.parametrize("short", [False, True])
+def test_pickup_quantity_mode_coherence_rejects_torn_or_short_reads(snapshot, short):
+    profile, _, _, read = snapshot
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changing_read(address, width):
+        if address == 0x800C7CE4:
+            return (
+                MemRead(True, b"x")
+                if short
+                else MemRead(True, (0x40000040).to_bytes(4, "little"))
+            )
+        return read(address, width)
+
+    result = poll_re2(profile, tracker, changing_read)
+    assert result.status is (PollStatus.ReadFailure if short else PollStatus.Retry)
+    assert tracker == before
+
+
+def test_pickup_quantity_override_does_not_change_event_delivery_amounts(snapshot):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    award = copy.deepcopy(profile.rooms["01-02"]["event_awards"][0])
+    award.update(item_type=30, amount=3)
+    source["event_awards"] = [award]
+    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    put(0x800C7CE4, 0x40000040, 4)
+    put(0x800CC9E8, 0x04000000, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    detail = tracker.rooms["00-01"].items[-1]
+    assert detail.state == "taken" and detail.quantity == 3
+
+
 @pytest.mark.parametrize("departed", [False, True])
 def test_source_established_items_remain_required_until_fresh_collection(
     snapshot, departed

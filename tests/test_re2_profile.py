@@ -151,6 +151,46 @@ def test_re2_quantity_alternatives_are_required_validated_metadata(tmp_path, amo
         Re2Profile.load(path)
 
 
+@pytest.mark.parametrize(
+    "override",
+    [
+        None,
+        {},
+        {"system_mask": True, "item_type": 30, "amount": 2},
+        {"system_mask": 0, "item_type": 30, "amount": 2},
+        {"system_mask": 65, "item_type": 30, "amount": 2},
+        {"system_mask": 1 << 32, "item_type": 30, "amount": 2},
+        {"system_mask": 64, "item_type": True, "amount": 2},
+        {"system_mask": 64, "item_type": -1, "amount": 2},
+        {"system_mask": 64, "item_type": 104, "amount": 2},
+        {"system_mask": 64, "item_type": 30, "amount": True},
+        {"system_mask": 64, "item_type": 30, "amount": -1},
+        {"system_mask": 64, "item_type": 30, "amount": 65536},
+        {"system_mask": 64, "item_type": 30, "amount": 2, "extra": 1},
+    ],
+)
+def test_re2_quantity_override_is_required_validated_configuration(tmp_path, override):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    if override is None:
+        del raw["runtime_layout"]["pickup_quantity_override"]
+    else:
+        raw["runtime_layout"]["pickup_quantity_override"] = override
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 pickup quantity override"):
+        Re2Profile.load(path)
+
+
+def test_re2_quantity_override_pins_the_native_pickup_handler_rule():
+    # RE2-QUANTITY-001: native 0x8004E330 replaces the operand before pickup.
+    profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
+    assert profile.runtime_layout["pickup_quantity_override"] == {
+        "system_mask": 0x40,
+        "item_type": 30,
+        "amount": 2,
+    }
+
+
 @pytest.mark.parametrize("floor", [None, True, "0", -1, 256])
 def test_re2_door_activation_floor_is_required_validated_metadata(tmp_path, floor):
     raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())

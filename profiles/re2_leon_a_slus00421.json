@@ -38,6 +38,7 @@
     "RE2-COLLECT-006",
     "RE2-COLLECT-007",
     "RE2-COLLECT-008",
+    "RE2-QUANTITY-001",
     "RE2-DOOR-001",
     "RE2-DOOR-002",
     "RE2-DOOR-003"
@@ -190,6 +191,11 @@
     "item_bank_stage_boundary": 4,
     "key_bank": 31,
     "file_type_min": 104,
+    "pickup_quantity_override": {
+      "system_mask": 64,
+      "item_type": 30,
+      "amount": 2
+    },
     "heading_offset_degrees": 90,
     "heading_direction": 1
   },

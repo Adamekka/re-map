@@ -69,6 +69,17 @@ class Re2Profile:
             if key.endswith("_address_ps1")
         ):
             raise ValueError("invalid RE2 runtime memory layout")
+        quantity_override = layout.get("pickup_quantity_override")
+        if (
+            type(quantity_override) is not dict
+            or quantity_override.keys() != {"system_mask", "item_type", "amount"}
+            or any(type(value) is not int for value in quantity_override.values())
+            or not 0 < quantity_override["system_mask"] <= 0xFFFFFFFF
+            or quantity_override["system_mask"] & (quantity_override["system_mask"] - 1)
+            or not 0 <= quantity_override["item_type"] < layout["file_type_min"]
+            or not 0 <= quantity_override["amount"] <= 0xFFFF
+        ):
+            raise ValueError("invalid or missing RE2 pickup quantity override")
         banks = {
             row["bank"]: (int(row["address_ps1"], 0), row["width"])
             for row in raw["flag_banks"]

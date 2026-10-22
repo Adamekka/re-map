@@ -39,6 +39,7 @@ def poll_re2(
             "Exploration history contains an unknown RE2 room. Choose another history file or start a new playthrough.",
         )
     layout = profile.runtime_layout
+    quantity_override = layout["pickup_quantity_override"]
     markers: dict[tuple[int, int], bytes] = {}
 
     class ReadFailure(Exception):
@@ -268,6 +269,14 @@ def poll_re2(
                     if available
                     else {amount for item in variants for amount in item["amounts"]}
                 )
+                if (
+                    item_type == quantity_override["item_type"]
+                    and system & quantity_override["system_mask"]
+                ):
+                    # RE2-QUANTITY-001: the native pickup handler replaces this
+                    # amount at prompt entry, so source/live operands are not
+                    # yet the award. Reconstruct it from fresh mode flags.
+                    amounts = {quantity_override["amount"]}
                 quantity = (
                     next(iter(amounts))
                     if len(amounts) == 1
@@ -357,7 +366,8 @@ def poll_re2(
             (int(layout["system_flags_address_ps1"], 0), 4): layout["gameplay_mask"]
             | layout["demo_mask"]
             | layout["game_over_mask"]
-            | layout["transition_mask"],
+            | layout["transition_mask"]
+            | quantity_override["system_mask"],
             (int(layout["status_flags_address_ps1"], 0), 4): layout["scenario_mask"],
             (int(layout["player_active_address_ps1"], 0), 4): 1,
         }
@@ -368,7 +378,7 @@ def poll_re2(
                     f"RE2 coherence read failed: {result.error or 'short reply'}"
                 )
             # Other system/player bits can change during ordinary animation.
-            # Only the bits used to admit this snapshot need to remain equal.
+            # Only the bits consumed by this snapshot need to remain equal.
             mask = masks.get((address, width), (1 << (8 * width)) - 1)
             if (
                 int.from_bytes(result.data, "little") ^ int.from_bytes(packet, "little")
