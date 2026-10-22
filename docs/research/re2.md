@@ -1234,7 +1234,7 @@ The final implementation passes 1,919 repository tests, 290 focused RE2 tests, s
 
 ## RE2-COLLECT-008: scenario exclusions through audited script effects
 
-Status: Candidate for SLUS-00421. Pinned source inspection, isolated native-handler execution and synthetic tracking checks establish the listed offline results. The hidden follow-up below verifies the limited `01-02` entry/departure publication and earlier/later savestate restores. Ordinary pickup collection, successful reentry and the other two sources remain unverified.
+Status: Confirmed for ID 158's exclusion during two ordinary collections, departure/reentry and the listed savestate restores in `01-08` on SLUS-00421. ID 249 has limited `01-02` entry/departure and restore observations; its ordinary pickup/reentry checks remain pending. ID 70 remains Candidate with offline evidence only. Full clearance and the remaining item in `01-08` are unverified. A separate quantity discrepancy is recorded in [RE2-QUANTITY-001](#re2-quantity-001-native-pickup-award-amount-differs-from-catalog).
 
 Game: Resident Evil 2 USA Disc 1, Leon A, SLUS-00421. Executable `SLUS_004.21` SHA256 `1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef`; isolated DuckStation `0.1-12083-g00e299795`. [RE2-IDENTITY-001](#re2-identity-001-leon-a-disc-identity-and-candidate-room-layout) pins revision and source formats. This extends [RE2-COLLECT-007](#re2-collect-007-fixed-scenario-proof-excludes-impossible-pickups) without changing its original observations.
 
@@ -1322,3 +1322,69 @@ Contribution:
 
 - 2026-10-22; human user; requested continuation of the already approved increment and hidden validation.
 - 2026-10-22; Codex root, exact verified model `gpt-6.1-sol`; performed native setup/navigation/delivery and the two actual restores, audited baseline/current publications and fresh history reconstruction, retained rejected input/address hypotheses, restored the isolated setup and authored this follow-up. `author.json` records the matching session and latest turn metadata. The native-capture audit, 365 focused RE2/history/logging tests in 7.60 seconds, 303 local documentation links and whitespace checks passed. Unrelated worktree bytes were preserved. This evidence-only follow-up does not add an external code review or change the earlier review's scope.
+
+### Second native follow-up, 2026-10-22
+
+Private evidence is under `/tmp/re-map-re2-scripted-runtime-followup-20261022/`, using production commit `2f8978c` with the same game executable, emulator and pre-increment metadata baseline. The native case reaches `01-08`, collects IDs 141 and 216, leaves for `01-07` and reenters after each collection stage. Excluded ID 158 stays unacquired and its native slot 12 pointer remains zero in every accepted current-room capture. The baseline retains its Unknown check; the corrected reader omits it. Real item 159 remains available while current and source-established Uncollected after departure. It continues to prevent clearance after the other two items are taken.
+
+| Capture | Actual source | IDs 141 / 216 | Full 2 MiB RAM SHA256 |
+| --- | --- | --- | --- |
+| `second-target-before` | `01-08` | clear / clear | `74ee52b6c8c6939f157dbceea4689afd5b2119194949e87f03266ca1a3fc5e18` |
+| `second-first-accepted` | `01-08` | set / clear | `06771f14d4ad0e4c5685d89dae1ddd30118ec0307484f5f18f53879d22b49890` |
+| `second-first-departed` | `01-07` | set / clear | `580296318ea7b38257f95fbd0bc7b730a78e021e69bb14ab384013ba8abfd0d2` |
+| `second-reentry-accepted` | `01-08` | set / clear | `30a243ee2b33c4a55a48b8359989deb81310af64d3ec453b20e2d52722dab1d5` |
+| `second-two-accepted` | `01-08` | set / set | `360735e1a2673eecb7b75d38be753994e68aec4ce8c234e9d13d3d359b00e04b` |
+| `second-two-departed` | `01-07` | set / set | `cf3620fead5237c49aa2abff1c7761e01d482e7ee75e556d20121531cd46d210` |
+| `second-two-reentered` | `01-08` | set / set | `804060385d076510f04e6807a22fc04a35d803b1f9be02b10311f4f283d153e5` |
+| `second-earlier-restored` | `01-08` | clear / clear | `74ee52b6c8c6939f157dbceea4689afd5b2119194949e87f03266ca1a3fc5e18` |
+| `second-later-restored` | `01-08` | set / set | `360735e1a2673eecb7b75d38be753994e68aec4ce8c234e9d13d3d359b00e04b` |
+
+ID 141 uses PS1 virtual `0x800CC9F8`, unsigned little-endian width four, mask `0x00040000`. ID 216 uses `0x800CCA00`, same width/order, mask `0x00000080`. At `0x800CC9F8`, masks `0x00000002` and `0x00000001` belong to excluded ID 158 and remaining ID 159; both stay clear. The slot 12 pointer is `0x800C66F8`, unsigned little-endian width four, full mask `0xFFFFFFFF`. The fixed scenario mask `0xC2000000` stays clear throughout. All addresses are PS1 virtual addresses.
+
+The earlier `second-target-before.sav`, SHA256 `60a2ab1fa275a42de85624d3c8ad984f4ebb8d8d97788bc11aa50697c8bd1168`, and later `second-two.sav`, SHA256 `781b2fac5a0f25db8111fc41318b32ccb88f4beed1868ea3731741b87444e888`, each reproduce their original RAM capture byte for byte after actual F1 loads. A third pair restores the later route capture in `00-0c`, SHA256 `e830e91f94270da6d58d133dfe344097805ab30b17e16a9ea4bc55b92b6a0637`. Its private `key-route-start.sav` has SHA256 `e920f000f491367847ebcbae1361a16e84db67cf5e96677cf94614affaef9e45`. The pass performs five actual F1 loads, including the earlier checkpoint used to isolate the quantity finding and the final route restoration. Booting the starting checkpoint is separate from that count.
+
+`audit.py` replays sixteen Display captures and two Retry captures through both readers. Full publications agree after removing ID 158's baseline row and its resulting unresolved-condition explanation when no other Unknown item remains. The initial comparison rejected that expected explanation change; the accepted audit checks it explicitly. Both Retry samples retain the previous complete publications. Three fresh trackers restore only five source visits and five region visits from a separate production history file, then reconstruct the earlier, later and first-item-departed states from captured RAM. These are offline history reconstruction checks, not new live tracker subprocesses. The same pickup amount is incorrect in both readers, so baseline agreement does not validate quantities; follow RE2-QUANTITY-001. `coverage.json` derives the prior twenty-seven-source union from the documented accepted lists in RE2-LIVE-001/002/003 and RE2-DOOR-001/002/003, then adds this pass's accepted sources. Only `01-08` is new, bringing the recorded union to twenty-eight. Source acceptance is not complete item/door coverage or campaign readiness.
+
+#### Navigation, rejected approaches and cleanup
+
+The first CLI attempt incorrectly supplied a filename to `-state`, which accepts a slot index; it exited before game load. The pinned executable's own help identifies `-statefile` as the filename option, and that launch succeeds. Before each boot/load, both achievement integrations are disabled and per-game overrides absent. The private empty-card path is confined to this pass; no user card/history is opened. Audio remains muted and the shader hash is unchanged from the preceding follow-up. A suppressed screenshot's central half is checked black without emitting an image. The starting native checkpoint retains earlier health assistance; this pass adds only recorded position/facing writes using the same whitelist and native free-control synchronization. No health, ammunition, enemy, inventory, item, key, scenario, story, floor, height or control-state value is patched.
+
+Initial menu trials still target the wrong interaction. Read-only Down/Up observations move a candidate inventory cursor 0 → 2 → 0 at `0x800CDC7C`, unsigned byte, full mask `0xFF`; pinned native references establish the status base `0x800CDC70`. The proposed transfer of the later-release status address remains rejected. Native menu dispatch at `0x8006663C..0x80066714` sends action 3 to Use/Equip at `0x800667CC` and action 2 to Inspect at `0x80067A80`. An initial hypothesis reversing those actions is rejected. The earlier failure was a different world interaction/floor context, not an established menu-mapping defect.
+
+The recorded [RE2-DOOR-001 approach](#re2-door-001-event-driven-unlock-and-savestate-reversal), native Y/floor supplied by `first-target-departed.sav`, X/Z -14935/2099 and yaw 2048, completes the access interaction through repeated Cross. Native stairs then change Y/floor before the route continues. Pickup preparation in `01-08` also requires approaching the free side of counter collision: native interaction code `0x8004DB34..0x8004DBBC` constructs a 620-unit forward point. Accepted settled positions are -19094/-16920, yaw 1024 for ID 141 and -15676/-17560, yaw 0 for ID 216, both on native floor zero. The native acquisition flags, rather than an approach position or elapsed time, establish collection.
+
+`second-target-first-collected` is a failed approach with both acquisition flags clear. `second-first-reentered` remains in `01-07` after enemy contact; it supplies no successful reentry. Later captures verify the actual destination. Enemy contact, collision resolution, unsupported source geometry and a catalog route alone do not establish passage or item availability. Private `menu-diagnosis.json`, `key-route.json`, `control-sync.jsonl` and the native disassemblies retain rejected hypotheses and successful preparation separately.
+
+The remaining `01-09` case has not been reached. Its route from `01-07` names key type 90. The short catalog key location in `00-13` is gated at owned RDT offsets 3874/3878 on bank 1 bit 1 set, while Leon A requires that bit clear. That local branch observation is a navigation rejection, not a new complete-source exclusion rule. The alternate creator in `00-0b` is gated at 5836/5840 on that bit clear, but its native route and pickup remain untested here. No key or progression state is patched to bypass the requirement.
+
+After the final route restoration, the isolated process and GDB listener are stopped. Original settings and selected slot are restored byte for byte with the same hashes as the preceding follow-up; `cleanup.json` records both. No host private-card file exists at exit, and no normal memory-card persistence is claimed. Raw RAM, owned data, checkpoints, images and helpers remain private. No production or renderer change is made; the README screenshot is unchanged by this work. Remaining limits include item 159/full clearance, ID 70, ID 249's ordinary pickup/reentry checks and the separately reproduced quantity defect.
+
+Contributions:
+
+- 2026-10-22; human user; requested continuation of the named exclusion validation with hidden gameplay.
+- 2026-10-22; Codex root, exact verified model `gpt-6.1-sol`; performed the ordinary pickups, native passages and five F1 loads, replayed both readers and fresh histories, isolated the quantity discrepancy, rejected menu/route hypotheses, restored the isolated setup and authored this evidence-only follow-up. `author.json` records the matching session/latest-turn metadata. The native audit, 365 focused RE2/history/logging tests in 6.13 seconds, 310 local documentation links and whitespace checks passed. Unrelated worktree bytes were preserved. No new external code review or production change is claimed.
+
+## RE2-QUANTITY-001: native pickup award amount differs from catalog
+
+Status: Confirmed discrepancy for acquisition ID 141 in `01-08` on SLUS-00421, observed in both repeated-confirmation and isolated single-pickup sequences. The shared correction, cause of the native adjustment and behavior of other pickups/modes remain unverified. No implementation is changed by this finding.
+
+Game: Resident Evil 2 USA Disc 1, Leon A, SLUS-00421, executable `SLUS_004.21` SHA256 `1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef`; DuckStation `0.1-12083-g00e299795`. Production commit `2f8978c`. [RE2-COLLECT-008's second native follow-up](#second-native-follow-up-2026-10-22) records setup, assistance, source identity, restore checks and cleanup. Private evidence shares `/tmp/re-map-re2-scripted-runtime-followup-20261022/`.
+
+The owned creator at RDT file offset 4986 declares type 30, amount three, acquisition ID 141. Before interaction the live descriptor also says three and inventory contains no type 30. Opening a single native pickup prompt changes the descriptor amount to two before acquisition. One further confirmation sets acquisition and adds two units to inventory. Triangle closes the pickup display without another world interaction. Once settled, both the baseline and current tracker publish Taken with quantity three. An earlier repeated-Cross collection independently produced the same two-unit inventory addition. The separate ordinary ammunition pickup adds the expected fifteen units. This finding concerns the amount displayed; acquisition reversal and incomplete-room behavior still pass.
+
+| Capture | Acquisition / inventory | Published result | Full RAM SHA256 |
+| --- | --- | --- | --- |
+| `second-target-before` | clear / zero | Available, three | `74ee52b6c8c6939f157dbceea4689afd5b2119194949e87f03266ca1a3fc5e18` |
+| `quantity-single-prompt` | clear / zero; native descriptor two | Retry, previous publication retained | `e47c6ca94d81cecb2b2c384aebcc30caba686bcc3a3837f1acc370683418bf35` |
+| `quantity-single-after` | set / two | Retry, previous publication retained | `179f893b53f59d612a5cce53ccd32dc1f7d78eaa9303a56c9b35aeedc89eef1f` |
+| `quantity-single-settled` | set / two | Taken, three | `72b43f6d501a8ace69f4f9e99c69bca31ae0193c444cc08ef91ba71d4fe3a2ba` |
+
+The source-bound loaded-RDT pointer is at PS1 virtual `0x800C6494`, unsigned little-endian width four, full mask `0xFFFFFFFF`. The descriptor amount is an unsigned little-endian halfword at loaded RDT base + 5002, file creator + 16, mask `0xFFFF`. Inventory type and amount at `0x800CCB70`/`0x800CCB71` are unsigned bytes, masks `0xFF`. Acquisition is the unsigned little-endian word at `0x800CC9F8`, mask `0x00040000`. These are PS1 virtual addresses/relative loaded-source offsets, not host-process addresses.
+
+Reproduce from the private earlier checkpoint recorded in RE2-COLLECT-008. Prepare X/Z -19094/-16920, yaw 1024 on the native floor zero, then send one Cross press and a neutral interval. Pause and capture the prompt before any acquisition. Resume, confirm once, allow the display to settle, then cancel the pickup display and capture. Do not substitute an inventory edit or repeated world interactions for this isolated sequence. The observed adjustment already exists before collection, so later item consumption does not explain this case. No difficulty-dependent formula is confirmed yet.
+
+The reader uses a live amount only for an available interaction. Once taken or departed, it selects the single generated amount when every catalog variant agrees. Here the catalog contains only three, so the amount returns to three even though the game grants two. This identifies the reader/catalog seam that needs a shared native award rule or explicit unreconstructed quantity. Retaining a transient pickup amount as cached history would not meet savestate/fresh-start requirements. No named-item exception or quantity fallback is introduced.
+
+Contributions:
+
+- 2026-10-22; Codex root, exact verified model `gpt-6.1-sol`; discovered the inventory/display difference during the approved exclusion test, reproduced it with discrete native inputs after an earlier restore, verified the prompt/acquisition/inventory bytes and unchanged Retry publications, inspected the existing quantity selection and authored this finding. The cause and correction have not been reviewed or implemented.
