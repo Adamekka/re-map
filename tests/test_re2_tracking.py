@@ -187,7 +187,7 @@ def snapshot(request, profile):
             width, "little"
         )
 
-    put(0x800C7CE4, 0x40000000, 4)
+    put(0x800C7CE4, 0x40000000 | profile.runtime_layout["system_mode_value"], 4)
     put(0x800C7D24, 1, 4)
     stage, number = source.split("-")
     put(profile.stage_address, int(stage), 2)
@@ -342,6 +342,16 @@ def test_native_pickup_quantities_reconstruct_from_fresh_mode_and_collection_fla
             fresh = Tracker()
             fresh.mark_current(RoomId(source["stage"], source["room"]))
             for observation in (tracker, fresh):
+                if not mode:
+                    # RE2-COLLECT-011 pins the observed native setup. The
+                    # quantity handler's flag-clear branch remains offline-only.
+                    before = copy.deepcopy(observation)
+                    assert (
+                        poll_re2(profile, observation, read).status
+                        is PollStatus.WrongGame
+                    )
+                    assert observation == before
+                    continue
                 assert poll_re2(profile, observation, read).status is PollStatus.Display
                 record = observation.rooms[source_key]
                 detail = record.items[0]
@@ -352,15 +362,7 @@ def test_native_pickup_quantities_reconstruct_from_fresh_mode_and_collection_fla
                     if active and not departed
                     else "uncollected"
                 )
-                assert detail.quantity == (
-                    2
-                    if mode
-                    else 4
-                    if alternatives and active and not departed
-                    else ItemQuantityState.Unreconstructed
-                    if alternatives
-                    else 3
-                )
+                assert detail.quantity == 2
                 assert record.completion is (
                     RoomCompletion.Cleared if acquired else RoomCompletion.Incomplete
                 )
@@ -378,7 +380,7 @@ def test_pickup_quantity_mode_coherence_rejects_torn_or_short_reads(snapshot, sh
             return (
                 MemRead(True, b"x")
                 if short
-                else MemRead(True, (0x40000040).to_bytes(4, "little"))
+                else MemRead(True, (0x40000000).to_bytes(4, "little"))
             )
         return read(address, width)
 
@@ -400,6 +402,55 @@ def test_pickup_quantity_override_does_not_change_event_delivery_amounts(snapsho
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     detail = tracker.rooms["00-01"].items[-1]
     assert detail.state == "taken" and detail.quantity == 3
+
+
+@pytest.mark.parametrize("already_observed", [False, True])
+def test_mode_mismatch_cannot_publish_or_erase_prior_exploration(
+    snapshot, already_observed
+):
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    if already_observed:
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    put(0x800C7CE4, 0x40000000, 4)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.WrongGame
+    assert (
+        result.text
+        == "Unsupported RE2 game settings. Load a supported Leon A savestate."
+    )
+    assert tracker == before
+    put(0x800C7CE4, 0x40000040, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert set(tracker.rooms) == {"00-01"}
+
+
+def test_mode_coherence_is_independent_of_the_quantity_override(snapshot):
+    profile, _, _, read = snapshot
+    # Keep the quantity predicate unchanged while only the required mode bit
+    # changes at the final read, so its old coherence mask cannot hide a tear.
+    profile = replace(
+        profile,
+        runtime_layout={
+            **profile.runtime_layout,
+            "pickup_quantity_override": {
+                **profile.runtime_layout["pickup_quantity_override"],
+                "system_mask": 0x20,
+            },
+        },
+    )
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def changing(address, width):
+        if address == 0x800C7CE4:
+            return MemRead(True, (0x40000000).to_bytes(4, "little"))
+        return read(address, width)
+
+    assert poll_re2(profile, tracker, changing).status is PollStatus.Retry
+    assert tracker == before
 
 
 @pytest.mark.parametrize("departed", [False, True])
@@ -1146,7 +1197,7 @@ def test_conditional_pickup_gate_is_part_of_coherent_publication(snapshot, failu
 @pytest.mark.parametrize("shared_acquisition", [False, True])
 @pytest.mark.parametrize(
     "excluded_source,excluded_gid",
-    [("00-0f", 157), ("01-02", 249), ("01-08", 158), ("01-09", 70)],
+    [("00-0f", 157), ("01-02", 249), ("01-02", 116), ("01-08", 158), ("01-09", 70)],
 )
 def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
     snapshot, departed, unproven, shared_acquisition, excluded_source, excluded_gid
@@ -1164,11 +1215,13 @@ def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
         rule for rule in actual["conditional_item_presence"] if rule["global_id"] != 157
     ]
     if unproven:
+        # This synthetic source lacks a presence rule for the added identity;
+        # the mode-pinned ID116 is now one of the exclusions under test.
         candidates.append(
             next(
                 item
-                for item in profile.rooms["01-02"]["items"]
-                if item["global_id"] == 116
+                for item in profile.rooms["01-08"]["items"]
+                if item["global_id"] == 159
             )
         )
     room = {

@@ -871,6 +871,39 @@ def test_scenario_exclusion_proves_every_creator_impossible(
     ) == ([9] if excluded else [])
 
 
+@pytest.mark.parametrize("mode", [0, 1])
+@pytest.mark.parametrize("writer", ["none", "mode", "alias", "unrelated"])
+def test_mode_exclusion_withholds_proof_for_direct_and_aliased_writers(
+    mode, writer, scenario_banks
+):
+    from games.re2.scenario_items import scenario_absent_items
+
+    pickup = item_command(20, 15, 9)
+    startup = bytes([6, 0, 28, 0, 0x21, 0, 25, 0]) + pickup + bytes([8, 0, 1, 0])
+    extra = (
+        bytes([1, 0])
+        if writer == "none"
+        else bytes(
+            [
+                0x22,
+                99 if writer == "alias" else 0,
+                24 if writer == "unrelated" else 25,
+                1,
+                1,
+                0,
+            ]
+        )
+    )
+    data = synthetic_room(bytes([1, 0]), (startup, extra))
+    room = decode_room(data, "synthetic", PRESENCE_FLAGS)
+    # The native bank table can alias the system word. A different bank number
+    # must not hide a writer to the pinned mode bit.
+    banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7CE4", "width": 4}]
+    assert scenario_absent_items(
+        data, room, [{"bank": 0, "bit": 25, "expected": mode}], banks
+    ) == ([9] if mode and writer in ("none", "unrelated") else [])
+
+
 @pytest.mark.parametrize("fixed,excluded", [(0, True), (1, False)])
 def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_banks):
     from games.re2.scenario_items import scenario_absent_items
@@ -1064,9 +1097,9 @@ def test_scenario_exclusions_require_independent_creator_proofs():
     }
     assert rooms["00-0f"]["scenario_absent_item_ids"] == [157]
     assert rooms["01-03"]["scenario_absent_item_ids"] == [36]
-    assert rooms["01-02"]["scenario_absent_item_ids"] == [249]
+    assert rooms["01-02"]["scenario_absent_item_ids"] == [116, 249]
     assert rooms["01-08"]["scenario_absent_item_ids"] == [158]
     assert rooms["01-09"]["scenario_absent_item_ids"] == [70]
-    # An opaque lifecycle guard still does not prove absence. The native
-    # reward can become available without changing its acquisition identity.
-    assert 116 not in rooms["01-02"]["scenario_absent_item_ids"]
+    # RE2-COLLECT-011 adds only a pinned mode predicate. It does not turn
+    # opaque activation paths in other sources into absence proofs.
+    assert 159 not in rooms["01-08"]["scenario_absent_item_ids"]

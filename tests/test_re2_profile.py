@@ -387,6 +387,15 @@ def test_presence_condition_flags_are_explicit_and_bound_to_metadata(tmp_path, c
         "boolean-flags",
         "mask-mismatch",
         "unmasked-value",
+        "missing-mode-mask",
+        "missing-mode-value",
+        "zero-mode-mask",
+        "boolean-mode-mask",
+        "wide-mode-mask",
+        "unmasked-mode-value",
+        "boolean-mode-value",
+        "different-mode",
+        "missing-metadata-mode",
         "missing-ids",
         "duplicate",
         "unknown-id",
@@ -414,6 +423,26 @@ def test_scenario_exclusion_metadata_is_required_and_bound_to_configuration(
         raw["runtime_layout"]["scenario_mask"] = 0x40000000
     elif case == "unmasked-value":
         raw["runtime_layout"]["scenario_value"] = 1
+    elif case == "missing-mode-mask":
+        del raw["runtime_layout"]["system_mode_mask"]
+    elif case == "missing-mode-value":
+        del raw["runtime_layout"]["system_mode_value"]
+    elif case == "zero-mode-mask":
+        raw["runtime_layout"]["system_mode_mask"] = 0
+    elif case == "boolean-mode-mask":
+        raw["runtime_layout"]["system_mode_mask"] = True
+    elif case == "wide-mode-mask":
+        raw["runtime_layout"]["system_mode_mask"] = 1 << 32
+    elif case == "unmasked-mode-value":
+        raw["runtime_layout"]["system_mode_value"] = 0x80
+    elif case == "boolean-mode-value":
+        raw["runtime_layout"]["system_mode_value"] = True
+    elif case == "different-mode":
+        raw["runtime_layout"]["system_mode_value"] = 0
+    elif case == "missing-metadata-mode":
+        document["fixed_scenario_flags"] = [
+            test for test in document["fixed_scenario_flags"] if test["bank"] != 0
+        ]
     elif case == "missing-ids":
         del room["scenario_absent_item_ids"]
     elif case == "duplicate":

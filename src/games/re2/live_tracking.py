@@ -94,6 +94,13 @@ def poll_re2(
             return PollResult(PollStatus.WrongGame, "This profile requires Leon A")
         if system & layout["transition_mask"]:
             return PollResult(PollStatus.Retry, "Changing rooms...")
+        # RE2-COLLECT-011: generated exclusions assume this initialized mode.
+        # Reject a mismatch before any absent-item proof can affect clearance.
+        if system & layout["system_mode_mask"] != layout["system_mode_value"]:
+            return PollResult(
+                PollStatus.WrongGame,
+                "Unsupported RE2 game settings. Load a supported Leon A savestate.",
+            )
         rid = RoomId(value(profile.stage_address, 2), value(profile.room_address, 2))
         if (rid.stage, rid.room) != pose_room:
             return PollResult(PollStatus.Retry, "Player room changed during pose read")
@@ -367,6 +374,7 @@ def poll_re2(
             | layout["demo_mask"]
             | layout["game_over_mask"]
             | layout["transition_mask"]
+            | layout["system_mode_mask"]
             | quantity_override["system_mask"],
             (int(layout["status_flags_address_ps1"], 0), 4): layout["scenario_mask"],
             (int(layout["player_active_address_ps1"], 0), 4): 1,

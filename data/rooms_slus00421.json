@@ -13,7 +13,8 @@
     "RE2-COLLECT-005",
     "RE2-COLLECT-006",
     "RE2-COLLECT-007",
-    "RE2-COLLECT-008"
+    "RE2-COLLECT-008",
+    "RE2-COLLECT-011"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -31,6 +32,11 @@
       "bank": 1,
       "bit": 6,
       "expected": 0
+    },
+    {
+      "bank": 0,
+      "bit": 25,
+      "expected": 1
     }
   ],
   "rooms": [
@@ -4270,6 +4276,7 @@
       "room": 2,
       "id": "01-02",
       "scenario_absent_item_ids": [
+        116,
         249
       ]
     },

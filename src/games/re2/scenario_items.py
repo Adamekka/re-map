@@ -1,4 +1,4 @@
-"""Fixed-scenario exclusion proofs, separate from presence. RE2-COLLECT-007/008."""
+"""Fixed-context exclusion proofs, separate from presence. RE2-COLLECT-007/008/011."""
 
 from __future__ import annotations
 
@@ -9,36 +9,51 @@ from games.re2.event_presence import INITIALIZER_FALLTHROUGH
 
 def scenario_flags(profile: dict) -> list[dict[str, int]]:
     layout = profile["runtime_layout"]
-    mask, expected = layout["scenario_mask"], layout["scenario_value"]
-    banks = [
-        row
-        for row in profile["flag_banks"]
-        if int(row["address_ps1"], 0) == int(layout["status_flags_address_ps1"], 0)
-        and type(row["width"]) is int
-        and row["width"] == 4
-    ]
-    if (
-        type(mask) is not int
-        or not 0 < mask <= 0xFFFFFFFF
-        or type(expected) is not int
-        or not 0 <= expected <= 0xFFFFFFFF
-        or expected & ~mask
-        or len(banks) != 1
-        or type(banks[0]["bank"]) is not int
-        or not 0 <= banks[0]["bank"] <= 255
+    flags = []
+    # Generation and loading must bind exclusion proofs to the same native
+    # context that polling requires, including the initialized system mode.
+    for address, mask, expected in (
+        (
+            layout["status_flags_address_ps1"],
+            layout["scenario_mask"],
+            layout["scenario_value"],
+        ),
+        (
+            layout["system_flags_address_ps1"],
+            layout.get("system_mode_mask"),
+            layout.get("system_mode_value"),
+        ),
     ):
-        raise ValueError(
-            "RE2 scenario requires a fixed mask and one matching flag bank"
+        banks = [
+            row
+            for row in profile["flag_banks"]
+            if int(row["address_ps1"], 0) == int(address, 0)
+            and type(row["width"]) is int
+            and row["width"] == 4
+        ]
+        if (
+            type(mask) is not int
+            or not 0 < mask <= 0xFFFFFFFF
+            or type(expected) is not int
+            or not 0 <= expected <= 0xFFFFFFFF
+            or expected & ~mask
+            or len(banks) != 1
+            or type(banks[0]["bank"]) is not int
+            or not 0 <= banks[0]["bank"] <= 255
+        ):
+            raise ValueError(
+                "RE2 scenario and mode require fixed masks and matching flag banks"
+            )
+        flags.extend(
+            {
+                "bank": banks[0]["bank"],
+                "bit": bit,
+                "expected": int(bool(expected & (0x80000000 >> bit))),
+            }
+            for bit in range(32)
+            if mask & (0x80000000 >> bit)
         )
-    return [
-        {
-            "bank": banks[0]["bank"],
-            "bit": bit,
-            "expected": int(bool(expected & (0x80000000 >> bit))),
-        }
-        for bit in range(32)
-        if mask & (0x80000000 >> bit)
-    ]
+    return flags
 
 
 def scenario_absent_items(
