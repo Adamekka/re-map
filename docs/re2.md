@@ -46,6 +46,9 @@ The [auxiliary write audit](research/re2.md#auxiliary-native-write-audit-2026-10
 
 [RE2-COLLECT-013](research/re2.md#shared-flag-write-guard-and-native-pickup-2026-10-23) permits audited startup flag writes that cannot change the configured presence inputs, including through bank aliases. Another native pickup now remains Uncollected after departure and earlier restores, then becomes Taken after collection. Repeat collection, successful reentry and six exact restores verify that case. Five conditional proofs are generated across four sources; their broader lifecycle coverage remains unverified. Other unresolved items still prevent full clearance in the tested source, and runtime-source coverage stays at thirty.
 
+
+[RE2-COLLECT-014](research/re2.md#re2-collect-014-fixed-scenario-selects-conflicting-pickup-identities) uses the enforced scenario to select a uniquely possible item variant from conflicting source definitions. Selection remains separate from presence and acquisition. One native pickup now clears its previously unresolved source, retains clearance through ordinary departure/reentry and reverses through six exact savestate restores. Three variants are selected offline; the other two have no new native lifecycle validation, and one still has no presence proof. Existing scenario exclusions and floor plans stay unchanged. The parked-item completion gap remains unresolved; runtime source coverage stays at thirty.
+
 The catalog and floor plans contain numeric metadata and contours, not original game pixels or executable bytes. To regenerate them from the pinned owned disc, install `unicorn` in a development environment and run:
 
 ```sh

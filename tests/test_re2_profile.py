@@ -608,3 +608,88 @@ def test_scenario_exclusion_metadata_is_required_and_bound_to_configuration(
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="RE2.*scenario|RE2 scenario"):
         Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "null",
+        "row-type",
+        "extra-field",
+        "boolean-id",
+        "unknown-id",
+        "empty",
+        "boolean-offset",
+        "unknown-offset",
+        "other-id",
+        "duplicate-offset",
+        "duplicate-id",
+        "mixed-types",
+        "unambiguous",
+        "incomplete",
+    ],
+)
+def test_scenario_item_variants_are_required_and_bound_to_catalog(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(row for row in document["rooms"] if row["id"] == "00-15")
+    rules = room["scenario_item_variants"]
+    assert rules == [{"global_id": 103, "offsets": [5332]}]
+    if case == "missing":
+        del room["scenario_item_variants"]
+    elif case == "null":
+        room["scenario_item_variants"] = None
+    elif case == "row-type":
+        rules[0] = []
+    elif case == "extra-field":
+        rules[0]["type"] = 7
+    elif case == "boolean-id":
+        rules[0]["global_id"] = True
+    elif case == "unknown-id":
+        rules[0]["global_id"] = 255
+    elif case == "empty":
+        rules[0]["offsets"] = []
+    elif case == "boolean-offset":
+        rules[0]["offsets"] = [True]
+    elif case == "unknown-offset":
+        rules[0]["offsets"] = [5333]
+    elif case == "other-id":
+        rules[0]["offsets"] = [5250]
+    elif case == "duplicate-offset":
+        rules[0]["offsets"] = [5332, 5332]
+    elif case == "duplicate-id":
+        rules.append(dict(rules[0]))
+    elif case == "mixed-types":
+        rules[0]["offsets"] = [5332, 5396]
+    elif case == "unambiguous":
+        rules[0] = {"global_id": 40, "offsets": [5250]}
+    elif case == "incomplete":
+        room["candidate_list_complete"] = False
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    expected = {
+        "missing": "expected a list",
+        "null": "expected a list",
+        "row-type": "expected global_id and nonempty integer offsets",
+        "extra-field": "expected global_id and nonempty integer offsets",
+        "boolean-id": "expected global_id and nonempty integer offsets",
+        "unknown-id": "identity must have conflicting catalog types",
+        "empty": "expected global_id and nonempty integer offsets",
+        "boolean-offset": "expected global_id and nonempty integer offsets",
+        "unknown-offset": "offsets must belong to the acquisition ID",
+        "other-id": "offsets must belong to the acquisition ID",
+        "duplicate-offset": "offsets must be unique and sorted",
+        "duplicate-id": "duplicate acquisition ID",
+        "mixed-types": "selected creators must have one type",
+        "unambiguous": "identity must have conflicting catalog types",
+        "incomplete": "source list is incomplete",
+    }
+    with pytest.raises(ValueError) as error:
+        Re2Profile.load(path)
+    assert str(error.value) == f"RE2 scenario item variants in 00-15: {expected[case]}"

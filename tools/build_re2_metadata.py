@@ -25,8 +25,12 @@ from map_geometry import trace_floor_cells
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapProjection
-from games.re2.room_data import bind_event_awards, decode_room
-from games.re2.scenario_items import scenario_absent_items, scenario_flags
+from games.re2.room_data import bind_event_awards, collection_presence, decode_room
+from games.re2.scenario_items import (
+    scenario_flags,
+    scenario_item_candidates,
+    scenario_item_proofs,
+)
 
 AREA_NAMES = (
     "City streets west",
@@ -147,9 +151,22 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     )
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
-        room["scenario_absent_item_ids"] = scenario_absent_items(
-            sources[room["id"]], room, fixed_flags, profile["flag_banks"]
+        room["scenario_absent_item_ids"], room["scenario_item_variants"] = (
+            scenario_item_proofs(
+                sources[room["id"]], room, fixed_flags, profile["flag_banks"]
+            )
         )
+        if room["scenario_item_variants"]:
+            room["collection_item_ids"], room["conditional_item_presence"] = (
+                collection_presence(
+                    sources[room["id"]],
+                    room,
+                    condition_flags,
+                    frozenset(
+                        item["offset"] for item in scenario_item_candidates(room)
+                    ),
+                )
+            )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -419,6 +436,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-011",
                 "RE2-COLLECT-012",
                 "RE2-COLLECT-013",
+                "RE2-COLLECT-014",
             ],
             "fixed_scenario_flags": fixed_flags,
             "presence_counter_writes": profile["presence_counter_writes"],

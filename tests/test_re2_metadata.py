@@ -1198,7 +1198,7 @@ def scenario_banks():
 def test_scenario_exclusion_proves_every_creator_impossible(
     case, excluded, scenario_banks
 ):
-    from games.re2.scenario_items import scenario_absent_items
+    from games.re2.scenario_items import scenario_item_proofs
 
     pickup = item_command(20, 15, 9)
     checks = bytes([0x21, 1, 1, 0 if case == "fixed-true" else 1])
@@ -1255,7 +1255,7 @@ def test_scenario_exclusion_proves_every_creator_impossible(
         # Unknown predicates explore true paths too. Exceeding the stack bound
         # in another procedure withholds the entire source's negative proof.
         nested = bytes([1, 0])
-        for _ in range(5):
+        for _ in range(9):
             nested = (
                 bytes([6, 0, len(nested) + 6, 0, 0x21, 4, 7, 1])
                 + nested
@@ -1275,9 +1275,9 @@ def test_scenario_exclusion_proves_every_creator_impossible(
     )
     if case == "incomplete":
         room["candidate_list_complete"] = False
-    assert scenario_absent_items(
+    assert scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
-    ) == ([9] if excluded else [])
+    )[0] == ([9] if excluded else [])
 
 
 @pytest.mark.parametrize("mode", [0, 1])
@@ -1285,7 +1285,7 @@ def test_scenario_exclusion_proves_every_creator_impossible(
 def test_mode_exclusion_withholds_proof_for_direct_and_aliased_writers(
     mode, writer, scenario_banks
 ):
-    from games.re2.scenario_items import scenario_absent_items
+    from games.re2.scenario_items import scenario_item_proofs
 
     pickup = item_command(20, 15, 9)
     startup = bytes([6, 0, 28, 0, 0x21, 0, 25, 0]) + pickup + bytes([8, 0, 1, 0])
@@ -1314,14 +1314,14 @@ def test_mode_exclusion_withholds_proof_for_direct_and_aliased_writers(
     # The native bank table can alias the system word. A different bank number
     # must not hide a writer to the pinned mode bit.
     banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7CE4", "width": 4}]
-    assert scenario_absent_items(
+    assert scenario_item_proofs(
         data, room, [{"bank": 0, "bit": 25, "expected": mode}], banks
-    ) == ([9] if mode and writer in ("none", "unrelated") else [])
+    )[0] == ([9] if mode and writer in ("none", "unrelated") else [])
 
 
 @pytest.mark.parametrize("fixed,excluded", [(0, True), (1, False)])
 def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_banks):
-    from games.re2.scenario_items import scenario_absent_items
+    from games.re2.scenario_items import scenario_item_proofs
 
     # An opaque nested condition takes either path. Its Else must pop only
     # that frame, leaving the outer fixed guard intact until the outer Else.
@@ -1342,9 +1342,9 @@ def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_
         presence_counters=PRESENCE_COUNTERS,
         presence_writes=PRESENCE_WRITES,
     )
-    assert scenario_absent_items(
+    assert scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": fixed}], scenario_banks
-    ) == ([9] if excluded else [])
+    )[0] == ([9] if excluded else [])
 
 
 @pytest.mark.parametrize(
@@ -1387,7 +1387,7 @@ def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_
 def test_scripted_scenario_exclusion_audits_mutations_and_all_creators(
     scenario_banks, case, excluded
 ):
-    from games.re2.scenario_items import scenario_absent_items
+    from games.re2.scenario_items import scenario_item_proofs
 
     pickup = item_command(20, 15, 9)
     guarded = bytes([6, 0, 28, 0, 0x21, 1, 1, 1]) + pickup + bytes([8, 0, 1, 0])
@@ -1510,7 +1510,7 @@ def test_scripted_scenario_exclusion_audits_mutations_and_all_creators(
         presence_counters=PRESENCE_COUNTERS,
         presence_writes=PRESENCE_WRITES,
     )
-    assert scenario_absent_items(data, room, fixed, scenario_banks) == (
+    assert scenario_item_proofs(data, room, fixed, scenario_banks)[0] == (
         [9] if excluded else []
     )
 
@@ -1530,3 +1530,147 @@ def test_scenario_exclusions_require_independent_creator_proofs():
     # RE2-COLLECT-011 adds only a pinned mode predicate. It does not turn
     # opaque activation paths in other sources into absence proofs.
     assert 159 not in rooms["01-08"]["scenario_absent_item_ids"]
+
+
+@pytest.mark.parametrize("fixed", [0, 1])
+@pytest.mark.parametrize(
+    "case",
+    [
+        "valid",
+        "unknown-condition",
+        "other-creator",
+        "reset",
+        "writer",
+        "alias",
+        "unsupported",
+        "incomplete",
+    ],
+)
+def test_scenario_variant_proof_requires_every_possible_creator(
+    fixed, case, scenario_banks
+):
+    """RE2-COLLECT-014: a sufficient presence path cannot prove unique identity."""
+    from games.re2.room_data import collection_presence
+    from games.re2.scenario_items import scenario_item_candidates, scenario_item_proofs
+
+    first = item_command(20, 15, 9)
+    second = item_command(21, 30, 9)
+    branch = (
+        bytes(
+            [
+                6,
+                0,
+                30,
+                0,
+                0x21,
+                4 if case == "unknown-condition" else 1,
+                7 if case == "unknown-condition" else 1,
+                0,
+            ]
+        )
+        + first
+        + bytes([7, 0, 28, 0])
+        + second
+        + bytes([0, 0, 1, 0])
+    )
+    extra = bytes([1, 0])
+    if case == "other-creator":
+        extra = (second if fixed == 0 else first) + extra
+    elif case == "reset":
+        extra = bytes([0x46, 8, 2, 0]) + struct.pack("<3H", 21, 30, 9) + extra
+    elif case in ("writer", "alias"):
+        extra = bytes([0x22, 99 if case == "alias" else 1, 1, 1]) + extra
+    elif case == "unsupported":
+        extra = bytes([0x4A, 0, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (branch, extra))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    if case == "incomplete":
+        room["candidate_list_complete"] = False
+    banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7D04", "width": 4}]
+    absent, variants = scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": fixed}], banks
+    )
+    assert absent == []
+    if case != "valid":
+        assert variants == []
+        return
+    selected = next(
+        item for item in room["items"] if item["type"] == (20 if fixed == 0 else 21)
+    )
+    assert variants == [{"global_id": 9, "offsets": [selected["offset"]]}]
+    room["scenario_item_variants"] = variants
+    candidates = scenario_item_candidates(room)
+    assert candidates == [selected]
+    assert collection_presence(
+        data, room, PRESENCE_FLAGS, frozenset(item["offset"] for item in candidates)
+    ) == (
+        [],
+        [
+            {
+                "global_id": 9,
+                "presence": {
+                    "kind": "conditions",
+                    "any_of": [[{"bank": 1, "bit": 1, "expected": fixed}]],
+                },
+            }
+        ],
+    )
+
+
+@pytest.mark.parametrize("opening,closing", [(0x0F, 0x10), (0x11, 0x12)])
+@pytest.mark.parametrize("malformed", [False, True])
+@pytest.mark.parametrize("loop_gid", [9, 10])
+def test_scenario_loops_keep_every_creator_possible(
+    opening, closing, malformed, loop_gid, scenario_banks
+):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    # A valid wait may execute zero times. Treat all its creators as possible,
+    # rather than pruning an alternative using the enclosing loop predicate.
+    test = bytes([0x50, 0, 0, 0x80])
+    body = item_command(21, 30, loop_gid)
+    if opening == 0x0F:
+        loop = (
+            bytes([opening, 4, len(test) + len(body) + 2, 0])
+            + test
+            + body
+            + bytes([closing, 0])
+        )
+    else:
+        loop = bytes([opening, 0, len(body) + 6, 0]) + body + bytes([closing, 4]) + test
+    if malformed:
+        loop = (
+            loop[:2]
+            + (int.from_bytes(loop[2:4], "little") + 1).to_bytes(2, "little")
+            + loop[4:]
+        )
+    data = synthetic_room(
+        bytes([1, 0]),
+        (
+            bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+            + item_command(20, 15, 9)
+            + bytes([8, 0, 1, 0]),
+            loop + bytes([1, 0]),
+        ),
+    )
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    absent, variants = scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    )
+    assert absent == ([9] if not malformed and loop_gid != 9 else [])
+    assert variants == (
+        [
+            {
+                "global_id": 9,
+                "offsets": [
+                    next(item["offset"] for item in room["items"] if item["type"] == 21)
+                ],
+            }
+        ]
+        if not malformed and loop_gid == 9
+        else []
+    )

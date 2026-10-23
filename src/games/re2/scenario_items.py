@@ -1,4 +1,4 @@
-"""Fixed-context exclusion proofs, separate from presence. RE2-COLLECT-007/008/011."""
+"""Fixed-context identity/exclusion proofs. RE2-COLLECT-007/008/011/014."""
 
 from __future__ import annotations
 
@@ -60,13 +60,14 @@ def scenario_flags(profile: dict) -> list[dict[str, int]]:
     return flags
 
 
-def scenario_absent_items(
+def scenario_item_proofs(
     data: bytes, room: dict, flags: list[dict[str, int]], flag_banks: list[dict]
-) -> list[int]:
+) -> tuple[list[int], list[dict]]:
+    """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
     assert fixed and len(fixed) == len(flags)
     if not room["candidate_list_complete"]:
-        return []
+        return [], []
     banks = {
         row["bank"]: (int(row["address_ps1"], 0), row["width"]) for row in flag_banks
     }
@@ -102,6 +103,7 @@ def scenario_absent_items(
             0x42,
             0x43,
             0x47,
+            0x48,
             0x51,
             0x53,
             0x57,
@@ -109,9 +111,13 @@ def scenario_absent_items(
             0x59,
             0x5B,
             0x62,
+            0x66,
         )
     )
-    predicates = {0x23, 0x3E, 0x5E}
+    # RE2-COLLECT-014: the input predicate writes only the task PC. Actor
+    # attachment/forced-mode effects above write the selected actor, as do
+    # the existing actor effects; none creates a pickup or changes fixed bits.
+    predicates = {0x23, 0x3E, 0x50, 0x5E}
     status_writes = {
         0x29: (1, 0x00100100),
         0x2A: (1, 0x00100100),
@@ -120,34 +126,59 @@ def scenario_absent_items(
     }
     opaque_loops = set()
     for key, program in programs.items():
-        if not any(row["opcode"] in (0x11, 0x12) for row in program["commands"]):
+        if not any(
+            row["opcode"] in (0x0F, 0x10, 0x11, 0x12) for row in program["commands"]
+        ):
             continue
-        # Do/while actor waits need no reachability guess: every command in
+        # While/do-while actor waits need no reachability guess: every command in
         # their procedure is possible. Require paired local bounds and one
         # read-only predicate, so hidden condition bytecode cannot be a creator.
         loops = []
         for row in program["commands"]:
             if row["opcode"] in (6, 7, 8, 0x17):
-                return []
-            if row["opcode"] == 0x11:
+                return [], []
+            if row["opcode"] in (0x0F, 0x11):
                 if len(loops) >= 4:
-                    return []
+                    return [], []
                 loops.append(
-                    row["next"] + struct.unpack_from("<h", data, row["offset"] + 2)[0]
+                    (
+                        row["opcode"],
+                        row["next"]
+                        + struct.unpack_from("<h", data, row["offset"] + 2)[0],
+                    )
                 )
-            elif row["opcode"] == 0x12:
-                test = commands[key].get(row["next"])
-                if (
-                    not loops
-                    or test is None
-                    or test["opcode"] not in predicates | {0x21}
-                    or test["next"] - test["offset"] != data[row["offset"] + 1]
-                    or test["next"] != loops.pop()
-                    or test["next"] not in commands[key]
-                ):
-                    return []
+                if row["opcode"] == 0x0F:
+                    test = commands[key].get(row["next"])
+                    if (
+                        test is None
+                        or test["opcode"] not in predicates | {0x21}
+                        or test["next"] - test["offset"] != data[row["offset"] + 1]
+                    ):
+                        return [], []
+            elif row["opcode"] in (0x10, 0x12):
+                if not loops:
+                    return [], []
+                opening, limit = loops.pop()
+                if row["opcode"] == 0x10:
+                    if (
+                        opening != 0x0F
+                        or row["next"] != limit
+                        or limit not in commands[key]
+                    ):
+                        return [], []
+                else:
+                    test = commands[key].get(row["next"])
+                    if (
+                        opening != 0x11
+                        or test is None
+                        or test["opcode"] not in predicates | {0x21}
+                        or test["next"] - test["offset"] != data[row["offset"] + 1]
+                        or test["next"] != limit
+                        or limit not in commands[key]
+                    ):
+                        return [], []
         if loops:
-            return []
+            return [], []
         opaque_loops.add(key)
     reset_ids = set()
     slot_kinds = {}
@@ -167,7 +198,7 @@ def scenario_absent_items(
             if kind == "call":
                 target = f"17:{row['procedure']}"
                 if target not in programs:
-                    return []
+                    return [], []
             elif kind == "flag_write":
                 if (
                     row["bank"] not in banks
@@ -175,34 +206,34 @@ def scenario_absent_items(
                     or row["operation"] not in FLAG_WRITE_OPERATIONS
                     or (row["bank"], row["bit"]) in forbidden
                 ):
-                    return []
+                    return [], []
             elif kind == "end":
                 if row["opcode"] != 1 or data[row["offset"] + 1] != 0:
-                    return []
+                    return [], []
             elif kind == "interaction":
                 # Generic AOT creators must not hide an uncatalogued item.
                 if row["interaction"] == 2:
-                    return []
+                    return [], []
             elif kind == "item":
                 if data[row["offset"] + 2] not in (0, 2):
-                    return []
+                    return [], []
             elif kind == "reset":
                 # A reset is another possible creator even without a matching
                 # live descriptor. Its identity must never be excluded.
                 continue
-            elif row["opcode"] in (0x11, 0x12):
+            elif row["opcode"] in (0x0F, 0x10, 0x11, 0x12):
                 if key not in opaque_loops:
-                    return []
+                    return [], []
             elif row["opcode"] == 4:
                 if (
                     data[row["offset"] + 1 : row["offset"] + 3] != b"\xff\x18"
                     or f"17:{data[row['offset'] + 3]}" not in programs
                 ):
-                    return []
+                    return [], []
             elif row["opcode"] == 0x47:
                 kinds = slot_kinds.get(data[row["offset"] + 1], set())
                 if not kinds or not kinds <= {0, 1, 2, 5}:
-                    return []
+                    return [], []
                 # Item and door dispatch also set native status bits. Binding
                 # an allowed interaction kind alone does not preserve them.
                 if any(
@@ -213,7 +244,7 @@ def scenario_absent_items(
                     )
                     if interaction in kinds
                 ):
-                    return []
+                    return [], []
             elif row["opcode"] == 0x2E:
                 work, index = data[row["offset"] + 1 : row["offset"] + 3]
                 # Work_set reads a signed index without checking bounds. The
@@ -226,7 +257,7 @@ def scenario_absent_items(
                     or work == 4
                     and index >= 128
                 ):
-                    return []
+                    return [], []
             elif not (
                 kind in ("if", "flag_check", "door")
                 or row["opcode"] in predicates
@@ -234,7 +265,7 @@ def scenario_absent_items(
                 or row["opcode"] == 7
                 or row["opcode"] in fallthrough
             ):
-                return []
+                return [], []
             # These native camera/audio commands write named status bits, even
             # though they preserve ordinary item creation. Reject overlap with
             # any profile-fixed bit instead of assuming this profile's mask.
@@ -245,7 +276,7 @@ def scenario_absent_items(
                     else status_writes[row["opcode"]]
                 )
                 if bank not in banks or fixed_words.get(banks[bank][0], 0) & mask:
-                    return []
+                    return [], []
     # Also reject raw writer candidates outside decoded paths, within procedure
     # extents. Geometry and texture bytes outside scripts are not commands.
     # False positives withhold proof rather than inventing a fixed assumption.
@@ -254,7 +285,7 @@ def scenario_absent_items(
         for bank, bit in forbidden
         for program in programs.values()
     ):
-        return []
+        return [], []
 
     # Loop procedures contribute every decoded creator, independently of any
     # fixed predicate. A wait cannot hide an alternative creator from proof.
@@ -267,7 +298,7 @@ def scenario_absent_items(
     reached = {(key, position) for key in opaque_loops for position in commands[key]}
     steps = len(reached)
     if steps > 4096:
-        return []
+        return [], []
     while pending:
         key, position, conditions = pending.pop()
         state = key, position, conditions
@@ -275,7 +306,7 @@ def scenario_absent_items(
             continue
         steps += 1
         if steps > 4096 or position not in commands[key]:
-            return []
+            return [], []
         seen.add(state)
         reached.add((key, position))
         row = commands[key][position]
@@ -293,13 +324,13 @@ def scenario_absent_items(
                 steps += 1
                 position = test["next"]
                 if steps > 4096:
-                    return []
+                    return [], []
             if not tests:
                 if (
                     position not in commands[key]
                     or commands[key][position]["opcode"] not in predicates
                 ):
-                    return []
+                    return [], []
                 position = commands[key][position]["next"]
             branches = (False, True)
             if (
@@ -314,20 +345,21 @@ def scenario_absent_items(
             if False in branches:
                 pending.append((key, row["target"], conditions))
             if True in branches:
-                # Keep deeper conditional stacks outside this negative proof.
-                if len(conditions) >= 4:
-                    return []
+                # This source family has five nested actor predicates. Keep
+                # an explicit analysis bound while retaining every branch.
+                if len(conditions) >= 8:
+                    return [], []
                 pending.append((key, position, conditions + (row["target"],)))
         elif row["kind"] == "flag_check" or row["opcode"] in predicates:
             if not conditions:
-                return []
+                return [], []
             # Opaque predicates can fail after another condition succeeded.
             # Include their false continuation as well as their true one.
             pending.append((key, conditions[-1], conditions[:-1]))
             pending.append((key, row["next"], conditions))
         elif row["opcode"] in (7, 8):
             if not conditions:
-                return []
+                return [], []
             pending.append(
                 (
                     key,
@@ -348,7 +380,7 @@ def scenario_absent_items(
                     (key, row["offset"])
                 )
     assert targets.keys() == {item["global_id"] for item in room["items"]}
-    return sorted(
+    absent = sorted(
         gid
         for gid, creators in targets.items()
         if not creators & reached
@@ -356,3 +388,34 @@ def scenario_absent_items(
         and len({item["type"] for item in room["items"] if item["global_id"] == gid})
         == 1
     )
+    variants = []
+    for gid, creators in sorted(targets.items()):
+        definitions = [item for item in room["items"] if item["global_id"] == gid]
+        possible = [items[offset] for _, offset in creators & reached]
+        # A fixed scenario can remove a conflicting creator, but a reset can
+        # introduce that identity independently. Do not infer presence here.
+        if (
+            gid not in reset_ids
+            and len({item["type"] for item in definitions}) > 1
+            and len({item["type"] for item in possible}) == 1
+        ):
+            variants.append(
+                {
+                    "global_id": gid,
+                    "offsets": sorted(item["offset"] for item in possible),
+                }
+            )
+    return absent, variants
+
+
+def scenario_item_candidates(room: dict) -> list[dict]:
+    """Apply source-proven variant selection without discarding the raw catalog."""
+    selected = {
+        row["global_id"]: set(row["offsets"]) for row in room["scenario_item_variants"]
+    }
+    return [
+        item
+        for item in room["items"]
+        if item["global_id"] not in selected
+        or item["offset"] in selected[item["global_id"]]
+    ]

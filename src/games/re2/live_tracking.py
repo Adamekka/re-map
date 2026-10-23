@@ -14,6 +14,7 @@ from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
+from games.re2.scenario_items import scenario_item_candidates
 from games.runtime_identity import MemoryResult
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
@@ -224,8 +225,18 @@ def poll_re2(
                 if source["stage"] < layout["item_bank_stage_boundary"]
                 else layout["item_bank_late"]
             )
+            candidates = scenario_item_candidates(source)
+            if visited == key and any(
+                item["offset"] in live_items and item not in candidates
+                for item in source["items"]
+            ):
+                # A live excluded creator contradicts the fixed-context proof.
+                # Retry without publishing instead of hiding the observation.
+                return PollResult(
+                    PollStatus.Retry, "Pickup disagrees with fixed scenario variant"
+                )
             grouped = {}
-            for item in source["items"]:
+            for item in candidates:
                 if item["type"] >= layout["file_type_min"]:
                     continue
                 grouped.setdefault(item["global_id"], []).append(item)

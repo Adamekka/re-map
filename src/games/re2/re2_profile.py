@@ -10,7 +10,7 @@ from pathlib import Path
 from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
-from games.re2.scenario_items import scenario_flags
+from games.re2.scenario_items import scenario_flags, scenario_item_candidates
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
@@ -270,6 +270,57 @@ class Re2Profile:
                 raise ValueError(
                     "RE2 source requires explicit collection identity proofs"
                 )
+            variants = room.get("scenario_item_variants")
+            diagnostic = f"RE2 scenario item variants in {key}"
+            if type(variants) is not list:
+                raise ValueError(f"{diagnostic}: expected a list")
+            if variants and not room["candidate_list_complete"]:
+                raise ValueError(f"{diagnostic}: source list is incomplete")
+            variant_ids = set()
+            for rule in variants:
+                if (
+                    type(rule) is not dict
+                    or rule.keys() != {"global_id", "offsets"}
+                    or type(rule["global_id"]) is not int
+                    or type(rule["offsets"]) is not list
+                    or not rule["offsets"]
+                    or any(type(offset) is not int for offset in rule["offsets"])
+                ):
+                    raise ValueError(
+                        f"{diagnostic}: expected global_id and nonempty integer offsets"
+                    )
+                if rule["global_id"] in variant_ids:
+                    raise ValueError(f"{diagnostic}: duplicate acquisition ID")
+                variant_ids.add(rule["global_id"])
+                if rule["offsets"] != sorted(set(rule["offsets"])):
+                    raise ValueError(f"{diagnostic}: offsets must be unique and sorted")
+                definitions = [
+                    item
+                    for item in room["items"]
+                    if item["global_id"] == rule["global_id"]
+                ]
+                if len({item["type"] for item in definitions}) <= 1:
+                    raise ValueError(
+                        f"{diagnostic}: identity must have conflicting catalog types"
+                    )
+                if not set(rule["offsets"]) <= {item["offset"] for item in definitions}:
+                    raise ValueError(
+                        f"{diagnostic}: offsets must belong to the acquisition ID"
+                    )
+                if (
+                    len(
+                        {
+                            item["type"]
+                            for item in definitions
+                            if item["offset"] in rule["offsets"]
+                        }
+                    )
+                    != 1
+                ):
+                    raise ValueError(
+                        f"{diagnostic}: selected creators must have one type"
+                    )
+            candidates = scenario_item_candidates(room)
             required = room["collection_item_ids"]
             for item in room["items"]:
                 if (
@@ -292,7 +343,7 @@ class Re2Profile:
                     len(
                         {
                             item["type"]
-                            for item in room["items"]
+                            for item in candidates
                             if item["global_id"] == gid
                         }
                     )
@@ -312,7 +363,7 @@ class Re2Profile:
                     or len(
                         {
                             item["type"]
-                            for item in room["items"]
+                            for item in candidates
                             if item["global_id"] == rule["global_id"]
                         }
                     )
@@ -332,6 +383,7 @@ class Re2Profile:
                 or any(
                     type(gid) is not int
                     or gid in required
+                    or any(rule["global_id"] == gid for rule in variants)
                     or len(
                         {
                             item["type"]

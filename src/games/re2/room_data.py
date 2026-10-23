@@ -455,13 +455,54 @@ def decode_room(
         # Withhold full-list knowledge until that identity is reconstructed.
         complete = False
 
+    room = {
+        "source": source,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "size": len(data),
+        "cameras": data[1],
+        "section_offsets": list(offsets),
+        "proofs": proofs,
+        "items": list(items.values()),
+        "doors": list(doors.values()),
+        "programs": programs,
+        "candidate_list_complete": complete,
+    }
+    required, conditional = collection_presence(
+        data, room, condition_flags, frozenset(items)
+    )
+    return {
+        **room,
+        "collection_item_ids": required,
+        "conditional_item_presence": conditional,
+    }
+
+
+def collection_presence(
+    data: bytes,
+    room: dict,
+    condition_flags: frozenset[tuple[int, int]],
+    offsets: frozenset[int],
+) -> tuple[list[int], list[dict]]:
+    """Prove collection presence for an explicit set of source candidates."""
+    items = {item["offset"]: item for item in room["items"]}
+    eligible = {offset: item for offset, item in items.items() if offset in offsets}
+    programs = room["programs"]
+    doors = {door["offset"]: door for door in room["doors"]}
+    complete = room["candidate_list_complete"]
+    assert offsets <= items.keys(), "presence candidates must belong to the source"
+    resets = [
+        command
+        for program in programs.values()
+        for command in program["commands"]
+        if command["kind"] == "reset"
+    ]
     ambiguous_slots = {
         slot
-        for slot in {item["slot"] for item in items.values()}
+        for slot in {item["slot"] for item in eligible.values()}
         if len(
             {
                 (item["global_id"], item["type"])
-                for item in items.values()
+                for item in eligible.values()
                 if item["slot"] == slot
             }
         )
@@ -478,7 +519,7 @@ def decode_room(
     for command in resets:
         identities = {
             (item["type"], item["global_id"])
-            for item in items.values()
+            for item in eligible.values()
             if item["slot"] == command["slot"]
         }
         if not identities:
@@ -565,7 +606,10 @@ def decode_room(
                         return []
                     # RE2-COLLECT-002: conflicting slot identities need their
                     # own history proof; they cannot erase unrelated items.
-                    if item["slot"] not in ambiguous_slots:
+                    if (
+                        item["offset"] in eligible
+                        and item["slot"] not in ambiguous_slots
+                    ):
                         found = found | {(item["global_id"], item["type"])}
                     position = command["next"]
                 elif kind == "reset":
@@ -598,14 +642,16 @@ def decode_room(
         return sorted(
             gid
             for gid, item_type in required
-            if {item["type"] for item in items.values() if item["global_id"] == gid}
+            if {item["type"] for item in eligible.values() if item["global_id"] == gid}
             == {item_type}
         )
 
     required = collection_items()
     conditional = []
-    for gid in sorted({item["global_id"] for item in items.values()} - set(required)):
-        variants = [item for item in items.values() if item["global_id"] == gid]
+    for gid in sorted(
+        {item["global_id"] for item in eligible.values()} - set(required)
+    ):
+        variants = [item for item in eligible.values() if item["global_id"] == gid]
         if (
             not complete
             or len({item["type"] for item in variants}) != 1
@@ -626,6 +672,7 @@ def decode_room(
                 for key, program in programs.items()
                 for command in program["commands"]
                 if command["kind"] == "item"
+                and command["item"] in eligible
                 and items[command["item"]]["global_id"] == gid
             },
             "startup",
@@ -634,17 +681,4 @@ def decode_room(
         if presence["kind"] != "unresolved":
             conditional.append({"global_id": gid, "presence": presence})
 
-    return {
-        "source": source,
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "size": len(data),
-        "cameras": data[1],
-        "section_offsets": list(offsets),
-        "proofs": proofs,
-        "items": list(items.values()),
-        "doors": list(doors.values()),
-        "programs": programs,
-        "candidate_list_complete": complete,
-        "collection_item_ids": required,
-        "conditional_item_presence": conditional,
-    }
+    return required, conditional

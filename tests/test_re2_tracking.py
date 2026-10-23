@@ -48,6 +48,9 @@ def test_counter_initialized_items_rewind_after_departure_without_cached_presenc
     # Isolate counter presence here; RE2-COLLECT-013 separately tests the
     # conditional proofs through unrelated startup flag writes.
     source["conditional_item_presence"] = []
+    # Keep this earlier regression's conflicting identity unresolved; the
+    # scenario-selected variant has its own fresh-state/clearance tests below.
+    source["scenario_item_variants"] = []
     if not keep_unresolved_checks:
         source["items"] = [
             item for item in source["items"] if item["global_id"] in (101, 209)
@@ -1447,3 +1450,67 @@ def test_scenario_exclusions_require_the_same_coherent_scenario_snapshot(snapsho
     assert tracker == before
     assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
     assert tracker == before
+
+
+def test_scenario_selected_identity_rebuilds_after_departure(snapshot):
+    """RE2-COLLECT-014: no remembered descriptor is needed to select identity."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["00-15"]
+    assert source["scenario_item_variants"] == [{"global_id": 103, "offsets": [5332]}]
+    # Set other independent acquisition bits explicitly so this identity is
+    # the only remaining check. The fixture is a synthetic read, not gameplay.
+    tracker = Tracker()
+    # This seeds prior exploration only. The fixture's live room stays 00-01,
+    # so every poll below rebuilds the selected identity while departed.
+    tracker.mark_current(RoomId(0, 0x15))
+    for acquired in (False, True, False, True):
+        words = {}
+        for gid in (101, 40, 104, 209, *([103] if acquired else [])):
+            address = 0x800CC9E8 + gid // 32 * 4
+            words[address] = words.get(address, 0) | (0x80000000 >> (gid % 32))
+        for address, value in words.items():
+            put(address, value, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        assert tracker.current == RoomId(0, 1)
+        record = tracker.rooms["00-15"]
+        item = next(
+            item for item in record.items if item.label == profile.names["items"]["7"]
+        )
+        assert item.state == ("taken" if acquired else "uncollected")
+        assert item.quantity == 5
+        assert not any(item.label == "Collectible" for item in record.items)
+        assert record.completion is (
+            RoomCompletion.Cleared if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 0x15))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["00-15"].items == record.items
+        assert fresh.rooms["00-15"].completion is record.completion
+
+
+@pytest.mark.parametrize("snapshot", ["00-15"], indirect=True)
+@pytest.mark.parametrize("excluded", [False, True])
+def test_live_creator_must_agree_with_scenario_selected_variant(snapshot, excluded):
+    profile, _, put, read = snapshot
+    selected = next(
+        item
+        for item in profile.rooms["00-15"]["items"]
+        if item["offset"] == (5396 if excluded else 5332)
+    )
+    put(0x800C66C8 + 13 * 4, 0x80100000 + selected["offset"] + 2, 4)
+    tracker = Tracker()
+    before = copy.deepcopy(tracker)
+    result = poll_re2(profile, tracker, read)
+    if excluded:
+        assert result.status is PollStatus.Retry
+        assert result.text == "Pickup disagrees with fixed scenario variant"
+        assert tracker == before
+    else:
+        assert result.status is PollStatus.Display
+        item = next(
+            item
+            for item in tracker.rooms["00-15"].items
+            if item.label == profile.names["items"]["7"]
+        )
+        assert item.state == "available" and item.quantity == 5
