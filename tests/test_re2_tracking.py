@@ -37,6 +37,54 @@ HEADING_MOVEMENTS = json.loads(
 )["measurements"]
 
 
+@pytest.mark.parametrize("keep_unresolved_checks", [False, True])
+def test_counter_initialized_items_rewind_after_departure_without_cached_presence(
+    snapshot, keep_unresolved_checks
+):
+    """RE2-COLLECT-012: known items survive inactive pointers and fresh starts."""
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-15"])
+    assert source["collection_item_ids"] == [101, 209]
+    if not keep_unresolved_checks:
+        source["items"] = [
+            item for item in source["items"] if item["global_id"] in (101, 209)
+        ]
+    profile = replace(profile, rooms=profile.rooms | {"00-15": source})
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 0x15))
+    for acquired, counter in [(False, 0), (True, 51), (False, 0), (True, 51)]:
+        put(0x800CC9F4, 0x04000000 if acquired else 0, 4)
+        put(0x800CCA00, 0x00004000 if acquired else 0, 4)
+        put(0x800CC926, counter, 2)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-15"]
+        known = [
+            item
+            for item in record.items
+            if item.label
+            in (profile.names["items"]["20"], profile.names["items"]["80"])
+        ]
+        assert len(known) == 2
+        assert all(
+            item.state == ("taken" if acquired else "uncollected") for item in known
+        )
+        assert record.completion is (
+            RoomCompletion.Incomplete
+            if not acquired
+            else RoomCompletion.Unknown
+            if keep_unresolved_checks
+            else RoomCompletion.Cleared
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 0x15))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["00-15"].items == record.items
+        assert fresh.rooms["00-15"].completion is record.completion
+        assert set(tracker.rooms) == {"00-01", "00-15"}
+
+
 @pytest.mark.parametrize("movement", HEADING_MOVEMENTS, ids=lambda row: row["after"])
 def test_heading_agrees_with_native_forward_displacement(snapshot, movement):
     profile, _, put, read = snapshot

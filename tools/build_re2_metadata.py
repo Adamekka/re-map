@@ -23,6 +23,7 @@ from extract_psx_file import _find
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
 
+from games.re2.event_presence import presence_counter_indices
 from games.re2.map_layout import Re2MapProjection
 from games.re2.room_data import bind_event_awards, decode_room
 from games.re2.scenario_items import scenario_absent_items, scenario_flags
@@ -57,6 +58,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     condition_flags = frozenset(
         (row["bank"], row["bit"]) for row in profile["presence_condition_flags"]
     )
+    counters = presence_counter_indices(profile)
     from unicorn import UC_ARCH_MIPS, UC_MODE_LITTLE_ENDIAN, UC_MODE_MIPS32, Uc
     from unicorn.mips_const import (
         UC_MIPS_REG_A0,
@@ -109,7 +111,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 raise ValueError(f"unexpected Leon room source {name}")
             data = _read_file(stream, extent, size)
             try:
-                room = decode_room(data, "PL0/RDT/" + name, condition_flags)
+                room = decode_room(data, "PL0/RDT/" + name, condition_flags, counters)
             except ValueError as error:
                 raise ValueError(f"{name}: {error}") from error
             # Fill this field after the corpus check without reordering JSON keys.
@@ -404,8 +406,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-007",
                 "RE2-COLLECT-008",
                 "RE2-COLLECT-011",
+                "RE2-COLLECT-012",
             ],
             "fixed_scenario_flags": fixed_flags,
+            "presence_counter_writes": profile["presence_counter_writes"],
             "rooms": rooms,
         },
         {**header, "stage_modulus": 256, "areas": plans, "locations": locations},

@@ -22,6 +22,74 @@ INITIALIZER_FALLTHROUGH = (
 )
 
 
+def presence_counter_indices(profile: dict) -> frozenset[int]:
+    """Validate the revision's bounded counter-write proof. RE2-COLLECT-012."""
+    region = profile.get("presence_counter_writes")
+    if (
+        type(region) is not dict
+        or region.keys() != {"address_ps1", "limit_address_ps1"}
+        or any(type(value) is not str for value in region.values())
+    ):
+        raise ValueError("invalid or missing RE2 presence counter write range")
+    try:
+        base = int(region["address_ps1"], 0)
+        limit = int(region["limit_address_ps1"], 0)
+    except ValueError as error:
+        raise ValueError("invalid RE2 presence counter write addresses") from error
+    try:
+        layout = profile["runtime_layout"]
+        native_base = int(layout["script_counter_address_ps1"], 0)
+        save_base = int(layout["save_block_address_ps1"], 0)
+        save_width = layout["save_block_width"]
+        identities = [
+            int(profile[field], 0)
+            for field in ("stage_address_ps1", "room_address_ps1", "camera_address_ps1")
+        ]
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(
+            "invalid or missing RE2 counter layout or identity addresses"
+        ) from error
+    # Packet indices are relative to the native origin, not the chosen proof
+    # window. A shifted window would otherwise approve the wrong RAM writes.
+    if base != native_base:
+        raise ValueError(
+            "RE2 presence counter range must start at the native counter base"
+        )
+    # Save accepts any byte index. The bounded work region also contains
+    # room identity, so those halfwords must be excluded individually below.
+    if (
+        base % 2
+        or limit % 2
+        or not 0x80000000 <= base < limit <= 0x80200000
+        or not 2 <= limit - base <= 512
+        or type(save_width) is not int
+        or not 1 <= save_width <= 4096
+        or not save_base <= base < limit <= save_base + save_width
+        or any(
+            base < int(bank["address_ps1"], 0) + bank["width"]
+            and int(bank["address_ps1"], 0) < limit
+            for bank in profile["flag_banks"]
+        )
+    ):
+        raise ValueError("RE2 presence counter writes overlap unproved state")
+    return frozenset(
+        index
+        for index in range((limit - base) // 2)
+        if all(
+            not (base + 2 * index < address + 2 and address < base + 2 * index + 2)
+            for address in identities
+        )
+    )
+
+
+def initializer_fallthrough(command: dict) -> bool:
+    # A counter opcode alone is insufficient: decoding must bind its write to
+    # the profile's audited, flag-disjoint range before either proof accepts it.
+    return command["opcode"] in INITIALIZER_FALLTHROUGH or (
+        command["kind"] == "counter_write" and command["presence_safe"]
+    )
+
+
 def source_presence(
     data: bytes,
     programs: dict,
@@ -40,13 +108,18 @@ def source_presence(
         for key, program in programs.items()
     }
 
-    # A task queued by startup runs later. Reject cancellation/replacement
-    # anywhere in the source, including commands after the scheduling point.
+    # Later counter aliases can invalidate fresh presence predicates. Reject
+    # them anywhere in the source, as with task cancellation/replacement.
     for program in programs.values():
         for row in program["commands"]:
-            if row["opcode"] in (3, 5) or (
-                row["opcode"] == 4
-                and data[row["offset"] + 1 : row["offset"] + 3] != b"\xff\x18"
+            if (
+                row["kind"] == "counter_write"
+                and not initializer_fallthrough(row)
+                or row["opcode"] in (3, 5)
+                or (
+                    row["opcode"] == 4
+                    and data[row["offset"] + 1 : row["offset"] + 3] != b"\xff\x18"
+                )
             ):
                 return {"kind": "unresolved"}
 
@@ -86,7 +159,7 @@ def source_presence(
     def required_before(goal, root, symbolic_flags):
         active, cache = set(), {}
         steps = 0
-        fallthrough = set(INITIALIZER_FALLTHROUGH) - {0x22} | {8}
+        fallthrough = {8}
         if not symbolic_flags:
             # Audited delivery waits, camera, message, actor and audio commands
             # preserve the executing task's continuation past the command.
@@ -217,6 +290,11 @@ def source_presence(
                 or (
                     kind in ("item", "door", "interaction", "reset")
                     or opcode in fallthrough
+                    or (
+                        # Symbolic startup predicates must survive unchanged;
+                        # flag writes are allowed only by the nonsymbolic set.
+                        opcode != 0x22 and initializer_fallthrough(row)
+                    )
                 )
             ):
                 result = walk(key, row["next"], returns)

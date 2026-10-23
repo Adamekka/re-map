@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import struct
 
-from games.re2.event_presence import INITIALIZER_FALLTHROUGH, source_presence
+from games.re2.event_presence import initializer_fallthrough, source_presence
 
 
 def bind_event_awards(
@@ -233,8 +233,14 @@ OPCODE_WIDTHS = (
 
 
 def decode_room(
-    data: bytes, source: str, condition_flags: frozenset[tuple[int, int]]
+    data: bytes,
+    source: str,
+    condition_flags: frozenset[tuple[int, int]],
+    presence_counters: frozenset[int],
 ) -> dict:
+    assert isinstance(presence_counters, frozenset) and all(
+        type(index) is int and 0 <= index <= 255 for index in presence_counters
+    ), "counter proof indices must be explicit unsigned bytes"
     if len(data) < 100 or data[1] == 0:
         raise ValueError("RE2 room needs a complete header and cameras")
     offsets = struct.unpack_from("<23I", data, 8)
@@ -321,6 +327,12 @@ def decode_room(
                         bank=packet[1],
                         bit=packet[2],
                         operation=packet[3],
+                    )
+                elif opcode == 0x24:
+                    command.update(
+                        kind="counter_write",
+                        counter=packet[1],
+                        presence_safe=packet[1] in presence_counters,
                     )
                 elif opcode in (0x4E, 0x69):
                     operand = 14 if opcode == 0x4E else 22
@@ -470,7 +482,12 @@ def decode_room(
     def collection_items() -> list[int]:
         # RE2-COLLECT-001: prove presence independently of activation. A catalog
         # entry alone may belong to a conditional or never-started procedure.
-        if not complete:
+        # Later unsafe counter writes can alias item flags or room identity.
+        if not complete or any(
+            row["kind"] == "counter_write" and not initializer_fallthrough(row)
+            for program in programs.values()
+            for row in program["commands"]
+        ):
             return []
         commands = {
             key: {command["offset"]: command for command in program["commands"]}
@@ -553,7 +570,7 @@ def decode_room(
                     # These creators' slots were excluded above, including
                     # creators reached only by an asynchronous event.
                     position = command["next"]
-                elif opcode in INITIALIZER_FALLTHROUGH:
+                elif initializer_fallthrough(command):
                     # Audited fall-through commands: padding, flag writes,
                     # scalar/actor setup and camera replacement do not declare
                     # collectibles or yield the executing startup task.

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
+from games.re2.event_presence import presence_counter_indices
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.scenario_items import scenario_flags
 from games.runtime_identity import MemoryResult, RuntimeSignature
@@ -63,6 +64,7 @@ class Re2Profile:
         ):
             raise ValueError("invalid RE2 runtime identity or room addresses")
         layout = raw["runtime_layout"]
+        presence_counter_indices(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -117,6 +119,8 @@ class Re2Profile:
             or document["executable_identity"] != raw["executable_identity"]
         ):
             raise ValueError("RE2 room metadata disagrees with the pinned revision")
+        if document.get("presence_counter_writes") != raw["presence_counter_writes"]:
+            raise ValueError("RE2 counter proof disagrees with its revision layout")
         fixed = document.get("fixed_scenario_flags")
         if (
             type(fixed) is not list

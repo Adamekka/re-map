@@ -14,7 +14,8 @@
     "RE2-COLLECT-006",
     "RE2-COLLECT-007",
     "RE2-COLLECT-008",
-    "RE2-COLLECT-011"
+    "RE2-COLLECT-011",
+    "RE2-COLLECT-012"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -39,6 +40,10 @@
       "expected": 1
     }
   ],
+  "presence_counter_writes": {
+    "address_ps1": "0x800CC918",
+    "limit_address_ps1": "0x800CC960"
+  },
   "rooms": [
     {
       "source": "PL0/RDT/ROOM1000.RDT",
@@ -2845,7 +2850,10 @@
         }
       ],
       "candidate_list_complete": true,
-      "collection_item_ids": [],
+      "collection_item_ids": [
+        101,
+        209
+      ],
       "conditional_item_presence": [],
       "event_awards": [],
       "stage": 0,

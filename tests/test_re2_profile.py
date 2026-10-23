@@ -32,6 +32,70 @@ def test_re2_profile_pins_leon_disc_and_halfword_addresses():
     ).room == RoomId(1, 0x1A)
 
 
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "wrong-type",
+        "extra-key",
+        "bad-address",
+        "unaligned",
+        "empty",
+        "outside-save",
+        "too-wide",
+        "flag-alias",
+        "shifted-base",
+        "native-base-missing",
+        "native-base-invalid",
+        "metadata-missing",
+        "metadata-mismatch",
+    ],
+)
+def test_counter_presence_requires_a_valid_bound_revision_layout(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    region = raw["presence_counter_writes"]
+    if case == "missing":
+        del raw["presence_counter_writes"]
+    elif case == "wrong-type":
+        region["address_ps1"] = 0x800CC918
+    elif case == "extra-key":
+        region["fallback"] = True
+    elif case == "bad-address":
+        region["address_ps1"] = "invalid"
+    elif case == "unaligned":
+        region["address_ps1"] = "0x800CC919"
+    elif case == "empty":
+        region["limit_address_ps1"] = region["address_ps1"]
+    elif case == "outside-save":
+        region["address_ps1"] = "0x800C7D5C"
+    elif case == "too-wide":
+        region["limit_address_ps1"] = "0x800CCB1A"
+    elif case == "flag-alias":
+        region["limit_address_ps1"] = "0x800CC962"
+    elif case == "shifted-base":
+        region["address_ps1"] = "0x800CC920"
+        # Match the metadata too so only the native-origin guard rejects it.
+        document["presence_counter_writes"] = dict(region)
+    elif case == "native-base-missing":
+        del raw["runtime_layout"]["script_counter_address_ps1"]
+    elif case == "native-base-invalid":
+        raw["runtime_layout"]["script_counter_address_ps1"] = None
+    elif case == "metadata-missing":
+        del document["presence_counter_writes"]
+    else:
+        document["presence_counter_writes"]["limit_address_ps1"] = "0x800CC928"
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2.*counter"):
+        Re2Profile.load(path)
+
+
 @pytest.mark.parametrize("data", [b"", b"\x00", b"\x00\x01", b"\xff\xff"])
 def test_re2_room_rejects_short_or_invalid_halfwords(data):
     profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
