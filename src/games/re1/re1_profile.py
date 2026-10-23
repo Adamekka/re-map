@@ -99,6 +99,9 @@ class Re1Profile:
     runtime_signature: RuntimeSignature | None = None
     pilot_items: tuple[PilotItem, ...] = ()
     runtime_room_layout: RuntimeRoomLayout | None = None
+    # Placing an inventory item can create a retrievable pickup in another
+    # room. Its source-bound identity is not a reward to collect there.
+    player_placed_items: frozenset[tuple[int, int]] = frozenset()
     door_state_layout: DoorStateLayout | None = None
     room_sources: tuple[RoomScriptSource, ...] = ()
     room_programs: dict[str, RoomProgram] = field(default_factory=dict)
@@ -220,7 +223,22 @@ class Re1Profile:
 
         runtime_raw = raw.get("runtime_room_layout")
         runtime_layout = None
+        player_placed_items = frozenset()
         if runtime_raw is not None:
+            placed_raw = raw["player_placed_items"]
+            if not isinstance(placed_raw, list) or any(
+                not isinstance(row, list)
+                or len(row) != 2
+                or type(row[0]) is not int
+                or not 1 <= row[0] <= 0x53
+                or type(row[1]) is not int
+                or not 0 <= row[1] <= 255
+                for row in placed_raw
+            ):
+                raise ValueError("player-placed items require item type/GlobalId pairs")
+            player_placed_items = frozenset(tuple(row) for row in placed_raw)
+            if len(player_placed_items) != len(placed_raw):
+                raise ValueError("duplicate player-placed item identity")
             runtime_layout = RuntimeRoomLayout(
                 acquisition=AcquisitionLayout.load(
                     raw["acquisition_rules"],
@@ -570,6 +588,7 @@ class Re1Profile:
             runtime_signature=signature,
             pilot_items=tuple(pilots),
             runtime_room_layout=runtime_layout,
+            player_placed_items=player_placed_items,
             door_state_layout=door_layout,
             room_sources=tuple(room_sources),
             room_programs=room_programs,

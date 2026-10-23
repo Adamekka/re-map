@@ -475,7 +475,12 @@ def poll_once(
     profile.room_observations[rid] = current_cached
     for room, result in refreshed.items():
         normal_items = tuple(
-            item for item in result.items if item.state != RuntimeItemState.Unavailable
+            item
+            for item in result.items
+            if item.state != RuntimeItemState.Unavailable
+            # RE1-CLEAR-006: a retrievable replacement belongs to the player,
+            # so leaving it in a puzzle must not add a room requirement.
+            and (item.item_type, item.global_id) not in profile.player_placed_items
         )
         tracker.update_room_items(
             room,

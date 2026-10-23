@@ -457,6 +457,47 @@ History:
 
 - 2026-10-08; Codex root, GPT-6.1 Sol; observed the native prompt and pickup, compared the acquisition bank, replayed the publications, rejected the conflicting byte lead and checked retention through three room exits. Normal-save persistence and earlier-load reversal were not promoted.
 
+## RE1-CLEAR-006: player-placed replacements are not room rewards
+
+Status: Candidate
+Scope: Resident Evil Director's Cut, USA, SLUS-00551, Jill; disc revision not printed. Executable `SLUS_005.51`, SHA256 `0f589fb426fb4a3e067b3251e8ccd5e34df79322fdcc37ebff75aa670ac7fae6`. Profile's tested emulator is DuckStation `0.1-11894-gc66b2694d`; this contribution uses offline extracts, with no emulator boot or newly tested emulator version.
+Authored: 2026-10-20; Codex root, `gpt-6.1-sol`.
+Human contribution: the user reported that the placed Wood Emblem incorrectly kept the Bar incomplete and confirmed the same desired behavior for the Broken Shotgun in the Living Room and Gold Emblem in the Dining Room.
+
+The shared completion projection now excludes exact item-type/GlobalId identities declared as player-placed replacements in the revision profile. It does not rewrite pickup flags, native availability, cached observations or source coverage. Original reward identities still count in their own rooms. This implements the user's [completion policy](../../room-completion.md), rather than claiming that a replacement pickup is unavailable or acquired.
+
+Source inspection of the owned disc and its committed numeric programs establishes these distinct identities:
+
+| Source | Descriptor and role | Acquisition flag |
+| --- | --- | --- |
+| `PSX/STAGE1/ROOM10F0.RDT` and `ROOM10F1.RDT`, file offsets `0x309FA` and `0x30A16` | Wood Emblem `0x1F`, GlobalId 20, slot 3; retrievable replacement | PS1 VA `0x800C86DD`, u8, mask `0x08` |
+| Same Bar sources, file offset `0x30A30` | Gold Emblem `0x20`, GlobalId 21, slot 4; room reward | PS1 VA `0x800C86DD`, u8, mask `0x04` |
+| `PSX/STAGE1/ROOM1160.RDT`, file offset `0x1FE62` | Broken Shotgun `0x1C`, GlobalId 1, slot 2; retrievable replacement | PS1 VA `0x800C86DF`, u8, mask `0x40` |
+| Same Living Room source, file offset `0x1FE44` | Shotgun `0x03`, GlobalId 0, slot 1; room reward | PS1 VA `0x800C86DF`, u8, mask `0x80` |
+| `PSX/STAGE1/ROOM1050.RDT`, file offsets `0x28118`/`0x28134`; `ROOM1051.RDT`, `0x28104`/`0x28120` | Gold Emblem `0x20`, GlobalId 43; retrievable replacement in Dining Room | PS1 VA `0x800C86E2`, u8, mask `0x10` |
+
+All listed acquisition flags use set-to-remaining polarity and the RE1-FLAG-001 word mapping. Each observed value is one byte, with no byte-order conversion. Stage 6 Bar, Living Room and Dining Room programs reuse the same replacement identities. Wood Emblem GlobalId 42 in the Dining Room and Broken Shotgun GlobalId 48 in its source-established alternate original pickup remain required, as does Gold Emblem GlobalId 21 in the Bar. Zero geometry alone does not classify a replacement, since dormant rewards also use it.
+
+Reproduction and observations:
+
+1. Existing `logs/tracker.log` and rotations report Bar `00-0f` incomplete with Wood Emblem available, Gold Emblem taken and Music Notes taken. The Living Room `00-16` is incomplete with Shotgun taken and Broken Shotgun available. Both lists are complete. The current log's final publication on 2026-10-20 contains the same Bar defect.
+2. Extract RAM from the user's existing `SLUS-00551_1.sav`, SHA256 `faaf0f419632b6f2a235416e4f5bb62ac9bebd9f84185831d882b7f4821b8884`, and resume savestate, SHA256 `faf0c46bea9b2a3719198b090431c65d088c6b00e3aad366c47625d9d46000b8`, using `tools/extract_sav_ram.py`. These are local copies read offline; their creating emulator version is unrecorded. Raw RAM stays outside Git.
+3. For each unchanged RAM image, create fresh profile/tracker instances, mark only Bar and Living Room as previously visited, and call production `poll_once`. With replacement exclusions empty, both rooms reproduce INCOMPLETE. With the pinned profile, both become CLEARED with complete lists. Bar retains Gold Emblem and Music Notes as taken; Living Room retains Shotgun as taken. No game bytes or exploration file are written. Private replay evidence is under `re-map-placed-items-uzllwz5w/replay.json` in the host temporary directory.
+4. Run `python3 -m pytest -q tests/test_placed_items.py`. The actual pinned room programs cover original and returned Mansion, replacement set/clear states, reward acquisition reversal, reconstruction with discarded caches and unchanged visit scope. Synthetic live polls exercise the same projection with an unrelated explicitly classified identity, preserve raw acquisition observations and leave RAM unchanged. Other checks preserve original pickup requirements, reject malformed or missing policy metadata, and retain Unknown for unresolved source coverage.
+5. The user's follow-up added the Dining Room Gold Emblem. Its distinct GlobalId 43 uses the same shared policy. The regression now includes Dining Room in the same acquisition/reversal/cache-loss sequence; remaining native rewards still prevent its clearance. Replaying both unchanged RAM images again with all three rooms preserves the Dining Room's remaining Shield Key, removes its placed Gold Emblem and leaves the original Wood Emblem taken. The other two rooms remain cleared. `replay3.json` beside the earlier evidence records this comparison.
+6. The full Python suite passes 1,932 tests. Ruff lint and formatting checks pass on the three changed Python files, and `git diff --check` passes. Headless Chromium using bundled Playwright `1.62.1` displays both Bar aliases and Living Room as cleared, with no placed replacements in Remaining items. The refreshed README image comes from production publication over an unchanged save and a private copy of the user's history; the original history is untouched.
+
+Limits: the two offline saves and log records are existing gameplay evidence, not controlled before/after performances of either exchange. Synthetic flag changes do not establish native placement behavior, Chris support or normal memory-card persistence. No new natural exchange, room reentry or in-game save/load was performed. Source analysis and review cannot promote this finding to runtime-confirmed. No test emulator was launched and no patches were enabled.
+
+History:
+- 2026-10-20; Codex root, `gpt-6.1-sol`; writing, owned-disc inspection, baseline/fixed replay of two unchanged local savestates, implementation and synthetic regressions. Human policy confirmation is attributed separately above.
+- 2026-10-20; Codex root, `gpt-6.1-sol`; final self review of the three revision identities, the shared current/departed completion projection, preserved acquisition observations, coverage, reversal and original pickup requirements. Final full-suite, Ruff and browser results are recorded above.
+- 2026-10-20; requested `Claude Opus 5.5 (High)` through agy for a supplied-snapshot review of completion policy, profile validation and regressions. The CLI rejected that model selection; no model ran and no review or endorsement is accepted. It was not retried or substituted.
+- 2026-10-20; `Gemini 3.8 Flash (High)` through agy, verified by its init records. Initial conversation `dbf27bff-ffbb-4713-af49-16505c74e64a` was stopped without a response when the user extended scope to the Dining Room. Fresh conversation `52039011-aac9-4d72-9b0c-a5b900c83ecc` received the full updated diff, tests and completion contract. It stalled with only user-input DONE, no model step or response, and no further CLI-log progress after generation requests for almost four minutes. Root inspected both streams, stderr and CLI diagnostics, then terminated the stalled process. Both terminal results are ERROR/interrupted; no completed perspective, finding, endorsement or runtime validation is accepted. No further retry was made. Work remains uncommitted because the required external reviews could not complete.
+
+- 2026-10-23; human user; explicitly instructed committing the pending RE1 work after the unavailable Opus review and incomplete Gemini review were explained. This authorizes this feature's commit despite those missing perspectives; neither failed review becomes an endorsement.
+- 2026-10-23; Codex root, exact verified model `gpt-6.1-sol`; rechecked the completion projection, required profile metadata, preserved raw observations, original pickup identities, coverage and cache-loss/acquisition reversal regressions. The current full suite passes 2,224 tests in 107.99 seconds. Scoped Ruff lint/format and whitespace checks pass. No implementation change or new gameplay occurs in this commit preparation; the original Candidate limits remain. Matching current-session model metadata and verification results are retained under `/tmp/re-map-re1-placed-commit-20261023/`.
+
 ## RE1-CLEAR-007: permanently disabled initializer items are not puzzle rewards
 
 Status: Candidate; pinned source inspection, reported tracker publication and offline fixture/source comparisons. No new gameplay, emulator session, ladder crossing or native save/load observation.
