@@ -23,7 +23,7 @@ from extract_psx_file import _find
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
 
-from games.re2.event_presence import presence_counter_indices
+from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapProjection
 from games.re2.room_data import bind_event_awards, decode_room
 from games.re2.scenario_items import scenario_absent_items, scenario_flags
@@ -59,6 +59,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         (row["bank"], row["bit"]) for row in profile["presence_condition_flags"]
     )
     counters = presence_counter_indices(profile)
+    writes, flag_proof = presence_flag_write_proof(profile)
     from unicorn import UC_ARCH_MIPS, UC_MODE_LITTLE_ENDIAN, UC_MODE_MIPS32, Uc
     from unicorn.mips_const import (
         UC_MIPS_REG_A0,
@@ -83,6 +84,14 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         identity = "SLUS_004.21 SHA256 " + hashlib.sha256(executable).hexdigest()
         if identity != profile["executable_identity"]:
             raise ValueError("disc executable does not match the RE2 profile")
+        load = struct.unpack_from("<I", executable, 0x18)[0]
+        table = int(flag_proof["bank_table_address_ps1"], 0)
+        for bank in flag_proof["flag_banks"]:
+            offset = 0x800 + table + bank["bank"] * 4 - load
+            if not 0x800 <= offset <= len(executable) - 4 or struct.unpack_from(
+                "<I", executable, offset
+            )[0] != int(bank["address_ps1"], 0):
+                raise ValueError("RE2 flag proof disagrees with the native bank table")
         extent, size = _find(stream, root, root_size, "COMMON/DATA/MAPS.PIX")
         pixels = _read_file(stream, extent, size)
         if len(pixels) != 20 * 32768:
@@ -111,7 +120,9 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 raise ValueError(f"unexpected Leon room source {name}")
             data = _read_file(stream, extent, size)
             try:
-                room = decode_room(data, "PL0/RDT/" + name, condition_flags, counters)
+                room = decode_room(
+                    data, "PL0/RDT/" + name, condition_flags, counters, writes
+                )
             except ValueError as error:
                 raise ValueError(f"{name}: {error}") from error
             # Fill this field after the corpus check without reordering JSON keys.
@@ -407,9 +418,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-008",
                 "RE2-COLLECT-011",
                 "RE2-COLLECT-012",
+                "RE2-COLLECT-013",
             ],
             "fixed_scenario_flags": fixed_flags,
             "presence_counter_writes": profile["presence_counter_writes"],
+            "presence_flag_writes": flag_proof,
             "rooms": rooms,
         },
         {**header, "stage_modulus": 256, "areas": plans, "locations": locations},

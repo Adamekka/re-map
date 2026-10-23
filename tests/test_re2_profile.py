@@ -96,6 +96,85 @@ def test_counter_presence_requires_a_valid_bound_revision_layout(tmp_path, case)
         Re2Profile.load(path)
 
 
+@pytest.mark.parametrize(
+    "case",
+    [
+        "table-missing",
+        "table-invalid",
+        "table-malformed",
+        "table-unaligned",
+        "duplicate-bank",
+        "boolean-bank",
+        "bad-width",
+        "boolean-width",
+        "bank-unaligned",
+        "outside-state",
+        "metadata-missing",
+        "metadata-bank",
+        "metadata-conditions",
+        "metadata-operations",
+        "metadata-boolean-operation",
+        "metadata-boolean-bank",
+        "metadata-boolean-bit",
+        "table-mismatch",
+    ],
+)
+def test_flag_write_proof_is_required_validated_and_bound_to_metadata(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    if case == "table-missing":
+        del raw["runtime_layout"]["script_flag_table_address_ps1"]
+    elif case == "table-invalid":
+        raw["runtime_layout"]["script_flag_table_address_ps1"] = None
+    elif case == "table-malformed":
+        raw["runtime_layout"]["script_flag_table_address_ps1"] = "not-hex"
+    elif case == "table-unaligned":
+        raw["runtime_layout"]["script_flag_table_address_ps1"] = "0x8009FD39"
+    elif case == "duplicate-bank":
+        raw["flag_banks"].append(dict(raw["flag_banks"][0]))
+    elif case == "boolean-bank":
+        raw["flag_banks"][0]["bank"] = True
+    elif case == "bad-width":
+        raw["flag_banks"][0]["width"] = 3
+    elif case == "boolean-width":
+        raw["flag_banks"][0]["width"] = True
+    elif case == "bank-unaligned":
+        raw["flag_banks"][0]["address_ps1"] = "0x800C7CE5"
+    elif case == "outside-state":
+        raw["flag_banks"][0]["address_ps1"] = "0x80010000"
+    elif case == "metadata-missing":
+        del document["presence_flag_writes"]
+    elif case == "metadata-bank":
+        document["presence_flag_writes"]["flag_banks"][0]["address_ps1"] = "0x800C7D04"
+    elif case == "metadata-conditions":
+        document["presence_flag_writes"]["condition_flags"].pop()
+    elif case == "metadata-operations":
+        document["presence_flag_writes"]["operations"] = [0, 1, 2]
+    elif case == "metadata-boolean-operation":
+        document["presence_flag_writes"]["operations"] = [False, True, 7]
+    elif case == "metadata-boolean-bank":
+        document["presence_flag_writes"]["flag_banks"][0]["bank"] = False
+    elif case == "metadata-boolean-bit":
+        document["presence_flag_writes"]["condition_flags"][0]["bit"] = False
+    else:
+        raw["runtime_layout"]["script_flag_table_address_ps1"] = "0x8009FD3C"
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    diagnostic = (
+        "RE2 presence flag table address"
+        if case
+        in ("table-missing", "table-invalid", "table-malformed", "table-unaligned")
+        else "RE2 .*flag|RE2 presence flag"
+    )
+    with pytest.raises(ValueError, match=diagnostic):
+        Re2Profile.load(path)
+
+
 @pytest.mark.parametrize("data", [b"", b"\x00", b"\x00\x01", b"\xff\xff"])
 def test_re2_room_rejects_short_or_invalid_halfwords(data):
     profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
@@ -438,7 +517,7 @@ def test_presence_condition_flags_are_explicit_and_bound_to_metadata(tmp_path, c
     path.write_text(json.dumps(raw))
     with pytest.raises(
         ValueError,
-        match="RE2 stable presence flags|RE2 conditional pickup presence|RE2 event award presence",
+        match="RE2 stable presence flags|RE2 conditional pickup presence|RE2 event award presence|RE2 flag write proof",
     ):
         Re2Profile.load(path)
 

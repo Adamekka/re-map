@@ -17,13 +17,102 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from map_geometry import trace_floor_cells
 
-from games.re2.event_presence import presence_counter_indices
+from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.room_data import bind_event_awards, decode_room
 
 PRESENCE_FLAGS = frozenset({(1, 0), (1, 1), (1, 6), (4, 7)})
 PRESENCE_COUNTERS = presence_counter_indices(
     json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
 )
+
+PRESENCE_WRITES, FLAG_PROOF = presence_flag_write_proof(
+    json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+)
+
+
+@pytest.mark.parametrize("operation", [0, 1, 7, 2, 255])
+@pytest.mark.parametrize(
+    "bank,bit,safe",
+    [(4, 6, True), (4, 7, False), (1, 32, False), (2, 224, False), (11, 0, False)],
+)
+def test_startup_flag_writes_must_preserve_presence_inputs(operation, bank, bit, safe):
+    """RE2-COLLECT-013: neither a bank number nor a no-op proves safety."""
+    guarded = (
+        bytes([6, 0, 28, 0, 0x21, 4, 7, 0])
+        + item_command(20, 15, 9)
+        + bytes([8, 0, 1, 0])
+    )
+    data = synthetic_room(bytes([0x22, bank, bit, operation, 1, 0]), (guarded,))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert room["conditional_item_presence"] == (
+        [
+            {
+                "global_id": 9,
+                "presence": {
+                    "kind": "conditions",
+                    "any_of": [[{"bank": 4, "bit": 7, "expected": 0}]],
+                },
+            }
+        ]
+        if safe and operation in (0, 1, 7)
+        else []
+    )
+
+
+def test_flag_write_guard_catches_aliases_and_keeps_other_bits_in_the_word():
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    # This explicit synthetic bank aliases the preceding word and the stable
+    # input word. It is not a new native profile bank.
+    raw["flag_banks"].append({"bank": 99, "address_ps1": "0x800CC97C", "width": 8})
+    allowed, _ = presence_flag_write_proof(raw)
+    assert (99, 39) not in allowed and (99, 38) in allowed
+    assert (4, 7) not in allowed and (4, 6) in allowed
+    guarded = (
+        bytes([6, 0, 28, 0, 0x21, 4, 7, 0])
+        + item_command(20, 15, 9)
+        + bytes([8, 0, 1, 0])
+    )
+    for bit, present in [(39, False), (38, True)]:
+        room = decode_room(
+            synthetic_room(bytes([0x22, 99, bit, 1, 1, 0]), (guarded,)),
+            "synthetic",
+            PRESENCE_FLAGS,
+            PRESENCE_COUNTERS,
+            allowed,
+        )
+        assert bool(room["conditional_item_presence"]) is present
+
+
+@pytest.mark.parametrize("safe", [False, True])
+def test_scheduled_presence_uses_the_same_flag_write_guard_after_queuing(safe):
+    from games.re2.event_presence import source_presence
+
+    startup = bytes([4, 255, 0x18, 1, 0x22, 4, 6 if safe else 7, 1, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    award = next(
+        row for row in room["programs"]["17:1"]["commands"] if row["kind"] == "award"
+    )
+    assert source_presence(
+        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+    ) == {"kind": "required" if safe else "unresolved"}
+
+
+def test_startup_flag_write_without_explicit_proof_is_unresolved():
+    guarded = (
+        bytes([6, 0, 28, 0, 0x21, 4, 7, 0])
+        + item_command(20, 15, 9)
+        + bytes([8, 0, 1, 0])
+    )
+    data = synthetic_room(bytes([0x22, 4, 6, 1, 1, 0]), (guarded,))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, frozenset()
+    )
+    assert room["conditional_item_presence"] == []
 
 
 @pytest.mark.parametrize(
@@ -43,7 +132,13 @@ def test_counter_setup_requires_a_flag_and_identity_disjoint_write(counter, valu
     safe = counter in {0, 7, 23, 32, 35}
     save = bytes([0x24, counter]) + struct.pack("<H", value)
     data = synthetic_room(save + item_command(20, 15, 9) + b"\x01\0")
-    room = decode_room(data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS)
+    room = decode_room(
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
+    )
     assert room["candidate_list_complete"]
     assert room["collection_item_ids"] == ([9] if safe else [])
     assert room["conditional_item_presence"] == []
@@ -61,7 +156,13 @@ def test_counter_aliases_cannot_authorize_fresh_conditional_presence(
         bytes([1, 0]),
         (guarded, save + bytes([1, 0])) if after_startup else (save + guarded,),
     )
-    room = decode_room(data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS)
+    room = decode_room(
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
+    )
     assert room["collection_item_ids"] == []
     assert room["conditional_item_presence"] == (
         [
@@ -87,7 +188,13 @@ def test_scheduled_delivery_reuses_the_counter_write_guard(counter):
         bytes([1, 0]),
         (save + bytes([4, 255, 0x18, 1, 1, 0]), save + bytes([0x76, 53, 1, 1, 0])),
     )
-    room = decode_room(data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS)
+    room = decode_room(
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
+    )
     award = next(
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
     )
@@ -98,7 +205,9 @@ def test_scheduled_delivery_reuses_the_counter_write_guard(counter):
 
 def test_counter_setup_without_an_explicit_proof_stays_unresolved():
     data = synthetic_room(bytes([0x24, 7, 0, 0]) + item_command(20, 15, 9) + b"\x01\0")
-    room = decode_room(data, "synthetic", PRESENCE_FLAGS, frozenset())
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, frozenset(), presence_writes=PRESENCE_WRITES
+    )
     assert not room["collection_item_ids"] and not room["conditional_item_presence"]
 
 
@@ -157,7 +266,11 @@ def test_event_award_requires_an_exclusive_post_delivery_item_flag(case, bound):
     data = synthetic_room(bytes([1, 0]), (delivery + bytes([1, 0]),))
     first = {
         **decode_room(
-            data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         ),
         "id": "01-02",
         "stage": 1,
@@ -176,7 +289,11 @@ def test_event_award_requires_an_exclusive_post_delivery_item_flag(case, bound):
         other_data += bytes([0x22, 8, 5, 2])
     other = {
         **decode_room(
-            other_data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            other_data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         ),
         "id": "00-01",
         "stage": 0,
@@ -217,7 +334,11 @@ def test_conditional_return_does_not_hide_later_pickup():
         bytes([6, 0, 8, 0, 0x21, 4, 0, 1, 1, 0, 0, 0]) + item + bytes([1, 0])
     )
     result = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert result["items"] == [
         {
@@ -239,7 +360,11 @@ def test_inactive_reward_keeps_its_initializer_collection_identity():
         item_command(20, 15, 9) + bytes([0x46, 8, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
     )
     assert decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [9]
 
 
@@ -261,6 +386,7 @@ def test_presence_joins_branches_only_when_every_path_has_the_same_identity(
             "synthetic",
             PRESENCE_FLAGS,
             presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == expected
     )
@@ -278,6 +404,7 @@ def test_optional_creator_and_uncalled_procedure_do_not_establish_presence():
             "synthetic",
             PRESENCE_FLAGS,
             presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -286,7 +413,11 @@ def test_optional_creator_and_uncalled_procedure_do_not_establish_presence():
     )
     assert (
         decode_room(
-            data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -298,7 +429,11 @@ def test_init_gosub_uses_main_table_and_returns_to_its_caller():
         (bytes([1, 0]), item_command(30, 1, 10, slot=9) + bytes([0x19, 0])),
     )
     assert decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [
         9,
         10,
@@ -318,7 +453,11 @@ def test_unsupported_effects_cannot_authorize_an_item(prefix, suffix):
     data = synthetic_room(prefix + item_command(20, 15, 9) + suffix + bytes([1, 0]))
     assert (
         decode_room(
-            data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -332,7 +471,11 @@ def test_recursive_calls_and_missing_callees_cannot_establish_presence():
         )
         assert (
             decode_room(
-                data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+                data,
+                "synthetic",
+                PRESENCE_FLAGS,
+                presence_counters=PRESENCE_COUNTERS,
+                presence_writes=PRESENCE_WRITES,
             )["collection_item_ids"]
             == []
         )
@@ -344,7 +487,11 @@ def test_replaced_item_slot_does_not_turn_both_initializers_into_required_items(
     )
     assert (
         decode_room(
-            data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -365,6 +512,7 @@ def test_conflicting_slot_does_not_discard_an_unrelated_item(
         "synthetic",
         PRESENCE_FLAGS,
         presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert result["collection_item_ids"] == [11]
 
@@ -384,6 +532,7 @@ def test_branch_conflicts_leave_an_unconditional_item_proven():
         "synthetic",
         PRESENCE_FLAGS,
         presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [11]
 
 
@@ -399,6 +548,7 @@ def test_conflicting_acquisition_identity_across_slots_stays_unproven():
         "synthetic",
         PRESENCE_FLAGS,
         presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [11]
 
 
@@ -408,7 +558,11 @@ def test_uncalled_conflict_does_not_create_an_item_or_erase_unrelated_proof():
         (bytes([1, 0]), item_command(30, 1, 10) + bytes([1, 0])),
     )
     assert decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [11]
 
 
@@ -425,6 +579,7 @@ def test_unsupported_control_flow_still_discards_independent_item_proofs():
             "synthetic",
             PRESENCE_FLAGS,
             presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -439,6 +594,7 @@ def test_item_initializer_with_an_unresolved_interaction_is_not_a_presence_proof
             "synthetic",
             PRESENCE_FLAGS,
             presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -454,7 +610,11 @@ def test_unrelated_resets_and_matching_reward_activation_preserve_identity():
     activation = bytes([0x46, 8, 2, 0x31, 20, 0, 4, 0, 9, 0, 1, 0])
     data = synthetic_room(script, (bytes([1, 0]), activation))
     result = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert result["collection_item_ids"] == [9]
     assert result["items"][0]["amounts"] == [4, 15]
@@ -473,7 +633,11 @@ def test_later_identity_reset_cannot_authorize_an_earlier_reward(
     )
     assert (
         decode_room(
-            data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -485,7 +649,11 @@ def test_automatic_task_does_not_make_its_items_mandatory():
         (bytes([1, 0]), item_command(30, 1, 10, slot=9) + bytes([1, 0])),
     )
     assert decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [9]
 
 
@@ -495,7 +663,11 @@ def test_reset_without_a_matching_creator_leaves_coverage_unresolved():
         (bytes([1, 0]), bytes([0x46, 9, 2, 0, 30, 0, 1, 0, 10, 0, 1, 0])),
     )
     result = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert not result["candidate_list_complete"]
     assert result["collection_item_ids"] == []
@@ -510,7 +682,11 @@ def test_event_slot_replacement_does_not_erase_unrelated_item_proof():
         (bytes([1, 0]), bytes([0x2C, 8, 5, 0]) + bytes(16) + bytes([1, 0])),
     )
     assert decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [10]
 
 
@@ -521,7 +697,11 @@ def test_explicit_or_missing_tasks_do_not_prove_startup_execution(task, procedur
     )
     assert (
         decode_room(
-            data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+            data,
+            "synthetic",
+            PRESENCE_FLAGS,
+            presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )["collection_item_ids"]
         == []
     )
@@ -533,7 +713,11 @@ def test_audited_actor_setup_does_not_block_later_reward_declaration():
     )
     data = synthetic_room(setup + item_command(20, 15, 9) + bytes([1, 0]))
     assert decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["collection_item_ids"] == [9]
 
 
@@ -544,6 +728,7 @@ def test_truncated_script_and_branch_outside_procedure_are_rejected():
             "synthetic",
             PRESENCE_FLAGS,
             presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )
     with pytest.raises(ValueError, match="outside its procedure"):
         decode_room(
@@ -551,6 +736,7 @@ def test_truncated_script_and_branch_outside_procedure_are_rejected():
             "synthetic",
             PRESENCE_FLAGS,
             presence_counters=PRESENCE_COUNTERS,
+            presence_writes=PRESENCE_WRITES,
         )
 
 
@@ -598,6 +784,7 @@ def test_door_trigger_floor_is_separate_from_destination(
         "synthetic",
         PRESENCE_FLAGS,
         presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )["doors"][0]
     assert door["activation_floor"] == activation_floor
     assert door["floor"] == 1
@@ -658,7 +845,11 @@ def test_event_presence_proves_scheduling_and_every_supported_delivery_path(case
         delivery = bytes([0x18, 1]) + delivery
     data = synthetic_room(bytes([1, 0]), (startup, delivery))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     award = next(
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
@@ -688,7 +879,11 @@ def test_event_presence_joins_both_scheduling_branches_without_an_unrelated_gate
     )
     data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     award = room["programs"]["17:1"]["entry"]
     assert source_presence(
@@ -709,7 +904,11 @@ def test_event_presence_preserves_a_waiting_award_but_rejects_changed_wait_effec
         wait = bytes([5, 0, 1, 0])
     data = synthetic_room(bytes([1, 0]), (startup, delivery, wait))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     award = next(
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
@@ -726,7 +925,11 @@ def test_event_presence_rejects_a_delivery_path_that_can_finish_without_awarding
     delivery = bytes([6, 0, 7, 0, 0x21, 4, 7, 0, 0x76, 53, 1, 1, 0])
     data = synthetic_room(bytes([1, 0]), (startup, delivery))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     award = next(
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
@@ -771,7 +974,11 @@ def test_startup_write_cannot_make_an_unexecuted_branch_look_required():
     )
     data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert source_presence(
         data,
@@ -790,7 +997,11 @@ def test_compound_predicates_need_a_native_join_proof_before_exporting_condition
     )
     data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert source_presence(
         data,
@@ -807,7 +1018,11 @@ def test_later_task_cancellation_invalidates_an_earlier_scheduling_proof():
     startup = bytes([4, 255, 0x18, 1, 5, 10, 1, 0])
     data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert source_presence(
         data,
@@ -826,7 +1041,11 @@ def test_startup_must_finish_after_queuing_the_award_task():
     startup = bytes([4, 255, 0x18, 1, 0x47, 0, 1, 0])
     data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert source_presence(
         data,
@@ -892,6 +1111,7 @@ def test_conditional_pickup_proof_preserves_identity_and_startup_conditions(
         "synthetic",
         PRESENCE_FLAGS,
         presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert room["collection_item_ids"] == []
     assert room["conditional_item_presence"] == (
@@ -935,6 +1155,7 @@ def test_unapproved_flag_checks_are_opaque_to_pickup_presence(bank, bit):
         "synthetic",
         PRESENCE_FLAGS,
         presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert room["collection_item_ids"] == []
     assert room["conditional_item_presence"] == []
@@ -1046,7 +1267,11 @@ def test_scenario_exclusion_proves_every_creator_impossible(
         # These bytes lie in the camera section, outside every SCD procedure.
         data = data[:108] + bytes([0x22, 1, 1]) + data[111:]
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     if case == "incomplete":
         room["candidate_list_complete"] = False
@@ -1080,7 +1305,11 @@ def test_mode_exclusion_withholds_proof_for_direct_and_aliased_writers(
     )
     data = synthetic_room(bytes([1, 0]), (startup, extra))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     # The native bank table can alias the system word. A different bank number
     # must not hide a writer to the pinned mode bit.
@@ -1107,7 +1336,11 @@ def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_
     )
     data = synthetic_room(bytes([1, 0]), (guarded,))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert scenario_absent_items(
         data, room, [{"bank": 1, "bit": 1, "expected": fixed}], scenario_banks
@@ -1271,7 +1504,11 @@ def test_scripted_scenario_exclusion_audits_mutations_and_all_creators(
         extra = bytes([0x58, 0, 0, 0, 0x17, 0, 0, 0, 0, 0, 1, 0])
     data = synthetic_room(bytes([1, 0]), (guarded, extra))
     room = decode_room(
-        data, "synthetic", PRESENCE_FLAGS, presence_counters=PRESENCE_COUNTERS
+        data,
+        "synthetic",
+        PRESENCE_FLAGS,
+        presence_counters=PRESENCE_COUNTERS,
+        presence_writes=PRESENCE_WRITES,
     )
     assert scenario_absent_items(data, room, fixed, scenario_banks) == (
         [9] if excluded else []

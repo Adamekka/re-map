@@ -45,6 +45,9 @@ def test_counter_initialized_items_rewind_after_departure_without_cached_presenc
     profile, _, put, read = snapshot
     source = copy.deepcopy(profile.rooms["00-15"])
     assert source["collection_item_ids"] == [101, 209]
+    # Isolate counter presence here; RE2-COLLECT-013 separately tests the
+    # conditional proofs through unrelated startup flag writes.
+    source["conditional_item_presence"] = []
     if not keep_unresolved_checks:
         source["items"] = [
             item for item in source["items"] if item["global_id"] in (101, 209)
@@ -83,6 +86,84 @@ def test_counter_initialized_items_rewind_after_departure_without_cached_presenc
         assert fresh.rooms["00-15"].items == record.items
         assert fresh.rooms["00-15"].completion is record.completion
         assert set(tracker.rooms) == {"00-01", "00-15"}
+
+
+@pytest.mark.parametrize(
+    "source,gid", [("00-06", 8), ("00-0c", 32), ("00-15", 40), ("00-15", 104)]
+)
+def test_flag_guarded_pickups_rebuild_after_departure_and_acquisition_reversal(
+    snapshot, source, gid
+):
+    """RE2-COLLECT-013: reconstruct the conditions compatible with this profile."""
+    profile, _, put, read = snapshot
+    room = RoomId(int(source[:2], 16), int(source[3:], 16))
+    item_types = {
+        item["type"]
+        for item in profile.rooms[source]["items"]
+        if item["global_id"] == gid
+    }
+    assert len(item_types) == 1
+    label = profile.names["items"][str(next(iter(item_types)))]
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    tracker = Tracker()
+    tracker.mark_current(room)
+    for acquired in (False, True, False, True):
+        put(
+            0x800CC9E8 + gid // 32 * 4, (0x80000000 >> (gid % 32)) if acquired else 0, 4
+        )
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source]
+        item = next(item for item in record.items if item.label == label)
+        assert item.state == ("taken" if acquired else "uncollected")
+        if not acquired:
+            assert record.completion is RoomCompletion.Incomplete
+        fresh = Tracker()
+        fresh.mark_current(room)
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms[source].items == record.items
+        assert fresh.rooms[source].completion is record.completion
+
+
+@pytest.mark.parametrize("acquired", [False, True])
+@pytest.mark.parametrize("second_bit", [False, True])
+def test_opposite_scenario_condition_cannot_publish_or_record_visits(
+    snapshot, acquired, second_bit
+):
+    """RE2-COLLECT-013: the fifth proof cannot authorize another scenario."""
+    from games.re2.event_presence import presence_matches
+
+    profile, _, put, read = snapshot
+    rule = profile.rooms["00-10"]["conditional_item_presence"][0]
+    assert rule["global_id"] == 17
+    assert rule["presence"]["any_of"] == [
+        [{"bank": 1, "bit": 1, "expected": 1}, {"bank": 1, "bit": 6, "expected": 0}]
+    ]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 0x10))
+    put(0x800CC9E8, (0x80000000 >> 17) if acquired else 0, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    item_type = next(
+        item["type"]
+        for item in profile.rooms["00-10"]["items"]
+        if item["global_id"] == 17
+    )
+    item = next(
+        item
+        for item in tracker.rooms["00-10"].items
+        if item.label == profile.names["items"][str(item_type)]
+    )
+    assert item.state == ("taken" if acquired else "unknown")
+    before = copy.deepcopy(tracker)
+    # A true compound predicate is outside the pinned Leon A scenario. Never
+    # weaken that gate just to exercise the generated alternative's happy path.
+    put(0x800C7D04, 0x40000000 | (0x02000000 if second_bit else 0), 4)
+    assert presence_matches(
+        rule["presence"],
+        lambda bank, bit: {(1, 1): True, (1, 6): second_bit}[bank, bit],
+    ) is (not second_bit)
+    assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
+    assert tracker == before
 
 
 @pytest.mark.parametrize("movement", HEADING_MOVEMENTS, ids=lambda row: row["after"])

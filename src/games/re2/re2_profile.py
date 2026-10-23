@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
-from games.re2.event_presence import presence_counter_indices
+from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.scenario_items import scenario_flags
 from games.runtime_identity import MemoryResult, RuntimeSignature
@@ -64,6 +64,7 @@ class Re2Profile:
         ):
             raise ValueError("invalid RE2 runtime identity or room addresses")
         layout = raw["runtime_layout"]
+        _, flag_proof = presence_flag_write_proof(raw)
         presence_counter_indices(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
@@ -121,6 +122,12 @@ class Re2Profile:
             raise ValueError("RE2 room metadata disagrees with the pinned revision")
         if document.get("presence_counter_writes") != raw["presence_counter_writes"]:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
+        # JSON types are part of the proof: Python equality would equate
+        # boolean bank/bit operands with integer zero or one.
+        if json.dumps(
+            document.get("presence_flag_writes"), sort_keys=True
+        ) != json.dumps(flag_proof, sort_keys=True):
+            raise ValueError("RE2 flag write proof disagrees with its revision layout")
         fixed = document.get("fixed_scenario_flags")
         if (
             type(fixed) is not list
@@ -138,22 +145,7 @@ class Re2Profile:
         if len(rooms) != 125 or len(rooms) != len(document["rooms"]):
             raise ValueError("RE2 metadata needs 125 unique room sources")
 
-        supported = raw.get("presence_condition_flags")
-        if (
-            type(supported) is not list
-            or not supported
-            or any(
-                type(row) is not dict
-                or row.keys() != {"bank", "bit"}
-                or type(row["bank"]) is not int
-                or row["bank"] not in banks
-                or type(row["bit"]) is not int
-                or not 0 <= row["bit"] < banks[row["bank"]][1] * 8
-                for row in supported
-            )
-            or len({(row["bank"], row["bit"]) for row in supported}) != len(supported)
-        ):
-            raise ValueError("invalid or missing RE2 stable presence flags")
+        supported = raw["presence_condition_flags"]
         condition_flags = frozenset((row["bank"], row["bit"]) for row in supported)
 
         def valid_presence(presence):

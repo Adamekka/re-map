@@ -21,6 +21,122 @@ INITIALIZER_FALLTHROUGH = (
     0x6E,
 )
 
+# RE2-COLLECT-013: native clear, set and toggle. Other operand values are not
+# admitted to presence proofs even though this revision treats them as no-ops.
+FLAG_WRITE_OPERATIONS = (0, 1, 7)
+
+
+def flag_write_conflicts(
+    banks: dict[int, tuple[int, int]], flags: frozenset[tuple[int, int]]
+) -> tuple[dict[int, int], frozenset[tuple[int, int]]]:
+    words = {}
+    for bank, bit in flags:
+        address = banks[bank][0] + bit // 32 * 4
+        words[address] = words.get(address, 0) | (0x80000000 >> (bit % 32))
+    # Native bank numbers can alias, including through an out-of-range bit.
+    # Compare the actual PS1 word/mask before applying each proof's bounds.
+    aliases = frozenset(
+        (bank, bit)
+        for bank, (address, _) in banks.items()
+        for bit in range(256)
+        if words.get(address + bit // 32 * 4, 0) & (0x80000000 >> (bit % 32))
+    )
+    return words, aliases
+
+
+def presence_flag_write_proof(
+    profile: dict,
+) -> tuple[frozenset[tuple[int, int]], dict]:
+    """Validate bounded, predicate-disjoint writes and their metadata contract."""
+    try:
+        layout = profile["runtime_layout"]
+        rows = profile["flag_banks"]
+        supported = profile.get("presence_condition_flags")
+        blocks = [
+            (int(layout[f"{kind}_block_address_ps1"], 0), layout[f"{kind}_block_width"])
+            for kind in ("player", "save")
+        ]
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("invalid or missing RE2 presence flag write layout") from error
+    if type(layout.get("script_flag_table_address_ps1")) is not str:
+        raise ValueError("invalid or missing RE2 presence flag table address")
+    try:
+        table = int(layout["script_flag_table_address_ps1"], 0)
+    except ValueError as error:
+        raise ValueError("invalid RE2 presence flag table address") from error
+    # An unsigned byte bank indexes a four-byte native pointer table.
+    if table % 4 or not 0x80000000 <= table <= 0x80200000 - 256 * 4:
+        raise ValueError(
+            "RE2 presence flag table address must be aligned within PS1 RAM"
+        )
+    if (
+        type(rows) is not list
+        or not rows
+        or any(
+            type(width) is not int
+            or not 1 <= width <= 4096
+            or not 0x80000000 <= base <= 0x80200000 - width
+            for base, width in blocks
+        )
+    ):
+        raise ValueError("invalid RE2 presence flag write layout")
+    banks = {}
+    for row in rows:
+        if (
+            type(row) is not dict
+            or row.keys() != {"bank", "address_ps1", "width"}
+            or type(row["bank"]) is not int
+            or not 0 <= row["bank"] <= 255
+            or row["bank"] in banks
+            or type(row["address_ps1"]) is not str
+            or type(row["width"]) is not int
+            or not 4 <= row["width"] <= 32
+            or row["width"] % 4
+        ):
+            raise ValueError("invalid RE2 presence flag write bank")
+        try:
+            address = int(row["address_ps1"], 0)
+        except ValueError as error:
+            raise ValueError("invalid RE2 presence flag write bank address") from error
+        if address % 4 or not any(
+            base <= address and address + row["width"] <= base + width
+            for base, width in blocks
+        ):
+            raise ValueError("RE2 presence flag write bank exceeds bounded state")
+        banks[row["bank"]] = address, row["width"]
+    if (
+        type(supported) is not list
+        or not supported
+        or any(
+            type(row) is not dict
+            or row.keys() != {"bank", "bit"}
+            or type(row["bank"]) is not int
+            or row["bank"] not in banks
+            or type(row["bit"]) is not int
+            or not 0 <= row["bit"] < banks[row["bank"]][1] * 8
+            for row in supported
+        )
+        or len({(row["bank"], row["bit"]) for row in supported}) != len(supported)
+    ):
+        raise ValueError("invalid or missing RE2 stable presence flags")
+    flags = frozenset((row["bank"], row["bit"]) for row in supported)
+    _, forbidden = flag_write_conflicts(banks, flags)
+    allowed = frozenset(
+        (bank, bit)
+        for bank, (_, width) in banks.items()
+        for bit in range(width * 8)
+        if (bank, bit) not in forbidden
+    )
+    return allowed, {
+        "bank_table_address_ps1": f"0x{table:08X}",
+        "operations": list(FLAG_WRITE_OPERATIONS),
+        "flag_banks": [
+            {"bank": bank, "address_ps1": f"0x{address:08X}", "width": width}
+            for bank, (address, width) in sorted(banks.items())
+        ],
+        "condition_flags": [{"bank": bank, "bit": bit} for bank, bit in sorted(flags)],
+    }
+
 
 def presence_counter_indices(profile: dict) -> frozenset[int]:
     """Validate the revision's bounded counter-write proof. RE2-COLLECT-012."""
@@ -291,9 +407,10 @@ def source_presence(
                     kind in ("item", "door", "interaction", "reset")
                     or opcode in fallthrough
                     or (
-                        # Symbolic startup predicates must survive unchanged;
-                        # flag writes are allowed only by the nonsymbolic set.
-                        opcode != 0x22 and initializer_fallthrough(row)
+                        # Fresh predicates must survive startup. Decoding binds
+                        # unrelated writes to canonical, alias-checked bits.
+                        (opcode != 0x22 or row["presence_safe"])
+                        and initializer_fallthrough(row)
                     )
                 )
             ):

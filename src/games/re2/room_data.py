@@ -5,7 +5,11 @@ from __future__ import annotations
 import hashlib
 import struct
 
-from games.re2.event_presence import initializer_fallthrough, source_presence
+from games.re2.event_presence import (
+    FLAG_WRITE_OPERATIONS,
+    initializer_fallthrough,
+    source_presence,
+)
 
 
 def bind_event_awards(
@@ -237,10 +241,17 @@ def decode_room(
     source: str,
     condition_flags: frozenset[tuple[int, int]],
     presence_counters: frozenset[int],
+    presence_writes: frozenset[tuple[int, int]],
 ) -> dict:
     assert isinstance(presence_counters, frozenset) and all(
         type(index) is int and 0 <= index <= 255 for index in presence_counters
     ), "counter proof indices must be explicit unsigned bytes"
+    assert isinstance(presence_writes, frozenset) and all(
+        isinstance(pair, tuple)
+        and len(pair) == 2
+        and all(type(value) is int and 0 <= value <= 255 for value in pair)
+        for pair in presence_writes
+    ), "flag write proof pairs must be explicit unsigned bytes"
     if len(data) < 100 or data[1] == 0:
         raise ValueError("RE2 room needs a complete header and cameras")
     offsets = struct.unpack_from("<23I", data, 8)
@@ -327,6 +338,8 @@ def decode_room(
                         bank=packet[1],
                         bit=packet[2],
                         operation=packet[3],
+                        presence_safe=(packet[1], packet[2]) in presence_writes
+                        and packet[3] in FLAG_WRITE_OPERATIONS,
                     )
                 elif opcode == 0x24:
                     command.update(

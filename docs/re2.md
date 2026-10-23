@@ -44,6 +44,8 @@ The [auxiliary write audit](research/re2.md#auxiliary-native-write-audit-2026-10
 
 [RE2-COLLECT-012](research/re2.md#native-counter-presence-lifecycle-2026-10-23) adds guarded counter initialization to the shared presence proof. Two established items now remain uncollected after departure and earlier restores elsewhere. Native pickups, ordinary departure/reentry and six byte-identical savestate restores verify their collection states, including while the source room stays off-screen. Other unresolved checks remain, and the parked-item case above is unchanged. Both tested sources were already covered, so runtime room coverage stays unchanged.
 
+[RE2-COLLECT-013](research/re2.md#shared-flag-write-guard-and-native-pickup-2026-10-23) permits audited startup flag writes that cannot change the configured presence inputs, including through bank aliases. Another native pickup now remains Uncollected after departure and earlier restores, then becomes Taken after collection. Repeat collection, successful reentry and six exact restores verify that case. Five conditional proofs are generated across four sources; their broader lifecycle coverage remains unverified. Other unresolved items still prevent full clearance in the tested source, and runtime-source coverage stays at thirty.
+
 The catalog and floor plans contain numeric metadata and contours, not original game pixels or executable bytes. To regenerate them from the pinned owned disc, install `unicorn` in a development environment and run:
 
 ```sh

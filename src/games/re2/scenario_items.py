@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import struct
 
-from games.re2.event_presence import INITIALIZER_FALLTHROUGH
+from games.re2.event_presence import (
+    FLAG_WRITE_OPERATIONS,
+    INITIALIZER_FALLTHROUGH,
+    flag_write_conflicts,
+)
 
 
 def scenario_flags(profile: dict) -> list[dict[str, int]]:
@@ -66,18 +70,7 @@ def scenario_absent_items(
     banks = {
         row["bank"]: (int(row["address_ps1"], 0), row["width"]) for row in flag_banks
     }
-    fixed_words = {}
-    for bank, bit in fixed:
-        address = banks[bank][0] + bit // 32 * 4
-        fixed_words[address] = fixed_words.get(address, 0) | (0x80000000 >> (bit % 32))
-    # Native banks can alias. Compare the PS1 virtual word and mask, not just the
-    # script bank number, before treating any flag write as unrelated.
-    forbidden = {
-        (bank, bit)
-        for bank, (address, _) in banks.items()
-        for bit in range(256)
-        if fixed_words.get(address + bit // 32 * 4, 0) & (0x80000000 >> (bit % 32))
-    }
+    fixed_words, forbidden = flag_write_conflicts(banks, frozenset(fixed))
     # A negative claim needs every creator, including other tasks. Audited
     # event effects may change unrelated state, but cannot introduce an item
     # identity or change the fixed scenario bits. RE2-COLLECT-008.
@@ -179,7 +172,7 @@ def scenario_absent_items(
                 if (
                     row["bank"] not in banks
                     or row["bit"] >= banks[row["bank"]][1] * 8
-                    or row["operation"] not in (0, 1, 7)
+                    or row["operation"] not in FLAG_WRITE_OPERATIONS
                     or (row["bank"], row["bit"]) in forbidden
                 ):
                     return []
