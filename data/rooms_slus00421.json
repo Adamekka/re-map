@@ -18,6 +18,7 @@
     "RE2-COLLECT-012",
     "RE2-COLLECT-013",
     "RE2-COLLECT-014",
+    "RE2-COLLECT-015",
     "RE2-SOURCE-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
@@ -3046,7 +3047,43 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 18,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 30,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 1,
+                  "expected": 1
+                },
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 0,
       "room": 19,
@@ -13872,7 +13909,29 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 64,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 65,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 1,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 4,
       "room": 8,
@@ -15216,7 +15275,14 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 6,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 5,
       "room": 9,
@@ -15951,7 +16017,20 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 0,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 1,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 5,
       "room": 14,

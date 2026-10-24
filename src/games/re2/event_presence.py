@@ -365,14 +365,20 @@ def source_presence(
                     test = commands[key][position]
                     tests.append((test["bank"], test["bit"], test["expected"]))
                     position = test["next"]
+                predicate = commands[key].get(position)
                 if (
                     not tests
-                    and position in commands[key]
-                    and commands[key][position]["opcode"] == 0x3E
+                    and predicate is not None
+                    and (
+                        predicate["opcode"] == 0x3E
+                        or predicate["opcode"] == 0x23
+                        and data[predicate["offset"] + 3] < 7
+                    )
                 ):
-                    # Actor comparisons are opaque here; both outcomes must
-                    # still require the award. Never guess their live values.
-                    position = commands[key][position]["next"]
+                    # RE2-COLLECT-015: the seven native counter comparisons,
+                    # like actor comparisons, only advance the task PC. Require
+                    # both outcomes; fresh counter values cannot prove presence.
+                    position = predicate["next"]
                 elif not tests or any(test[2] not in (0, 1) for test in tests):
                     active.remove(state)
                     return unresolved

@@ -1300,6 +1300,59 @@ def test_required_event_item_remains_until_collection_and_rewinds(
     assert fresh.rooms[source].completion is RoomCompletion.Incomplete
 
 
+@pytest.mark.parametrize(
+    "source,global_id",
+    [
+        ("00-13", 18),
+        ("04-08", 64),
+        ("04-08", 65),
+        ("05-09", 6),
+        ("05-0e", 0),
+        ("05-0e", 1),
+    ],
+)
+def test_counter_independent_generated_presence_rewinds_while_departed(
+    snapshot, source, global_id
+):
+    """RE2-COLLECT-015: generated proofs depend on flags, never a fresh counter."""
+    profile, _, put, read = snapshot
+    rule = next(
+        r
+        for r in profile.rooms[source]["conditional_item_presence"]
+        if r["global_id"] == global_id
+    )
+    assert rule["presence"]["kind"] in ("required", "conditions")
+    bank = profile.runtime_layout[
+        "item_bank_early"
+        if int(source[:2]) < profile.runtime_layout["item_bank_stage_boundary"]
+        else "item_bank_late"
+    ]
+    address = profile.flag_banks[bank][0] + global_id // 32 * 4
+    mask = 0x80000000 >> (global_id % 32)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(int(source[:2]), int(source[3:], 16)))
+    visits = None
+    for acquired, counter in [(False, 0), (True, 1282), (False, 65535), (True, 0)]:
+        word = int.from_bytes(read(address, 4).data, "little") & ~mask
+        put(address, word | (mask if acquired else 0), 4)
+        put(0x800CC94E, counter, 2)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source]
+        definitions = sorted({i["global_id"] for i in profile.rooms[source]["items"]})
+        index = definitions.index(global_id)
+        assert record.items[index].state == ("taken" if acquired else "uncollected")
+        if not acquired:
+            assert record.completion is RoomCompletion.Incomplete
+        if visits is None:
+            visits = dict(tracker.region_visits)
+        assert tracker.region_visits == visits
+    # Opposite scenario values cannot make the seventh new rule publish.
+    before = copy.deepcopy(tracker)
+    put(0x800C7D04, 0x40000000, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
+    assert tracker == before
+
+
 @pytest.mark.parametrize("failure", ["changed", "short"])
 def test_event_presence_gate_participates_in_snapshot_coherence(snapshot, failure):
     profile, _, put, read = snapshot

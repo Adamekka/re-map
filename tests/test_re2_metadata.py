@@ -1178,6 +1178,117 @@ def test_volatile_startup_checks_never_become_fresh_presence_conditions():
     )["presence"] == {"kind": "required"}
 
 
+@pytest.mark.parametrize("operation", range(9))
+@pytest.mark.parametrize("counter", [0, 27, 255])
+def test_counter_comparisons_require_common_pickup_reachability(operation, counter):
+    """RE2-COLLECT-015: no live counter value is exported as a condition."""
+    comparison = bytes([0x23, 0, counter, operation, 2, 5])
+    startup = bytes([6, 0, 8, 0]) + comparison + bytes([8, 0])
+    startup += item_command(20, 15, 9) + bytes([1, 0])
+    room = decode_room(
+        synthetic_room(bytes([1, 0]), (startup,)),
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        PRESENCE_WRITES,
+    )
+    assert room["conditional_item_presence"] == (
+        [{"global_id": 9, "presence": {"kind": "required"}}] if operation < 7 else []
+    )
+
+
+@pytest.mark.parametrize(
+    "case,proved",
+    [
+        ("common", True),
+        ("callee-return", True),
+        ("one-sided", False),
+        ("inline-return", False),
+        ("transition", False),
+        ("flag-write", False),
+        ("counter-write", False),
+        ("compound", False),
+        ("standalone", False),
+        ("unsupported-operator", False),
+    ],
+)
+def test_counter_comparisons_preserve_branch_and_startup_guards(case, proved):
+    comparison = bytes([0x23, 0, 27, 0, 2, 5])
+    body = bytes([0, 0])
+    if case in ("callee-return", "inline-return"):
+        body = bytes([1, 0])
+    elif case == "transition":
+        body = bytes([0x47, 0, 1, 0])
+    elif case == "flag-write":
+        body = bytes([0x22, 4, 7, 1])
+    elif case == "counter-write":
+        body = bytes([0x24, 24, 0, 0])
+    elif case == "compound":
+        comparison += bytes([0x21, 4, 7, 0])
+    elif case == "unsupported-operator":
+        comparison = bytes([0x23, 0, 27, 255, 2, 5])
+    pickup = item_command(20, 15, 9)
+    if case == "one-sided":
+        body = pickup
+    branch = (
+        bytes([6, 0])
+        + struct.pack("<H", len(comparison) + len(body))
+        + comparison
+        + body
+        + bytes([8, 0])
+    )
+    extra = ()
+    if case == "callee-return":
+        startup = bytes([0x18, 1]) + pickup + bytes([1, 0])
+        extra = (branch + bytes([1, 0]),)
+    elif case == "standalone":
+        startup = comparison + pickup + bytes([1, 0])
+    else:
+        startup = branch + (b"" if case == "one-sided" else pickup) + bytes([1, 0])
+    room = decode_room(
+        synthetic_room(bytes([1, 0]), (startup, *extra)),
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        PRESENCE_WRITES,
+    )
+    assert room["conditional_item_presence"] == (
+        [{"global_id": 9, "presence": {"kind": "required"}}] if proved else []
+    )
+
+
+@pytest.mark.parametrize("transition", [False, True])
+def test_scheduled_award_requires_startup_to_finish_after_counter_comparison(
+    transition,
+):
+    from games.re2.event_presence import source_presence
+
+    branch = bytes([6, 0, 8, 0, 0x23, 0, 27, 0, 2, 5, 8, 0])
+    startup = bytes([4, 255, 0x18, 1]) + branch
+    startup += bytes([0x47, 0, 1, 0]) if transition else bytes([1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, bytes([0x76, 53, 1, 1, 0])))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    award = next(
+        c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
+    )
+    assert source_presence(
+        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+    ) == {"kind": "unresolved" if transition else "required"}
+
+
+def test_counter_comparison_must_have_a_complete_native_packet():
+    with pytest.raises(ValueError, match="truncated"):
+        decode_room(
+            synthetic_room(bytes([1, 0]), (bytes([0x23, 0, 27, 0, 2]),)),
+            "synthetic",
+            PRESENCE_FLAGS,
+            PRESENCE_COUNTERS,
+            PRESENCE_WRITES,
+        )
+
+
 @pytest.mark.parametrize("bank,bit", [(0, 25), (2, 7), (10, 0)])
 def test_unapproved_flag_checks_are_opaque_to_pickup_presence(bank, bit):
     item = item_command(20, 15, 9)
