@@ -167,6 +167,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     frozenset(
                         item["offset"] for item in scenario_item_candidates(room)
                     ),
+                    fixed_flags=frozenset(
+                        (row["bank"], row["bit"], row["expected"])
+                        for row in fixed_flags
+                    ),
                 )
             )
         del room["programs"]
@@ -443,6 +447,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-016",
                 "RE2-COLLECT-017",
                 "RE2-COLLECT-018",
+                "RE2-COLLECT-019",
                 "RE2-SOURCE-001",
             ],
             "fixed_scenario_flags": fixed_flags,

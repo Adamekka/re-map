@@ -22,6 +22,7 @@
     "RE2-COLLECT-016",
     "RE2-COLLECT-017",
     "RE2-COLLECT-018",
+    "RE2-COLLECT-019",
     "RE2-SOURCE-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
@@ -2368,66 +2369,19 @@
         {
           "global_id": 37,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 38,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 139,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
-          }
-        },
-        {
-          "global_id": 157,
-          "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 1
-                },
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -3073,61 +3027,13 @@
         {
           "global_id": 18,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
-          }
-        },
-        {
-          "global_id": 30,
-          "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 1
-                },
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 145,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 0,
-                  "bit": 25,
-                  "expected": 1
-                },
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                },
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -3497,46 +3403,19 @@
         {
           "global_id": 40,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 103,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 104,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -5077,36 +4956,6 @@
           "presence": {
             "kind": "required"
           }
-        },
-        {
-          "global_id": 116,
-          "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 0,
-                  "bit": 25,
-                  "expected": 0
-                }
-              ]
-            ]
-          }
-        },
-        {
-          "global_id": 249,
-          "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 1
-                }
-              ]
-            ]
-          }
         }
       ],
       "event_awards": [
@@ -5304,16 +5153,7 @@
         {
           "global_id": 188,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -5933,31 +5773,13 @@
         {
           "global_id": 148,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 167,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -6173,33 +5995,9 @@
       ],
       "conditional_item_presence": [
         {
-          "global_id": 158,
-          "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 0,
-                  "expected": 1
-                }
-              ]
-            ]
-          }
-        },
-        {
           "global_id": 216,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 0,
-                  "bit": 25,
-                  "expected": 1
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -6527,7 +6325,14 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 33,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 10,
@@ -6927,12 +6732,19 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 170,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 12,
       "id": "01-0c",
-      "fixed_context_preserved": false,
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -7621,31 +7433,13 @@
         {
           "global_id": 85,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         },
         {
           "global_id": 219,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 0,
-                  "bit": 25,
-                  "expected": 1
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],
@@ -10105,7 +9899,7 @@
       "stage": 2,
       "room": 9,
       "id": "02-09",
-      "fixed_context_preserved": false,
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14104,16 +13898,7 @@
         {
           "global_id": 65,
           "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 0
-                }
-              ]
-            ]
+            "kind": "required"
           }
         }
       ],

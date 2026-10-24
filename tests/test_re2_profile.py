@@ -512,6 +512,12 @@ def test_conditional_pickup_rules_require_valid_explicit_metadata(tmp_path, case
     document = json.loads(Path(raw["room_metadata_path"]).read_text())
     room = next(room for room in document["rooms"] if room["id"] == "01-07")
     rules = room["conditional_item_presence"]
+    # Generation can bind fixed predicates to Required. Seed an explicit
+    # formula so these cases still exercise malformed conditional metadata.
+    rules[0]["presence"] = {
+        "kind": "conditions",
+        "any_of": [[{"bank": 1, "bit": 6, "expected": 0}]],
+    }
     if case == "missing":
         del room["conditional_item_presence"]
     elif case == "shape":
@@ -646,7 +652,9 @@ def test_scenario_exclusion_metadata_is_required_and_bound_to_configuration(
         other = next(row for row in document["rooms"] if row["id"] == "01-03")
         other["scenario_absent_item_ids"].append(35)
     elif case == "conditional-overlap":
-        room["conditional_item_presence"][-1]["presence"] = {"kind": "required"}
+        room["conditional_item_presence"].append(
+            {"global_id": 157, "presence": {"kind": "required"}}
+        )
     elif case == "incomplete":
         room["candidate_list_complete"] = False
     metadata = tmp_path / "rooms.json"

@@ -212,9 +212,16 @@ def source_presence(
     targets: set[tuple[str, int]],
     mode: Literal["startup", "scheduled"],
     condition_flags: frozenset[tuple[int, int]],
+    fixed_flags: frozenset[tuple[int, int, int]],
 ) -> dict:
     assert mode in ("startup", "scheduled")
     assert targets and all(key in programs for key, _ in targets)
+    assert isinstance(fixed_flags, frozenset) and all(
+        (bank, bit) in condition_flags and type(value) is int and value in (0, 1)
+        for bank, bit, value in fixed_flags
+    ), "fixed startup flags must be supported predicates with explicit values"
+    fixed = {(bank, bit): value for bank, bit, value in fixed_flags}
+    assert len(fixed) == len(fixed_flags), "fixed startup flags must not conflict"
     # An empty set means no sufficient condition was proved. The empty
     # conjunction means unconditional reachability, as in ordinary Boolean DNF.
     unconditional = frozenset((frozenset(),))
@@ -382,6 +389,26 @@ def source_presence(
                 elif not tests or any(test[2] not in (0, 1) for test in tests):
                     active.remove(state)
                     return unresolved
+                # RE2-COLLECT-019: only a whole-source context proof permits
+                # fixed-value pruning. Polling enforces that same context;
+                # other fresh predicates remain symbolic below.
+                # A false first check exits even a compound IF. A true first
+                # check cannot establish its later opaque predicates.
+                if (
+                    tests
+                    and tests[0][:2] in fixed
+                    and (len(tests) == 1 or fixed[tests[0][:2]] != tests[0][2])
+                ):
+                    result = walk(
+                        key,
+                        position
+                        if fixed[tests[0][:2]] == tests[0][2]
+                        else row["target"],
+                        returns,
+                    )
+                    active.remove(state)
+                    cache[state] = result
+                    return result
                 yes = walk(key, position, returns)
                 no = walk(key, row["target"], returns)
                 # Only explicitly supported stable flags become predicates.

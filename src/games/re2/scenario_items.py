@@ -1,4 +1,4 @@
-"""Fixed-context item proofs. RE2-COLLECT-007/008/011/014/016/017."""
+"""Fixed-context item proofs. RE2-COLLECT-007/008/011/014/016/017/019."""
 
 from __future__ import annotations
 
@@ -338,6 +338,16 @@ def scenario_item_proofs(
                     + (2 if destination["opcode"] == 0x32 else 4)
                     or width == 2
                     and target % 2
+                ):
+                    return ScenarioItemProof(False, [], [])
+            elif row["opcode"] == 0x3A:
+                # RE2-COLLECT-019: reference zero reads a static transform.
+                # Allocation writes only the fixed 96-by-124-byte effect pool,
+                # apart from task PC/stack. Other reference forms stay opaque;
+                # a profile-fixed word must not alias any part of that pool.
+                if data[row["offset"] + 4] != 0 or any(
+                    address < 0x800D3BE8 and 0x800D0D68 < address + 4
+                    for address in fixed_words
                 ):
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x37:

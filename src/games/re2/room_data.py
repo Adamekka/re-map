@@ -81,6 +81,7 @@ def bind_event_awards(
                             {(key, command["offset"])},
                             "scheduled",
                             condition_flags,
+                            fixed_flags=frozenset(),
                         )
                 awards.append(award)
         result[room["id"]] = awards
@@ -484,7 +485,7 @@ def decode_room(
         "candidate_list_complete": complete,
     }
     required, conditional = collection_presence(
-        data, room, condition_flags, frozenset(items)
+        data, room, condition_flags, frozenset(items), fixed_flags=frozenset()
     )
     return {
         **room,
@@ -498,8 +499,13 @@ def collection_presence(
     room: dict,
     condition_flags: frozenset[tuple[int, int]],
     offsets: frozenset[int],
+    fixed_flags: frozenset[tuple[int, int, int]],
 ) -> tuple[list[int], list[dict]]:
     """Prove collection presence for an explicit set of source candidates."""
+    assert isinstance(fixed_flags, frozenset), "fixed startup flags must be explicit"
+    assert not fixed_flags or room.get("fixed_context_preserved") is True, (
+        "fixed startup flags require the whole-source context proof"
+    )
     items = {item["offset"]: item for item in room["items"]}
     eligible = {offset: item for offset, item in items.items() if offset in offsets}
     programs = room["programs"]
@@ -723,6 +729,7 @@ def collection_presence(
             },
             "startup",
             condition_flags,
+            fixed_flags,
         )
         if presence["kind"] != "unresolved":
             conditional.append({"global_id": gid, "presence": presence})

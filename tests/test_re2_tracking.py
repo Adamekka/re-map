@@ -521,6 +521,50 @@ def test_generated_script_interaction_preserves_item_presence_and_fresh_rewinds(
         assert fresh.rooms["01-10"].completion is record.completion
 
 
+@pytest.mark.parametrize("snapshot", ["01-0c", "00-01"], indirect=True)
+def test_generated_fixed_startup_presence_keeps_unresolved_neighbor_and_rewinds(
+    snapshot,
+):
+    """RE2-COLLECT-019: fixed startup context preserves an independent pickup."""
+    profile, _, put, read = snapshot
+    assert {"global_id": 170, "presence": {"kind": "required"}} in profile.rooms[
+        "01-0c"
+    ]["conditional_item_presence"]
+    current = str(profile.read_current_room(read).room) == "01-0c"
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    if current:
+        item = next(i for i in profile.rooms["01-0c"]["items"] if i["global_id"] == 170)
+        pointer = 0x80100000 + item["offset"] + 2
+        put(0x800C66C8 + item["slot"] * 4, pointer, 4)
+        put(pointer, 2, 1)
+        for offset, value in [(12, 39), (14, 1), (16, 170)]:
+            put(pointer + offset, value, 2)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x0C))
+    for acquired in (False, True, False, True):
+        put(0x800CC9FC, 0x00200000 if acquired else 0, 4)
+        if current:
+            put(pointer, 0 if acquired else 2, 1)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-0c"]
+        assert [(i.state, i.quantity) for i in record.items] == [
+            ("unknown", ItemQuantityState.Unreconstructed),
+            ("taken" if acquired else "available" if current else "uncollected", 1),
+        ]
+        assert record.completion is (
+            RoomCompletion.Unknown if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x0C))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-0c"] == record
+    published = copy.deepcopy(tracker)
+    put(0x800C7D04, 0x40000000, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
+    assert tracker == published
+
+
 @pytest.mark.parametrize("snapshot", ["01-08", "00-0f"], indirect=True)
 @pytest.mark.parametrize("departed", [False, True])
 @pytest.mark.parametrize("alternatives", [False, True])

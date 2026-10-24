@@ -98,7 +98,12 @@ def test_scheduled_presence_uses_the_same_flag_write_guard_after_queuing(safe):
         row for row in room["programs"]["17:1"]["commands"] if row["kind"] == "award"
     )
     assert source_presence(
-        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award["offset"])},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "required" if safe else "unresolved"}
 
 
@@ -199,7 +204,12 @@ def test_scheduled_delivery_reuses_the_counter_write_guard(counter):
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
     )
     assert source_presence(
-        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award["offset"])},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "required" if counter in (7, 32) else "unresolved"}
 
 
@@ -1034,7 +1044,12 @@ def test_event_presence_proves_scheduling_and_every_supported_delivery_path(case
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
     )
     result = source_presence(
-        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award["offset"])},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     )
     assert result == (
         {"kind": "conditions", "any_of": [[{"bank": 4, "bit": 7, "expected": 0}]]}
@@ -1066,7 +1081,12 @@ def test_event_presence_joins_both_scheduling_branches_without_an_unrelated_gate
     )
     award = room["programs"]["17:1"]["entry"]
     assert source_presence(
-        data, room["programs"], {("17:1", award)}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award)},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "required"}
 
 
@@ -1093,7 +1113,12 @@ def test_event_presence_preserves_a_waiting_award_but_rejects_changed_wait_effec
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
     )
     assert source_presence(
-        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award["offset"])},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == ({"kind": "unresolved"} if wait_change else {"kind": "required"})
 
 
@@ -1114,7 +1139,12 @@ def test_event_presence_rejects_a_delivery_path_that_can_finish_without_awarding
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
     )
     assert source_presence(
-        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award["offset"])},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "unresolved"}
 
 
@@ -1165,6 +1195,7 @@ def test_startup_write_cannot_make_an_unexecuted_branch_look_required():
         {("17:1", room["programs"]["17:1"]["entry"])},
         "scheduled",
         PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "unresolved"}
 
 
@@ -1188,6 +1219,7 @@ def test_compound_predicates_need_a_native_join_proof_before_exporting_condition
         {("17:1", room["programs"]["17:1"]["entry"])},
         "scheduled",
         PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "unresolved"}
 
 
@@ -1209,6 +1241,7 @@ def test_later_task_cancellation_invalidates_an_earlier_scheduling_proof():
         {("17:1", room["programs"]["17:1"]["entry"])},
         "scheduled",
         PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "unresolved"}
 
 
@@ -1232,6 +1265,7 @@ def test_startup_must_finish_after_queuing_the_award_task():
         {("17:1", room["programs"]["17:1"]["entry"])},
         "scheduled",
         PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "unresolved"}
 
 
@@ -1317,16 +1351,11 @@ def test_fixed_context_does_not_expand_the_general_stable_flag_whitelist():
     assert {"bank": 0, "bit": 25} not in raw["presence_condition_flags"]
     rooms = json.loads((ROOT / "data/rooms_slus00421.json").read_text())["rooms"]
     room = next(room for room in rooms if room["id"] == "01-02")
-    # RE2-COLLECT-017 permits the mode predicate only after whole-source
-    # validation. The incompatible branch still cannot override exclusion.
+    # RE2-COLLECT-019 binds the mode only after whole-source validation.
+    # Its impossible presence branch cannot override the existing exclusion.
     assert room["fixed_context_preserved"]
     assert 116 in room["scenario_absent_item_ids"]
-    assert next(
-        rule for rule in room["conditional_item_presence"] if rule["global_id"] == 116
-    )["presence"] == {
-        "kind": "conditions",
-        "any_of": [[{"bank": 0, "bit": 25, "expected": 0}]],
-    }
+    assert all(rule["global_id"] != 116 for rule in room["conditional_item_presence"])
     assert next(
         rule for rule in room["conditional_item_presence"] if rule["global_id"] == 114
     )["presence"] == {"kind": "required"}
@@ -1428,7 +1457,12 @@ def test_scheduled_award_requires_startup_to_finish_after_counter_comparison(
         c for c in room["programs"]["17:1"]["commands"] if c["kind"] == "award"
     )
     assert source_presence(
-        data, room["programs"], {("17:1", award["offset"])}, "scheduled", PRESENCE_FLAGS
+        data,
+        room["programs"],
+        {("17:1", award["offset"])},
+        "scheduled",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
     ) == {"kind": "unresolved" if transition else "required"}
 
 
@@ -1902,7 +1936,11 @@ def test_scenario_variant_proof_requires_every_possible_creator(
     candidates = scenario_item_candidates(room)
     assert candidates == [selected]
     assert collection_presence(
-        data, room, PRESENCE_FLAGS, frozenset(item["offset"] for item in candidates)
+        data,
+        room,
+        PRESENCE_FLAGS,
+        frozenset(item["offset"] for item in candidates),
+        fixed_flags=frozenset(),
     ) == (
         [],
         [
@@ -2016,6 +2054,132 @@ def test_scenario_shadow_selector_bounds(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
     )
     assert (proof.absent_item_ids, proof.item_variants) == ([9] if safe else [], [])
+
+
+@pytest.mark.parametrize(
+    "reference,index,safe",
+    [(0, 0, True), (0, 255, True)]
+    + [(reference, 0, False) for reference in (1, 2, 3, 4, 5, 127, 128, 160, 192, 255)],
+)
+def test_scenario_effect_static_reference_preserves_context(
+    reference, index, safe, incompatible_item, scenario_banks
+):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    packet = bytes([0x3A, 0, 47, 0, reference, index]) + bytes(10)
+    data = synthetic_room(b"\x01\0", (incompatible_item, packet + b"\x01\0"))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    proof = scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    )
+    assert proof.fixed_context_preserved is safe
+    assert proof.absent_item_ids == ([9] if safe else [])
+
+
+@pytest.mark.parametrize(
+    "checks,fixed,proven",
+    [
+        ([(1, 1, 1)], frozenset(), False),
+        ([(1, 1, 1)], frozenset({(1, 1, 0)}), True),
+        ([(1, 1, 1)], frozenset({(1, 1, 1)}), False),
+        ([(1, 1, 1), (4, 7, 1)], frozenset({(1, 1, 0)}), True),
+        ([(1, 1, 1), (4, 7, 1)], frozenset({(1, 1, 1)}), False),
+        ([(4, 7, 1), (1, 1, 1)], frozenset({(1, 1, 0)}), False),
+    ],
+)
+def test_fixed_context_skips_only_proven_startup_branches(checks, fixed, proven):
+    from games.re2.event_presence import source_presence
+
+    # The opaque message command is on an alternate startup path. Its
+    # continuation cannot be assumed when that path has not been excluded.
+    body = b"\x51\0\x01\0\0\0"
+    tests = b"".join(bytes([0x21, *check]) for check in checks)
+    startup = (
+        bytes([6, 0])
+        + struct.pack("<H", len(tests) + len(body) + 2)
+        + tests
+        + body
+        + b"\x08\0"
+        + item_command(39, 1, 9)
+        + b"\x01\0"
+    )
+    data = synthetic_room(b"\x01\0", (startup,))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    creator = room["items"][0]["offset"]
+    result = source_presence(
+        data, room["programs"], {("17:0", creator)}, "startup", PRESENCE_FLAGS, fixed
+    )
+    assert result == {"kind": "required" if proven else "unresolved"}
+
+
+@pytest.mark.parametrize(
+    "fixed",
+    [frozenset({(1, 1, 0), (1, 1, 1)}), frozenset({(4, 6, 0)})],
+)
+def test_fixed_startup_context_rejects_conflicting_or_unsupported_inputs(fixed):
+    from games.re2.event_presence import source_presence
+
+    data = synthetic_room(b"\x01\0", (item_command(39, 1, 9) + b"\x01\0",))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    with pytest.raises(AssertionError):
+        source_presence(
+            data,
+            room["programs"],
+            {("17:0", room["items"][0]["offset"])},
+            "startup",
+            PRESENCE_FLAGS,
+            fixed,
+        )
+
+
+def test_fixed_collection_context_requires_whole_source_proof():
+    from games.re2.room_data import collection_presence
+
+    data = synthetic_room(b"\x01\0", (item_command(39, 1, 9) + b"\x01\0",))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    with pytest.raises(AssertionError, match="whole-source"):
+        collection_presence(
+            data,
+            room,
+            PRESENCE_FLAGS,
+            frozenset(i["offset"] for i in room["items"]),
+            frozenset({(1, 1, 0)}),
+        )
+
+
+@pytest.mark.parametrize(
+    "address,bit,safe",
+    [
+        (0x800D0D64, 0, True),
+        (0x800D0D64, 32, False),
+        (0x800D0D68, 0, False),
+        (0x800D3BE4, 31, False),
+        (0x800D3BE8, 0, True),
+    ],
+)
+def test_scenario_effect_pool_must_not_alias_fixed_context(
+    address, bit, safe, scenario_banks
+):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    packet = bytes([0x3A, 0, 47, 0, 0, 255]) + bytes(10)
+    data = synthetic_room(b"\x01\0", (packet + b"\x01\0",))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    banks = [*scenario_banks, {"bank": 99, "address_ps1": hex(address), "width": 8}]
+    proof = scenario_item_proofs(
+        data, room, [{"bank": 99, "bit": bit, "expected": 0}], banks
+    )
+    assert proof.fixed_context_preserved is safe
 
 
 @pytest.mark.parametrize(
@@ -2293,7 +2457,11 @@ def test_fixed_context_presence_requires_a_whole_source_proof(writer, scenario_b
     from games.re2.room_data import collection_presence
 
     required, conditional = collection_presence(
-        data, room, flags, frozenset(i["offset"] for i in room["items"])
+        data,
+        room,
+        flags,
+        frozenset(i["offset"] for i in room["items"]),
+        fixed_flags=frozenset(),
     )
     assert required == []
     assert conditional == (
