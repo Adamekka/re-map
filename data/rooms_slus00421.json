@@ -20,6 +20,7 @@
     "RE2-COLLECT-014",
     "RE2-COLLECT-015",
     "RE2-COLLECT-016",
+    "RE2-COLLECT-017",
     "RE2-SOURCE-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
@@ -337,6 +338,7 @@
       "stage": 0,
       "room": 0,
       "id": "00-00",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -478,6 +480,7 @@
       "stage": 0,
       "room": 1,
       "id": "00-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -603,6 +606,7 @@
       "stage": 0,
       "room": 2,
       "id": "00-02",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -713,6 +717,7 @@
       "stage": 0,
       "room": 3,
       "id": "00-03",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -800,6 +805,7 @@
       "stage": 0,
       "room": 4,
       "id": "00-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -914,6 +920,7 @@
       "stage": 0,
       "room": 5,
       "id": "00-05",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1080,6 +1087,7 @@
       "stage": 0,
       "room": 6,
       "id": "00-06",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1182,6 +1190,7 @@
       "stage": 0,
       "room": 7,
       "id": "00-07",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1318,6 +1327,7 @@
       "stage": 0,
       "room": 8,
       "id": "00-08",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1495,6 +1505,7 @@
       "stage": 0,
       "room": 9,
       "id": "00-09",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1627,6 +1638,7 @@
       "stage": 0,
       "room": 10,
       "id": "00-0a",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1781,6 +1793,7 @@
       "stage": 0,
       "room": 11,
       "id": "00-0b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -1937,6 +1950,7 @@
       "stage": 0,
       "room": 12,
       "id": "00-0c",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -2062,6 +2076,7 @@
       "stage": 0,
       "room": 13,
       "id": "00-0d",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -2175,6 +2190,7 @@
       "stage": 0,
       "room": 14,
       "id": "00-0e",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -2418,6 +2434,7 @@
       "stage": 0,
       "room": 15,
       "id": "00-0f",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [
         157
       ],
@@ -2600,6 +2617,7 @@
       "stage": 0,
       "room": 16,
       "id": "00-10",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -2714,6 +2732,7 @@
       "stage": 0,
       "room": 17,
       "id": "00-11",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -2854,6 +2873,7 @@
       "stage": 0,
       "room": 18,
       "id": "00-12",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -3083,12 +3103,38 @@
               ]
             ]
           }
+        },
+        {
+          "global_id": 145,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 0,
+                  "bit": 25,
+                  "expected": 1
+                },
+                {
+                  "bank": 1,
+                  "bit": 1,
+                  "expected": 0
+                },
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
         }
       ],
       "event_awards": [],
       "stage": 0,
       "room": 19,
       "id": "00-13",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [
         30
       ],
@@ -3260,6 +3306,7 @@
       "stage": 0,
       "room": 20,
       "id": "00-14",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -3496,6 +3543,7 @@
       "stage": 0,
       "room": 21,
       "id": "00-15",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [
         {
@@ -3639,6 +3687,7 @@
       "stage": 0,
       "room": 22,
       "id": "00-16",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -3741,6 +3790,7 @@
       "stage": 0,
       "room": 23,
       "id": "00-17",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -3855,6 +3905,7 @@
       "stage": 0,
       "room": 24,
       "id": "00-18",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -3957,6 +4008,7 @@
       "stage": 0,
       "room": 25,
       "id": "00-19",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -4073,6 +4125,7 @@
       "stage": 0,
       "room": 26,
       "id": "00-1a",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -4175,6 +4228,7 @@
       "stage": 0,
       "room": 27,
       "id": "00-1b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -4277,6 +4331,7 @@
       "stage": 0,
       "room": 28,
       "id": "00-1c",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -4379,6 +4434,7 @@
       "stage": 0,
       "room": 29,
       "id": "00-1d",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -4644,6 +4700,7 @@
       "stage": 1,
       "room": 0,
       "id": "01-00",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -4810,6 +4867,7 @@
       "stage": 1,
       "room": 1,
       "id": "01-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -5020,6 +5078,21 @@
           }
         },
         {
+          "global_id": 116,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 0,
+                  "bit": 25,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
           "global_id": 249,
           "presence": {
             "kind": "conditions",
@@ -5070,6 +5143,7 @@
       "stage": 1,
       "room": 2,
       "id": "01-02",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [
         116,
         249
@@ -5246,6 +5320,7 @@
       "stage": 1,
       "room": 3,
       "id": "01-03",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [
         36
       ],
@@ -5399,6 +5474,7 @@
       "stage": 1,
       "room": 4,
       "id": "01-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -5516,6 +5592,7 @@
       "stage": 1,
       "room": 5,
       "id": "01-05",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -5670,6 +5747,7 @@
       "stage": 1,
       "room": 6,
       "id": "01-06",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -5886,6 +5964,7 @@
       "stage": 1,
       "room": 7,
       "id": "01-07",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -6105,12 +6184,28 @@
               ]
             ]
           }
+        },
+        {
+          "global_id": 216,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 0,
+                  "bit": 25,
+                  "expected": 1
+                }
+              ]
+            ]
+          }
         }
       ],
       "event_awards": [],
       "stage": 1,
       "room": 8,
       "id": "01-08",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [
         158
       ],
@@ -6273,6 +6368,7 @@
       "stage": 1,
       "room": 9,
       "id": "01-09",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [
         70
       ],
@@ -6434,6 +6530,7 @@
       "stage": 1,
       "room": 10,
       "id": "01-0a",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -6644,6 +6741,7 @@
       "stage": 1,
       "room": 11,
       "id": "01-0b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -6832,6 +6930,7 @@
       "stage": 1,
       "room": 12,
       "id": "01-0c",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -6975,6 +7074,7 @@
       "stage": 1,
       "room": 13,
       "id": "01-0d",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -7210,6 +7310,7 @@
       "stage": 1,
       "room": 14,
       "id": "01-0e",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -7372,6 +7473,7 @@
       "stage": 1,
       "room": 15,
       "id": "01-0f",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -7527,12 +7629,28 @@
               ]
             ]
           }
+        },
+        {
+          "global_id": 219,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 0,
+                  "bit": 25,
+                  "expected": 1
+                }
+              ]
+            ]
+          }
         }
       ],
       "event_awards": [],
       "stage": 1,
       "room": 16,
       "id": "01-10",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [
         {
@@ -7744,6 +7862,7 @@
       "stage": 1,
       "room": 17,
       "id": "01-11",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -7858,6 +7977,7 @@
       "stage": 1,
       "room": 18,
       "id": "01-12",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -7979,6 +8099,7 @@
       "stage": 1,
       "room": 19,
       "id": "01-13",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8141,6 +8262,7 @@
       "stage": 1,
       "room": 20,
       "id": "01-14",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8242,6 +8364,7 @@
       "stage": 1,
       "room": 21,
       "id": "01-15",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8356,6 +8479,7 @@
       "stage": 1,
       "room": 22,
       "id": "01-16",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8496,6 +8620,7 @@
       "stage": 1,
       "room": 25,
       "id": "01-19",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8651,6 +8776,7 @@
       "stage": 1,
       "room": 26,
       "id": "01-1a",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8821,6 +8947,7 @@
       "stage": 1,
       "room": 27,
       "id": "01-1b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -8923,6 +9050,7 @@
       "stage": 2,
       "room": 0,
       "id": "02-00",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9066,6 +9194,7 @@
       "stage": 2,
       "room": 1,
       "id": "02-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9168,6 +9297,7 @@
       "stage": 2,
       "room": 2,
       "id": "02-02",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9300,6 +9430,7 @@
       "stage": 2,
       "room": 3,
       "id": "02-03",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9417,6 +9548,7 @@
       "stage": 2,
       "room": 4,
       "id": "02-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9534,6 +9666,7 @@
       "stage": 2,
       "room": 5,
       "id": "02-05",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9633,6 +9766,7 @@
       "stage": 2,
       "room": 6,
       "id": "02-06",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9762,6 +9896,7 @@
       "stage": 2,
       "room": 7,
       "id": "02-07",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9864,6 +9999,7 @@
       "stage": 2,
       "room": 8,
       "id": "02-08",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -9966,6 +10102,7 @@
       "stage": 2,
       "room": 9,
       "id": "02-09",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10068,6 +10205,7 @@
       "stage": 2,
       "room": 10,
       "id": "02-0a",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10234,6 +10372,7 @@
       "stage": 2,
       "room": 11,
       "id": "02-0b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10358,6 +10497,7 @@
       "stage": 2,
       "room": 12,
       "id": "02-0c",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10440,6 +10580,7 @@
       "stage": 2,
       "room": 13,
       "id": "02-0d",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10580,6 +10721,7 @@
       "stage": 3,
       "room": 0,
       "id": "03-00",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10820,6 +10962,7 @@
       "stage": 3,
       "room": 1,
       "id": "03-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -10945,6 +11088,7 @@
       "stage": 3,
       "room": 2,
       "id": "03-02",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11159,6 +11303,7 @@
       "stage": 3,
       "room": 3,
       "id": "03-03",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11306,6 +11451,7 @@
       "stage": 3,
       "room": 4,
       "id": "03-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11457,6 +11603,7 @@
       "stage": 3,
       "room": 5,
       "id": "03-05",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11574,6 +11721,7 @@
       "stage": 3,
       "room": 7,
       "id": "03-07",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11732,6 +11880,7 @@
       "stage": 3,
       "room": 8,
       "id": "03-08",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11879,6 +12028,7 @@
       "stage": 3,
       "room": 9,
       "id": "03-09",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -11981,6 +12131,7 @@
       "stage": 3,
       "room": 10,
       "id": "03-0a",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12083,6 +12234,7 @@
       "stage": 3,
       "room": 11,
       "id": "03-0b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12154,6 +12306,7 @@
       "stage": 3,
       "room": 12,
       "id": "03-0c",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12256,6 +12409,7 @@
       "stage": 3,
       "room": 13,
       "id": "03-0d",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12396,6 +12550,7 @@
       "stage": 3,
       "room": 14,
       "id": "03-0e",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12467,6 +12622,7 @@
       "stage": 3,
       "room": 15,
       "id": "03-0f",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12659,6 +12815,7 @@
       "stage": 3,
       "room": 16,
       "id": "03-10",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12746,6 +12903,7 @@
       "stage": 4,
       "room": 0,
       "id": "04-00",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12860,6 +13018,7 @@
       "stage": 4,
       "room": 1,
       "id": "04-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -12980,11 +13139,19 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 21,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 4,
       "room": 2,
       "id": "04-02",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -13162,6 +13329,7 @@
       "stage": 4,
       "room": 3,
       "id": "04-03",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -13287,6 +13455,7 @@
       "stage": 4,
       "room": 4,
       "id": "04-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -13490,6 +13659,7 @@
       "stage": 4,
       "room": 5,
       "id": "04-05",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -13615,6 +13785,7 @@
       "stage": 4,
       "room": 6,
       "id": "04-06",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -13758,6 +13929,7 @@
       "stage": 4,
       "room": 7,
       "id": "04-07",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -13946,6 +14118,7 @@
       "stage": 4,
       "room": 8,
       "id": "04-08",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [
         {
@@ -14040,6 +14213,7 @@
       "stage": 4,
       "room": 9,
       "id": "04-09",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14142,6 +14316,7 @@
       "stage": 5,
       "room": 0,
       "id": "05-00",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14259,6 +14434,7 @@
       "stage": 5,
       "room": 1,
       "id": "05-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14384,6 +14560,7 @@
       "stage": 5,
       "room": 2,
       "id": "05-02",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14557,6 +14734,7 @@
       "stage": 5,
       "room": 3,
       "id": "05-03",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14656,6 +14834,7 @@
       "stage": 5,
       "room": 4,
       "id": "05-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14743,6 +14922,7 @@
       "stage": 5,
       "room": 5,
       "id": "05-05",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -14905,6 +15085,7 @@
       "stage": 5,
       "room": 6,
       "id": "05-06",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15052,6 +15233,7 @@
       "stage": 5,
       "room": 7,
       "id": "05-07",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15169,6 +15351,7 @@
       "stage": 5,
       "room": 8,
       "id": "05-08",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15297,6 +15480,7 @@
       "stage": 5,
       "room": 9,
       "id": "05-09",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15455,6 +15639,7 @@
       "stage": 5,
       "room": 10,
       "id": "05-0a",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15602,6 +15787,7 @@
       "stage": 5,
       "room": 11,
       "id": "05-0b",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15761,6 +15947,7 @@
       "stage": 5,
       "room": 12,
       "id": "05-0c",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -15882,6 +16069,7 @@
       "stage": 5,
       "room": 13,
       "id": "05-0d",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16045,6 +16233,7 @@
       "stage": 5,
       "room": 14,
       "id": "05-0e",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16155,6 +16344,7 @@
       "stage": 5,
       "room": 15,
       "id": "05-0f",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16302,6 +16492,7 @@
       "stage": 5,
       "room": 16,
       "id": "05-10",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16419,6 +16610,7 @@
       "stage": 5,
       "room": 17,
       "id": "05-11",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16521,6 +16713,7 @@
       "stage": 5,
       "room": 18,
       "id": "05-12",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16608,6 +16801,7 @@
       "stage": 5,
       "room": 19,
       "id": "05-13",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16737,6 +16931,7 @@
       "stage": 5,
       "room": 20,
       "id": "05-14",
+      "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -16891,6 +17086,7 @@
       "stage": 5,
       "room": 21,
       "id": "05-15",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17042,6 +17238,7 @@
       "stage": 5,
       "room": 22,
       "id": "05-16",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17144,6 +17341,7 @@
       "stage": 5,
       "room": 23,
       "id": "05-17",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17246,6 +17444,7 @@
       "stage": 6,
       "room": 0,
       "id": "06-00",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17371,6 +17570,7 @@
       "stage": 6,
       "room": 1,
       "id": "06-01",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17470,6 +17670,7 @@
       "stage": 6,
       "room": 2,
       "id": "06-02",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17587,6 +17788,7 @@
       "stage": 6,
       "room": 3,
       "id": "06-03",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     },
@@ -17697,6 +17899,7 @@
       "stage": 6,
       "room": 4,
       "id": "06-04",
+      "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     }

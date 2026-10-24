@@ -10,7 +10,11 @@ from pathlib import Path
 from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
-from games.re2.scenario_items import scenario_flags, scenario_item_candidates
+from games.re2.scenario_items import (
+    scenario_flags,
+    scenario_item_candidates,
+    scenario_presence_flags,
+)
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
@@ -148,7 +152,7 @@ class Re2Profile:
         supported = raw["presence_condition_flags"]
         condition_flags = frozenset((row["bank"], row["bit"]) for row in supported)
 
-        def valid_presence(presence):
+        def valid_presence(presence, allowed_flags):
             if type(presence) is not dict or presence.get("kind") not in (
                 "unresolved",
                 "required",
@@ -173,7 +177,7 @@ class Re2Profile:
                             and test["bank"] in banks
                             and type(test["bit"]) is int
                             and 0 <= test["bit"] < banks[test["bank"]][1] * 8
-                            and (test["bank"], test["bit"]) in condition_flags
+                            and (test["bank"], test["bit"]) in allowed_flags
                             and type(test["expected"]) is int
                             and test["expected"] in (0, 1)
                             for test in clause
@@ -187,6 +191,11 @@ class Re2Profile:
 
         award_flags, pickup_flags = set(), set()
         for key, room in rooms.items():
+            if type(room.get("fixed_context_preserved")) is not bool:
+                raise ValueError("invalid or missing RE2 fixed-context presence proof")
+            allowed_flags = scenario_presence_flags(
+                condition_flags, fixed, room["fixed_context_preserved"]
+            )
             bank = (
                 layout["item_bank_early"]
                 if room["stage"] < layout["item_bank_stage_boundary"]
@@ -245,7 +254,7 @@ class Re2Profile:
                         raise ValueError("aliased RE2 event award collection rule")
                     award_flags.add(identity)
                 presence = award.get("presence")
-                if not valid_presence(presence) or (
+                if not valid_presence(presence, condition_flags) or (
                     presence["kind"] != "unresolved" and collection["kind"] != "flag"
                 ):
                     raise ValueError("invalid or unbound RE2 event award presence rule")
@@ -388,7 +397,7 @@ class Re2Profile:
                         }
                     )
                     != 1
-                    or not valid_presence(rule["presence"])
+                    or not valid_presence(rule["presence"], allowed_flags)
                     or rule["presence"]["kind"] == "unresolved"
                     for rule in conditional
                 )
@@ -396,6 +405,10 @@ class Re2Profile:
             ):
                 raise ValueError("invalid or missing RE2 conditional pickup presence")
             absent = room.get("scenario_absent_item_ids")
+            if not room["fixed_context_preserved"] and (absent or variants):
+                raise ValueError(
+                    "RE2 scenario item proofs require a preserved fixed context"
+                )
             if (
                 type(absent) is not list
                 or bool(absent)
@@ -433,6 +446,10 @@ class Re2Profile:
                 )
             ):
                 raise ValueError("invalid or missing RE2 scenario pickup exclusions")
+            if room["fixed_context_preserved"] and not room["candidate_list_complete"]:
+                raise ValueError(
+                    "RE2 fixed-context presence proof needs a complete source"
+                )
             if any(
                 not 0 <= proof["offset"] <= room["size"] - proof["width"]
                 for proof in room["proofs"]

@@ -1,8 +1,9 @@
-"""Fixed-context identity/exclusion proofs. RE2-COLLECT-007/008/011/014/016."""
+"""Fixed-context item proofs. RE2-COLLECT-007/008/011/014/016/017."""
 
 from __future__ import annotations
 
 import struct
+from dataclasses import dataclass
 
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
@@ -12,6 +13,32 @@ from games.re2.event_presence import (
 
 # The pinned native actor search and shadow selector share this enemy table.
 ENEMY_SLOT_COUNT = 32
+
+
+@dataclass(frozen=True)
+class ScenarioItemProof:
+    fixed_context_preserved: bool
+    absent_item_ids: list[int]
+    item_variants: list[dict]
+
+    def __post_init__(self) -> None:
+        assert type(self.fixed_context_preserved) is bool
+        assert self.fixed_context_preserved or (
+            not self.absent_item_ids and not self.item_variants
+        ), "item proofs require a preserved fixed context"
+
+
+def scenario_presence_flags(
+    condition_flags: frozenset[tuple[int, int]],
+    fixed_flags: list[dict[str, int]],
+    context_preserved: bool,
+) -> frozenset[tuple[int, int]]:
+    assert type(context_preserved) is bool
+    # A runtime gate alone cannot establish an earlier creator's branch.
+    # Admit its predicates only after the whole source preserves that context.
+    return condition_flags | frozenset(
+        (row["bank"], row["bit"]) for row in fixed_flags if context_preserved
+    )
 
 
 def scenario_flags(profile: dict) -> list[dict[str, int]]:
@@ -65,12 +92,12 @@ def scenario_flags(profile: dict) -> list[dict[str, int]]:
 
 def scenario_item_proofs(
     data: bytes, room: dict, flags: list[dict[str, int]], flag_banks: list[dict]
-) -> tuple[list[int], list[dict]]:
+) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
     assert fixed and len(fixed) == len(flags)
     if not room["candidate_list_complete"]:
-        return [], []
+        return ScenarioItemProof(False, [], [])
     banks = {
         row["bank"]: (int(row["address_ps1"], 0), row["width"]) for row in flag_banks
     }
@@ -136,7 +163,7 @@ def scenario_item_proofs(
             if any(
                 row["opcode"] in (0x0F, 0x10, 0x11, 0x12) for row in program["commands"]
             ):
-                return [], []
+                return ScenarioItemProof(False, [], [])
             loops, bodies, conditions = [], [], []
             for row in program["commands"]:
                 # The opaque creator set skips the reachability walk below.
@@ -149,15 +176,15 @@ def scenario_item_proofs(
                         or test is None
                         or test["opcode"] not in predicates | {0x21}
                     ):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                     conditions.append(row["target"])
                 elif row["opcode"] == 8:
                     if not conditions or row["next"] != conditions.pop():
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                 elif row["opcode"] == 7 or (
                     row["opcode"] in predicates | {0x21} and not conditions
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 if row["opcode"] == 0x0D:
                     limit = (
                         row["next"]
@@ -168,26 +195,26 @@ def scenario_item_proofs(
                         or limit <= row["next"]
                         or limit not in commands[key]
                     ):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                     loops.append((row["next"], limit))
                 elif row["opcode"] == 0x0E:
                     if not loops:
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                     start, limit = loops.pop()
                     if row["next"] != limit:
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                     bodies.append((start, limit))
             if loops or conditions:
-                return [], []
+                return ScenarioItemProof(False, [], [])
             for start, limit in bodies:
                 for row in program["commands"]:
                     inside = start <= row["offset"] < limit
                     if inside and (row["kind"] == "end" or row["opcode"] == 0x17):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                     if row["kind"] in ("if", "jump") and inside != (
                         start <= row["target"] < limit
                     ):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
             opaque_loops.add(key)
             continue
         if not any(
@@ -200,10 +227,10 @@ def scenario_item_proofs(
         loops = []
         for row in program["commands"]:
             if row["opcode"] in (6, 7, 8, 0x17):
-                return [], []
+                return ScenarioItemProof(False, [], [])
             if row["opcode"] in (0x0F, 0x11):
                 if len(loops) >= 4:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 loops.append(
                     (
                         row["opcode"],
@@ -218,10 +245,10 @@ def scenario_item_proofs(
                         or test["opcode"] not in predicates | {0x21}
                         or test["next"] - test["offset"] != data[row["offset"] + 1]
                     ):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
             elif row["opcode"] in (0x10, 0x12):
                 if not loops:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 opening, limit = loops.pop()
                 if row["opcode"] == 0x10:
                     if (
@@ -229,7 +256,7 @@ def scenario_item_proofs(
                         or row["next"] != limit
                         or limit not in commands[key]
                     ):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
                 else:
                     test = commands[key].get(row["next"])
                     if (
@@ -240,9 +267,9 @@ def scenario_item_proofs(
                         or test["next"] != limit
                         or limit not in commands[key]
                     ):
-                        return [], []
+                        return ScenarioItemProof(False, [], [])
         if loops:
-            return [], []
+            return ScenarioItemProof(False, [], [])
         opaque_loops.add(key)
     reset_ids = set()
     slot_kinds = {}
@@ -262,7 +289,7 @@ def scenario_item_proofs(
             if kind == "call":
                 target = f"17:{row['procedure']}"
                 if target not in programs:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif kind == "flag_write":
                 if (
                     row["bank"] not in banks
@@ -270,24 +297,24 @@ def scenario_item_proofs(
                     or row["operation"] not in FLAG_WRITE_OPERATIONS
                     or (row["bank"], row["bit"]) in forbidden
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif kind == "end":
                 if row["opcode"] != 1 or data[row["offset"] + 1] != 0:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif kind == "interaction":
                 # Generic AOT creators must not hide an uncatalogued item.
                 if row["interaction"] == 2:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif kind == "item":
                 if data[row["offset"] + 2] not in (0, 2):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif kind == "reset":
                 # A reset is another possible creator even without a matching
                 # live descriptor. Its identity must never be excluded.
                 continue
             elif row["opcode"] in (0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12):
                 if key not in opaque_loops:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x1D:
                 width = 2 if data[row["offset"] + 3] else 1
                 target = row["next"] + data[row["offset"] + 2]
@@ -312,11 +339,11 @@ def scenario_item_proofs(
                     or width == 2
                     and target % 2
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x37:
                 collision = struct.unpack_from("<I", data, 0x20)[0]
                 if not collision or collision % 4 or collision + 16 > len(data):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 count = struct.unpack_from("<I", data, collision + 4)[0]
                 limit = min(
                     [len(data)]
@@ -339,7 +366,7 @@ def scenario_item_proofs(
                         for source in programs.values()
                     )
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x60:
                 category, index = data[row["offset"] + 1 : row["offset"] + 3]
                 # Other selectors leave the native shadow pointer uninitialized;
@@ -347,17 +374,17 @@ def scenario_item_proofs(
                 if category not in (1, 2, 3) or (
                     category == 3 and index >= ENEMY_SLOT_COUNT
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 4:
                 if (
                     data[row["offset"] + 1 : row["offset"] + 3] != b"\xff\x18"
                     or f"17:{data[row['offset'] + 3]}" not in programs
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x47:
                 kinds = slot_kinds.get(data[row["offset"] + 1], set())
                 if not kinds or not kinds <= {0, 1, 2, 5}:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 # Item and door dispatch also set native status bits. Binding
                 # an allowed interaction kind alone does not preserve them.
                 if any(
@@ -368,7 +395,7 @@ def scenario_item_proofs(
                     )
                     if interaction in kinds
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x2E:
                 work, index = data[row["offset"] + 1 : row["offset"] + 3]
                 # Work_set reads a signed index without checking bounds. The
@@ -381,7 +408,7 @@ def scenario_item_proofs(
                     or work == 4
                     and index >= 128
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             elif not (
                 kind in ("if", "flag_check", "door")
                 or row["opcode"] in predicates
@@ -389,7 +416,7 @@ def scenario_item_proofs(
                 or row["opcode"] == 7
                 or row["opcode"] in fallthrough
             ):
-                return [], []
+                return ScenarioItemProof(False, [], [])
             # These native camera/audio commands write named status bits, even
             # though they preserve ordinary item creation. Reject overlap with
             # any profile-fixed bit instead of assuming this profile's mask.
@@ -400,7 +427,7 @@ def scenario_item_proofs(
                     else status_writes[row["opcode"]]
                 )
                 if bank not in banks or fixed_words.get(banks[bank][0], 0) & mask:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
     # Also reject raw writer candidates outside decoded paths, within procedure
     # extents. Geometry and texture bytes outside scripts are not commands.
     # False positives withhold proof rather than inventing a fixed assumption.
@@ -409,7 +436,7 @@ def scenario_item_proofs(
         for bank, bit in forbidden
         for program in programs.values()
     ):
-        return [], []
+        return ScenarioItemProof(False, [], [])
 
     # Loop procedures contribute every decoded creator, independently of any
     # fixed predicate. A wait cannot hide an alternative creator from proof.
@@ -422,7 +449,7 @@ def scenario_item_proofs(
     reached = {(key, position) for key in opaque_loops for position in commands[key]}
     steps = len(reached)
     if steps > 4096:
-        return [], []
+        return ScenarioItemProof(False, [], [])
     while pending:
         key, position, conditions = pending.pop()
         state = key, position, conditions
@@ -430,7 +457,7 @@ def scenario_item_proofs(
             continue
         steps += 1
         if steps > 4096 or position not in commands[key]:
-            return [], []
+            return ScenarioItemProof(False, [], [])
         seen.add(state)
         reached.add((key, position))
         row = commands[key][position]
@@ -448,13 +475,13 @@ def scenario_item_proofs(
                 steps += 1
                 position = test["next"]
                 if steps > 4096:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
             if not tests:
                 if (
                     position not in commands[key]
                     or commands[key][position]["opcode"] not in predicates
                 ):
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 position = commands[key][position]["next"]
             branches = (False, True)
             if (
@@ -472,18 +499,18 @@ def scenario_item_proofs(
                 # This source family has five nested actor predicates. Keep
                 # an explicit analysis bound while retaining every branch.
                 if len(conditions) >= 8:
-                    return [], []
+                    return ScenarioItemProof(False, [], [])
                 pending.append((key, position, conditions + (row["target"],)))
         elif row["kind"] == "flag_check" or row["opcode"] in predicates:
             if not conditions:
-                return [], []
+                return ScenarioItemProof(False, [], [])
             # Opaque predicates can fail after another condition succeeded.
             # Include their false continuation as well as their true one.
             pending.append((key, conditions[-1], conditions[:-1]))
             pending.append((key, row["next"], conditions))
         elif row["opcode"] in (7, 8):
             if not conditions:
-                return [], []
+                return ScenarioItemProof(False, [], [])
             pending.append(
                 (
                     key,
@@ -529,7 +556,7 @@ def scenario_item_proofs(
                     "offsets": sorted(item["offset"] for item in possible),
                 }
             )
-    return absent, variants
+    return ScenarioItemProof(True, absent, variants)
 
 
 def scenario_item_candidates(room: dict) -> list[dict]:

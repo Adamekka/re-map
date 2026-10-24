@@ -170,14 +170,25 @@ def test_opposite_scenario_condition_cannot_publish_or_record_visits(
 
 
 @pytest.mark.parametrize("incompatible_acquired", [False, True])
-def test_generated_identity_resolves_collection_without_inventing_presence(
-    snapshot, incompatible_acquired
+@pytest.mark.parametrize("presence_proven", [False, True])
+def test_generated_identity_uses_only_proven_departed_presence_and_rewinds(
+    snapshot, incompatible_acquired, presence_proven
 ):
-    """RE2-COLLECT-016: an earlier load restores uncertainty, not clearance."""
+    """RE2-COLLECT-017: fresh presence and acquisition rebuild on each rewind."""
     profile, _, put, read = snapshot
     source = profile.rooms["00-13"]
     assert source["scenario_absent_item_ids"] == [30]
     assert source["scenario_item_variants"] == [{"global_id": 145, "offsets": [3822]}]
+    if not presence_proven:
+        source = {
+            **source,
+            "conditional_item_presence": [
+                rule
+                for rule in source["conditional_item_presence"]
+                if rule["global_id"] != 145
+            ],
+        }
+        profile = replace(profile, rooms={**profile.rooms, "00-13": source})
     tracker = Tracker()
     tracker.mark_current(RoomId(0, 0x13))
     put(0x800CC9E8, 0x2000 | (2 if incompatible_acquired else 0), 4)
@@ -190,10 +201,22 @@ def test_generated_identity_resolves_collection_without_inventing_presence(
         assert record.collected_items == (2 if acquired else 1)
         assert [(item.label, item.state, item.quantity) for item in record.items] == [
             (profile.names["items"]["32"], "taken", 1),
-            (profile.names["items"]["20"], "taken" if acquired else "unknown", 15),
+            (
+                profile.names["items"]["20"],
+                "taken"
+                if acquired
+                else "uncollected"
+                if presence_proven
+                else "unknown",
+                15,
+            ),
         ]
         assert record.completion is (
-            RoomCompletion.Cleared if acquired else RoomCompletion.Unknown
+            RoomCompletion.Cleared
+            if acquired
+            else RoomCompletion.Incomplete
+            if presence_proven
+            else RoomCompletion.Unknown
         )
         if visits is None:
             visits = tracker.region_visits.copy()

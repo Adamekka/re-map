@@ -30,6 +30,7 @@ from games.re2.scenario_items import (
     scenario_flags,
     scenario_item_candidates,
     scenario_item_proofs,
+    scenario_presence_flags,
 )
 
 AREA_NAMES = (
@@ -151,17 +152,18 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     )
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
-        room["scenario_absent_item_ids"], room["scenario_item_variants"] = (
-            scenario_item_proofs(
-                sources[room["id"]], room, fixed_flags, profile["flag_banks"]
-            )
+        proof = scenario_item_proofs(
+            sources[room["id"]], room, fixed_flags, profile["flag_banks"]
         )
-        if room["scenario_item_variants"]:
+        room["fixed_context_preserved"] = proof.fixed_context_preserved
+        room["scenario_absent_item_ids"] = proof.absent_item_ids
+        room["scenario_item_variants"] = proof.item_variants
+        if proof.fixed_context_preserved:
             room["collection_item_ids"], room["conditional_item_presence"] = (
                 collection_presence(
                     sources[room["id"]],
                     room,
-                    condition_flags,
+                    scenario_presence_flags(condition_flags, fixed_flags, True),
                     frozenset(
                         item["offset"] for item in scenario_item_candidates(room)
                     ),
@@ -439,6 +441,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-014",
                 "RE2-COLLECT-015",
                 "RE2-COLLECT-016",
+                "RE2-COLLECT-017",
                 "RE2-SOURCE-001",
             ],
             "fixed_scenario_flags": fixed_flags,

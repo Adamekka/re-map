@@ -741,3 +741,45 @@ def test_scenario_item_variants_are_required_and_bound_to_catalog(tmp_path, case
     with pytest.raises(ValueError) as error:
         Re2Profile.load(path)
     assert str(error.value) == f"RE2 scenario item variants in 00-15: {expected[case]}"
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "integer",
+        "null",
+        "unproved-condition",
+        "unproved-identity",
+        "incomplete",
+    ],
+)
+def test_fixed_context_presence_certificate_is_required_and_bound_to_rules(
+    tmp_path, case
+):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(r for r in document["rooms"] if r["id"] == "00-13")
+    if case == "missing":
+        del room["fixed_context_preserved"]
+    elif case in ("integer", "null"):
+        room["fixed_context_preserved"] = 1 if case == "integer" else None
+    elif case in ("unproved-condition", "unproved-identity"):
+        room["fixed_context_preserved"] = False
+        if case == "unproved-identity":
+            room["conditional_item_presence"] = [
+                r for r in room["conditional_item_presence"] if r["global_id"] != 145
+            ]
+    else:
+        room["candidate_list_complete"] = False
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(
+        ValueError, match="RE2.*context|RE2.*presence|RE2.*exclusion|RE2.*incomplete"
+    ):
+        Re2Profile.load(path)

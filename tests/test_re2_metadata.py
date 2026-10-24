@@ -1165,14 +1165,21 @@ def test_conditional_pickup_proof_preserves_identity_and_startup_conditions(
     )
 
 
-def test_volatile_startup_checks_never_become_fresh_presence_conditions():
+def test_fixed_context_does_not_expand_the_general_stable_flag_whitelist():
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    assert {"bank": 0, "bit": 25} not in raw["presence_condition_flags"]
     rooms = json.loads((ROOT / "data/rooms_slus00421.json").read_text())["rooms"]
     room = next(room for room in rooms if room["id"] == "01-02")
-    # Bank zero bit 25 changes before normal gameplay, outside these scripts.
-    # It cannot authorize either complementary creator using its live value.
-    assert not any(
-        rule["global_id"] in (115, 116) for rule in room["conditional_item_presence"]
-    )
+    # RE2-COLLECT-017 permits the mode predicate only after whole-source
+    # validation. The incompatible branch still cannot override exclusion.
+    assert room["fixed_context_preserved"]
+    assert 116 in room["scenario_absent_item_ids"]
+    assert next(
+        rule for rule in room["conditional_item_presence"] if rule["global_id"] == 116
+    )["presence"] == {
+        "kind": "conditions",
+        "any_of": [[{"bank": 0, "bit": 25, "expected": 0}]],
+    }
     assert next(
         rule for rule in room["conditional_item_presence"] if rule["global_id"] == 114
     )["presence"] == {"kind": "required"}
@@ -1420,7 +1427,7 @@ def test_scenario_exclusion_proves_every_creator_impossible(
         room["candidate_list_complete"] = False
     assert scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
-    )[0] == ([9] if excluded else [])
+    ).absent_item_ids == ([9] if excluded else [])
 
 
 @pytest.mark.parametrize("mode", [0, 1])
@@ -1459,7 +1466,7 @@ def test_mode_exclusion_withholds_proof_for_direct_and_aliased_writers(
     banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7CE4", "width": 4}]
     assert scenario_item_proofs(
         data, room, [{"bank": 0, "bit": 25, "expected": mode}], banks
-    )[0] == ([9] if mode and writer in ("none", "unrelated") else [])
+    ).absent_item_ids == ([9] if mode and writer in ("none", "unrelated") else [])
 
 
 @pytest.mark.parametrize("fixed,excluded", [(0, True), (1, False)])
@@ -1487,7 +1494,7 @@ def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_
     )
     assert scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": fixed}], scenario_banks
-    )[0] == ([9] if excluded else [])
+    ).absent_item_ids == ([9] if excluded else [])
 
 
 @pytest.mark.parametrize(
@@ -1653,7 +1660,7 @@ def test_scripted_scenario_exclusion_audits_mutations_and_all_creators(
         presence_counters=PRESENCE_COUNTERS,
         presence_writes=PRESENCE_WRITES,
     )
-    assert scenario_item_proofs(data, room, fixed, scenario_banks)[0] == (
+    assert scenario_item_proofs(data, room, fixed, scenario_banks).absent_item_ids == (
         [9] if excluded else []
     )
 
@@ -1732,9 +1739,10 @@ def test_scenario_variant_proof_requires_every_possible_creator(
     if case == "incomplete":
         room["candidate_list_complete"] = False
     banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7D04", "width": 4}]
-    absent, variants = scenario_item_proofs(
+    proof = scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": fixed}], banks
     )
+    absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == []
     if case != "valid":
         assert variants == []
@@ -1801,9 +1809,10 @@ def test_scenario_loops_keep_every_creator_possible(
     room = decode_room(
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
-    absent, variants = scenario_item_proofs(
+    proof = scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
     )
+    absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == ([9] if not malformed and loop_gid != 9 else [])
     assert variants == (
         [
@@ -1856,9 +1865,10 @@ def test_scenario_shadow_selector_bounds(
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     assert room["candidate_list_complete"]
-    assert scenario_item_proofs(
+    proof = scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
-    ) == ([9] if safe else [], [])
+    )
+    assert (proof.absent_item_ids, proof.item_variants) == ([9] if safe else [], [])
 
 
 @pytest.mark.parametrize(
@@ -1911,9 +1921,10 @@ def test_scenario_copy_can_only_patch_numeric_actor_operands(
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     assert room["candidate_list_complete"]
-    assert scenario_item_proofs(
+    proof = scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
-    ) == ([9] if safe else [], [])
+    )
+    assert (proof.absent_item_ids, proof.item_variants) == ([9] if safe else [], [])
 
 
 @pytest.mark.parametrize(
@@ -1963,9 +1974,13 @@ def test_scenario_collision_store_stays_in_its_section(
         bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     assert room["candidate_list_complete"]
-    assert scenario_item_proofs(
+    proof = scenario_item_proofs(
         bytes(data), room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
-    ) == ([9] if case in ("valid", "last") else [], [])
+    )
+    assert (proof.absent_item_ids, proof.item_variants) == (
+        [9] if case in ("valid", "last") else [],
+        [],
+    )
 
 
 @pytest.mark.parametrize("count", [0, 1, 65535])
@@ -1991,9 +2006,10 @@ def test_scenario_for_procedure_never_prunes_a_creator(
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     assert room["candidate_list_complete"]
-    absent, variants = scenario_item_proofs(
+    proof = scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
     )
+    absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == ([9] if body_gid == 10 else [])
     assert variants == (
         [{"global_id": 9, "offsets": [room["items"][-1]["offset"]]}]
@@ -2076,6 +2092,73 @@ def test_scenario_for_control_flow_bounds(case, incompatible_item, scenario_bank
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     assert room["candidate_list_complete"]
-    assert scenario_item_proofs(
+    proof = scenario_item_proofs(
         data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
-    ) == ([9] if case == "balanced" else [], [])
+    )
+    assert (proof.absent_item_ids, proof.item_variants) == (
+        [9] if case == "balanced" else [],
+        [],
+    )
+
+
+@pytest.mark.parametrize(
+    "writer",
+    ["none", "unrelated", "direct", "alias", "raw", "unsupported", "incomplete"],
+)
+def test_fixed_context_presence_requires_a_whole_source_proof(writer, scenario_banks):
+    from games.re2.scenario_items import scenario_item_proofs, scenario_presence_flags
+
+    startup = (
+        bytes([6, 0, 28, 0, 0x21, 0, 25, 1])
+        + item_command(20, 15, 9)
+        + bytes([8, 0, 1, 0])
+    )
+    extra = bytes([1, 0])
+    if writer in ("direct", "alias", "unrelated"):
+        extra = bytes(
+            [
+                0x22,
+                99 if writer == "alias" else 0,
+                24 if writer == "unrelated" else 25,
+                1,
+                1,
+                0,
+            ]
+        )
+    elif writer == "raw":
+        extra += bytes([0x22, 0, 25, 1])
+    elif writer == "unsupported":
+        extra = bytes([0x4A, 0, 1, 0])
+    data = synthetic_room(bytes([1, 0]), (startup, extra))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    if writer == "incomplete":
+        room["candidate_list_complete"] = False
+    banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7CE4", "width": 4}]
+    fixed = [{"bank": 0, "bit": 25, "expected": 1}]
+    proof = scenario_item_proofs(data, room, fixed, banks)
+    assert not proof.absent_item_ids and not proof.item_variants
+    assert proof.fixed_context_preserved is (writer in ("none", "unrelated"))
+    flags = scenario_presence_flags(
+        PRESENCE_FLAGS, fixed, proof.fixed_context_preserved
+    )
+    from games.re2.room_data import collection_presence
+
+    required, conditional = collection_presence(
+        data, room, flags, frozenset(i["offset"] for i in room["items"])
+    )
+    assert required == []
+    assert conditional == (
+        [
+            {
+                "global_id": 9,
+                "presence": {
+                    "kind": "conditions",
+                    "any_of": [[{"bank": 0, "bit": 25, "expected": 1}]],
+                },
+            }
+        ]
+        if proof.fixed_context_preserved
+        else []
+    )
