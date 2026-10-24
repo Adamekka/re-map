@@ -1817,3 +1817,265 @@ def test_scenario_loops_keep_every_creator_possible(
         if not malformed and loop_gid == 9
         else []
     )
+
+
+@pytest.fixture
+def incompatible_item():
+    return (
+        bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+        + item_command(20, 15, 9)
+        + bytes([8, 0, 1, 0])
+    )
+
+
+@pytest.mark.parametrize(
+    "category,index,safe",
+    [
+        (1, 0, True),
+        (1, 255, True),
+        (2, 255, True),
+        (3, 0, True),
+        (3, 31, True),
+        (0, 0, False),
+        (4, 0, False),
+        (255, 0, False),
+        (3, 32, False),
+        (3, 127, False),
+        (3, 128, False),
+        (3, 255, False),
+    ],
+)
+def test_scenario_shadow_selector_bounds(
+    category, index, safe, incompatible_item, scenario_banks
+):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    packet = bytes([0x60, category, index]) + bytes(11)
+    data = synthetic_room(b"\x01\0", (incompatible_item, packet + b"\x01\0"))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert room["candidate_list_complete"]
+    assert scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    ) == ([9] if safe else [], [])
+
+
+@pytest.mark.parametrize(
+    "opcode,field,width,safe",
+    [
+        (0x32, 2, 1, True),
+        (0x32, 3, 1, True),
+        (0x32, 6, 2, True),
+        (0x40, 4, 1, True),
+        (0x40, 6, 2, True),
+        (0x32, 0, 1, False),
+        (0x32, 1, 1, False),
+        (0x32, 3, 2, False),
+        (0x32, 7, 2, False),
+        (0x40, 2, 1, False),
+        (0x40, 3, 1, False),
+        (0x4E, 1, 1, False),
+        (0x4E, 14, 2, False),
+        (0x4E, 16, 2, False),
+        (0x4E, 18, 2, False),
+        (0x21, 1, 1, False),
+        (0x18, 1, 1, False),
+        (0x1D, 1, 1, False),
+        (0x01, 0, 1, False),
+    ],
+)
+def test_scenario_copy_can_only_patch_numeric_actor_operands(
+    opcode, field, width, safe, incompatible_item, scenario_banks
+):
+    from games.re2.room_data import OPCODE_WIDTHS
+    from games.re2.scenario_items import scenario_item_proofs
+
+    destination = bytearray(OPCODE_WIDTHS[opcode])
+    destination[0] = opcode
+    if opcode == 0x4E:
+        destination = bytearray(item_command(20, 1, 10))
+    elif opcode == 0x21:
+        destination[:] = bytes([0x21, 4, 7, 1])
+    elif opcode == 0x18:
+        destination[1] = 0
+    elif opcode == 0x1D:
+        destination[:] = bytes([0x1D, 0, 2, 1])
+    # Counter values remain unknown. Safety comes from the destination's role,
+    # including byte/halfword boundaries, rather than a convenient test value.
+    packet = bytes([0x1D, 255, field, width - 1])
+    data = synthetic_room(
+        b"\x01\0", (incompatible_item, packet + destination + b"\x01\0")
+    )
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert room["candidate_list_complete"]
+    assert scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    ) == ([9] if safe else [], [])
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "valid",
+        "last",
+        "zero-count",
+        "header-only",
+        "outside-index",
+        "overrun",
+        "script-overlap",
+        "unaligned",
+    ],
+)
+def test_scenario_collision_store_stays_in_its_section(
+    case, incompatible_item, scenario_banks
+):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    index = 1 if case == "last" else 2 if case == "outside-index" else 0
+    data = bytearray(
+        synthetic_room(
+            b"\x01\0", (incompatible_item, bytes([0x37, index, 0, 0xFC, 1, 0]))
+        )
+    )
+    data.extend(bytes(-len(data) % 4))
+    collision = len(data)
+    data.extend(bytes(48))
+    count = (
+        0
+        if case == "zero-count"
+        else 1
+        if case == "header-only"
+        else 4
+        if case == "overrun"
+        else 3
+    )
+    if case == "script-overlap":
+        collision = 132
+    elif case == "unaligned":
+        collision += 1
+    struct.pack_into("<I", data, 0x20, collision)
+    if case != "script-overlap":
+        struct.pack_into("<I", data, collision + 4, count)
+    room = decode_room(
+        bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert room["candidate_list_complete"]
+    assert scenario_item_proofs(
+        bytes(data), room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    ) == ([9] if case in ("valid", "last") else [], [])
+
+
+@pytest.mark.parametrize("count", [0, 1, 65535])
+@pytest.mark.parametrize("body_gid", [9, 10])
+def test_scenario_for_procedure_never_prunes_a_creator(
+    count, body_gid, incompatible_item, scenario_banks
+):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    body = (
+        bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+        + item_command(21, 7, body_gid)
+        + bytes([8, 0])
+    )
+    loop = (
+        bytes([0x0D, 0])
+        + struct.pack("<HH", len(body) + 2, count)
+        + body
+        + b"\x0e\0\x01\0"
+    )
+    data = synthetic_room(b"\x01\0", (incompatible_item, loop))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert room["candidate_list_complete"]
+    absent, variants = scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    )
+    assert absent == ([9] if body_gid == 10 else [])
+    assert variants == (
+        [{"global_id": 9, "offsets": [room["items"][-1]["offset"]]}]
+        if body_gid == 9
+        else []
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "balanced",
+        "unmatched-open",
+        "unmatched-close",
+        "wrong-limit",
+        "depth-five",
+        "mixed-while",
+        "early-end",
+        "early-return",
+        "jump-out",
+        "jump-in",
+        "endif-underflow",
+        "unclosed-if",
+        "if-depth-nine",
+        "unframed-test",
+        "unsupported-test",
+        "wrong-endif",
+    ],
+)
+def test_scenario_for_control_flow_bounds(case, incompatible_item, scenario_banks):
+    from games.re2.scenario_items import scenario_item_proofs
+
+    body = b"\0\0"
+    if case == "mixed-while":
+        body = bytes([0x0F, 4, 6, 0, 0x50, 0, 0, 0x80, 0x10, 0])
+    elif case in ("early-end", "early-return"):
+        body = bytes([1 if case == "early-end" else 0x17, 0])
+    elif case == "jump-out":
+        body = bytes([7, 0, 6, 0])
+    loop = bytes([0x0D, 0]) + struct.pack("<HH", len(body) + 2, 1) + body + b"\x0e\0"
+    if case == "unmatched-open":
+        loop = loop[:-2]
+    elif case == "unmatched-close":
+        loop = loop[6:]
+    elif case == "wrong-limit":
+        loop = loop[:2] + struct.pack("<H", len(body)) + loop[4:]
+    elif case == "depth-five":
+        for _ in range(4):
+            loop = (
+                bytes([0x0D, 0])
+                + struct.pack("<HH", len(loop) + 2, 1)
+                + loop
+                + b"\x0e\0"
+            )
+    elif case == "jump-in":
+        loop = bytes([7, 0, 10, 0]) + loop
+    elif case == "endif-underflow":
+        loop += b"\x08\0"
+    elif case == "unclosed-if":
+        loop += bytes([6, 0, 4, 0, 0x21, 1, 1, 1])
+    elif case == "if-depth-nine":
+        for _ in range(9):
+            loop = (
+                bytes([6, 0])
+                + struct.pack("<H", len(loop) + 6)
+                + bytes([0x21, 1, 1, 1])
+                + loop
+                + b"\x08\0"
+            )
+    elif case == "unframed-test":
+        loop += bytes([0x21, 1, 1, 1])
+    elif case in ("unsupported-test", "wrong-endif"):
+        loop += (
+            bytes([6, 0, 4, 0])
+            + (bytes([0x21, 1, 1, 1]) if case == "wrong-endif" else b"\0\0")
+            + b"\x08\0"
+        )
+    data = synthetic_room(b"\x01\0", (incompatible_item, loop + b"\x01\0"))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert room["candidate_list_complete"]
+    assert scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    ) == ([9] if case == "balanced" else [], [])

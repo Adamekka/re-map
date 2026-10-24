@@ -1,4 +1,4 @@
-"""Fixed-context identity/exclusion proofs. RE2-COLLECT-007/008/011/014."""
+"""Fixed-context identity/exclusion proofs. RE2-COLLECT-007/008/011/014/016."""
 
 from __future__ import annotations
 
@@ -9,6 +9,9 @@ from games.re2.event_presence import (
     INITIALIZER_FALLTHROUGH,
     flag_write_conflicts,
 )
+
+# The pinned native actor search and shadow selector share this enemy table.
+ENEMY_SLOT_COUNT = 32
 
 
 def scenario_flags(profile: dict) -> list[dict[str, int]]:
@@ -126,6 +129,67 @@ def scenario_item_proofs(
     }
     opaque_loops = set()
     for key, program in programs.items():
+        if any(row["opcode"] in (0x0D, 0x0E) for row in program["commands"]):
+            # RE2-COLLECT-016: include every creator in a FOR procedure, even
+            # for a zero count or fixed-false guard. Only balanced local loops
+            # whose other branches cannot enter or escape a body are admitted.
+            if any(
+                row["opcode"] in (0x0F, 0x10, 0x11, 0x12) for row in program["commands"]
+            ):
+                return [], []
+            loops, bodies, conditions = [], [], []
+            for row in program["commands"]:
+                # The opaque creator set skips the reachability walk below.
+                # Still enforce bounded IF frames; a malformed task stack
+                # cannot justify a negative claim about other procedures.
+                if row["kind"] == "if":
+                    test = commands[key].get(row["next"])
+                    if (
+                        len(conditions) >= 8
+                        or test is None
+                        or test["opcode"] not in predicates | {0x21}
+                    ):
+                        return [], []
+                    conditions.append(row["target"])
+                elif row["opcode"] == 8:
+                    if not conditions or row["next"] != conditions.pop():
+                        return [], []
+                elif row["opcode"] == 7 or (
+                    row["opcode"] in predicates | {0x21} and not conditions
+                ):
+                    return [], []
+                if row["opcode"] == 0x0D:
+                    limit = (
+                        row["next"]
+                        + struct.unpack_from("<h", data, row["offset"] + 2)[0]
+                    )
+                    if (
+                        len(loops) >= 4
+                        or limit <= row["next"]
+                        or limit not in commands[key]
+                    ):
+                        return [], []
+                    loops.append((row["next"], limit))
+                elif row["opcode"] == 0x0E:
+                    if not loops:
+                        return [], []
+                    start, limit = loops.pop()
+                    if row["next"] != limit:
+                        return [], []
+                    bodies.append((start, limit))
+            if loops or conditions:
+                return [], []
+            for start, limit in bodies:
+                for row in program["commands"]:
+                    inside = start <= row["offset"] < limit
+                    if inside and (row["kind"] == "end" or row["opcode"] == 0x17):
+                        return [], []
+                    if row["kind"] in ("if", "jump") and inside != (
+                        start <= row["target"] < limit
+                    ):
+                        return [], []
+            opaque_loops.add(key)
+            continue
         if not any(
             row["opcode"] in (0x0F, 0x10, 0x11, 0x12) for row in program["commands"]
         ):
@@ -221,8 +285,68 @@ def scenario_item_proofs(
                 # A reset is another possible creator even without a matching
                 # live descriptor. Its identity must never be excluded.
                 continue
-            elif row["opcode"] in (0x0F, 0x10, 0x11, 0x12):
+            elif row["opcode"] in (0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12):
                 if key not in opaque_loops:
+                    return [], []
+            elif row["opcode"] == 0x1D:
+                width = 2 if data[row["offset"] + 3] else 1
+                target = row["next"] + data[row["offset"] + 2]
+                destination = next(
+                    (
+                        command
+                        for command in program["commands"]
+                        if command["offset"] <= target
+                        and target + width <= command["next"]
+                    ),
+                    None,
+                )
+                # Native Copy writes a counter into later bytecode. Permit
+                # only numeric position/destination operands, never opcodes,
+                # identities, predicates, branches, pointers or loop controls.
+                if (
+                    destination is None
+                    or destination["opcode"] not in (0x32, 0x40)
+                    or target
+                    < destination["offset"]
+                    + (2 if destination["opcode"] == 0x32 else 4)
+                    or width == 2
+                    and target % 2
+                ):
+                    return [], []
+            elif row["opcode"] == 0x37:
+                collision = struct.unpack_from("<I", data, 0x20)[0]
+                if not collision or collision % 4 or collision + 16 > len(data):
+                    return [], []
+                count = struct.unpack_from("<I", data, collision + 4)[0]
+                limit = min(
+                    [len(data)]
+                    + [
+                        offset
+                        for offset in room["section_offsets"]
+                        if offset > collision
+                    ]
+                )
+                # The native index skips the 16-byte SCA header. Its halfword
+                # store must stay in a declared collision record, outside all
+                # script bytes, so it cannot rewrite a creator or fixed test.
+                if (
+                    count < 1
+                    or data[row["offset"] + 1] >= count - 1
+                    or collision + count * 16 > limit
+                    or any(
+                        collision < source["limit"]
+                        and source["entry"] < collision + count * 16
+                        for source in programs.values()
+                    )
+                ):
+                    return [], []
+            elif row["opcode"] == 0x60:
+                category, index = data[row["offset"] + 1 : row["offset"] + 3]
+                # Other selectors leave the native shadow pointer uninitialized;
+                # enemy indices are signed and must stay within the actor table.
+                if category not in (1, 2, 3) or (
+                    category == 3 and index >= ENEMY_SLOT_COUNT
+                ):
                     return [], []
             elif row["opcode"] == 4:
                 if (
@@ -253,7 +377,7 @@ def scenario_item_proofs(
                 if (
                     work not in (1, 3, 4)
                     or work == 3
-                    and index >= 32
+                    and index >= ENEMY_SLOT_COUNT
                     or work == 4
                     and index >= 128
                 ):

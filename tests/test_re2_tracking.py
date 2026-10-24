@@ -169,6 +169,37 @@ def test_opposite_scenario_condition_cannot_publish_or_record_visits(
     assert tracker == before
 
 
+@pytest.mark.parametrize("incompatible_acquired", [False, True])
+def test_generated_identity_resolves_collection_without_inventing_presence(
+    snapshot, incompatible_acquired
+):
+    """RE2-COLLECT-016: an earlier load restores uncertainty, not clearance."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["00-13"]
+    assert source["scenario_absent_item_ids"] == [30]
+    assert source["scenario_item_variants"] == [{"global_id": 145, "offsets": [3822]}]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 0x13))
+    put(0x800CC9E8, 0x2000 | (2 if incompatible_acquired else 0), 4)
+    visits = None
+    for acquired in (False, True, False, True):
+        put(0x800CC9F8, 0x4000 if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-13"]
+        assert record.list_complete and record.total_items == 2
+        assert record.collected_items == (2 if acquired else 1)
+        assert [(item.label, item.state, item.quantity) for item in record.items] == [
+            (profile.names["items"]["32"], "taken", 1),
+            (profile.names["items"]["20"], "taken" if acquired else "unknown", 15),
+        ]
+        assert record.completion is (
+            RoomCompletion.Cleared if acquired else RoomCompletion.Unknown
+        )
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
 @pytest.mark.parametrize("movement", HEADING_MOVEMENTS, ids=lambda row: row["after"])
 def test_heading_agrees_with_native_forward_displacement(snapshot, movement):
     profile, _, put, read = snapshot

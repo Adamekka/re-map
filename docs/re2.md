@@ -64,3 +64,5 @@ python3 tools/build_re2_metadata.py '/path/to/Resident Evil 2 (USA) (Disc 1).cue
 ```
 
 Runtime evidence and limitations belong in [RE2 research](research/re2.md). Source inspection, generated room counts and synthetic regressions do not confirm gameplay behavior.
+
+[RE2-COLLECT-016](research/re2.md#re2-collect-016-bounded-script-writes-preserve-scenario-proofs) extends fixed-scenario proofs through audited commands with bounded writes and conservative FOR handling. One further selected pickup has native collection, departure/reentry, full-clearance and six exact restore observations. Its definite identity survives departure; presence before collection still remains Unknown. Source coverage stays 67 of 125, 53.6%.
