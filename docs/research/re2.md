@@ -3071,3 +3071,51 @@ The audit confirms the selected constructor path and narrows the clone/member/lo
 
 - 2026-10-24; human user; explicitly approved the named native actor-flag audit, hidden validation, isolated history and verified evidence commit, with production rules unchanged.
 - 2026-10-24 and 2026-10-25; Codex root, exact verified executing model `gpt-6.1-sol`; traced the constructor/copy/member/helper contracts and loaded EMS leads, ran the copied segments, retained the unsuccessful native attempts, observed two native constructor stores, performed six exact restores and fresh history reconstruction, corrected the private helpers/oracles, restored the isolated setup and authored this entry. `author.json` retains session/latest-turn attribution. Primary verification checked native versus copied claims, source hashes and dynamic binding, field/store bounds, source-copy ambiguity, retry/early-startup semantics, restore/action provenance, unchanged production hashes and documentation scope. No external review or full native writer closure is claimed.
+
+## RE2-FLAG-003: remaining native flag-call argument bounds
+
+Status: Candidate source/copy contracts. Twenty-four of the 25 selected calls exclude the target under their audited function-entry and argument contracts. One signed-room call still needs a native lifetime invariant. This supplies no new presence, absence, collected-item or clearance result. Pickup 207 remains Unknown.
+
+The human approved a finite evidence-only audit of the remaining 25 native set/clear calls, their target reachability and index bounds, validation and an evidence commit. Baseline: `f93046d`. Resident Evil 2 USA Disc 1, Leon A, SLUS-00421, executable `SLUS_004.21`, SHA256 `1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef`. Existing native evidence uses DuckStation `0.1-12083-g00e299795`, commit `00e2997958d62de79d352cd680ec0c1ad95d491c`. No emulator is launched in this pass.
+
+Private evidence is under `/tmp/re-map-re2-nonactor-flag207-audit-20261025/`. `call-contexts.txt`, `call_audit.py`, `call-audit.json`, `copied-calls.json`, `replay.json` and `focused-tests.log` retain source locations, bounds, copied execution, reused native provenance and checks. Owned code, raw RAM and states remain outside Git. The human questioned the practical value of the preceding audits; this pass uses existing restore captures and makes no new playability or coverage claim.
+
+### Finite call inventory
+
+Addresses here are PS1 virtual unless identified as RAM offsets. Instructions, pointers, native helper indices and words are unsigned four-byte little-endian values, full mask `0xFFFFFFFF`. Byte loads have mask `0xFF`; signed/unsigned halfwords have raw mask `0xFFFF`. The target remains word `0x800CC9C0`, width four, mask `0x00800000`. [RE2-FLAG-001](#re2-flag-001-source-01-0c-presence-flag-provenance) records its bank-six bit-200 identity and the shared set/clear helpers `0x80072ADC` and `0x80072B04`.
+
+The owned executable contains 26 aligned direct JAL encodings to those helpers. This audit covers all 25 except actor helper call `0x8001896C`, already considered in [RE2-FLAG-002](#re2-flag-002-native-actor-flag-initialization-and-shared-setter-provenance). Several remaining callers also handle actor state; the exclusion is of that one helper, not all actor-related code. The inventory does not close indirect/tail calls, other caller stores, overlays, bulk writes or arbitrary pointer lifetimes.
+
+| Argument family | Calls | Source contract |
+| --- | --- | --- |
+| Constant base/index | 10 | `0x8003831C`, `0x80038B7C`, `0x80063C70`, `0x80063C7C`, `0x800640B0`, `0x80064128`, `0x800647F4`, `0x800649DC`, `0x800666AC`, `0x800666BC`; none selects the target word/mask |
+| Masked byte | 1 | `0x8004E13C`: base `0x800CCB60`, index `0..63` |
+| Unsigned halfword | 3 | `0x8004EE2C`: base `0x800CCB60`; `0x8006DB2C` and `0x8006E35C`: bases `0x800CC9E8` or `0x800CCA08`; all indices `0..65535` remain beyond the target without wrapping |
+| Unsigned byte | 9 | Eight calls from `0x8005EBE0` through `0x80062220` use base `0x800CC9A0` and actor byte `+0x1CB`; `0x80067D58` uses base `0x800CCA18` and a table byte; indices `0..255` exclude the target |
+| Bounded selector result | 1 | `0x80064BA8`: base `0x800CCA34`, selector result `0..19` |
+| Signed room plus prefix | 1 | `0x80064B88`: base `0x800CCA38`; synthetic negative room values can alias the target |
+
+The base formations, load widths and executed delay slots are pinned in the copied checks. The `0x800666BC` set path retains base `0x800CC980`; the zero assignment after the alternate clear path's jump does not execute on that set path. A linear scan across both branches would misidentify the argument.
+
+The eight byte-indexed calls at base `0x800CC9A0` are not bounded by the logical eight-byte bank width. Larger byte indices can address the first 192 bits of adjacent bank six. Target bit 200 would require index 264 relative to this base, beyond LBU's maximum 255. This excludes this target without asserting that logical banks are isolated.
+
+The [native area selector](#re2-map-001-native-leon-floor-selectors-and-numeric-contours), `0x80069FC0..0x8006A2B4`, returns `0..19` under its source contract. Its guarded seven-entry jump table is pinned at `0x80011928`. The source check covers all 31 direct transfers into the common epilogue, including the two NOP-delay cases whose preceding executed instructions define the result, plus the zero-result fallthrough. The body has only its guarded table jump and final return as JR instructions, and its external calls are the read-only flag predicate. Normal function entry, intact pinned code/tables and callee-saved register preservation remain explicit assumptions.
+
+### Signed-index alias and bounded validation
+
+Call `0x80064B88` reads saved room `0x800CC94A` as a signed little-endian halfword and adds a stage prefix. The guarded table at `0x800117A4` selects prefixes `0,30,58,72,89,99,123`. All 125 catalog source IDs exclude the target. That catalog check is not a proof of every native value stored in the room halfword.
+
+With prefix zero and synthetic room `-952`, the unsigned helper index is `0xFFFFFC48`. Logical shift/index arithmetic computes address `0xA00CC9C0` with mask `0x00800000`, aliasing the target's RAM offset `0xCC9C0`. The other six prefixes have corresponding negative-room witnesses. RAM normalization is applied only after recognizing a RAM address range, not to arbitrary device addresses. This shows why a bank-base comparison alone is insufficient. No native invalid-room occurrence or gameplay defect is observed, and no tracker exception or game patch follows.
+
+There are 2391 copied original argument/helper cases, including every byte value at each of the nine unmasked-byte call sites, halfword boundary values on both stage arms, selector results and seven negative-room alias witnesses. Selected straight instruction fragments include relevant call delay slots. Calls, branches and returns are not executed in this set; native guard results select explicit source-inspected continuations. Caller side effects outside those fragments are not audited as part of the helper argument result. The initial handwritten selector-exit count of 29 is rejected; enumeration and pinned delay-slot checks establish 31. No production code changes.
+
+Six existing native restore pairs from RE2-FLAG-002 are rechecked for complete original RAM/map equality and checkpoint hashes. Current production interpretation replays each through the copied visits-only history, without adding visits or changing history bytes. All 25 call windows, selector code and both jump tables match the owned executable in these captures. Six whole-selector copied runs reach the explicit return boundary, return within `0..19` and write only their copied stack. Saved rooms are positive and the target remains Unknown. These are reuse/replay and copied-execution checks, not six new F1 actions or gameplay observations.
+
+All 168 tracked production/data/profile/test/tool hashes remain unchanged. The focused RE2/history/logging suite passes 829 tests in 7.07 seconds. Local documentation links and whitespace checks pass. No new full-suite run or external model review is claimed. No emulator settings, user saves/history or game memory are changed. Runtime room-source coverage remains 68 of 125, 54.4%; no new room, item or door outcome is resolved. Renderer and controls are unchanged, so the README screenshot is retained.
+
+The finite call inventory is now classified, but the signed-room lifetime and other native/indirect writers still prevent a global absence proof. This audit ends without a production rule or playability gain; continued whole-game tracing is not implied by these results.
+
+### Contributions
+
+- 2026-10-25; human user; approved the named 25-call evidence audit and asked whether the audits were producing useful results. Production rules remained outside scope.
+- 2026-10-25; Codex root, exact verified executing model `gpt-6.1-sol`; inspected all selected arguments and selector exits, checked native delay-slot paths, identified the synthetic signed-room alias, ran copied bounds and existing-evidence replay, verified unchanged production hashes and authored this entry. `author.json` retains session/latest-turn attribution. Primary verification checked finite-inventory completeness, signedness and address ranges, RAM alias handling, native versus copied/reused claims, exact replay equality and documentation scope. No external review or complete native lifetime proof is claimed.
