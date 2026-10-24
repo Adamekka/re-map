@@ -142,6 +142,57 @@ def test_original_emblem_and_broken_shotgun_still_count(tmp_path):
         )
 
 
+@pytest.mark.parametrize("drop_cache", [False, True])
+def test_placed_red_book_keeps_original_and_ribbon_required(tmp_path, drop_cache):
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    tracker = Tracker()
+    rec_room, room003 = RoomId(3, 1), RoomId(3, 0x0A)
+    tracker.mark_current(rec_room)
+    tracker.mark_current(room003)
+    # Replay independent acquisition reversals through the pinned programs.
+    # The placed book's flag must never replace the original pickup or ribbon.
+    for original_taken, ribbon_taken, placed_remaining in (
+        (False, True, True),
+        (True, False, True),
+        (True, True, True),
+        (True, True, False),
+        (False, True, False),
+    ):
+        for item_type, gid, collected in (
+            (62, 99, original_taken),
+            (12, 165, True),
+            (47, 120, ribbon_taken),
+            (62, 255, not placed_remaining),
+        ):
+            flag = profile.runtime_room_layout.acquisition.flag(item_type, gid)
+            offset = flag.address - 0x80000000
+            ram[offset] = (
+                ram[offset] & ~flag.mask if collected else ram[offset] | flag.mask
+            )
+        if drop_cache:
+            profile.room_observations.clear()
+            profile.room_reentry_evaluations.clear()
+        before = bytes(ram)
+        result = poll_once(profile, tracker, RamReader(ram).read_memory)
+        assert result.status is PollStatus.Display, result.text
+        assert bytes(ram) == before
+        record = tracker.room_state(room003)
+        assert record.list_complete
+        assert [item.label for item in record.items] == ["Ink Ribbon"]
+        assert record.completion is (
+            RoomCompletion.Cleared if ribbon_taken else RoomCompletion.Incomplete
+        )
+        original = tracker.room_state(rec_room)
+        assert original.list_complete
+        assert original.items[0].label == "Red Book"
+        assert (original.items[0].state == "taken") is original_taken
+        assert original.completion is (
+            RoomCompletion.Cleared if original_taken else RoomCompletion.Incomplete
+        )
+        assert set(tracker.rooms) == {"03-01", "03-0a", "00-09"}
+
+
 @pytest.mark.parametrize(
     "value", [None, [[28]], [[True, 1]], [[28, 256]], [[28, 1], [28, 1]]]
 )

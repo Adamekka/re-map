@@ -440,7 +440,7 @@
     "commit_address": "0x80025C54",
     "sha256": "617d66cbb61456b7eadb7e38a53eb71ab9cdefc1a278dca868363d5322ac6869"
   },
-  "player_placed_items": [[28, 1], [31, 20], [32, 43]],
+  "player_placed_items": [[28, 1], [31, 20], [32, 43], [62, 255]],
   "acquisition_rules": [
     {
       "item_types": ["0x01", "0x4C"],
