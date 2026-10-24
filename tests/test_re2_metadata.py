@@ -226,6 +226,37 @@ def synthetic_room(init, main_procedures=(b"\x01\0",)):
     return bytes(data)
 
 
+@pytest.mark.parametrize("truncated", [False, True])
+def test_sound_proofs_hash_only_the_stable_source_bytes(truncated):
+    data = bytearray(synthetic_room(b"\x01\0"))
+    offset = len(data)
+    struct.pack_into("<2I", data, 8, offset, offset + 192)
+    edt, header = bytes(range(192)), bytes(range(32))
+    data.extend(edt + header)
+    if truncated:
+        with pytest.raises(ValueError, match="sound proof outside"):
+            decode_room(
+                bytes(data[:-1]),
+                "synthetic",
+                PRESENCE_FLAGS,
+                PRESENCE_COUNTERS,
+                PRESENCE_WRITES,
+            )
+    else:
+        data.extend(b"mutable program records")
+        room = decode_room(
+            bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+        )
+        assert room["sound_proofs"] == [
+            {
+                "section": index,
+                "width": len(packet),
+                "sha256": hashlib.sha256(packet).hexdigest(),
+            }
+            for index, packet in enumerate((edt, header))
+        ]
+
+
 def item_command(item_type, amount, gid, slot=8):
     item = bytearray(22)
     item[0:4] = bytes([0x4E, slot, 2, 0x31])
@@ -754,7 +785,8 @@ def test_generated_catalog_has_unique_room_proofs_and_only_numeric_map_data():
     assert len(rooms["rooms"]) == 125
     signatures = {
         (
-            tuple(room["section_offsets"]),
+            # RE2-SOURCE-001: sound relocation must not collapse room identity.
+            tuple(room["section_offsets"][2:]),
             tuple(proof["sha256"] for proof in room["proofs"]),
         )
         for room in rooms["rooms"]

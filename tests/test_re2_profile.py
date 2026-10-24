@@ -273,6 +273,54 @@ def test_re2_collection_proofs_are_required_validated_metadata(tmp_path, proof):
 
 
 @pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "empty",
+        "duplicate",
+        "boolean",
+        "width",
+        "digest",
+        "extra",
+        "bounds",
+        "spacing",
+    ],
+)
+def test_sound_source_proofs_are_required_and_validated(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = document["rooms"][0]
+    proof = room["sound_proofs"][0]
+    if case == "missing":
+        del room["sound_proofs"]
+    elif case == "empty":
+        room["sound_proofs"] = []
+    elif case == "duplicate":
+        room["sound_proofs"][1] = proof
+    elif case == "boolean":
+        proof["section"] = False
+    elif case == "width":
+        proof["width"] = 193
+    elif case == "digest":
+        proof["sha256"] = "G" * 64
+    elif case == "extra":
+        proof["fallback"] = True
+    elif case == "bounds":
+        room["section_offsets"][1] = room["size"]
+    elif case == "spacing":
+        room["section_offsets"][1] += 4
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 sound source proofs"):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
     "amounts", [None, [], [True], ["5"], [5, 5], [5, 4], [4], [-1, 5], [5, 65536]]
 )
 def test_re2_quantity_alternatives_are_required_validated_metadata(tmp_path, amounts):

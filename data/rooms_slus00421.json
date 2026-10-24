@@ -17,7 +17,8 @@
     "RE2-COLLECT-011",
     "RE2-COLLECT-012",
     "RE2-COLLECT-013",
-    "RE2-COLLECT-014"
+    "RE2-COLLECT-014",
+    "RE2-SOURCE-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -297,6 +298,18 @@
           "sha256": "90960c3425bf43a04a5743ddebd62b26dd91807b2a9245c12fbd4ff970cc897b"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1fa7d6f7186fd52ba6a3da1725c4c9bce917c9db1c606ab9bdc9f255a78dc7a3"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "d62bf3889229a51a25899707fd7400acaf37ab90503257f9a3895ce462fe3841"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -370,6 +383,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "126bf4fe3ce57eac4c522a49c444364322a7c3dedd9878c018f511fa1980473f"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "6197ebf10f8c7f6d1fe204da97c6cd6de1134664115b3801c4a60f843ffd3fe8"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "98b53022cd805492142f417b68805a7a10f94a386643f180256d92060ca927a5"
         }
       ],
       "items": [
@@ -501,6 +526,18 @@
           "sha256": "8261dd4dab1419596f494f0b94674d6850a4b5d8b103fc6162579f788b7968ad"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "535123d9da9196966ecafbf3063762d2fd2ff3e37028e0f39b81bbc040a7c831"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "069486498bd1c5c046f1b04b88690e9597b8f20d7011a72f738b18eeebaa8fcb"
+        }
+      ],
       "items": [
         {
           "offset": 7812,
@@ -614,6 +651,18 @@
           "sha256": "89a5f2b2b14d5906b82bfb027a146fb9a5430f0f20916986c62f40524c2a9044"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2e3401e050d9166d159c64df83fa6222913291c7be31b759be424ee7db01e393"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "6f7cecbcc40becfed2f07c405326405920bbe26a73ac8e8e70e703bab0852adb"
+        }
+      ],
       "items": [
         {
           "offset": 14082,
@@ -712,6 +761,18 @@
           "sha256": "49fa99731ac38a9fd007106f41126080f11281672deb9bd33b58b2aa1fdbcbfa"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "d62bf3889229a51a25899707fd7400acaf37ab90503257f9a3895ce462fe3841"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -785,6 +846,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "6a3e563af8030d3c1937953cbd0165356a05ce318837070e4406f182798caa00"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "3a35afbae3eedf56c209720792a3ace0c8ef01ae9404849a3f1187195e253270"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ea65e6ba144ca459815d70eabe892ba4cb36a30c008c7c873736f71140a4f32e"
         }
       ],
       "items": [
@@ -887,6 +960,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "dc86a3632cdffa4bd40c8494857c9293266c5a8a81345192c73104be4d890609"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "ef680c60502b815c5c997695f72041fd3a31631c6bc1a08582cd472d6d061129"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "769f2dfaf2efaebf24f4c6b14020ec52f4cc8187e42178de16357df76d4c5e7c"
         }
       ],
       "items": [
@@ -1043,6 +1128,18 @@
           "sha256": "27e6f37e55fb95fabc5115496dc60865110de8c9e8ccb6e72abbfd3a2876266a"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "75609e75e7eb64c396b919d055b1a14a43600d4264f4da9efbf2cd24ba484260"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -1131,6 +1228,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "00d777d447d5331bc260d8f0af5cbb7205915de72aaecd2c1de1801b8d782b49"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "8c437503f9553809acf9043f753474dda0f630b364c01d2a59a80c54f24769e6"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "fba0cf45f48da165302f7bfde677f94b55e4cc57f9bbf7adb526bb0dce737c4f"
         }
       ],
       "items": [
@@ -1255,6 +1364,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "0c8801dc1e6c09a617fbee04d40bec08bba36188a138b6bcfc3f798eeb596f9d"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1aeb10132c95a00dda0b870f280a3690c23ca626c9101f71a1483b5dbbdd131f"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "56f2d9ca4899311959308102dc7d7bd02d17f623dd6e76016874299820e6f088"
         }
       ],
       "items": [
@@ -1422,6 +1543,18 @@
           "sha256": "eb91e36312bc7df19d37ec764a6c024c78a0d6bbd343976d6f343eeca5a688a2"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1a30a61891eeadb695591960a0d2b3f59cd5eb8284227fec22f6a83fa7b7dd93"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "d15557fe334e92855e7a230e54a53194da9a408d11aaa3f0c44ec1f8b8ffc7f4"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -1540,6 +1673,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "b371f76d9704e67c0a5fd3c2d2be3980d8982ecc5d81aa0820509623a6b001af"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1ec28a80505943722c67d242e3eeb792de5738b092af01baf5b742c2524ba5dc"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c30f994566832a8e2990790b693323efc68cb5e7e2b22fbdc9442ae6bd53e933"
         }
       ],
       "items": [
@@ -1682,6 +1827,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "e97db910035a6ab20f2000ed312cd97cfc8cbdedd8c472f49bb46ef4dd26c423"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "fc19af103aeef840b4eed6c26faccb23e6e511d4f65f59002933b2085cb17702"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c9edc210424fafb931715bb3f66394a8d3e5e9ef60080cf9e8e3140e39341778"
         }
       ],
       "items": [
@@ -1828,6 +1985,18 @@
           "sha256": "895054c48c268c9fbfbdafd70b9874f52c1baed54f380f20358c9e5423f1aa64"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c2b6b56c05c4f4033c7aceac451bc685e86f7792a0714b55aab7cfe4dcaaaef0"
+        }
+      ],
       "items": [
         {
           "offset": 2134,
@@ -1941,6 +2110,18 @@
           "sha256": "13cc162a3f425ce86f9043d11dd44431bcff294836abcfb4a634950fced2c673"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "62d437cb0ee4c48ac721027a2a2acec826a8477e4ee1d8784d40d33a7fd493ce"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "7146e4061700eeb895882f821f312361cac19419a5fd0c248bdc1e498c4bcdc3"
+        }
+      ],
       "items": [
         {
           "offset": 7462,
@@ -2040,6 +2221,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "71170c48df5c644f65794485b99f0935131dc1c790d4d0322b56d15561d4ca21"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2773318fb20a046c53f778e21622157fe8f40b9690d551ba754c87ce5fa96a00"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "552fb1f78fb6558da7ff378f85e61891296a0a998400eaa32acbc66ac2e7df41"
         }
       ],
       "items": [
@@ -2275,6 +2468,18 @@
           "sha256": "0c56e01d196c35352edaca86a97c5bf01ef6795f3d8be933c8094186fc4846f9"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "cef7835580447159b888332e8fb7dbefc292127d9910a3f6801df3b58e2168e0"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "dcd10eca31bab49c74e73477c4524745ee4c4b31e1448ebf11a627c2c39a29cb"
+        }
+      ],
       "items": [
         {
           "offset": 10156,
@@ -2443,6 +2648,18 @@
           "sha256": "de6c866ce83f2c508b9765aff20bb81a7b6cfa3b9ff1b45f7ba324b4baad4b6e"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "838518907c7e29d6123f63ca689320847c4e1512a50fdbdc74f30338624f5359"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ce6e3474a3513497add8df2e80d7fc2a094cf5cf88722f8342859cd7d02e1edb"
+        }
+      ],
       "items": [
         {
           "offset": 8270,
@@ -2543,6 +2760,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "316704e1a5f3090dd09d54b99fdba72177bb60877235abaee7516499a88e7ba7"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "a744dc5e9de54e1bfee63ca26713fe10b08f4673c2cf0bc502d642e26b2516cb"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "9ce92ee5ff074b0e2fd1937c3c9d3e223abd086ac74d6a239589a5a43e012473"
         }
       ],
       "items": [
@@ -2671,6 +2900,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "64221a962220dd27e5eb605665ecc3195a8dd4668c76d47177afab3c62dee392"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "bc0c24a87bd43eb08c4064ceecde3b700be7499dc09f89fe88d8b1f7853353c9"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "7d066d19d8f5104b4462a76ede0bdeaf14c9763cc8f8ce6939c7985d6b8273fc"
         }
       ],
       "items": [
@@ -2860,6 +3101,18 @@
           "sha256": "cc297238216828b4f3caf38885f0e1931ac0ddb4b9041991208f11e83000d036"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "65cca6eacd585ca358a65db95dc935359e45b59db5f413d25db0341ee54c7c3d"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "91609daeea1ae4b5a5b271cbecf8801fb0f6f708937c1c23a6d43142d3e31136"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -3008,6 +3261,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "8224497b613d6cc442479b3bcd3417ddc6ae25e4890e7c38f4af4956299de239"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "9c6e264f9ac77f2ead44f3ca48dfe051ef389d8dd61bf0a7520c39bbaa4e023a"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "1ac5f688035b8f1803312a698ee4334bc533642a91762f90ff433b6a50c8de76"
         }
       ],
       "items": [
@@ -3241,6 +3506,18 @@
           "sha256": "802c4c026635cb4005631177b9f59f8fe465d2ee7e3ffe1e175f00f8be8276d9"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "b909f494aaa54194977934273dd1be761ca5a5b6f0bdff221f2fc6b785b7bb0d"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "3c42f4e79dbcb790d24d1fb8f2ddc6986d007c21de25d2a8c677d6e1af741931"
+        }
+      ],
       "items": [
         {
           "offset": 2598,
@@ -3365,6 +3642,18 @@
           "sha256": "6f18f9c0d4f229df1ef99a76ce63c37cebbb5f0d9f1252b5c4b9b69c98d42b58"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "8d850a9940813b1f983aedb0a4c809b07d510f0414c8d7ebc95a3c0d2c5caaf6"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "25a2b805e8b7feb6089d4166f5913ffb1d153403e87ff1ceb8edf649d209be32"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -3453,6 +3742,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "53179015587d65489fa81e036420f9bd949fe128ed1fc0879cbbf1ee9bd807b9"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "69f84f6e03aac17684d318da877ba8bda1cd5efba5d1899719a4224eb39b10fc"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "69678c8021d99cbebeb694cd5befa7a48ef4266ec28e0cdc339a74cdf0575428"
         }
       ],
       "items": [
@@ -3557,6 +3858,18 @@
           "sha256": "9816edb02bcb65556aaef4ecdc8ca6139eb242a91633bca96fb7ed1c539aea32"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "3644870c0109d6b144e1d849ae38017ee3ce44f17f9a4bde88b78b8d8f344c0a"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -3645,6 +3958,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "c39053246bd845fe53463235d44843470c1705bbf82d2f742cb75f4db4b403cf"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "3d83d77ca9ae80df266530ee09c6b5840804af513dd557f9ecf106ae975082a8"
         }
       ],
       "items": [
@@ -3751,6 +4076,18 @@
           "sha256": "29847a608866950b48db28e0c8656037c85ceb949acd00c59c39e70bfa049214"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "7c98372ec88a781399811013f1b1edfc86aca9d4b60b7b883e2d4972506c5bee"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -3839,6 +4176,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "199b99883eecacdbb04bc7d9d619d99b2b5dd313635fbf97fef85562b44ec1c0"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "be0ccc9be0e528e6d8b586ccc451f2a6076cfb54fd27579c0783ffea5d8b0781"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ef7e1ec89387fd4cc63ac1bec3e14edcd8938fb4e667879c324ba20f17975f13"
         }
       ],
       "items": [],
@@ -3931,6 +4280,18 @@
           "sha256": "8261dd4dab1419596f494f0b94674d6850a4b5d8b103fc6162579f788b7968ad"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "bff0e170f6151ad841c42d63dbb354153797c7d09c636feea18248ec677a2c07"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c82736d1b31f2ebb66f23a0fb7a62a027b350519e3e778726d93f6d957988c9f"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -4019,6 +4380,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "40947b2ea8251c6bd92283d2428bfc697bbff9bed33edf451e485b860d825ed2"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "c34e9bef792a600c716739c4d46f2a0b11bbeff2ae658ea86ee96a9d0faa664a"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "b178ff06eb8a64f89527274417f5b2dbcf3253815303c44dae3b8f4829c0b6d2"
         }
       ],
       "items": [
@@ -4274,6 +4647,18 @@
           "sha256": "8dc67bc45d8b3558e09ab4c7afdecbb57989d61747055623a3695936f47c61a5"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "894d0af0308a62585e92929e694c6e87ba2ea3452a99dd0d25b086483c9a85ba"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "b452ba1d4406f7806ac78fee94da85f30869395da7d23b40370f193cdfa4090b"
+        }
+      ],
       "items": [
         {
           "offset": 3160,
@@ -4426,6 +4811,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "611fbd11156f5e2bb2bee4f90ea8172432c390bbcecb1a2ad112df6b48ae8c6f"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "936132b741e417ea29bea7176d683f4ca3e14acb2bced7c612fea375cd063a66"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "bf1d4c1f7c71ceb5fdafa74ca5034bf624bef55db8a861faba1bcaf72c0df32b"
         }
       ],
       "items": [
@@ -4679,6 +5076,18 @@
           "sha256": "a99e54aa5bfd76e54c2e2d4c1d7fd14cb7464c2799b92eb0903676602c3f4974"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "cd5029b404e6bbc016c4c55b2bc301f997a9b56e337b13311b7a694e0d508369"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "e4ab9bcd11226abe887f6c934bf499ee55eac493cfc564c632176d57faaca42a"
+        }
+      ],
       "items": [
         {
           "offset": 1758,
@@ -4842,6 +5251,18 @@
           "sha256": "392bbb38fb40874ab6009c0c195f240d4d021a0c2caf639145792c83c08b496b"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "f4de33d49e1e573aa2161e8529c7275ecd2802ac1dd8c2967c2f52b25838c9a2"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "5f01a09fd28e99185cd3e947b41e74e8204a6c2ec5b9b889cc2a692247472b34"
+        }
+      ],
       "items": [
         {
           "offset": 6732,
@@ -4981,6 +5402,18 @@
           "sha256": "1e89a0f387baec1b0c2612cbb6e5c067df971e7f1208dbab75326465523f0c0f"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e4dfdb0d8cbaf07881e92b1654749386bcf38fc01b6744652cdd11951100ca6a"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "f773618c2698f74a8f12666fc35a336428b9b5b9ff9f509832f1aa66e005c6c9"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -5084,6 +5517,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "10560347b146c07d707b0b06aa247400699253d1680afe3d5f6d597534d37795"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "aa7f797427b0abec72b56a7530d224327e9e18c5ce763494e7ca3cc3ec6fbfdf"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "92ae877593a75859f9da0664ac7c686fa73cda5858a3a5fb42e76fcf01030e62"
         }
       ],
       "items": [
@@ -5226,6 +5671,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "ca9e0e39e47cab64c2fef593c644ead1bccf492eefccb1c03f0fd9cc2f279356"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "443f2352550fd56eb2c2bb64752cf2d9cab2095bc8b94a1a8571371e75b4923b"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c51cfb94de9b885e87055588c16cb239458e98958f082ce3d1e10d6a63df23d1"
         }
       ],
       "items": [
@@ -5430,6 +5887,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "487e6dc85fca49c90581f70df8005092c787def67ad1a5e93b8662c32062c942"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "30ecb06db5251d954518df0fe456aa5e0666fd5426587701b348cad35be942e4"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "dbd461e528c8eb6854d1a93a8a2ab7a67d754b21abe37ce396fd9af8cd67023e"
         }
       ],
       "items": [
@@ -5647,6 +6116,18 @@
           "sha256": "df2095384adef85418885d94bf1b2d61fdab8edba292e1a8a2309cbe0b7b4567"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "7681ba33672f54599ff8d25187199fe05f3c50321f809dddd7c1be6e3f763c01"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "f81aa7c9579c2ffce2f6dfd9cf3e230925934f80b4842d2cc38c703e73bbc47c"
+        }
+      ],
       "items": [
         {
           "offset": 3330,
@@ -5797,6 +6278,18 @@
           "sha256": "97edad13136cc121f331a1b9a200e7bd9563dbafb82afa183c723e2334efdb57"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2b4777a0f32467404424ffadad72169188cec867915b0716b400a661e9cf1bbd"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "9166581fff9fb6790bf4378043658e7685a44036b2ec9afe26ccd348284e4dc4"
+        }
+      ],
       "items": [
         {
           "offset": 2554,
@@ -5942,6 +6435,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "4c8f1cb22022e4017833b0f268ef7d49c62dd523d53d189ac4c3f3426baffa90"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "ff87b921445d26c6531859d81f8c34abafbd814b3d8d194247bdfe92d6e83156"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "9b8d4356977a27aff46b5e1afcfa0099b822994164f9f720c40da867f423b9ff"
         }
       ],
       "items": [
@@ -6142,6 +6647,18 @@
           "sha256": "e823f40637f37f6ccadc8dc45a12a698060bfe054c019d9433c4cc3f3b2a91a7"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "f588d12a3f3e08b65c2bed5d80beed5577561e84841b014f5e53b8972093b62d"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "33f421c8dd1e3e94fad45098de2f3ec71c3d73a4b0badb5ce4f2266bfc67922e"
+        }
+      ],
       "items": [
         {
           "offset": 7534,
@@ -6318,6 +6835,18 @@
           "sha256": "65e48d5b0fbdb9c8e9d1c73116eb82566a21abe36fe6b7eca0d3e412c79aab0b"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "d9323bcea0c3f15f46d9382524ac0bec742e57284da2a6b8c5163cae9828def4"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "7b4fc23593461bbda7eee104dfcb227e9b854b8cfd62972e93001f8003482434"
+        }
+      ],
       "items": [
         {
           "offset": 4416,
@@ -6447,6 +6976,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "7ce8b37a46bd7ec7da99cf3e902e6d5bf4eb0217733c9d4950a1afda8e4d58e1"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "bec889ac43cccc2bbe052bb17f2c71287028d1ce5e852100b435ef1ee1031033"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "02685f3b2fa28fec001f9797ea9757fd6a5046634c39b0f8ab4d747477d83b17"
         }
       ],
       "items": [
@@ -6672,6 +7213,18 @@
           "sha256": "b0b3b0deff5cde68585cc85889ab47cb6f51cdec2ab0245d12d49b6467913824"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "77e1a223036507afe73dfd84f2bafcf8e76a96bfd9bcd6cb6a8694b17885acd3"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "e9749739b558eaacffd44b5244029557ea71341478dc98dfb7803353d831be1c"
+        }
+      ],
       "items": [
         {
           "offset": 6160,
@@ -6820,6 +7373,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "ae3aa06302b915afc9c82f3a9c8c15fbf0908ce0e7d68a97be740a9eac9f9723"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "d6ce39a024e38ff4c9881b61ea1b981690ea9e039d1179895e950a86284796c4"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c37fc0ff5c63e349f0b90e86307646a5210f8eef667168ea0f481b6c8f71932b"
         }
       ],
       "items": [
@@ -6976,6 +7541,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "7259b0a61fee926945a320806fe4ddefaf58995f69e74f53627d52791e19e12f"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "415de50f17f352c0443392e58594d051c48cba136e5a5a854822771cdcd68221"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "dd4382b0a6e32f3268697be46f29d78376cbef93299347ccf87807ea3315a817"
         }
       ],
       "items": [
@@ -7170,6 +7747,18 @@
           "sha256": "e0956af184285b67625701e7b2508f6c818c100d769e7e433738ffcb0e28e5c8"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "55e0adde18d7d2fe4513d7012ea42b3c414a592cfab572a7de9fe98d2feec51c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "d4fedc47ab8493ea6435aaec260f4415321111723f097ade1591d1b274edc6c9"
+        }
+      ],
       "items": [
         {
           "offset": 2190,
@@ -7270,6 +7859,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "9f0d0e31800f048707f04ae161a62f1588dabab733a9de204753069e85833d04"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "5f015cceb7ad10dd499166af54a9633c4835d10ede9a9da4a0dd460abbe8c4b3"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "22320786db63e2ed456e9e70ab77c1efec6dfef84fb3048655e7be02026bca57"
         }
       ],
       "items": [
@@ -7379,6 +7980,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "6a6abfc7bdb60b05a96c5eee7ed3966c4b19592f26cba3c1778cee13c861c11b"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "28ea95ef870ebd0a4e080d1af9a33bb43e9fd56fb0791e77bac4e8d9fd83db12"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "199262f6e5e689f062cc3f6dc992dfdb9f706aa1a5e2ed89cc237287c9c4bcff"
         }
       ],
       "items": [
@@ -7531,6 +8144,18 @@
           "sha256": "419b3583a972324bceed633425960d2df42e39cd3abcfaee33582b5f808f932e"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1ef8b4bdb53f50d8c2ddb64f4f4414a5e0f5c9af75a468ede8086ade4ac9e5dd"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "08fdc564ad4eeae75c0254999580ec1fb74af4ff03433935eba90f4b58af59be"
+        }
+      ],
       "items": [
         {
           "offset": 4776,
@@ -7618,6 +8243,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "87c4d2cc01605078eec8c858f9eee5da540be03625e02bc8a929cfe7fcde1de6"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "49d8b1904e31e4de058f3d05258f802b58ae52a28df578ac3a4048b430a6bedc"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "fc13f9fe52cd9981969d10e59c20c1bd099861f7f3851524c0f0616a0cd3cd07"
         }
       ],
       "items": [
@@ -7720,6 +8357,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "146a89de207d1b3314982b7f8668663db0f3d691ffe2260513123f17c52d6ecb"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "0bfa52a09ef49b9e214de6cf0a3102e22bfaab270aafea26c84310052c85670a"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "270282c12fc8ee40f578f1e921a00ca114bc49bf9e73107643e2cd1942b09984"
         }
       ],
       "items": [
@@ -7848,6 +8497,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "9b8f34397608002818a81f28971628aeed1eb4a496f244104fbb48990b3ce4ff"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "0af10caf7e3353f3ce2e471d90efa8dd36691870b47f73be03d37d7168c6dcd0"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "8fa79bad07f2488477e1a2fba07beeb01b9de866a6713be114e262be7a435893"
         }
       ],
       "items": [
@@ -7991,6 +8652,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "40b7ab1f0348b2503b08fb7f289a46f009c74218a1f1e9fedcfc6a85c980f4be"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2b7eb925ca2078751755b82cbb1d9e6e041f049423491215bf1b9c4a7a4a91ec"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "eed7a1544cedfb935ce73beeca994700bc5763d4dcfe3b7ccdbbca92d1affc85"
         }
       ],
       "items": [
@@ -8151,6 +8824,18 @@
           "sha256": "0272d465c288d856f99cc36927a93f925fc07ecfcddd8ba8a2b94e144a683e64"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "770014e842bb358ecca6db469b5352d5ed1d3e46c832e2d752730b85d523180b"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "b733081ec050567af0e644ae8bea5a53c80118a7b1a56de703f0457b8ddcf090"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -8239,6 +8924,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "5d4e8e84a27302f77b7c790dfa17071b63be6a4194dc4c7a878c30f7b0e7c245"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "f373b34f5f69e412b63714c0858de9185a5108af4c33f7634d6705d143b58853"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ba26c071dbadd796912769ec69bda77a0c68385c9c9c45c39a47544bb912f63a"
         }
       ],
       "items": [
@@ -8372,6 +9069,18 @@
           "sha256": "ceff1b38416615ee17c86156eaa745a8eb4e6f4a920616fdbb829f160040f7ff"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "fd801ce941a30a13c09000471a36f15706feca43a6e1071c11c1864b6592eb67"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ae30aebb9927d8d67a89f8782bb37cca13c80e0ec5075451c4b7fefde7323f5c"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -8460,6 +9169,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "4860bb55636c18e7345d4565de68e8a94173ee3583e8a201ad49173bdf71328f"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "4632a14e292d1797be8152facb2d74c293bcdaf8a5e3337af64368c588987bf6"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "c6f85a80eabaf6ec81ef5e15e2c6d2a9efb15c95258ed1de5be228b23deb3ed2"
         }
       ],
       "items": [],
@@ -8582,6 +9303,18 @@
           "sha256": "868982df5533abc2667db75bd16e574a77d686f34666073738ee96c3e0081126"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "ff754e543ba0c8292a0638ebafe579ae75a1797808b0de8edeb71b2682ff2486"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "584d60f7501f35058d1a8af004512e44d6631106a742270731127fabd9530b9c"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -8685,6 +9418,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "0a237908d7e753d72bbd10a7f28cb070120e32821202fdc7dea83d3d73d19a8e"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "cdb590664e511f95f49a3ef2606da725c20bf5e164ab9d36c2a8285b3ed2261c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "01b952bb02c3b503909f4e73018a621ca393a2f9c24832b6eb18be4e1b04e05f"
         }
       ],
       "items": [],
@@ -8792,6 +9537,18 @@
           "sha256": "127c49097997c51dbf32024d3f67e3b131419de2c9e6299e05c8b85610cd3574"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "291da31b32a7e1245695a7b87c36ac2b65e22f6a7a4b03e1be793ec1d3509a2b"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "bba6bb0c654a9b7d06443433086bc47ab9ac131e79106dbf1f74f98050e58dee"
+        }
+      ],
       "items": [
         {
           "offset": 8048,
@@ -8877,6 +9634,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "2b6eb4e1dd069ab09094a552287aa2bcd67c17b1616ec924cabe927c403d4dba"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "68072cbb660b14b2da1a3186c2953d4dae9bfb50ca545f6382eeb20d76463bfb"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "243413046ce42dc21870716c9b1d1125623065901e2bea4da4ded2b430bf4c38"
         }
       ],
       "items": [
@@ -8996,6 +9765,18 @@
           "sha256": "1e0f2ae9f97ff0a4d12a3d2628a3894f2f01f011eec01c83c1c2002dfe0a0182"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "3829703957169eec04277f4df54cb6bd9f21d3f254aa40706e727b83ba93e36d"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "675bc062a761b8b450d2ae8b5b93ee06b1f1dc8bc035b66dba3608915dcdeb35"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -9084,6 +9865,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "c319815cc04614137397f382d3b74b2285ab5d6a3d1e71e9818239b8e9bfbf89"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "97a9ecedfa3c089b9e343c1697ee9694af112c08df23601b81de5f2abf2af0a8"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "56df7563d69e224ecb1501b478d49cdbd7290277d18007d5f273faa867373ad5"
         }
       ],
       "items": [],
@@ -9176,6 +9969,18 @@
           "sha256": "c46d17c44559cf8617f0271e8580d2e48c163c9d59b8f09a317fb5e4d2e75417"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "7fa0a3ce390505f54c48f0627d62e824f33d54b0399c7987e7b9afd013201c76"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "77f6ea3ee50494c67d8a4ff5eace9b2ce2db99d53fa8e88f8d9408aa6df07f4f"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -9264,6 +10069,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "e02491b48ee910c3e8d32836e4aaadc53d52441c74a978376def9379d9112d0b"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "85ed18e52e9d368ebfdb8d2407723d10c172fc27f1a4f0d77e8386f7505e8ae4"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "1c943be9d7124f2922144567f150c4ca669c3d856f729980250d0b06aa96a859"
         }
       ],
       "items": [
@@ -9420,6 +10237,18 @@
           "sha256": "8dfb0fd0439934d65aa2434dbdadb8765906cc90079f0dae8b901abd0ad1ddaa"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2773318fb20a046c53f778e21622157fe8f40b9690d551ba754c87ce5fa96a00"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "2f5e48d6e4ca22ffcae0be7dedc421cd6aa66c5f63ce810b1b489727a8080564"
+        }
+      ],
       "items": [
         {
           "offset": 1136,
@@ -9527,6 +10356,18 @@
           "sha256": "0ba36d9ef49abeec651da06021ad03ca73f9afcbbb94da92a0873a53344960eb"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2773318fb20a046c53f778e21622157fe8f40b9690d551ba754c87ce5fa96a00"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "2f5e48d6e4ca22ffcae0be7dedc421cd6aa66c5f63ce810b1b489727a8080564"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -9600,6 +10441,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "2ff2a2910b028537ef92256cf447ea441c0a63d29ee6bc4d292bdd8082404f75"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "65aad9a754de7bfa70aae5efe6f9ec8bcf34fb4169a9b4e9ed41db964bd38afb"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "56629f8ec5d72e0d90f55281daca0ae3e15d98e29b10866603ba98084c1b0e9f"
         }
       ],
       "items": [
@@ -9728,6 +10581,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "014cd4d92d8ffe552e86c906a6ddfce61555a4f7fe0d6888d1f19c5bbe138413"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "8291bb402e1e3588a3f39c48650e32b32b42caf594a05f4c4f710e17215166a3"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ec0f43e3de804ad1464ecd8e4d34d069aae363bc2eeea223099c2010032ebecb"
         }
       ],
       "items": [
@@ -9958,6 +10823,18 @@
           "sha256": "19389f06f0a9d76491a69019e62b4c65e4c973d5f83ecbd7e65f30fd62c97fd8"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "fd801ce941a30a13c09000471a36f15706feca43a6e1071c11c1864b6592eb67"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ae30aebb9927d8d67a89f8782bb37cca13c80e0ec5075451c4b7fefde7323f5c"
+        }
+      ],
       "items": [
         {
           "offset": 2728,
@@ -10069,6 +10946,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "2b2a406ddefea2549a4a80cb35fca2c6c3e1da8fc81cff900855e5677511ec4d"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "4361ecf3818f37a190e6467d3ba2227c768c0824704bb702f295d87866e7d949"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "00d221be5294c96d95e5247a03bc1b1aad041cf04909057dadce3f288e0a4dd2"
         }
       ],
       "items": [
@@ -10273,6 +11162,18 @@
           "sha256": "60e6fcc26fd096071267f99981b9d94cff3171ad08015b95c04e236544d7687a"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "a1e0efed8c6fc6007da3ba0c87093cf985631f7266e0c692335df23ec5547cf2"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "e7f07bb7a124f6a10f712d2138f77b134d62e29d2e1461c5abd2ef3d17b77cc1"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -10406,6 +11307,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "6b39f79911ea666c3577be1c56627e5a1f5da49ab9ca869eed1099e2d0f14c13"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "fd801ce941a30a13c09000471a36f15706feca43a6e1071c11c1864b6592eb67"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "bcdbe22e94fe2f071857fd091045da465fdc999a24e55b2d1467a3f83f027d12"
         }
       ],
       "items": [
@@ -10547,6 +11460,18 @@
           "sha256": "e3c316f2a7ceee5c1e0eb512647087dd8e9731154636ad6361442fe83e68cf15"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "5ac25cc90f524a061d6d0152dfc2cc3eb06faf3a4be96474bc02f10539dc61b9"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "f0891fdc7fbd1987a18dcf467168ff60b943ba1720ee766a411719acc9f12f2f"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -10650,6 +11575,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "000689031fd65d517b3e0bd02e275bb12d81f965dea5e9a5a763507ccbad8219"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21a2f241c8553cb3cdb99fbf02ed9e5bb75c26cea1f0f1fe94fbe51e38ddf014"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "b1348ee4037c2669f9324dbbf8c6a0d86337c6eda9733ff512a346ee6c1ca492"
         }
       ],
       "items": [
@@ -10798,6 +11735,18 @@
           "sha256": "c048918d9af3b9147c34e423bd4d9421fe88e6ddf2c50ce68e7ff5d813c7cafe"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "65f762566fd2a3bcdbc3beef69f7e04ae468da19ea6e0927556806d7073e2c28"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "76c1d8d801fa47e5f7b40b43fbf8ba956670910e4b8e8a90081ae5d112db02aa"
+        }
+      ],
       "items": [
         {
           "offset": 8840,
@@ -10933,6 +11882,18 @@
           "sha256": "47a472b92afa64c2765c19844ac003b42f16b4efe331a6f59f5be0078d0f99f3"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "9ca6a45d1bc75d9ae302e727548e5e2d5927f8766c30d60d22e084c202f1f7b7"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "8c5073b12916fa16bd415ee12bacec64e2d7393e6f1a9ad537dbea5738e24d83"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -11021,6 +11982,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "a270e861b5c6ca0a6d796ddb12fe2363f8cc2b9e624a586f8c857ab0ea63ad61"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "7629b99b49739a56d2529dfb01ff4d6e2c97e1b2fc05b789286e7b5a1ef4d51c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "21e4ec75e32fba6924d9560db42bbf997d08a2858798921ae59c516318c287c3"
         }
       ],
       "items": [],
@@ -11113,6 +12086,18 @@
           "sha256": "e43c0bc52570f6f45168e71666e04052f8a18edbc67ef42c259af1a4bcd82d44"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e3e0c06aa936037eb14995891d8b4eadc65cb85e24f905031101c585bc6d7ab1"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "8b3c6a494bc121e46df1977f0e9b267c3058bcab304038107f4e65550c344bef"
+        }
+      ],
       "items": [],
       "doors": [],
       "candidate_list_complete": true,
@@ -11170,6 +12155,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "7b5ffe1af0d816a80b74e5c414ec70f633bc0f2a30a0378a729c44c08c0b65ee"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "8e83b261781cbff2151238d8411109d820f0659f87786c7352fb9b2ad3de14b9"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "787be23fd0eb7420f17a83d0780068bd5048a7fdbb0177eea6e8169b97eb05cd"
         }
       ],
       "items": [],
@@ -11260,6 +12257,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "6b436490d195846cbab8430c55bdd5eba7bf61b759a3d249524e69ef9bae40ed"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "aea66f343d5bbecc83db621dd93e394b22c6bf06eea24e64275d66b6332e164f"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "49851b4c41c112913e4150db883b1430b39777a4ba45f40e0337b8ea1b30bac3"
         }
       ],
       "items": [
@@ -11390,6 +12399,18 @@
           "sha256": "a270e861b5c6ca0a6d796ddb12fe2363f8cc2b9e624a586f8c857ab0ea63ad61"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "7629b99b49739a56d2529dfb01ff4d6e2c97e1b2fc05b789286e7b5a1ef4d51c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "21e4ec75e32fba6924d9560db42bbf997d08a2858798921ae59c516318c287c3"
+        }
+      ],
       "items": [],
       "doors": [],
       "candidate_list_complete": true,
@@ -11447,6 +12468,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "6088a19d86dabf15407deb18cfa9c3e017dcda816ff4c64161b6d497f7cb1e5e"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e5ecf49cc81b8367bb60251d9317a5e5e2bd35334574744a9ee8de0d08b3847d"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "251944dae20b9529a758e82155ead3ee360a465d60dfe99c67823eb47cf0157e"
         }
       ],
       "items": [
@@ -11629,6 +12662,18 @@
           "sha256": "874c5e5618af7dae483424a06adf3822f59c20712cddb021008341fc5a390f2b"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "aed268dfb96418ed8ff8336a910f9c133980c9b414ea00954f662c9074ccfc5f"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "2312cf4b098e5b82fddfa3fb866f0d408107ccb8c9157a2de8cb84054fa49556"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -11702,6 +12747,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "7196e2ad148a075f9c3abbfbe5125e087878b5cb6fbcd5abc0173951f309160a"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "80553324924f2e510b0c2c9ded943f708a3d16781dd9cb928ce26a3c84f4cd26"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "4ddc61ba025742a02e04e1602c177f54a9d62299d81ff905a2121d5ef76fb450"
         }
       ],
       "items": [
@@ -11804,6 +12861,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "9d04d2e5bb539c0c2a961cd6207b48c0032d7a19585a277a46c8d845a5d8fad6"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "a3a74d2882d50157675788c8e109c446098ebaefa79c39ab3abdcbdc7be17176"
         }
       ],
       "items": [
@@ -11917,6 +12986,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "37ff258763589851be05d9e184194f6281d5fe37ef9c62fa7b5980bceb15cc29"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "c04cd7038caa5a4ef9bd0df71c44a368997528d7e7a7a3ab5274335b8b2a8958"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "7bd97f18452e255d730b56119505331bab1acc76c8fc9e3d512c588c30e5354e"
         }
       ],
       "items": [
@@ -12084,6 +13165,18 @@
           "sha256": "52e954b182ffac5b9156f086b7f2d898ed92251ab8ed77b3b1b38d74925f9b08"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "5e2e42c2f955a5616da947950a29cd904489fbaa8641ade1dee5b35c31fcf1ab"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "66d31e7bc0f2d3807b51e5cf1347836ba44a45319827354ebab2108b16cb2ba6"
+        }
+      ],
       "items": [
         {
           "offset": 7412,
@@ -12195,6 +13288,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "7883596dc0cbef1ba2cf27f74c127b3e0a8a89de52071717d4ca173201d1a24b"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "0678242dbfddedc93e0bfc53d05f807ab9590cfe1880c4c5ff799c50f57b0037"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "dd868b6cba8b04274f2305fa465109d5fc6c3ffeb726e5de4012ba398eb6e9a5"
         }
       ],
       "items": [
@@ -12388,6 +13493,18 @@
           "sha256": "9025d47d69ad23751b98cb0a7ba53785462e4496ae9299e0c04909c446710123"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "d652059b684fa93c42f031c5433a6ed32b0221c8d5852c5843747d9dbd89aa6f"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "bc97ffe228f399873851b201ecf2293c46e2ec4a0f0b6a1fe485cca89bc29100"
+        }
+      ],
       "items": [
         {
           "offset": 3520,
@@ -12499,6 +13616,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "1ebb1d6ac7395d61b6c2b3ee9a4f7e9089c2e16747a397a89bd9acf055b109b2"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "f20093b245a88b2808f9591efaca07c1a71f05de20c2b0850c5c14e20e3a5f0b"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ba4b27d0a8d00fe26c0432cdc700b9fbb097b94f3381c0c1311d470df073955f"
         }
       ],
       "items": [
@@ -12630,6 +13759,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "a34657c9748b5003e35f18febeeadf331226f131c7b6a4d56f30ff418bfdf827"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "a3a74d2882d50157675788c8e109c446098ebaefa79c39ab3abdcbdc7be17176"
         }
       ],
       "items": [
@@ -12793,6 +13934,18 @@
           "sha256": "8707107bbf36ee6a548bdfd7313e72f1d5b4f0d630faca77d985fa919b8567e1"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "5857563de4fca54bba0d1f52d937f4097c1aeb421c2ce7ea0f8522d617db6006"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "07a9624d4d9e9bf3d8d38712786ee92a58a09531fa4429834eccb07779e9c94d"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -12866,6 +14019,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "8707107bbf36ee6a548bdfd7313e72f1d5b4f0d630faca77d985fa919b8567e1"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "13177e8efb4bb5b0fffaf190c882f989d4245cc13c3d495f5987137602a2864c"
         }
       ],
       "items": [],
@@ -12956,6 +14121,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "eb0eb244f11a9dc54ceb6d569a81213aea7e8f4c3219b55611db6b7cc23b7145"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e24d33f34d5544894137c835ff69a954350eded912b3d90ca5d4c3ae5773c15c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "05f0434621e77476692ad8a36f7bc95fbc3fbf3e83328fe87a07490026d8b7fa"
         }
       ],
       "items": [],
@@ -13061,6 +14238,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "349cba98e4807ca54dc3066805139254e90609462128401e8d440a899b3701af"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1248622cac8e9f605aa68cba910f8e36f746c226eea46a55baa14ac124f699db"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "b2679a353ec3a72fc373606bbf53b718c90644162b0ad3ec45feac154c0e9d18"
         }
       ],
       "items": [
@@ -13174,6 +14363,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "096d2cd025d4c8e47268c6fb0447ebb55804704c9f12832b778a4e253e8658fa"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "73d25e8c07a3a1a9afb1cfd183c659ce70019d095a851b3df7e2c5c6ac8382dc"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "e682a4090aefcf12eb4ca82b8c85e6dc447d442e5fe91fa9dc4746a16e60b12a"
         }
       ],
       "items": [
@@ -13337,6 +14538,18 @@
           "sha256": "73b8d02890f5d685590fc1e27087f98e45b4ca34a515a93a54740269d0939c07"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "aab17deb2e868e966c1819199a0a960c29a1b7dc38bdb0c4ec5355cfca358e4c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "f299b955609da665b86d4db3745fbffaa0994cd9a2a5fd43f544a7c186ad2a57"
+        }
+      ],
       "items": [
         {
           "offset": 8296,
@@ -13424,6 +14637,18 @@
           "sha256": "6b2de5e28debfdbcca8b673b2d6e36719f4ca17d24fa50dbf93983aef0b35887"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "6960414e655e94636041a48c78c362d4c83b89d7149a260a2579351d8cdffad1"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "27306865d73ade5c75a3b03323eda6800cd31773aeb898a1fa13f6476010df9b"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -13497,6 +14722,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "29ef7a24d598c9512061ab9a60729aa38a807eb62a80f0a1434e456d25c82bf9"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "65d9f8c140a722120218d783e5205bd69cef958add0f6b3c80b630693cb4cf2b"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "8260444cb38eb241f3380828fa00546ca3f6eddaba15e665f8b88d292e2f6cb6"
         }
       ],
       "items": [],
@@ -13649,6 +14886,18 @@
           "sha256": "4b0517a74aa40476d0efd233f7079b7992d03033a22cc8b211350e23a3eb3adf"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "20df22d4aca01c67ac080187597021703392e363bc80b3ada977b97f693e2449"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "6cd669a81e6dd42ffaf0c66aafec9e5a7f20a58f807a28c0c7c55539b97a3d6d"
+        }
+      ],
       "items": [
         {
           "offset": 3132,
@@ -13784,6 +15033,18 @@
           "sha256": "0b079d0b40b9ed5c2f92956726e8287afd24e511843b610924ea439006832cbb"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "066c08ff384a3994f0bfad0bc50a47e7090712144da0711aa9afc6575b536607"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ef43f816db9f4dc6a3f3ebf88d0c19ffc6887a1e5719a6388db073dad870b1cb"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -13887,6 +15148,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "2687ae93b11581d663c73559051a61bdc65abbb69649eee0fd7fcfc2f8f45806"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e3f916bd0a7fddb59636721e637d6c76ea1f887e1a55b16826bfa70fc0c7f704"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "edbc139b1df6df7f8e81d97da1bc1c5e217375368ccd62ca5f6ed27a12ed2217"
         }
       ],
       "items": [
@@ -13996,6 +15269,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "db30c86b92b08443a8779498ba5bf5f64c83e88e001e4cbb15192d554eaed038"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e078b82e002412d80f0f4987a26a57d7fefe97c61135f06158ef4ce322cdafad"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "ec71355dd3082762ed18948b2053d008f44a9cdf465dbc7a1c8ebd8c67f22fd7"
         }
       ],
       "items": [
@@ -14144,6 +15429,18 @@
           "sha256": "688abd30b56023e6e89895976ef8813da95749e85a15d1aed05ef4b41271736c"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "f3746d6d0463abacb873717425ab41c8dbbff6cb96ba3e1c16d6d4fca646a625"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "1908ca7b2a667b46d61198adcb1494fdd3c6541fd113015ca85a403a11a49f31"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -14277,6 +15574,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "5b15ee048c5ebaf59f10eca1108d6ec0966da2763bf75062eeaac7199a45bee0"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "2d50077a5eb8712e41de8d620a068510f82e36a47cc2e383c42438a27c556d3c"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "a2b8116f763669143566f0452e5cbcf8bf7c70c2b80747864fc7a1ac4a2883c4"
         }
       ],
       "items": [
@@ -14426,6 +15735,18 @@
           "sha256": "1aba99ba7a60ff8396b7ddf8b775af411b5aa27829c703f0df0a0a352f027b35"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "21e6b1589b206a345d9c86acc134991a837a52a81aa8aa24c54c04cfcad73c88"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "5544b9f0f28a67f08ff737e947da3f86002ed7ec5ca8b791a73e146b6a4eb10b"
+        }
+      ],
       "items": [
         {
           "offset": 2278,
@@ -14528,6 +15849,18 @@
           "offset": 136,
           "width": 24,
           "sha256": "9ecd69e7e816ecf20b74dcc46a298e32af503883e6ff398ce6ac787bd8737a58"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "bdb286a8e1f406eeae11c2e3e68196e6a082aff4db93f97253cc1d19fb04a806"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "907257f87e1a9d92882ae6a6917cacc6205013b9e18f70fb6e9d1356ac30a65e"
         }
       ],
       "items": [
@@ -14673,6 +16006,18 @@
           "sha256": "6901a34adbc0216ff6a0b8dfea6ed12ec828ec8597509086a3ecceb93bd98b23"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "69f84f6e03aac17684d318da877ba8bda1cd5efba5d1899719a4224eb39b10fc"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "92b2083cd0aa1f99fb8205962f536a95fdcd48f5c5a16dab60a212cbfdf0424e"
+        }
+      ],
       "items": [
         {
           "offset": 1982,
@@ -14769,6 +16114,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "af1b4487183672eff8177708a2f951825df899dd5c779eee7cf9e8cb3b2a9ff0"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "e17dbde96eff67707b69d8c9e168c3e1e756a7b2132137fb4af3ec68e06cdeb0"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "1f32cedff4097f722ebbea2271968edfea4a8005363ae269ac7d834ac6a53ba5"
         }
       ],
       "items": [
@@ -14906,6 +16263,18 @@
           "sha256": "0b079d0b40b9ed5c2f92956726e8287afd24e511843b610924ea439006832cbb"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "105e8f7367ecd2b1ef442b84ed54f942a358d4213f4edc8ce72a6f8fdc172a00"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "d0850be9e28ad51876b237fdefd7a51ffe81209e0bb751c7740dceb8b0638355"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -15011,6 +16380,18 @@
           "sha256": "715ff4af1578471fe0e0b03849017acf2d500239ad6dc0e7a292124b7e283ab7"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "135d2d3a941591251b4d43b505051482e22ab60eebabbe276793fb9b18a4f9da"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "1b25ad943176294923634c183a70c2c2a1b41992706f224b74d69a58fb289165"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -15101,6 +16482,18 @@
           "sha256": "3391df4cc9317ab315525bda09297c9780ecfc65ca9bc2a0f9bdf4321db82296"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "f886f2e5962ea02f567fcac311d7f535b58ac37a0c6976687d92f6f37dc0ed8b"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "4707f640ca3eea9f9d1d117609c5e927e40405b459e7bbb0767c0a1608796855"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -15174,6 +16567,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "824ffb83cf5b672248dc4d07eaf605463eb7b6f50c4f942e0141adb32abad259"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "acb866cb8b1343f526a53d233757b3ae4379d788285223f2b02caff81ef64b9d"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "d6884e7291bbe5de97d7be68694ae8f21731b782f0bfd877fe9d786eb419e05f"
         }
       ],
       "items": [
@@ -15291,6 +16696,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "f7b8e8149005473ee85028f1641bcdfe97224f2385e8d6daea890b84bce0252c"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "b4afd39bd31a179e898b604cb3b86b8a69fe600131791fec2b9220418621997f"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "71a3ecc0756136962c601729fe26c29318fb043f6ea3acfbca23161adb0a195c"
         }
       ],
       "items": [
@@ -15435,6 +16852,18 @@
           "sha256": "d3463afb1b84c2c95ecc56b7fd753b8426f9b8e8bf4b15f730e9bf150a766d1d"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "0667741e03aae51a5db9701c63a6c5a47b84e1923810c6b6879f86f2b6e4e1b1"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "329f1fd541b773e1b50f4c2b15413d6c7f46bf685556f76b82b957766e4b1397"
+        }
+      ],
       "items": [
         {
           "offset": 7672,
@@ -15574,6 +17003,18 @@
           "sha256": "e65e334c7d0956a074a66edea11285fc0e874898e3ff2bf4c6b63a16c7c3eb5b"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "1e95b6fa7e1d6a954c4719880b412e9a03dbff1d2db7bd8b8fd02ebad2a635ac"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "4aadf86139d9c5ec774998147119728c49837a9fdeabbdd6cbdc82322847bb21"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -15664,6 +17105,18 @@
           "sha256": "80ef6c423a3ab8311e67594d3b0e2b9bbb18844fd40d3b7895474cccaee15687"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "d9fbf4ff02059863cae7783e5dbb75dcf65273a0daec0ed0e58daf6731444272"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "e190f84234e0d45340b963d6a33396d85fea9ebf870fb3861b4a7c78857f1be2"
+        }
+      ],
       "items": [],
       "doors": [
         {
@@ -15752,6 +17205,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "09a1230306033bc8c7ca442eeb7ce4ec1ca90c4c88f24e173152062f70ee65f1"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "ff625266ade9ee2ea0199ffe7a2515c486754936fc8965e3860cbb83a0bc7be8"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "02cac69ebf0bb4d179432afb1d7a2094a5223d031db7da7a8d384b5ab81ba43f"
         }
       ],
       "items": [
@@ -15867,6 +17332,18 @@
           "sha256": "81780bd92a1bd240be5edf3c37ab5799ec4160fb3f9e2926850d880144455a43"
         }
       ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "0385cecad4fd3cbb213ba0abbd597cb741bbae5c0fdda9c293733c318ccb8788"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "75fdb90e3e1b9fed19d5d6a473016f523e2a711bb3a65e4cf3d7b38ee9731e2d"
+        }
+      ],
       "items": [
         {
           "offset": 4610,
@@ -15952,6 +17429,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "f07a2d3f040470cd52c57a6e41a05020b01bc311a33dd1f819bb38c31dd439a3"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "a2fe037e6ef75b9e5bbcf9f2d5aa0e13203765152cfcb096c197da9a8f2c0e93"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "9110254df216068cf292bcc207808359fd006fe2de53a14d4e302301422640e6"
         }
       ],
       "items": [],
@@ -16057,6 +17546,18 @@
           "offset": 168,
           "width": 24,
           "sha256": "f24d18fefef5d86e2001f3fec72cb36f4421bf25b50d411044c7ce87a36a26ac"
+        }
+      ],
+      "sound_proofs": [
+        {
+          "section": 0,
+          "width": 192,
+          "sha256": "4f40f1baa287a14557053672287a238ad3b58669b0f9de791e3623b7ab22c019"
+        },
+        {
+          "section": 1,
+          "width": 32,
+          "sha256": "12b33548056769df37e578b6e4cb418019412f8e96ffbb0e174c979631a83b10"
         }
       ],
       "items": [

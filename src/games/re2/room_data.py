@@ -270,6 +270,21 @@ def decode_room(
         }
         for index in range(min(data[1], 3))
     ]
+    # RE2-SOURCE-001: the sound bank's program records change after loading.
+    # Hash only the complete EDT and the immutable 32-byte VAB header.
+    sound_proofs = []
+    for index, width in ((0, 192), (1, 32)):
+        offset = offsets[index]
+        if offset:
+            if offset + width > len(data):
+                raise ValueError("RE2 sound proof outside the source")
+            sound_proofs.append(
+                {
+                    "section": index,
+                    "width": width,
+                    "sha256": hashlib.sha256(data[offset : offset + width]).hexdigest(),
+                }
+            )
     items, doors, programs = {}, {}, {}
     complete = True
     for section in (16, 17):
@@ -462,6 +477,7 @@ def decode_room(
         "cameras": data[1],
         "section_offsets": list(offsets),
         "proofs": proofs,
+        "sound_proofs": sound_proofs,
         "items": list(items.values()),
         "doors": list(doors.values()),
         "programs": programs,

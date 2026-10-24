@@ -116,14 +116,31 @@ def poll_re2(
         if not 0x80000000 <= base <= 0x80200000 - room["size"]:
             return PollResult(PollStatus.Retry, "Room source is still loading")
         sections = struct.unpack("<23I", read(base + 8, 92))
-        # The loader relocates every nonzero section pointer in place. Camera
-        # positions alone are shared by several different RE2 room sources.
-        if [pointer - base if pointer else 0 for pointer in sections] != room[
-            "section_offsets"
-        ]:
+        offsets = [pointer - base if pointer else 0 for pointer in sections]
+        # RE2-SOURCE-001: native sound pointers can move together inside the
+        # loaded source. Camera positions alone cannot identify every room.
+        if offsets[2:] != room["section_offsets"][2:]:
             return PollResult(
                 PollStatus.Retry, "Loaded room section layout does not match its source"
             )
+        if offsets[:2] != room["section_offsets"][:2]:
+            if offsets[0] - room["section_offsets"][0] != offsets[1] - room[
+                "section_offsets"
+            ][1] or any(
+                sections[proof["section"]] % 4
+                or not 100 <= offsets[proof["section"]] <= room["size"] - proof["width"]
+                for proof in room["sound_proofs"]
+            ):
+                return PollResult(
+                    PollStatus.Retry,
+                    "Loaded room sound section layout does not match its source",
+                )
+            for proof in room["sound_proofs"]:
+                packet = read(sections[proof["section"]], proof["width"])
+                if hashlib.sha256(packet).hexdigest() != proof["sha256"]:
+                    return PollResult(
+                        PollStatus.Retry, "Loaded room sound does not match its source"
+                    )
         for proof in room["proofs"]:
             packet = read(base + proof["offset"], proof["width"])
             if hashlib.sha256(packet).hexdigest() != proof["sha256"]:

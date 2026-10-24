@@ -943,6 +943,114 @@ def test_shared_camera_positions_do_not_bind_the_wrong_room(snapshot):
     assert tracker == Tracker()
 
 
+@pytest.mark.parametrize("index", range(2, 23))
+def test_sound_relocation_does_not_relax_other_sections(snapshot, index):
+    profile, _, put, read = snapshot
+    expected = profile.rooms["00-01"]["section_offsets"][index]
+    put(0x80100008 + index * 4, 0x80100000 + expected + 4, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Retry
+    assert tracker == Tracker()
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "none",
+        "spacing",
+        "unaligned",
+        "null",
+        "both-null",
+        "below-room",
+        "bounds",
+        "edt",
+        "vh",
+        "camera",
+        "torn",
+        "edt-torn",
+        "vh-torn",
+        "short",
+    ],
+)
+def test_paired_sound_relocation_requires_bounded_coherent_source_proofs(
+    snapshot, fault
+):
+    """RE2-SOURCE-001: no native RAM or sound assets are embedded in fixtures."""
+    profile, _, put, read = snapshot
+    room = copy.deepcopy(profile.rooms["00-01"])
+    for proof in room["sound_proofs"]:
+        proof["sha256"] = hashlib.sha256(bytes(proof["width"])).hexdigest()
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    # An explicit test location models only the moved sound bytes. Native
+    # pointer values and content hashes are checked in the capture replay.
+    start = 0x80100000 + room["size"] - 256
+    start &= ~3
+    if fault == "unaligned":
+        start += 1
+    if fault == "bounds":
+        start = 0x80200000
+    if fault == "below-room":
+        start = 0x80100060
+    put(0x80100008, start, 4)
+    put(0x8010000C, start + 192, 4)
+    if fault == "spacing":
+        put(0x8010000C, start + 196, 4)
+    if fault == "null":
+        put(0x80100008, 0, 4)
+    if fault == "both-null":
+        put(0x80100008, 0, 4)
+        put(0x8010000C, 0, 4)
+    if fault in ("edt", "vh"):
+        put(start + (0 if fault == "edt" else 192), 1, 1)
+    if fault == "camera":
+        put(0x80100000 + room["proofs"][0]["offset"], 1, 1)
+    header_reads = 0
+    sound_reads = {}
+
+    def changed_read(address, width):
+        nonlocal header_reads
+        if address == 0x80100008 and width == 92:
+            header_reads += 1
+            if fault == "torn" and header_reads == 2:
+                packet = bytearray(read(address, width).data)
+                packet[0] ^= 4
+                return MemRead(True, bytes(packet))
+        if fault == "short" and address == start:
+            return MemRead(True, bytes(width - 1))
+        if address in (start, start + 192):
+            sound_reads[address] = sound_reads.get(address, 0) + 1
+            if (
+                fault == ("edt-torn" if address == start else "vh-torn")
+                and sound_reads[address] == 2
+            ):
+                packet = bytearray(read(address, width).data)
+                packet[0] ^= 1
+                return MemRead(True, bytes(packet))
+        return read(address, width)
+
+    result = poll_re2(profile, tracker, changed_read)
+    if fault == "none":
+        assert result.status is PollStatus.Display
+        assert tracker == before
+        # Restoring the original header must re-read item flags, rather than
+        # carrying the relocated publication forward after a savestate load.
+        for index, offset in enumerate(room["section_offsets"][:2]):
+            put(0x80100008 + index * 4, 0x80100000 + offset, 4)
+        for definition in room["items"]:
+            put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+        put(0x800CC9E8, 0xC0010000, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        assert tracker.rooms["00-01"].items != before.rooms["00-01"].items
+    else:
+        assert result.status is (
+            PollStatus.ReadFailure if fault == "short" else PollStatus.Retry
+        )
+        assert tracker == before
+
+
 def test_disabled_door_does_not_become_open_from_a_key_flag(snapshot):
     profile, _, put, read = snapshot
     definition = profile.rooms["00-01"]["doors"][0]

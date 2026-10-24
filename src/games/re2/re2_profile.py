@@ -260,6 +260,26 @@ class Re2Profile:
                 )
             ):
                 raise ValueError("invalid RE2 source section bounds")
+            sound = room.get("sound_proofs")
+            if (
+                type(sound) is not list
+                or len(sound) != 2
+                or any(
+                    type(proof) is not dict
+                    or proof.keys() != {"section", "width", "sha256"}
+                    or type(proof["section"]) is not int
+                    or proof["section"] != index
+                    or type(proof["width"]) is not int
+                    or proof["width"] != width
+                    or type(proof["sha256"]) is not str
+                    or len(proof["sha256"]) != 64
+                    or any(c not in "0123456789abcdef" for c in proof["sha256"])
+                    or not 100 <= room["section_offsets"][index] <= room["size"] - width
+                    for proof, (index, width) in zip(sound, ((0, 192), (1, 32)))
+                )
+                or room["section_offsets"][1] - room["section_offsets"][0] != 192
+            ):
+                raise ValueError("invalid or missing RE2 sound source proofs")
             if any(
                 not 0 <= item["global_id"] < banks[bank][1] * 8
                 for item in room["items"]
