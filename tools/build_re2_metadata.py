@@ -448,6 +448,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-017",
                 "RE2-COLLECT-018",
                 "RE2-COLLECT-019",
+                "RE2-COLLECT-020",
                 "RE2-SOURCE-001",
             ],
             "fixed_scenario_flags": fixed_flags,

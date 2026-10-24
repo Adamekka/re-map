@@ -549,7 +549,7 @@ def test_generated_fixed_startup_presence_keeps_unresolved_neighbor_and_rewinds(
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
         record = tracker.rooms["01-0c"]
         assert [(i.state, i.quantity) for i in record.items] == [
-            ("unknown", ItemQuantityState.Unreconstructed),
+            ("unknown", 7),
             ("taken" if acquired else "available" if current else "uncollected", 1),
         ]
         assert record.completion is (
@@ -563,6 +563,58 @@ def test_generated_fixed_startup_presence_keeps_unresolved_neighbor_and_rewinds(
     put(0x800C7D04, 0x40000000, 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
     assert tracker == published
+
+
+@pytest.mark.parametrize("snapshot", ["01-0c", "00-01"], indirect=True)
+def test_generated_reset_variant_keeps_presence_unknown_and_rebuilds_acquisition(
+    snapshot,
+):
+    """RE2-COLLECT-020: identity proof cannot manufacture an available item."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-0c"]
+    assert source["scenario_item_variants"] == [{"global_id": 207, "offsets": [7534]}]
+    assert 207 not in source["collection_item_ids"]
+    assert all(r["global_id"] != 207 for r in source["conditional_item_presence"])
+    assert 207 not in source["scenario_absent_item_ids"]
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    put(0x800CC9FC, 0x00200000, 4)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x0C))
+    for acquired in (False, True, False, True):
+        put(0x800CCA00, 0x00010000 if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-0c"]
+        assert [(i.label, i.state, i.quantity) for i in record.items] == [
+            (profile.names["items"]["21"], "taken" if acquired else "unknown", 7),
+            (profile.names["items"]["39"], "taken", 1),
+        ]
+        # All-flags-set clearance is a synthetic interpretation contract,
+        # not native collection or clearance evidence for pickup 207.
+        assert record.completion is (
+            RoomCompletion.Cleared if acquired else RoomCompletion.Unknown
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x0C))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-0c"] == record
+
+
+@pytest.mark.parametrize("snapshot", ["01-0c"], indirect=True)
+def test_generated_reset_variant_rejects_an_incompatible_live_creator(snapshot):
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-0c"]
+    foreign = next(
+        i for i in source["items"] if i["global_id"] == 207 and i["type"] == 29
+    )
+    pointer = 0x80100000 + foreign["offset"] + 2
+    put(0x800C66C8 + foreign["slot"] * 4, pointer, 4)
+    put(pointer, 2, 1)
+    for offset, value in [(12, 29), (14, 36), (16, 207)]:
+        put(pointer + offset, value, 2)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Retry
+    assert tracker == Tracker()
 
 
 @pytest.mark.parametrize("snapshot", ["01-08", "00-0f"], indirect=True)

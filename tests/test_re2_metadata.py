@@ -1925,7 +1925,7 @@ def test_scenario_variant_proof_requires_every_possible_creator(
     )
     absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == []
-    if case != "valid":
+    if case != "valid" and not (case == "reset" and fixed == 1):
         assert variants == []
         return
     selected = next(
@@ -1952,6 +1952,141 @@ def test_scenario_variant_proof_requires_every_possible_creator(
                 },
             }
         ],
+    )
+
+
+@pytest.mark.parametrize(
+    "case,selected",
+    [
+        ("matching", True),
+        ("unreachable-alternative", True),
+        ("unknown-alternative", False),
+        ("uncalled-alternative", False),
+        ("opaque-loop-alternative", False),
+        ("changed-type", False),
+        ("changed-amount", True),
+        ("foreign-slot", False),
+        ("foreign-id-on-slot", False),
+        ("script-on-slot", False),
+        ("inactive-zero", True),
+        ("inactive-payload", False),
+        ("geometry-change", False),
+        ("past-registry", False),
+        ("negative-slot", False),
+        ("copy-reset", False),
+        ("incomplete", False),
+        ("quantity-set", True),
+        ("no-reachable-creator", False),
+    ],
+)
+def test_scenario_variant_includes_every_reachable_reset(
+    case, selected, scenario_banks
+):
+    """RE2-COLLECT-020: reset reachability cannot replace identity/quantity proof."""
+    from games.re2.scenario_items import scenario_item_candidates, scenario_item_proofs
+
+    first, second = item_command(20, 15, 9), item_command(21, 30, 9)
+    branch = (
+        bytes([6, 0, 30, 0, 0x21, 1, 1, 0])
+        + first
+        + bytes([7, 0, 28, 0])
+        + second
+        + b"\0\0\x01\0"
+    )
+    matching = bytes([0x46, 8, 2, 0x31]) + struct.pack("<3H", 20, 15, 9)
+    other = bytes([0x46, 8, 2, 0x31]) + struct.pack("<3H", 21, 30, 9)
+    extra = matching + b"\x01\0"
+    additional = ()
+    if case in ("unreachable-alternative", "unknown-alternative"):
+        extra = (
+            matching
+            + bytes(
+                [
+                    6,
+                    0,
+                    16,
+                    0,
+                    0x21,
+                    1 if case == "unreachable-alternative" else 4,
+                    1 if case == "unreachable-alternative" else 7,
+                    1,
+                ]
+            )
+            + other
+            + b"\x08\0\x01\0"
+        )
+    elif case == "uncalled-alternative":
+        additional = (other + b"\x01\0",)
+    elif case == "opaque-loop-alternative":
+        # A zero-count loop is deliberately opaque in the negative analysis.
+        extra = matching + bytes([0x0D, 0, 12, 0, 0, 0]) + other + b"\x0e\0\x01\0"
+    elif case == "changed-type":
+        extra = other + b"\x01\0"
+    elif case == "changed-amount":
+        extra = matching[:6] + struct.pack("<H", 16) + matching[8:] + b"\x01\0"
+    elif case == "foreign-slot":
+        extra = bytes([0x46, 9]) + matching[2:] + b"\x01\0"
+        additional = (
+            bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+            + item_command(20, 15, 9, slot=9)
+            + b"\x08\0\x01\0",
+        )
+    elif case == "foreign-id-on-slot":
+        extra = matching[:8] + struct.pack("<H", 10) + b"\x01\0"
+        additional = (
+            bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+            + item_command(20, 15, 10)
+            + b"\x08\0\x01\0",
+        )
+    elif case == "script-on-slot":
+        extra = bytes([0x46, 8, 5, 0x31, 255, 0, 24, 2, 0, 0, 1, 0])
+    elif case in ("inactive-zero", "inactive-payload"):
+        extra = (
+            matching
+            + bytes([0x46, 8, 0, 0])
+            + bytes(5)
+            + bytes([case == "inactive-payload"])
+            + b"\x01\0"
+        )
+    elif case == "geometry-change":
+        extra = matching[:3] + b"\x80" + matching[4:] + b"\x01\0"
+    elif case in ("past-registry", "negative-slot"):
+        extra = (
+            bytes([0x46, 32 if case == "past-registry" else 255])
+            + matching[2:]
+            + b"\x01\0"
+        )
+    elif case == "copy-reset":
+        extra = bytes([0x1D, 0, 4, 0]) + matching + b"\x01\0"
+    elif case == "quantity-set":
+        extra = (
+            item_command(20, 16, 9)
+            + matching[:6]
+            + struct.pack("<H", 16)
+            + matching[8:]
+            + b"\x01\0"
+        )
+    elif case == "no-reachable-creator":
+        body = first + second
+        branch = bytes([6, 0, 50, 0, 0x21, 1, 1, 1]) + body + b"\x08\0\x01\0"
+    data = synthetic_room(b"\x01\0", (branch, extra, *additional))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    if case == "incomplete":
+        room["candidate_list_complete"] = False
+    proof = scenario_item_proofs(
+        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+    )
+    assert proof.absent_item_ids == []
+    if not selected:
+        assert proof.item_variants == []
+        return
+    room["scenario_item_variants"] = proof.item_variants
+    candidates = scenario_item_candidates(room)
+    assert {item["type"] for item in candidates} == {20}
+    assert {amount for item in candidates for amount in item["amounts"]} == (
+        {15, 16} if case in ("quantity-set", "changed-amount") else {15}
     )
 
 

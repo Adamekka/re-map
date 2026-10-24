@@ -23,6 +23,7 @@
     "RE2-COLLECT-017",
     "RE2-COLLECT-018",
     "RE2-COLLECT-019",
+    "RE2-COLLECT-020",
     "RE2-SOURCE-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
@@ -6746,7 +6747,14 @@
       "id": "01-0c",
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
-      "scenario_item_variants": []
+      "scenario_item_variants": [
+        {
+          "global_id": 207,
+          "offsets": [
+            7534
+          ]
+        }
+      ]
     },
     {
       "source": "PL0/RDT/ROOM20D0.RDT",

@@ -1,4 +1,4 @@
-"""Fixed-context item proofs. RE2-COLLECT-007/008/011/014/016/017/019."""
+"""Fixed-context item proofs. RE2-COLLECT-007/008/011/014/016/017/019/020."""
 
 from __future__ import annotations
 
@@ -311,6 +311,11 @@ def scenario_item_proofs(
             elif kind == "reset":
                 # A reset is another possible creator even without a matching
                 # live descriptor. Its identity must never be excluded.
+                # RE2-COLLECT-020: native indexing is signed and unchecked.
+                # Setting the geometry bit can move subsequent payload reads
+                # away from the bytes this reset actually writes.
+                if not 0 <= row["slot"] < 32 or data[row["offset"] + 3] & 0x80:
+                    return ScenarioItemProof(False, [], [])
                 continue
             elif row["opcode"] in (0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12):
                 if key not in opaque_loops:
@@ -549,17 +554,41 @@ def scenario_item_proofs(
         and len({item["type"] for item in room["items"] if item["global_id"] == gid})
         == 1
     )
+    reachable_resets = [
+        (row, struct.unpack("<3H", bytes(row["data"])))
+        for key, program in programs.items()
+        for row in program["commands"]
+        if row["kind"] == "reset" and (key, row["offset"]) in reached
+    ]
     variants = []
     for gid, creators in sorted(targets.items()):
         definitions = [item for item in room["items"] if item["global_id"] == gid]
         possible = [items[offset] for _, offset in creators & reached]
-        # A fixed scenario can remove a conflicting creator, but a reset can
-        # introduce that identity independently. Do not infer presence here.
+        # Reachable resets are independent identity sources. Admit them only
+        # when they preserve a selected creator's slot, identity and published
+        # quantity set. This proves neither presence nor scenario absence.
         if (
-            gid not in reset_ids
-            and len({item["type"] for item in definitions}) > 1
+            len({item["type"] for item in definitions}) > 1
             and len({item["type"] for item in possible}) == 1
         ):
+            slots = {item["slot"] for item in possible}
+            payloads = {
+                (item["slot"], item["type"], amount, gid)
+                for item in possible
+                for amount in item["amounts"]
+            }
+            if any(
+                (row["slot"] in slots or row["interaction"] == 2 and payload[2] == gid)
+                and not (
+                    row["interaction"] == 0
+                    and not any(row["data"])
+                    or row["interaction"] == 2
+                    and row["slot"] in slots
+                    and (row["slot"], *payload) in payloads
+                )
+                for row, payload in reachable_resets
+            ):
+                continue
             variants.append(
                 {
                     "global_id": gid,
