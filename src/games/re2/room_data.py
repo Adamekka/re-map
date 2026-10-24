@@ -512,6 +512,13 @@ def collection_presence(
         for command in program["commands"]
         if command["kind"] == "reset"
     ]
+    # A later Copy can rewrite a callback binding or its entry command.
+    # The script-restoration proof requires bytecode that stays unchanged.
+    self_modifying = any(
+        command["opcode"] == 0x1D
+        for program in programs.values()
+        for command in program["commands"]
+    )
     ambiguous_slots = {
         slot
         for slot in {item["slot"] for item in eligible.values()}
@@ -543,6 +550,29 @@ def collection_presence(
         payload = bytes(command["data"])
         if command["interaction"] == 0 and not any(payload):
             continue
+        if (
+            command["interaction"] == 5
+            and not self_modifying
+            and payload[:3] == b"\xff\0\x18"
+            and payload[4:] == b"\0\0"
+        ):
+            callback = programs.get(f"17:{payload[3]}")
+            if callback is not None:
+                entry = next(
+                    row
+                    for row in callback["commands"]
+                    if row["offset"] == callback["entry"]
+                )
+                # RE2-COLLECT-018: a canonical automatic script interaction
+                # preserves the declared item only when it restores that exact
+                # slot and identity before executing any other command.
+                if (
+                    entry["kind"] == "reset"
+                    and entry["slot"] == command["slot"]
+                    and entry["interaction"] == 2
+                    and identities == {struct.unpack("<3H", bytes(entry["data"]))[::2]}
+                ):
+                    continue
         item_type, _amount, gid = struct.unpack("<3H", payload)
         # RE2-COLLECT-003: a later reset can change identity even when
         # its event is not part of startup. Quantity is not identity.

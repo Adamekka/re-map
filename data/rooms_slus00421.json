@@ -21,6 +21,7 @@
     "RE2-COLLECT-015",
     "RE2-COLLECT-016",
     "RE2-COLLECT-017",
+    "RE2-COLLECT-018",
     "RE2-SOURCE-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
@@ -6162,6 +6163,7 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [
+        25,
         125,
         126,
         127,
@@ -7612,6 +7614,7 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [
+        87,
         91
       ],
       "conditional_item_presence": [

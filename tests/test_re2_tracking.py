@@ -476,6 +476,51 @@ def test_generated_scripted_reward_tracks_activation_collection_and_rewind(snaps
         )
 
 
+@pytest.mark.parametrize("snapshot", ["01-10", "00-01"], indirect=True)
+def test_generated_script_interaction_preserves_item_presence_and_fresh_rewinds(
+    snapshot,
+):
+    """RE2-COLLECT-018: script payload bytes cannot erase a declared collectible."""
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["01-10"])
+    source["collection_item_ids"] = Re2Profile.load(
+        ROOT / "profiles/re2_leon_a_slus00421.json"
+    ).rooms["01-10"]["collection_item_ids"]
+    assert 87 in source["collection_item_ids"]
+    profile = replace(profile, rooms=profile.rooms | {"01-10": source})
+    current = str(profile.read_current_room(read).room) == "01-10"
+    for slot in range(32):
+        put(0x800C66C8 + slot * 4, 0, 4)
+    if current:
+        definition = next(item for item in source["items"] if item["global_id"] == 87)
+        pointer = 0x80100000 + definition["offset"] + 2
+        put(0x800C66C8 + definition["slot"] * 4, pointer, 4)
+        put(pointer, 5, 1)
+        put(pointer + 1, 0x31, 1)
+        # Native Aot_reset overwrites the item operands with this script binding.
+        put(pointer + 12, int.from_bytes(bytes([255, 0, 24, 2, 0, 0]), "little"), 6)
+    put(0x800CCA00, 0x00000010, 4)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x10))
+    for acquired in (False, True, False, True):
+        put(0x800CC9F0, 0x00000400 | (0x00000100 if acquired else 0), 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-10"]
+        assert [(item.state, item.quantity) for item in record.items] == [
+            ("taken", 8),
+            ("taken" if acquired else "uncollected", 7),
+            ("taken", 2),
+        ]
+        assert record.completion is (
+            RoomCompletion.Cleared if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x10))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-10"].items == record.items
+        assert fresh.rooms["01-10"].completion is record.completion
+
+
 @pytest.mark.parametrize("snapshot", ["01-08", "00-0f"], indirect=True)
 @pytest.mark.parametrize("departed", [False, True])
 @pytest.mark.parametrize("alternatives", [False, True])

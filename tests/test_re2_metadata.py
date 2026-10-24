@@ -674,6 +674,153 @@ def test_later_identity_reset_cannot_authorize_an_earlier_reward(
     )
 
 
+@pytest.mark.parametrize(
+    "case,preserved",
+    [
+        ("matching", True),
+        ("changed-amount", True),
+        ("fixed-task", False),
+        ("task-high-byte", False),
+        ("dispatch-marker", False),
+        ("reserved-payload", False),
+        ("missing-procedure", False),
+        ("empty-procedure", False),
+        ("padding-before-reset", False),
+        ("call-before-reset", False),
+        ("conditional-reset", False),
+        ("wrong-slot", False),
+        ("wrong-type", False),
+        ("wrong-acquisition", False),
+        ("wrong-kind", False),
+        ("later-foreign-reset", False),
+        ("conflicting-creator", False),
+        ("incomplete-catalog", False),
+    ],
+)
+def test_script_interaction_requires_an_immediate_matching_item_restore(
+    case, preserved
+):
+    """RE2-COLLECT-018: scripted activation cannot replace collection identity."""
+    park = bytearray([0x46, 8, 5, 0x31, 255, 0, 24, 1, 0, 0])
+    restore = bytearray([0x46, 8, 2, 0, 20, 0, 4, 0, 9, 0])
+    prefix, suffix, extra = b"", b"", b""
+    if case == "changed-amount":
+        restore[6] = 7
+    elif case in (
+        "fixed-task",
+        "task-high-byte",
+        "dispatch-marker",
+        "reserved-payload",
+    ):
+        index, value = {
+            "fixed-task": (4, 10),
+            "task-high-byte": (5, 1),
+            "dispatch-marker": (6, 0),
+            "reserved-payload": (8, 1),
+        }[case]
+        park[index] = value
+    elif case == "missing-procedure":
+        park[7] = 2
+    elif case == "empty-procedure":
+        restore = b""
+    elif case == "padding-before-reset":
+        prefix = bytes([0, 0])
+    elif case == "call-before-reset":
+        prefix = bytes([0x18, 1])
+    elif case == "conditional-reset":
+        prefix = bytes([6, 0, 16, 0, 0x21, 4, 7, 1])
+        suffix = bytes([8, 0])
+    elif case in ("wrong-slot", "wrong-type", "wrong-acquisition", "wrong-kind"):
+        index, value = {
+            "wrong-slot": (1, 9),
+            "wrong-type": (4, 21),
+            "wrong-acquisition": (8, 10),
+            "wrong-kind": (2, 0),
+        }[case]
+        restore[index] = value
+    elif case == "later-foreign-reset":
+        suffix = bytes([0x46, 8, 2, 0, 21, 0, 4, 0, 9, 0])
+    elif case == "conflicting-creator":
+        extra = item_command(21, 4, 10)
+    elif case == "incomplete-catalog":
+        extra = bytes([0x46, 9, 2, 0, 21, 0, 4, 0, 10, 0])
+    data = synthetic_room(
+        item_command(20, 15, 9) + park + extra + bytes([1, 0]),
+        (bytes([1, 0]), prefix + restore + suffix + bytes([1, 0])),
+    )
+    result = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert (9 in result["collection_item_ids"]) is preserved
+    assert result["conditional_item_presence"] == []
+    if preserved:
+        assert result["items"][0]["amounts"] == [
+            7 if case == "changed-amount" else 4,
+            15,
+        ]
+
+
+@pytest.mark.parametrize("creator", ["conditional", "uncalled"])
+def test_matching_script_callback_does_not_establish_creator_reachability(creator):
+    park = bytes([0x46, 8, 5, 0x31, 255, 0, 24, 1, 0, 0])
+    restore = bytes([0x46, 8, 2, 0x31, 20, 0, 15, 0, 9, 0, 1, 0])
+    declaration = item_command(20, 15, 9) + park
+    data = (
+        synthetic_room(
+            bytes([6, 0, 38, 0, 0x21, 4, 7, 1]) + declaration + bytes([8, 0, 1, 0]),
+            (bytes([1, 0]), restore),
+        )
+        if creator == "conditional"
+        else synthetic_room(
+            bytes([1, 0]), (bytes([1, 0]), restore, declaration + bytes([1, 0]))
+        )
+    )
+    result = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert result["collection_item_ids"] == []
+    assert result["conditional_item_presence"] == (
+        [
+            {
+                "global_id": 9,
+                "presence": {
+                    "kind": "conditions",
+                    "any_of": [[{"bank": 4, "bit": 7, "expected": 1}]],
+                },
+            }
+        ]
+        if creator == "conditional"
+        else []
+    )
+
+
+@pytest.mark.parametrize("target_delta", [4, 8])
+def test_scheduled_copy_withholds_script_restore_proof_but_keeps_unrelated_items(
+    target_delta,
+):
+    # The scheduled child can overwrite the later callback's kind or amount
+    # after startup. A raw entry reset alone cannot prove that lifetime.
+    park = bytes([0x46, 8, 5, 0x31, 255, 0, 24, 2, 0, 0])
+    restore = bytes([0x46, 8, 2, 0x31, 20, 0, 15, 0, 9, 0, 1, 0])
+    data = synthetic_room(
+        bytes([0x24, 0, 5, 0])
+        + item_command(20, 15, 9)
+        + park
+        + item_command(30, 1, 10, slot=9)
+        + bytes([1, 0]),
+        (
+            bytes([4, 255, 24, 1, 1, 0]),
+            bytes([0x1D, 0, target_delta, 0, 1, 0]),
+            restore,
+        ),
+    )
+    result = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    assert result["collection_item_ids"] == [10]
+    assert result["conditional_item_presence"] == []
+
+
 def test_automatic_task_does_not_make_its_items_mandatory():
     data = synthetic_room(
         bytes([4, 255, 0x18, 1]) + item_command(20, 15, 9) + bytes([1, 0]),
