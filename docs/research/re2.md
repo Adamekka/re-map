@@ -3576,6 +3576,8 @@ The production reader publishes Available from kind two. The owned executable's 
 
 Thus Available overstates this descriptor's observed activation. Zero SAT fails this bitwise gate for every caller mask, but these observations do not establish that SAT can never change or that the item is absent. The completion policy still requires conservative presence handling. No production rule or named-item exception is added here.
 
+2026-10-26 follow-up: [RE2-COLLECT-022](#re2-collect-022-zero-activation-bytes-do-not-establish-availability) supersedes the baseline Available publication with a separately approved shared reader fix. The native skip evidence remains valid; pickup collection, award quantity and future activation remain unvalidated.
+
 ### Attempts, passages and restores
 
 Private evidence is under `/tmp/re-map-re2-claire-b-pickup13-20261026/`. Boot [RE2-CLAIRE-008](#re2-claire-008-shared-pickup-id-after-native-collection)'s `collected-departed-native.sav` with achievements disabled, overrides absent, StartPaused, muted audio and the black shader. The initial full RAM exactly matches its retained image. Select private slot one with F3 and save paused checkpoints with F2. Recheck isolation before copying a selected checkpoint to that slot and invoking native F1.
@@ -3611,3 +3613,60 @@ The focused RE2/history/logging suite passes 869 tests in 7.16 seconds. This evi
 
 - 2026-10-26; human user; approved the named hidden pickup validation and verified-evidence commit, with production fixes separate.
 - 2026-10-26; `gpt-6.1-sol`, verified from the matching session's latest turn metadata; prepared isolated tests, observed four native passages and unsuccessful interactions, traced the zero-SAT skip in two contexts, created/restored four native checkpoints, audited complete publications and private history, verified unchanged production and cleanup, and wrote this entry. Primary verification checked source/live descriptor identity, native input, exact skip PCs and instruction bytes, unchanged inventory/acquisition, full native payload/RAM/map comparisons, preserved neighboring checks, setup-write bounds and explicit collection limits. External starter authorship remains ResidentEvilTim's as recorded in RE2-CLAIRE-001.
+
+## RE2-COLLECT-022: Zero activation bytes do not establish availability
+
+Status: Confirmed for the listed Claire B current/departed restore publications on USA Disc 2, SLUS-00592. The shared Leon A path has owned-executable guard inspection and retained native-capture replay on USA Disc 1, SLUS-00421. This increment adds no Leon gameplay observation or completed pickup lifecycle.
+
+On 2026-10-26 the human approved the shared zero-mask availability fix, preserving source-established remaining items, fresh acquisition flags and unresolved checks, with Leon/Claire regressions, hidden native restores and a verified commit. Baseline is `4f14214`. [RE2-CLAIRE-009](#re2-claire-009-zero-activation-mask-skips-pickup-13) supplies the two native zero-SAT skip traces and actual departure/reentry observations that establish the defect. Its unsuccessful collection remains unsuccessful.
+
+### Shared rule and revision bounds
+
+Both owned executables load the unsigned SAT byte at descriptor offset one, AND it with the caller mask and skip ordinary activation before geometry or pickup dispatch when zero. SAT has width one byte and mask `0xFF`; byte order is immaterial at that width. Executable identities remain [RE2-IDENTITY-001](#re2-identity-001-leon-a-disc-identity-and-candidate-room-layout) and [RE2-CLAIRE-001](#re2-claire-001-claire-b-profile-and-native-starter). `revision-guards.json` retains exact MIPS32 little-endian instructions and SHA256:
+
+| Revision | SAT load / AND / zero-skip target, PS1 virtual | Executable SHA256 |
+| --- | --- | --- |
+| Leon A, SLUS-00421 | `0x8004DC0C` / `0x8004DC14` / `0x8004DF50` | `1cd618bc4390db4bd60735b0db1e91534f6134ede56fae454eb580be2aa686ef` |
+| Claire B, SLUS-00592 | `0x8004DB90` / `0x8004DB98` / `0x8004DED4` | `2800c21f6a468cf030af75703b952062d8dc98c20753c8f8735558764f2f6814` |
+
+The shared reader keeps a validated kind-two creator with SAT zero internally inactive, instead of Available. It still validates source/slot/payload identity and records the creator for fixed-scenario contradiction checks. A source-established item remains Uncollected while disabled. An unproven candidate stays Unknown; zero SAT establishes neither presence nor absence. Fresh acquisition flags still produce Taken. Reenabling an actually available descriptor while its acquisition bit is set still returns Retry without publication.
+
+A current kind-two creator still contradicts its fixed-scenario absence or selected-variant proof even with SAT zero. A different current room's matching file offset cannot contradict a departed room's proof. The existing geometry guard also remains: losing the SAT high bit expected by a four-point declaration makes its layout untrusted, even when SAT is zero. That path remains unresolved and cannot permit clearance. It does not become a proven disabled creator. Other nonzero SAT values, floor/distance/actor gates and direct scripted dispatch are outside this change.
+
+No address, polling cadence, public state model, history schema, source-proof algorithm or generated catalog changes. Both catalogs match baseline bytes. Profiles add research references only, including the direct Claire native trace. No named-item exception or cached activation/identity is introduced.
+
+### Fresh native restores and history
+
+Private evidence is under `/tmp/re-map-re2-zero-mask-20261026/`. Use the four retained checkpoints from RE2-CLAIRE-009 in the isolated DuckStation `0.1-12442-gdd4a0eb77` Interpreter build, binary SHA256 `a4d07549758d8246b5efe94772e7a5a48a34941fb6c381dfe39142afbb329ab4`. Select private slot one, copy each checkpoint after verifying isolation, invoke actual native F1 while paused, and capture through the read-only GDB connection. Every fresh full 2 MiB RAM image equals its original:
+
+| Fresh capture / original | RAM SHA256 |
+| --- | --- |
+| `native-before-current` / `initial-current` | `badbc3ca4748950d0b1b83cbfdb4ec7a9f0f94c9f39894bfd65a03e15bc328f3` |
+| `native-later-current` / `activation-rejected-current` | `a6bd2f546d4ab03a84f0f2a6d41e57ffa706103880b6b729c696015c47463305` |
+| `native-before-departed` / `pickup-before-departed-ready` | `859e9cecacc30dbcb6939b0922f47ee0a4e20d299a7b7f22b75dc796c8ccd169` |
+| `native-later-departed` / `activation-rejected-departed` | `b9bb0ddeb2f59757d3cd6b3a453e3896be005070221f9858243c78235c4ec648` |
+
+In all four publications, source `00-09` pickup 13 is Unknown with source quantity fifteen, zero collected count and an incomplete list. While current, independent ID 146 remains Available and the room stays Incomplete. While departed, the room stays Unknown. ID 205 stays Unknown. The acquired neighboring-source ID 213 remains generic Taken with unreconstructed quantity. Relative to baseline, only the two current target states change from Available to Unknown. The complete corrected publications otherwise match baseline.
+
+`native-audit.py` and `native-audit.json` verify each complete map after production history save/close/reopen under one fresh private playthrough identity. Exactly `00-09`/`00-08` and two regions accumulate. Restored history contains no current-room, items, doors or completion cache before fresh RAM supplies them. These four loads repeat unacquired states; they do not prove pickup 13's collection, award quantity, acquisition reversal or a natural activation-byte transition. No guest memory, position, health or ammunition writes, new pickup, or new passage occurs in this increment. Synthetic regressions separately exercise mask and acquisition reversal.
+
+Both achievement sections are disabled before startup and every selected-slot load, with game-settings overrides absent. StartPaused, muted audio and the existing black shader keep gameplay hidden. Whole-window start/end checks exceed 99.9% black and are never emitted to chat. Cleanup stops the owned emulator, closes port 2346, restores settings and both selected-slot files byte for byte, and verifies the private card checksum remains unchanged. User histories, saves and emulator settings remain untouched. Native saves, RAM, card bytes, images and owned executable data stay outside Git.
+
+### Replay, regressions and rendered output
+
+Retained-capture comparison accepts 357 unique Leon images and 55 Claire images. Seven Leon source `00-12` publications for ID 21 and six Claire source `00-09` publications for ID 13 change only from Available to Unknown. All thirteen publications retain Incomplete. Pose, visits, doors, collected counts and every other item remain unchanged. There is no expanded clearance or newly admitted capture. Twenty-nine Retry and six NonGameplay images retain their statuses; 242 duplicate RAM images are counted once. These replay counts add no source or gameplay coverage.
+
+Twenty-nine net new Python cases cover current/departed and fresh-tracker reconstruction, zero/enabled activation bytes, repeated acquisition reversal, source-proven required items, complete/incomplete coverage, acquired/enabled contradictions, torn SAT reads, fixed-scenario/variant contradictions, lost four-point geometry and historical/current offset collisions. The common test fixture now sets observed enabled regular/four-point SAT values `0x31`/`0xB1`; its previous zero-filled activation byte no longer models an enabled descriptor. This is test-only setup, not a production fallback.
+
+The focused suite passes 898 tests in 7.79 seconds. The final full suite passes 2539 tests in 150.09 seconds. Scoped Ruff checks and formatting pass. The existing RE2 browser suite passes all 133 outlines and controls. A separate headless render of `native-before-current` verifies three item rows, two Unresolved rows, one independent Remaining item, a retained incomplete-check entry and the Incomplete room verdict without emitting a screenshot. `rendered-native-check.json` records the assertions. Renderer, layout, styles and copy are unchanged, so the existing README screenshot remains applicable.
+
+This resolves the demonstrated availability overstatement only. Pickup 13's native collection, its award quantity, future activation, scenario absence, full source clearance and normal memory-card persistence remain unvalidated. Source coverage stays six Claire sources and sixty-eight Leon sources. No campaign-readiness percentage follows from these test or replay counts.
+
+### Contributions and review
+
+- 2026-10-26; human user; explicitly approved the named shared zero-mask fix, validation and commit.
+- 2026-10-26; `gpt-6.1-sol`, verified from the matching session's latest turn metadata; inspected both executable guards, implemented the shared rule and regressions, replayed retained captures, performed four hidden native F1 loads, audited complete publications/private history and cleanup, checked rendered output, and wrote this entry. Primary verification checked activation versus required presence/collection, source and geometry guards, cross-room offset isolation, unchanged catalogs, full native RAM equality and conservative completion. External starter authorship remains ResidentEvilTim's as recorded in RE2-CLAIRE-001.
+- 2026-10-26; returned identifier `Claude Opus 4.6 (Thinking)`, conversation `192d4cbf-8c76-49ac-9f3b-799ec06fdaf7`; completed a snapshot-only code review with terminal SUCCESS, process exit zero, completed response, empty stderr and no tool attempts. Its verified clarity/test gap led to the geometry why-comment and two regressions. The other suggestions were checked against the actual regular-only fixtures and explicit acquisition/Retry assertions; they exposed no additional uncovered behavior.
+- 2026-10-26; returned identifier `Gemini 3.8 Flash (High)`, conversation `96326c92-5e01-4faf-9ee9-c6c3cdccb323`; completed the same snapshot-only review with terminal SUCCESS, process exit zero, completed response, empty stderr and no tool attempts. Verified improvements add the direct Claire trace reference, consistent local descriptor addresses and four cross-room offset-collision cases. No review establishes native gameplay behavior.
+
+The reviews covered correctness, security, performance, architecture/maintenance, conventions, tests, UI/UX/AX, DX and shared logic using supplied code/contracts. Neither model saw rendered screenshots or ran tests; primary browser assertions supply the bounded rendered-output check. Prompt SHA256 is `5f4284a8f4005e42ce60fc28efadb6ecb21ad9a390adb855e99d23c9c433ca98`. Configured Opus 5.5 is unavailable in the installed catalog; available Opus 4.6 was disclosed before use. The final reader AST is identical to the behavior reviewed and validated natively; follow-up changes are a why-comment, profile research reference and test refinements. Final primary verification checks those additions. Private `review/` retains complete responses and finding dispositions.

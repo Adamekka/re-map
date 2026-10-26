@@ -24,7 +24,9 @@
   },
   "research_ids": [
     "RE2-CLAIRE-001",
-    "RE2-COLLECT-021"
+    "RE2-COLLECT-021",
+    "RE2-COLLECT-022",
+    "RE2-CLAIRE-009"
   ],
   "metadata_layout": {
     "map_info_address_ps1": "0x800A2CFC",

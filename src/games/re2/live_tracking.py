@@ -216,6 +216,9 @@ def poll_re2(
                 continue
             definition = candidates[0]
             if kind and bool(prefix[1] & 0x80) != definition["four_point"]:
+                # SAT also selects payload geometry. Losing that bit, even
+                # with SAT zero, leaves a four-point payload untrusted rather
+                # than proving a disabled creator or scenario absence.
                 unresolved_registry = True
                 continue
             operand = 20 if definition["four_point"] else 12
@@ -232,7 +235,10 @@ def poll_re2(
                 if (item_type, gid) != (definition["type"], definition["global_id"]):
                     unresolved_registry = True
                     continue
-                live_items[offset] = ("available", amount)
+                # A zero SAT byte skips native activation before geometry or
+                # dispatch. Keep the creator for scenario checks, but do not
+                # infer presence from it. RE2-COLLECT-022, RE2-CLAIRE-009.
+                live_items[offset] = ("available" if packet[1] else "inactive", amount)
             elif kind == 0 and definition in room["doors"]:
                 live_doors[offset] = {**definition, "inactive": True}
             elif kind == 1:
@@ -284,7 +290,11 @@ def poll_re2(
                     and live_items[item["offset"]][0] == "available"
                 ]
                 if gid in source["scenario_absent_item_ids"]:
-                    if available:
+                    if visited == key and any(
+                        item["offset"] in live_items for item in variants
+                    ):
+                        # Disabling activation does not undo a creator that
+                        # contradicts the fixed-scenario absence proof.
                         return PollResult(
                             PollStatus.Retry,
                             "Pickup disagrees with fixed scenario proof",

@@ -51,7 +51,8 @@
     "RE2-QUANTITY-001",
     "RE2-DOOR-001",
     "RE2-DOOR-002",
-    "RE2-DOOR-003"
+    "RE2-DOOR-003",
+    "RE2-COLLECT-022"
   ],
   "metadata_layout": {
     "map_info_address_ps1": "0x800A2DF4",

@@ -396,6 +396,9 @@ def snapshot(request, profile):
                 4,
             )
             put(pointer, kind, 1)
+            # Native enabled descriptors carry activation bits independently
+            # of the kind and the four-point geometry bit.
+            put(pointer + 1, 0x31 | (0x80 if definition["four_point"] else 0), 1)
             operand = 20 if definition["four_point"] else 12
             if kind == 2:
                 for index, name in enumerate(("type", "amount", "global_id")):
@@ -450,6 +453,150 @@ def test_disabled_candidates_do_not_establish_presence_or_clearance(snapshot):
     put(0x800C66C8 + 11 * 4, 0, 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
+
+
+@pytest.mark.parametrize(
+    ("profile", "snapshot"),
+    [("re2_leon_a_slus00421", "00-01"), ("re2_claire_b_slus00592", "00-09")],
+    indirect=True,
+)
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("proven", [False, True])
+@pytest.mark.parametrize("coverage", [False, True])
+def test_zero_mask_preserves_presence_collection_and_rewind(
+    snapshot, departed, proven, coverage
+):
+    """RE2-COLLECT-022: a disabled creator is neither available nor absent."""
+    profile, _, put, read = snapshot
+    key = str(profile.read_current_room(read).room)
+    source = copy.deepcopy(profile.rooms[key])
+    item = source["items"][0]
+    assert not item["four_point"]
+    source.update(
+        items=[item],
+        collection_item_ids=[item["global_id"]] if proven else [],
+        conditional_item_presence=[],
+        scenario_absent_item_ids=[],
+        scenario_item_variants=[],
+        event_awards=[],
+        candidate_list_complete=coverage,
+    )
+    rooms = profile.rooms | {key: source}
+    if departed:
+        # An empty synthetic neighbor reuses the fixture's source binding to
+        # exercise departed state without inventing another native capture.
+        rooms["00-08"] = {**source, "room": 8, "items": [], "doors": []}
+        put(profile.room_address, 8, 2)
+    profile = replace(profile, rooms=rooms)
+    layout = profile.runtime_layout
+    registry = int(layout["aot_table_address_ps1"], 0)
+    for slot in range(layout["aot_capacity"]):
+        put(registry + slot * 4, 0, 4)
+    pointer = 0x80100000 + item["offset"] + 2
+    if not departed:
+        put(registry + item["slot"] * 4, pointer, 4)
+    address, _ = profile.flag_banks[layout["item_bank_early"]]
+    address += item["global_id"] // 32 * 4
+    mask = 0x80000000 >> (item["global_id"] % 32)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(source["stage"], source["room"]))
+    visits = None
+    for sat, acquired in [(0, False), (0x31, False), (0, True), (0, False)]:
+        put(pointer + 1, sat, 1)
+        put(address, mask if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[key]
+        state = (
+            "taken"
+            if acquired
+            else "available"
+            if sat and not departed
+            else "uncollected"
+            if proven
+            else "unknown"
+        )
+        assert len(record.items) == 1 and record.items[0].state == state
+        assert record.collected_items == int(acquired)
+        assert record.list_complete is coverage
+        assert record.completion is (
+            RoomCompletion.Incomplete
+            if state in ("available", "uncollected")
+            else RoomCompletion.Cleared
+            if acquired and coverage
+            else RoomCompletion.Unknown
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(source["stage"], source["room"]))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms[key] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+    if not departed:
+        put(pointer + 1, 0x31, 1)
+        put(address, mask, 4)
+        before = copy.deepcopy(tracker)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Retry
+        assert tracker == before
+
+
+@pytest.mark.parametrize(
+    ("profile", "snapshot"),
+    [("re2_leon_a_slus00421", "00-01"), ("re2_claire_b_slus00592", "00-09")],
+    indirect=True,
+)
+@pytest.mark.parametrize("initial_sat", [0, 0x31])
+def test_activation_mask_changes_require_a_coherent_snapshot(snapshot, initial_sat):
+    profile, _, put, read = snapshot
+    key = str(profile.read_current_room(read).room)
+    item = profile.rooms[key]["items"][0]
+    pointer = 0x80100000 + item["offset"] + 2
+    put(pointer + 1, initial_sat, 1)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    changed = False
+
+    def changing_read(address, width):
+        nonlocal changed
+        result = read(address, width)
+        if address == pointer and width == 2 and not changed:
+            put(pointer + 1, 0x31 if initial_sat == 0 else 0, 1)
+            changed = True
+        return result
+
+    assert poll_re2(profile, tracker, changing_read).status is PollStatus.Retry
+    assert changed and tracker == before
+
+
+@pytest.mark.parametrize("profile", ["re2_claire_b_slus00592"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["00-08"], indirect=True)
+@pytest.mark.parametrize("absent", [False, True])
+def test_zero_sat_with_lost_four_point_geometry_stays_unresolved(snapshot, absent):
+    """A missing geometry bit cannot turn an untrusted payload into absence."""
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-08"])
+    item = next(item for item in source["items"] if item["type"] == 26)
+    assert item["four_point"]
+    source.update(
+        items=[item],
+        candidate_list_complete=True,
+        collection_item_ids=[],
+        conditional_item_presence=[],
+        scenario_item_variants=[],
+        scenario_absent_item_ids=[item["global_id"]] if absent else [],
+        event_awards=[],
+    )
+    profile = replace(profile, rooms=profile.rooms | {"00-08": source})
+    pointer = 0x80100000 + item["offset"] + 2
+    put(pointer + 1, 0, 1)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    record = tracker.rooms["00-08"]
+    assert record.completion is RoomCompletion.Unknown
+    assert not record.list_complete and not record.doors_complete
+    assert record.reason and record.door_reason
+    assert record.items == () if absent else record.items[0].state == "unknown"
 
 
 def test_generated_scripted_reward_tracks_activation_collection_and_rewind(snapshot):
@@ -1897,8 +2044,9 @@ def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
     assert fresh.rooms[source] == tracker.rooms[source]
 
 
-def test_scenario_exclusion_cannot_hide_a_live_pickup(snapshot):
-    profile, _, _, read = snapshot
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_scenario_exclusion_cannot_hide_a_live_pickup(snapshot, sat):
+    profile, _, put, read = snapshot
     tracker = Tracker()
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     before = copy.deepcopy(tracker)
@@ -1909,10 +2057,52 @@ def test_scenario_exclusion_cannot_hide_a_live_pickup(snapshot):
         ],
     }
     profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    for item in room["items"]:
+        pointer = 0x80100000 + item["offset"] + 2
+        put(pointer + 1, sat, 1)
     result = poll_re2(profile, tracker, read)
     assert result.status is PollStatus.Retry
     assert result.text == "Pickup disagrees with fixed scenario proof"
     assert tracker == before
+
+
+@pytest.mark.parametrize("sat", [0, 0x31])
+@pytest.mark.parametrize("acquired", [False, True])
+def test_departed_absence_ignores_another_rooms_matching_live_offset(
+    snapshot, sat, acquired
+):
+    """Source-relative offsets cannot transfer creator contradictions across rooms."""
+    profile, _, put, read = snapshot
+    current = profile.rooms["00-01"]
+    item = current["items"][0]
+    absent_id = 16
+    assert absent_id not in {item["global_id"] for item in current["items"]}
+    # This synthetic historical source deliberately shares the current
+    # creator's offset and slot, but declares a different, proven-absent ID.
+    historical = {
+        **current,
+        "room": 8,
+        "items": [{**item, "global_id": absent_id}],
+        "collection_item_ids": [],
+        "conditional_item_presence": [],
+        "scenario_item_variants": [],
+        "scenario_absent_item_ids": [absent_id],
+        "event_awards": [],
+        "fixed_context_preserved": True,
+        "candidate_list_complete": True,
+    }
+    profile = replace(profile, rooms=profile.rooms | {"00-08": historical})
+    pointer = 0x80100000 + item["offset"] + 2
+    put(pointer + 1, sat, 1)
+    address, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    put(address, 0x80000000 >> absent_id if acquired else 0, 4)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 8))
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    record = tracker.rooms["00-08"]
+    assert record.items == () and record.total_items == record.collected_items == 0
+    assert record.list_complete and record.completion is RoomCompletion.Cleared
+    assert tracker.rooms["00-01"].items[0].state == ("available" if sat else "unknown")
 
 
 def test_scenario_exclusions_require_the_same_coherent_scenario_snapshot(snapshot):
@@ -1983,14 +2173,19 @@ def test_scenario_selected_identity_rebuilds_after_departure(snapshot):
 
 @pytest.mark.parametrize("snapshot", ["00-15"], indirect=True)
 @pytest.mark.parametrize("excluded", [False, True])
-def test_live_creator_must_agree_with_scenario_selected_variant(snapshot, excluded):
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_live_creator_must_agree_with_scenario_selected_variant(
+    snapshot, excluded, sat
+):
     profile, _, put, read = snapshot
     selected = next(
         item
         for item in profile.rooms["00-15"]["items"]
         if item["offset"] == (5396 if excluded else 5332)
     )
-    put(0x800C66C8 + 13 * 4, 0x80100000 + selected["offset"] + 2, 4)
+    pointer = 0x80100000 + selected["offset"] + 2
+    put(0x800C66C8 + 13 * 4, pointer, 4)
+    put(pointer + 1, sat, 1)
     tracker = Tracker()
     before = copy.deepcopy(tracker)
     result = poll_re2(profile, tracker, read)
@@ -2005,7 +2200,8 @@ def test_live_creator_must_agree_with_scenario_selected_variant(snapshot, exclud
             for item in tracker.rooms["00-15"].items
             if item.label == profile.names["items"]["7"]
         )
-        assert item.state == "available" and item.quantity == 5
+        assert item.state == ("available" if sat else "uncollected")
+        assert item.quantity == 5
 
 
 @pytest.mark.parametrize("profile", ["re2_claire_b_slus00592"], indirect=True)
