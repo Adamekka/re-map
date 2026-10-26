@@ -270,6 +270,7 @@ def poll_re2(
                     continue
                 grouped.setdefault(item["global_id"], []).append(item)
             details = []
+            identities_complete = True
             conditional = {
                 rule["global_id"]: rule["presence"]
                 for rule in source["conditional_item_presence"]
@@ -300,9 +301,14 @@ def poll_re2(
                 item_type = next(iter(types)) if len(types) == 1 else None
                 label = profile.names["items"].get(str(item_type), "Collectible")
                 if item_type is None:
-                    state = "unknown"
-                elif taken:
+                    # Collection belongs to the acquisition ID. Its unresolved
+                    # identity still prevents a complete room verdict, even
+                    # when the fresh flag records collection. RE2-COLLECT-021.
+                    identities_complete = False
+                if taken:
                     state = "taken"
+                elif item_type is None:
+                    state = "unknown"
                 elif available:
                     state = "available"
                 elif gid in source["collection_item_ids"] or (
@@ -324,9 +330,11 @@ def poll_re2(
                     # amount at prompt entry, so source/live operands are not
                     # yet the award. Reconstruct it from fresh mode flags.
                     amounts = {quantity_override["amount"]}
+                # Equal source operands do not prove equal native awards
+                # across types, including the mode-specific override above.
                 quantity = (
                     next(iter(amounts))
-                    if len(amounts) == 1
+                    if item_type is not None and len(amounts) == 1
                     else ItemQuantityState.Unreconstructed
                 )
                 details.append(ItemDetail(label, state, quantity))
@@ -354,8 +362,10 @@ def poll_re2(
                         else ItemQuantityState.Unreconstructed,
                     )
                 )
-            complete = source["candidate_list_complete"] and not (
-                visited == key and unresolved_registry
+            complete = (
+                source["candidate_list_complete"]
+                and identities_complete
+                and not (visited == key and unresolved_registry)
             )
             evaluations.append((source_id, tuple(details), complete))
             for definition in source["doors"]:

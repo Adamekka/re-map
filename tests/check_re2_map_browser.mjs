@@ -80,6 +80,23 @@ try {
   }
   assert.match(await page.locator('#remaining-items').textContent(), /Handgun ammo/);
   assert.match(await page.locator('#incomplete-checks').textContent(), /Gun/);
+  const originalVisit = structuredClone(state.current_detail);
+  const roomName = await page.locator('#room-name').textContent();
+  const visits = [state.current_detail, ...state.rooms, ...Object.values(state.explored_areas).flat()].filter(visit => visit.room === state.current);
+  for (const visit of visits) {
+    Object.assign(visit, {
+      state: 'UNKNOWN',
+      items_complete: false,
+      items: [{ label: 'Collectible', state: 'taken', quantity: 'unreconstructed' }],
+    });
+  }
+  await page.waitForFunction(() => document.getElementById('items').textContent.includes('Collected'));
+  assert.match(await page.locator('#items').textContent(), /Collectible/);
+  assert.equal(await page.locator('#remaining-items .room-link').count(), 0);
+  assert.equal(await page.locator('#incomplete-checks').getByRole('button', { name: roomName, exact: true }).count(), 1);
+  assert((await page.locator('#map .room.selected').getAttribute('class')).includes('UNKNOWN'));
+  for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
+  await page.waitForFunction(() => document.getElementById('items').textContent.includes('Handgun ammo'));
   for (const movement of measurements) {
     state.player_heading = movement.published_heading;
     await page.waitForFunction(heading => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(' + heading + ')'), state.player_heading);

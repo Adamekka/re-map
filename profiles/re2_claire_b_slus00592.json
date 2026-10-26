@@ -23,7 +23,8 @@
     "concatenated_sha256": "c83a48706f4ed1f6860a0f2ffe591f9902c1efab73e35c327d82d9f55760d14c"
   },
   "research_ids": [
-    "RE2-CLAIRE-001"
+    "RE2-CLAIRE-001",
+    "RE2-COLLECT-021"
   ],
   "metadata_layout": {
     "map_info_address_ps1": "0x800A2CFC",

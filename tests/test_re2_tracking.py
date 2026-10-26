@@ -856,18 +856,143 @@ def test_known_remaining_item_wins_over_unresolved_coverage(snapshot):
     assert record.reason
 
 
-def test_ambiguous_item_identity_stays_unknown_even_with_acquisition_flag(snapshot):
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("coverage", [False, True])
+@pytest.mark.parametrize("equal_amounts", [False, True])
+def test_ambiguous_collection_rewinds_without_resolving_identity(
+    snapshot, departed, coverage, equal_amounts
+):
+    """RE2-COLLECT-021: collection and a resolved item list are separate facts."""
+    profile, _, put, read = snapshot
+    key = "01-02" if departed else "00-01"
+    source = copy.deepcopy(profile.rooms[key])
+    first = {
+        **source["items"][0],
+        "global_id": 0,
+        "type": 30,
+        "amount": 1,
+        "amounts": [1],
+    }
+    source.update(
+        items=[
+            first,
+            {
+                **first,
+                "type": 20,
+                "offset": 100,
+                "amount": 1 if equal_amounts else 7,
+                "amounts": [1 if equal_amounts else 7],
+            },
+        ],
+        collection_item_ids=[],
+        conditional_item_presence=[],
+        scenario_absent_item_ids=[],
+        scenario_item_variants=[],
+        event_awards=[],
+        candidate_list_complete=coverage,
+    )
+    profile = replace(profile, rooms=profile.rooms | {key: source})
+    for slot in range(profile.runtime_layout["aot_capacity"]):
+        put(int(profile.runtime_layout["aot_table_address_ps1"], 0) + slot * 4, 0, 4)
+    address, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    tracker = Tracker()
+    if departed:
+        tracker.mark_current(RoomId(1, 2))
+    visits = None
+    for acquired in (False, True, False, True):
+        put(address, 0x80000000 if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[key]
+        assert record.completion is RoomCompletion.Unknown
+        assert not record.list_complete and record.reason
+        assert record.collected_items == int(acquired)
+        assert len(record.items) == 1
+        item = record.items[0]
+        assert item.label == "Collectible"
+        assert item.state == ("taken" if acquired else "unknown")
+        assert item.quantity is ItemQuantityState.Unreconstructed
+        fresh = Tracker()
+        fresh.mark_current(RoomId(source["stage"], source["room"]))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms[key] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+def test_known_remaining_item_survives_ambiguous_collection(snapshot):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    first = {**source["items"][0], "global_id": 0}
+    source.update(
+        items=[
+            first,
+            {**first, "type": 20, "offset": 100},
+            {
+                **first,
+                "global_id": 1,
+                "type": 20,
+                "offset": 200,
+                "amount": 15,
+                "amounts": [15],
+            },
+        ],
+        collection_item_ids=[1],
+        conditional_item_presence=[],
+        scenario_item_variants=[],
+        scenario_absent_item_ids=[],
+        event_awards=[],
+        candidate_list_complete=True,
+    )
+    profile = replace(profile, rooms=profile.rooms | {"00-01": source})
+    for slot in range(profile.runtime_layout["aot_capacity"]):
+        put(int(profile.runtime_layout["aot_table_address_ps1"], 0) + slot * 4, 0, 4)
+    address, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    put(address, 0x80000000, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    record = tracker.rooms["00-01"]
+    assert record.completion is RoomCompletion.Incomplete
+    assert not record.list_complete and record.collected_items == 1
+    assert [(item.label, item.state, item.quantity) for item in record.items] == [
+        ("Collectible", "taken", ItemQuantityState.Unreconstructed),
+        (profile.names["items"]["20"], "uncollected", 15),
+    ]
+
+
+def test_ambiguous_acquisition_requires_a_coherent_snapshot(snapshot):
     profile, _, put, read = snapshot
     source = copy.deepcopy(profile.rooms["00-01"])
     source["items"].append({**source["items"][0], "type": 20, "offset": 100})
-    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
-    for definition in source["items"]:
-        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
-    put(0x800CC9E8, 0xC0010000, 4)
+    profile = replace(profile, rooms=profile.rooms | {"00-01": source})
+    for slot in range(profile.runtime_layout["aot_capacity"]):
+        put(int(profile.runtime_layout["aot_table_address_ps1"], 0) + slot * 4, 0, 4)
+    address, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    put(address, 0x80000000, 4)
     tracker = Tracker()
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
-    assert tracker.rooms["00-01"].completion is RoomCompletion.Unknown
-    assert any(item.state == "unknown" for item in tracker.rooms["00-01"].items)
+    before = copy.deepcopy(tracker)
+
+    def changed_flag(address_read, width):
+        result = read(address_read, width)
+        if address_read == int(profile.runtime_layout["save_block_address_ps1"], 0):
+            put(address, 0, 4)
+        return result
+
+    assert poll_re2(profile, tracker, changed_flag).status is PollStatus.Retry
+    assert tracker == before
+
+
+def test_ambiguous_acquisition_cannot_override_a_live_pickup(snapshot):
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    source["items"].append({**source["items"][0], "type": 20, "offset": 100})
+    profile = replace(profile, rooms=profile.rooms | {"00-01": source})
+    address, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    put(address, 0x80000000, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Retry
+    assert not tracker.rooms and tracker.current is None
 
 
 @pytest.mark.parametrize("departed", [False, True])
@@ -1004,10 +1129,11 @@ def test_unrelated_proven_items_survive_ambiguity_collection_and_rewind(
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
         record = tracker.rooms["00-01"]
         assert record.completion is expected
-        assert record.collected_items == (2 if flags else 0)
+        assert record.collected_items == (3 if flags else 0)
         states = [item.state for item in record.items]
-        assert states.count("unknown") == 1
-        assert states.count("taken" if flags else "uncollected") == 2
+        assert states.count("unknown") == (0 if flags else 1)
+        assert states.count("taken" if flags else "uncollected") == (3 if flags else 2)
+        assert not record.list_complete
         assert record.reason
         if visits is None:
             visits = dict(tracker.region_visits)
