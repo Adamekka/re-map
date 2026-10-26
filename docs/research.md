@@ -310,5 +310,6 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re2-door-001-event-driven-unlock-and-savestate-reversal"></a>[RE2-DOOR-001](research/re2.md#re2-door-001-event-driven-unlock-and-savestate-reversal) | event-driven unlock, paired passage and fresh access after restores |
 | <a id="re2-door-002-named-key-use-and-savestate-reversal"></a>[RE2-DOOR-002](research/re2.md#re2-door-002-named-key-use-and-savestate-reversal) | native key pickup/use, carrying versus unlocking and fresh state after restores |
 | <a id="re2-door-003-one-sided-unlock-and-savestate-reversal"></a>[RE2-DOOR-003](research/re2.md#re2-door-003-one-sided-unlock-and-savestate-reversal) | native one-sided unlock, paired passage and fresh access after restores |
+| <a id="re2-claire-001-claire-b-profile-and-native-starter"></a>[RE2-CLAIRE-001](research/re2.md#re2-claire-001-claire-b-profile-and-native-starter) | Claire B disc profile, explicit source gaps, scenario-correct map generation and limited hidden native starter validation |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.

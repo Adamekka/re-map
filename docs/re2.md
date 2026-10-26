@@ -1,6 +1,6 @@
 # Resident Evil 2
 
-The approved target is Leon A on the owned USA Disc 1, SLUS-00421, pinned by the executable identity in [RE2-IDENTITY-001](research/re2.md#re2-identity-001-leon-a-disc-identity-and-candidate-room-layout). DuckStation savestates are the restore mechanism.
+The approved targets are Leon A on the owned USA Disc 1, SLUS-00421, and Claire B on the owned USA Disc 2, SLUS-00592. The executable identities are pinned in [RE2-IDENTITY-001](research/re2.md#re2-identity-001-leon-a-disc-identity-and-candidate-room-layout) and [RE2-CLAIRE-001](research/re2.md#re2-claire-001-claire-b-profile-and-native-starter). DuckStation savestates are the restore mechanism. Use the same practical acceptance standard as RE1: useful tracking and fixes for encountered problems, without requiring an agent to complete or exhaustively audit the campaign.
 
 Match the existing tracker behavior: spatial floor plans revealed by entering rooms, room names, actual facing, floor browsing, zoom and pan, persistent exploration isolated by game/revision/scenario/playthrough, remaining items, separate unresolved checks, game-derived door access, and fresh item/door/story state after savestate changes. Exploration survives earlier savestates; acquired items and unlocked doors must rewind with the game.
 
@@ -12,7 +12,15 @@ Run the tracker while Leon A is playing:
 python3 tools/track.py --profile profiles/re2_leon_a_slus00421.json --history-file .local/re2-leon-a.json --map
 ```
 
-RE2 defaults to `.local/re2-leon-a.json`; RE1 keeps `.local/visit-history.json`. Use a separate history file for each playthrough. Add `--new-playthrough` to reset that history explicitly. The normal DuckStation GDB setup is the same as RE1. See the [startup guide](duckstation-startup.md).
+For Claire B, run:
+
+```sh
+python3 tools/track.py --profile profiles/re2_claire_b_slus00592.json --history-file .local/re2-claire-b.json --map
+```
+
+Claire B is an initial profile with 126 decoded room sources and 20 generated map areas. One additional source is explicitly unsupported and cannot record or clear a visit. Native checks cover one entered source, approximate position, earlier/later savestate restoration and a real CLI/history run. Pickup collection, door lifecycles, other sources and conditional floors still need observations. Unsupported identities or conditions remain Unknown. These source counts do not measure gameplay readiness.
+
+Leon A defaults to `.local/re2-leon-a.json`, Claire B to `.local/re2-claire-b.json`; RE1 keeps `.local/visit-history.json`. Use a separate history file for each playthrough. Add `--new-playthrough` to reset that history explicitly. The normal DuckStation GDB setup is the same as RE1. See the [startup guide](duckstation-startup.md).
 
 The runner now reads the pinned RE2 revision, reveals native floor outlines on entry, reads player yaw, and uses the shared map controls and remaining-item overview. [RE2-PLAYER-001](research/re2.md#re2-player-001-native-movement-confirms-continuous-heading) verifies the facing conversion against native movement in two rooms and actual earlier/later loads. [RE2-PLAYER-002](research/re2.md#re2-player-002-approximate-position-follows-native-pose-and-restores) adds an approximate moving position when the native projection falls strictly inside the current room's outline. Unmapped, boundary and out-of-outline positions retain an explicit room-only marker. Pan and zoom stay unchanged during movement. A source-specific interaction ID binds each door observation to its wall marker. Native acquisition and key flags are reread after loads and on every poll; exploration accumulates separately.
 
@@ -61,6 +69,12 @@ The catalog and floor plans contain numeric metadata and contours, not original 
 
 ```sh
 python3 tools/build_re2_metadata.py '/path/to/Resident Evil 2 (USA) (Disc 1).cue' data/rooms_slus00421.json data/floor_plans_slus00421.json
+```
+
+For Claire B, select its profile explicitly:
+
+```sh
+python3 tools/build_re2_metadata.py '/path/to/Resident Evil 2 (USA) (Disc 2).cue' data/rooms_slus00592.json data/floor_plans_slus00592.json --profile profiles/re2_claire_b_slus00592.json
 ```
 
 Runtime evidence and limitations belong in [RE2 research](research/re2.md). Source inspection, generated room counts and synthetic regressions do not confirm gameplay behavior.

@@ -345,9 +345,9 @@ def test_failed_pose_snapshot_preserves_the_previous_publication(snapshot, short
     assert tracker == before
 
 
-@pytest.fixture(scope="module")
-def profile():
-    return Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
+@pytest.fixture(scope="module", params=["re2_leon_a_slus00421"])
+def profile(request):
+    return Re2Profile.load(ROOT / "profiles" / (request.param + ".json"))
 
 
 @pytest.fixture(params=["00-01"])
@@ -373,18 +373,28 @@ def snapshot(request, profile):
             width, "little"
         )
 
-    put(0x800C7CE4, 0x40000000 | profile.runtime_layout["system_mode_value"], 4)
-    put(0x800C7D24, 1, 4)
+    layout = profile.runtime_layout
+    put(
+        int(layout["system_flags_address_ps1"], 0),
+        0x40000000 | layout["system_mode_value"],
+        4,
+    )
+    put(int(layout["status_flags_address_ps1"], 0), layout["scenario_value"], 4)
+    put(int(layout["player_active_address_ps1"], 0), 1, 4)
     stage, number = source.split("-")
     put(profile.stage_address, int(stage), 2)
     put(profile.room_address, int(number, 16), 2)
-    put(0x800C6494, 0x80100000, 4)
+    put(int(layout["loaded_rdt_address_ps1"], 0), 0x80100000, 4)
     for index, offset in enumerate(room["section_offsets"]):
         put(0x80100008 + index * 4, 0x80100000 + offset if offset else 0, 4)
     for kind, definitions in ((2, room["items"]), (1, room["doors"])):
         for definition in definitions:
             pointer = 0x80100000 + definition["offset"] + 2
-            put(0x800C66C8 + definition["slot"] * 4, pointer, 4)
+            put(
+                int(layout["aot_table_address_ps1"], 0) + definition["slot"] * 4,
+                pointer,
+                4,
+            )
             put(pointer, kind, 1)
             operand = 20 if definition["four_point"] else 12
             if kind == 2:
@@ -1870,3 +1880,49 @@ def test_live_creator_must_agree_with_scenario_selected_variant(snapshot, exclud
             if item.label == profile.names["items"]["7"]
         )
         assert item.state == "available" and item.quantity == 5
+
+
+@pytest.mark.parametrize("profile", ["re2_claire_b_slus00592"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["00-04"], indirect=True)
+@pytest.mark.parametrize("status", [0, 0x40000000, 0x80000000, 0xC0000000])
+def test_claire_b_admission_is_scenario_specific_and_atomic(snapshot, status):
+    profile, _, put, read = snapshot
+    put(int(profile.runtime_layout["status_flags_address_ps1"], 0), status, 4)
+    tracker = Tracker()
+    before = copy.deepcopy(tracker)
+    result = poll_re2(profile, tracker, read)
+    if status == 0xC0000000:
+        assert result.status is PollStatus.Display
+        assert set(tracker.rooms) == {"00-04"}
+        assert tracker.current == RoomId(0, 4)
+    else:
+        assert result.status is PollStatus.WrongGame
+        assert result.text == "This profile requires Claire B"
+        assert tracker == before
+
+
+@pytest.mark.parametrize("profile", ["re2_claire_b_slus00592"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["00-04"], indirect=True)
+def test_claire_b_unsupported_source_cannot_record_or_clear_a_visit(snapshot):
+    profile, _, put, read = snapshot
+    put(profile.stage_address, 6, 2)
+    put(profile.room_address, 5, 2)
+    tracker = Tracker()
+    before = copy.deepcopy(tracker)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.UnsupportedRoom
+    assert tracker == before
+
+
+@pytest.mark.parametrize("profile", ["re2_claire_b_slus00592"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["05-11"], indirect=True)
+def test_soundless_sources_reject_invented_sound_pointer_relocation(snapshot):
+    profile, _, put, read = snapshot
+    assert profile.rooms["05-11"]["sound_proofs"] == []
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    put(0x80100008, 0x80100100, 4)
+    put(0x8010000C, 0x80100100, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Retry
+    assert tracker == before

@@ -17699,5 +17699,10 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": []
     }
-  ]
+  ],
+  "scenario_effect_pool": {
+    "address_ps1": "0x800D0D68",
+    "limit_address_ps1": "0x800D3BE8"
+  },
+  "unsupported_sources": []
 }

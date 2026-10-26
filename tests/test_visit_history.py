@@ -315,3 +315,40 @@ def test_cli_saves_only_verified_gameplay_and_resumes_across_restarts(
             handler.close()
         root.handlers = handlers
         root.setLevel(level)
+
+
+def test_claire_cli_uses_a_separate_default_history_and_scenario(tmp_path, monkeypatch):
+    captured = {}
+
+    def capture_history(path, identity, region_rooms, new_playthrough):
+        captured.update(path=path, identity=identity)
+        raise HistoryError("test stopped before connecting")
+
+    monkeypatch.setattr(track, "VisitHistory", capture_history)
+    monkeypatch.setattr(track, "__file__", str(tmp_path / "tools/track.py"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "track.py",
+            "--once",
+            "--profile",
+            str(REPO / "profiles/re2_claire_b_slus00592.json"),
+            "--log-file",
+            str(tmp_path / "tracker.log"),
+        ],
+    )
+    root_logger = logging.getLogger()
+    old_handlers, old_level = root_logger.handlers[:], root_logger.level
+    # CLI logging uses force=True; detach pytest handlers so it cannot close them.
+    root_logger.handlers = []
+    try:
+        assert track.main() == 1
+    finally:
+        for handler in root_logger.handlers:
+            handler.close()
+        root_logger.handlers = old_handlers
+        root_logger.setLevel(old_level)
+    assert captured["path"] == tmp_path / ".local/re2-claire-b.json"
+    assert captured["identity"].profile == "re2_claire_b_slus00592"
+    assert captured["identity"].scenario == "claire-b"

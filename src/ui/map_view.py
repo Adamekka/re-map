@@ -87,9 +87,7 @@ def map_state(tracker: Tracker) -> dict:
 def map_page(graph: dict) -> bytes:
     graph_json = json.dumps(graph).replace("<", "\\u003c")
     title = (
-        "Resident Evil 2"
-        if graph["profile_id"] == "re2_leon_a_slus00421"
-        else "Resident Evil"
+        "Resident Evil 2" if graph["profile_id"].startswith("re2_") else "Resident Evil"
     )
     return (
         _PAGE.replace("__GRAPH__", graph_json)

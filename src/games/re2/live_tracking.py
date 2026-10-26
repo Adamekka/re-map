@@ -1,4 +1,4 @@
-"""Coherent bounded Leon A observations. RE2-LIVE-001, RE2-SCD-001.
+"""Coherent bounded RE2 observations. RE2-LIVE-001, RE2-SCD-001.
 
 Collection proofs establish required items independently of activation. A
 missing live interaction alone never proves scenario absence or item presence.
@@ -92,7 +92,9 @@ def poll_re2(
                 PollStatus.NonGameplay, "Title, demo or game over; visits not recorded"
             )
         if status & layout["scenario_mask"] != layout["scenario_value"]:
-            return PollResult(PollStatus.WrongGame, "This profile requires Leon A")
+            return PollResult(
+                PollStatus.WrongGame, f"This profile requires {profile.target.label}"
+            )
         if system & layout["transition_mask"]:
             return PollResult(PollStatus.Retry, "Changing rooms...")
         # RE2-COLLECT-011: generated exclusions assume this initialized mode.
@@ -100,12 +102,17 @@ def poll_re2(
         if system & layout["system_mode_mask"] != layout["system_mode_value"]:
             return PollResult(
                 PollStatus.WrongGame,
-                "Unsupported RE2 game settings. Load a supported Leon A savestate.",
+                f"Unsupported RE2 game settings. Load a supported {profile.target.label} savestate.",
             )
         rid = RoomId(value(profile.stage_address, 2), value(profile.room_address, 2))
         if (rid.stage, rid.room) != pose_room:
             return PollResult(PollStatus.Retry, "Player room changed during pose read")
         key = str(rid)
+        if key in profile.unsupported_sources:
+            return PollResult(
+                PollStatus.UnsupportedRoom,
+                "This room cannot be tracked yet. Visits were not recorded.",
+            )
         if key not in profile.rooms:
             return PollResult(PollStatus.Retry, "Room identity is not yet available")
         room = profile.rooms[key]
@@ -124,12 +131,17 @@ def poll_re2(
                 PollStatus.Retry, "Loaded room section layout does not match its source"
             )
         if offsets[:2] != room["section_offsets"][:2]:
-            if offsets[0] - room["section_offsets"][0] != offsets[1] - room[
-                "section_offsets"
-            ][1] or any(
-                sections[proof["section"]] % 4
-                or not 100 <= offsets[proof["section"]] <= room["size"] - proof["width"]
-                for proof in room["sound_proofs"]
+            if (
+                not room["sound_proofs"]
+                or offsets[0] - room["section_offsets"][0]
+                != offsets[1] - room["section_offsets"][1]
+                or any(
+                    sections[proof["section"]] % 4
+                    or not 100
+                    <= offsets[proof["section"]]
+                    <= room["size"] - proof["width"]
+                    for proof in room["sound_proofs"]
+                )
             ):
                 return PollResult(
                     PollStatus.Retry,

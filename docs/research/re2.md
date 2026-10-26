@@ -1,4 +1,4 @@
-# RE2 Leon A research
+# RE2 research
 
 [Documentation index](../README.md) · [Claim index](../research.md)
 
@@ -3119,3 +3119,68 @@ The finite call inventory is now classified, but the signed-room lifetime and ot
 
 - 2026-10-25; human user; approved the named 25-call evidence audit and asked whether the audits were producing useful results. Production rules remained outside scope.
 - 2026-10-25; Codex root, exact verified executing model `gpt-6.1-sol`; inspected all selected arguments and selector exits, checked native delay-slot paths, identified the synthetic signed-room alias, ran copied bounds and existing-evidence replay, verified unchanged production hashes and authored this entry. `author.json` retains session/latest-turn attribution. Primary verification checked finite-inventory completeness, signedness and address ranges, RAM alias handling, native versus copied/reused claims, exact replay equality and documentation scope. No external review or complete native lifetime proof is claimed.
+
+## RE2-CLAIRE-001: Claire B profile and native starter
+
+Status: Candidate for SLUS-00592. Native admission and restoration are observed in one room source; this does not confirm the rest of the campaign.
+
+The human selected Claire B on 2026-10-26 and requested an online test save because they have never played RE2 and have no clear save. The practical RE1 acceptance standard applies. Test gameplay stays hidden and uses a separate history; exhaustive campaign coverage is not required.
+
+### Identity and source contracts
+
+Game: Resident Evil 2, USA Disc 2, SLUS-00592. The owned boot executable `SLUS_005.92` is 987136 bytes, SHA256 `2800c21f6a468cf030af75703b952062d8dc98c20753c8f8735558764f2f6814`, loaded at PS1 virtual `0x80010000`. No separate revision label is inferred. Runtime identity hashes 32-byte windows at `0x800514F4`, `0x80051404`, `0x80050B74` and `0x80072AB0` in order, giving `c83a48706f4ed1f6860a0f2ffe591f9902c1efab73e35c327d82d9f55760d14c`. The accepted B snapshots match those owned code windows.
+
+All following addresses are PS1 virtual and little-endian.
+
+| Field | Address | Width and mask |
+| --- | --- | --- |
+| Stage / room / camera | `0x800CC710` / `0x800CC712` / `0x800CC714` | unsigned 16-bit each, `0xFFFF` |
+| System flags | `0x800C7AAC` | unsigned 32-bit; gameplay `0x40000000`, required mode `0x40` with value `0x40`; other lifecycle masks remain explicit in the profile |
+| Status flags | `0x800C7ACC` | unsigned 32-bit; required scenario mask `0xC2000000`, value `0xC0000000` |
+| Active player | `0x800C7AEC` | unsigned 32-bit, active mask `1` |
+| X / Y / Z | `0x800C7B24` / `0x800C7B28` / `0x800C7B2C` | signed 32-bit each, full mask `0xFFFFFFFF` |
+| Facing | `0x800C7B62` | unsigned 16-bit, angle mask `0x0FFF` |
+| Floor | `0x800C7BF2` | unsigned 8-bit, `0xFF` |
+| Loaded source pointer | `0x800C625C` | unsigned 32-bit pointer, `0xFFFFFFFF` |
+| AOT registry | `0x800C6490` | 32 unsigned 32-bit pointers, `0xFFFFFFFF` each |
+| Script bank table | `0x8009FC40` | unsigned 32-bit pointers, `0xFFFFFFFF` each |
+
+The bounded player/save reads begin at `0x800C7AA8` for 352 bytes and `0x800CC5C8` for 1792 bytes. Each configured bank is checked against the owned native table during generation. The effect allocator at `0x8001B910` uses 96 slots with 124-byte stride and base `0x800D0B30`; its end is `0x800D39B0`. The shared context proof now receives explicit revision bounds rather than assuming Leon's pool. The Claire profile admits only fixed character/scenario predicates as stable presence inputs; the additional Leon event predicate is not generalized.
+
+The native map descriptor table is `0x800A2CFC`; selectors are `0x80069F40` and `0x8006A238`. The executable initially has A's status value, so generation explicitly seeds the requested fixed context before running the copied selectors. B's scenario bit changes source `04-03` and `04-05` outcomes. The profile declares the relevant flag bytes, including bank four bit 98 at `0x800CC757` mask `0x20`, bit 190 at `0x800CC75C` mask `0x02`, bit 99 at `0x800CC757` mask `0x10`, and bit 137 at `0x800CC75A` mask `0x40`. The added late source `06-07` retains its conditional mapping and explicit unmapped alternative. These are owned-source contracts, not native observations of those later contexts.
+
+The disc supplies 127 `PL1/RDT` files. 126 decode into numeric item, door and map metadata. `PL1/RDT/ROOM7051.RDT`, 1188 bytes, fails section-bounds validation and stays in an explicit diagnostic list. A compact layout is only a source lead, not a proven native format. No empty item list is invented for it. Sources with two zero sound pointers require an explicit empty sound-proof list; any attempted relocation of those pointers is rejected. No original artwork, executable bytes, RAM or RE2 saves are committed.
+
+### External save and isolated emulator
+
+The native DexDrive card came from [ResidentEvilTim's GameFAQs save, published 2001-04-18](https://gamefaqs.gamespot.com/ps/198458-resident-evil-2/saves/811). Archive SHA256 is `69b3c22e26ae4daf076a2edcd9a2a7a4ba2b649516e6ddbc879e30a0c80fcf45`. Removing the 3904-byte container header preserves the 131072-byte native card, SHA256 `69ad3a2e58cdc865d9d987ff2c635c500579152c30362e390fd9009d2b1cbb24`. Header and directory-frame checksums pass. Block six is `BASLUS-0042105`, titled Claire B, Scenario 2nd, with save count zero. Its game block SHA256 is `a9e7fe8eaba0c29bed9677abb1993223f99da6135a4bd7cacf3d89551c95a6d7`. The listing says special weapons are unlocked. That limitation is retained; the card is an explicit private agent fixture and never a production default. An earlier 2 KB archive from rGFx was downloaded but not used for native validation.
+
+The human explicitly authorized updating the isolated emulator. The built-in update exited with an incomplete test bundle, so the agent installed the [official rolling-release archive](https://github.com/stenzek/duckstation/releases/tag/latest) after matching its published SHA256 `b9f6f0e747ee2617988de33e1fafdd17d02e918d042fed691355aed9a86c11cd` and verifying the code signature before adding portable test data. Accepted gameplay/restores use DuckStation `0.1-12442-gdd4a0eb77`, binary SHA256 `a4d07549758d8246b5efe94772e7a5a48a34941fb6c381dfe39142afbb329ab4`, with Interpreter CPU mode. A settings-window timeout required an isolated restart; this does not establish that the CPU mode caused or fixed that timeout.
+
+Both achievement sections are false before boot and each native load, with no per-game overrides. Only the private downloaded card copy is mounted. Audio is muted and the black output shader is checked in actual window captures. Native card loading and controller input establish B; no live guest-memory, item, story, scenario, health or ammunition patch is used. Memory-card import is fixture preparation and does not establish normal-save tracking persistence.
+
+### Native observations and reproducibility
+
+The accepted source is `PL1/RDT/ROOM1041.RDT`, 112452 bytes, SHA256 `f2a8f5c87a4b2e71dedb6d8a6efd641c3082ce27025bb5da5bacbc2d4e8da49e`. System/status words are `0x40000040` and `0xC0000040`; the player flag is `0x1001`. Two native poses are `[-19708, 0, -21289]` and `[-19241, 0, -21779]`, with yaw 523 and floor zero. The shared reader publishes one visited source and one region, with an approximate position and Unknown item completion. Other rooms are not revealed. This startup movement is not a manual-navigation or pickup observation.
+
+Two actual F1 actions restore the earlier and later native F2 checkpoints. Full 2 MiB RAM matches the corresponding originals exactly: earlier `d617f8bb3be727001697c6627ec48352de8f4b6254003d80797b6e63f685d6dd`, later `385e5587d2f136a354bd5e6075713096bd7f06820b17aef681c39d119f66138b`. The CLI also publishes this B source using a fresh private history whose identity is `re2_claire_b_slus00592` / `claire-b`; its saved visits contain only the actual source/region and no completion cache.
+
+Reproduce with the owned pinned disc, the cited private card, disabled achievements, hidden output and the recorded emulator configuration. Select its sixth entry through the native load menu, finish the native scenario-start sequence, and create paused gameplay checkpoints. Capture RAM, run the profile, move forward in native startup time, save again, and load each checkpoint with F1 before recapturing. Rebuild publications from each fresh capture and a visits-only history. Private evidence, settings, corrected helper attempts, snapshots, CLI logs and checksums are under `/tmp/re-map-re2-claire-b-20261026/`. Native saves are `db60bc4762c4524ee7adfcd6b47df005587e9563de71e9b06ead2164a3beff2c` and `29c59da13e414cfcd347b935f1106ed7e3153e0ac680920bcacf5ffb59b779d2`.
+
+Limits: one runtime source; no B pickup/door lifecycle, ordinary route, conditional-floor gameplay or campaign-wide clearance claim. Generated counts, automated tests and prose reviews do not close those gaps. The shared rules keep unresolved checks Unknown.
+
+### Final verification and review
+
+The final full suite passes 2500 tests in 108.07 seconds. Scoped Ruff F checks and formatting pass for all twelve changed Python files. All 438 checked local documentation links and anchors pass, as does the whitespace check. These checks cover implementation regressions and documentation consistency, not unobserved Claire B gameplay.
+
+Regeneration from both owned discs matches all four final metadata/map documents. Leon's decoded source outcomes and every existing floor-plan byte remain unchanged. The browser regression checks all 133 Leon outlines; a separate Claire B tracker preview contains one revealed room and one player marker with no horizontal overflow. The README tracker screenshot is updated from that preview and contains no native game pixels. The isolated emulator and preview server are stopped, the test port is closed, and the preceding test setup's settings and savestate slot retain their exact hashes. The user's installed DuckStation application is unchanged.
+
+Independent snapshot reviews by `Claude Opus 4.6 (Thinking)` completed in conversations `779858c5-6dbc-4104-a82a-c3e188d432ed` and `41db1316-978d-4a46-999f-ce778c5b12a5`. They covered correctness, source/profile contracts, regression risks, architecture, diagnostics, tests and the supplied UI evidence; they did not execute gameplay. Primary verification found that the initial waiting banner still named Leon and that an unsupported source appeared as a connection failure. The final implementation uses the selected scenario label and a distinct unsupported-room status, with real CLI publication regressions. The follow-up identified in-process CLI tests that could restore closed logging handlers and a missing once-mode status regression. The test harness now detaches pytest handlers before forced CLI logging setup; once-mode regressions check the failure exit, diagnostic and absence of persisted visits. No verified actionable finding remains.
+
+The configured `Claude Opus 5.5 (High)` was unavailable because its model selection was rejected. The first `Gemini 3.8 Flash (High)` call exceeded its output limit; its one shortened retry attempted a tool and supplied no final review. These calls provide no endorsement. The available Opus 4.6 perspective was named explicitly before use. The private review directory preserves prompts, stream/stderr logs, the superseded initial assessment and final finding verification. No model review is treated as runtime evidence.
+
+Contributions:
+
+- 2026-10-26; human: selected Claire B, requested an online fixture and authorized the emulator update. External save authorship remains with ResidentEvilTim.
+- 2026-10-26; `gpt-6.1-sol`: owned-source inspection, implementation, save-format checks, hidden native observations/restores, CLI/history validation and writing. The exact model was verified from current session metadata.
+- 2026-10-26; `gpt-6.1-sol`: final diff and generated-data review, UI/status corrections, test-harness corrections, browser/cleanup verification and documentation. External reviewer `Claude Opus 4.6 (Thinking)` supplied the two advisory snapshots above; failed or incomplete configured reviews are recorded separately.

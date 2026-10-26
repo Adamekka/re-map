@@ -598,16 +598,16 @@ def main() -> int:
         return 2
 
     profile_id = json.loads(args.profile.read_text())["profile_id"]
-    is_re2 = profile_id == "re2_leon_a_slus00421"
+    is_re2 = profile_id.startswith("re2_")
     profile = Re2Profile.load(args.profile) if is_re2 else Re1Profile.load(args.profile)
-    # Preserve existing Jill histories while giving Leon his own default file.
+    # Preserve existing Jill histories while isolating each RE2 scenario.
     # Explicit --history-file selections still belong to the caller.
     history_path = (
         args.history_file
         if hasattr(args, "history_file")
         else Path(__file__).resolve().parents[1]
         / ".local"
-        / ("re2-leon-a.json" if is_re2 else "visit-history.json")
+        / (f"re2-{profile.target.scenario}.json" if is_re2 else "visit-history.json")
     )
     logger.info(
         "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision
@@ -633,7 +633,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    if args.map and profile.profile_id not in (MAP_PROFILE_ID, "re2_leon_a_slus00421"):
+    if args.map and not is_re2 and profile.profile_id != MAP_PROFILE_ID:
         logger.error("Map unavailable for profile %s", profile.profile_id)
         print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
         return 2
@@ -655,7 +655,7 @@ def main() -> int:
                 profile.profile_id,
                 profile.runtime_signature.concatenated_sha256,
                 # Scenario identity keeps supported runs separate within a revision.
-                "leon-a" if is_re2 else "jill",
+                profile.target.scenario if is_re2 else "jill",
             ),
             region_rooms,
             args.new_playthrough,
@@ -780,10 +780,12 @@ def main() -> int:
                             if result.status == PollStatus.Retry
                             else "Title or demo playback. Load or start gameplay to track."
                             if result.status == PollStatus.NonGameplay
-                            else "Waiting for Resident Evil 2, Leon A."
+                            else f"Waiting for Resident Evil 2, {profile.target.label}."
                             if is_re2 and result.status == PollStatus.WrongGame
                             else "Waiting for Resident Evil Director's Cut, Jill."
                             if result.status == PollStatus.WrongGame
+                            else result.text
+                            if result.status == PollStatus.UnsupportedRoom
                             else "Game connection interrupted. Check DuckStation and its GDB server."
                         ),
                     }
@@ -796,7 +798,8 @@ def main() -> int:
                     logging.ERROR
                     if result.status == PollStatus.ReadFailure
                     else logging.WARNING
-                    if result.status == PollStatus.WrongGame
+                    if result.status
+                    in (PollStatus.WrongGame, PollStatus.UnsupportedRoom)
                     else logging.INFO
                 )
                 logger.log(
@@ -836,7 +839,7 @@ def main() -> int:
                     last_wait_reason = result.text
                 time.sleep(period)
                 continue
-            if result.status == PollStatus.ReadFailure:
+            if result.status in (PollStatus.ReadFailure, PollStatus.UnsupportedRoom):
                 if args.once:
                     print(result.text, file=sys.stderr)
                     return 1

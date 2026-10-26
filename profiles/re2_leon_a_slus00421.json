@@ -414,5 +414,9 @@
       "bank": 4,
       "bit": 7
     }
-  ]
+  ],
+  "scenario_effect_pool": {
+    "address_ps1": "0x800D0D68",
+    "limit_address_ps1": "0x800D3BE8"
+  }
 }

@@ -19,6 +19,11 @@ from map_geometry import trace_floor_cells
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.room_data import bind_event_awards, decode_room
+from games.re2.scenario_items import scenario_effect_pool
+
+SCENARIO_EFFECT_POOL = scenario_effect_pool(
+    json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+)
 
 PRESENCE_FLAGS = frozenset({(1, 0), (1, 1), (1, 6), (4, 7)})
 PRESENCE_COUNTERS = presence_counter_indices(
@@ -1607,7 +1612,11 @@ def test_scenario_exclusion_proves_every_creator_impossible(
     if case == "incomplete":
         room["candidate_list_complete"] = False
     assert scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     ).absent_item_ids == ([9] if excluded else [])
 
 
@@ -1646,7 +1655,11 @@ def test_mode_exclusion_withholds_proof_for_direct_and_aliased_writers(
     # must not hide a writer to the pinned mode bit.
     banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7CE4", "width": 4}]
     assert scenario_item_proofs(
-        data, room, [{"bank": 0, "bit": 25, "expected": mode}], banks
+        data,
+        room,
+        [{"bank": 0, "bit": 25, "expected": mode}],
+        banks,
+        SCENARIO_EFFECT_POOL,
     ).absent_item_ids == ([9] if mode and writer in ("none", "unrelated") else [])
 
 
@@ -1674,7 +1687,11 @@ def test_scenario_exclusion_tracks_nested_else_frames(fixed, excluded, scenario_
         presence_writes=PRESENCE_WRITES,
     )
     assert scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": fixed}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": fixed}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     ).absent_item_ids == ([9] if excluded else [])
 
 
@@ -1841,9 +1858,9 @@ def test_scripted_scenario_exclusion_audits_mutations_and_all_creators(
         presence_counters=PRESENCE_COUNTERS,
         presence_writes=PRESENCE_WRITES,
     )
-    assert scenario_item_proofs(data, room, fixed, scenario_banks).absent_item_ids == (
-        [9] if excluded else []
-    )
+    assert scenario_item_proofs(
+        data, room, fixed, scenario_banks, SCENARIO_EFFECT_POOL
+    ).absent_item_ids == ([9] if excluded else [])
 
 
 def test_scenario_exclusions_require_independent_creator_proofs():
@@ -1921,7 +1938,11 @@ def test_scenario_variant_proof_requires_every_possible_creator(
         room["candidate_list_complete"] = False
     banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7D04", "width": 4}]
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": fixed}], banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": fixed}],
+        banks,
+        SCENARIO_EFFECT_POOL,
     )
     absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == []
@@ -2076,7 +2097,11 @@ def test_scenario_variant_includes_every_reachable_reset(
     if case == "incomplete":
         room["candidate_list_complete"] = False
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     assert proof.absent_item_ids == []
     if not selected:
@@ -2130,7 +2155,11 @@ def test_scenario_loops_keep_every_creator_possible(
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == ([9] if not malformed and loop_gid != 9 else [])
@@ -2186,7 +2215,11 @@ def test_scenario_shadow_selector_bounds(
     )
     assert room["candidate_list_complete"]
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     assert (proof.absent_item_ids, proof.item_variants) == ([9] if safe else [], [])
 
@@ -2207,7 +2240,11 @@ def test_scenario_effect_static_reference_preserves_context(
         data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     assert proof.fixed_context_preserved is safe
     assert proof.absent_item_ids == ([9] if safe else [])
@@ -2300,9 +2337,11 @@ def test_fixed_collection_context_requires_whole_source_proof():
         (0x800D3BE8, 0, True),
     ],
 )
+@pytest.mark.parametrize("pool_shift", [0, -0x238])
 def test_scenario_effect_pool_must_not_alias_fixed_context(
-    address, bit, safe, scenario_banks
+    address, bit, safe, scenario_banks, pool_shift
 ):
+    address += pool_shift
     from games.re2.scenario_items import scenario_item_proofs
 
     packet = bytes([0x3A, 0, 47, 0, 0, 255]) + bytes(10)
@@ -2312,7 +2351,11 @@ def test_scenario_effect_pool_must_not_alias_fixed_context(
     )
     banks = [*scenario_banks, {"bank": 99, "address_ps1": hex(address), "width": 8}]
     proof = scenario_item_proofs(
-        data, room, [{"bank": 99, "bit": bit, "expected": 0}], banks
+        data,
+        room,
+        [{"bank": 99, "bit": bit, "expected": 0}],
+        banks,
+        tuple(value + pool_shift for value in SCENARIO_EFFECT_POOL),
     )
     assert proof.fixed_context_preserved is safe
 
@@ -2368,7 +2411,11 @@ def test_scenario_copy_can_only_patch_numeric_actor_operands(
     )
     assert room["candidate_list_complete"]
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     assert (proof.absent_item_ids, proof.item_variants) == ([9] if safe else [], [])
 
@@ -2421,7 +2468,11 @@ def test_scenario_collision_store_stays_in_its_section(
     )
     assert room["candidate_list_complete"]
     proof = scenario_item_proofs(
-        bytes(data), room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        bytes(data),
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     assert (proof.absent_item_ids, proof.item_variants) == (
         [9] if case in ("valid", "last") else [],
@@ -2453,7 +2504,11 @@ def test_scenario_for_procedure_never_prunes_a_creator(
     )
     assert room["candidate_list_complete"]
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     absent, variants = proof.absent_item_ids, proof.item_variants
     assert absent == ([9] if body_gid == 10 else [])
@@ -2539,7 +2594,11 @@ def test_scenario_for_control_flow_bounds(case, incompatible_item, scenario_bank
     )
     assert room["candidate_list_complete"]
     proof = scenario_item_proofs(
-        data, room, [{"bank": 1, "bit": 1, "expected": 0}], scenario_banks
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
     )
     assert (proof.absent_item_ids, proof.item_variants) == (
         [9] if case == "balanced" else [],
@@ -2583,7 +2642,7 @@ def test_fixed_context_presence_requires_a_whole_source_proof(writer, scenario_b
         room["candidate_list_complete"] = False
     banks = [*scenario_banks, {"bank": 99, "address_ps1": "0x800C7CE4", "width": 4}]
     fixed = [{"bank": 0, "bit": 25, "expected": 1}]
-    proof = scenario_item_proofs(data, room, fixed, banks)
+    proof = scenario_item_proofs(data, room, fixed, banks, SCENARIO_EFFECT_POOL)
     assert not proof.absent_item_ids and not proof.item_variants
     assert proof.fixed_context_preserved is (writer in ("none", "unrelated"))
     flags = scenario_presence_flags(

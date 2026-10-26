@@ -26,11 +26,13 @@ from map_geometry import trace_floor_cells
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapProjection
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
+from games.re2.re2_profile import re2_target
 from games.re2.scenario_items import (
     scenario_flags,
     scenario_item_candidates,
     scenario_item_proofs,
     scenario_presence_flags,
+    scenario_effect_pool,
 )
 
 AREA_NAMES = (
@@ -58,6 +60,8 @@ AREA_NAMES = (
 
 
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
+    target = re2_target(profile)
+    effect_pool = scenario_effect_pool(profile)
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -84,9 +88,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             raise ValueError("data track lacks an ISO9660 primary volume")
         root = struct.unpack_from("<I", pvd, 158)[0]
         root_size = struct.unpack_from("<I", pvd, 166)[0]
-        extent, size = _find(stream, root, root_size, "SLUS_004.21")
+        extent, size = _find(stream, root, root_size, target.executable_name)
         executable = _read_file(stream, extent, size)
-        identity = "SLUS_004.21 SHA256 " + hashlib.sha256(executable).hexdigest()
+        identity = (
+            target.executable_name + " SHA256 " + hashlib.sha256(executable).hexdigest()
+        )
         if identity != profile["executable_identity"]:
             raise ValueError("disc executable does not match the RE2 profile")
         load = struct.unpack_from("<I", executable, 0x18)[0]
@@ -102,7 +108,8 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         if len(pixels) != 20 * 32768:
             raise ValueError("unsupported RE2 map pixel layout")
         directory, directory_size = root, root_size
-        for component in ("PL0", "RDT"):
+        source_directory = f"PL{target.player_index}/RDT"
+        for component in source_directory.split("/"):
             row = next(
                 (
                     row
@@ -112,32 +119,52 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 None,
             )
             if row is None:
-                raise ValueError("disc lacks Leon room data")
+                raise ValueError(f"disc lacks {target.label} room data")
             directory, directory_size = row[1:3]
-        rooms, sources = [], {}
+        rooms, sources, unsupported = [], {}, []
         for name, extent, size, is_directory in _read_dir(
             stream, directory, directory_size
         ):
             if is_directory:
                 continue
-            match = re.fullmatch(r"ROOM([1-7])([0-9A-F]{2})0\.RDT", name)
+            match = re.fullmatch(
+                rf"ROOM([1-7])([0-9A-F]{{2}}){target.player_index}\.RDT", name
+            )
             if match is None:
-                raise ValueError(f"unexpected Leon room source {name}")
+                raise ValueError(f"unexpected {target.label} room source {name}")
             data = _read_file(stream, extent, size)
+            stage, number = int(match[1]) - 1, int(match[2], 16)
             try:
                 room = decode_room(
-                    data, "PL0/RDT/" + name, condition_flags, counters, writes
+                    data,
+                    source_directory + "/" + name,
+                    condition_flags,
+                    counters,
+                    writes,
                 )
             except ValueError as error:
-                raise ValueError(f"{name}: {error}") from error
+                # Keep an unreadable source explicit. Inventing empty item data
+                # here would let a later visit incorrectly clear that room.
+                unsupported.append(
+                    {
+                        "id": f"{stage:02d}-{number:02x}",
+                        "path": source_directory + "/" + name,
+                        "size": len(data),
+                        "sha256": hashlib.sha256(data).hexdigest(),
+                        "error": str(error),
+                    }
+                )
+                continue
             # Fill this field after the corpus check without reordering JSON keys.
             room["event_awards"] = []
             room.update(stage=int(match[1]) - 1, room=int(match[2], 16))
             room["id"] = f"{room['stage']:02d}-{room['room']:02x}"
             rooms.append(room)
             sources[room["id"]] = data
-    if len(rooms) != 125:
-        raise ValueError("pinned Leon disc must contain 125 room sources")
+    if len(rooms) + len(unsupported) != target.room_count:
+        raise ValueError(
+            f"pinned {target.label} disc must contain {target.room_count} room sources"
+        )
     layout = profile["runtime_layout"]
     awards = bind_event_awards(
         rooms,
@@ -153,7 +180,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
         proof = scenario_item_proofs(
-            sources[room["id"]], room, fixed_flags, profile["flag_banks"]
+            sources[room["id"]], room, fixed_flags, profile["flag_banks"], effect_pool
         )
         room["fixed_context_preserved"] = proof.fixed_context_preserved
         room["scenario_absent_item_ids"] = proof.absent_item_ids
@@ -178,6 +205,17 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     machine.mem_map(0, 0x200000)
     load = struct.unpack_from("<I", executable, 0x18)[0]
     machine.mem_write(load & 0x1FFFFF, executable[0x800:])
+    # The executable starts in A's context even when generating a B profile.
+    # Native map selectors read these flags as well as room/floor inputs.
+    bank_addresses = {
+        row["bank"]: int(row["address_ps1"], 0) for row in profile["flag_banks"]
+    }
+    for flag in fixed_flags:
+        address = (bank_addresses[flag["bank"]] + flag["bit"] // 32 * 4) & 0x1FFFFF
+        mask = 0x80000000 >> (flag["bit"] % 32)
+        word = int.from_bytes(machine.mem_read(address, 4), "little")
+        word = word & ~mask | (mask if flag["expected"] else 0)
+        machine.mem_write(address, word.to_bytes(4, "little"))
     layout = profile["metadata_layout"]
 
     def native(address: int, first: int, second: int) -> int:
@@ -342,7 +380,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                             room["id"], "Room " + room["id"]
                         )
     for plan in plans:
-        # Extra native shapes can belong exclusively to Claire or an unsupported
+        # Extra native shapes can belong exclusively to another character or an unsupported
         # scenario. They stay outside this profile's revealable geometry.
         plan["rooms"] = [entry for entry in plan["rooms"] if entry["room_ids"]]
         for entry in plan["rooms"]:
@@ -452,6 +490,8 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SOURCE-001",
             ],
             "fixed_scenario_flags": fixed_flags,
+            "scenario_effect_pool": profile["scenario_effect_pool"],
+            "unsupported_sources": unsupported,
             "presence_counter_writes": profile["presence_counter_writes"],
             "presence_flag_writes": flag_proof,
             "rooms": rooms,
@@ -465,11 +505,20 @@ def main() -> int:
     parser.add_argument("cue", type=Path)
     parser.add_argument("room_output", type=Path)
     parser.add_argument("map_output", type=Path)
+    parser.add_argument(
+        "--profile", type=Path, default=ROOT / "profiles/re2_leon_a_slus00421.json"
+    )
     args = parser.parse_args()
     try:
-        profile = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+        profile = json.loads(args.profile.read_text())
         names = json.loads((ROOT / "data/re2_names.json").read_text())
         rooms, maps = build(args.cue, profile, names)
+        if rooms["unsupported_sources"]:
+            print(
+                f"RE2 metadata has {len(rooms['unsupported_sources'])} unsupported room source(s); "
+                "their diagnostics are recorded and live tracking will reject them.",
+                file=sys.stderr,
+            )
         for path, document in ((args.room_output, rooms), (args.map_output, maps)):
             path.write_text(json.dumps(document, indent=2) + "\n")
     except (OSError, ValueError, ImportError, KeyError, struct.error) as error:

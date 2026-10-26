@@ -90,12 +90,33 @@ def scenario_flags(profile: dict) -> list[dict[str, int]]:
     return flags
 
 
+def scenario_effect_pool(profile: dict) -> tuple[int, int]:
+    pool = profile.get("scenario_effect_pool")
+    if type(pool) is not dict or pool.keys() != {"address_ps1", "limit_address_ps1"}:
+        raise ValueError("invalid or missing RE2 scenario effect pool")
+    try:
+        start, limit = (
+            int(pool[key], 0) for key in ("address_ps1", "limit_address_ps1")
+        )
+    except (TypeError, ValueError) as error:
+        raise ValueError("invalid RE2 scenario effect pool addresses") from error
+    if start % 4 or limit % 4 or not 0x80000000 <= start < limit <= 0x80200000:
+        raise ValueError("RE2 scenario effect pool must fit aligned PS1 RAM")
+    return start, limit
+
+
 def scenario_item_proofs(
-    data: bytes, room: dict, flags: list[dict[str, int]], flag_banks: list[dict]
+    data: bytes,
+    room: dict,
+    flags: list[dict[str, int]],
+    flag_banks: list[dict],
+    effect_pool: tuple[int, int],
 ) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
     assert fixed and len(fixed) == len(flags)
+    pool_start, pool_limit = effect_pool
+    assert 0x80000000 <= pool_start < pool_limit <= 0x80200000
     if not room["candidate_list_complete"]:
         return ScenarioItemProof(False, [], [])
     banks = {
@@ -351,7 +372,7 @@ def scenario_item_proofs(
                 # apart from task PC/stack. Other reference forms stay opaque;
                 # a profile-fixed word must not alias any part of that pool.
                 if data[row["offset"] + 4] != 0 or any(
-                    address < 0x800D3BE8 and 0x800D0D68 < address + 4
+                    address < pool_limit and pool_start < address + 4
                     for address in fixed_words
                 ):
                     return ScenarioItemProof(False, [], [])

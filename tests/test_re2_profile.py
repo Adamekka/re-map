@@ -791,3 +791,67 @@ def test_fixed_context_presence_certificate_is_required_and_bound_to_rules(
         ValueError, match="RE2.*context|RE2.*presence|RE2.*exclusion|RE2.*incomplete"
     ):
         Re2Profile.load(path)
+
+
+def test_claire_b_profile_pins_separate_disc_addresses_and_catalog():
+    leon = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
+    claire = Re2Profile.load(ROOT / "profiles/re2_claire_b_slus00592.json")
+    assert claire.target.serial == "SLUS-00592"
+    assert claire.target.scenario == "claire-b"
+    assert claire.executable_identity.endswith(
+        "2800c21f6a468cf030af75703b952062d8dc98c20753c8f8735558764f2f6814"
+    )
+    assert (claire.stage_address, claire.room_address, claire.camera_address) == (
+        0x800CC710,
+        0x800CC712,
+        0x800CC714,
+    )
+    assert claire.runtime_layout["scenario_value"] == 0xC0000000
+    assert claire.runtime_signature != leon.runtime_signature
+    assert len(claire.rooms) == 126
+    assert set(claire.unsupported_sources) == {"06-05"}
+    assert all(room["source"].startswith("PL1/RDT/") for room in claire.rooms.values())
+    assert len(claire.map_layout.document["areas"]) == 20
+
+
+@pytest.mark.parametrize("case", ["missing", "bounds", "metadata"])
+def test_effect_pool_requires_explicit_revision_bound_metadata(tmp_path, case):
+    raw = json.loads((ROOT / "profiles/re2_claire_b_slus00592.json").read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((ROOT / "profiles" / raw[field]).resolve())
+    if case == "missing":
+        del raw["scenario_effect_pool"]
+    elif case == "bounds":
+        raw["scenario_effect_pool"]["limit_address_ps1"] = "0x80000000"
+    else:
+        raw["scenario_effect_pool"]["address_ps1"] = "0x800D0D68"
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2.*effect pool"):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "source,flags,area",
+    [
+        ("04-03", {}, "re2-11"),
+        ("04-03", {0x800CC757: 32}, "re2-10"),
+        ("04-05", {}, "re2-10"),
+        ("04-05", {0x800CC757: 16}, "re2-12"),
+        ("04-05", {0x800CC75C: 2}, "re2-13"),
+        ("04-05", {0x800CC757: 16, 0x800CC75C: 2}, "re2-13"),
+        ("06-07", {}, "unmapped"),
+        ("06-07", {0x800CC75A: 64}, "re2-19"),
+    ],
+)
+def test_claire_map_generation_uses_b_context_and_native_flag_bytes(
+    source, flags, area
+):
+    """RE2-CLAIRE-001: copied native selector outcomes, not gameplay coverage."""
+    profile = Re2Profile.load(ROOT / "profiles/re2_claire_b_slus00592.json")
+    assert (
+        profile.map_layout.select(
+            source, 0, lambda address, width: flags.get(address, 0)
+        )[0]
+        == area
+    )

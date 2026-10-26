@@ -1,4 +1,4 @@
-"""SLUS-00421 Leon A identity, bounded memory layout and required metadata."""
+"""Pinned RE2 identities, bounded memory layouts and required metadata."""
 
 from __future__ import annotations
 
@@ -14,13 +14,45 @@ from games.re2.scenario_items import (
     scenario_flags,
     scenario_item_candidates,
     scenario_presence_flags,
+    scenario_effect_pool,
 )
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
 @dataclass(frozen=True)
+class Re2Target:
+    serial: str
+    scenario: str
+    label: str
+    executable_name: str
+    player_index: int
+    room_count: int
+
+
+RE2_TARGETS = {
+    "re2_leon_a_slus00421": Re2Target(
+        "SLUS-00421", "leon-a", "Leon A", "SLUS_004.21", 0, 125
+    ),
+    "re2_claire_b_slus00592": Re2Target(
+        "SLUS-00592", "claire-b", "Claire B", "SLUS_005.92", 1, 127
+    ),
+}
+
+
+def re2_target(raw: dict) -> Re2Target:
+    target = RE2_TARGETS.get(raw["profile_id"])
+    if target is None or (raw["serial"], raw["scenario"]) != (
+        target.serial,
+        target.scenario,
+    ):
+        raise ValueError("unsupported RE2 revision or scenario")
+    return target
+
+
+@dataclass(frozen=True)
 class Re2Profile:
     profile_id: str
+    target: Re2Target
     revision: str
     executable_identity: str
     stage_address: int
@@ -30,17 +62,16 @@ class Re2Profile:
     runtime_layout: dict
     flag_banks: dict[int, tuple[int, int]]
     rooms: dict[str, dict]
+    unsupported_sources: dict[str, dict]
     names: dict
     map_layout: Re2MapLayout
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
         raw = json.loads(path.read_text())
+        target = re2_target(raw)
         if (
-            raw["profile_id"] != "re2_leon_a_slus00421"
-            or raw["serial"] != "SLUS-00421"
-            or raw["scenario"] != "leon-a"
-            or raw["address_space"] != "PS1 virtual address, little-endian"
+            raw["address_space"] != "PS1 virtual address, little-endian"
             or raw["room_value_width_bytes"] != 2
         ):
             raise ValueError("unsupported RE2 revision, scenario or address layout")
@@ -70,6 +101,7 @@ class Re2Profile:
         layout = raw["runtime_layout"]
         _, flag_proof = presence_flag_write_proof(raw)
         presence_counter_indices(raw)
+        scenario_effect_pool(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -126,6 +158,8 @@ class Re2Profile:
             raise ValueError("RE2 room metadata disagrees with the pinned revision")
         if document.get("presence_counter_writes") != raw["presence_counter_writes"]:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
+        if document.get("scenario_effect_pool") != raw["scenario_effect_pool"]:
+            raise ValueError("RE2 effect pool proof disagrees with its revision layout")
         # JSON types are part of the proof: Python equality would equate
         # boolean bank/bit operands with integer zero or one.
         if json.dumps(
@@ -146,8 +180,38 @@ class Re2Profile:
             raise ValueError("RE2 exclusion proof disagrees with fixed scenario flags")
         fixed_values = {(test["bank"], test["bit"]): test["expected"] for test in fixed}
         rooms = {row["id"]: row for row in document["rooms"]}
-        if len(rooms) != 125 or len(rooms) != len(document["rooms"]):
-            raise ValueError("RE2 metadata needs 125 unique room sources")
+        unsupported = document.get("unsupported_sources")
+        if type(unsupported) is not list or any(
+            type(row) is not dict
+            or row.keys() != {"id", "path", "size", "sha256", "error"}
+            or type(row["id"]) is not str
+            or len(row["id"]) != 5
+            or row["id"][2] != "-"
+            or any(c not in "0123456789abcdef" for c in row["id"][:2] + row["id"][3:])
+            or int(row["id"][:2], 16) > 6
+            or int(row["id"][3:], 16) > 0x2F
+            or type(row["path"]) is not str
+            or not row["path"]
+            or type(row["size"]) is not int
+            or row["size"] <= 0
+            or type(row["sha256"]) is not str
+            or len(row["sha256"]) != 64
+            or any(c not in "0123456789abcdef" for c in row["sha256"])
+            or type(row["error"]) is not str
+            or not row["error"]
+            for row in unsupported
+        ):
+            raise ValueError("invalid or missing RE2 unsupported source diagnostics")
+        unsupported = {row["id"]: row for row in unsupported}
+        if (
+            len(rooms) + len(unsupported) != target.room_count
+            or len(rooms) != len(document["rooms"])
+            or len(unsupported) != len(document["unsupported_sources"])
+            or rooms.keys() & unsupported.keys()
+        ):
+            raise ValueError(
+                f"RE2 metadata needs {target.room_count} unique room sources"
+            )
 
         supported = raw["presence_condition_flags"]
         condition_flags = frozenset((row["bank"], row["bit"]) for row in supported)
@@ -270,25 +334,30 @@ class Re2Profile:
             ):
                 raise ValueError("invalid RE2 source section bounds")
             sound = room.get("sound_proofs")
-            if (
-                type(sound) is not list
-                or len(sound) != 2
-                or any(
-                    type(proof) is not dict
-                    or proof.keys() != {"section", "width", "sha256"}
-                    or type(proof["section"]) is not int
-                    or proof["section"] != index
-                    or type(proof["width"]) is not int
-                    or proof["width"] != width
-                    or type(proof["sha256"]) is not str
-                    or len(proof["sha256"]) != 64
-                    or any(c not in "0123456789abcdef" for c in proof["sha256"])
-                    or not 100 <= room["section_offsets"][index] <= room["size"] - width
-                    for proof, (index, width) in zip(sound, ((0, 192), (1, 32)))
-                )
-                or room["section_offsets"][1] - room["section_offsets"][0] != 192
-            ):
-                raise ValueError("invalid or missing RE2 sound source proofs")
+            # Soundless sources require explicit zero pointers and no hashes.
+            # They cannot use the paired, hash-checked relocation path.
+            if room["section_offsets"][:2] != [0, 0] or sound != []:
+                if (
+                    type(sound) is not list
+                    or len(sound) != 2
+                    or any(
+                        type(proof) is not dict
+                        or proof.keys() != {"section", "width", "sha256"}
+                        or type(proof["section"]) is not int
+                        or proof["section"] != index
+                        or type(proof["width"]) is not int
+                        or proof["width"] != width
+                        or type(proof["sha256"]) is not str
+                        or len(proof["sha256"]) != 64
+                        or any(c not in "0123456789abcdef" for c in proof["sha256"])
+                        or not 100
+                        <= room["section_offsets"][index]
+                        <= room["size"] - width
+                        for proof, (index, width) in zip(sound, ((0, 192), (1, 32)))
+                    )
+                    or room["section_offsets"][1] - room["section_offsets"][0] != 192
+                ):
+                    raise ValueError("invalid or missing RE2 sound source proofs")
             if any(
                 not 0 <= item["global_id"] < banks[bank][1] * 8
                 for item in room["items"]
@@ -471,6 +540,7 @@ class Re2Profile:
             raise ValueError("aliased RE2 event award and pickup collection rules")
         return Re2Profile(
             raw["profile_id"],
+            target,
             raw["revision"],
             raw["executable_identity"],
             *room_addresses,
@@ -478,6 +548,7 @@ class Re2Profile:
             layout,
             banks,
             rooms,
+            unsupported,
             json.loads((path.parent / raw["names_path"]).read_text()),
             Re2MapLayout.load(
                 path.parent / raw["floor_plans_path"],

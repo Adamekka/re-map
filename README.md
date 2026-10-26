@@ -57,6 +57,12 @@ Start Leon A on the pinned USA Disc 1, then run:
 python3 tools/track.py --profile profiles/re2_leon_a_slus00421.json --history-file .local/re2-leon-a.json --map
 ```
 
-The [RE2 guide](docs/re2.md) lists coverage and unresolved checks. Keep its exploration history separate from Jill's.
+For Claire B on the pinned USA Disc 2:
+
+```sh
+python3 tools/track.py --profile profiles/re2_claire_b_slus00592.json --history-file .local/re2-claire-b.json --map
+```
+
+Claire B has initial native validation. The [RE2 guide](docs/re2.md) lists coverage and unresolved checks. Each profile has its own exploration history.
 
 ![RE2 opening map with approximate player position](docs/images/re2-map.png)
