@@ -18,7 +18,7 @@ For Claire B, run:
 python3 tools/track.py --profile profiles/re2_claire_b_slus00592.json --history-file .local/re2-claire-b.json --map
 ```
 
-Claire B is an initial profile with 126 decoded room sources and 20 generated map areas. One additional source is explicitly unsupported and cannot record or clear a visit. Native checks cover one entered source, approximate position, earlier/later savestate restoration and a real CLI/history run. Pickup collection, door lifecycles, other sources and conditional floors still need observations. Unsupported identities or conditions remain Unknown. These source counts do not measure gameplay readiness.
+Claire B is an initial profile with 126 decoded room sources and 20 generated map areas. One additional source is explicitly unsupported and cannot record or clear a visit. Native checks cover two entered sources, approximate position, a real CLI/history run and [one pickup's collection, departure/reentry and current/departed savestate reversal](research/re2.md#re2-claire-002-first-native-pickup-lifecycle). That pickup remains Unknown while departed and unacquired; its source retains unresolved checks after collection. Other pickups, locked-door lifecycles, other sources and conditional floors still need observations. Unsupported identities or conditions remain Unknown. These source counts do not measure gameplay readiness.
 
 Leon A defaults to `.local/re2-leon-a.json`, Claire B to `.local/re2-claire-b.json`; RE1 keeps `.local/visit-history.json`. Use a separate history file for each playthrough. Add `--new-playthrough` to reset that history explicitly. The normal DuckStation GDB setup is the same as RE1. See the [startup guide](duckstation-startup.md).
 
