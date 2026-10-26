@@ -3720,3 +3720,62 @@ The focused RE2/history/logging suite passes 898 tests in 7.39 seconds. This evi
 
 - 2026-10-26; human user; explicitly approved the named hidden pickup validation and evidence commit, with production fixes separate.
 - 2026-10-26; `gpt-6.1-sol`, verified from the matching session's latest turn metadata; prepared isolated tests, observed the native award and four passages, created/restored checkpoints, audited complete publications and visits-only history, verified unchanged production/write bounds/cleanup, and wrote this entry. Primary verification checked source/live identity and quantity, target-only acquisition/inventory changes, descriptor deactivation, current/departed and reentered states, unresolved neighbors, exact full native payload/RAM pairs, maps under retained exploration and stated limits. External starter authorship remains ResidentEvilTim's as recorded in RE2-CLAIRE-001.
+
+## RE2-CLAIRE-011: Source 00-0a entry and map reveal
+
+Status: Confirmed for the listed native entry/return/reentry and map-publication observations on Claire B USA Disc 2, SLUS-00592. The observed native floor byte is zero. Other floor contexts, in-game map pixels, item-list completeness and room clearance remain unvalidated.
+
+The human approved hidden validation of source `00-0a`, including native entry, map reveal/floor selection, return passage/reentry, earlier/later restores, isolated history and a verified-evidence commit. Incomplete item coverage must keep completion Unknown; production fixes were separate. Baseline is `1d58211`; all 171 recorded production/data/test/tool files retain their hashes.
+
+### Revision, passage and map observations
+
+Game: Resident Evil 2, USA Disc 2, Claire B, SLUS-00592, executable `SLUS_005.92` SHA256 `2800c21f6a468cf030af75703b952062d8dc98c20753c8f8735558764f2f6814`. DuckStation is `0.1-12442-gdd4a0eb77`, Interpreter mode, binary SHA256 `a4d07549758d8246b5efe94772e7a5a48a34941fb6c381dfe39142afbb329ab4`. Revision and external starter provenance retain [RE2-CLAIRE-001](#re2-claire-001-claire-b-profile-and-native-starter)'s bounds. The owned source is `PL1/RDT/ROOM10A1.RDT`, 143468 bytes, SHA256 `748b79b5d94b70622d0c58e2ae39dfdd0c0e00fa823603304ef9b8695212c491`.
+
+Stage/room are read at PS1 virtual `0x800CC710`/`0x800CC712`, unsigned 16-bit little-endian with full masks `0xFFFF`. The native floor field at `0x800C7BF2`, unsigned byte with mask `0xFF`, stays zero. The established generated map selection is area `re2-03`, Police station 2F, with region `01` for source `00-09` and `02` for `00-0a`. This observes selection from the native room/floor inputs; it does not inspect native in-game map pixels or validate a floor transition.
+
+| Capture | Current source | Native floor byte | Map area / region | Target `00-0a` |
+| --- | --- | --- | --- | --- |
+| `before-entry` | `00-09` | 0 | `re2-03:01` | absent from fresh tracker history |
+| `entered-current` | `00-0a` | 0 | `re2-03:02` | revealed, Unknown |
+| `departed-current` | `00-09` | 0 | `re2-03:01` | retained, Unknown |
+| `reentered-current` | `00-0a` | 0 | `re2-03:02` | retained, Unknown |
+
+The target has no decoded item declarations but an incomplete candidate list, so it stays Unknown with unresolved item coverage in every publication after entry. No item absence or clearance follows from its empty decoded list. Source `00-09` retains IDs 13/205 as Unknown and ID 146 as Taken with quantity one. Acquisition banks, inventory and key-bank bytes stay unchanged across all eight original/restored images.
+
+The paired native passages use source `00-09` door offset 8400, slot one, and source `00-0a` offset 6602, slot zero. Both current bound observations report Open with no lock. Only that paired doorway is traversed. The target's other destinations, `00-0f`, `00-0b` and `01-1b`, stay unvisited and unrevealed. Their physical accessibility is not validated by their displayed access states.
+
+### Reproduction, checkpoints and retained exploration
+
+Private evidence is under `/tmp/re-map-re2-claire-b-room0a-20261026/`. Boot [RE2-CLAIRE-010](#re2-claire-010-pickup-146-native-collection-and-restore-reversal)'s `collected-current-native.sav` with achievements disabled in both sections, overrides absent, StartPaused, muted audio and the black shader. The initial full RAM matches that retained capture exactly. Fresh test history initially contains only source `00-09` and region `re2-03:01`; it does not import the fixture's prior game exploration.
+
+After accepted Display and observed free control, prepare source `00-09` at X/Z `-26505/-24896`, yaw 2048. Native Cross enters `00-0a` at X/Y/Z `-24315/0/-24780`, yaw 2580. For return, request `-24000/-25000`, yaw zero, then native Cross. Native arrival in `00-09` is `-26505/0/-24896`, yaw zero. Repeat the original approach for reentry. Three source-write watches confirm the three passages without writing stage/room fields. Released input, native host space and further frames settle each watch stop before capture; no universal pause-cause rule is inferred.
+
+Select private slot one with F3 and save each paused core state with F2. Recheck achievement isolation, copy its checkpoint into that slot and invoke actual native F1. Four native payloads and restores reproduce full original 2 MiB RAM:
+
+| Original / actual F1 restore | RAM SHA256 |
+| --- | --- |
+| `before-entry` / `restore-before-entry` | `9a43247fd3b8f082aa0332ec097b2924fe6d470507852a905a7fc7faa0290fcf` |
+| `entered-current` / `restore-entered-current` | `37a06d4e044a1ef731a2e0d02bc310bad41c5e290e02b04dd89dab1ef2c8eed5` |
+| `departed-current` / `restore-departed-current` | `3111606f35cb4f1eda2964dde2bb320b0489605804e9c669c4b6c21e622975f2` |
+| `reentered-current` / `restore-reentered-current` | `c9db8ec1e4227c40781c89c0463e9c4cdec54b8476c8421e8f6d90cc6d708c0f` |
+
+Loading `before-entry` afterward retains the later actual `00-0a` visit and outline, while current source/floor return to `00-09`/zero. Its full map equals reconstruction from original RAM under accumulated history. The other three restored maps also equal their original publications. In every restored case, target completion remains Unknown.
+
+`audit.py` and `native-audit.json` verify all eight complete publications through production history save/close/reopen under one private playthrough identity. Fresh history contains no current-room, item, completion or door cache before fresh RAM supplies them. Visits grow from one source/region to exactly `00-09`/`00-0a` and two regions, never adding unvisited destinations.
+
+### Rendered map, isolation and limits
+
+A headless browser consumes the eight accepted native map states. It verifies one outline/name before first tracked entry and two afterward, the current-room marker/name, expected selected area/region, Unknown completion and incomplete-check entries. The newly explored outline remains in the rendered map after return and earlier-state loads. A chosen zoom remains unchanged across every update on this same map area. `browser-check.json` records the assertions; no screenshot is emitted. This is tracker rendering validation, not native map-image or absolute wall/pose alignment inspection.
+
+Three preparations write only [RE2-CLAIRE-002](#re2-claire-002-first-native-pickup-lifecycle)'s nine X/Z/yaw and candidate mirror fields, retaining its PS1 virtual addresses, widths, little-endian encoding and masks. No Y, floor, control, item, key, story, door or other actor write occurs. Inherited health stays 29730; no health/ammunition aid is added. Native acquisitions and inventory are unchanged.
+
+Both achievement sections are disabled before boot and every selected-slot load. Whole-window start/end checks exceed 99.9% black and are never emitted to chat. Cleanup stops the owned emulator, closes port 2346, restores settings and both selected-slot files byte for byte, and verifies the private card checksum is unchanged. User settings, saves and histories remain untouched. Native saves, card bytes, owned source data, images and raw RAM remain outside Git.
+
+The focused RE2/history/logging suite passes 898 tests in 7.22 seconds. This evidence-only increment changes no UI, so the README screenshot is retained. No new full-suite run or external code review is claimed. `coverage.json` unions prior accepted sources with the new `00-0a` entry, increasing Claire's observed-source count from six to seven. Its initial aggregation missed CLAIRE-001's startup capture because that evidence has a different format; replaying the original source `00-04` image through the pinned reader corrects the tally without new gameplay. `audit-corrections.json` preserves that correction and the original capture's checksum.
+
+This adds one observed map source and a paired passage/reentry case. It does not resolve item conditions, full clearance, other door passages, alternate/conditional floors, ordinary navigation, native map pixels or normal memory-card persistence. Accepted-source counts do not measure campaign readiness.
+
+### Contributions
+
+- 2026-10-26; human user; explicitly approved the named hidden entry/map/restore validation and evidence commit, with production fixes separate.
+- 2026-10-26; `gpt-6.1-sol`, verified from the matching session's latest turn metadata; extracted and verified the owned source, prepared isolated tests, observed three native passages, created/restored four checkpoints, audited full publications and private history, corrected the coverage aggregation, checked headless rendering and cleanup, and wrote this entry. Primary verification checked reveal timing, observed floor/region selection, unvisited destinations, unresolved completion, unchanged item/key state, native payload/RAM/map equality, retained exploration, chosen zoom and exact setup-write bounds. External starter authorship remains ResidentEvilTim's as recorded in RE2-CLAIRE-001.
