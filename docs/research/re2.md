@@ -3280,3 +3280,53 @@ The accepted-source union for Claire B is now `00-04`, `00-05`, `00-06`; this pa
 
 - 2026-10-26; human user; approved the named hidden door validation and verified-evidence commit, with production fixes separate.
 - 2026-10-26; `gpt-6.1-sol`, verified from the current session's latest turn metadata; prepared isolated tests, observed native flag/item changes and passages, created/restored native checkpoints, audited full publications and visits-only persistence, verified unchanged production and cleanup, and wrote this entry. Primary verification checked the held-item/flag distinction, consumption and acquisition independence, current versus departed access labels, complete native RAM payloads, maps under accumulated history, explicit setup-write bounds and stated limits. External starter authorship remains ResidentEvilTim's as recorded in RE2-CLAIRE-001.
+
+## RE2-CLAIRE-004: Pickup quantity and departed presence
+
+Status: Candidate for broader SLUS-00592 pickup coverage. The named pickup's two-unit awards, listed presence states, passages and native restores are observed; other pickups and mode combinations are outside this finding.
+
+The human approved hidden native validation of source `00-06`, pickup 7, including quantity, collection, departure/reentry, earlier/later restores, independent remaining checks, isolated history and an evidence commit. Production fixes were separate. Baseline is `9db5bb3`; all 136 recorded production/data/test/tool files retain their hashes.
+
+### Native quantity and independent outcomes
+
+Game: Resident Evil 2, USA Disc 2, SLUS-00592, executable `SLUS_005.92`, SHA256 `2800c21f6a468cf030af75703b952062d8dc98c20753c8f8735558764f2f6814`. DuckStation is `0.1-12442-gdd4a0eb77`, Interpreter mode. The fixture, runtime identity and source `PL1/RDT/ROOM1061.RDT` retain [RE2-CLAIRE-001](#re2-claire-001-claire-b-profile-and-native-starter) and [RE2-CLAIRE-003](#re2-claire-003-named-key-door-access-and-savestate-reversal)'s identities and limits. The native start is the prior `unlocked-departed-native.sav`; no new acquisition or scenario state is synthesized.
+
+Packet 3116 declares slot two, type 30, amount three, acquisition ID 7. Its rectangle is X/Z `-26503/3301`, extent `1000/1000`. A settled capture binds the live slot-two pointer to loaded source base plus 3118. In the profile's required system mode, mask `0x40` with value `0x40` at PS1 virtual `0x800C7AAC`, unsigned 32-bit little-endian, the existing quantity rule reports two. Both native collections award exactly two, including after the actual earlier-current restore.
+
+Bank eight bit seven is the unsigned little-endian 32-bit word at PS1 virtual `0x800CC7B0`, mask `0x01000000`. It changes from `0x08000000` to `0x09000000`, preserving the earlier pickup's independent bit. Inventory slot two at `0x800CC938` changes from four zero bytes to `1E 02 00 00`; type/quantity are unsigned bytes, masks `0xFF`. The remaining 28 inventory bytes are identical. The compared early/late acquisition banks, 32 bytes at `0x800CC7B0` and 16 at `0x800CC7D0`, differ only by the target bit. All eight key-bank bytes at `0x800CC928` stay unchanged. The agent never writes these fields.
+
+Before collection the current item is Available when its interaction exists, or specifically Uncollected during startup before that interaction exists. It stays Uncollected with quantity two after departure and keeps the room Incomplete. Collection changes it to Taken with quantity two. Another item remains Available with quantity fifteen while current; the other two checks remain Unknown with quantities eighteen and one. Thus the current room remains Incomplete. After departure the acquired item stays Taken while the other three checks are Unknown, so the room becomes Unknown. Native reentry restores the independent available item without changing its acquisition. No room falsely clears and no other pickup lifecycle is claimed.
+
+### Reproduction, native checkpoints and history
+
+Private evidence is under `/tmp/re-map-re2-claire-b-pickup7-20261026/`. Keep both achievement sections disabled, overrides absent, audio muted and the black shader active before boot and each load. Load the retained native source checkpoint. Prepare X/Z `-26003/2900`, yaw 3072, then use separate native Cross presses to open the pickup, confirm it and dismiss its result. For the accepted post-collection departure, requested X/Z `-26550/-356`, yaw 2048, settles to X `-26532`; one Cross enters `00-05`. The return approach there is `21550/-17099`, yaw zero, with one Cross after native startup. These are assisted interactions, not an ordinary navigation route.
+
+Four core native F2 payloads match captured full RAM. Four actual F1 actions reproduce each corresponding original 2 MiB image:
+
+| Original / actual F1 restore | RAM SHA256 |
+| --- | --- |
+| `pickup-before-current` / `restore-before-current` | `e685409d0bc98d62cacce7009bf703692f395073d9930c6defec9229e1cc966e` |
+| `pickup-before-departed` / `restore-before-departed` | `89ed47a3723c0debaef3a3cb2ef6652103f3bcfdb607103c66206aaa51f31709` |
+| `collected-current-final` / `restore-collected-current` | `5e49f9b5a535604452890b5a6e347175cc7de712b8811bd5991773b087a4a990` |
+| `collected-departed-final` / `restore-collected-departed` | `492c7b0bb7d248f129e97e4d750fe9fec5724a5598e4c176e5b2620a34e17c60` |
+
+The first original map predates entry into `00-05`; its restored map correctly retains that actual later visit. Its complete map matches fresh reconstruction from the exact original RAM and accumulated visits. The other three restored complete maps also equal their original publications. Earlier states reverse inventory and target acquisition without losing exploration; later states recover Taken while the neighbors remain independent. The earlier-current load occurs during recovery and is followed by the second native collection, not a synthetic flag edit.
+
+`native-audit.json` records thirteen accepted tracker publications, checkpoint hashes, complete reconstructions and limits. Each publication reproduces after production history save/close/reopen under the same playthrough identity. History grows from source `00-06` alone to exactly `00-05`/`00-06` and two regions. Fresh history restores contain no current room, items, completion cache or doors until RAM supplies them. Persisted keys remain schema, identity, playthrough ID, rooms and regions. The incorrectly named failed-departure capture is replayed against its actual current source, not treated as a passage. Raw RAM, native saves, card bytes and thumbnails remain outside Git.
+
+### Save-prompt recovery and setup bounds
+
+The first collection uses repeated Cross and awards two, but further interaction opens the nearby save UI. Three subsequent source watches stay in `00-06`. The premature `collected-departed` capture retains that actual source and is excluded from departed-state and core checkpoint claims. A private diagnostic thumbnail's OCR identifies a memory-card menu. Single Triangle/Circle attempts are observed only through unchanged system flags and do not establish which menu layers closed; those flags are not promoted to a universal menu predicate. The private card file remains unchanged throughout and after shutdown.
+
+Recovery uses the actual earlier-current F1 restore, then three separate Cross presses. The second awards two again, and the third dismisses the result. A settled approach and single Cross produce actual departure; native reentry succeeds. The first repeated-input collection remains valid award evidence but is not the final current core checkpoint. No memory-card save/load persistence result is inferred from the accidental UI. Two private diagnostic F2 saves and the preliminary `collected-current-native.sav` are separate from the four core checkpoints.
+
+Eight preparations write only the nine X/Z/yaw and candidate mirror fields recorded in [RE2-CLAIRE-002](#re2-claire-002-first-native-pickup-lifecycle), with its exact PS1 virtual addresses, widths, little-endian encoding and masks. No Y, floor, control word, inventory, acquisition, key, story, door descriptor or other actor write occurs. All preparations satisfy the existing actor routine-word guard `0x00010001` at `0x800C7AF0`, unsigned 32-bit, full mask `0xFFFFFFFF`. Failed menu-blocked attempts retain that word, so it alone does not prove currently unblocked gameplay input. This bounds the earlier "native free control" shorthand; it changes no production lifecycle rule. Inherited health is 29970, with no new health or ammunition aid.
+
+An initial ScreenCaptureKit `-3811` screenshot observation fails before native input; a fresh accessibility observation and retry recover. Start/end window checks verify suppressed output, and no native image is emitted to chat. Cleanup stops the owned PID, closes port 2346, restores settings and both selected-slot files byte for byte, verifies disabled achievements/absent overrides and the unchanged private card. User emulator settings, saves and histories are untouched. The focused RE2/history/logging suite passes 859 tests in 7.79 seconds; all 453 checked local documentation links/anchors and whitespace checks pass. No new full-suite run or external code review is claimed for this evidence-only increment. The UI is unchanged, so the existing README screenshot is retained.
+
+The Claire B source union remains three; this pass adds pickup outcomes, not source coverage or a readiness percentage. Other pickup quantities, unresolved checks, ordinary navigation, other scenarios/modes and normal memory-card persistence remain unvalidated.
+
+### Contributions
+
+- 2026-10-26; human user; approved the named hidden pickup/quantity validation and verified-evidence commit, with production fixes separate.
+- 2026-10-26; `gpt-6.1-sol`, verified from the current session's latest turn metadata; prepared isolated tests, observed both native awards and passages, recovered from unintended save UI with a native restore, created/restored checkpoints, audited complete publications and visits-only history, verified write bounds/unchanged production/cleanup, and wrote this entry. Primary verification checked actual quantities against source/profile values, acquisition/inventory independence, other remaining checks, all core RAM/native-payload pairs, maps under accumulated exploration and the rejected passage/guard interpretations. External starter authorship remains ResidentEvilTim's as recorded in RE2-CLAIRE-001.
