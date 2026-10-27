@@ -27883,5 +27883,6 @@
       "area": "re2-19",
       "region": "01"
     }
-  ]
+  ],
+  "door_placement": "projected-wall"
 }

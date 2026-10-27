@@ -107,6 +107,33 @@ def map_detail_segments(cells: dict[tuple[int, int], int]) -> list:
     return details
 
 
+def map_door_segments(cells: dict[tuple[int, int], int], rings: list) -> list:
+    """RE2-MAP-005: retain native shade-three openings on room boundaries."""
+    segments = []
+    for ring in rings:
+        for a, b in zip(ring, ring[1:] + ring[:1]):
+            axis = 0 if a[1] == b[1] else 1
+            fixed = a[1 - axis]
+            runs = []
+            for along in range(min(a[axis], b[axis]), max(a[axis], b[axis])):
+                neighbors = ((along, fixed - 1), (along, fixed))
+                if axis == 1:
+                    neighbors = tuple(point[::-1] for point in neighbors)
+                if any(cells.get(point) == 3 for point in neighbors):
+                    if runs and runs[-1][-1] == along - 1:
+                        runs[-1].append(along)
+                    else:
+                        runs.append([along])
+            for run in runs:
+                if len(run) < 2:
+                    continue
+                segment = [[run[0], fixed], [run[-1] + 1, fixed]]
+                segments.append(
+                    segment if axis == 0 else [point[::-1] for point in segment]
+                )
+    return segments
+
+
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     target = re2_target(profile)
     effect_pool = scenario_effect_pool(profile)
@@ -284,7 +311,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         return machine.reg_read(UC_MIPS_REG_V0)
 
     plans = []
-    anchors = {}
+    doorways = {}
     for area in range(20):
         table = int(layout["map_info_address_ps1"], 0) - load + 0x800 + area * 8
         address, count, _page, file_number = struct.unpack_from(
@@ -330,7 +357,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "world_origin": [bx, by],
             }
             plan["rooms"].append(entry)
-            anchors[area, region] = (bx, by)
+            doorways[plan["id"], entry["id"]] = map_door_segments(cells, entry["rings"])
         plans.append(plan)
     locations = []
     area_selector = int(layout["area_selector_ps1"], 0)
@@ -420,42 +447,37 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     ):
                         continue
                     wx, wz = door["center"]
-                    # The native marker maps world X/Z using this translation
-                    # and scale (RE2-MAP-001), before adding the room's origin.
+                    # Projection only selects an opening. Native maps distort
+                    # room proportions, so snapping to arbitrary walls invents
+                    # doors and shifts real ones toward corners. RE2-MAP-005.
                     x, y = projection.project(tuple(entry["world_origin"]), wx, wz)
                     candidates = []
-                    for ring in entry["rings"]:
-                        for first, last in zip(ring, ring[1:] + ring[:1]):
-                            dx, dy = last[0] - first[0], last[1] - first[1]
-                            length = (dx * dx + dy * dy) ** 0.5
-                            if length < 2:
-                                continue
-                            along = max(
-                                0,
-                                min(
-                                    length,
-                                    ((x - first[0]) * dx + (y - first[1]) * dy)
-                                    / length,
-                                ),
-                            )
-                            px, py = (
-                                first[0] + along * dx / length,
-                                first[1] + along * dy / length,
-                            )
-                            distance = (px - x) ** 2 + (py - y) ** 2
-                            midpoint = max(1, min(length - 1, along))
-                            segment = [
-                                [
-                                    round(
-                                        first[0] + (midpoint + shift) * dx / length, 3
-                                    ),
-                                    round(
-                                        first[1] + (midpoint + shift) * dy / length, 3
-                                    ),
-                                ]
-                                for shift in (-1, 1)
+                    for first, last in doorways[plan["id"], entry["id"]]:
+                        dx, dy = last[0] - first[0], last[1] - first[1]
+                        length = (dx * dx + dy * dy) ** 0.5
+                        if length < 2:
+                            continue
+                        along = max(
+                            0,
+                            min(
+                                length,
+                                ((x - first[0]) * dx + (y - first[1]) * dy) / length,
+                            ),
+                        )
+                        px, py = (
+                            first[0] + along * dx / length,
+                            first[1] + along * dy / length,
+                        )
+                        distance = (px - x) ** 2 + (py - y) ** 2
+                        midpoint = length / 2
+                        segment = [
+                            [
+                                round(first[0] + (midpoint + shift) * dx / length, 3),
+                                round(first[1] + (midpoint + shift) * dy / length, 3),
                             ]
-                            candidates.append((distance, segment))
+                            for shift in (-1, 1)
+                        ]
+                        candidates.append((distance, segment))
                     candidates.sort(key=lambda candidate: candidate[0])
                     if not candidates or candidates[0][0] > 64:
                         continue
@@ -464,7 +486,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                         and abs(candidates[0][0] - candidates[1][0]) < 1e-8
                         and candidates[0][1] != candidates[1][1]
                     ):
-                        # A corner does not establish which wall owns the door.
+                        # Equally near openings cannot establish door identity.
                         continue
                     observation_id = f"{room['id']}:{door['offset']}"
                     plan["doors"].append(
@@ -517,7 +539,8 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         },
         {
             **header,
-            "research_ids": [*header["research_ids"], "RE2-MAP-003"],
+            "research_ids": [*header["research_ids"], "RE2-MAP-003", "RE2-MAP-005"],
+            "door_placement": "native-doorway",
             "stage_modulus": 256,
             "areas": plans,
             "locations": locations,

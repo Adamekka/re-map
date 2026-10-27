@@ -45,6 +45,7 @@ def position_document():
         "profile_id": "position-test",
         "executable_identity": "test",
         "stage_modulus": 256,
+        "door_placement": "projected-wall",
         "areas": [
             {
                 "id": "a",
@@ -78,6 +79,22 @@ def position_document():
             }
         ],
     }
+
+
+@pytest.mark.parametrize("placement", [None, "", "guessed", 1])
+def test_door_placement_mode_is_required_and_explicit(
+    tmp_path, position_document, placement
+):
+    if placement is None:
+        del position_document["door_placement"]
+    else:
+        position_document["door_placement"] = placement
+    path = tmp_path / "map.json"
+    path.write_text(json.dumps(position_document))
+    with pytest.raises(ValueError, match="door placement mode"):
+        Re2MapLayout.load(
+            path, "position-test", "test", {"00-01": {}}, Re2MapProjection(0, 1)
+        )
 
 
 @pytest.mark.parametrize(

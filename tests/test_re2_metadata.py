@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 
-from build_re2_metadata import map_detail_segments
+from build_re2_metadata import map_detail_segments, map_door_segments
 from map_geometry import trace_floor_cells
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
@@ -1052,6 +1052,47 @@ def test_diagonal_floor_contacts_preserve_both_disconnected_cells():
     assert len(rings) == 2
     assert sum(area for area, _ in rings) == 2
     assert label in {(0, 0), (1, 1)}
+
+
+@pytest.mark.parametrize("transpose", [False, True])
+def test_native_door_openings_keep_their_boundary_span(transpose):
+    cells = {(x, y): 1 for x in range(10) for y in range(12)}
+    # Include a doorway on each side, plus an interior mark that cannot
+    # establish a wall opening and a single-pixel edge mark to reject.
+    for x, y in [
+        (0, 3),
+        (0, 4),
+        (9, 7),
+        (9, 8),
+        (4, 0),
+        (5, 0),
+        (6, 11),
+        (7, 11),
+        (5, 5),
+        (0, 9),
+    ]:
+        cells[x, y] = 3
+    expected = [
+        [[4, 0], [6, 0]],
+        [[10, 7], [10, 9]],
+        [[6, 12], [8, 12]],
+        [[0, 3], [0, 5]],
+    ]
+    if transpose:
+        cells = {point[::-1]: shade for point, shade in cells.items()}
+        expected = [[point[::-1] for point in segment] for segment in expected]
+    rings, _ = trace_floor_cells(set(cells))
+    actual = map_door_segments(cells, [ring for _, ring in rings])
+    assert {frozenset(map(tuple, segment)) for segment in actual} == {
+        frozenset(map(tuple, segment)) for segment in expected
+    }
+
+
+def test_native_door_openings_do_not_invent_doors_from_other_map_shades():
+    rings = [[[0, 0], [6, 0], [6, 6], [0, 6]]]
+    for shade in (1, 2, 4):
+        cells = {(x, y): shade for x in range(6) for y in range(6)}
+        assert map_door_segments(cells, rings) == []
 
 
 @pytest.mark.parametrize("transpose", [False, True])

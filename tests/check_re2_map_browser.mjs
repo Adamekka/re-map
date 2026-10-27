@@ -257,6 +257,24 @@ try {
     return count;
   }, detailState);
   assert.equal(detailLabels, detailCount);
+  const doorLocations = await detailPage.evaluate(fixture => {
+    const results = [];
+    for (const [region, expected] of [
+      ['00', ['127,118,127,120', '127,150,127,152', '154,174,156,174', '183,166,183,168']],
+      ['02', ['127,118,127,120', '86,115,88,115']],
+    ]) {
+      const visit = fixture.explored_areas['re2-02'].find(visit => visit.id === region);
+      floorView = { mode: 'follow' };
+      selected = null;
+      draw({ ...fixture, area: 're2-02', map_region: region, current: visit.room, current_detail: visit, rooms: [visit], explored_areas: { 're2-02': [visit] } });
+      if (document.querySelectorAll('#map .room').length !== 1) throw new Error('Door placement revealed an unexplored neighbor');
+      const actual = [...new Set([...document.querySelectorAll('.door > line:not(.door-border)')].map(line => ['x1', 'y1', 'x2', 'y2'].map(key => line.getAttribute(key)).join(',')))].sort();
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Incorrect native doorway positions in region ' + region + ': ' + actual);
+      results.push({ region, positions: actual });
+    }
+    return results;
+  }, detailState);
+  assert.equal(doorLocations.length, 2);
   assert.deepEqual(errors, []);
   await detailPage.close();
   console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');

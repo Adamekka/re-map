@@ -7,6 +7,7 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from tracker.player_position import ApproximatePosition, RoomOnlyPosition
 
@@ -37,7 +38,10 @@ class Re2MapProjection:
 
 
 def shared_door_markers(
-    area: dict, rooms: dict, projection: Re2MapProjection
+    area: dict,
+    rooms: dict,
+    projection: Re2MapProjection,
+    placement: Literal["native-doorway", "projected-wall"],
 ) -> list[dict]:
     """RE2-MAP-004: bind unique reciprocal doors to one shared wall marker."""
     if not area["doors"]:
@@ -129,19 +133,29 @@ def shared_door_markers(
                         previous = joined.pop()
                         low, high = previous[2], max(high, previous[3])
                     joined.append((axis, fixed, low, high))
-                # Native room maps distort the two trigger projections.
-                # Average their estimates before snapping to the shared wall.
+                native = placement == "native-doorway"
+                # Keep source-derived openings fixed. Older catalogs have only
+                # projected estimates, whose distortion needs both sides.
                 points = (
-                    projection.project(
-                        tuple(owner["world_origin"]), *definition["center"]
-                    ),
-                    projection.project(
-                        tuple(neighbor["world_origin"]), *reverse[0]["center"]
-                    ),
+                    marker["segment"]
+                    if native
+                    else (
+                        projection.project(
+                            tuple(owner["world_origin"]), *definition["center"]
+                        ),
+                        projection.project(
+                            tuple(neighbor["world_origin"]), *reverse[0]["center"]
+                        ),
+                    )
                 )
                 center = [(points[0][axis] + points[1][axis]) / 2 for axis in (0, 1)]
                 for axis, fixed, low, high in joined:
                     if high - low < 2:
+                        continue
+                    if native and not all(
+                        point[1 - axis] == fixed and low <= point[axis] <= high
+                        for point in marker["segment"]
+                    ):
                         continue
                     along = max(low, min(high, center[axis]))
                     distance = (center[1 - axis] - fixed) ** 2 + (
@@ -210,6 +224,8 @@ class Re2MapLayout:
             or document["stage_modulus"] != 256
         ):
             raise ValueError("RE2 map metadata disagrees with the pinned revision")
+        if document.get("door_placement") not in ("native-doorway", "projected-wall"):
+            raise ValueError("invalid RE2 door placement mode")
         regions = {}
         for area in document["areas"]:
             if area["id"] in regions or ":" in area["id"]:
@@ -277,7 +293,9 @@ class Re2MapLayout:
         if set(locations) != set(rooms):
             raise ValueError("RE2 map selections must cover the room catalog")
         for area in document["areas"]:
-            area["doors"] = shared_door_markers(area, rooms, projection)
+            area["doors"] = shared_door_markers(
+                area, rooms, projection, document["door_placement"]
+            )
         return Re2MapLayout(
             document,
             {key: tuple(rows) for key, rows in locations.items()},

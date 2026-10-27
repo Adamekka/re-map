@@ -158,6 +158,27 @@ Contributions:
 - 2026-10-27; human user; authorized committing after the external-review limitation was reported.
 - 2026-10-27; Codex root, exact model `gpt-6.1-sol`, verified through T3's current-thread model selection; traced the duplicate observations, implemented and directly reviewed shared-wall pairing, added geometry/browser regressions, compared tracker renders and authored this record. Prior research authorship and gameplay claims remain unchanged.
 
+## RE2-MAP-005: native doorway spans replace arbitrary-wall projection
+
+Status: Candidate for absolute alignment in Resident Evil 2 Dual Shock Ver. USA Leon A SLUS-00748 and Claire B SLUS-00756, Original/Normal. Owned-source extraction and tracker rendering reproduce and correct the reported positions. This is not native passage validation.
+
+The human supplied Main Hall and West Office tracker crops on 2026-10-27. The former omitted a west doorway and placed side doors near corners; the latter put its hall door on the north wall. RE2-MAP-001's nearest-wall estimate was using a distorted player-marker projection as the final door position. RE2-MAP-004's shared-wall pairing did not supply the missing source geometry.
+
+The owned `COMMON/DATA/MAPS.PIX` identified in RE2-MAP-003 retains shade-three doorway spans at the room perimeter. The generator now extracts those spans, uses the source trigger projection only to select a unique opening within eight map units, and centers the existing two-unit marker within that opening. Equally near or distant candidates remain unplaced. A connection without a map doorway is not drawn on an arbitrary wall. No pixels, palettes or source assets enter the catalogs.
+
+In police-station area `re2-02`, the Main Hall's four native opening centers are map coordinates `(155,174)`, `(127,151)`, `(127,119)` and `(183,167)`. Its previous north-wall marker has no corresponding native opening and is removed. The West Office's centers are `(127,119)` and `(87,115)`. Repeated script creators retain their source observation IDs; they can occupy the same physical opening. These are numeric map coordinates, not memory addresses.
+
+Both DualShock catalogs are regenerated from their pinned owned CUEs. Room contours, origins, interior segments, floor selectors and room/item metadata remain unchanged. Their explicit `door_placement` mode is `native-doorway`; the two original-release catalogs explicitly retain `projected-wall` because this pass did not regenerate their owned sources. The loader requires a recognized mode. Shared-door pairing preserves native positions and cannot pull an opening onto a different nearby wall. The earlier absolute-placement claims remain Candidate outside the named source/render checks.
+
+`tests/test_re2_metadata.py` checks horizontal/vertical openings, disconnected spans, interior marks, single-pixel rejection and non-door shades. `tests/test_re2_door_layout.py` checks native position preservation, shared-wall isolation, both reported rooms in both DualShock catalogs, unchanged original-release shop positions and corrected DualShock shop openings. The browser regression checks the reported positions while revealing only one visited room. Existing floor, key/access, pan, zoom and restore checks pass. The retained full-suite run and focused follow-ups are implementation regressions, not gameplay coverage.
+
+Private evidence is under `/tmp/re-map-re2-door-positions-20261027/`: `catalog-delta.json`, before/after tracker publications and renders, `render.mjs`, room captures, `browser-result.json` and `live-restart.json`. Both catalogs contain only numeric geometry. The live tracker restart loads the new placement mode while preserving the playthrough identity; it does not load a game/savestate or change emulator memory/settings. The README tracker screenshot is refreshed.
+
+Contributions:
+
+- 2026-10-27; human user; supplied the two misplaced-door crops and specified door positions as the correction.
+- 2026-10-27; Codex root, verified executing model `gpt-6.1-sol`; inspected the owned native doorway spans, implemented and directly reviewed generation/pairing, regenerated both DualShock catalogs, checked source-only deltas and focused/browser regressions, inspected the tracker render and authored this entry. Review checked source binding, clipping/bounds, ambiguity, floor/revision isolation, fresh-state behavior, startup cost and rendered exploration visibility. Configured Claude and Antigravity providers are disabled in T3, so their external reviews were unavailable and provide no endorsement.
+
 ## RE2-LIVE-001: coherent opening-room reads and explicit runtime limits
 
 Status: Candidate for SLUS-00421. One controlled opening-room observation is available; multiple independent pickup, key-door and restore situations are not yet confirmed.
