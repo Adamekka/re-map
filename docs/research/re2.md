@@ -102,6 +102,26 @@ Contributions:
 - 2026-10-27; human user; supplied the screenshot and identified the missing internal partition as the requested correction.
 - 2026-10-27; `gpt-6.1-sol`, verified from this session's matching `session_meta` and latest `turn_context`; inspected both owned map sources, implemented and directly reviewed the shared rule, regenerated the two current catalogs, ran the focused and browser checks, inspected the tracker render and authored this entry. Review checked correctness, source fidelity, perimeter/rail preservation, revision isolation, determinism, offline generation cost, test scope, rendered UI/UX/AX impact and unchanged runtime contracts. Configured Claude and Antigravity review providers are disabled in T3, so neither external review completed; there is no substituted model or external endorsement.
 
+### Interior presentation follow-up, 2026-10-27
+
+The human supplied a further alleyway crop showing a heavy pale partition and a room name crossing the vertical interior marking. The existing source strokes touch, so their single light-colored pass fills the entire partition footprint. This presentation follow-up retains those coordinates and the source geometry above.
+
+RE2 now paints the complete interior path twice: a muted outline at width `1.4`, followed by the original one-unit footprint in dark color. Painting all outlines before all cores avoids seams between neighboring source strokes. Labels test the interior stroke footprint as well as the enclosing room and use interior endpoints when choosing candidate positions. This keeps the alleyway name in open space at its original font size. RE1's existing detail styling and label placement are retained.
+
+Private evidence is under `/tmp/re-map-re2-interior-style-20261027/`. `before-render.json` and `after-render.json` use the same read-only snapshot of already explored rooms. `render.mjs`, the alleyway crops and `browser-result.json` reproduce the comparison. The glyph-box sampling check detects overlap before the change and none afterward; direct visual inspection checks the darker outlined partition and the unobstructed room name. The README screenshot is refreshed. These are tracker presentation checks, not native geometry or gameplay confirmation.
+
+The browser regression checks every one of the DualShock Leon layout's 132 room outlines as current, including bold labels, interior border/core geometry and glyph clearance from both outer and interior walls. The original-release Leon browser sweep covers 133 outlines and controls; the RE1 suite separately guards its 118 outlines and existing detail styling. The focused map/metadata/door-layout suite passes 486 tests. Lint and formatting pass. No source catalogs, room contours, item/door interpretation or game state change in this increment.
+
+`live-restart.json` verifies that the user's existing tracker serves the updated styling and label checks after a graceful restart. Its playthrough identity and accumulated visits are preserved. A page refresh loads the updated renderer.
+
+Root review checks the two-pass stroke order, unchanged native footprint, label clearance, candidate completeness, cached layout cost, revision isolation and the rendered result. Configured external review providers remain disabled as recorded above; no external endorsement or new gameplay validation is claimed. After the review limitation was reported, the human said the result was better and directed committing the fix on 2026-10-27.
+
+Contributions:
+
+- 2026-10-27; human user; supplied the alleyway crop and requested a clearer interior marking.
+- 2026-10-27; human user; accepted the improved appearance and authorized committing after the external-review limitation was reported.
+- 2026-10-27; Codex root, exact model `gpt-6.1-sol`; implemented and directly reviewed the presentation change, checked the before/after tracker render, extended browser regressions and authored this follow-up. Model identity is verified from T3's current-thread model selection.
+
 ## RE2-MAP-004: one marker for a shared doorway
 
 Status: Candidate for physical pairing and absolute wall placement in the four supported RE2 USA profiles. Source catalogs, geometric regressions and tracker rendering establish the two-marker result for the reported shop. No native door traversal or new gameplay coverage is claimed.

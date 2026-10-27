@@ -1,4 +1,5 @@
 // Synthetic visits and RE2-PLAYER-001 heading references test the shared browser.
+// RE2-MAP-003 checks interior styling and label clearance on the DualShock layout.
 // NODE_PATH=<bundled node_modules> bun tests/check_re2_map_browser.mjs <python>
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -48,10 +49,18 @@ assert len(markers)==2
 # the two different access states to their proper walls.
 t.doors=tuple(DoorDetail(RoomId(0,1),RoomId(0,0),access,access,key_label='Spade Key',observation_id=next(obs for obs in marker['observation_ids'] if obs.startswith('00-01:'))) for marker,access in zip(markers,('LOCKED','OPEN')))
 t.doors += (DoorDetail(RoomId(0,0),RoomId(0,1),'LOCKED','Locked',key_label='Club Key',observation_id='00-00:4246'),DoorDetail(RoomId(0,2),RoomId(0,1),'BLOCKED','Door is inactive',observation_id='00-02:6146'))
-print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states}))
+detail_profile=Re2Profile.load(Path('profiles/re2_leon_a_slus00748.json'))
+detail_tracker=Tracker()
+for area in detail_profile.map_layout.document['areas']:
+    for room in area['rooms']:
+        key=room['room_ids'][0]
+        detail_tracker.rooms[key]=RoomRecord(visited=True,completion=RoomCompletion.Unknown)
+        detail_tracker.region_visits[area['id']+':'+room['id']]=key
+detail_tracker.mark_current(RoomId(0,2));detail_tracker.player_heading=90;detail_tracker.current_region='re2-00:02'
+print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas'])}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
-const { document, state, counts, markers, floorStates } = JSON.parse(setup.stdout);
+const { document, state, counts, markers, floorStates, detailDocument, detailState, detailCount } = JSON.parse(setup.stdout);
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
@@ -70,7 +79,7 @@ try {
   assert.equal(await page.title(), 'Resident Evil 2 room map');
   for (const [area, count] of Object.entries(counts)) {
     await floor.selectOption(area);
-    assert.equal(await page.locator('#map .room text').count(), count, area);
+    assert.equal(await page.locator('#map .room text').count(), count, area+' '+errors.join('; '));
   }
   await floor.selectOption('re2-00');
   for (const [index, marker] of markers.entries()) {
@@ -205,6 +214,51 @@ try {
   assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 1);
   assert.equal(await page.locator('[data-observations~="00-16:2522"]').count(), 0);
   assert.deepEqual(errors, []);
+  const detailPage = await browser.newPage();
+  detailPage.on('pageerror', error => errors.push(error.message));
+  await detailPage.route('http://re2-details.test/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/') return route.fulfill({ contentType: 'text/html', body: detailDocument });
+    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(detailState) });
+    errors.push('Unexpected detail request: ' + path);
+    return route.fulfill({ status: 404 });
+  });
+  await detailPage.goto('http://re2-details.test/');
+  await detailPage.waitForFunction(() => document.querySelector('.room.current text'));
+  const detailLabels = await detailPage.evaluate(fixture => {
+    floorView = { mode: 'follow' };
+    selected = null;
+    let count = 0;
+    for (const plan of catalog.areas) {
+      const visits = fixture.explored_areas[plan.id];
+      for (const visit of visits) {
+        // Bold current-room labels must also fit beside the interior geometry.
+        draw({ ...fixture, area: plan.id, map_region: visit.id, current: visit.room, current_detail: visit, rooms: visits });
+        const group = document.querySelector('.room.current');
+        const label = group.querySelector('text'), outline = group.querySelector('path');
+        const core = group.querySelector('.map-detail-core'), border = group.querySelector('.map-detail-border');
+        if (Boolean(core) !== Boolean(border)) throw new Error('Incomplete interior outline');
+        if (core && (core.getAttribute('d') !== border.getAttribute('d') || getComputedStyle(core).stroke !== 'rgb(23, 35, 45)' || getComputedStyle(border).strokeWidth !== '1.4px')) throw new Error('Interior structure lost its dark core or thin border');
+        const matrix = outline.getCTM().inverse().multiply(label.getCTM());
+        for (const span of label.querySelectorAll('tspan')) {
+          for (let index = 0; index < span.getNumberOfChars(); index++) {
+            const box = span.getExtentOfChar(index);
+            for (const x of [box.x, box.x + box.width / 2, box.x + box.width]) {
+              for (const y of [box.y, box.y + box.height / 2, box.y + box.height]) {
+                const point = new DOMPoint(x, y).matrixTransform(matrix);
+                if (!outline.isPointInFill(point) || border?.isPointInStroke(point)) throw new Error('Room label overlaps a boundary: ' + group.getAttribute('aria-label'));
+              }
+            }
+          }
+        }
+        count++;
+      }
+    }
+    return count;
+  }, detailState);
+  assert.equal(detailLabels, detailCount);
+  assert.deepEqual(errors, []);
+  await detailPage.close();
   console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');
 } finally {
   await browser.close();

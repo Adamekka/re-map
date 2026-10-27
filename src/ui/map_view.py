@@ -206,6 +206,8 @@ cannot merge them with a decided state. */
 .room text { fill:#dce7ee; font:2.6px system-ui,sans-serif; pointer-events:none; text-anchor:middle; }
 .room.current text { font-weight:700; fill:#fff; }
 .room path.map-detail { fill:none; stroke:#bed0dd; stroke-width:1; stroke-linecap:square; pointer-events:none; }
+.room path.map-detail-border { stroke:#8a9ca9; stroke-width:1.4; }
+.room path.map-detail-core { stroke:#17232d; }
 .room .map-detail+text { paint-order:stroke; stroke:#151e27; stroke-width:.5; stroke-linejoin:round; }
 .player { pointer-events:none; }
 .player path { fill:#a5efff; stroke:#10202b; stroke-width:.6; stroke-linejoin:round; }
@@ -534,7 +536,12 @@ function draw(state) {
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
     const title=element('title',{});title.textContent=room.name;group.append(title);
     const detail=room.detail_segments.map(([a,b])=>'M'+a.join(',')+'L'+b.join(',')).join('');
-    if(detail) group.append(element('path',{class:'map-detail',d:detail}));
+    if(detail) {
+      // Paint all borders before all cores so adjacent native strokes form
+      // one outlined structure without pale seams between its source cells.
+      if(isRe2) group.append(element('path',{class:'map-detail map-detail-border',d:detail}));
+      group.append(element('path',{class:'map-detail'+(isRe2 ? ' map-detail-core' : ''),d:detail}));
+    }
     const label=element('text',{});group.append(label);svg.append(group);
     function setLines(lines) {
       label.replaceChildren();
@@ -554,12 +561,14 @@ function draw(state) {
         variants.push({lines,bounds:label.getBBox()});
       }
       const outline=group.querySelector('path');
-      const points=room.rings.flat();
+      const interior=[...group.querySelectorAll('.map-detail-core')];
+      const points=room.rings.flat().concat(isRe2 ? room.detail_segments.flat() : []);
       const xs=[...new Set(points.map(point=>point[0]))].sort((a,b)=>a-b);
       const ys=[...new Set(points.map(point=>point[1]))].sort((a,b)=>a-b);
       const centers=[];
       // The original anchor fits a short ID, but may sit beside a door notch.
-      // Rectangle centers offer nearby positions inside the same room.
+      // Interior endpoints also expose space beside partitions when the
+      // outer corners alone offer no unobstructed label position.
       for(let x=1;x<xs.length;x++) {
         for(let y=1;y<ys.length;y++) {
           const center=[(xs[x-1]+xs[x])/2,(ys[y-1]+ys[y])/2];
@@ -585,7 +594,8 @@ function draw(state) {
               // also catches corridor bends and interior gaps between corners.
               for(let x=0;x<=columns && fits;x++) {
                 for(let y=0;y<=rows;y++) {
-                  if(!outline.isPointInFill(new DOMPoint(center[0]-width/2+x*width/columns,center[1]-height/2+y*height/rows))) {fits=false;break;}
+                  const point=new DOMPoint(center[0]-width/2+x*width/columns,center[1]-height/2+y*height/rows);
+                  if(!outline.isPointInFill(point) || interior.some(path=>path.isPointInStroke(point))) {fits=false;break;}
                 }
               }
               if(fits) {layout={lines,angle,scale,center,offset:[-bounds.x-bounds.width/2,-bounds.y-bounds.height/2]};break fitting;}
