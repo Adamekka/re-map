@@ -53,8 +53,8 @@
     }
   ],
   "scenario_effect_pool": {
-    "address_ps1": "0x800E8CF0",
-    "limit_address_ps1": "0x800EBB70"
+    "address_ps1": "0x800D8CF0",
+    "limit_address_ps1": "0x800DBB70"
   },
   "scenario_vibration_writes": [
     {

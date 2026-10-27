@@ -36,6 +36,35 @@ PRESENCE_WRITES, FLAG_PROOF = presence_flag_write_proof(
 )
 
 
+@pytest.mark.parametrize("offset", [0, 24, 96 * 124 - 4])
+def test_dualshock_effect_pool_rejects_native_fixed_word_aliases(offset):
+    """RE2-DS-003: sign-extended ADDIU selects D8CF0, not E8CF0."""
+    from games.re2.scenario_items import scenario_item_proofs
+
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
+    pool = scenario_effect_pool(raw)
+    # Both native allocators add signed -0x7310 to LUI 0x800E. Their
+    # 96 records occupy this full interval, including the last pointer word.
+    assert pool == (0x800D8CF0, 0x800DBB70)
+    data = synthetic_room(b"\x01\0", (bytes([0x3A]) + bytes(15) + b"\x01\0",))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    flags = [{"bank": 99, "bit": 0, "expected": 0}]
+    banks = [
+        *raw["flag_banks"],
+        {"bank": 99, "address_ps1": f"0x{0x800D8CF0 + offset:08X}", "width": 4},
+    ]
+    assert not scenario_item_proofs(
+        data, room, flags, banks, pool
+    ).fixed_context_preserved
+    # The prior interval incorrectly admitted these aliases. Retain the
+    # counterexample so another unsigned-immediate transcription is caught.
+    assert scenario_item_proofs(
+        data, room, flags, banks, (0x800E8CF0, 0x800EBB70)
+    ).fixed_context_preserved
+
+
 @pytest.mark.parametrize("opcode", [0x8A, 0x8B, 0x8C])
 @pytest.mark.parametrize(
     "proof", ["missing", "disjoint", "scratch", "queue0", "queue1"]
