@@ -6,7 +6,7 @@ A companion map for Resident Evil in DuckStation, showing explored rooms, remain
 
 ## Setup
 
-You need Python 3, DuckStation, your own BIOS and Resident Evil Director's Cut USA, SLUS-00551. Supports Jill using DuckStation savestates. An initial [RE2 Leon A profile](docs/re2.md) is also available for USA Disc 1, SLUS-00421. Its gameplay validation is still limited.
+You need Python 3, DuckStation, your own BIOS and Resident Evil Director's Cut USA, SLUS-00551. Supports Jill using DuckStation savestates. The [RE2 Leon A profile](docs/re2.md) targets Dual Shock Ver. USA Disc 1, SLUS-00748, in Original mode on Normal difficulty. Its gameplay validation is still limited.
 
 With DuckStation closed, add or update these settings in its `settings.ini`:
 
@@ -51,18 +51,12 @@ If something goes wrong, report what happened and include `logs/tracker.log` fro
 
 ## Resident Evil 2
 
-Start Leon A on the pinned USA Disc 1, then run:
+Start Leon A in **Original Game → Normal** on Dual Shock Ver. USA Disc 1, **SLUS-00748**, then run:
 
 ```sh
-python3 tools/track.py --profile profiles/re2_leon_a_slus00421.json --history-file .local/re2-leon-a.json --map
+python3 tools/track.py --profile profiles/re2_leon_a_slus00748.json --map
 ```
 
-For Claire B on the pinned USA Disc 2:
-
-```sh
-python3 tools/track.py --profile profiles/re2_claire_b_slus00592.json --history-file .local/re2-claire-b.json --map
-```
-
-Claire B has initial native validation. The [RE2 guide](docs/re2.md) lists coverage and unresolved checks. Each profile has its own exploration history.
+This revision has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identity and validation limits. Claire's DualShock disc is outside this Leon-only migration.
 
 ![RE2 opening map with approximate player position](docs/images/re2-map.png)

@@ -600,14 +600,14 @@ def main() -> int:
     profile_id = json.loads(args.profile.read_text())["profile_id"]
     is_re2 = profile_id.startswith("re2_")
     profile = Re2Profile.load(args.profile) if is_re2 else Re1Profile.load(args.profile)
-    # Preserve existing Jill histories while isolating each RE2 scenario.
+    # Preserve existing histories while isolating the new RE2 revision.
     # Explicit --history-file selections still belong to the caller.
     history_path = (
         args.history_file
         if hasattr(args, "history_file")
         else Path(__file__).resolve().parents[1]
         / ".local"
-        / (f"re2-{profile.target.scenario}.json" if is_re2 else "visit-history.json")
+        / (profile.target.history_filename if is_re2 else "visit-history.json")
     )
     logger.info(
         "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision

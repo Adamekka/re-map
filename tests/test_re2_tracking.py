@@ -457,7 +457,11 @@ def test_disabled_candidates_do_not_establish_presence_or_clearance(snapshot):
 
 @pytest.mark.parametrize(
     ("profile", "snapshot"),
-    [("re2_leon_a_slus00421", "00-01"), ("re2_claire_b_slus00592", "00-09")],
+    [
+        ("re2_leon_a_slus00421", "00-01"),
+        ("re2_claire_b_slus00592", "00-09"),
+        ("re2_leon_a_slus00748", "00-01"),
+    ],
     indirect=True,
 )
 @pytest.mark.parametrize("departed", [False, True])
@@ -542,7 +546,11 @@ def test_zero_mask_preserves_presence_collection_and_rewind(
 
 @pytest.mark.parametrize(
     ("profile", "snapshot"),
-    [("re2_leon_a_slus00421", "00-01"), ("re2_claire_b_slus00592", "00-09")],
+    [
+        ("re2_leon_a_slus00421", "00-01"),
+        ("re2_claire_b_slus00592", "00-09"),
+        ("re2_leon_a_slus00748", "00-01"),
+    ],
     indirect=True,
 )
 @pytest.mark.parametrize("initial_sat", [0, 0x31])

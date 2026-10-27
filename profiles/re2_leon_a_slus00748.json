@@ -1,0 +1,395 @@
+{
+  "profile_id": "re2_leon_a_slus00748",
+  "game": "Resident Evil 2 DualShock",
+  "region": "NTSC-U",
+  "serial": "SLUS-00748",
+  "scenario": "leon-a",
+  "revision": "USA Dual Shock Ver. Disc 1; Original/Normal; revision pinned by executable SHA256",
+  "executable_identity": "SLUS_007.48 SHA256 e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
+  "duckstation_version_tested": "0.1-12442-gdd4a0eb77",
+  "address_space": "PS1 virtual address, little-endian",
+  "stage_address_ps1": "0x800D481C",
+  "room_address_ps1": "0x800D481E",
+  "camera_address_ps1": "0x800D4820",
+  "room_value_width_bytes": 2,
+  "runtime_signature": {
+    "window_width_bytes": 32,
+    "window_addresses_ps1": [
+      "0x80054CD4",
+      "0x80054BE4",
+      "0x80054354",
+      "0x80077360"
+    ],
+    "concatenated_sha256": "9aa05ab09809136807378c68766ae1893379d1b4ca6c8781b4df896432d6908c"
+  },
+  "research_ids": [
+    "RE2-DS-001"
+  ],
+  "metadata_layout": {
+    "map_info_address_ps1": "0x800AAA38",
+    "area_selector_ps1": "0x8006E7F0",
+    "region_selector_ps1": "0x8006EAE8",
+    "floor_address_ps1": "0x800CFCFE",
+    "selector_contexts": [
+      {
+        "rooms": [
+          "04-05"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800D486B",
+            "mask": 2,
+            "samples": [
+              [
+                0,
+                0,
+                false
+              ],
+              [
+                2,
+                2,
+                false
+              ]
+            ]
+          },
+          {
+            "address_ps1": "0x800D4863",
+            "mask": 16,
+            "samples": [
+              [
+                0,
+                0,
+                false
+              ],
+              [
+                16,
+                16,
+                false
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "rooms": [
+          "06-00",
+          "06-01",
+          "06-02",
+          "06-03",
+          "06-04"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800D4866",
+            "mask": 64,
+            "samples": [
+              [
+                0,
+                0,
+                false
+              ],
+              [
+                64,
+                64,
+                false
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "rooms": [
+          "05-0e"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800D4D54",
+            "mask": 255,
+            "samples": [
+              [
+                0,
+                1,
+                true
+              ],
+              [
+                1,
+                1,
+                false
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "rooms": [
+          "05-01"
+        ],
+        "fields": [
+          {
+            "address_ps1": "0x800D4822",
+            "mask": 65535,
+            "samples": [
+              [
+                0,
+                1538,
+                true
+              ],
+              [
+                1538,
+                1538,
+                false
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "room_metadata_path": "../data/rooms_slus00748.json",
+  "floor_plans_path": "../data/floor_plans_slus00748.json",
+  "names_path": "../data/re2_names.json",
+  "runtime_layout": {
+    "player_block_address_ps1": "0x800CFB70",
+    "player_block_width": 420,
+    "save_block_address_ps1": "0x800D46D4",
+    "save_block_width": 1792,
+    "script_counter_address_ps1": "0x800D47EC",
+    "script_flag_table_address_ps1": "0x800A78C8",
+    "system_flags_address_ps1": "0x800CFB74",
+    "status_flags_address_ps1": "0x800CFBD8",
+    "player_active_address_ps1": "0x800CFBF8",
+    "player_facing_address_ps1": "0x800CFC6E",
+    "player_position_address_ps1": "0x800CFC30",
+    "floor_address_ps1": "0x800CFCFE",
+    "loaded_rdt_address_ps1": "0x800CE324",
+    "aot_table_address_ps1": "0x800CE558",
+    "aot_capacity": 32,
+    "gameplay_mask": 1073741824,
+    "demo_mask": 8192,
+    "transition_mask": 33554432,
+    "game_over_mask": 67108864,
+    "scenario_mask": 3254779904,
+    "scenario_value": 0,
+    "system_mode_mask": 64,
+    "system_mode_value": 64,
+    "item_bank_early": 8,
+    "item_bank_late": 34,
+    "item_bank_stage_boundary": 4,
+    "key_bank": 31,
+    "file_type_min": 104,
+    "pickup_quantity_override": {
+      "system_mask": 64,
+      "item_type": 30,
+      "amount": 2
+    },
+    "heading_offset_degrees": 90,
+    "heading_direction": 1
+  },
+  "flag_banks": [
+    {
+      "bank": 0,
+      "address_ps1": "0x800CFB74",
+      "width": 4
+    },
+    {
+      "bank": 1,
+      "address_ps1": "0x800CFBD8",
+      "width": 4
+    },
+    {
+      "bank": 2,
+      "address_ps1": "0x800CFBDC",
+      "width": 4
+    },
+    {
+      "bank": 3,
+      "address_ps1": "0x800D4834",
+      "width": 32
+    },
+    {
+      "bank": 4,
+      "address_ps1": "0x800D4854",
+      "width": 32
+    },
+    {
+      "bank": 5,
+      "address_ps1": "0x800D4874",
+      "width": 8
+    },
+    {
+      "bank": 6,
+      "address_ps1": "0x800D487C",
+      "width": 32
+    },
+    {
+      "bank": 7,
+      "address_ps1": "0x800D489C",
+      "width": 32
+    },
+    {
+      "bank": 8,
+      "address_ps1": "0x800D48BC",
+      "width": 32
+    },
+    {
+      "bank": 9,
+      "address_ps1": "0x800D490C",
+      "width": 16
+    },
+    {
+      "bank": 10,
+      "address_ps1": "0x800CFBE0",
+      "width": 4
+    },
+    {
+      "bank": 12,
+      "address_ps1": "0x800CFBF4",
+      "width": 4
+    },
+    {
+      "bank": 13,
+      "address_ps1": "0x800D4928",
+      "width": 16
+    },
+    {
+      "bank": 14,
+      "address_ps1": "0x800D4938",
+      "width": 16
+    },
+    {
+      "bank": 15,
+      "address_ps1": "0x800D4948",
+      "width": 16
+    },
+    {
+      "bank": 16,
+      "address_ps1": "0x800D4958",
+      "width": 16
+    },
+    {
+      "bank": 17,
+      "address_ps1": "0x800D4968",
+      "width": 16
+    },
+    {
+      "bank": 18,
+      "address_ps1": "0x800D4978",
+      "width": 16
+    },
+    {
+      "bank": 19,
+      "address_ps1": "0x800D4988",
+      "width": 16
+    },
+    {
+      "bank": 20,
+      "address_ps1": "0x800D4998",
+      "width": 16
+    },
+    {
+      "bank": 21,
+      "address_ps1": "0x800D49A8",
+      "width": 16
+    },
+    {
+      "bank": 22,
+      "address_ps1": "0x800D49B8",
+      "width": 16
+    },
+    {
+      "bank": 23,
+      "address_ps1": "0x800D49C8",
+      "width": 16
+    },
+    {
+      "bank": 24,
+      "address_ps1": "0x800D49D8",
+      "width": 16
+    },
+    {
+      "bank": 25,
+      "address_ps1": "0x800D49E8",
+      "width": 16
+    },
+    {
+      "bank": 26,
+      "address_ps1": "0x800D49F8",
+      "width": 16
+    },
+    {
+      "bank": 27,
+      "address_ps1": "0x800D4A08",
+      "width": 16
+    },
+    {
+      "bank": 28,
+      "address_ps1": "0x800D4A18",
+      "width": 16
+    },
+    {
+      "bank": 29,
+      "address_ps1": "0x800D4A2C",
+      "width": 4
+    },
+    {
+      "bank": 30,
+      "address_ps1": "0x800CFB70",
+      "width": 4
+    },
+    {
+      "bank": 31,
+      "address_ps1": "0x800D4A34",
+      "width": 8
+    },
+    {
+      "bank": 32,
+      "address_ps1": "0x800D4920",
+      "width": 8
+    },
+    {
+      "bank": 33,
+      "address_ps1": "0x800D4924",
+      "width": 4
+    },
+    {
+      "bank": 34,
+      "address_ps1": "0x800D48DC",
+      "width": 16
+    },
+    {
+      "bank": 35,
+      "address_ps1": "0x800D4908",
+      "width": 4
+    }
+  ],
+  "map_projection": {
+    "world_bias": 28000,
+    "units_per_pixel": 450
+  },
+  "presence_counter_writes": {
+    "address_ps1": "0x800D47EC",
+    "limit_address_ps1": "0x800D4834"
+  },
+  "presence_condition_flags": [
+    {
+      "bank": 1,
+      "bit": 0
+    },
+    {
+      "bank": 1,
+      "bit": 1
+    },
+    {
+      "bank": 1,
+      "bit": 6
+    },
+    {
+      "bank": 4,
+      "bit": 7
+    }
+  ],
+  "scenario_effect_pool": {
+    "address_ps1": "0x800E8CF0",
+    "limit_address_ps1": "0x800EBB70"
+  }
+}

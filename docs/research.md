@@ -266,6 +266,12 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re1-map-016-laboratory-power-route-enters-b4-and-returns-with-retained-state"></a>[RE1-MAP-016](research/re1/map-validation.md#re1-map-016-laboratory-power-route-enters-b4-and-returns-with-retained-state) | Laboratory power route enters B4 and returns with retained state |
 | <a id="re1-map-017-mansion-b1-entry-four-outlined-regions-and-stairway-return"></a>[RE1-MAP-017](research/re1/map-validation.md#re1-map-017-mansion-b1-entry-four-outlined-regions-and-stairway-return) | Mansion B1 entry, four outlined regions and stairway return |
 
+## RE2 DualShock revision research
+
+| Claim | Finding |
+| --- | --- |
+| [RE2-DS-001](research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) | exact requested Disc 1 hash, Leon A Original/Normal profile, separate history and revision validation limits |
+
 ## RE2 Leon A research
 
 | Claim | Finding |

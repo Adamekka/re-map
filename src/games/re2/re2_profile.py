@@ -27,14 +27,33 @@ class Re2Target:
     executable_name: str
     player_index: int
     room_count: int
+    excluded_room_stages: str
+    history_filename: str
 
 
 RE2_TARGETS = {
+    "re2_leon_a_slus00748": Re2Target(
+        "SLUS-00748",
+        "leon-a",
+        "Leon A",
+        "SLUS_007.48",
+        0,
+        125,
+        "ABCDEFG",
+        "re2-leon-a-slus00748.json",
+    ),
     "re2_leon_a_slus00421": Re2Target(
-        "SLUS-00421", "leon-a", "Leon A", "SLUS_004.21", 0, 125
+        "SLUS-00421", "leon-a", "Leon A", "SLUS_004.21", 0, 125, "", "re2-leon-a.json"
     ),
     "re2_claire_b_slus00592": Re2Target(
-        "SLUS-00592", "claire-b", "Claire B", "SLUS_005.92", 1, 127
+        "SLUS-00592",
+        "claire-b",
+        "Claire B",
+        "SLUS_005.92",
+        1,
+        127,
+        "",
+        "re2-claire-b.json",
     ),
 }
 

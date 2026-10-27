@@ -17,6 +17,33 @@ from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import RuntimeSignature
 
 
+def test_dualshock_leon_profile_pins_its_own_layout_and_history():
+    """RE2-DS-001: DualShock inserts fields; one relocation delta is unsafe."""
+    profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00748.json")
+    original = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
+    assert profile.target.serial == "SLUS-00748"
+    assert profile.executable_identity == (
+        "SLUS_007.48 SHA256 "
+        "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
+    )
+    assert profile.stage_address == 0x800D481C
+    assert profile.room_address == 0x800D481E
+    assert profile.camera_address == 0x800D4820
+    assert profile.flag_banks[0] == (0x800CFB74, 4)
+    assert profile.flag_banks[1] == (0x800CFBD8, 4)
+    assert profile.flag_banks[8] == (0x800D48BC, 32)
+    assert profile.flag_banks[31] == (0x800D4A34, 8)
+    assert profile.runtime_layout["player_block_width"] == 420
+    assert profile.target.history_filename == "re2-leon-a-slus00748.json"
+    assert original.target.history_filename == "re2-leon-a.json"
+    assert profile.runtime_signature != original.runtime_signature
+    assert len(profile.rooms) == 125
+    assert len(profile.map_layout.document["areas"]) == 20
+    assert not profile.verify_runtime(
+        lambda address, width: MemRead(True, bytes(width))
+    ).value
+
+
 def test_re2_profile_pins_leon_disc_and_halfword_addresses():
     profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
     assert profile.stage_address == 0x800CC948

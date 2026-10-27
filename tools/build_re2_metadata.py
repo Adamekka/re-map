@@ -127,6 +127,13 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         ):
             if is_directory:
                 continue
+            if target.excluded_room_stages and re.fullmatch(
+                rf"ROOM[{target.excluded_room_stages}][0-9A-F]{{2}}{target.player_index}\.RDT",
+                name,
+            ):
+                # DualShock has a second room corpus. This profile reads only
+                # the numbered sources used by Original mode.
+                continue
             match = re.fullmatch(
                 rf"ROOM([1-7])([0-9A-F]{{2}}){target.player_index}\.RDT", name
             )

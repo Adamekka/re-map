@@ -2,6 +2,10 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## DualShock Leon A
+
+The active target is USA Dual Shock Ver. Disc 1, SLUS-00748, Original/Normal in Casual/Softcore. Use `profiles/re2_leon_a_slus00748.json`; its default history is separate from the original-release profiles. [RE2-DS-001](../research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) records exact identity, generation, native observations and limitations. Run the focused command below with `tests/test_visit_history.py tests/test_logging.py` for revision isolation and runner/history checks. The original-release coverage below remains historical evidence for its named revisions.
+
 ## RE2 Leon A checks
 
 See [RE2](../re2.md) for the explicit profile/history command and current limits. Run `python3 -m pytest -q tests/test_re2_profile.py tests/test_re2_metadata.py tests/test_re2_tracking.py tests/test_re2_position.py` for pinned identity, SCD bounds, shared contour extraction, source binding, native-map alternatives, lifecycle/scenario rejection, dormant versus unresolved items, acquisition/key flag reversal, guarded position placement and atomic publication after coherence checks. These are synthetic regressions and offline catalog checks, not new gameplay observations. Browser regressions are `bun tests/check_map_browser.mjs <python>` for RE1 and `bun tests/check_re2_map_browser.mjs <python>` for all 133 Leon A outlines, source-specific door bindings and moving-marker view/state handling. If Playwright is supplied by the bundled runtime, set `NODE_PATH` to its `node_modules` directory.
