@@ -1,12 +1,20 @@
 # Resident Evil 2
 
-The current target is Resident Evil 2 Dual Shock Ver. USA Disc 1, **SLUS-00748**, Leon A in **Original Game → Normal**. The supplied disc matches the user's [RetroAchievements set](https://retroachievements.org/game/11245), hash `33df147cc40901c4f96e4e9328cc9218`. Use Casual/Softcore achievements and DuckStation savestates. Hardcore disables the GDB connection used by this tracker and blocks loading savestates. Claire's DualShock Disc 2 is deferred at the user's request.
+The current targets are Resident Evil 2 Dual Shock Ver. USA Disc 1, **SLUS-00748**, Leon A, and Disc 2, **SLUS-00756**, Claire B, in **Original Game → Normal**. The supplied disc matches the user's [RetroAchievements set](https://retroachievements.org/game/11245), hash `33df147cc40901c4f96e4e9328cc9218`. Use Casual/Softcore achievements and DuckStation savestates. Hardcore disables the GDB connection used by this tracker and blocks loading savestates. Disc 2 matches the requested hash `2e78f5817db6bb9dfb0208068d0801ce`.
 
 ```sh
 python3 tools/track.py --profile profiles/re2_leon_a_slus00748.json --map
 ```
 
-Its default history is `.local/re2-leon-a-slus00748.json`, isolated from original-release exploration. Use `--history-file <path>` for another playthrough. [RE2-DS-001](research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) records the executable, revision-specific layouts, generation and native validation limits. The original-release profiles below remain available and retain their own identities and histories. Their earlier gameplay results do not establish DualShock runtime coverage.
+For Claire B:
+
+```sh
+python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
+```
+
+Load your Claire B save when using this profile.
+
+Default histories are `.local/re2-leon-a-slus00748.json` and `.local/re2-claire-b-slus00756.json`, isolated from each other and original-release exploration. Use `--history-file <path>` for another playthrough. [RE2-DS-001](research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) records Leon's executable, revision-specific layouts, generation and native validation limits. [RE2-DS-002](research/re2/dualshock.md#re2-ds-002-claire-b-dualshock-revision-port) records Claire's separate revision audit and checks. The original-release profiles below remain available and retain their own identities and histories. Their earlier gameplay results do not establish DualShock runtime coverage.
 
 Match the existing tracker behavior: spatial floor plans revealed by entering rooms, room names, actual facing, floor browsing, zoom and pan, persistent exploration isolated by game/revision/scenario/playthrough, remaining items, separate unresolved checks, game-derived door access, and fresh item/door/story state after savestate changes. Exploration survives earlier savestates; acquired items and unlocked doors must rewind with the game.
 

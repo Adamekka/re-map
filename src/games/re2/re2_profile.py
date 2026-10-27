@@ -42,6 +42,16 @@ RE2_TARGETS = {
         "ABCDEFG",
         "re2-leon-a-slus00748.json",
     ),
+    "re2_claire_b_slus00756": Re2Target(
+        "SLUS-00756",
+        "claire-b",
+        "Claire B",
+        "SLUS_007.56",
+        1,
+        125,
+        "ABCDEFG",
+        "re2-claire-b-slus00756.json",
+    ),
     "re2_leon_a_slus00421": Re2Target(
         "SLUS-00421", "leon-a", "Leon A", "SLUS_004.21", 0, 125, "", "re2-leon-a.json"
     ),

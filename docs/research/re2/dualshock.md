@@ -6,6 +6,8 @@
 
 Status: Candidate for USA Dual Shock Ver. Disc 1, SLUS-00748. Static extraction and synthetic regressions establish the profile contract; native observations are recorded separately below. Original-release gameplay is not DualShock validation.
 
+Follow-up, 2026-10-27: the human subsequently authorized Claire B's DualShock port in [RE2-DS-002](#re2-ds-002-claire-b-dualshock-revision-port). The Leon observations below keep their original scope.
+
 ### Target and identity
 
 The human requested the DualShock edition and supplied the expected hashes on 2026-10-27. The selected setup is Leon A, Original Game on Normal difficulty, Casual/Softcore achievements and DuckStation savestates. The later instruction limits this migration to Leon; Claire is deferred even though Disc 2 is available.
@@ -83,3 +85,99 @@ Contributions:
 - 2026-10-27; human user; supplied the desired edition, exact hash screenshot, Disc 1 and mode/achievement selections, then limited the immediate migration to Leon.
 - 2026-10-27; human user; directed committing the migration after the unavailable external reviews and unchanged pre-existing lint findings were reported.
 - 2026-10-27; Codex root, exact executing model `gpt-6.1-sol`; verified the disc hash, audited revision layouts and native code, generated metadata, added profile/history isolation and synthetic regressions, and authored this record. Original-release research authorship and validation remain unchanged.
+
+## RE2-DS-002: Claire B DualShock revision port
+
+Status: Candidate for USA Dual Shock Ver. Disc 2, SLUS-00756. Native B-scenario startup, the first room publication, exact earlier/later restores and fresh history reconstruction are observed. Other room, item and door outcomes remain unvalidated on this revision.
+
+### Scope and identity
+
+On 2026-10-27, after the Leon migration, the human authorized porting Claire while they try Leon. This resumes the previously deferred Claire B scope. The selected setup remains Original/Normal with Casual/Softcore achievements and DuckStation savestates. Leon's running tracker, profile, exploration history and emulator are not replaced or used for agent tests.
+
+Game: Resident Evil 2 Dual Shock Ver. USA Disc 2, serial SLUS-00756. `SYSTEM.CNF` boots `SLUS_007.56`, 987136 bytes, SHA256 `1664e7c634f8cfd03e421f10a6d7e8e8e9fa9bc7982f7c649cc86d28a983fbee`, loading `0xF0800` bytes at PS1 virtual `0x80010000`. MD5 of the executable name followed by the complete executable is `2e78f5817db6bb9dfb0208068d0801ce`, exactly the Disc 2 hash supplied by the human. This uses RE2-DS-001's cited identification method and does not validate every disc sector or an achievement unlock.
+
+Runtime identity hashes four 32-byte code windows at `0x80054CAC`, `0x80054BBC`, `0x8005432C` and `0x80077318`, in that order. The concatenated hash is explicit in `profiles/re2_claire_b_slus00756.json`. They cover item creation, door creation, the script flag predicate and shared flag checking. The native capture matches this signature; full executable SHA256 separately binds the generated data.
+
+### Audited revision layout
+
+All addresses are PS1 virtual, little-endian. Integer masks apply to values after little-endian decoding. These are revision-specific addresses, not offsets to add indiscriminately to another profile.
+
+| Field | Address | Width and mask |
+| --- | --- | --- |
+| Stage / room / camera | `0x800D47D4` / `0x800D47D6` / `0x800D47D8` | unsigned two bytes each, `0xFFFF` |
+| Player/state block | `0x800CFB28` | 420 bytes |
+| Save/state block | `0x800D468C` | 1792 bytes |
+| System flags | `0x800CFB2C` | unsigned four bytes; gameplay `0x40000000`, demo `0x2000`, transition `0x02000000`, game over `0x04000000`, required mode mask/value `0x40` |
+| Scenario/status flags | `0x800CFB90` | unsigned four bytes; `(value & 0xC2000000) == 0xC0000000` |
+| Active player | `0x800CFBB0` | unsigned four bytes, active mask `1` |
+| X / Y / Z | `0x800CFBE8` / `0x800CFBEC` / `0x800CFBF0` | signed four bytes each, `0xFFFFFFFF` |
+| Facing | `0x800CFC26` | unsigned two bytes; angle mask `0x0FFF` |
+| Floor | `0x800CFCB6` | unsigned one byte, `0xFF` |
+| Loaded room pointer | `0x800CE2DC` | unsigned four bytes, `0xFFFFFFFF` |
+| Interaction registry | `0x800CE510` | 32 unsigned four-byte pointers, `0xFFFFFFFF` each |
+| Script counter range | `0x800D47A4` to `0x800D47EC`, exclusive | aligned signed two-byte values, `0xFFFF` |
+| Native flag-bank table | `0x800A7884` | unsigned four-byte pointers, `0xFFFFFFFF` each |
+| Early / late item banks | `0x800D4874` / `0x800D4894` | 32 / 16 bytes; word `id // 32`, mask `0x80000000 >> (id % 32)` |
+| Door unlock bank | `0x800D49EC` | eight bytes; same native word/bit convention |
+| Map table | `0x800AA9F4` | twenty eight-byte native descriptors |
+| Area / region selectors | `0x8006E7A8` / `0x8006EAA0` | bounded native code entry points |
+| Effect allocation pool | `0x800E8CA8` to `0x800EBB28`, exclusive | 96 slots, stride 124 bytes |
+
+The script predicate independently locates the flag pointer table. Its configured banks are read from the supplied executable and checked by generation. The opcode dispatch table at `0x800A7484`, four-byte little-endian pointers, independently identifies ordinary/four-point creators, reset, flag write and counter write. Item creation reads the stage at `0x800D47D4`, selects item bank 8 before stage four and bank 34 afterward, and registers the original descriptor in the 32-slot registry. The shared flag helper retains descending masks within little-endian words. Ordinary item interaction at `0x8005185C` retains the system-mask `0x40`, type 30, amount-two override. These native-code findings retain Candidate status beyond the observed startup.
+
+The map table is identified by all twenty descriptor tails and checked by executing both selectors over the requested B context and declared floor/story alternatives. The area selector explicitly reads floor `0x800CFCB6`. Conditional inputs are declared in the profile rather than borrowing Leon's scenario contexts. The effect allocator independently establishes its pool base, 124-byte stride and 96-slot bound. Relative to DualShock Leon, static tables move by `-0x44`, state fields by `-0x48`, and the selected code entries by either `-0x28` or `-0x48`. A single relocation delta is rejected.
+
+Source labels and format leads retain the Starter Kit/biohazard-utils provenance in RE2-DS-001 and RE2-CLAIRE-001. The addresses above come from this owned executable's instructions/tables, not an assumed cross-disc address map. Private disassembly and lookup evidence are under `/tmp/re-map-dualshock-claire/`.
+
+### Generated data and regressions
+
+The supplied disc has 125 numbered `PL1/RDT` campaign files and a separate 125-source `A`–`G` corpus. All numbered files decode. The target reuses the existing explicit exclusion of the additional corpus; it does not extend script interpretation. Fifty-three whole campaign files match the original-release Claire catalog byte-for-byte. The original-release catalog includes decoded source `06-07` and unsupported source `06-05`; neither file is present on this disc. No empty replacement sources are invented.
+
+Generate with:
+
+```sh
+python3 tools/build_re2_metadata.py \
+  '/absolute/path/to/Resident Evil 2 - Dual Shock Ver. (Disc 2) (Claire).cue' \
+  data/rooms_slus00756.json data/floor_plans_slus00756.json \
+  --profile profiles/re2_claire_b_slus00756.json
+```
+
+A second complete generation matches both checked-in JSON documents byte-for-byte. They contain 125 sources and twenty map areas. These are offline extraction counts, not gameplay coverage. Original profiles and generated files remain unchanged. The new default history `.local/re2-claire-b-slus00756.json` is distinct from Leon and the original Claire release; history identity also binds revision signature and scenario. Production does not default to any test card or checkpoint.
+
+Focused regressions pin Disc 2's executable/layout and B scenario, require distinct default history filenames, and run the existing zero-activation/collection/reversal cases against its generated metadata. B-scenario admission tests reject the other character/scenario combinations without changing visits or publication. No new game interpretation or UI behavior is introduced.
+
+### Native validation and evidence
+
+The isolated app uses official DuckStation `0.1-12442-gdd4a0eb77`, source commit `dd4a0eb779296a525f8b10b6d9a45911ad6d088f`, Interpreter mode, GDB port 2348. Before boot and both load preparations, both achievement integrations are disabled and no per-game overrides exist. Audio is muted and the black-only shader has RE2-DS-001's verified SHA256. A private copy of the native test card from ResidentEvilTim is loaded through Original data, selecting its sixth Claire B starter. Its source, unlocked-special-weapons limitation, original card SHA256 `69ad3a2e58cdc865d9d987ff2c635c500579152c30362e390fd9009d2b1cbb24` and block provenance remain as recorded in RE2-CLAIRE-001. The original fixture is unchanged. This verifies loading that one legacy fixture on DualShock; general save compatibility and ordinary memory-card persistence are not inferred.
+
+Private savestate thumbnails are read by the existing Swift 6/Vision OCR helper, without emitting gameplay images. The native scenario-start sequence is advanced through controller input. There are no guest-memory writes, health/ammunition patches or position edits in this validation.
+
+The accepted native source is `00-04`, with system flags `0x40000040`, status `0xC0000040`, active bit one and loaded RDT at `0x8011A728`. These values independently satisfy the new B-only gate and source binding. The production reader publishes Display, one visited source and one map outline, with Unknown completion because source coverage is incomplete. Native opening RAM SHA256 is `ac6493793d89b47bc8593dd43222cabcdd4273162fdb465da7eed4ece076b7e4`.
+
+The first and later paused native F2 checkpoints are restored with native F1 after rechecking achievement isolation. Their complete 2 MiB RAM matches exactly:
+
+| Checkpoint / restored capture | Native checkpoint SHA256 | Full RAM SHA256 |
+| --- | --- | --- |
+| `earlier-native-save` / `earlier-restored` | `44983282012152a113af3c8e851852832a47cb2b8b218866eba27e66cea44b3f` | `7157e1150f88d92579d51f2c78faf63b9e91992f6bf84cbbf6fc9883ef85abed` |
+| `later-native-save` / `later-restored` | `ec8dfe3268308a7573f025bb1859f531d9971b1d8362404fef63ea1842dc3196` | `1d1fa9bceb66ca6eb0bf9eda4a5e86ceb34a44814288e3bd6d2af595bddbf79e` |
+
+A five-capture visits-only history replay saves/closes/reopens the private history and reconstructs the same publication from each fresh RAM image. Exactly source `00-04` remains explored, and completion remains Unknown. This is not acquisition or unlock reversal. The actual CLI also passes `--once` against port 2348 using a private history. Both independent state captures, native restores, history replay, CLI logs and provenance are retained outside Git in `/tmp/re-map-dualshock-claire/`.
+
+Only the private test emulator is terminated after validation. The agent does not replace or restart Leon's tracker, attach to its GDB port, or terminate the installed emulator. Agent visits are never written into a user playthrough history. No UI code or layout changes, so the README screenshot is retained.
+
+Limits: one observed source. Native pickups, quantities, locked-door use, ordinary navigation, reentry, conditional floors, later rooms and campaign-wide clearance remain unvalidated on SLUS-00756. Original-release observations, byte-identical sources, synthetic tests and model advice do not promote those outcomes to Confirmed.
+
+### Final verification and review
+
+The focused profile/metadata/tracking/position/history/runner suite passes 924 tests in 8.36 seconds. Scoped Ruff formatting and E4/E7/E9/F checks pass, excluding the established module-path setup pattern E402. Local documentation links, JSON identity/schema loading, byte-identical regeneration and whitespace checks pass. The original Disc 1 and original-release profile/data files are unchanged.
+
+Primary review finding 1; Configuration/DX, Low priority, Low difficulty: `profiles/re2_claire_b_slus00756.json`, `metadata_layout.selector_contexts`, copied original-release source `06-07`, absent from this disc. Removed that unused entry. Complete regeneration retains identical map/room outputs after the correction.
+
+Primary review checks the complete registry/profile/test/documentation diff, generated metadata identity and deterministic output, B-only atomic admission, bounded field reads, distinct histories, source completeness, acquisition-versus-activation behavior, and native CLI/restore/history evidence. No verified defect remains in this port. There is no UI layout change; visual/UX/AX assessment is limited to the unchanged renderer contracts and serialized map publication, rather than a new browser screenshot.
+
+The required external Opus review was requested through T3 as `claude-opus-5-5` with high effort and rejected before child creation with `provider_unavailable`: `Provider instance is disabled.` A subsequent capability check also reports Antigravity disabled, so the configured Gemini Flash perspective cannot run. No child review completed, no substitute model or CLI fallback was used, and no external endorsement is claimed. This is the same reported review limitation under which the human directed committing the preceding DualShock migration; the current change records that limitation separately from its direct verification and native evidence.
+
+Contributions:
+
+- 2026-10-27; human user; authorized the Claire port while preparing to try the Leon route. The existing Claire B and Original/Normal, Casual/Softcore scope is retained.
+- 2026-10-27; Codex root, exact executing model `gpt-6.1-sol`; verified Disc 2's hash, audited its layout and code contracts, generated metadata, added profile/history/scenario regressions, performed hidden native admission/restores and CLI/history checks, reviewed the change and authored this record. External save authorship remains ResidentEvilTim's. Original-release authorship and validation are unchanged.

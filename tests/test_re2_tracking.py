@@ -461,6 +461,7 @@ def test_disabled_candidates_do_not_establish_presence_or_clearance(snapshot):
         ("re2_leon_a_slus00421", "00-01"),
         ("re2_claire_b_slus00592", "00-09"),
         ("re2_leon_a_slus00748", "00-01"),
+        ("re2_claire_b_slus00756", "00-09"),
     ],
     indirect=True,
 )
@@ -550,6 +551,7 @@ def test_zero_mask_preserves_presence_collection_and_rewind(
         ("re2_leon_a_slus00421", "00-01"),
         ("re2_claire_b_slus00592", "00-09"),
         ("re2_leon_a_slus00748", "00-01"),
+        ("re2_claire_b_slus00756", "00-09"),
     ],
     indirect=True,
 )
@@ -2212,7 +2214,9 @@ def test_live_creator_must_agree_with_scenario_selected_variant(
         assert item.quantity == 5
 
 
-@pytest.mark.parametrize("profile", ["re2_claire_b_slus00592"], indirect=True)
+@pytest.mark.parametrize(
+    "profile", ["re2_claire_b_slus00592", "re2_claire_b_slus00756"], indirect=True
+)
 @pytest.mark.parametrize("snapshot", ["00-04"], indirect=True)
 @pytest.mark.parametrize("status", [0, 0x40000000, 0x80000000, 0xC0000000])
 def test_claire_b_admission_is_scenario_specific_and_atomic(snapshot, status):

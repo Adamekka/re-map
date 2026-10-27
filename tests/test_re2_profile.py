@@ -44,6 +44,41 @@ def test_dualshock_leon_profile_pins_its_own_layout_and_history():
     ).value
 
 
+def test_dualshock_claire_profile_pins_disc_two_and_b_scenario():
+    """RE2-DS-002: Claire has its own code, state layout and B-only history."""
+    profile = Re2Profile.load(ROOT / "profiles/re2_claire_b_slus00756.json")
+    assert profile.target.serial == "SLUS-00756"
+    assert profile.target.scenario == "claire-b"
+    assert profile.target.player_index == 1
+    assert profile.executable_identity == (
+        "SLUS_007.56 SHA256 "
+        "1664e7c634f8cfd03e421f10a6d7e8e8e9fa9bc7982f7c649cc86d28a983fbee"
+    )
+    assert (profile.stage_address, profile.room_address, profile.camera_address) == (
+        0x800D47D4,
+        0x800D47D6,
+        0x800D47D8,
+    )
+    assert profile.flag_banks[0] == (0x800CFB2C, 4)
+    assert profile.flag_banks[1] == (0x800CFB90, 4)
+    assert profile.flag_banks[8] == (0x800D4874, 32)
+    assert profile.flag_banks[31] == (0x800D49EC, 8)
+    assert profile.runtime_layout["scenario_value"] == 0xC0000000
+    assert profile.runtime_layout["player_block_width"] == 420
+    assert profile.target.history_filename == "re2-claire-b-slus00756.json"
+    assert len(profile.rooms) == 125
+    assert not profile.unsupported_sources
+    assert len(profile.map_layout.document["areas"]) == 20
+    assert all(
+        room["source"].startswith("PL1/RDT/ROOM") for room in profile.rooms.values()
+    )
+    histories = [
+        Re2Profile.load(path).target.history_filename
+        for path in (ROOT / "profiles").glob("re2_*.json")
+    ]
+    assert len(histories) == len(set(histories))
+
+
 def test_re2_profile_pins_leon_disc_and_halfword_addresses():
     profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00421.json")
     assert profile.stage_address == 0x800CC948

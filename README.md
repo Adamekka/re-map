@@ -57,6 +57,12 @@ Start Leon A in **Original Game → Normal** on Dual Shock Ver. USA Disc 1, **SL
 python3 tools/track.py --profile profiles/re2_leon_a_slus00748.json --map
 ```
 
-This revision has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identity and validation limits. Claire's DualShock disc is outside this Leon-only migration.
+For Claire B on Dual Shock Ver. USA Disc 2, **SLUS-00756**:
+
+```sh
+python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
+```
+
+Each revision and scenario has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identities and validation limits.
 
 ![RE2 opening map with approximate player position](docs/images/re2-map.png)

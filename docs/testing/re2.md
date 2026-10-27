@@ -2,9 +2,9 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
-## DualShock Leon A
+## DualShock profiles
 
-The active target is USA Dual Shock Ver. Disc 1, SLUS-00748, Original/Normal in Casual/Softcore. Use `profiles/re2_leon_a_slus00748.json`; its default history is separate from the original-release profiles. [RE2-DS-001](../research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) records exact identity, generation, native observations and limitations. Run the focused command below with `tests/test_visit_history.py tests/test_logging.py` for revision isolation and runner/history checks. The original-release coverage below remains historical evidence for its named revisions.
+The active targets are USA Dual Shock Ver. Disc 1, SLUS-00748, Leon A, and Disc 2, SLUS-00756, Claire B, Original/Normal in Casual/Softcore. Use `profiles/re2_leon_a_slus00748.json` or `profiles/re2_claire_b_slus00756.json`; their default histories are separate from each other and the original-release profiles. [RE2-DS-001](../research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) records Leon's exact identity, generation, native observations and limitations. [RE2-DS-002](../research/re2/dualshock.md#re2-ds-002-claire-b-dualshock-revision-port) records the corresponding Claire checks. Run the focused command below with `tests/test_visit_history.py tests/test_logging.py` for revision isolation and runner/history checks. The original-release coverage below remains historical evidence for its named revisions.
 
 ## RE2 Leon A checks
 
