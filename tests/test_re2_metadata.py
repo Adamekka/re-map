@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 
+from build_re2_metadata import map_detail_segments
 from map_geometry import trace_floor_cells
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
@@ -1051,6 +1052,55 @@ def test_diagonal_floor_contacts_preserve_both_disconnected_cells():
     assert len(rings) == 2
     assert sum(area for area, _ in rings) == 2
     assert label in {(0, 0), (1, 1)}
+
+
+@pytest.mark.parametrize("transpose", [False, True])
+def test_interior_wall_is_retained_without_redrawing_the_perimeter(transpose):
+    """RE2-MAP-003: a wall connects the border to an open passage."""
+    cells = {
+        (x, y): 4 if x < 2 or x >= 8 or y < 2 or y >= 6 else 1
+        for x in range(10)
+        for y in range(8)
+    }
+    cells.update({(x, y): 4 for x in range(6) for y in (3, 4)})
+    expected = [[[x + 0.5, 3.5], [x + 0.5, 4.5]] for x in range(2, 6)]
+    if transpose:
+        cells = {point[::-1]: value for point, value in cells.items()}
+        expected = [[point[::-1] for point in segment] for segment in expected]
+    assert map_detail_segments(cells) == expected
+
+
+@pytest.mark.parametrize("end_shade", [0, 1, 3])
+def test_wall_runs_need_floor_on_both_sides(end_shade):
+    cells = {(x, y): 1 for x in range(5) for y in range(5)}
+    cells.update({(1, 2): 4, (2, 2): 4})
+    if end_shade:
+        cells[3, 2] = end_shade
+    else:
+        del cells[3, 2]
+    assert map_detail_segments(cells) == (
+        [[[1.5, 2.5], [2.5, 2.5]]] if end_shade == 1 else []
+    )
+
+
+def test_existing_interior_rails_keep_their_segments():
+    cells = {(x, y): 1 for x in range(5) for y in range(5)}
+    cells.update({(x, 2): 2 for x in range(1, 4)})
+    cells.update({(x, 0): 2 for x in range(1, 4)})
+    assert map_detail_segments(cells) == [[[1.5, 2.5], [3.5, 2.5]]]
+
+
+@pytest.mark.parametrize("serial", ["00748", "00756"])
+def test_basketball_court_retains_its_upper_alley_partition(serial):
+    """RE2-MAP-003: native tile wall, distinct from the vertical rail."""
+    maps = json.loads((ROOT / f"data/floor_plans_slus{serial}.json").read_text())
+    court = next(room for room in maps["areas"][0]["rooms"] if room["id"] == "02")
+    # The native wall's leftmost column extends one cell farther into the court.
+    for x in range(84, 111):
+        assert [[x + 0.5, 117.5], [x + 0.5, 120.5 + (x == 84)]] in court[
+            "detail_segments"
+        ]
+    assert [[111.5, 121.5], [111.5, 138.5]] in court["detail_segments"]
 
 
 def test_generated_catalog_has_unique_room_proofs_and_only_numeric_map_data():

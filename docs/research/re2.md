@@ -71,6 +71,37 @@ Contributions:
 - 2026-10-19; `gpt-6.1-sol`; updated the former heading-validation limit after the native observations in RE2-PLAYER-001. That claim confirms only the stated continuous facing conversion; the remaining map/projection claims retain their existing status.
 - 2026-10-19; `gpt-6.1-sol`; [RE2-FLOOR-001](#re2-floor-001-native-same-room-floor-changes-and-restores) adds native bidirectional and restore evidence for the two observed floor-dependent selections in source `00-16`. Other selectors, position alignment and door placement retain their existing limits.
 
+## RE2-MAP-003: retain the basketball court's interior partition
+
+Status: Candidate for Resident Evil 2 Dual Shock Ver. USA, Leon A Disc 1 SLUS-00748 and Claire B Disc 2 SLUS-00756, Original Game on Normal. Owned-source extraction, synthetic regressions and tracker rendering verify the reported missing wall. This is not independent native gameplay or campaign-wide wall alignment confirmation.
+
+### Report, source and correction
+
+On 2026-10-27 the human supplied a tracker screenshot of the opening streets and confirmed that the missing partition above the basketball court was the defect. Baseline `bb9953a` fills every nonzero native map cell into the room contour, but retains only shade-two interior details. The shade-four partition consequently disappears inside the filled room.
+
+[RE2-DS-001](re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) and [RE2-DS-002](re2/dualshock.md#re2-ds-002-claire-b-dualshock-revision-port) pin the executable identities. The inspected executables are `SLUS_007.48`, SHA256 `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`, and `SLUS_007.56`, SHA256 `1664e7c634f8cfd03e421f10a6d7e8e8e9fa9bc7982f7c649cc86d28a983fbee`. Their map tables are at PS1 virtual `0x800AAA38` and `0x800AA9F4`; field widths, byte order and contour/projection contracts are described in [RE2-MAP-001](#re2-map-001-native-leon-floor-selectors-and-numeric-contours). These are executable table addresses, not host addresses or raw RAM offsets.
+
+Both owned discs contain identical `COMMON/DATA/MAPS.PIX`, 655360 bytes, SHA256 `d5b71306319d64bb0569562549463b338920a124383ea77e23758610c1fac439`. In area zero, region two, the descriptor selects page zero at U/V `144/16`, width/height `38/80`, positioned at map X/Y `81/112`. The partition contains shade-four columns X `84..110`, Y `117..120`; column 84 extends through Y 121. Shade one supplies floor on both sides. The adjacent vertical rail is shade two. These are numeric tile/map coordinates, not PS1 memory addresses.
+
+The shared generator now retains shade-four runs with floor shade one immediately before and after the run. Both detail shades still require occupied orthogonal neighbors; outer-edge pixels cannot establish an interior detail. This keeps the bounded partition while avoiding a second rendering of the outside border. Shade-two extraction retains its previous behavior. The extracted function is a direct test seam for this rule without requiring a disc or native selector emulation in unit tests.
+
+Both current DualShock floor-plan catalogs are regenerated from their owned discs. Each gains interior details in 24 regions, including 27 partition segments in the reported room. All existing detail segments remain. Contours, labels, origins, door markers, selectors and room/item metadata are unchanged. Original-release catalogs are retained; this pass does not transfer the new tile observation to another revision. Only numeric geometry and the tracker screenshot enter Git.
+
+### Verification and limits
+
+The focused metadata/profile/position/tracking/map suite passes 977 tests. New regressions check horizontal and vertical partitions, perimeter exclusion, floor-versus-door/absent endpoints, unchanged rails and both generated DualShock court partitions. Ruff lint and formatting pass. The existing RE2 browser suite passes all 133 original-release outlines and its door, heading, position and floor controls; that is a rendering regression check, not new DualShock gameplay evidence.
+
+A separate headless browser loads the regenerated Leon layout with a read-only snapshot of the user's four already explored opening rooms. SVG stroke checks find the partition and existing rail, while the upper alley, court floor and right passage remain open. Zoom/fit controls and page-error checks pass. Direct visual inspection checks the resulting partition, room labels and surrounding outlines. The README screenshot is refreshed from that tracker-only render. The running user's tracker still needs a restart to load regenerated startup metadata.
+
+No emulator test instance is started, no game or savestate is loaded, and no emulator setting, guest memory or user exploration history is changed by this pass. There is no newly tested DuckStation version or native wall-alignment observation. Item/door outcomes and gameplay coverage are unchanged.
+
+Private evidence is under `/tmp/re-map-re2-geometry-20261027/`: `catalog-delta.json`, `render.json`, `render.mjs`, `browser-check.json` and `map.png`, plus private owned-source extracts and regeneration outputs. Reproduce by regenerating both DualShock profiles with the commands in their revision claims, running the focused tests and rendering the same four explored regions. The expected wall is between the upper alley and court; the right-hand passage remains open.
+
+Contributions:
+
+- 2026-10-27; human user; supplied the screenshot and identified the missing internal partition as the requested correction.
+- 2026-10-27; `gpt-6.1-sol`, verified from this session's matching `session_meta` and latest `turn_context`; inspected both owned map sources, implemented and directly reviewed the shared rule, regenerated the two current catalogs, ran the focused and browser checks, inspected the tracker render and authored this entry. Review checked correctness, source fidelity, perimeter/rail preservation, revision isolation, determinism, offline generation cost, test scope, rendered UI/UX/AX impact and unchanged runtime contracts. Configured Claude and Antigravity review providers are disabled in T3, so neither external review completed; there is no substituted model or external endorsement.
+
 ## RE2-LIVE-001: coherent opening-room reads and explicit runtime limits
 
 Status: Candidate for SLUS-00421. One controlled opening-room observation is available; multiple independent pickup, key-door and restore situations are not yet confirmed.

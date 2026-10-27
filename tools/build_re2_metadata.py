@@ -25,14 +25,14 @@ from map_geometry import trace_floor_cells
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapProjection
-from games.re2.room_data import bind_event_awards, collection_presence, decode_room
 from games.re2.re2_profile import re2_target
+from games.re2.room_data import bind_event_awards, collection_presence, decode_room
 from games.re2.scenario_items import (
+    scenario_effect_pool,
     scenario_flags,
     scenario_item_candidates,
     scenario_item_proofs,
     scenario_presence_flags,
-    scenario_effect_pool,
 )
 
 AREA_NAMES = (
@@ -57,6 +57,54 @@ AREA_NAMES = (
     "Escape platform",
     "Escape train",
 )
+
+
+def map_detail_segments(cells: dict[tuple[int, int], int]) -> list:
+    details = []
+    for axis in (0, 1):
+        for shade in (2, 4):
+            points = sorted(
+                (point[1 - axis], point[axis])
+                for point, value in cells.items()
+                if value == shade
+                and all(
+                    other in cells
+                    for other in (
+                        (point[0] - 1, point[1]),
+                        (point[0] + 1, point[1]),
+                        (point[0], point[1] - 1),
+                        (point[0], point[1] + 1),
+                    )
+                )
+            )
+            for fixed, group in itertools.groupby(points, key=lambda point: point[0]):
+                runs = []
+                for _, coordinate in group:
+                    if runs and coordinate == runs[-1][-1] + 1:
+                        runs[-1].append(coordinate)
+                    else:
+                        runs.append([coordinate])
+                for run in runs:
+                    if len(run) < 2:
+                        continue
+                    if shade == 4:
+                        # Shade four also draws the perimeter. Floor on both
+                        # sides identifies an interior wall without redrawing
+                        # the room border. See RE2-MAP-003.
+                        ends = [(run[0] - 1, fixed), (run[-1] + 1, fixed)]
+                        if not all(
+                            cells.get(point if axis == 0 else point[::-1]) == 1
+                            for point in ends
+                        ):
+                            continue
+                    segment = [
+                        [run[0] + 0.5, fixed + 0.5],
+                        [run[-1] + 0.5, fixed + 0.5],
+                    ]
+                    details.append(
+                        segment if axis == 0 else [point[::-1] for point in segment]
+                    )
+    return details
 
 
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
@@ -258,7 +306,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             u, v, width, height, x, y, bx, by, *_ = descriptor
             if not width or not height:
                 raise ValueError("invalid native RE2 map rectangle")
-            cells, interior = set(), set()
+            cells = {}
             for dy in range(height):
                 for dx in range(width):
                     # PS1 texture coordinates wrap at the 256-pixel page edge.
@@ -267,45 +315,8 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                         pixels[file_number * 32768 + index // 2] >> (4 * (index % 2))
                     ) & 15
                     if value:
-                        cells.add((x + dx, y + dy))
-                    if value == 2:
-                        interior.add((x + dx, y + dy))
-            rings, label = trace_floor_cells(cells)
-            details = []
-            for axis in (0, 1):
-                points = sorted(
-                    (point[1 - axis], point[axis])
-                    for point in interior
-                    if all(
-                        other in cells
-                        for other in (
-                            (point[0] - 1, point[1]),
-                            (point[0] + 1, point[1]),
-                            (point[0], point[1] - 1),
-                            (point[0], point[1] + 1),
-                        )
-                    )
-                )
-                for fixed, group in itertools.groupby(
-                    points, key=lambda point: point[0]
-                ):
-                    runs = []
-                    for _, coordinate in group:
-                        if runs and coordinate == runs[-1][-1] + 1:
-                            runs[-1].append(coordinate)
-                        else:
-                            runs.append([coordinate])
-                    for run in runs:
-                        if len(run) >= 2:
-                            segment = [
-                                [run[0] + 0.5, fixed + 0.5],
-                                [run[-1] + 0.5, fixed + 0.5],
-                            ]
-                            details.append(
-                                segment
-                                if axis == 0
-                                else [point[::-1] for point in segment]
-                            )
+                        cells[x + dx, y + dy] = value
+            rings, label = trace_floor_cells(set(cells))
             entry = {
                 "id": f"{region:02X}",
                 "name": "",
@@ -315,7 +326,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     "outer" if signed > 0 else "hole" for signed, _ in rings
                 ],
                 "label": [value + 0.5 for value in label],
-                "detail_segments": details,
+                "detail_segments": map_detail_segments(cells),
                 "world_origin": [bx, by],
             }
             plan["rooms"].append(entry)
@@ -504,7 +515,13 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             "presence_flag_writes": flag_proof,
             "rooms": rooms,
         },
-        {**header, "stage_modulus": 256, "areas": plans, "locations": locations},
+        {
+            **header,
+            "research_ids": [*header["research_ids"], "RE2-MAP-003"],
+            "stage_modulus": 256,
+            "areas": plans,
+            "locations": locations,
+        },
     )
 
 
