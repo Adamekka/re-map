@@ -102,6 +102,42 @@ Contributions:
 - 2026-10-27; human user; supplied the screenshot and identified the missing internal partition as the requested correction.
 - 2026-10-27; `gpt-6.1-sol`, verified from this session's matching `session_meta` and latest `turn_context`; inspected both owned map sources, implemented and directly reviewed the shared rule, regenerated the two current catalogs, ran the focused and browser checks, inspected the tracker render and authored this entry. Review checked correctness, source fidelity, perimeter/rail preservation, revision isolation, determinism, offline generation cost, test scope, rendered UI/UX/AX impact and unchanged runtime contracts. Configured Claude and Antigravity review providers are disabled in T3, so neither external review completed; there is no substituted model or external endorsement.
 
+## RE2-MAP-004: one marker for a shared doorway
+
+Status: Candidate for physical pairing and absolute wall placement in the four supported RE2 USA profiles. Source catalogs, geometric regressions and tracker rendering establish the two-marker result for the reported shop. No native door traversal or new gameplay coverage is claimed.
+
+### Report and correction
+
+On 2026-10-27 the human specified that the shop should have two doors and supplied a crop with an extra marker near its upper corner. They described the drawing as merging together and could not separate a room-outline problem from a door-marker problem. Baseline `8af83c5` draws source-side markers independently. The street's `00-00:4246` and shop's `00-01:6050` observations represent the two directions of the entrance but project onto different nearby walls. The shop itself has exactly two door definitions.
+
+Original-release identities are pinned in [RE2-IDENTITY-001](#re2-identity-001-leon-a-disc-identity-and-candidate-room-layout) and [RE2-CLAIRE-001](#re2-claire-001-claire-b-profile-and-native-starter); DualShock identities are pinned in [RE2-DS-001](re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) and [RE2-DS-002](re2/dualshock.md#re2-ds-002-claire-b-dualshock-revision-port). This pass reads their existing numeric catalogs and adds no addresses, memory reads, opcode interpretation or emulator-version validation. Address spaces, widths, masks and byte order remain those of the linked claims.
+
+The layout pairs a connection only when each source has one door to the other, their destination/activation floors agree and the outlines have an unambiguous shared wall. Opposite edge winding distinguishes adjacent interiors from overlapping shapes. Collinear wall fragments are joined. Both projected trigger centers contribute to the placement estimate within the existing eight-map-unit bound. The two-unit glyph stays within the shared wall. Ambiguous, parallel, one-way, disconnected, corner-only, undersized or floor-incompatible connections retain their individual markers.
+
+Pairing occurs at map-layout load. Raw catalogs, room outlines and persisted exploration retain their formats and values. Each rendered RE2 marker explicitly carries the source observation IDs it represents, including a reverse descriptor whose original projection was unplaced. The browser uses the selected room's observation for access and key identity, then the current room's observation, otherwise only an agreed state. Either explored owner can reveal the marker without revealing the unexplored neighbor. Game-derived door state and passage observations remain separate from this geometry.
+
+Leon's shop now has two markers: the street/shop wall at map X `106`, Y `79..81`, and shop/alley wall at map Y `112`, X `81..83`. These are map coordinates, not memory addresses. The entrance binds `00-00:4246`/`00-01:6050`; the exit binds `00-01:6082`/`00-02:6146`. Claire uses shop offsets `6098` and `6130` instead. No named-room exception is used.
+
+### Verification and limits
+
+`tests/test_re2_door_layout.py` checks both directions and an unplaced reverse-side marker, parallel doors, gap/corner/short/tied/overlapping walls, distance and floor limits, one-way connections, collinear fragments, invalid ownership and the two shop connections in all four catalogs. RE2 browser regressions check one marker per pair, each side's access/key states, two doors with both neighbors unexplored, and floor-trigger isolation. The RE1 browser suite checks shared renderer behavior separately.
+
+The final full suite passes 2,610 tests. Strict Ruff lint, formatting and whitespace checks pass for the changed Python files. Both browser suites pass, covering all 133 RE2 and 118 RE1 outlines. RE1 retains its existing requirement that conflicting paired key identities suppress the symbol; RE2's source-bound descriptors retain the selected side's known key.
+
+Private evidence is under `/tmp/re-map-re2-doors-20261027/`. `before-render.json` captures the baseline page and only the user's already explored regions. `after-render.json` uses the same state with the corrected page. `render.mjs`, `before-shop.png`, `after-shop.png` and `browser-result.json` reproduce the tracker render and page-error checks. Direct visual inspection confirms two shop doorways on separating walls. The README screenshot is refreshed. `catalog-check.json` verifies that every original source observation remains represented and room geometry is unchanged across all four catalogs. Marker counts measure layout output, not resolved gameplay outcomes.
+
+`live-restart.json` verifies a graceful restart with the user's existing tracker arguments, unchanged playthrough identity and retained visits. The served page contains exactly two shared shop markers. Existing open pages need a refresh to load the new map catalog and renderer.
+
+No agent emulator is started, no game or savestate is loaded and no game input, memory write, achievement setting or exploration-history edit is used for these checks. Existing absolute alignment limits remain Candidate; rendered appearance is not native passage validation.
+
+The root review checks reciprocal uniqueness, ownership, floor compatibility, wall winding/bounds, ambiguity, source identity preservation, side-specific key/access selection, exploration visibility, startup-only layout cost and rendered clarity. Previously inspected T3 capabilities report Claude and Antigravity disabled, so the configured external reviews cannot run. No replacement model or CLI fallback is used and no external endorsement is claimed. After the review limitation was reported, the human directed committing this fix on 2026-10-27.
+
+Contributions:
+
+- 2026-10-27; human user; supplied the shop crop, specified two doors and reported that the drawing merges together.
+- 2026-10-27; human user; authorized committing after the external-review limitation was reported.
+- 2026-10-27; Codex root, exact model `gpt-6.1-sol`, verified through T3's current-thread model selection; traced the duplicate observations, implemented and directly reviewed shared-wall pairing, added geometry/browser regressions, compared tracker renders and authored this record. Prior research authorship and gameplay claims remain unchanged.
+
 ## RE2-LIVE-001: coherent opening-room reads and explicit runtime limits
 
 Status: Candidate for SLUS-00421. One controlled opening-room observation is available; multiple independent pickup, key-door and restore situations are not yet confirmed.

@@ -36,6 +36,157 @@ class Re2MapProjection:
         )
 
 
+def shared_door_markers(
+    area: dict, rooms: dict, projection: Re2MapProjection
+) -> list[dict]:
+    """RE2-MAP-004: bind unique reciprocal doors to one shared wall marker."""
+    if not area["doors"]:
+        return []
+    regions = {entry["id"]: entry for entry in area["rooms"]}
+    definitions = {
+        f"{key}:{door['offset']}": (key, door)
+        for key, room in rooms.items()
+        for door in room["doors"]
+    }
+    consumed, result = set(), []
+    for marker in area["doors"]:
+        if marker["id"] in consumed:
+            continue
+        if marker["observation_id"] not in definitions or len(marker["rooms"]) != 1:
+            raise ValueError("RE2 door marker requires one known source observation")
+        source, definition = definitions[marker["observation_id"]]
+        target = f"{definition['stage']:02d}-{definition['room']:02x}"
+        forward = [
+            door
+            for door in rooms[source]["doors"]
+            if (door["stage"], door["room"])
+            == (definition["stage"], definition["room"])
+        ]
+        reverse = (
+            [
+                door
+                for door in rooms[target]["doors"]
+                if (door["stage"], door["room"])
+                == (rooms[source]["stage"], rooms[source]["room"])
+            ]
+            if target in rooms
+            else []
+        )
+        owner = regions[marker["rooms"][0]]
+        if source not in owner["room_ids"]:
+            raise ValueError("RE2 door marker disagrees with its owning room")
+        choices = []
+        # Bit 7 accepts the trigger on every floor. Otherwise each destination
+        # must land on the floor accepted by the opposite-side trigger.
+        if (
+            source != target
+            and len(forward) == len(reverse) == 1
+            and (
+                reverse[0]["activation_floor"] & 0x80
+                or reverse[0]["activation_floor"] == definition["floor"]
+            )
+            and (
+                definition["activation_floor"] & 0x80
+                or definition["activation_floor"] == reverse[0]["floor"]
+            )
+        ):
+            for neighbor in area["rooms"]:
+                if neighbor["id"] == owner["id"] or target not in neighbor["room_ids"]:
+                    continue
+                walls = set()
+                for first_ring in owner["rings"]:
+                    for a, b in zip(first_ring, first_ring[1:] + first_ring[:1]):
+                        for second_ring in neighbor["rings"]:
+                            for c, d in zip(
+                                second_ring, second_ring[1:] + second_ring[:1]
+                            ):
+                                for axis in (0, 1):
+                                    fixed = 1 - axis
+                                    # Opposite winding puts the room interiors
+                                    # on opposite sides of a separating wall.
+                                    if (
+                                        a[fixed] == b[fixed] == c[fixed] == d[fixed]
+                                        and (b[axis] - a[axis]) * (d[axis] - c[axis])
+                                        < 0
+                                    ):
+                                        low = max(
+                                            min(a[axis], b[axis]), min(c[axis], d[axis])
+                                        )
+                                        high = min(
+                                            max(a[axis], b[axis]), max(c[axis], d[axis])
+                                        )
+                                        if high > low:
+                                            walls.add((axis, a[fixed], low, high))
+                # Contours can split a straight wall into several segments.
+                # Join touching spans before requiring room for a doorway.
+                joined = []
+                for axis, fixed, low, high in sorted(walls):
+                    if (
+                        joined
+                        and joined[-1][:2] == (axis, fixed)
+                        and low <= joined[-1][3]
+                    ):
+                        previous = joined.pop()
+                        low, high = previous[2], max(high, previous[3])
+                    joined.append((axis, fixed, low, high))
+                # Native room maps distort the two trigger projections.
+                # Average their estimates before snapping to the shared wall.
+                points = (
+                    projection.project(
+                        tuple(owner["world_origin"]), *definition["center"]
+                    ),
+                    projection.project(
+                        tuple(neighbor["world_origin"]), *reverse[0]["center"]
+                    ),
+                )
+                center = [(points[0][axis] + points[1][axis]) / 2 for axis in (0, 1)]
+                for axis, fixed, low, high in joined:
+                    if high - low < 2:
+                        continue
+                    along = max(low, min(high, center[axis]))
+                    distance = (center[1 - axis] - fixed) ** 2 + (
+                        center[axis] - along
+                    ) ** 2
+                    midpoint = max(low + 1, min(high - 1, along))
+                    segment = []
+                    for shift in (-1, 1):
+                        position = round(midpoint + shift, 3)
+                        segment.append(
+                            [position, fixed] if axis == 0 else [fixed, position]
+                        )
+                    choices.append((distance, neighbor["id"], segment))
+        choices.sort(key=lambda choice: choice[0])
+        # Keep the existing eight-map-unit placement bound. A tied wall or
+        # multiple doors between the same sources cannot prove a pairing.
+        paired = (
+            bool(choices)
+            and choices[0][0] <= 64
+            and not (len(choices) > 1 and abs(choices[0][0] - choices[1][0]) < 1e-8)
+        )
+        observations = [marker["observation_id"]]
+        region_ids, segment = marker["rooms"], marker["segment"]
+        if paired:
+            _, neighbor_id, segment = choices[0]
+            reverse_id = f"{target}:{reverse[0]['offset']}"
+            observations.append(reverse_id)
+            region_ids = [owner["id"], neighbor_id]
+            consumed.update(
+                other["id"]
+                for other in area["doors"]
+                if other["observation_id"] == reverse_id
+                and other["rooms"] == [neighbor_id]
+            )
+        result.append(
+            {
+                "id": marker["id"],
+                "observation_ids": observations,
+                "rooms": region_ids,
+                "segment": segment,
+            }
+        )
+    return result
+
+
 @dataclass(frozen=True)
 class Re2MapLayout:
     document: dict
@@ -125,6 +276,8 @@ class Re2MapLayout:
             locations.setdefault(row["room"], []).append(row)
         if set(locations) != set(rooms):
             raise ValueError("RE2 map selections must cover the room catalog")
+        for area in document["areas"]:
+            area["doors"] = shared_door_markers(area, rooms, projection)
         return Re2MapLayout(
             document,
             {key: tuple(rows) for key, rows in locations.items()},

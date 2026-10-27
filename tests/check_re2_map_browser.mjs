@@ -42,11 +42,12 @@ t.rooms['00-01'].items=(ItemDetail('Handgun ammo','available',15),ItemDetail('Sh
 t.rooms['00-01'].reason='Item conditions are unresolved.'
 t.rooms['00-01'].list_complete=True
 t.rooms['00-01'].completion=RoomCompletion.Incomplete
-markers=[door for door in p.map_layout.document['areas'][0]['doors'] if door['observation_id'].startswith('00-01:')]
+markers=[door for door in p.map_layout.document['areas'][0]['doors'] if any(obs.startswith('00-01:') for obs in door['observation_ids'])]
 assert len(markers)==2
 # Both observations intentionally share a room pair. Only source IDs can bind
 # the two different access states to their proper walls.
-t.doors=tuple(DoorDetail(RoomId(0,1),RoomId(0,0),access,access,key_label='Spade Key',observation_id=marker['observation_id']) for marker,access in zip(markers,('LOCKED','OPEN')))
+t.doors=tuple(DoorDetail(RoomId(0,1),RoomId(0,0),access,access,key_label='Spade Key',observation_id=next(obs for obs in marker['observation_ids'] if obs.startswith('00-01:'))) for marker,access in zip(markers,('LOCKED','OPEN')))
+t.doors += (DoorDetail(RoomId(0,0),RoomId(0,1),'LOCKED','Locked',key_label='Club Key',observation_id='00-00:4246'),DoorDetail(RoomId(0,2),RoomId(0,1),'BLOCKED','Door is inactive',observation_id='00-02:6146'))
 print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
@@ -78,6 +79,29 @@ try {
     if (index === 0) assert.equal(await door.locator('.key-symbol title').textContent(), 'Spade Key');
     else assert.equal(await door.locator('.key-symbol').count(), 0, 'an open RE2 door must hide its used-key symbol');
   }
+  const entrance = page.locator('[data-observations~="00-01:6050"]');
+  assert.equal(await entrance.count(), 1);
+  assert.equal(await page.locator('[data-observations~="00-00:4246"]').getAttribute('data-door'), await entrance.getAttribute('data-door'), 'the two entrance observations must bind one physical marker');
+  const exit = page.locator('[data-observations~="00-01:6082"]');
+  assert.equal(await page.locator('[data-observations~="00-02:6146"]').getAttribute('data-door'), await exit.getAttribute('data-door'));
+  await page.locator('#map').getByRole('button', { name: 'Back Street Area West', exact: true }).press('Enter');
+  assert.match(await entrance.getAttribute('class'), /LOCKED/);
+  assert.equal(await entrance.locator('.key-symbol title').textContent(), 'Club Key', 'selecting the other side must use its known key');
+  await page.locator('#map').getByRole('button', { name: 'Basketball Court Alleyway', exact: true }).press('Enter');
+  assert.match(await exit.getAttribute('class'), /BLOCKED/);
+  await page.locator('#map').getByRole('button', { name: "Kendo's Gun Shop", exact: true }).press('Enter');
+  assert.match(await entrance.getAttribute('class'), /LOCKED/);
+  assert.equal(await entrance.locator('.key-symbol title').textContent(), 'Spade Key');
+  assert.match(await exit.getAttribute('class'), /OPEN/);
+  const allExploration = structuredClone(state);
+  const shopVisit = state.current_detail;
+  state.rooms = [shopVisit];
+  state.explored_areas = { 're2-00': [shopVisit] };
+  state.doors = state.doors.filter(door => door.source === '00-01').map(door => ({ ...door, target_visited: false }));
+  await page.waitForFunction(() => document.querySelectorAll('#map .room').length === 1);
+  assert.equal(await page.locator('#map .door').count(), 2, 'the shop must show two doors without revealing either neighbor');
+  Object.assign(state, allExploration);
+  await page.waitForFunction(() => document.querySelectorAll('#map .room').length > 1);
   assert.match(await page.locator('#remaining-items').textContent(), /Handgun ammo/);
   assert.match(await page.locator('#incomplete-checks').textContent(), /Gun/);
   const originalVisit = structuredClone(state.current_detail);
@@ -151,14 +175,14 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
   assert.equal(await floor.locator('option').count(), 1, 'another floor must stay hidden until entered');
   assert.equal(await page.locator('#map .room').count(), 1);
-  assert.equal(await page.locator('[data-door="00-16:2554:0D"]').count(), 1);
-  assert.equal(await page.locator('[data-door="00-16:2522:0D"]').count(), 0, 'a lower-floor trigger must not appear on the upper outline');
+  assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 1);
+  assert.equal(await page.locator('[data-observations~="00-16:2522"]').count(), 0, 'a lower-floor trigger must not appear on the upper outline');
   Object.assign(state, floorStates['lower-later']);
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-02');
   assert.deepEqual(await floor.locator('option').evaluateAll(options => options.map(option => option.value)), ['re2-02', 're2-03']);
   assert.equal(await page.locator('#map .room').count(), 1, 'a floor change must reveal only its visited region');
-  assert.equal(await page.locator('[data-door="00-16:2522:11"]').count(), 1);
-  assert.equal(await page.locator('[data-door="00-16:2554:0D"]').count(), 0);
+  assert.equal(await page.locator('[data-observations~="00-16:2522"]').count(), 1);
+  assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 0);
   await floor.selectOption('re2-03');
   assert.equal(await page.locator('.player').count(), 0, 'browsing another floor must hide the player');
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
@@ -178,8 +202,8 @@ try {
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
   assert.equal(await page.locator('#map .room').count(), 1);
   assert.equal(await floor.locator('option').count(), 2);
-  assert.equal(await page.locator('[data-door="00-16:2554:0D"]').count(), 1);
-  assert.equal(await page.locator('[data-door="00-16:2522:0D"]').count(), 0);
+  assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 1);
+  assert.equal(await page.locator('[data-observations~="00-16:2522"]').count(), 0);
   assert.deepEqual(errors, []);
   console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');
 } finally {

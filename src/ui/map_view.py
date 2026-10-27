@@ -273,6 +273,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 </section>
 <script>
 const catalog = __GRAPH__;
+const isRe2 = catalog.profile_id.startsWith('re2_');
 const areas = new Map(catalog.areas.map(plan => [plan.id,plan]));
 const knownRooms = new Map(catalog.areas.flatMap(plan=>[...plan.rooms,...plan.unoutlined_rooms].flatMap(region=>region.room_ids.map(id=>[id,region.name]))));
 const svg = document.getElementById('map');
@@ -609,7 +610,7 @@ function draw(state) {
     // Boundary markers encode no destination. Even a unique off-plan exit cannot
     // prove its wall identity; retain its known access in the door list instead.
     const ownerIds=owner.room_ids.map(mapRoomId),neighborIds=neighbor ? neighbor.room_ids.map(mapRoomId) : [];
-    const observations=marker.observation_id ? state.doors.filter(door=>door.observation_id===marker.observation_id) : neighbor ? state.doors.filter(door=>
+    const observations=isRe2 ? state.doors.filter(door=>marker.observation_ids.includes(door.observation_id)) : neighbor ? state.doors.filter(door=>
       ownerIds.includes(mapRoomId(door.source))&&neighborIds.includes(mapRoomId(door.target)) || neighborIds.includes(mapRoomId(door.source))&&ownerIds.includes(mapRoomId(door.target))) : [];
     const pickedSource=visible.get(picked)?.room || state.current;
     const candidates=observations.filter(door=>door.source===pickedSource);
@@ -619,8 +620,10 @@ function draw(state) {
     // Resolve access and known key identity independently of that wording.
     const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state) ? chosen[0] : null;
     const access=observed ? observed.state : 'UNCHECKED';
-    const keyLabels=[...new Set(observations.map(door=>door.key_label).filter(Boolean))];
-    const group=element('g',{class:'door '+access,'data-door':marker.id});
+    // RE2 descriptors identify the source side. RE1's paired metadata must
+    // agree on key identity before either direction can display a symbol.
+    const keyLabels=[...new Set((isRe2 ? chosen : observations).map(door=>door.key_label).filter(Boolean))];
+    const group=element('g',{class:'door '+access,'data-door':marker.id,'data-observations':isRe2 ? marker.observation_ids.join(' ') : ''});
     const [a,b]=marker.segment;
     group.append(element('line',{class:'door-border',x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));

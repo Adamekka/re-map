@@ -20,6 +20,8 @@ Keep agent test gameplay out of view and reports spoiler-free. The recorded pass
 
 ## Collection-based completion
 
+[RE2-MAP-004](../research/re2.md#re2-map-004-one-marker-for-a-shared-doorway) adds `tests/test_re2_door_layout.py` for shared physical door markers. Run it with the focused RE2 command and both browser scripts when changing doorway geometry or source-side access/key selection. The shop must show two boundary markers, retain distinct parallel doors, and keep unexplored neighboring outlines hidden.
+
 [RE2-SCD-002](../research/re2/script-coverage.md#re2-scd-002-switch-branches-establish-candidate-list-coverage) checks complete switch catalogs independently of item presence. Regressions cover early-return cases, defaults, nested switches, malformed targets, overlapping commands and orphan markers. Both DualShock opening catalogs clear only with a resolved live registry. Ten retained native captures and fresh history round trips reproduce the corrected empty-room result; these are replays, not new gameplay. The research entry records copied-handler checks, corpus deltas and unavailable external reviews.
 
 [RE2-COLLECT-001](../research/re2.md#re2-collect-001-source-established-items-remain-until-collected) separates item presence from activation. The focused RE2 command above checks mandatory startup declarations, conditional/uncalled creators, conflicting identities, slot replacement, disabled records, source-proof metadata validation, current/departed rooms and fresh acquisition reversal. Unsupported source effects remain unproven. A known remaining item still makes the room incomplete when other checks are unresolved.
