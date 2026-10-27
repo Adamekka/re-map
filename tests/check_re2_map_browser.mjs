@@ -57,6 +57,7 @@ for area in detail_profile.map_layout.document['areas']:
         detail_tracker.rooms[key]=RoomRecord(visited=True,completion=RoomCompletion.Unknown)
         detail_tracker.region_visits[area['id']+':'+room['id']]=key
 detail_tracker.mark_current(RoomId(0,2));detail_tracker.player_heading=90;detail_tracker.current_region='re2-00:02'
+detail_tracker.doors=(DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'LOCKED','Heart Key',key_label='Heart Key',observation_id='01-0b:12090'),DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'UNCHECKED','Door conditions unresolved',observation_id='01-0b:12126'))
 print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas'])}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
@@ -275,6 +276,28 @@ try {
     return results;
   }, detailState);
   assert.equal(doorLocations.length, 2);
+  const keyVisibility = await detailPage.evaluate(fixture => {
+    const visit = fixture.explored_areas['re2-02'].find(visit => visit.id === '0B');
+    const lock = fixture.doors.find(door => door.observation_id === '01-0b:12090');
+    const results = [];
+    for (const access of ['LOCKED', 'OPEN', 'LOCKED']) {
+      lock.state = access;
+      floorView = { mode: 'follow' };
+      selected = null;
+      draw({ ...fixture, area: 're2-02', map_region: visit.id, current: visit.room, current_detail: visit, rooms: [visit], explored_areas: { 're2-02': [visit] } });
+      const symbol = document.querySelector('[data-observations~="01-0b:12090"] .key-symbol');
+      if (access === 'OPEN') {
+        if (symbol) throw new Error('An unlocked door retained its key symbol');
+      } else {
+        if (!symbol || symbol.getAttribute('aria-label') !== 'Heart Key') throw new Error('The known key symbol disappeared');
+        const center = new DOMPoint(0, 0).matrixTransform(symbol.getScreenCTM());
+        if (document.elementFromPoint(center.x, center.y)?.closest('.key-symbol') !== symbol) throw new Error('Another doorway covers the key symbol');
+      }
+      results.push(Boolean(symbol));
+    }
+    return results;
+  }, detailState);
+  assert.deepEqual(keyVisibility, [true, false, true]);
   assert.deepEqual(errors, []);
   await detailPage.close();
   console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');

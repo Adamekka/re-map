@@ -158,6 +158,15 @@ Contributions:
 - 2026-10-27; human user; authorized committing after the external-review limitation was reported.
 - 2026-10-27; Codex root, exact model `gpt-6.1-sol`, verified through T3's current-thread model selection; traced the duplicate observations, implemented and directly reviewed shared-wall pairing, added geometry/browser regressions, compared tracker renders and authored this record. Prior research authorship and gameplay claims remain unchanged.
 
+### Key-symbol layering follow-up, 2026-10-27
+
+The human supplied a crop in which a pale door bar covers a known key symbol. Repeated source creators and the opposite side can occupy the same physical opening. Rendering each complete marker in catalog order lets a later unresolved bar cover an earlier lock's symbol or observed access color.
+
+The renderer now paints unresolved markers before observed access, and key-bearing markers last within each group. The source-side access/key selection remains unchanged. The Heart Key regression uses the two real East Office creator IDs with synthetic Locked, Open and Locked observations: hit testing verifies that no later bar covers the symbol, and unlocking/rewinding removes/restores it. Existing RE1 and RE2 browser checks pass. This is a presentation correction, not confirmation of native key use or new unlock knowledge. The README tracker screenshot is refreshed.
+
+- 2026-10-27; human user; reported the covered key symbol and misleading grey markers.
+- 2026-10-27; Codex root, verified executing model `gpt-6.1-sol`; reproduced overlapping source markers, implemented and directly reviewed draw order, checked rendered symbol hit testing and fresh-state reversal, and authored this follow-up. Direct review checked selected-side behavior, unresolved/known ordering, unchanged source identities, keyboard/tooltips and retained exploration. External review providers remain unavailable as recorded above.
+
 ## RE2-MAP-005: native doorway spans replace arbitrary-wall projection
 
 Status: Candidate for absolute alignment in Resident Evil 2 Dual Shock Ver. USA Leon A SLUS-00748 and Claire B SLUS-00756, Original/Normal. Owned-source extraction and tracker rendering reproduce and correct the reported positions. This is not native passage validation.

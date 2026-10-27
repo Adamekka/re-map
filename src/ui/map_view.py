@@ -613,6 +613,7 @@ function draw(state) {
     group.addEventListener('click',()=>{selected=id;draw(lastState);});
     group.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();selected=id;draw(lastState);}});
   }
+  const doorGroups=[];
   for(const marker of plan ? plan.doors : []) {
     if(!marker.rooms.some(id=>visible.has(id))) continue;
     // A door can be visible on an entered wall before its destination is explored.
@@ -642,8 +643,11 @@ function draw(state) {
       symbol.setAttribute('transform','translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')');
       group.append(symbol);
     }
-    const title=element('title',{});title.textContent=observed ? [...new Set(chosen.map(door=>door.label))].join(' / ') : 'Door';group.append(title);svg.append(group);
+    const title=element('title',{});title.textContent=observed ? [...new Set(chosen.map(door=>door.label))].join(' / ') : 'Door';group.append(title);doorGroups.push(group);
   }
+  // Script variants can share a doorway. Draw unresolved markers underneath
+  // observed access, then keep key symbols above other bars in the same state.
+  doorGroups.sort((a,b)=>Number(!a.classList.contains('UNCHECKED'))-Number(!b.classList.contains('UNCHECKED')) || Number(Boolean(a.querySelector('.key-symbol')))-Number(Boolean(b.querySelector('.key-symbol')))).forEach(group=>svg.append(group));
   if(visible.has(currentId)) {
     const room=byId.get(currentId);
     // Games or rooms without position support retain an explicitly room-only
