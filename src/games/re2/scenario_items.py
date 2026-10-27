@@ -20,11 +20,19 @@ class ScenarioItemProof:
     fixed_context_preserved: bool
     absent_item_ids: list[int]
     item_variants: list[dict]
+    unreachable_creator_offsets: frozenset[int] = frozenset()
 
     def __post_init__(self) -> None:
         assert type(self.fixed_context_preserved) is bool
+        assert type(self.unreachable_creator_offsets) is frozenset
+        assert all(
+            type(offset) is int and offset >= 0
+            for offset in self.unreachable_creator_offsets
+        )
         assert self.fixed_context_preserved or (
-            not self.absent_item_ids and not self.item_variants
+            not self.absent_item_ids
+            and not self.item_variants
+            and not self.unreachable_creator_offsets
         ), "item proofs require a preserved fixed context"
 
 
@@ -675,7 +683,16 @@ def scenario_item_proofs(
                     "offsets": sorted(item["offset"] for item in possible),
                 }
             )
-    return ScenarioItemProof(True, absent, variants)
+    # Keep creator reachability separate from item-ID exclusion: an impossible
+    # generic interaction can conflict with a reachable item's slot too.
+    unreachable_creators = frozenset(
+        row["offset"]
+        for key, program in programs.items()
+        for row in program["commands"]
+        if row["kind"] in ("item", "interaction", "door", "reset")
+        and (key, row["offset"]) not in reached
+    )
+    return ScenarioItemProof(True, absent, variants, unreachable_creators)
 
 
 def scenario_item_candidates(room: dict) -> list[dict]:
