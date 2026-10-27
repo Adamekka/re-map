@@ -1401,6 +1401,160 @@ def test_key_flags_rewind_and_doors_keep_source_id(snapshot):
     assert tracker.doors[0].key_label == "Spade Key"
 
 
+@pytest.mark.parametrize(
+    "profile",
+    [
+        "re2_leon_a_slus00421",
+        "re2_claire_b_slus00592",
+        "re2_leon_a_slus00748",
+        "re2_claire_b_slus00756",
+    ],
+    indirect=True,
+)
+def test_live_door_slot_suppresses_only_superseded_current_variants(snapshot):
+    """RE2-DOOR-004: an active creator replaces alternatives in the same slot."""
+    profile, ram, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    original = source["doors"][0]
+    alternative = {
+        **original,
+        "offset": original["offset"] + 400,
+        "lock_id": 0x82,
+        "lock_type": 89,
+    }
+    source["doors"].append(alternative)
+    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    pointer = 0x80100000 + original["offset"] + 2
+    other_pointer = 0x80100000 + alternative["offset"] + 2
+    ram[other_pointer & 0x1FFFFF : (other_pointer & 0x1FFFFF) + 30] = read(
+        pointer, 30
+    ).data
+    put(other_pointer + 27, 0x82, 1)
+    put(other_pointer + 28, 89, 1)
+    registry = (
+        int(profile.runtime_layout["aot_table_address_ps1"], 0) + original["slot"] * 4
+    )
+    tracker = Tracker()
+    for active in (pointer, other_pointer, pointer):
+        put(registry, active, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        target = [door for door in tracker.doors if door.target == RoomId(0, 0)]
+        assert len(target) == 1
+        assert target[0].state == ("LOCKED" if active == other_pointer else "OPEN")
+        assert (
+            target[0].observation_id
+            == f"00-01:{alternative['offset'] if active == other_pointer else original['offset']}"
+        )
+    put(registry, 0, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    target = [door for door in tracker.doors if door.target == RoomId(0, 0)]
+    assert len(target) == 2
+    assert all(door.state == "UNCHECKED" for door in target)
+
+    # Departure loses the live variant choice; visits must not cache access.
+    profile = replace(profile, rooms={**profile.rooms, "00-00": {**source, "room": 0}})
+    put(profile.room_address, 0, 2)
+    key_address, _ = profile.flag_banks[profile.runtime_layout["key_bank"]]
+    for flags in (0x20000000, 0, 0x20000000):
+        put(key_address, flags, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        departed = [door for door in tracker.doors if door.source == RoomId(0, 1)]
+        assert len(departed) == len(source["doors"])
+        assert all(door.state == "UNCHECKED" for door in departed)
+        alternative_door = next(
+            door
+            for door in departed
+            if door.observation_id == f"00-01:{alternative['offset']}"
+        )
+        assert alternative_door.label == (
+            "Unlocked; access unconfirmed" if flags else "Door conditions unresolved"
+        )
+
+
+@pytest.mark.parametrize(
+    "profile", ["re2_leon_a_slus00421", "re2_leon_a_slus00748"], indirect=True
+)
+@pytest.mark.parametrize("unlocked", [False, True])
+def test_zero_activation_door_remains_inactive_with_fresh_unlock_flags(
+    snapshot, unlocked
+):
+    """RE2-DOOR-004: an unlock does not enable a zero-SAT interaction."""
+    profile, _, put, read = snapshot
+    definition = profile.rooms["00-01"]["doors"][0]
+    pointer = 0x80100000 + definition["offset"] + 2
+    put(pointer + 27, 0x82, 1)
+    put(pointer + 28, 89, 1)
+    key_address, _ = profile.flag_banks[profile.runtime_layout["key_bank"]]
+    put(key_address, 0x20000000 if unlocked else 0, 4)
+    tracker = Tracker()
+    for sat in (0x31, 0, 0x31, 0):
+        put(pointer + 1, sat, 1)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        door = next(
+            door
+            for door in tracker.doors
+            if door.observation_id == f"00-01:{definition['offset']}"
+        )
+        assert door.state == (
+            "BLOCKED" if not sat else "OPEN" if unlocked else "LOCKED"
+        )
+        assert door.label == (
+            "Unlocked; door inactive"
+            if not sat and unlocked
+            else "Door is inactive"
+            if not sat
+            else "Unlocked"
+            if unlocked
+            else "Spade Key"
+        )
+        assert door.key_label == ("" if unlocked else "Spade Key")
+        fresh = Tracker()
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.doors == tracker.doors
+
+
+@pytest.mark.parametrize("fault", ["slot", "activation"])
+def test_door_variant_and_activation_changes_withhold_publication(snapshot, fault):
+    """RE2-DOOR-004: selected creators and activation belong to one snapshot."""
+    profile, _, put, read = snapshot
+    definition = profile.rooms["00-01"]["doors"][0]
+    pointer = 0x80100000 + definition["offset"] + 2
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+
+    def change(address, width):
+        result = read(address, width)
+        if address == pointer and width > 2:
+            if fault == "slot":
+                put(registry + definition["slot"] * 4, 0, 4)
+            else:
+                put(pointer + 1, 0, 1)
+        return result
+
+    assert poll_re2(profile, tracker, change).status is PollStatus.Retry
+    assert tracker == before
+
+
+def test_untrusted_door_geometry_does_not_suppress_an_unresolved_variant(snapshot):
+    """RE2-DOOR-004: a malformed live layout cannot select a source variant."""
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    definition = source["doors"][0]
+    alternative = {**definition, "offset": definition["offset"] + 400}
+    source["doors"].append(alternative)
+    definition["four_point"] = True
+    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    put(0x80100000 + definition["offset"] + 3, 0, 1)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    target = [door for door in tracker.doors if door.target == RoomId(0, 0)]
+    assert len(target) == 2
+    assert all(door.state == "UNCHECKED" for door in target)
+    assert not tracker.rooms["00-01"].doors_complete
+
+
 def test_native_map_contexts_select_one_region_without_revealing_it(profile):
     for room in profile.rooms:
         rows = profile.map_layout.locations[room]

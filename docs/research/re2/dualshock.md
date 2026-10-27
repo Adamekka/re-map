@@ -181,3 +181,48 @@ Contributions:
 
 - 2026-10-27; human user; authorized the Claire port while preparing to try the Leon route. The existing Claire B and Original/Normal, Casual/Softcore scope is retained.
 - 2026-10-27; Codex root, exact executing model `gpt-6.1-sol`; verified Disc 2's hash, audited its layout and code contracts, generated metadata, added profile/history/scenario regressions, performed hidden native admission/restores and CLI/history checks, reviewed the change and authored this record. External save authorship remains ResidentEvilTim's. Original-release authorship and validation are unchanged.
+
+## RE2-DOOR-004: current slot selection and inactive door access
+
+Status: Candidate for DualShock Leon A SLUS-00748. Retained publications and logs reproduce duplicate current creators; pinned code and synthetic tests establish the correction. No new gameplay observation confirms activation or passage. Original-release capture replay is recorded separately and does not confirm DualShock behavior.
+
+The 2026-10-27 report concerns grey or incorrect doors during the user's playthrough. This pass incorporates the task-provided `current-variant.patch` and regression, then fixes the independently reproduced zero-activation defect. It changes only door interpretation and tests. Map geometry, symbols, interior geometry, generated metadata and user history are unchanged.
+
+### Revision contract and defects
+
+The requested revision is Resident Evil 2 Dual Shock Ver., USA Disc 1, Leon A, Original/Normal, SLUS-00748. Executable `SLUS_007.48` has SHA256 `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`. [RE2-DS-001](#re2-ds-001-leon-a-dualshock-revision-port) records its full identity and prior DuckStation `0.1-12442-gdd4a0eb77` setup. This pass launches no emulator, loads no checkpoint and makes no guest-memory, settings or live-history writes. Retained captures keep their originating claims' emulator and assistance provenance.
+
+1. A live interaction slot selects one source creator. The reader previously also published alternative door creators in that slot as Unchecked. The task-provided fix excludes these superseded current definitions after source, slot and geometry validation. An absent or untrusted current binding remains unresolved. Departed rooms retain their candidate uncertainty; the reader does not cache the previous variant choice.
+2. A bound kind-one door with SAT zero previously reported Open or Locked from its lock payload. The reader now marks it inactive before interpreting access, retaining independently established unlock knowledge. A set key flag cannot activate the door. Reenabling SAT reconstructs the current lock result from fresh flags. Losing required four-point geometry remains unresolved rather than proving inactivity.
+
+Addresses are PS1 virtual. The registry at `0x800CE558` contains 32 little-endian unsigned four-byte pointers, mask `0xFFFFFFFF`; the loaded-source pointer is at `0x800CE324`, with the same width and mask. Registry pointers address source offset plus two. Kind and SAT occupy descriptor offsets zero and one, unsigned bytes with masks `0xFF`; SAT bit `0x80` selects four-point geometry. Ordinary/four-point payloads begin at descriptor offsets 12/20. Target stage/room and lock ID/type are payload byte offsets 8/9 and 15/16. Byte order is immaterial for these byte fields. Fresh bank-31 unlock knowledge uses `0x800D4A34`, eight bytes, little-endian words and mask `0x80000000 >> (bit % 32)`, with bit index `lock_id & 0x3F` when lock ID bit `0x80` is set.
+
+Owned executable inspection at `0x80054BE4..0x80054C4C` shows the door creator replacing its registry entry. The shared activation guard loads SAT at `0x80051160`, ANDs the caller mask at `0x80051168` and branches to the skip path `0x800514A4` when zero. The eight MIPS32 little-endian words at `0x80051160` have SHA256 `8e1b1b82dc8bc7efe4349d50fa81ec12f2f0470b5444275388cdbb5d26d35111`. This agrees with the original-release guard in [RE2-COLLECT-022](../re2.md#re2-collect-022-zero-activation-bytes-do-not-establish-availability). It is source inspection, not gameplay confirmation. Nonzero SAT masks and additional actor, floor, distance and scripted-dispatch conditions retain their existing limits.
+
+### Reproduction and retained evidence
+
+The supplied `/tmp/re-map-re2-door-positions-20261027/current-publication.json` contains only waiting/disconnected status, no current room and no rooms. It cannot validate a door. The same directory's `before-render.json` and `after-render.json`, plus retained tracker logs, show source `01-0a` publishing five current door candidates. Offsets 2178 and 2210 select slots zero and one, while superseded offsets 2090 and 2122 also appear grey. Selection now retains the three current doors, without changing the live Unlocked/Open results. The logs also reproduce alternative creators in other sources. These publication observations do not prove passage or source binding independently of the original reader.
+
+Private offline evidence is under `/tmp/re-map-re2-door-state-20261027/`: `baseline/live_tracking.py`, `replay.py`, `capture-replay.json`, `log-door-observations.json` and `dualshock-activation-guard.asm`. Baseline is commit `2c1f8bf`; reader SHA256 is `4a8d231ef7ea2dc8930611114d134f415476bc874bfc2074256fa7b7968b2f0f`. Replay hashes and deduplicates retained full RAM, verifies each revision's runtime signature, and compares old/new results and tracker fields. No raw RAM or copyrighted source is added to Git.
+
+| Revision | Unique captures / Display | Removed superseded door observations | Zero-SAT corrections |
+| --- | --- | --- | --- |
+| Leon A SLUS-00421 | 279 / 266 | 158 | 5 |
+| Claire B SLUS-00592 | 94 / 88 | 42 | 0 |
+| Leon A SLUS-00748 | 7 / 3 | 0 | 0 |
+| Claire B SLUS-00756 | 3 / 3 | 0 | 0 |
+
+All 383 result statuses/messages and all item, completion, pose, map and visit fields agree. Changes are limited to the selected door list, zero-SAT access and derived door coverage. The five zero-SAT corrections are door observations across three original-release captures, not five independent captures. They are retained in `/tmp/re-map-re2-third-variant-native-20261023/native/`: `alternate-connection-verified.ram`, SHA256 `6d2d60208db648629f6cd489541c83c31b7712dc680834726807bf49561bb4e5`; `alternate-transition-result.ram`, `e2728702220813974e92ce9ac82ae2b66aa6ed99adbc0a0010e5245f6421218d`; and `alternate-lower-entry.ram`, `72210889bbceaa714de05bf2a033f15523d021c59852d05d0cd9eef0cb84fab6`. Their selected descriptors have kind/SAT bytes `01 00`. No new denied interaction is observed. The six unique Display captures across the two DualShock profiles are unchanged opening states, not validation of the user's current rooms.
+
+### Tests, review and limits
+
+Run `python3 -m pytest -q tests/test_re2_profile.py tests/test_re2_metadata.py tests/test_re2_tracking.py tests/test_re2_position.py tests/test_visit_history.py tests/test_logging.py tests/test_re2_door_layout.py`. All 980 tests pass. New door regressions cover creator replacement and reversal across all four profiles, absent bindings, departed uncertainty with fresh unlock reversal, zero-SAT disabling/reenabling, fresh trackers, untrusted geometry, and atomic rejection when registry or SAT changes during a read. The zero-SAT tests failed against the preceding reader and pass with the fix. Scoped Ruff formatting and E4/E7/E9/F checks pass with the repository's established E402 exclusion.
+
+Primary final review checked slot/source binding, mutable lock payloads, zero-SAT precedence, geometry rejection, fresh flag interpretation, departed uncertainty, coherent publication, scoped changes and retained-capture differences. No further verified defect remains within this increment. UI/UX/AX assessment is limited to the unchanged publication/renderer contract; no browser or live-emulator check is claimed. Required external Claude and Gemini review providers are disabled in T3, as reported by the coordinating task. Neither review ran; no replacement provider or CLI fallback was used, and there is no external endorsement.
+
+Remaining limits include unresolved departed activation and scenario alternatives, nonzero activation-mask interpretation, direct script dispatch, and native validation of current DualShock doors. Earlier passage never becomes cached Open knowledge. No new room coverage, native unlock lifecycle, normal memory-card persistence or campaign readiness is claimed. The README screenshot is retained because no UI code or geometry changes.
+
+Contributions:
+
+- 2026-10-27; coordinating task; supplied the current-slot diagnosis, patch, regression and retained publication paths, and required offline-only work without emulator access.
+- 2026-10-27; implementation sub-agent, exact executing model `gpt-6.1-sol`, verified in session `01a17f15-f420-7511-ba71-e950442b5d2a`'s latest `turn_context`; incorporated the supplied fix, reproduced and corrected zero-SAT access, added regressions, replayed retained captures, performed the primary review and wrote this record. No new native gameplay experiment was performed.

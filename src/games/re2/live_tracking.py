@@ -245,6 +245,9 @@ def poll_re2(
                 # Mutable descriptor payload controls current targets and locks.
                 live_doors[offset] = {
                     **definition,
+                    # The shared activation dispatcher skips zero SAT before
+                    # door handling, even when the fresh key flag is set.
+                    "inactive": not packet[1],
                     "stage": packet[operand + 8],
                     "room": packet[operand + 9],
                     "lock_id": packet[operand + 15],
@@ -382,6 +385,17 @@ def poll_re2(
                 observed = (
                     live_doors.get(definition["offset"]) if visited == key else None
                 )
+                if (
+                    visited == key
+                    and observed is None
+                    and any(
+                        door["slot"] == definition["slot"]
+                        for door in live_doors.values()
+                    )
+                ):
+                    # A live slot identifies its current script variant. Other
+                    # creators for that slot are not additional current doors.
+                    continue
                 lock = observed or definition
                 key_type = lock["lock_type"]
                 key_label = (

@@ -278,6 +278,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | --- | --- |
 | [RE2-DS-001](research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) | exact requested Disc 1 hash, Leon A Original/Normal profile, separate history and revision validation limits |
 | [RE2-DS-002](research/re2/dualshock.md#re2-ds-002-claire-b-dualshock-revision-port) | exact requested Disc 2 hash, Claire B profile, separate history and revision validation limits |
+| [RE2-DOOR-004](research/re2/dualshock.md#re2-door-004-current-slot-selection-and-inactive-door-access) | suppress superseded current creators, respect zero activation, preserve departed uncertainty and fresh unlock flags; offline validation limits |
 
 ## RE2 Leon A research
 
