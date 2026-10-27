@@ -258,6 +258,20 @@ try {
     return count;
   }, detailState);
   assert.equal(detailLabels, detailCount);
+  await detailPage.evaluate(fixture => {
+    const visits = fixture.explored_areas['re2-02'];
+    for (const id of ['00', '0B']) {
+      const current = visits.find(visit => visit.id === (id === '00' ? '0B' : '00'));
+      selected = id;
+      selectedArea = 're2-02';
+      floorView = { mode: 'follow' };
+      draw({ ...fixture, area: 're2-02', map_region: current.id, current: current.room, current_detail: current, rooms: visits, explored_areas: { 're2-02': visits } });
+      const room = document.querySelector('.room.selected:not(.current)');
+      const core = room?.querySelector('.map-detail-core');
+      if (!core || getComputedStyle(core).stroke !== 'rgb(23, 35, 45)' || getComputedStyle(core).fill !== 'none') throw new Error('Inspecting a room overwrites its interior styling');
+      if (getComputedStyle(room.firstElementChild).stroke !== 'rgb(240, 207, 140)') throw new Error('The selected outer outline lost its highlight');
+    }
+  }, detailState);
   const doorLocations = await detailPage.evaluate(fixture => {
     const results = [];
     for (const [region, expected] of [

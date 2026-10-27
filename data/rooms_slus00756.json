@@ -25,7 +25,8 @@
     "RE2-COLLECT-019",
     "RE2-COLLECT-020",
     "RE2-SOURCE-001",
-    "RE2-SCD-002"
+    "RE2-SCD-002",
+    "RE2-DS-003"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -54,6 +55,7 @@
     "address_ps1": "0x800E8CA8",
     "limit_address_ps1": "0x800EBB28"
   },
+  "scenario_vibration_writes": [],
   "unsupported_sources": [],
   "presence_counter_writes": {
     "address_ps1": "0x800D47A4",

@@ -1,7 +1,8 @@
 """Generate numeric RE2 metadata from the pinned owned CUE. No artwork is exported.
 
 Generation needs Unicorn (pip package `unicorn`) to execute the two bounded
-native map selectors. The running tracker uses only the generated JSON.
+native map selectors and Shapely 2.1 for the scoped DualShock collision details.
+The running tracker uses only the generated JSON.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from build_item_table import _read_file
 from extract_psx_file import _find
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
+from re2_map_interiors import add_collision_interiors
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapProjection
@@ -431,6 +433,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                         entry["name"] = names["rooms"].get(
                             room["id"], "Room " + room["id"]
                         )
+    add_collision_interiors(profile["profile_id"], sources, plans, projection)
     for plan in plans:
         # Extra native shapes can belong exclusively to another character or an unsupported
         # scenario. They stay outside this profile's revealable geometry.

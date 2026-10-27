@@ -26,6 +26,8 @@ Uniquely matched doorways appear once on the shared wall. Selecting a room shows
 
 Interior structures use dark cores with thin outlines, and room names avoid those structures. [RE2-MAP-003](research/re2.md#interior-presentation-follow-up-2026-10-27) records the alleyway presentation check.
 
+The DualShock Main Hall and East Office also show source-derived collision footprints and ramp/step envelopes where their original map sprites are empty. These are approximate navigation shapes; exact visible walls and stair treads remain unverified. [RE2-MAP-006](research/re2/interiors.md#re2-map-006-collision-footprints-supplement-two-empty-native-room-sprites) records the geometry and limits.
+
 ## Original-release profiles and validation
 
 RE2 follows the shared [collection-based completion policy](room-completion.md). An available collectible or source-established uncollected item keeps its explored room incomplete, including before activation and after departure. Clearance requires a resolved full list with nothing remaining. An inactive pointer or catalog candidate alone does not establish an item; unsupported conditions and conflicting identities remain unknown. The bounded source proof covers audited startup paths. [RE2-COLLECT-001](research/re2.md#re2-collect-001-source-established-items-remain-until-collected) records the initial implementation and its limits. [RE2-COLLECT-002](research/re2.md#re2-collect-002-conflicting-slots-preserve-unrelated-item-proofs) preserves proofs for unrelated items when another slot has conflicting definitions. [RE2-COLLECT-003](research/re2.md#re2-collect-003-scripted-activation-preserves-collection-identity) extends the proof through audited actor setup, automatic task scheduling and matching interaction resets. The original seventeen relevant collectible proofs remain unchanged. [RE2-COLLECT-006](research/re2.md#re2-collect-006-stable-conditions-preserve-departed-pickups) adds shared startup-condition proofs for ordinary pickups, using an explicit revision-specific set of stable flags. Volatile or unsupported conditions remain unresolved. Source-proof counts describe offline interpretation, not gameplay coverage.
@@ -107,7 +109,7 @@ The [two-pickup native validation](research/re2.md#native-follow-up-for-generate
 
 The [remaining pickup's native validation](research/re2.md#native-follow-up-for-generated-source-04-08-id-64-2026-10-24) closes ID 64's pre-collection departure gap. Its neighbor is acquired first, leaving the target Uncollected after departure; collection then clears the room. Reentry, repeat collection and six exact native restores preserve the separate acquisition identities and fresh completion. All six scenario-compatible pickup IDs added by RE2-COLLECT-015 now have named native lifecycle observations. This adds no runtime source, so coverage stays 67 of 125. Unobserved conditions, the parked-item gap and broader readiness remain unresolved.
 
-The catalog and floor plans contain numeric metadata and contours, not original game pixels or executable bytes. To regenerate them from the pinned owned disc, install `unicorn` in a development environment and run:
+The catalog and floor plans contain numeric metadata and contours, not original game pixels or executable bytes. To regenerate them from the pinned owned disc, install `unicorn` and Shapely 2.1 in a development environment and run:
 
 ```sh
 python3 tools/build_re2_metadata.py '/path/to/Resident Evil 2 (USA) (Disc 1).cue' data/rooms_slus00421.json data/floor_plans_slus00421.json

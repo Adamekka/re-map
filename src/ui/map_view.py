@@ -203,7 +203,7 @@ main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; b
 cannot merge them with a decided state. */
 .room.UNKNOWN path { fill:#42515d; }
 .room.current path { stroke:#d9f6ff; stroke-width:1.05; }
-.room.selected:not(.current) path { stroke:#f0cf8c; }
+.room.selected:not(.current) > path:first-child { stroke:#f0cf8c; }
 .room text { fill:#dce7ee; font:2.6px system-ui,sans-serif; pointer-events:none; text-anchor:middle; }
 .room.current text { font-weight:700; fill:#fff; }
 .room path.map-detail { fill:none; stroke:#bed0dd; stroke-width:1; stroke-linecap:square; pointer-events:none; }
