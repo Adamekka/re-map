@@ -27,7 +27,7 @@ from games.item_quantity import ItemQuantityState
 from games.re2.live_tracking import poll_re2
 from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import RuntimeSignature
-from tracker.exploration_state import RoomCompletion, Tracker
+from tracker.exploration_state import DoorUnlockState, RoomCompletion, Tracker
 from tracker.player_position import ApproximatePosition, RoomOnlyPosition
 from tracker.polling import PollStatus
 from ui.map_view import map_state
@@ -1437,14 +1437,17 @@ def test_key_flags_rewind_and_doors_keep_source_id(snapshot):
         "Spade Key",
         "00-01:6050",
     )
+    assert door.unlock_state is DoorUnlockState.Locked
     put(0x800CCB60, 0x20000000, 4)
     poll_re2(profile, tracker, read)
     assert tracker.doors[0].state == "OPEN"
     assert tracker.doors[0].key_label == ""
+    assert tracker.doors[0].unlock_state is DoorUnlockState.Unlocked
     put(0x800CCB60, 0, 4)
     poll_re2(profile, tracker, read)
     assert tracker.doors[0].state == "LOCKED"
     assert tracker.doors[0].key_label == "Spade Key"
+    assert tracker.doors[0].unlock_state is DoorUnlockState.Locked
 
 
 @pytest.mark.parametrize(
@@ -1487,6 +1490,11 @@ def test_live_door_slot_suppresses_only_superseded_current_variants(snapshot):
         target = [door for door in tracker.doors if door.target == RoomId(0, 0)]
         assert len(target) == 1
         assert target[0].state == ("LOCKED" if active == other_pointer else "OPEN")
+        assert target[0].unlock_state is (
+            DoorUnlockState.Locked
+            if active == other_pointer
+            else DoorUnlockState.Unknown
+        )
         assert (
             target[0].observation_id
             == f"00-01:{alternative['offset'] if active == other_pointer else original['offset']}"
@@ -1496,6 +1504,7 @@ def test_live_door_slot_suppresses_only_superseded_current_variants(snapshot):
     target = [door for door in tracker.doors if door.target == RoomId(0, 0)]
     assert len(target) == 2
     assert all(door.state == "UNCHECKED" for door in target)
+    assert all(door.unlock_state is DoorUnlockState.Unknown for door in target)
 
     # Departure loses the live variant choice; visits must not cache access.
     profile = replace(profile, rooms={**profile.rooms, "00-00": {**source, "room": 0}})
@@ -1512,17 +1521,17 @@ def test_live_door_slot_suppresses_only_superseded_current_variants(snapshot):
             for door in departed
             if door.observation_id == f"00-01:{alternative['offset']}"
         )
-        assert alternative_door.label == (
-            "Unlocked; access unconfirmed" if flags else "Door conditions unresolved"
-        )
+        assert alternative_door.label == "Door conditions unresolved"
+        assert alternative_door.unlock_state is DoorUnlockState.Unknown
+        assert alternative_door.key_label == "Spade Key"
 
 
 @pytest.mark.parametrize(
     "profile", ["re2_leon_a_slus00421", "re2_leon_a_slus00748"], indirect=True
 )
-@pytest.mark.parametrize("unlocked", [False, True])
+@pytest.mark.parametrize("initial_unlocked", [False, True])
 def test_zero_activation_door_remains_inactive_with_fresh_unlock_flags(
-    snapshot, unlocked
+    snapshot, initial_unlocked
 ):
     """RE2-DOOR-004: an unlock does not enable a zero-SAT interaction."""
     profile, _, put, read = snapshot
@@ -1531,9 +1540,16 @@ def test_zero_activation_door_remains_inactive_with_fresh_unlock_flags(
     put(pointer + 27, 0x82, 1)
     put(pointer + 28, 89, 1)
     key_address, _ = profile.flag_banks[profile.runtime_layout["key_bank"]]
-    put(key_address, 0x20000000 if unlocked else 0, 4)
     tracker = Tracker()
-    for sat in (0x31, 0, 0x31, 0):
+    for sat, unlocked in (
+        (0x31, initial_unlocked),
+        (0, initial_unlocked),
+        (0, not initial_unlocked),
+        (0, initial_unlocked),
+        (0x31, initial_unlocked),
+        (0, initial_unlocked),
+    ):
+        put(key_address, 0x20000000 if unlocked else 0, 4)
         put(pointer + 1, sat, 1)
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
         door = next(
@@ -1554,6 +1570,9 @@ def test_zero_activation_door_remains_inactive_with_fresh_unlock_flags(
             else "Spade Key"
         )
         assert door.key_label == ("" if unlocked else "Spade Key")
+        assert door.unlock_state is (
+            DoorUnlockState.Unlocked if unlocked else DoorUnlockState.Locked
+        )
         fresh = Tracker()
         assert poll_re2(profile, fresh, read).status is PollStatus.Display
         assert fresh.doors == tracker.doors
@@ -1598,6 +1617,7 @@ def test_untrusted_door_geometry_does_not_suppress_an_unresolved_variant(snapsho
     target = [door for door in tracker.doors if door.target == RoomId(0, 0)]
     assert len(target) == 2
     assert all(door.state == "UNCHECKED" for door in target)
+    assert all(door.unlock_state is DoorUnlockState.Unknown for door in target)
     assert not tracker.rooms["00-01"].doors_complete
 
 
@@ -1938,24 +1958,135 @@ def test_foreign_room_in_history_reports_a_recoverable_failure(snapshot):
     assert set(tracker.rooms) == {"255-ff"}
 
 
+@pytest.mark.parametrize(
+    "profile",
+    [
+        "re2_leon_a_slus00421",
+        "re2_claire_b_slus00592",
+        "re2_leon_a_slus00748",
+        "re2_claire_b_slus00756",
+    ],
+    indirect=True,
+)
 def test_departed_door_retains_fresh_unlock_knowledge_without_claiming_access(snapshot):
+    """RE2-DOOR-005: fresh unlock knowledge never proves departed access."""
     profile, _, put, read = snapshot
     source = copy.deepcopy(profile.rooms["00-00"])
     source["doors"][0].update(lock_id=0x82, lock_type=89)
     profile = replace(profile, rooms={**profile.rooms, "00-00": source})
     tracker = Tracker()
     tracker.mark_current(RoomId(0, 0))
-    put(0x800CCB60, 0x20000000, 4)
+    key_address, _ = profile.flag_banks[profile.runtime_layout["key_bank"]]
+    visits = None
+    for unlocked in (False, True, False, True):
+        put(key_address, 0x20000000 if unlocked else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        door = next(door for door in tracker.doors if door.source == RoomId(0, 0))
+        assert door.state == "UNCHECKED"
+        assert door.unlock_state is (
+            DoorUnlockState.Unlocked if unlocked else DoorUnlockState.Locked
+        )
+        assert door.label == (
+            "Unlocked; access unconfirmed" if unlocked else "Door conditions unresolved"
+        )
+        assert door.key_label == ("" if unlocked else "Spade Key")
+        publication = next(
+            door for door in map_state(tracker)["doors"] if door["source"] == "00-00"
+        )
+        assert publication["unlock_state"] == door.unlock_state.value
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 0))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.doors == tracker.doors
+        assert set(tracker.rooms) == {"00-00", "00-01"}
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("fault", ["missing", "geometry", "duplicate", "item"])
+def test_unbound_door_creators_do_not_gain_unlock_knowledge(snapshot, departed, fault):
+    """RE2-DOOR-005: source/slot ambiguity cannot choose a lock from a set bit."""
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-01"])
+    definition = source["doors"][0]
+    definition.update(lock_id=0x82, lock_type=89)
+    pointer = 0x80100000 + definition["offset"] + 2
+    if fault == "missing":
+        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+    elif fault == "geometry":
+        definition["four_point"] = True
+    elif fault == "duplicate":
+        source["doors"].append({**definition})
+    else:
+        source["items"].append({**source["items"][0], "slot": definition["slot"]})
+        put(0x800C66C8 + definition["slot"] * 4, 0, 4)
+    put(pointer + 27, 0x82, 1)
+    put(pointer + 28, 89, 1)
+    rooms = {**profile.rooms, "00-01": source}
+    if departed:
+        rooms["00-00"] = {**profile.rooms["00-01"], "room": 0}
+        put(profile.room_address, 0, 2)
+    profile = replace(profile, rooms=rooms)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 1))
+    key_address, _ = profile.flag_banks[profile.runtime_layout["key_bank"]]
+    for flags in (0x20000000, 0, 0x20000000):
+        put(key_address, flags, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        doors = [
+            door
+            for door in tracker.doors
+            if door.observation_id == f"00-01:{definition['offset']}"
+        ]
+        assert len(doors) == (2 if fault == "duplicate" else 1)
+        for door in doors:
+            assert door.state == "UNCHECKED"
+            assert door.unlock_state is (
+                DoorUnlockState.Unlocked
+                if departed and fault in ("missing", "geometry") and flags
+                else DoorUnlockState.Locked
+                if departed and fault in ("missing", "geometry")
+                else DoorUnlockState.Unknown
+            )
+            assert door.key_label == (
+                "" if door.unlock_state is DoorUnlockState.Unlocked else "Spade Key"
+            )
+
+
+@pytest.mark.parametrize("departed", [False, True])
+@pytest.mark.parametrize("fault", ["changed", "short"])
+def test_fresh_unlock_flags_require_coherent_publication(snapshot, departed, fault):
+    """RE2-DOOR-005: no partial unlock update survives an incoherent read."""
+    profile, _, put, read = snapshot
+    source = copy.deepcopy(profile.rooms["00-00"])
+    source["doors"][0].update(lock_id=0x82, lock_type=89)
+    profile = replace(profile, rooms={**profile.rooms, "00-00": source})
+    definition = profile.rooms["00-01"]["doors"][0]
+    pointer = 0x80100000 + definition["offset"] + 2
+    put(pointer + 27, 0x82, 1)
+    put(pointer + 28, 89, 1)
+    tracker = Tracker()
+    if departed:
+        tracker.mark_current(RoomId(0, 0))
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
-    door = next(door for door in tracker.doors if door.source == RoomId(0, 0))
-    assert door.state == "UNCHECKED"
-    assert door.label == "Unlocked; access unconfirmed"
-    assert door.key_label == ""
-    put(0x800CCB60, 0, 4)
-    assert poll_re2(profile, tracker, read).status is PollStatus.Display
-    door = next(door for door in tracker.doors if door.source == RoomId(0, 0))
-    assert door.label == "Door conditions unresolved"
-    assert door.key_label == "Spade Key"
+    before = copy.deepcopy(tracker)
+    key_address, _ = profile.flag_banks[profile.runtime_layout["key_bank"]]
+
+    def change(address, width):
+        result = read(address, width)
+        if address == key_address and width == 4:
+            if fault == "short":
+                return MemRead(True, result.data[:-1])
+            put(key_address, 0x20000000, 4)
+            return read(address, width)
+        return result
+
+    assert poll_re2(profile, tracker, change).status is (
+        PollStatus.Retry if fault == "changed" else PollStatus.ReadFailure
+    )
+    assert tracker == before
 
 
 @pytest.mark.parametrize("departed", [False, True])

@@ -78,6 +78,7 @@ def map_state(tracker: Tracker) -> dict:
                 "label": door.label,
                 "key_label": door.key_label,
                 "observation_id": door.observation_id,
+                "unlock_state": door.unlock_state.value,
             }
             for door in tracker.doors
         ],
@@ -218,6 +219,7 @@ cannot merge them with a decided state. */
 .door.LOCKED line,.door.BLOCKED line { stroke:#ed6965; }
 .door.UNLOCKABLE line { stroke:#e9b85e; }
 .door.UNCHECKED line { stroke:#d0d9de; }
+.door.UNCHECKED.unlocked line:not(.door-border) { stroke:#a5d5ac; stroke-dasharray:1.5 1; }
 /* RE2 doors sit directly on walls, so a dark border keeps access colors
 distinct from room outlines and fills. */
 .door line.door-border { stroke:#10151b; stroke-width:2.6; }
@@ -228,6 +230,13 @@ distinct from room outlines and fills. */
 .door.OPEN .key-symbol rect { stroke:#71b6cf; }
 .door.LOCKED .key-symbol rect,.door.BLOCKED .key-symbol rect { stroke:#ed6965; }
 .door.UNLOCKABLE .key-symbol rect { stroke:#e9b85e; }
+.unlock-symbol { pointer-events:all; }
+.unlock-symbol rect { fill:#14202a; stroke:#a5d5ac; stroke-width:.4; }
+.unlock-symbol path { fill:none; stroke:#a5d5ac; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+/* The badge covers the door bar, so its frame must retain access status. */
+.door.UNCHECKED .unlock-symbol rect { stroke-dasharray:.9 .6; }
+.door.BLOCKED .unlock-symbol rect { stroke:#ed6965; }
+.door.OPEN .unlock-symbol rect { stroke:#71b6cf; }
 aside { border-left:1px solid #303d48; padding:22px; }
 #room-name { font-size:18px; font-weight:600; margin:0 0 8px; }
 #room-id { color:#91a5b4; font-size:13px; margin-bottom:18px; }
@@ -245,9 +254,11 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 .list-symbol.collected,.list-symbol.open { color:#71b6cf; }
 .list-symbol.locked,.list-symbol.blocked { color:#ed6965; }
 .list-symbol.unlockable { color:#e9b85e; }
+.list-symbol.unlocked { color:#a5d5ac; }
 #legend { display:flex; flex-wrap:wrap; gap:12px 24px; padding:18px 28px 24px; color:#abb9c5; font-size:13px; }
 .key { display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-2px; }
 .key.door-key { height:3px; vertical-align:3px; }
+.key.unlocked-key { height:0; border-top:3px dashed #a5d5ac; }
 #note { color:#91a5b4; font-size:13px; line-height:1.5; }
 #overview { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:0 28px 28px; }
 #overview h2 { margin:0 0 12px; }
@@ -279,6 +290,7 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key door-key" style="background:#ed6965"></i>Locked</span>
 <span><i class="key door-key" style="background:#e9b85e"></i>Unlock from this side</span>
 <span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
+<span><i class="key door-key unlocked-key"></i>Unlocked · access unconfirmed</span>
 </div>
 <section id="overview" aria-label="Explored room items">
 <section aria-labelledby="remaining-heading"><h2 id="remaining-heading">Remaining items</h2><p id="remaining-status">Waiting for game.</p><div id="remaining-items"></div></section>
@@ -472,6 +484,7 @@ const symbolPaths=new Map([
   ['open','M2 15V1H10V5M2 15H10V12M6 8H15M12 5L15 8L12 11'],
   ['locked','M3 7H13V15H3ZM5 7V4A3 3 0 0 1 11 4V7M8 10V12'],
   ['unlockable','M3 7H13V15H3ZM5 7V4A3 3 0 0 1 11 4M8 10V12'],
+  ['unlocked','M3 7H13V15H3ZM5 7V3A3 3 0 0 1 11 3M8 10V12'],
   ['blocked','M8 1A7 7 0 1 1 8 15A7 7 0 1 1 8 1ZM3 3L13 13'],
 ]);
 const itemVisuals=new Map([
@@ -683,19 +696,29 @@ function draw(state) {
     const pickedSource=visible.get(picked)?.room || state.current;
     const candidates=observations.filter(door=>door.source===pickedSource);
     const currentCandidates=observations.filter(door=>door.source===state.current);
-    const chosen=candidates.length ? candidates : currentCandidates.length ? currentCandidates : observations;
+    // A missing selected RE2 side cannot borrow the opposite side's lock.
+    const pickedSide=isRe2 && [owner,neighbor].some(room=>room && room.room_ids.includes(pickedSource));
+    const chosen=candidates.length ? candidates : pickedSide ? [] : currentCandidates.length ? currentCandidates : observations;
     // Opposite sides can agree on access while saying "No lock"/"Unlocked".
     // Resolve access and known key identity independently of that wording.
     const observed=chosen.length && chosen.every(door=>door.state===chosen[0].state) ? chosen[0] : null;
     const access=observed ? observed.state : 'UNCHECKED';
+    // One bound creator supplies unlock knowledge. Agreement on access alone
+    // cannot choose between opposite sides or competing creator identities.
+    const unlocked=chosen.length===1 && chosen[0].unlock_state==='UNLOCKED';
     // RE2 descriptors identify the source side. RE1's paired metadata must
     // agree on key identity before either direction can display a symbol.
     const keyLabels=[...new Set((isRe2 ? chosen : observations).map(door=>door.key_label).filter(Boolean))];
-    const group=element('g',{class:'door '+access,'data-door':marker.id,'data-observations':isRe2 ? marker.observation_ids.join(' ') : ''});
+    const group=element('g',{class:'door '+access+(unlocked?' unlocked':''),'data-door':marker.id,'data-observations':isRe2 ? marker.observation_ids.join(' ') : ''});
     const [a,b]=marker.segment;
     group.append(element('line',{class:'door-border',x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
-    if(observed && access!=='OPEN' && keyLabels.length===1) {
+    if(unlocked) {
+      const symbol=element('g',{class:'unlock-symbol',role:'img','aria-label':'Unlocked',transform:'translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')'});
+      symbol.append(element('rect',{x:-2,y:-2,width:4,height:4,rx:.5}));
+      symbol.append(element('path',{d:symbolPaths.get('unlocked'),transform:'scale(.2) translate(-8 -8)'}));
+      group.append(symbol);
+    } else if(observed && access!=='OPEN' && keyLabels.length===1) {
       const symbol=keySymbol(keyLabels[0]);
       symbol.setAttribute('transform','translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')');
       group.append(symbol);
@@ -703,8 +726,8 @@ function draw(state) {
     const title=element('title',{});title.textContent=observed ? [...new Set(chosen.map(door=>door.label))].join(' / ') : 'Door';group.append(title);doorGroups.push(group);
   }
   // Script variants can share a doorway. Draw unresolved markers underneath
-  // observed access, then keep key symbols above other bars in the same state.
-  doorGroups.sort((a,b)=>Number(!a.classList.contains('UNCHECKED'))-Number(!b.classList.contains('UNCHECKED')) || Number(Boolean(a.querySelector('.key-symbol')))-Number(Boolean(b.querySelector('.key-symbol')))).forEach(group=>svg.append(group));
+  // observed access, then keep lock symbols above other bars in the same state.
+  doorGroups.sort((a,b)=>Number(!a.classList.contains('UNCHECKED'))-Number(!b.classList.contains('UNCHECKED')) || Number(Boolean(a.querySelector('.key-symbol,.unlock-symbol')))-Number(Boolean(b.querySelector('.key-symbol,.unlock-symbol')))).forEach(group=>svg.append(group));
   if(visible.has(currentId)) {
     const room=byId.get(currentId);
     // Games or rooms without position support retain an explicitly room-only
@@ -758,8 +781,10 @@ function draw(state) {
     const label=document.createElement('span');label.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';name.append(listSymbol('door','neutral'),label);
     const status={OPEN:'open',LOCKED:'locked',BLOCKED:'blocked',UNLOCKABLE:'unlockable',UNCHECKED:'unresolved'}[door.state];
     if(!status) throw new Error('Unknown door state: '+door.state);
-    const symbol=door.key_label && door.state!=='OPEN' ? keySymbols.has(door.key_label)?door.key_label:'key' : status;
-    const text=document.createElement('span');text.textContent=door.label+(door.key_label && !door.label.includes(door.key_label) ? ' · '+door.key_label : '');
+    const unlocked=door.unlock_state==='UNLOCKED';
+    const symbol=door.key_label && door.state!=='OPEN' && !unlocked ? keySymbols.has(door.key_label)?door.key_label:'key' : status;
+    const text=document.createElement('span');text.textContent=door.label+(!unlocked && door.key_label && !door.label.includes(door.key_label) ? ' · '+door.key_label : '');
+    if(unlocked) detail.append(listSymbol('unlocked','unlocked'));
     detail.append(listSymbol(symbol,status==='unresolved'?'neutral':status),text);row.append(name,detail);doors.append(row);
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');

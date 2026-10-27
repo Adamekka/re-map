@@ -35,6 +35,12 @@ class ItemDetail:
         ), "quantity must be a count or explicitly unreconstructed"
 
 
+class DoorUnlockState(Enum):
+    Unknown = "UNKNOWN"
+    Locked = "LOCKED"
+    Unlocked = "UNLOCKED"
+
+
 @dataclass(frozen=True)
 class DoorDetail:
     source: RoomId
@@ -47,6 +53,14 @@ class DoorDetail:
     # RE2 has source-offset wall bindings. RE1 retains its established
     # room-pair bindings and therefore supplies no source observation identity.
     observation_id: str = ""
+    # Access and activation do not establish a separately read unlock flag.
+    # Readers without that knowledge, including RE1, leave it unknown.
+    unlock_state: DoorUnlockState = DoorUnlockState.Unknown
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.unlock_state, DoorUnlockState), (
+            "door unlock knowledge must be explicit"
+        )
 
 
 @dataclass

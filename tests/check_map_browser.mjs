@@ -421,6 +421,7 @@ try {
   }
   assert.equal(await keeperDoor.locator('.key-symbol').count(), 0, 'an open door must not retain its key emblem');
   assert.equal(await trapDoor.locator('.key-symbol').count(), 0);
+  assert.equal(await page.locator('.unlock-symbol,#doors .list-symbol.unlocked').count(), 0, 'RE1 access and label wording must not fabricate separate unlock knowledge');
   await page.evaluate(() => draw({ ...lastState, doors: [...lastState.doors].reverse() }));
   assert.match(await keeperDoor.getAttribute('class'), /\bOPEN\b/);
   assert.equal(await keeperDoor.locator('.key-symbol').count(), 0);

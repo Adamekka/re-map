@@ -227,6 +227,52 @@ Contributions:
 - 2026-10-27; coordinating task; supplied the current-slot diagnosis, patch, regression and retained publication paths, and required offline-only work without emulator access.
 - 2026-10-27; implementation sub-agent, exact executing model `gpt-6.1-sol`, verified in session `01a17f15-f420-7511-ba71-e950442b5d2a`'s latest `turn_context`; incorporated the supplied fix, reproduced and corrected zero-SAT access, added regressions, replayed retained captures, performed the primary review and wrote this record. No new native gameplay experiment was performed.
 
+## RE2-DOOR-005: display fresh unlock knowledge separately from access
+
+Status: Candidate for the four supported RE2 profiles. Synthetic regressions and retained offline captures establish the publication/rendering contract. This pass provides no new native observation, source proof or confirmation of DualShock passage/activation.
+
+The human's 2026-10-27 report concerns grey doors and incorrect state presentation. Baseline `de179cc364b84f494928203546f246a07393e809` already labels a departed door `Unlocked; access unconfirmed` from a fresh set key flag. Its access state remains `UNCHECKED`, so the map draws it identically to a door with no unlock knowledge. The renderer previously had no separate typed field for that distinction.
+
+### Model, binding and presentation
+
+`DoorUnlockState` records Unknown, Locked or Unlocked separately from access. A coherent applicable key-flag read supplies Locked/Unlocked; absence of a lock flag or an untrusted binding supplies Unknown. Current doors require the existing source/slot/geometry-validated live descriptor because its target and lock operands are mutable. A departed source may use its declaration only when no other item/door creator competes for the slot. Competing departed creators retain Unknown, superseding RE2-DOOR-004's broader candidate-label behavior. No last-live creator, passage, visit or previous unlock verdict is cached.
+
+An Unlocked door has a green open-padlock cue on the wall and in the selected room's door list. Unchecked access uses a dashed green doorway; Open keeps its existing cyan access color. A current inactive door retains a red Blocked bar and blocked list symbol alongside the unlock cue. Unchecked access retains the unresolved list symbol and explicit text. The dark doorway border remains intact. Key emblems disappear with the selected observation's fresh Unlocked knowledge and return when its flag reverses.
+
+Selection binds knowledge to the same source observation as access. A missing selected RE2 side cannot borrow the opposite side. Multiple unresolved sides or creator identities cannot establish an unlocked marker even when their access states agree. The shared renderer consumes the field directly and never parses label wording to infer it. RE1's existing publisher leaves the field Unknown; its access/key rendering remains covered by its existing browser suite. This change does not reinterpret RE1 flags.
+
+### Revision and address contract
+
+The reported target is Resident Evil 2 Dual Shock Ver., USA Disc 1, Leon A, Original/Normal, SLUS-00748, executable `SLUS_007.48`, SHA256 `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`. [RE2-DS-001](#re2-ds-001-leon-a-dualshock-revision-port) and [RE2-DS-002](#re2-ds-002-claire-b-dualshock-revision-port) retain the two DualShock identities. [RE2-DOOR-004](#re2-door-004-current-slot-selection-and-inactive-door-access) records the existing registry, mutable payload and key-bank contracts. No address, native handler rule, metadata generator, room-presence proof or scenario proof changes here.
+
+For Leon DualShock, bank 31 begins at PS1 virtual `0x800D4A34`, eight bytes. Each read is an unsigned four-byte little-endian word. Lock ID is an unsigned descriptor payload byte at offset 15, full mask `0xFF`; bit `0x80` enables the flag binding and `lock_id & 0x3F` selects the bank bit. The word address adds `bit // 32 * 4`; its mask is `0x80000000 >> (bit % 32)`. These are PS1 virtual addresses, not raw RAM offsets or host-process pointers. Other profiles retain their own configured banks and prior claims. The model field adds no new native semantic proof.
+
+### Reproduction and checks
+
+Run the focused commands in [testing](../../testing/re2.md#door-unlock-state). The 374-case Python selection passes. Regressions cover all four profiles' departed flag reversal and fresh reconstruction, current Locked/Open, current zero-SAT Blocked, missing or malformed bindings, competing door/item creators, coherent flag reads, publication and unchanged exploration. The RE1 and RE2 browser suites pass for all 118 and 133 outlines respectively. The additional browser script passes at 1280×916 and 390×1100 with no page errors or horizontal overflow. It independently changes labels and typed state, checks selected sides, duplicate/contradictory observations, overlap ordering, hidden destinations and zoom preservation. Primary visual inspection covers both synthetic renders.
+
+Private evidence is under `/tmp/re-map-door-unlock-cue-20261027/`. Reproduce the synthetic renders with `NODE_PATH=/Users/adamekka/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules bun tests/check_door_unlock_browser.mjs /tmp/re-map-dualshock/venv/bin/python /tmp/re-map-door-unlock-cue-20261027`. `unlocked-desktop.png`, `unlocked-mobile.png` and `browser-result.json` are generated there. These are tracker renders from explicit synthetic data, not gameplay screenshots. The coordinating task owns the final combined README screenshot and actual tracker reload.
+
+`replay.py` compares the baseline and corrected readers over the unchanged, SHA256-checked 383-image manifest from RE2-DOOR-004, accumulating visits only in private in-memory trackers. It preserves every PollResult and every non-door tracker field, door source/target/access and observation ID. All 360 Display captures reproduce from fresh trackers seeded with the same visits; the remaining fifteen Retry and eight NonGameplay results retain their outcomes. No history file is opened or written. The seven Leon and three Claire DualShock images remain the earlier opening observations, with no unlocked door in those captures. They do not validate the user's current RPD doors.
+
+The original-release replay withdraws 611 repeated departed candidate labels across the manifest's accumulated visits because those slots have competing creators. These are repeated publications, not 611 different doors or new outcomes. Every withdrawal keeps Unchecked access, restores the candidate's key label when named and reports Unknown unlock knowledge. Separately, the replay publishes 365 repeated fresh Unlocked observations from unambiguous bindings. `capture-replay.json` records paths, original hashes, profile/status, knowledge counts and every withdrawn observation. Owned game bytes, RAM and savestates stay outside Git.
+
+### Review and limits
+
+Primary direct review checked typed field construction/serialization, flag freshness and polarity, mutable and ambiguous source bindings, snapshot coherence, reversal/reconstruction, renderer side selection, access/key separation, overlapping symbols, border contrast, list text/icons, accessibility labels, mobile layout, hidden-room visibility and RE1 compatibility. It corrected a CSS specificity conflict that would have recolored the dark border and added a regression. Scoped Ruff format/E4/E7/E9/F checks with the established E402 exclusion and whitespace checks pass. External Claude/Gemini providers are disabled in T3, as reported by the coordinating task; no external review or fallback was attempted, and neither supplies an endorsement.
+
+There is no live emulator access, input, game/save loading, settings/history change, guest write, new room coverage or native unlock/activation validation. Earlier/later reversal here is synthetic flag editing and replay of retained images. The parent runs the aggregate full suite. Unresolved departed activation, nonzero SAT-mask interpretation, direct script dispatch, current DualShock door gameplay, normal memory-card persistence and campaign readiness retain their previous limits.
+
+Contributions:
+
+- 2026-10-27; human user; reported misleading grey doors and requested more graphical symbols. The existing unlock/access separation requirement is retained.
+- 2026-10-27; parent coordination, verified model `gpt-6.1-sol`; identified the presentation gap, assigned the offline renderer/model task and coordinated final screenshot/reload ownership.
+- 2026-10-27; implementation sub-agent, exact executing model `gpt-6.1-sol`, verified in session `01a17f39-c3b7-7b00-aaad-ee75aa1f6c8d`'s latest `turn_context`; implemented the typed state and shared map/list cue, added focused regressions, replayed retained images, inspected synthetic renders, performed direct review and authored this entry. No new native experiment was performed.
+
+Parent rendered review found that the badge covers the door bar. Its visible frame now preserves the separate access cue: dashed for Unchecked, red for Blocked and cyan for Open, while the open-padlock path remains green. The desktop/mobile browser regression checks this visible frame as well as the underlying bar. The README image is refreshed from the retained explored-room publication; missing independent flag knowledge in that older publication is explicitly represented as Unknown, not reconstructed from label wording.
+
+- 2026-10-27; parent integration, direct review and writing, verified model `gpt-6.1-sol`; checked the complete model/reader/renderer diff, inspected synthetic renders, corrected badge-frame access visibility and contributor attribution, added the frame regression, refreshed the combined image and ran integration checks. This adds no gameplay observation.
+
 ## RE2-DS-003: vibration writes preserve item context
 
 Status: Candidate for USA Dual Shock Ver. Disc 1, SLUS-00748, Leon A, Original/Normal. Owned-source inspection, copied handler execution and synthetic regressions establish the bounded interpretation. This task performs no native gameplay, emulator access, game/save loading, settings/history changes or guest-memory writes. Other revisions receive no vibration proof.

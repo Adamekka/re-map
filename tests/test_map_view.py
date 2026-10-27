@@ -12,7 +12,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
 from games.game_profile import RoomId
-from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
+from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
 from ui.map_view import MapRequestHandler, MapServer, map_state
 
 
@@ -64,6 +64,7 @@ def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
     assert state["explored_areas"]["mansion1f"][0]["items_complete"] is True
     assert state["doors"][0]["state"] == "LOCKED"
     assert state["doors"][0]["key_label"] == "Armor Key"
+    assert state["doors"][0]["unlock_state"] == "UNKNOWN"
 
     # A loaded game's fresh verdicts must update a browsable departed floor too.
     tracker.update_room_items(herb_room, 1, 1, True, False, False)
@@ -74,6 +75,30 @@ def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
     assert previous_floor["state"] == "CLEARED"
     assert previous_floor["items"][0]["state"] == "taken"
     assert state["doors"][0]["state"] == "OPEN"
+    assert state["doors"][0]["unlock_state"] == "UNKNOWN"
+
+
+@pytest.mark.parametrize("unlock_state", list(DoorUnlockState))
+def test_map_serializes_unlock_knowledge_without_changing_access(unlock_state):
+    tracker = Tracker(player_heading=90)
+    room = RoomId(0, 9)
+    tracker.mark_current(room)
+    tracker.current_region = "mansion1f:09"
+    tracker.region_visits[tracker.current_region] = str(room)
+    tracker.doors = (
+        DoorDetail(
+            room,
+            RoomId(0, 8),
+            "UNCHECKED",
+            "Access unconfirmed",
+            unlock_state=unlock_state,
+        ),
+    )
+    door = map_state(tracker)["doors"][0]
+    assert door["state"] == "UNCHECKED"
+    assert door["unlock_state"] == unlock_state.value
+    assert door["target_visited"] is False
+    assert set(tracker.rooms) == {"00-09"}
 
 
 def test_unoutlined_current_floor_can_follow_without_revealing_rooms():

@@ -16,7 +16,7 @@ from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
 from games.re2.scenario_items import scenario_item_candidates
 from games.runtime_identity import MemoryResult
-from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
+from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
 from ui.debug_view import render
 
@@ -403,9 +403,26 @@ def poll_re2(
                     if key_type not in (0, 0xFE, 0xFF)
                     else ""
                 )
-                unlocked = bool(lock["lock_id"] & 0x80) and flag(
-                    layout["key_bank"], lock["lock_id"] & 0x3F
-                )
+                unlock_state = DoorUnlockState.Unknown
+                # Current payloads can change targets and locks, so source
+                # operands cannot replace a missing live binding. Departed
+                # competing creators also cannot identify this side's lock;
+                # never cache the last creator through departure or rewind.
+                if lock["lock_id"] & 0x80 and (
+                    observed is not None
+                    or visited != key
+                    and sum(
+                        creator["slot"] == definition["slot"]
+                        for creator in source["doors"] + source["items"]
+                    )
+                    == 1
+                ):
+                    unlock_state = (
+                        DoorUnlockState.Unlocked
+                        if flag(layout["key_bank"], lock["lock_id"] & 0x3F)
+                        else DoorUnlockState.Locked
+                    )
+                unlocked = unlock_state is DoorUnlockState.Unlocked
                 if unlocked:
                     key_label = ""
                 if observed is None:
@@ -438,6 +455,7 @@ def poll_re2(
                         label,
                         key_label,
                         f"{visited}:{definition['offset']}",
+                        unlock_state=unlock_state,
                     )
                 )
 
