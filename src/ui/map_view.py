@@ -210,11 +210,14 @@ cannot merge them with a decided state. */
 .player { pointer-events:none; }
 .player path { fill:#a5efff; stroke:#10202b; stroke-width:.6; stroke-linejoin:round; }
 .key.player-key { background:#a5efff; clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%); }
-.door line { stroke-width:1.1; stroke-linecap:square; }
+.door line { stroke-width:1.4; stroke-linecap:square; }
 .door.OPEN line { stroke:#71b6cf; }
 .door.LOCKED line,.door.BLOCKED line { stroke:#ed6965; }
 .door.UNLOCKABLE line { stroke:#e9b85e; }
 .door.UNCHECKED line { stroke:#d0d9de; }
+/* RE2 doors sit directly on walls, so a dark border keeps access colors
+distinct from room outlines and fills. */
+.door line.door-border { stroke:#10151b; stroke-width:2.6; }
 .door title { pointer-events:none; }
 .key-symbol { pointer-events:all; }
 .key-symbol rect { fill:#14202a; stroke-width:.4; }
@@ -619,6 +622,7 @@ function draw(state) {
     const keyLabels=[...new Set(observations.map(door=>door.key_label).filter(Boolean))];
     const group=element('g',{class:'door '+access,'data-door':marker.id});
     const [a,b]=marker.segment;
+    group.append(element('line',{class:'door-border',x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
     group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
     if(observed && access!=='OPEN' && keyLabels.length===1) {
       const symbol=keySymbol(keyLabels[0]);

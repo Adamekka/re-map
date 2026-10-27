@@ -415,7 +415,7 @@ try {
   const trapDoor = page.locator('.door[data-door="09-15"]');
   for (const door of [keeperDoor, trapDoor]) {
     assert.match(await door.getAttribute('class'), /\bOPEN\b/, 'matching access must survive different descriptions on opposite sides');
-    assert.equal(await door.locator('line').evaluate(line => getComputedStyle(line).stroke), 'rgb(113, 182, 207)');
+    assert.equal(await door.locator('line:not(.door-border)').evaluate(line => getComputedStyle(line).stroke), 'rgb(113, 182, 207)');
     assert.match(await door.locator(':scope > title').textContent(), /No lock/);
     assert.match(await door.locator(':scope > title').textContent(), /Unlocked/);
   }
