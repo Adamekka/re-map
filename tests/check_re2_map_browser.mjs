@@ -231,15 +231,15 @@ try {
     selected = null;
     let count = 0;
     for (const plan of catalog.areas) {
-      const visits = fixture.explored_areas[plan.id];
+      const visits = fixture.explored_areas[plan.id].map(visit => ({ ...visit, state: 'INCOMPLETE', items: [{ label: 'Valve Handle', state: 'available', quantity: 1 }] }));
       for (const visit of visits) {
         // Bold current-room labels must also fit beside the interior geometry.
-        draw({ ...fixture, area: plan.id, map_region: visit.id, current: visit.room, current_detail: visit, rooms: visits });
+        draw({ ...fixture, area: plan.id, map_region: visit.id, current: visit.room, current_detail: visit, rooms: visits, explored_areas: { ...fixture.explored_areas, [plan.id]: visits } });
         const group = document.querySelector('.room.current');
         const label = group.querySelector('text'), outline = group.querySelector('path');
         const core = group.querySelector('.map-detail-core'), border = group.querySelector('.map-detail-border');
         if (Boolean(core) !== Boolean(border)) throw new Error('Incomplete interior outline');
-        if (core && (core.getAttribute('d') !== border.getAttribute('d') || getComputedStyle(core).stroke !== 'rgb(23, 35, 45)' || getComputedStyle(border).strokeWidth !== '1.4px')) throw new Error('Interior structure lost its dark core or thin border');
+        if (core && (core.getAttribute('d') !== border.getAttribute('d') || getComputedStyle(core).stroke !== 'rgb(23, 35, 45)' || getComputedStyle(core).fill !== 'none' || getComputedStyle(border).strokeWidth !== '1.4px')) throw new Error('Interior structure lost its dark core, transparent fill or thin border');
         const matrix = outline.getCTM().inverse().multiply(label.getCTM());
         for (const span of label.querySelectorAll('tspan')) {
           for (let index = 0; index < span.getNumberOfChars(); index++) {
@@ -298,6 +298,34 @@ try {
     return results;
   }, detailState);
   assert.deepEqual(keyVisibility, [true, false, true]);
+  const itemPresentation = await detailPage.evaluate(fixture => {
+    const visit = fixture.explored_areas['re2-02'].find(visit => visit.id === '0B');
+    const cases = [
+      ['INCOMPLETE', 'available', 'available', 'rgb(104, 83, 49)'],
+      ['INCOMPLETE', 'taken', 'available', 'rgb(116, 62, 64)'],
+      ['INCOMPLETE', 'unknown', 'available', 'rgb(116, 62, 64)'],
+      ['CLEARED', 'taken', 'taken', 'rgb(36, 76, 110)'],
+      ['UNKNOWN', 'unknown', 'unknown', 'rgb(66, 81, 93)'],
+      ['INCOMPLETE', 'available', 'available', 'rgb(104, 83, 49)'],
+    ];
+    for (const [state, keyState, supplyState, fill] of cases) {
+      const current = { ...visit, state, items: [{ label: 'Valve Handle', state: keyState, quantity: 1 }, { label: 'Shotgun shells', state: supplyState, quantity: 6 }] };
+      floorView = { mode: 'follow' };
+      selected = null;
+      draw({ ...fixture, area: 're2-02', map_region: visit.id, current: visit.room, current_detail: current, rooms: [current], explored_areas: { 're2-02': [current] } });
+      if (getComputedStyle(document.querySelector('.room > path')).fill !== fill) throw new Error('Incorrect item-category room color');
+      const names = [...document.querySelectorAll('#items .entry-name')];
+      if (names[0].textContent !== 'Valve Handle' || names[1].textContent !== 'Shotgun shells') throw new Error('Item symbols replaced the item names');
+      if (!names[0].classList.contains('story') || !names[1].classList.contains('supplies')) throw new Error('Item categories lost their distinct colors');
+      if (getComputedStyle(names[0]).color === getComputedStyle(names[1]).color) throw new Error('Item category colors are identical');
+      for (const row of document.querySelectorAll('#items li,#doors li')) {
+        if (row.querySelectorAll('svg[aria-hidden="true"]').length !== 2 || !row.querySelector('.entry-status').textContent) throw new Error('List symbols lost their adjacent text or accessibility treatment');
+        if ([...row.querySelectorAll('svg')].some(icon => icon.getBoundingClientRect().height !== 18)) throw new Error('List symbols inherited the map dimensions');
+      }
+    }
+    return cases.length;
+  }, detailState);
+  assert.equal(itemPresentation, 6);
   assert.deepEqual(errors, []);
   await detailPage.close();
   console.log('RE2 browser checks passed for all ' + Object.values(counts).reduce((sum, count) => sum + count, 0) + ' outlines, door bindings, headings, moving markers and floor following/browsing/restores.');

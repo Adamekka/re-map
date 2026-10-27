@@ -189,7 +189,7 @@ select:disabled,button:disabled { opacity:.55; }
 #status { padding:0 28px 14px; min-height:20px; color:#abb9c5; }
 main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; border:1px solid #303d48; background:#151e27; }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
-svg { display:block; width:100%; height:65vh; min-height:410px; }
+#map { display:block; width:100%; height:65vh; min-height:410px; }
 #map { user-select:none; }
 #map.navigable { cursor:grab; touch-action:none; }
 #map.panning,#map.panning .room { cursor:grabbing; }
@@ -197,6 +197,7 @@ svg { display:block; width:100%; height:65vh; min-height:410px; }
 .room { cursor:pointer; }
 .room path { stroke:#8a9ca9; stroke-width:.65; fill:#42515d; stroke-linejoin:miter; }
 .room.INCOMPLETE path { fill:#743e40; }
+.room.INCOMPLETE.story-items > path:first-child { fill:#685331; }
 .room.CLEARED path { fill:#244c6e; }
 /* Unresolved rooms keep the neutral fill explicitly so a future default
 cannot merge them with a decided state. */
@@ -234,7 +235,16 @@ aside { border-left:1px solid #303d48; padding:22px; }
 h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#91a5b4; margin:22px 0 10px; }
 ul { list-style:none; margin:0; padding:0; }
 li { padding:8px 0; border-top:1px solid #2d3943; display:flex; gap:10px; justify-content:space-between; font-size:13px; }
-li span:last-child { color:#94a7b6; text-align:right; }
+li > span:last-child { color:#94a7b6; text-align:right; }
+.entry-name,.entry-status { display:flex; align-items:center; gap:8px; min-width:0; }
+.entry-status { justify-content:flex-end; max-width:48%; flex-shrink:0; }
+.list-symbol { display:block; flex:none; width:18px; height:18px; overflow:visible; fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round; stroke-linejoin:round; }
+.entry-name.story,.list-symbol.story { color:#e9be72; }
+.entry-name.supplies,.list-symbol.supplies { color:#df9793; }
+.list-symbol.neutral { color:#94a7b6; }
+.list-symbol.collected,.list-symbol.open { color:#71b6cf; }
+.list-symbol.locked,.list-symbol.blocked { color:#ed6965; }
+.list-symbol.unlockable { color:#e9b85e; }
 #legend { display:flex; flex-wrap:wrap; gap:12px 24px; padding:18px 28px 24px; color:#abb9c5; font-size:13px; }
 .key { display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-2px; }
 .key.door-key { height:3px; vertical-align:3px; }
@@ -248,7 +258,7 @@ li span:last-child { color:#94a7b6; text-align:right; }
 .room-link:hover,.room-link:focus-visible { border-color:#d9f6ff; }
 #overview .room-link span { display:block; text-align:left; color:inherit; }
 #overview .room-link span+span { margin-top:4px; color:#94a7b6; }
-@media(max-width:760px) { header { padding:18px; } #map-controls { padding:0 18px 12px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } svg { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } #overview { margin:0 18px 18px; grid-template-columns:1fr; gap:22px; } }
+@media(max-width:760px) { header { padding:18px; } #map-controls { padding:0 18px 12px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } #map { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } #overview { margin:0 18px 18px; grid-template-columns:1fr; gap:22px; } }
 </style>
 </head>
 <body>
@@ -260,7 +270,8 @@ li span:last-child { color:#94a7b6; text-align:right; }
 <aside><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
 </main>
 <div id="legend">
-<span><i class="key" style="background:#743e40"></i>Items remain</span>
+<span><i class="key" style="background:#685331"></i>Story / key items remain</span>
+<span><i class="key" style="background:#743e40"></i>Supplies / other items remain</span>
 <span><i class="key" style="background:#244c6e"></i>Cleared</span>
 <span><i class="key" style="background:#42515d"></i>Check incomplete</span>
 <span><i class="key" style="border:2px solid #d9f6ff;box-sizing:border-box"></i>Current room</span>
@@ -440,12 +451,57 @@ const keySymbols=new Map([
   ['Shield Key','M2 2H14V7Q14 12 8 15Q2 12 2 7ZM8 3V12M4 7H12'],
   ['Helmet Key','M3 10V7A5 5 0 0 1 13 7V14H9L7 10ZM8 2V6M3 7H10M10 7V10H13'],
 ]);
+const genericKeyPath='M7 5a3 3 0 1 1-6 0a3 3 0 1 1 6 0ZM7 5h8m-3 0v3m3-3v3';
+const symbolPaths=new Map([
+  ...keySymbols,
+  ['key',genericKeyPath],
+  ['collectible','M2 4L8 1L14 4V12L8 15L2 12ZM2 4L8 7L14 4M8 7V15'],
+  ['ammo','M2 14V5L4 1L6 5V14ZM10 14V5L12 1L14 5V14ZM2 11H6M10 11H14'],
+  ['weapon','M1 4H14V8H9L8 14H4L5 8H1ZM9 8V10H11V8M3 4V8'],
+  ['herb','M8 15V4M8 8C3 8 1 5 2 2C6 2 8 4 8 8ZM8 11C8 6 11 4 15 5C15 9 12 12 8 11Z'],
+  ['spray','M5 5H12V15H3V7ZM5 5V2H11V5M11 2H15M5 10H10M7.5 7.5V12.5'],
+  ['ribbon','M1 3H6V10H1ZM10 3H15V10H10ZM6 5H10M6 8H10M3 10V14H13V10'],
+  ['tool','M8 1A6 6 0 1 1 8 13A6 6 0 1 1 8 1ZM8 1V13M2 7H14M8 13V15'],
+  ['puzzle','M1 6H5C3 1 10 1 8 6H14V10C9 8 9 15 14 13V15H1Z'],
+  ['remaining','M8 1A7 7 0 1 1 8 15A7 7 0 1 1 8 1ZM8 4V12M4 8H12'],
+  ['collected','M2 8L6 12L14 3'],
+  ['unresolved','M8 1A7 7 0 1 1 8 15A7 7 0 1 1 8 1ZM5.5 5A2.5 2.5 0 1 1 9 7.3L8 8V10M8 12V12.2'],
+  ['inactive','M8 1A7 7 0 1 1 8 15A7 7 0 1 1 8 1ZM4 8H12'],
+  ['unavailable','M8 1A7 7 0 1 1 8 15A7 7 0 1 1 8 1ZM3 3L13 13'],
+  ['door','M2 15V1H13V15M5 15V4L11 2V15ZM8 9V10'],
+  ['open','M2 15V1H10V5M2 15H10V12M6 8H15M12 5L15 8L12 11'],
+  ['locked','M3 7H13V15H3ZM5 7V4A3 3 0 0 1 11 4V7M8 10V12'],
+  ['unlockable','M3 7H13V15H3ZM5 7V4A3 3 0 0 1 11 4M8 10V12'],
+  ['blocked','M8 1A7 7 0 1 1 8 15A7 7 0 1 1 8 1ZM3 3L13 13'],
+]);
+const itemVisuals=new Map([
+  ['supplies','ammo',['Handgun ammo','Shotgun shells','Magnum rounds','Magnum Rounds','Dum Dum Rounds','Fuel Tank','Flame Thrower Fuel','Explosive Rounds','Flame Rounds','Acid Rounds','SMGAmmo','Sparkshot Ammo','Bowgun Ammo']],
+  ['supplies','weapon',['Knife','Combat Knife','Handgun','Custom Handgun','Magnum','Custom Magnum','Shotgun','Custom Shotgun','Grenade Launcher Explosive','Grenade Launcher Flame','Grenade Launcher Acid','Bowgun','Colt SAA','Sparkshot','SMG','Flamethrower','Flame Thrower','Rocket Launcher','Gatling Gun','Beretta','Handgun Parts','Magnum Parts','Shotgun Parts','Dum Dum Colt','Colt Python','Bazooka Acid','Bazooka Explosive','Bazooka Flame']],
+  ['supplies','herb',['Green Herb','Red Herb','Blue Herb','Mixed Herbs']],
+  ['supplies','spray',['First Aid Spray']],
+  ['supplies','ribbon',['Ink Ribbon']],
+  ['story','key',['Small Key','Lockpick','Lock Pick','Weapon Box Key','Special Key','Cabin Key','Down Key','Up Key','Power Room Key','Master Key','Platform Key','Control Room Key','Dorm Key 002','Dorm Key 003','Blue Card Key','Umbrella Key Card']],
+  ['story','tool',['Valve Handle','Crank','Square Crank','Hex Crank','Lighter','Manhole Opener']],
+  ['story','puzzle',['Serum','Antivirus Bomb','Chemical ACw32','Photo Sherry','Red Jewel','Red Card','Serpent Stone','Jaguar Stone','Jaguar Stone L','Jaguar Stone R','Eagle Stone','Bishop Plug','Rook Plug','Knight Plug','King Plug','Detonator','C4Explosive','C4Detonator','Film A','Film B','Film C','Film D','Unicorn Medal','Eagle Medal','Wolf Medal','Cog','Main Fuse','Fuse Case','Vaccine','Vaccine Cart','Vaccine Base','GVirus','Joint Plug Blue','Joint Plug Red','Cord','Photo Ada','MO Disk','Empty Bottle','Water','Umb No2','Umb No4','Umb No7','Umb No13','Yellow6','NP003','VJolt','Broken Shotgun','Wood Emblem','Gold Emblem','Blue Jewel','Music Notes','Chemical','Battery','MODisk','Wind Crest','Flare','Slides','Moon Crest','Star Crest','Sun Crest','Can Of Oil','Red Book','Doom Book2','Doom Book1','Radio']],
+].flatMap(([category,symbol,labels])=>labels.map(label=>[label,{category,symbol}])));
+for(const label of keySymbols.keys()) itemVisuals.set(label,{category:'story',symbol:label});
+function itemVisual(label) {
+  // An unresolved identity cannot establish whether an item advances the
+  // story. Keep it neutral instead of classifying every unknown as a key item.
+  return itemVisuals.get(label) || {category:'neutral',symbol:'collectible'};
+}
+function listSymbol(symbol,color) {
+  if(!symbolPaths.has(symbol)) throw new Error('Unknown list symbol: '+symbol);
+  const icon=element('svg',{class:'list-symbol '+color,viewBox:'0 0 16 16','aria-hidden':'true',focusable:'false'});
+  icon.append(element('path',{d:symbolPaths.get(symbol)}));
+  return icon;
+}
 function keySymbol(label) {
   const group=element('g',{class:'key-symbol',role:'img','aria-label':label});
   group.append(element('rect',{x:-2,y:-2,width:4,height:4,rx:.5}));
   // Other named keys share a key silhouette; their exact names remain in the
   // tooltip and door list instead of assigning them a Mansion emblem.
-  const path=keySymbols.has(label) ? keySymbols.get(label) : 'M7 5a3 3 0 1 1-6 0a3 3 0 1 1 6 0ZM7 5h8m-3 0v3m3-3v3';
+  const path=keySymbols.has(label) ? keySymbols.get(label) : genericKeyPath;
   group.append(element('path',{d:path,transform:'scale(.2) translate(-8 -8)'}));
   const title=element('title',{});title.textContent=label;group.append(title);
   return group;
@@ -531,7 +587,8 @@ function draw(state) {
   document.getElementById('player-label').textContent=state.player_position.kind==='approximate' ? 'You · approximate' : 'You · room only';
   for(const [id,visit] of visible) {
     const room=byId.get(id);
-    const group=element('g',{class:'room '+visit.state+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name});
+    const storyItems=visit.items.some(item=>itemRemains(item) && itemVisual(item.label).category==='story');
+    const group=element('g',{class:'room '+visit.state+(storyItems?' story-items':'')+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name});
     const path=room.rings.map(ring=>'M'+ring.map(point=>point.join(',')).join('L')+'Z').join('');
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
     const title=element('title',{});title.textContent=room.name;group.append(title);
@@ -688,13 +745,22 @@ function draw(state) {
   const items=document.getElementById('items');items.replaceChildren();
   for(const item of visit.items) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
-    name.textContent=item.label;detail.textContent=item.state==='taken'?'Collected':itemRemains(item)?'Remaining':item.state==='unknown'?'Unresolved':item.state==='dormant'?'Inactive':'Not available';row.append(name,detail);items.append(row);
+    const visual=itemVisual(item.label), status=item.state==='taken'?'collected':itemRemains(item)?'remaining':item.state==='unknown'?'unresolved':item.state==='dormant'?'inactive':'unavailable';
+    name.className='entry-name '+visual.category;detail.className='entry-status';
+    const label=document.createElement('span');label.textContent=item.label;name.append(listSymbol(visual.symbol,visual.category),label);
+    const text=document.createElement('span');text.textContent={collected:'Collected',remaining:'Remaining',unresolved:'Unresolved',inactive:'Inactive',unavailable:'Not available'}[status];
+    detail.append(listSymbol(status,status==='remaining'?visual.category:status==='collected'?'collected':'neutral'),text);row.append(name,detail);items.append(row);
   }
   const doors=document.getElementById('doors');doors.replaceChildren();
   for(const door of state.doors.filter(door=>door.source===visit.room)) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
-    name.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';
-    detail.textContent=door.label+(door.key_label && !door.label.includes(door.key_label) ? ' · '+door.key_label : '');row.append(name,detail);doors.append(row);
+    name.className='entry-name';detail.className='entry-status';
+    const label=document.createElement('span');label.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';name.append(listSymbol('door','neutral'),label);
+    const status={OPEN:'open',LOCKED:'locked',BLOCKED:'blocked',UNLOCKABLE:'unlockable',UNCHECKED:'unresolved'}[door.state];
+    if(!status) throw new Error('Unknown door state: '+door.state);
+    const symbol=door.key_label && door.state!=='OPEN' ? keySymbols.has(door.key_label)?door.key_label:'key' : status;
+    const text=document.createElement('span');text.textContent=door.label+(door.key_label && !door.label.includes(door.key_label) ? ' · '+door.key_label : '');
+    detail.append(listSymbol(symbol,status==='unresolved'?'neutral':status),text);row.append(name,detail);doors.append(row);
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');
   // Camera outlines share a logical room's items. Prefer its current outline

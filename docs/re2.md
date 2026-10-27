@@ -18,6 +18,8 @@ Default histories are `.local/re2-leon-a-slus00748.json` and `.local/re2-claire-
 
 Match the existing tracker behavior: spatial floor plans revealed by entering rooms, room names, actual facing, floor browsing, zoom and pan, persistent exploration isolated by game/revision/scenario/playthrough, remaining items, separate unresolved checks, game-derived door access, and fresh item/door/story state after savestate changes. Exploration survives earlier savestates; acquired items and unlocked doors must rewind with the game.
 
+Items stay in one list, with symbols alongside their names and status text. Story/key items use gold; health, ammunition and other supplies use red. Room fills use the same distinction for known remaining items, with story/key items taking priority when both kinds remain. Collected or unresolved story items do not establish a remaining story item. Cleared rooms stay blue; rooms reported as unresolved stay grey. An unresolved item identity uses a neutral symbol and does not acquire a story classification. Symbols and colors change presentation only; completion still follows the shared room-completion rules.
+
 Uniquely matched doorways appear once on the shared wall. Selecting a room shows that side's access and key state. [RE2-MAP-004](research/re2.md#re2-map-004-one-marker-for-a-shared-doorway) records the shop correction and pairing limits.
 
 Interior structures use dark cores with thin outlines, and room names avoid those structures. [RE2-MAP-003](research/re2.md#interior-presentation-follow-up-2026-10-27) records the alleyway presentation check.
