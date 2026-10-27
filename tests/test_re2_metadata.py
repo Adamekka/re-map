@@ -36,6 +36,59 @@ PRESENCE_WRITES, FLAG_PROOF = presence_flag_write_proof(
 )
 
 
+@pytest.mark.parametrize("opcode", [0x8A, 0x8B, 0x8C])
+@pytest.mark.parametrize(
+    "proof", ["missing", "disjoint", "scratch", "queue0", "queue1"]
+)
+def test_vibration_context_requires_all_writes_disjoint_from_fixed_words(
+    opcode, proof, scenario_banks
+):
+    """RE2-DS-003: a vibration command cannot authorize another revision."""
+    from games.re2.scenario_items import scenario_item_proofs, scenario_vibration_writes
+
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
+    regions = scenario_vibration_writes(raw)
+    if proof == "missing":
+        regions = ()
+    elif proof != "disjoint":
+        index = {"scratch": 0, "queue0": 1, "queue1": 2}[proof]
+        # An offset alias reaches the fixed word from another bank. Check the
+        # last aligned word in each permitted write range, not just its base.
+        start, width = regions[index]
+        scenario_banks = [
+            *scenario_banks,
+            {"bank": 99, "address_ps1": f"0x{start + width - 8:08X}", "width": 8},
+        ]
+    flags = [
+        {"bank": 99, "bit": 32, "expected": 0}
+        if proof in ("scratch", "queue0", "queue1")
+        else {"bank": 1, "bit": 1, "expected": 0}
+    ]
+    guarded = (
+        bytes([6, 0, 28, 0, 0x21, 1, 1, 1])
+        + item_command(20, 15, 9)
+        + bytes([8, 0, 1, 0])
+    )
+    command = bytes([opcode, 255, 10, 0, 2, 0])
+    if opcode == 0x8C:
+        command += bytes(2)
+    data = synthetic_room(bytes([1, 0]), (guarded, command + bytes([1, 0])))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    result = scenario_item_proofs(
+        data,
+        room,
+        flags,
+        scenario_banks,
+        SCENARIO_EFFECT_POOL,
+        vibration_writes=regions,
+    )
+    accepted = proof == "disjoint" and opcode in (0x8A, 0x8B)
+    assert result.fixed_context_preserved is accepted
+    assert result.absent_item_ids == ([9] if accepted else [])
+
+
 @pytest.mark.parametrize("operation", [0, 1, 7, 2, 255])
 @pytest.mark.parametrize(
     "bank,bit,safe",

@@ -388,6 +388,11 @@
       "bit": 7
     }
   ],
+  "scenario_vibration_writes": [
+    {"address_ps1": "0x800A268C", "width": 8},
+    {"address_ps1": "0x800EAAD8", "width": 320},
+    {"address_ps1": "0x800EAC28", "width": 320}
+  ],
   "scenario_effect_pool": {
     "address_ps1": "0x800E8CF0",
     "limit_address_ps1": "0x800EBB70"

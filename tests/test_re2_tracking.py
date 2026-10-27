@@ -37,6 +37,52 @@ HEADING_MOVEMENTS = json.loads(
 )["measurements"]
 
 
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["00-01", "01-0c"], indirect=True)
+def test_dualshock_vibration_proof_preserves_identity_and_departed_presence(snapshot):
+    """RE2-DS-003: fresh flags rewind independently of the presence proof."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-0c"]
+    assert source["scenario_item_variants"] == [{"global_id": 207, "offsets": [7534]}]
+    assert source["conditional_item_presence"] == [
+        {"global_id": 170, "presence": {"kind": "required"}}
+    ]
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    # Synthetic snapshots instantiate every catalog alternative. Clear them
+    # here because the fixed scenario selects only one of those creators.
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x0C))
+    visits = None
+    for acquired in (False, True, False, True):
+        bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+        put(bank + 170 // 32 * 4, (0x80000000 >> (170 % 32)) if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-0c"]
+        assert record.list_complete
+        assert [(item.label, item.state, item.quantity) for item in record.items] == [
+            (profile.names["items"]["21"], "unknown", 7),
+            (profile.names["items"]["39"], "taken" if acquired else "uncollected", 1),
+        ]
+        assert record.completion is (
+            RoomCompletion.Unknown if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x0C))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-0c"] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+    put(bank + 207 // 32 * 4, 0x80000000 >> (207 % 32), 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.rooms["01-0c"].completion is RoomCompletion.Cleared
+    put(bank + 207 // 32 * 4, 0, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.rooms["01-0c"].completion is RoomCompletion.Unknown
+
+
 @pytest.mark.parametrize(
     "profile", ["re2_leon_a_slus00748", "re2_claire_b_slus00756"], indirect=True
 )

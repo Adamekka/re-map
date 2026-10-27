@@ -105,18 +105,67 @@ def scenario_effect_pool(profile: dict) -> tuple[int, int]:
     return start, limit
 
 
+def scenario_vibration_writes(profile: dict) -> tuple[tuple[int, int], ...]:
+    """Bound the opted-in native vibration stores. RE2-DS-003."""
+    # An empty proof deliberately leaves vibration commands unsupported on
+    # revisions whose handlers have not been audited.
+    rows = profile.get("scenario_vibration_writes", [])
+    if rows == []:
+        return ()
+    # The handlers write two four-byte scratch pointers and two queues of
+    # 32 ten-byte records. Partial ranges cannot establish write exclusion.
+    if (
+        type(rows) is not list
+        or len(rows) != 3
+        or any(
+            type(row) is not dict
+            or row.keys() != {"address_ps1", "width"}
+            or type(row["address_ps1"]) is not str
+            or type(row["width"]) is not int
+            or row["width"] != width
+            for row, width in zip(rows, (8, 320, 320), strict=True)
+        )
+    ):
+        raise ValueError("invalid RE2 vibration write proof")
+    try:
+        regions = tuple((int(row["address_ps1"], 0), row["width"]) for row in rows)
+    except ValueError as error:
+        raise ValueError("invalid RE2 vibration write address") from error
+    if any(
+        address % 4 or not 0x80000000 <= address <= 0x80200000 - width
+        for address, width in regions
+    ) or any(
+        first < second + second_width and second < first + first_width
+        for index, (first, first_width) in enumerate(regions)
+        for second, second_width in regions[index + 1 :]
+    ):
+        raise ValueError("RE2 vibration writes must fit disjoint aligned PS1 RAM")
+    return regions
+
+
 def scenario_item_proofs(
     data: bytes,
     room: dict,
     flags: list[dict[str, int]],
     flag_banks: list[dict],
     effect_pool: tuple[int, int],
+    vibration_writes: tuple[tuple[int, int], ...] = (),
 ) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
     assert fixed and len(fixed) == len(flags)
     pool_start, pool_limit = effect_pool
     assert 0x80000000 <= pool_start < pool_limit <= 0x80200000
+    assert not vibration_writes or (
+        len(vibration_writes) == 3
+        and tuple(width for _, width in vibration_writes) == (8, 320, 320)
+        and all(
+            type(address) is int
+            and address % 4 == 0
+            and 0x80000000 <= address <= 0x80200000 - width
+            for address, width in vibration_writes
+        )
+    ), "vibration proof must cover both native queues and scratch pointers"
     if not room["candidate_list_complete"]:
         return ScenarioItemProof(False, [], [])
     banks = {
@@ -374,6 +423,16 @@ def scenario_item_proofs(
                 if data[row["offset"] + 4] != 0 or any(
                     address < pool_limit and pool_start < address + 4
                     for address in fixed_words
+                ):
+                    return ScenarioItemProof(False, [], [])
+            elif row["opcode"] in (0x8A, 0x8B):
+                # RE2-DS-003: these synchronous handlers only enqueue bounded
+                # vibration records and update their scratch pointers. Require
+                # the revision's complete write proof before preserving bits.
+                if not vibration_writes or any(
+                    address < start + width and start < address + 4
+                    for address in fixed_words
+                    for start, width in vibration_writes
                 ):
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x37:

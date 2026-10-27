@@ -226,3 +226,68 @@ Contributions:
 
 - 2026-10-27; coordinating task; supplied the current-slot diagnosis, patch, regression and retained publication paths, and required offline-only work without emulator access.
 - 2026-10-27; implementation sub-agent, exact executing model `gpt-6.1-sol`, verified in session `01a17f15-f420-7511-ba71-e950442b5d2a`'s latest `turn_context`; incorporated the supplied fix, reproduced and corrected zero-SAT access, added regressions, replayed retained captures, performed the primary review and wrote this record. No new native gameplay experiment was performed.
+
+## RE2-DS-003: vibration writes preserve item context
+
+Status: Candidate for USA Dual Shock Ver. Disc 1, SLUS-00748, Leon A, Original/Normal. Owned-source inspection, copied handler execution and synthetic regressions establish the bounded interpretation. This task performs no native gameplay, emulator access, game/save loading, settings/history changes or guest-memory writes. Other revisions receive no vibration proof.
+
+### Failure and resulting item outcomes
+
+The human reported grey explored RPD rooms and unresolved checks on 2026-10-27. Baseline `2c1f8bf9e044e6ce1cf42430d57892552725445a` has a complete candidate list for source `01-0c`, but rejects its fixed-context proof at file offset 8174, opcode `0x8A`. The following `0x8B` commands also lack a write proof. Consequently ID 170 loses departed presence, and ID 207's scenario-selected identity becomes generic. Source `01-0c` is Media Room Corridor.
+
+The executable is `SLUS_007.48`, SHA256 `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`, as in [RE2-DS-001](#re2-ds-001-leon-a-dualshock-revision-port). Owned `PL0/RDT/ROOM20C0.RDT` is 122020 bytes, SHA256 `1e018a6940a199e91eb18e1c06a7073395dffe22bee4d22c1e4848aba1397332`. The retained DualShock captures were made with official DuckStation `0.1-12442-gdd4a0eb77`; this task starts no DuckStation instance. Their original setup and assistance limits remain in RE2-DS-001.
+
+The shared context interpreter now accepts only the two audited vibration commands when the revision supplies their complete write ranges and those ranges do not overlap any profile-fixed word. Original-release profiles and the unaudited Claire DualShock profile supply no such proof. The existing creator/reset and startup rules then produce exactly these changes in Leon's generated room data:
+
+- ID 170 gains required source presence. With acquisition clear it remains Uncollected after departure; collection remains Taken and an earlier state reverses it.
+- ID 207 selects creator file offset 7534, type 21, source quantity seven. Its unacquired state stays Unknown. No new presence, absence, native award quantity or room-clear claim is made for it.
+
+A synthetic all-acquired state may clear the already complete candidate list. With ID 207 unacquired and ID 170 acquired, the room stays Unknown. With ID 170 remaining, it is Incomplete. No live observation or remembered verdict is promoted into a source proof. [RE2-COLLECT-019](../re2.md#re2-collect-019-preserved-context-prunes-inactive-startup-branches) and [RE2-COLLECT-020](../re2.md#re2-collect-020-reachable-resets-preserve-selected-pickup-identity) record the separate original-release evidence; those observations do not confirm DualShock gameplay.
+
+### Native write contract
+
+All addresses here are PS1 virtual addresses, little endian. They are neither host addresses nor raw RAM-file offsets. Copied Unicorn memory access masks them with `0x1FFFFF`.
+
+| Field or handler | Address / range | Width, mask and role |
+| --- | --- | --- |
+| Opcode `0x8A` handler | `0x80059348..0x80059390` | native instruction words, four bytes, `0xFFFFFFFF`; calls `0x8003947C` |
+| Opcode `0x8B` handler | `0x80059394..0x800593E0` | native instruction words, four bytes, `0xFFFFFFFF`; calls `0x80039514` |
+| Scratch pointers | `0x800A268C..0x800A2694`, end exclusive | two four-byte pointers, `0xFFFFFFFF` |
+| First vibration queue | `0x800EAAD8..0x800EAC18`, end exclusive | 32 ten-byte records |
+| Second vibration queue | `0x800EAC28..0x800EAD68`, end exclusive | 32 ten-byte records |
+| Task instruction pointer | task base plus `0x1C` | four bytes, `0xFFFFFFFF`; advances by six |
+| ID 170 acquisition | `0x800D48D0` | unsigned four bytes, mask `0x00200000` |
+| ID 207 acquisition | `0x800D48D4` | unsigned four bytes, mask `0x00010000` |
+
+Both packets are six bytes. The first handler reads duration and delay as unsigned two-byte operands at packet offsets two and four, masks `0xFFFF`. The second also reads its intensity byte at offset one, mask `0xFF`. The count helper `0x800397E4..0x80039814` reads 32 activity bytes at stride ten. Zero duration or a full queue performs no enqueue. Otherwise the search at `0x800397B8..0x800397E0` selects an inactive record within the same fixed queue.
+
+The handlers write one-byte activity and intensity at record offsets zero/one, mask `0xFF`; delay, duration and zero at offsets two/four/six are two-byte values, mask `0xFFFF`. Apart from task PC and bounded stack frames, all stores stay in the declared queues and scratch pointers. They neither create an interaction nor alter an item, story or fixed mode bit. Opcode `0x8C` remains unsupported. Queue addresses are configured only for the audited executable, and the generated proof must match the profile at load time. Missing, malformed, overlapping, unaligned, truncated and drifted proof data fail validation rather than silently narrowing the permitted writes.
+
+### Reproduction and evidence
+
+Private evidence is under `/tmp/re-map-re2-rpd-items-20261027/`. Owned bytes and RAM stay outside Git.
+
+- `investigate.py` extracts the five already explored RPD sources from the owned CUE, decodes them and records the first fixed-context rejection. The source copies and decoded programs are retained there. It makes no emulator connection.
+- `vibration.asm` binds the two handler/callee disassemblies to the exact executable. `native-vibration.py` and `native-vibration.json` execute the complete handlers, their queue helpers and actual returns with Unicorn `2.1.4`. All 32 cases cover both opcodes, zero/nonzero/maximal unsigned durations, intensity extremes, delays and 0/1/31/32 occupied records. Expected records, scratch pointers, return values, six-byte PC advances, every store and all changed RAM bytes are checked. These are copied-code experiments, not native gameplay or an independent runtime pickup validation.
+- `metadata-delta.json` records the only three changed room fields: source `01-0c`'s fixed-context boolean, ID 170's presence rule and ID 207's selected creator. All raw item declarations, quantities, candidate-list flags, exclusions, awards, other sources, doors and map bytes remain unchanged. Two complete owned-CUE generations reproduce the checked-in room catalog and original map document byte for byte. The catalog additionally records the revision-specific write proof and this claim ID.
+- `replay.py` and `capture-replay.json` compare 17 unique retained images. Three DualShock opening publications remain Display; four retain NonGameplay and one original-release image stored in that directory retains WrongGame. Nine original-release current/departed corridor captures retain their complete publications. All accepted items, rooms, doors, pose and visit publications agree. No DualShock RPD capture is present in those retained images, so this replay cannot confirm the changed corridor outcomes at runtime.
+- `tests/test_re2_metadata.py` checks missing proof, each scratch/queue fixed-word alias and the unaudited adjacent opcode. `tests/test_re2_profile.py` checks malformed ranges, metadata/profile binding and unsupported revisions. `tests/test_re2_tracking.py` checks fresh current/departed reconstruction, ID 170 acquisition reversal, preserved exploration, ID 207's typed Unknown state and a separate synthetic acquisition/rewind. These are interpretation regressions, not observed native pickups or actual save loads.
+
+The 31 new regressions pass. The focused RE2 suite passes 953 tests; the full suite passes 2641 tests in 114.95 seconds. Scoped Ruff E4/E7/E9/F checks, excluding the existing E402 path setup pattern, formatting and whitespace checks pass. All local links in the three changed documentation files resolve. Full suite output and the copied/replay results remain in the private evidence directory.
+
+### Other reported rooms and evidence limits
+
+The bounded vibration change leaves the named Main Hall, West Office and East Office unchanged. The supplied publication file reported a disconnected tracker during this investigation, so no current item flags or room verdicts are asserted from it.
+
+- Main Hall `01-00` has mixed FOR and DO loop forms in procedure `17:8`; the conservative loop proof rejects them. Ignoring that rejection in an offline diagnostic probe still encounters unsupported opcode `0x54` at file offset 10438. A loop-only relaxation supplies no usable item-context result. Resolving the conflicting ID 152 identity requires a bounded proof of the relevant loop/control effects and that remaining effect, followed by targeted source and native observations. No relaxation from that probe is shipped.
+- West Office `01-02` already preserves fixed context and excludes IDs 116/249. ID 115 shares slot 12 with a generic interaction in the opposite fixed system-mode branch. Presence analysis currently treats slot reuse conservatively across all decoded branches, even though the fixed context selects the pickup creator at offset 7394. A shared creator-lifetime proof that excludes unreachable generic interactions is required before retaining this item after departure. Its conditional direct award is a separate proof and is not made required merely because the room was visited.
+- East Office `01-0b` rejects IF bodies within DO loops. Ignoring loop rejection in an offline diagnostic probe still encounters `Aot_on` at offset 13164: slot nine has a kind-five script interaction among its possible bindings, outside the existing bounded dispatch contract. A loop-only relaxation therefore does not recover scenario exclusions or complete room state. Needed evidence includes the exact callback's effects and a bounded source/control proof, then current/departed and before/after acquisition observations on the named revision. No alternative item is assumed absent from that rejection.
+
+The implementation uses no named-item exception and adds no campaign or opcode coverage claim beyond the bounded vibration context rule. It changes no UI, floor geometry, door interpretation, history schema or saved game protocol. No README screenshot update is required. Fresh DualShock RPD observations and ordinary gameplay remain necessary to confirm the corrected corridor outcomes. Normal memory-card persistence is untested.
+
+### Review and contributions
+
+Primary review checks the complete diff, affected decoder/generator/profile/reader paths, native unsigned operand and queue bounds, fixed-word aliases, proof serialization, fresh acquisition reversal, conservative completion, regression coverage, runtime cost, scope and evidence attribution. The two configured external review providers remain disabled in T3 capabilities: Claude and Antigravity cannot provide the configured Claude Opus and Gemini Flash reviews. No substitute, sub-agent or CLI fallback is used. Neither unavailable review is an endorsement. UI/UX/accessibility rendering is outside this interpretation-only change.
+
+- 2026-10-27; human user, through the parent task; supplied the unresolved RPD report, authorized a bounded implementation and separately approved the minimal coordinated generator proof wiring. ID 207 presence was explicitly required to remain Unknown without proof.
+- 2026-10-27; Codex implementation agent, exact executing model `gpt-6.1-sol`, verified by T3's current-thread model selection; investigated the source failures, audited and executed the copied handlers, implemented the shared rule/tests and profile binding, regenerated only Leon item metadata, replayed retained captures, performed primary review and authored this entry. It conducted no new gameplay experiment. Earlier authorship and runtime claims remain unchanged.

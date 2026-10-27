@@ -17,6 +17,70 @@ from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import RuntimeSignature
 
 
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing-region",
+        "wrong-type",
+        "width",
+        "boolean-width",
+        "address",
+        "unaligned",
+        "outside-ram",
+        "overlap",
+        "metadata-missing",
+        "metadata-drift",
+        "metadata-boolean-width",
+    ],
+)
+def test_vibration_write_proof_is_bounded_and_bound_to_revision(tmp_path, case):
+    """RE2-DS-003: an incomplete native write contract cannot select identities."""
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
+    document = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
+    rows = raw["scenario_vibration_writes"]
+    if case == "missing-region":
+        rows.pop()
+    elif case == "wrong-type":
+        raw["scenario_vibration_writes"] = None
+    elif case == "width":
+        rows[1]["width"] = 10
+    elif case == "boolean-width":
+        rows[0]["width"] = True
+    elif case == "address":
+        rows[0]["address_ps1"] = "invalid"
+    elif case == "unaligned":
+        rows[0]["address_ps1"] = "0x800A268D"
+    elif case == "outside-ram":
+        rows[1]["address_ps1"] = "0x801FFFFC"
+    elif case == "overlap":
+        rows[0]["address_ps1"] = rows[1]["address_ps1"]
+    elif case == "metadata-missing":
+        del document["scenario_vibration_writes"]
+    elif case == "metadata-drift":
+        document["scenario_vibration_writes"][0]["address_ps1"] = "0x800A2600"
+    else:
+        document["scenario_vibration_writes"][0]["width"] = True
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2.*vibration"):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "profile_id",
+    ["re2_leon_a_slus00421", "re2_claire_b_slus00592", "re2_claire_b_slus00756"],
+)
+def test_other_revisions_do_not_inherit_vibration_support(profile_id):
+    from games.re2.scenario_items import scenario_vibration_writes
+
+    raw = json.loads((ROOT / "profiles" / f"{profile_id}.json").read_text())
+    assert scenario_vibration_writes(raw) == ()
+    Re2Profile.load(ROOT / "profiles" / f"{profile_id}.json")
+
+
 def test_dualshock_leon_profile_pins_its_own_layout_and_history():
     """RE2-DS-001: DualShock inserts fields; one relocation delta is unsafe."""
     profile = Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00748.json")

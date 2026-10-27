@@ -15,6 +15,7 @@ from games.re2.scenario_items import (
     scenario_item_candidates,
     scenario_presence_flags,
     scenario_effect_pool,
+    scenario_vibration_writes,
 )
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
@@ -131,6 +132,7 @@ class Re2Profile:
         _, flag_proof = presence_flag_write_proof(raw)
         presence_counter_indices(raw)
         scenario_effect_pool(raw)
+        scenario_vibration_writes(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -189,6 +191,10 @@ class Re2Profile:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
         if document.get("scenario_effect_pool") != raw["scenario_effect_pool"]:
             raise ValueError("RE2 effect pool proof disagrees with its revision layout")
+        if json.dumps(
+            document.get("scenario_vibration_writes", []), sort_keys=True
+        ) != json.dumps(raw.get("scenario_vibration_writes", []), sort_keys=True):
+            raise ValueError("RE2 vibration proof disagrees with its revision layout")
         # JSON types are part of the proof: Python equality would equate
         # boolean bank/bit operands with integer zero or one.
         if json.dumps(

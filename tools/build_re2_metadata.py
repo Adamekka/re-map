@@ -33,6 +33,7 @@ from games.re2.scenario_items import (
     scenario_item_candidates,
     scenario_item_proofs,
     scenario_presence_flags,
+    scenario_vibration_writes,
 )
 
 AREA_NAMES = (
@@ -137,6 +138,7 @@ def map_door_segments(cells: dict[tuple[int, int], int], rings: list) -> list:
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     target = re2_target(profile)
     effect_pool = scenario_effect_pool(profile)
+    vibration_writes = scenario_vibration_writes(profile)
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -262,7 +264,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
         proof = scenario_item_proofs(
-            sources[room["id"]], room, fixed_flags, profile["flag_banks"], effect_pool
+            sources[room["id"]],
+            room,
+            fixed_flags,
+            profile["flag_banks"],
+            effect_pool,
+            vibration_writes=vibration_writes,
         )
         room["fixed_context_preserved"] = proof.fixed_context_preserved
         room["scenario_absent_item_ids"] = proof.absent_item_ids
@@ -529,9 +536,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-COLLECT-020",
                 "RE2-SOURCE-001",
                 "RE2-SCD-002",
+                "RE2-DS-003",
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
+            "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "unsupported_sources": unsupported,
             "presence_counter_writes": profile["presence_counter_writes"],
             "presence_flag_writes": flag_proof,
