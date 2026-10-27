@@ -241,6 +241,119 @@ def synthetic_room(init, main_procedures=(b"\x01\0",)):
     return bytes(data)
 
 
+def switch_command(case_bodies, tail):
+    body = (
+        b"".join(
+            bytes([0x14, 0]) + struct.pack("<HH", len(commands), value) + commands
+            for value, commands in enumerate(case_bodies)
+        )
+        + tail
+        + bytes([0x16, 0])
+    )
+    return bytes([0x13, 0]) + struct.pack("<H", len(body)) + body
+
+
+@pytest.mark.parametrize("default", [False, True])
+def test_switch_catalog_includes_cases_after_returns_and_the_post_switch_path(default):
+    """RE2-SCD-002: source coverage includes all choices, not one live selector."""
+    tail = bytes([0x15, 0, 0x76, 53, 1, 1, 0]) if default else b""
+    script = (
+        switch_command((bytes([1, 0]), item_command(20, 15, 9) + bytes([1, 0])), tail)
+        + item_command(30, 1, 10, slot=9)
+        + bytes([1, 0])
+    )
+    room = decode_room(
+        synthetic_room(script),
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        PRESENCE_WRITES,
+    )
+    assert room["candidate_list_complete"]
+    assert {item["global_id"] for item in room["items"]} == {9, 10}
+    assert sum(
+        command["kind"] == "award"
+        for program in room["programs"].values()
+        for command in program["commands"]
+    ) == int(default)
+    # Cataloging every branch does not establish mandatory startup delivery.
+    assert room["collection_item_ids"] == []
+    assert room["conditional_item_presence"] == []
+
+
+def test_nested_switches_and_default_preserve_every_candidate():
+    inner = switch_command((bytes([1, 0]), item_command(20, 15, 9)), b"")
+    outer = switch_command(
+        (inner + bytes([1, 0]),),
+        bytes([0x15, 0]) + item_command(30, 1, 10, slot=9) + bytes([1, 0]),
+    )
+    room = decode_room(
+        synthetic_room(outer + bytes([1, 0])),
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        PRESENCE_WRITES,
+    )
+    assert room["candidate_list_complete"]
+    assert {item["global_id"] for item in room["items"]} == {9, 10}
+    assert room["collection_item_ids"] == []
+
+
+@pytest.mark.parametrize("bodies", [(), (b"", b""), (bytes([0x1A, 0]), bytes([1, 0]))])
+def test_item_free_switches_have_complete_empty_lists(bodies):
+    room = decode_room(
+        synthetic_room(switch_command(bodies, b"") + bytes([1, 0])),
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        PRESENCE_WRITES,
+    )
+    assert room["candidate_list_complete"]
+    assert room["items"] == []
+
+
+@pytest.mark.parametrize(
+    "mutation", ["exit", "closing", "case_target", "case_body", "overlap"]
+)
+def test_malformed_switches_cannot_establish_coverage(mutation):
+    script = bytearray(switch_command((item_command(20, 15, 9),), b"") + bytes([1, 0]))
+    if mutation == "exit":
+        struct.pack_into("<H", script, 2, len(script))
+    elif mutation == "closing":
+        script[-4] = 0
+    elif mutation == "case_target":
+        struct.pack_into("<H", script, 6, len(script))
+    elif mutation == "case_body":
+        struct.pack_into("<H", script, 6, 1)
+    else:
+        # A valid-looking end marker inside an item's operand is not a
+        # command boundary and cannot authorize a negative item-list proof.
+        struct.pack_into("<H", script, 2, 20)
+        struct.pack_into("<H", script, 6, 12)
+        script[22:24] = bytes([0x16, 0])
+    with pytest.raises(ValueError, match="switch|overlapping"):
+        decode_room(
+            synthetic_room(bytes(script)),
+            "synthetic",
+            PRESENCE_FLAGS,
+            PRESENCE_COUNTERS,
+            PRESENCE_WRITES,
+        )
+
+
+@pytest.mark.parametrize("marker", [0x14, 0x15, 0x16])
+def test_orphan_switch_markers_leave_candidate_coverage_unresolved(marker):
+    packet = bytes([marker, 0]) + (bytes(4) if marker == 0x14 else b"")
+    room = decode_room(
+        synthetic_room(packet + bytes([1, 0])),
+        "synthetic",
+        PRESENCE_FLAGS,
+        PRESENCE_COUNTERS,
+        PRESENCE_WRITES,
+    )
+    assert not room["candidate_list_complete"]
+
+
 @pytest.mark.parametrize("truncated", [False, True])
 def test_sound_proofs_hash_only_the_stable_source_bytes(truncated):
     data = bytearray(synthetic_room(b"\x01\0"))

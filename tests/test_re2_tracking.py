@@ -37,6 +37,34 @@ HEADING_MOVEMENTS = json.loads(
 )["measurements"]
 
 
+@pytest.mark.parametrize(
+    "profile", ["re2_leon_a_slus00748", "re2_claire_b_slus00756"], indirect=True
+)
+@pytest.mark.parametrize("snapshot", ["00-00"], indirect=True)
+def test_opening_switch_coverage_requires_a_resolved_live_registry(snapshot):
+    """RE2-SCD-002: complete empty source data still needs a coherent live check."""
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.rooms["00-00"].list_complete
+    assert tracker.rooms["00-00"].items == ()
+    assert tracker.rooms["00-00"].completion is RoomCompletion.Cleared
+
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    pointer = 0x80100000 + profile.rooms["00-00"]["doors"][0]["offset"] + 64
+    put(registry + 4, pointer, 4)
+    put(pointer, 2, 1)
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert tracker.rooms["00-00"].completion is RoomCompletion.Unknown
+    assert not tracker.rooms["00-00"].list_complete
+
+    put(registry + 4, 0, 4)
+    fresh = Tracker()
+    assert poll_re2(profile, fresh, read).status is PollStatus.Display
+    assert fresh.rooms["00-00"].completion is RoomCompletion.Cleared
+    assert fresh.rooms["00-00"].reason == ""
+
+
 @pytest.mark.parametrize("keep_unresolved_checks", [False, True])
 def test_counter_initialized_items_rewind_after_departure_without_cached_presence(
     snapshot, keep_unresolved_checks

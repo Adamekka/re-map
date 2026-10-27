@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import struct
+from itertools import pairwise
 
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
@@ -305,6 +306,7 @@ def decode_room(
             start = begin + entry
             stop = begin + entries[number + 1] if number + 1 < len(entries) else end
             pending, commands = [start], {}
+            switch_labels = set()
             while pending:
                 position = pending.pop()
                 if position in commands:
@@ -425,18 +427,55 @@ def decode_room(
                     )
                 elif opcode == 0x76:
                     command.update(kind="award", item_type=packet[1], amount=packet[2])
-                elif opcode in (0x13, 0x14, 0x15, 0x16):
-                    # Switch branches need their own reachability proof. Do not
-                    # call this room's candidate pickup list complete yet.
-                    complete = False
+                elif opcode == 0x13:
+                    # RE2-SCD-002: the native selector skips case bodies by
+                    # their unsigned relative offsets. Queue every label so
+                    # an early return cannot hide a later pickup or award.
+                    limit = following + struct.unpack_from("<H", packet, 2)[0]
+                    if not following < limit < stop or data[limit - 2] != 0x16:
+                        raise ValueError("invalid RE2 switch bounds")
+                    label = following
+                    while True:
+                        if not following <= label <= limit - 2:
+                            raise ValueError("RE2 switch case outside its bounds")
+                        marker = data[label]
+                        switch_labels.add(label)
+                        pending.append(label)
+                        if marker == 0x14 and label + 6 <= limit - 2:
+                            label += 6 + struct.unpack_from("<H", data, label + 2)[0]
+                        elif marker == 0x15 and label < limit - 2:
+                            # Default ends the native label search. Its body
+                            # is decoded normally; the closing marker and
+                            # post-switch path still need independent visits.
+                            switch_labels.add(limit - 2)
+                            pending.append(limit - 2)
+                            break
+                        elif marker == 0x16 and label == limit - 2:
+                            break
+                        else:
+                            raise ValueError("invalid RE2 switch label chain")
+                    pending.append(limit)
                 commands[position] = command
                 if command["kind"] not in ("end", "jump"):
                     pending.append(following)
+            ordered = sorted(commands.values(), key=lambda row: row["offset"])
+            if switch_labels and any(
+                left["next"] > right["offset"] for left, right in pairwise(ordered)
+            ):
+                raise ValueError("overlapping RE2 script commands")
+            if any(
+                row["opcode"] in (0x14, 0x15, 0x16)
+                and row["offset"] not in switch_labels
+                for row in ordered
+            ):
+                # An orphan marker has no validated switch owner, so it
+                # cannot establish a complete candidate list.
+                complete = False
             programs[f"{section}:{number}"] = {
                 "entry": start,
                 # Negative proofs also scan unreachable bytes inside this procedure.
                 "limit": stop,
-                "commands": sorted(commands.values(), key=lambda row: row["offset"]),
+                "commands": ordered,
             }
 
     resets = [

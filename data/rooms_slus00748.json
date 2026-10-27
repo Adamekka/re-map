@@ -24,7 +24,8 @@
     "RE2-COLLECT-018",
     "RE2-COLLECT-019",
     "RE2-COLLECT-020",
-    "RE2-SOURCE-001"
+    "RE2-SOURCE-001",
+    "RE2-SCD-002"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -339,7 +340,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -607,7 +608,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -718,7 +719,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -806,7 +807,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -921,7 +922,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -1328,7 +1329,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -1506,7 +1507,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -1639,7 +1640,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -1794,7 +1795,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -2827,7 +2828,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -3566,8 +3567,12 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
-      "collection_item_ids": [],
+      "candidate_list_complete": true,
+      "collection_item_ids": [
+        57,
+        58,
+        59
+      ],
       "conditional_item_presence": [],
       "event_awards": [],
       "stage": 0,
@@ -3784,7 +3789,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -3887,7 +3892,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -4107,7 +4112,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -4313,7 +4318,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -5314,7 +5319,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -6547,9 +6552,110 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 48,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 1,
+                  "expected": 1
+                },
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 74,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 78,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 81,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 82,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 1,
+                  "expected": 1
+                },
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 84,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 1,
+                  "bit": 6,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 11,
@@ -7766,7 +7872,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -7888,7 +7994,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -9086,7 +9192,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -9337,7 +9443,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -9455,7 +9561,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -9555,7 +9661,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -9788,7 +9894,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -9994,7 +10100,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -10161,7 +10267,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -10499,7 +10605,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -10866,7 +10972,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -11081,7 +11187,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -11381,7 +11487,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -11499,7 +11605,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -11806,7 +11912,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -11909,7 +12015,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -12012,7 +12118,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -12593,7 +12699,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -12681,7 +12787,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -13233,7 +13339,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -13563,7 +13669,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -13707,7 +13813,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -13982,7 +14088,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -14203,7 +14309,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -14329,7 +14435,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -14503,7 +14609,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -14603,7 +14709,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -14691,7 +14797,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -15120,7 +15226,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -15838,7 +15944,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -16379,7 +16485,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -16855,7 +16961,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
@@ -17439,7 +17545,7 @@
           ]
         }
       ],
-      "candidate_list_complete": false,
+      "candidate_list_complete": true,
       "collection_item_ids": [],
       "conditional_item_presence": [],
       "event_awards": [],
