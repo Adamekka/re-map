@@ -26,7 +26,8 @@
     "RE2-COLLECT-020",
     "RE2-SOURCE-001",
     "RE2-SCD-002",
-    "RE2-DS-003"
+    "RE2-DS-003",
+    "RE2-LIFETIME-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -4979,6 +4980,12 @@
         },
         {
           "global_id": 114,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 115,
           "presence": {
             "kind": "required"
           }

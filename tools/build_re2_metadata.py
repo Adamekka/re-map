@@ -289,6 +289,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                         (row["bank"], row["bit"], row["expected"])
                         for row in fixed_flags
                     ),
+                    unreachable_creator_offsets=proof.unreachable_creator_offsets,
                 )
             )
         del room["programs"]
@@ -540,6 +541,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SOURCE-001",
                 "RE2-SCD-002",
                 "RE2-DS-003",
+                "RE2-LIFETIME-001",
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],

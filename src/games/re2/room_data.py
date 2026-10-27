@@ -539,6 +539,8 @@ def collection_presence(
     condition_flags: frozenset[tuple[int, int]],
     offsets: frozenset[int],
     fixed_flags: frozenset[tuple[int, int, int]],
+    *,
+    unreachable_creator_offsets: frozenset[int] = frozenset(),
 ) -> tuple[list[int], list[dict]]:
     """Prove collection presence for an explicit set of source candidates."""
     assert isinstance(fixed_flags, frozenset), "fixed startup flags must be explicit"
@@ -548,6 +550,16 @@ def collection_presence(
     items = {item["offset"]: item for item in room["items"]}
     eligible = {offset: item for offset, item in items.items() if offset in offsets}
     programs = room["programs"]
+    assert isinstance(unreachable_creator_offsets, frozenset)
+    assert not unreachable_creator_offsets or fixed_flags, (
+        "creator lifetime exclusions require the preserved fixed context"
+    )
+    assert unreachable_creator_offsets <= {
+        command["offset"]
+        for program in programs.values()
+        for command in program["commands"]
+        if command["kind"] in ("item", "door", "interaction", "reset")
+    }, "creator lifetime exclusions must belong to the decoded source"
     doors = {door["offset"]: door for door in room["doors"]}
     complete = room["candidate_list_complete"]
     assert offsets <= items.keys(), "presence candidates must belong to the source"
@@ -576,13 +588,19 @@ def collection_presence(
         )
         > 1
     }
-    # An event can reuse the registry slot after startup. A creator for
-    # another interaction cannot establish the original item's lifetime.
+    # An event can reuse the registry slot after startup. Only the shared
+    # whole-source context walk can exclude a generic creator; an uncalled
+    # procedure or a fresh mutable predicate cannot prove its unreachability.
+    # Doors and resets retain their existing conservative lifetime checks.
     ambiguous_slots.update(
         doors[command["door"]]["slot"] if command["kind"] == "door" else command["slot"]
         for program in programs.values()
         for command in program["commands"]
         if command["kind"] in ("door", "interaction")
+        and not (
+            command["kind"] == "interaction"
+            and command["offset"] in unreachable_creator_offsets
+        )
     )
     for command in resets:
         identities = {
