@@ -53,6 +53,7 @@ from games.re2.script_dispatch_items import (
     script_dispatch_relations,
     script_item_dispatch,
 )
+from games.re2.startup_effects import StartupEffectAuditConfig, startup_effect_audit
 
 AREA_NAMES = (
     "City streets west",
@@ -193,6 +194,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     actor_parts = scenario_actor_parts(profile)
     clipping = clipping_effect_proof(profile)
     dispatch = script_item_dispatch(profile)
+    startup_audit = startup_effect_audit(profile)
     entry_config = room_entry_contract(profile)
     if isinstance(entry_config, RoomEntryContractFailure):
         raise ValueError(entry_config.value)
@@ -357,6 +359,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             vibration_writes=vibration_writes,
             actor_parts=actor_parts,
             clipping=clipping,
+            startup_audit=startup_audit,
         )
         room["fixed_context_preserved"] = proof.fixed_context_preserved
         room["scenario_absent_item_ids"] = proof.absent_item_ids
@@ -376,6 +379,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                         for row in fixed_flags
                     ),
                     unreachable_creator_offsets=proof.unreachable_creator_offsets,
+                    startup_effects=proof.startup_effects,
                 )
             )
         if dispatch is not ScriptItemDispatchSupport.Unaudited:
@@ -673,11 +677,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     if isinstance(entry_contract, VerifiedRoomEntryContract)
                     else []
                 ),
+                *(
+                    ["RE2-STARTUP-001"]
+                    if isinstance(startup_audit, StartupEffectAuditConfig)
+                    else []
+                ),
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {"startup_effect_audit": profile["startup_effect_audit"]}
+                if isinstance(startup_audit, StartupEffectAuditConfig)
+                else {}
+            ),
             **(
                 {"room_entry_contract": profile["room_entry_contract"]}
                 if isinstance(entry_contract, VerifiedRoomEntryContract)

@@ -566,6 +566,42 @@ def test_departed_door_applicability_change_withholds_whole_publication(snapshot
     assert tracker == before
 
 
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_startup_setup_preserves_all_departed_items_through_acquisition_reversal(
+    snapshot,
+):
+    """RE2-STARTUP-001: equivalent creators and setup effects retain presence."""
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x0E))
+    ids = {56, 60, 110, 199}
+    bank, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    visits = None
+    for acquired in (set(), {60}, ids, set()):
+        for word in sorted({gid // 32 for gid in ids}):
+            mask = sum(
+                0x80000000 >> (gid % 32) for gid in acquired if gid // 32 == word
+            )
+            put(bank + word * 4, mask, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        room = tracker.rooms["01-0e"]
+        assert room.list_complete and len(room.items) == 4
+        assert sum(item.state == "taken" for item in room.items) == len(acquired)
+        assert sum(item.state == "uncollected" for item in room.items) == 4 - len(
+            acquired
+        )
+        assert room.completion is (
+            RoomCompletion.Cleared if acquired == ids else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x0E))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-0e"] == room
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
 def test_pickups_rewind_without_erasing_visits(snapshot):
     profile, _, put, read = snapshot
     tracker = Tracker()

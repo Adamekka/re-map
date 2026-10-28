@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import struct
 from collections.abc import Callable
 from typing import Literal
+
+from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 # Audited initializer effects shared with ordinary collection proofs. These
 # commands neither declare pickups nor yield the synchronous startup task.
@@ -213,6 +216,9 @@ def source_presence(
     mode: Literal["startup", "scheduled"],
     condition_flags: frozenset[tuple[int, int]],
     fixed_flags: frozenset[tuple[int, int, int]],
+    *,
+    startup_effects: StartupEffectReceipt
+    | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
 ) -> dict:
     assert mode in ("startup", "scheduled")
     assert targets and all(key in programs for key, _ in targets)
@@ -222,6 +228,14 @@ def source_presence(
     ), "fixed startup flags must be supported predicates with explicit values"
     fixed = {(bank, bit): value for bank, bit, value in fixed_flags}
     assert len(fixed) == len(fixed_flags), "fixed startup flags must not conflict"
+    assert startup_effects is StartupEffectAuditSupport.Unaudited or isinstance(
+        startup_effects, StartupEffectReceipt
+    )
+    setup_locations = (
+        startup_effects.locations_for(data, programs, condition_flags, fixed_flags)
+        if isinstance(startup_effects, StartupEffectReceipt)
+        else frozenset()
+    )
     # An empty set means no sufficient condition was proved. The empty
     # conjunction means unconditional reachability, as in ordinary Boolean DNF.
     unconditional = frozenset((frozenset(),))
@@ -230,6 +244,25 @@ def source_presence(
         key: {row["offset"]: row for row in program["commands"]}
         for key, program in programs.items()
     }
+    groups = {}
+    for key, position in sorted(targets):
+        row = commands[key].get(position)
+        if (
+            row is not None
+            and row["kind"] == "item"
+            and row["opcode"] in (0x4E, 0x69)
+            and row["next"] - position == (22 if row["opcode"] == 0x4E else 30)
+        ):
+            operand = position + (14 if row["opcode"] == 0x4E else 22)
+            item_type, _, global_id = struct.unpack_from("<3H", data, operand)
+            identity = "item", global_id, item_type
+        else:
+            identity = "single", key, position
+        groups.setdefault(identity, set()).add((key, position))
+    # Either creator of one acquisition identity can satisfy the goal before
+    # opaque branch outcomes are intersected. Unrelated items/awards retain
+    # separate goals; their individual guarantees cannot be combined here.
+    target_groups = tuple(frozenset(group) for group in groups.values())
 
     # Later counter aliases can invalidate fresh presence predicates. Reject
     # them anywhere in the source, as with task cancellation/replacement.
@@ -310,7 +343,7 @@ def source_presence(
 
         def walk(key, position, returns):
             nonlocal steps
-            if (key, position) == goal:
+            if goal != "startup-end" and (key, position) in goal:
                 return unconditional
             state = key, position, returns
             steps += 1
@@ -439,6 +472,7 @@ def source_presence(
                 or (
                     kind in ("item", "door", "interaction", "reset")
                     or opcode in fallthrough
+                    or (key, row["offset"]) in setup_locations
                     or (
                         # Fresh predicates must survive startup. Decoding binds
                         # unrelated writes to canonical, alias-checked bits.
@@ -467,7 +501,7 @@ def source_presence(
 
     conditions = unresolved
     if mode == "startup":
-        for target in sorted(targets):
+        for target in target_groups:
             for root in ("16:0", "17:0"):
                 conditions = simplify(conditions | required_before(target, root, True))
     else:
@@ -481,12 +515,13 @@ def source_presence(
                     continue
                 if not any(
                     required_before(goal, target, False) == unconditional
-                    for goal in sorted(targets)
+                    for goal in target_groups
                 ):
                     continue
                 for root in ("16:0", "17:0"):
                     conditions = simplify(
-                        conditions | required_before((key, row["offset"]), root, True)
+                        conditions
+                        | required_before(frozenset({(key, row["offset"])}), root, True)
                     )
     if conditions == unconditional:
         return {"kind": "required"}

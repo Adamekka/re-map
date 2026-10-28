@@ -27,7 +27,8 @@
     "RE2-DS-005",
     "RE2-CLIP-001",
     "RE2-DISPATCH-001",
-    "RE2-DOOR-007"
+    "RE2-DOOR-007",
+    "RE2-STARTUP-001"
   ],
   "script_item_dispatch": {
     "main_table_address_ps1": "0x800D8CBC",
@@ -35,6 +36,10 @@
       {"address_ps1": "0x800D4874", "width": 8},
       {"address_ps1": "0x800D48BC", "width": 32}
     ]
+  },
+  "startup_effect_audit": {
+    "audit": "slus00748-sca-clipping-v1",
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
   },
   "metadata_layout": {
     "actor_part_resource_table_address_ps1": "0x8009ADF4",

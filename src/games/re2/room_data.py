@@ -11,6 +11,7 @@ from games.re2.event_presence import (
     initializer_fallthrough,
     source_presence,
 )
+from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 
 def bind_event_awards(
@@ -541,6 +542,8 @@ def collection_presence(
     fixed_flags: frozenset[tuple[int, int, int]],
     *,
     unreachable_creator_offsets: frozenset[int] = frozenset(),
+    startup_effects: StartupEffectReceipt
+    | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
 ) -> tuple[list[int], list[dict]]:
     """Prove collection presence for an explicit set of source candidates."""
     assert isinstance(fixed_flags, frozenset), "fixed startup flags must be explicit"
@@ -550,6 +553,14 @@ def collection_presence(
     items = {item["offset"]: item for item in room["items"]}
     eligible = {offset: item for offset, item in items.items() if offset in offsets}
     programs = room["programs"]
+    assert startup_effects is StartupEffectAuditSupport.Unaudited or isinstance(
+        startup_effects, StartupEffectReceipt
+    )
+    setup_locations = (
+        startup_effects.locations_for(data, programs, condition_flags, fixed_flags)
+        if isinstance(startup_effects, StartupEffectReceipt)
+        else frozenset()
+    )
     assert isinstance(unreachable_creator_offsets, frozenset)
     assert not unreachable_creator_offsets or fixed_flags, (
         "creator lifetime exclusions require the preserved fixed context"
@@ -736,7 +747,10 @@ def collection_presence(
                     # These creators' slots were excluded above, including
                     # creators reached only by an asynchronous event.
                     position = command["next"]
-                elif initializer_fallthrough(command):
+                elif (
+                    initializer_fallthrough(command)
+                    or (key, command["offset"]) in setup_locations
+                ):
                     # Audited fall-through commands: padding, flag writes,
                     # scalar/actor setup and camera replacement do not declare
                     # collectibles or yield the executing startup task.
@@ -787,6 +801,7 @@ def collection_presence(
             "startup",
             condition_flags,
             fixed_flags,
+            startup_effects=startup_effects,
         )
         if presence["kind"] != "unresolved":
             conditional.append({"global_id": gid, "presence": presence})

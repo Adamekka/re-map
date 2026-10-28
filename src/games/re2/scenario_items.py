@@ -17,6 +17,12 @@ from games.re2.event_presence import (
     flag_write_conflicts,
 )
 from games.re2.room_write_partitions import ScaWritePartition, sca_write_partition
+from games.re2.startup_effects import (
+    StartupEffectAuditConfig,
+    StartupEffectAuditSupport,
+    StartupEffectReceipt,
+    certify_startup_effects,
+)
 
 # The pinned native actor search and shadow selector share this enemy table.
 ENEMY_SLOT_COUNT = 32
@@ -29,9 +35,16 @@ class ScenarioItemProof:
     item_variants: list[dict]
     unreachable_creator_offsets: frozenset[int] = frozenset()
     context_conditions: list[dict] = field(default_factory=list)
+    startup_effects: StartupEffectReceipt | StartupEffectAuditSupport = (
+        StartupEffectAuditSupport.Unaudited
+    )
 
     def __post_init__(self) -> None:
         assert type(self.fixed_context_preserved) is bool
+        assert (
+            self.startup_effects is StartupEffectAuditSupport.Unaudited
+            or isinstance(self.startup_effects, StartupEffectReceipt)
+        )
         assert type(self.unreachable_creator_offsets) is frozenset
         assert all(
             type(offset) is int and offset >= 0
@@ -42,6 +55,7 @@ class ScenarioItemProof:
             and not self.item_variants
             and not self.unreachable_creator_offsets
             and not self.context_conditions
+            and self.startup_effects is StartupEffectAuditSupport.Unaudited
         ), "item proofs require a preserved fixed context"
 
 
@@ -169,12 +183,17 @@ def scenario_item_proofs(
     vibration_writes: tuple[tuple[int, int], ...] = (),
     actor_parts: ActorPartProofConfig | ActorPartSupport = ActorPartSupport.Unaudited,
     clipping: ClipEffectProof | ClipEffectSupport = ClipEffectSupport.Unaudited,
+    startup_audit: StartupEffectAuditConfig
+    | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
 ) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
     assert fixed and len(fixed) == len(flags)
     assert clipping is ClipEffectSupport.Unaudited or isinstance(
         clipping, ClipEffectProof
+    )
+    assert startup_audit is StartupEffectAuditSupport.Unaudited or isinstance(
+        startup_audit, StartupEffectAuditConfig
     )
     pool_start, pool_limit = effect_pool
     assert 0x80000000 <= pool_start < pool_limit <= 0x80200000
@@ -679,7 +698,14 @@ def scenario_item_proofs(
         and (key, row["offset"]) not in reached
     )
     return ScenarioItemProof(
-        True, absent, variants, unreachable_creators, actor_copy.context_conditions
+        True,
+        absent,
+        variants,
+        unreachable_creators,
+        actor_copy.context_conditions,
+        certify_startup_effects(
+            data, room, frozenset(fixed), banks, clipping, startup_audit
+        ),
     )
 
 

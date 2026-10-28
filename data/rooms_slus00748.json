@@ -31,7 +31,8 @@
     "RE2-DS-005",
     "RE2-CLIP-001",
     "RE2-DISPATCH-001",
-    "RE2-DOOR-007"
+    "RE2-DOOR-007",
+    "RE2-STARTUP-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -84,6 +85,10 @@
       "resource_width": 174964
     }
   ],
+  "startup_effect_audit": {
+    "audit": "slus00748-sca-clipping-v1",
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
+  },
   "room_entry_contract": {
     "audit": "slus00748-original-room-entry-v1",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
@@ -7723,7 +7728,32 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 56,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 60,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 110,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 199,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 14,

@@ -30,6 +30,7 @@ from games.re2.script_dispatch_items import (
     ScriptItemDispatchSupport,
     script_item_dispatch,
 )
+from games.re2.startup_effects import StartupEffectAuditConfig, startup_effect_audit
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
 
@@ -150,6 +151,7 @@ class Re2Profile:
         actor_parts = scenario_actor_parts(raw)
         clipping = clipping_effect_proof(raw)
         dispatch = script_item_dispatch(raw)
+        startup_audit = startup_effect_audit(raw)
         entry_contract = room_entry_contract(raw)
         if isinstance(entry_contract, RoomEntryContractFailure):
             raise ValueError(entry_contract.value)
@@ -219,6 +221,16 @@ class Re2Profile:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
         if document.get("scenario_effect_pool") != raw["scenario_effect_pool"]:
             raise ValueError("RE2 effect pool proof disagrees with its revision layout")
+        if ("startup_effect_audit" in document) != (
+            isinstance(startup_audit, StartupEffectAuditConfig)
+        ) or (
+            isinstance(startup_audit, StartupEffectAuditConfig)
+            and json.dumps(document["startup_effect_audit"], sort_keys=True)
+            != json.dumps(raw["startup_effect_audit"], sort_keys=True)
+        ):
+            raise ValueError(
+                "RE2 startup effect audit disagrees with its revision layout"
+            )
         if json.dumps(
             document.get("scenario_vibration_writes", []), sort_keys=True
         ) != json.dumps(raw.get("scenario_vibration_writes", []), sort_keys=True):

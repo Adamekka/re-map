@@ -17,6 +17,30 @@ from games.re2.re2_profile import Re2Profile
 from games.runtime_identity import RuntimeSignature
 
 
+@pytest.mark.parametrize("case", ["missing", "drift", "boolean", "raw-invalid"])
+def test_startup_effect_catalog_is_bound_to_its_revision_audit(tmp_path, case):
+    profile_path = ROOT / "profiles/re2_leon_a_slus00748.json"
+    raw = json.loads(profile_path.read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((profile_path.parent / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    if case == "missing":
+        document.pop("startup_effect_audit")
+    elif case == "drift":
+        document["startup_effect_audit"]["executable_sha256"] = "0" * 64
+    elif case == "boolean":
+        document["startup_effect_audit"]["audit"] = True
+    else:
+        raw["startup_effect_audit"] = None
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 startup effect audit"):
+        Re2Profile.load(path)
+
+
 @pytest.mark.parametrize(
     "case",
     [
