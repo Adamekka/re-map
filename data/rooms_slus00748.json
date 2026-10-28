@@ -29,7 +29,8 @@
     "RE2-DS-003",
     "RE2-LIFETIME-001",
     "RE2-DS-005",
-    "RE2-CLIP-001"
+    "RE2-CLIP-001",
+    "RE2-DISPATCH-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -82,6 +83,19 @@
       "resource_width": 174964
     }
   ],
+  "script_item_dispatch": {
+    "main_table_address_ps1": "0x800D8CBC",
+    "message_preserved_flag_ranges": [
+      {
+        "address_ps1": "0x800D4874",
+        "width": 8
+      },
+      {
+        "address_ps1": "0x800D48BC",
+        "width": 32
+      }
+    ]
+  },
   "scenario_clipping": {
     "status_address_ps1": "0x800CFBD8",
     "parameter_writes": [
@@ -400,7 +414,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1010.RDT",
@@ -543,7 +558,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1020.RDT",
@@ -670,7 +686,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1030.RDT",
@@ -782,7 +799,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1040.RDT",
@@ -871,7 +889,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1050.RDT",
@@ -987,7 +1006,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1060.RDT",
@@ -1155,7 +1175,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1070.RDT",
@@ -1259,7 +1280,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1080.RDT",
@@ -1397,7 +1419,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1090.RDT",
@@ -1576,7 +1599,54 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": [
+        {
+          "item_offset": 9024,
+          "callback_offset": 9004,
+          "callback_slot": 8,
+          "callback_four_point": false,
+          "target_slot": 3,
+          "procedure": 22,
+          "callback_proof": {
+            "offset": 9006,
+            "width": 18,
+            "sha256": "7429e1aaabb8c30f776cc86e4ce915538a943056e019950e84b58a1d12783ca9"
+          },
+          "message_proofs": [
+            {
+              "offset": 13220,
+              "width": 4,
+              "sha256": "34071955ce4284043357c6bf560fc658aa8703bc930292096d6f3f4c1a92350d"
+            },
+            {
+              "offset": 13226,
+              "width": 26,
+              "sha256": "4d2bba3cc255db7cc6dc35f258dffc3866efe1c3292594c7fa0068ab450314c2"
+            },
+            {
+              "offset": 13300,
+              "width": 4,
+              "sha256": "0470e7ad9d52e084fb6e0fcf80bc1c601a30ea6f6afb20b232ebec215a4db453"
+            },
+            {
+              "offset": 13306,
+              "width": 31,
+              "sha256": "d4b862627a343395421251552021fe0e4daa4c4f159eb35d7e15a20fae558d51"
+            }
+          ],
+          "table_proof": {
+            "offset": 8552,
+            "width": 2,
+            "sha256": "463c52051c83626d863b5d51b0f6b07cfccf547ed949a7ea3bb0d415b61c8fe2"
+          },
+          "program_proof": {
+            "offset": 11500,
+            "width": 48,
+            "sha256": "f0fd25eabd6c38b4208d557c71f29df1593cd6900c66a5cd9ddf5505b5d88b9d"
+          }
+        }
+      ]
     },
     {
       "source": "PL0/RDT/ROOM10A0.RDT",
@@ -1710,7 +1780,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM10B0.RDT",
@@ -1866,7 +1937,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM10C0.RDT",
@@ -2024,7 +2096,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM10D0.RDT",
@@ -2151,7 +2224,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM10E0.RDT",
@@ -2266,7 +2340,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM10F0.RDT",
@@ -2466,7 +2541,8 @@
         157
       ],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1100.RDT",
@@ -2648,7 +2724,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1110.RDT",
@@ -2764,7 +2841,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1120.RDT",
@@ -2906,7 +2984,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1130.RDT",
@@ -3129,7 +3208,8 @@
           ]
         }
       ],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1140.RDT",
@@ -3293,7 +3373,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1150.RDT",
@@ -3511,7 +3592,8 @@
           ]
         }
       ],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1160.RDT",
@@ -3653,7 +3735,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1170.RDT",
@@ -3757,7 +3840,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1180.RDT",
@@ -3873,7 +3957,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM1190.RDT",
@@ -3977,7 +4062,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM11A0.RDT",
@@ -4095,7 +4181,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM11B0.RDT",
@@ -4199,7 +4286,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM11C0.RDT",
@@ -4303,7 +4391,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM11D0.RDT",
@@ -4407,7 +4496,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2000.RDT",
@@ -4674,7 +4764,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2010.RDT",
@@ -4862,7 +4953,8 @@
             ]
           ]
         }
-      ]
+      ],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2020.RDT",
@@ -5118,7 +5210,8 @@
         249
       ],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2030.RDT",
@@ -5286,7 +5379,8 @@
         36
       ],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2040.RDT",
@@ -5439,7 +5533,54 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": [
+        {
+          "item_offset": 6732,
+          "callback_offset": 6776,
+          "callback_slot": 6,
+          "callback_four_point": false,
+          "target_slot": 4,
+          "procedure": 8,
+          "callback_proof": {
+            "offset": 6778,
+            "width": 18,
+            "sha256": "80bb1fa4e5c52e5b789a1968d0c7a327f918ec8e513706bfd487b329a5ce8851"
+          },
+          "message_proofs": [
+            {
+              "offset": 9440,
+              "width": 4,
+              "sha256": "e15615d7a5bd5031b2b0bf0fbbc3b254b303cea26a540d43a1ead5e837ff50d4"
+            },
+            {
+              "offset": 9530,
+              "width": 45,
+              "sha256": "94880cf299748200ffbbd6149db1563ffb3fa92e3469e213b27ad5c20d72e7d3"
+            },
+            {
+              "offset": 9796,
+              "width": 4,
+              "sha256": "16dda4a432c8dd9ac07458018d446c0a7deb7af5699075d78ccae420bf86ccaf"
+            },
+            {
+              "offset": 9882,
+              "width": 61,
+              "sha256": "8d4995a8187f0951b4d10ef3e34493a7fa9b1d3ac1fb10b88b5dfc8c72727234"
+            }
+          ],
+          "table_proof": {
+            "offset": 6568,
+            "width": 2,
+            "sha256": "aa5b771647bccd6b074e556da816df25032893b0b930d4aaf42c33153230d11e"
+          },
+          "program_proof": {
+            "offset": 7926,
+            "width": 48,
+            "sha256": "c1e3236de40f2846896c6cb6448a2a670963614ce47c9e249b3d4df7cba8ae1c"
+          }
+        }
+      ]
     },
     {
       "source": "PL0/RDT/ROOM2050.RDT",
@@ -5558,7 +5699,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2060.RDT",
@@ -5714,7 +5856,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2070.RDT",
@@ -5914,7 +6057,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2080.RDT",
@@ -6135,7 +6279,8 @@
         158
       ],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2090.RDT",
@@ -6299,7 +6444,8 @@
         70
       ],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM20A0.RDT",
@@ -6467,7 +6613,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM20B0.RDT",
@@ -6780,7 +6927,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM20C0.RDT",
@@ -6984,7 +7132,8 @@
           ]
         }
       ],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM20D0.RDT",
@@ -7129,7 +7278,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM20E0.RDT",
@@ -7377,7 +7527,8 @@
           ]
         }
       ],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM20F0.RDT",
@@ -7541,7 +7692,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2100.RDT",
@@ -7709,7 +7861,8 @@
           ]
         }
       ],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2110.RDT",
@@ -7915,7 +8068,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2120.RDT",
@@ -8031,7 +8185,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2130.RDT",
@@ -8154,7 +8309,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2140.RDT",
@@ -8318,7 +8474,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2150.RDT",
@@ -8421,7 +8578,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2160.RDT",
@@ -8537,7 +8695,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM2190.RDT",
@@ -8679,7 +8838,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM21A0.RDT",
@@ -8836,7 +8996,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM21B0.RDT",
@@ -9008,7 +9169,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3000.RDT",
@@ -9112,7 +9274,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3010.RDT",
@@ -9257,7 +9420,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3020.RDT",
@@ -9361,7 +9525,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3030.RDT",
@@ -9495,7 +9660,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3040.RDT",
@@ -9614,7 +9780,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3050.RDT",
@@ -9733,7 +9900,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3060.RDT",
@@ -9834,7 +10002,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3070.RDT",
@@ -9965,7 +10134,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3080.RDT",
@@ -10069,7 +10239,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM3090.RDT",
@@ -10173,7 +10344,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM30A0.RDT",
@@ -10277,7 +10449,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM30B0.RDT",
@@ -10445,7 +10618,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM30C0.RDT",
@@ -10560,7 +10734,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM30D0.RDT",
@@ -10644,7 +10819,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4000.RDT",
@@ -10786,7 +10962,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4010.RDT",
@@ -11028,7 +11205,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4020.RDT",
@@ -11155,7 +11333,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4030.RDT",
@@ -11371,7 +11550,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4040.RDT",
@@ -11520,7 +11700,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4050.RDT",
@@ -11673,7 +11854,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4070.RDT",
@@ -11792,7 +11974,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4080.RDT",
@@ -11952,7 +12135,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4090.RDT",
@@ -12101,7 +12285,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM40A0.RDT",
@@ -12205,7 +12390,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM40B0.RDT",
@@ -12309,7 +12495,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM40C0.RDT",
@@ -12382,7 +12569,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM40D0.RDT",
@@ -12486,7 +12674,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM40E0.RDT",
@@ -12628,7 +12817,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM40F0.RDT",
@@ -12701,7 +12891,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM4100.RDT",
@@ -12895,7 +13086,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5000.RDT",
@@ -12984,7 +13176,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5010.RDT",
@@ -13100,7 +13293,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5020.RDT",
@@ -13234,7 +13428,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5030.RDT",
@@ -13413,7 +13608,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5040.RDT",
@@ -13540,7 +13736,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5050.RDT",
@@ -13745,7 +13942,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5060.RDT",
@@ -13872,7 +14070,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5070.RDT",
@@ -14017,7 +14216,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5080.RDT",
@@ -14205,7 +14405,8 @@
           ]
         }
       ],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM5090.RDT",
@@ -14294,7 +14495,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6000.RDT",
@@ -14398,7 +14600,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6010.RDT",
@@ -14517,7 +14720,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6020.RDT",
@@ -14644,7 +14848,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6030.RDT",
@@ -14819,7 +15024,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6040.RDT",
@@ -14920,7 +15126,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6050.RDT",
@@ -15009,7 +15216,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6060.RDT",
@@ -15173,7 +15381,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6070.RDT",
@@ -15322,7 +15531,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6080.RDT",
@@ -15441,7 +15651,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6090.RDT",
@@ -15571,7 +15782,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM60A0.RDT",
@@ -15731,7 +15943,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM60B0.RDT",
@@ -15880,7 +16093,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM60C0.RDT",
@@ -16041,7 +16255,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM60D0.RDT",
@@ -16164,7 +16379,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM60E0.RDT",
@@ -16329,7 +16545,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM60F0.RDT",
@@ -16441,7 +16658,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6100.RDT",
@@ -16590,7 +16808,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6110.RDT",
@@ -16709,7 +16928,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6120.RDT",
@@ -16813,7 +17033,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6130.RDT",
@@ -16902,7 +17123,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6140.RDT",
@@ -17033,7 +17255,8 @@
       "fixed_context_preserved": true,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6150.RDT",
@@ -17189,7 +17412,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6160.RDT",
@@ -17342,7 +17566,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM6170.RDT",
@@ -17446,7 +17671,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM7000.RDT",
@@ -17550,7 +17776,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM7010.RDT",
@@ -17677,7 +17904,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM7020.RDT",
@@ -17778,7 +18006,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM7030.RDT",
@@ -17897,7 +18126,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     },
     {
       "source": "PL0/RDT/ROOM7040.RDT",
@@ -18009,7 +18239,8 @@
       "fixed_context_preserved": false,
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
-      "scenario_context_conditions": []
+      "scenario_context_conditions": [],
+      "script_item_dispatch_relations": []
     }
   ]
 }

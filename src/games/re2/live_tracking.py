@@ -14,6 +14,7 @@ from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
+from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.re2.scenario_items import scenario_item_candidates
 from games.runtime_identity import MemoryResult
 from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
@@ -254,6 +255,66 @@ def poll_re2(
                     "lock_type": packet[operand + 16],
                 }
 
+        if isinstance(profile.script_item_dispatch, ScriptItemDispatchConfig):
+            relations = room["script_item_dispatch_relations"]
+            if (
+                relations
+                and value(profile.script_item_dispatch.main_table_address, 4)
+                == sections[17]
+            ):
+                for relation in relations:
+                    item_offset = relation["item_offset"]
+                    if item_offset not in live_items:
+                        continue
+                    target = relation["target_slot"] * 4
+                    if (
+                        int.from_bytes(registry[target : target + 4], "little")
+                        != base + item_offset + 2
+                    ):
+                        continue
+                    callback = relation["callback_slot"] * 4
+                    pointer = base + relation["callback_offset"] + 2
+                    if (
+                        int.from_bytes(registry[callback : callback + 4], "little")
+                        != pointer
+                    ):
+                        continue
+                    descriptor = read(pointer, relation["callback_proof"]["width"])
+                    if (
+                        hashlib.sha256(descriptor).hexdigest()
+                        != relation["callback_proof"]["sha256"]
+                    ):
+                        continue
+                    if (
+                        descriptor[0] != 5
+                        or not descriptor[1]
+                        or bool(descriptor[1] & 0x80) != relation["callback_four_point"]
+                    ):
+                        continue
+                    payload = descriptor[
+                        (20 if relation["callback_four_point"] else 12) :
+                    ]
+                    if payload != bytes((0xFF, 0, 0x18, relation["procedure"], 0, 0)):
+                        continue
+                    if any(
+                        hashlib.sha256(
+                            read(base + proof["offset"], proof["width"])
+                        ).hexdigest()
+                        != proof["sha256"]
+                        for proof in (
+                            relation["table_proof"],
+                            relation["program_proof"],
+                            *relation["message_proofs"],
+                        )
+                    ):
+                        continue
+                    # Native Aot_on dispatches directly, bypassing SAT zero and
+                    # the parked item's rectangle. The fresh callback, table,
+                    # code and item binding prove a player can still collect it.
+                    state, amount = live_items[item_offset]
+                    if state == "inactive":
+                        live_items[item_offset] = ("uncollected", amount)
+
         evaluations, doors = [], []
         for visited in sorted(set(tracker.rooms) | {key}):
             source = profile.rooms[visited]
@@ -309,6 +370,13 @@ def poll_re2(
                     and item["offset"] in live_items
                     and live_items[item["offset"]][0] == "available"
                 ]
+                dispatched = [
+                    item
+                    for item in variants
+                    if visited == key
+                    and item["offset"] in live_items
+                    and live_items[item["offset"]][0] == "uncollected"
+                ]
                 if context_valid and gid in source["scenario_absent_item_ids"]:
                     if visited == key and any(
                         item["offset"] in live_items for item in variants
@@ -327,7 +395,8 @@ def poll_re2(
                     return PollResult(
                         PollStatus.Retry, "Pickup changed during room read"
                     )
-                types = {item["type"] for item in available or variants}
+                observed_items = available + dispatched
+                types = {item["type"] for item in observed_items or variants}
                 item_type = next(iter(types)) if len(types) == 1 else None
                 label = profile.names["items"].get(str(item_type), "Collectible")
                 if item_type is None:
@@ -341,6 +410,8 @@ def poll_re2(
                     state = "unknown"
                 elif available:
                     state = "available"
+                elif dispatched:
+                    state = "uncollected"
                 elif context_valid and (
                     gid in source["collection_item_ids"]
                     or (gid in conditional and presence_matches(conditional[gid], flag))
@@ -349,8 +420,8 @@ def poll_re2(
                 else:
                     state = "unknown"
                 amounts = (
-                    {live_items[item["offset"]][1] for item in available}
-                    if available
+                    {live_items[item["offset"]][1] for item in observed_items}
+                    if observed_items
                     else {amount for item in variants for amount in item["amounts"]}
                 )
                 if (

@@ -25,8 +25,16 @@
   "research_ids": [
     "RE2-DS-001",
     "RE2-DS-005",
-    "RE2-CLIP-001"
+    "RE2-CLIP-001",
+    "RE2-DISPATCH-001"
   ],
+  "script_item_dispatch": {
+    "main_table_address_ps1": "0x800D8CBC",
+    "message_preserved_flag_ranges": [
+      {"address_ps1": "0x800D4874", "width": 8},
+      {"address_ps1": "0x800D48BC", "width": 32}
+    ]
+  },
   "metadata_layout": {
     "actor_part_resource_table_address_ps1": "0x8009ADF4",
     "map_info_address_ps1": "0x800AAA38",

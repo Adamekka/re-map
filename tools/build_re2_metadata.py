@@ -28,6 +28,11 @@ from re2_map_interiors import add_collision_interiors
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
+from games.re2.script_dispatch_items import (
+    ScriptItemDispatchSupport,
+    script_dispatch_relations,
+    script_item_dispatch,
+)
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -178,6 +183,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     vibration_writes = scenario_vibration_writes(profile)
     actor_parts = scenario_actor_parts(profile)
     clipping = clipping_effect_proof(profile)
+    dispatch = script_item_dispatch(profile)
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -343,6 +349,20 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     ),
                     unreachable_creator_offsets=proof.unreachable_creator_offsets,
                 )
+            )
+        if dispatch is not ScriptItemDispatchSupport.Unaudited:
+            room["script_item_dispatch_relations"] = script_dispatch_relations(
+                sources[room["id"]],
+                room,
+                layout["item_bank_early"]
+                if room["stage"] < layout["item_bank_stage_boundary"]
+                else layout["item_bank_late"],
+                {
+                    row["bank"]: (int(row["address_ps1"], 0), row["width"])
+                    for row in profile["flag_banks"]
+                },
+                layout["aot_capacity"],
+                dispatch,
             )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
@@ -600,11 +620,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     if clipping is not ClipEffectSupport.Unaudited
                     else []
                 ),
+                *(
+                    ["RE2-DISPATCH-001"]
+                    if dispatch is not ScriptItemDispatchSupport.Unaudited
+                    else []
+                ),
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {"script_item_dispatch": profile["script_item_dispatch"]}
+                if dispatch is not ScriptItemDispatchSupport.Unaudited
+                else {}
+            ),
             **(
                 {"scenario_clipping": profile["scenario_clipping"]}
                 if clipping is not ClipEffectSupport.Unaudited

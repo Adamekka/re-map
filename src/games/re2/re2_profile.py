@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -12,6 +13,11 @@ from games.re2.event_presence import presence_counter_indices, presence_flag_wri
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
+from games.re2.script_dispatch_items import (
+    ScriptItemDispatchConfig,
+    ScriptItemDispatchSupport,
+    script_item_dispatch,
+)
 from games.re2.scenario_items import (
     scenario_flags,
     scenario_item_candidates,
@@ -97,6 +103,7 @@ class Re2Profile:
     unsupported_sources: dict[str, dict]
     names: dict
     map_layout: Re2MapLayout
+    script_item_dispatch: ScriptItemDispatchConfig | ScriptItemDispatchSupport
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
@@ -137,6 +144,7 @@ class Re2Profile:
         scenario_vibration_writes(raw)
         actor_parts = scenario_actor_parts(raw)
         clipping = clipping_effect_proof(raw)
+        dispatch = script_item_dispatch(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -215,6 +223,16 @@ class Re2Profile:
             != json.dumps(raw["scenario_clipping"], sort_keys=True)
         ):
             raise ValueError("RE2 clipping proof disagrees with its revision layout")
+        if ("script_item_dispatch" in document) != (
+            dispatch is not ScriptItemDispatchSupport.Unaudited
+        ) or (
+            dispatch is not ScriptItemDispatchSupport.Unaudited
+            and json.dumps(document["script_item_dispatch"], sort_keys=True)
+            != json.dumps(raw["script_item_dispatch"], sort_keys=True)
+        ):
+            raise ValueError(
+                "RE2 script item dispatch disagrees with its revision layout"
+            )
         # JSON types are part of the proof: Python equality would equate
         # boolean bank/bit operands with integer zero or one.
         if json.dumps(
@@ -315,6 +333,122 @@ class Re2Profile:
             for bit in range(width * 8)
         )
         for key, room in rooms.items():
+            relations = room.get("script_item_dispatch_relations", [])
+            if (
+                dispatch is not ScriptItemDispatchSupport.Unaudited
+                and "script_item_dispatch_relations" not in room
+                or type(relations) is not list
+                or dispatch is ScriptItemDispatchSupport.Unaudited
+                and relations
+            ):
+                raise ValueError(
+                    "invalid or missing RE2 script item dispatch relations"
+                )
+            relation_keys = set()
+            for relation in relations:
+                if (
+                    type(relation) is not dict
+                    or relation.keys()
+                    != {
+                        "item_offset",
+                        "callback_offset",
+                        "callback_slot",
+                        "callback_four_point",
+                        "target_slot",
+                        "procedure",
+                        "table_proof",
+                        "program_proof",
+                        "message_proofs",
+                        "callback_proof",
+                    }
+                    or any(
+                        type(relation[field]) is not int
+                        for field in (
+                            "item_offset",
+                            "callback_offset",
+                            "callback_slot",
+                            "target_slot",
+                            "procedure",
+                        )
+                    )
+                    or type(relation["callback_four_point"]) is not bool
+                    or not 0 <= relation["callback_slot"] < layout["aot_capacity"]
+                    or not 0 <= relation["target_slot"] < layout["aot_capacity"]
+                    or relation["callback_slot"] == relation["target_slot"]
+                    or not 0 <= relation["procedure"] <= 255
+                    or not 0
+                    <= relation["callback_offset"]
+                    <= room["size"] - (28 if relation["callback_four_point"] else 20)
+                    or not any(
+                        item["offset"] == relation["item_offset"]
+                        and item["slot"] == relation["target_slot"]
+                        for item in room["items"]
+                    )
+                ):
+                    raise ValueError("invalid RE2 script item dispatch relation")
+                if (
+                    type(relation["message_proofs"]) is not list
+                    or len(relation["message_proofs"]) > 64
+                ):
+                    raise ValueError("invalid RE2 script item dispatch message proofs")
+                for proof in (
+                    relation["table_proof"],
+                    relation["program_proof"],
+                    relation["callback_proof"],
+                    *relation["message_proofs"],
+                ):
+                    if (
+                        type(proof) is not dict
+                        or proof.keys() != {"offset", "width", "sha256"}
+                        or type(proof["offset"]) is not int
+                        or type(proof["width"]) is not int
+                        or not 1 <= proof["width"] <= room["size"]
+                        or not 0 <= proof["offset"] <= room["size"] - proof["width"]
+                        or type(proof["sha256"]) is not str
+                        or len(proof["sha256"]) != 64
+                        or any(
+                            character not in "0123456789abcdef"
+                            for character in proof["sha256"]
+                        )
+                    ):
+                        raise ValueError(
+                            "invalid RE2 script item dispatch source proof"
+                        )
+                if any(
+                    proof["width"] > 4096 for proof in relation["message_proofs"]
+                ) or len(
+                    {
+                        (proof["offset"], proof["width"])
+                        for proof in relation["message_proofs"]
+                    }
+                ) != len(relation["message_proofs"]):
+                    raise ValueError("invalid RE2 script item dispatch message proofs")
+                if (
+                    relation["callback_proof"]["offset"]
+                    != relation["callback_offset"] + 2
+                    or relation["callback_proof"]["width"]
+                    != (26 if relation["callback_four_point"] else 18)
+                    or relation["table_proof"]["width"] != 2
+                    or relation["table_proof"]["offset"]
+                    != room["section_offsets"][17] + 2 * relation["procedure"]
+                    or relation["program_proof"]["width"] > 4096
+                    or relation["program_proof"]["offset"] < room["section_offsets"][17]
+                    or not 0
+                    <= relation["program_proof"]["offset"] - room["section_offsets"][17]
+                    <= 0xFFFF
+                    or relation["table_proof"]["sha256"]
+                    != hashlib.sha256(
+                        (
+                            relation["program_proof"]["offset"]
+                            - room["section_offsets"][17]
+                        ).to_bytes(2, "little")
+                    ).hexdigest()
+                ):
+                    raise ValueError("unbound RE2 script item dispatch source proof")
+                identity = relation["item_offset"], relation["callback_offset"]
+                if identity in relation_keys:
+                    raise ValueError("duplicate RE2 script item dispatch relation")
+                relation_keys.add(identity)
             context_conditions = room.get("scenario_context_conditions", [])
             if (
                 actor_parts is not ActorPartSupport.Unaudited
@@ -631,6 +765,7 @@ class Re2Profile:
                 rooms,
                 Re2MapProjection(**raw["map_projection"]),
             ),
+            dispatch,
         )
 
     def verify_runtime(
