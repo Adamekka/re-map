@@ -32,7 +32,7 @@ def test_departed_waiting_room_preserves_each_observation_and_its_shared_slot(sn
         "01-01:0": 2,
         "01-01:1": 2,
     }
-    assert all(door.state == "UNCHECKED" for door in doors)
+    assert all(door.state == "OPEN" for door in doors)
     assert all(door.unlock_state is DoorUnlockState.Unknown for door in doors)
     published = [
         door for door in map_state(tracker)["doors"] if door["source"] == "01-01"

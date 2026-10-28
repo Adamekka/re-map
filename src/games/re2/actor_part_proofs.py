@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 
@@ -41,9 +41,129 @@ class ActorPartProofConfig:
 
 
 @dataclass(frozen=True)
+class ActorOwner:
+    enemy_slot: int
+    model_type: int
+    constructor_offset: int
+    part_count: int
+
+    def __post_init__(self) -> None:
+        assert all(
+            type(value) is int
+            for value in (
+                self.enemy_slot,
+                self.model_type,
+                self.constructor_offset,
+                self.part_count,
+            )
+        )
+        assert 0 <= self.enemy_slot < 32 and 0x10 <= self.model_type < 0x50
+        assert self.constructor_offset >= 0 and 1 <= self.part_count <= 128
+
+
+@dataclass(frozen=True)
+class SourceCopyWrite:
+    location: tuple[str, int]
+    target_offset: int
+    width: int
+
+    def __post_init__(self) -> None:
+        assert type(self.location) is tuple and len(self.location) == 2
+        assert (
+            type(self.location[0]) is str
+            and type(self.location[1]) is int
+            and self.location[1] >= 0
+        )
+        assert type(self.target_offset) is int and type(self.width) is int
+        assert self.target_offset >= self.location[1] + 4 and self.width in (1, 2)
+
+
+@dataclass(frozen=True)
+class OwnedActorFieldWrite:
+    location: tuple[str, int]
+    owners: tuple[ActorOwner, ...]
+    selector: int
+    field_offset: int
+    width: int
+
+    def __post_init__(self) -> None:
+        assert type(self.owners) is tuple and all(
+            isinstance(owner, ActorOwner) for owner in self.owners
+        )
+        assert all(
+            type(value) is int
+            for value in (self.selector, self.field_offset, self.width)
+        )
+        # Other member selectors include pointers and AI state. A bounded
+        # record alone does not establish their subsequent native effects.
+        assert self.owners and (self.selector, self.field_offset, self.width) == (
+            23,
+            0x1D4,
+            2,
+        )
+
+
+# Native 6E writes only these scalar fields of a 0xAC-byte part record.
+PART_FIELD_WRITES = (
+    (0x70, 2),
+    (0x72, 1),
+    (0, 2),
+    (2, 2),
+    (0x68, 2),
+    (0x6A, 2),
+    (0x6C, 2),
+)
+
+
+@dataclass(frozen=True)
+class OwnedPartFieldWrite:
+    location: tuple[str, int]
+    owners: tuple[ActorOwner, ...]
+    indices: frozenset[int]
+    selector: int
+    field_offset: int
+    width: int
+    record_stride: int = 0xAC
+
+    def __post_init__(self) -> None:
+        assert type(self.owners) is tuple and all(
+            isinstance(owner, ActorOwner) for owner in self.owners
+        )
+        assert type(self.indices) is frozenset and all(
+            type(index) is int for index in self.indices
+        )
+        assert all(
+            type(value) is int
+            for value in (
+                self.selector,
+                self.field_offset,
+                self.width,
+                self.record_stride,
+            )
+        )
+        assert self.owners and self.indices
+        assert all(
+            0 <= index < min(owner.part_count, 128)
+            for owner in self.owners
+            for index in self.indices
+        )
+        assert 0 <= self.selector < len(PART_FIELD_WRITES)
+        assert (self.field_offset, self.width) == PART_FIELD_WRITES[self.selector]
+        assert (
+            self.record_stride == 0xAC
+            and self.field_offset + self.width <= self.record_stride
+        )
+
+
+@dataclass(frozen=True)
 class ActorPartCopyProof:
     offsets: frozenset[int]
     context_conditions: list[dict]
+    reached_locations: frozenset[tuple[str, int]] = frozenset()
+    source_writes: tuple[SourceCopyWrite, ...] = ()
+    actor_writes: tuple[OwnedActorFieldWrite, ...] = ()
+    part_writes: tuple[OwnedPartFieldWrite, ...] = ()
+    write_context_conditions: list[dict] = field(default_factory=list)
 
 
 def scenario_actor_parts(profile: dict) -> ActorPartProofConfig | ActorPartSupport:
@@ -137,7 +257,13 @@ def actor_part_copy_proof(
     banks: dict[int, tuple[int, int]],
     config: ActorPartProofConfig | ActorPartSupport,
 ) -> ActorPartCopyProof:
-    """Prove nonyielding counted copies and all possible selected actor models."""
+    """Describe bounded writes under the source's analyzed actor ownership.
+
+    Reached locations are not a complete native entry closure. Consumers must
+    separately establish that closure, source operand stability and allocator
+    partitions before these relative domains imply source/AOT preservation.
+    Existing copy applicability stays separate from write-domain conditions.
+    """
     assert config is ActorPartSupport.Unaudited or isinstance(
         config, ActorPartProofConfig
     )
@@ -273,7 +399,7 @@ def actor_part_copy_proof(
         if key in programs
     ]
     deferred = []
-    seen, work_at, models = set(), {}, {}
+    seen, work_at, models, reached = set(), {}, {}, set()
     frame_started = False
     while pending or not frame_started:
         if not pending:
@@ -301,6 +427,7 @@ def actor_part_copy_proof(
         if len(seen) >= 16384 or len(guard) > 32 or position not in commands[key]:
             return ActorPartCopyProof(frozenset(), [])
         seen.add(state)
+        reached.add((key, position))
         row = commands[key][position]
         opcode = row["opcode"]
         contexts = work_at.setdefault((key, position), set())
@@ -328,6 +455,7 @@ def actor_part_copy_proof(
                 0x5E,
             ):
                 test = commands[key][following]
+                reached.add((key, following))
                 if test["kind"] == "flag_check" and test["expected"] in (0, 1):
                     tests.append((test["bank"], test["bit"], test["expected"]))
                 else:
@@ -464,7 +592,7 @@ def actor_part_copy_proof(
                 if flag_location(bank, acquired) is Unknown.Value:
                     return ActorPartCopyProof(frozenset(), [])
                 condition = (bank, acquired, 0)
-            origin = (index, model, guard, condition)
+            origin = (index, model, guard, condition, position)
             # Constructors after opaque/yielding paths cannot establish a
             # startup promise for independently scheduled room tasks.
             if certain:
@@ -483,7 +611,24 @@ def actor_part_copy_proof(
             certain = False
         pending.append((key, row["next"], work, depth, guard, certain, owned, phase))
 
-    allowed, applied_origins = set(), set()
+    def selected_origins(key: str, position: int) -> frozenset | Unknown:
+        contexts = work_at.get((key, position), set())
+        if not contexts or any(
+            context is Unknown.Value
+            or any(
+                not 0 <= origin[0] < 32
+                or origin[1] not in counts
+                or not models[origin[0]] <= counts.keys()
+                or origin[3]
+                and not monotonic_guard(origin[2] | {origin[3]})
+                for origin in context
+            )
+            for context in contexts
+        ):
+            return Unknown.Value
+        return frozenset(origin for context in contexts for origin in context)
+
+    allowed, applied_origins, scalar_indices = set(), set(), {}
     for key, program in programs.items():
         candidates = []
         for row in program["commands"]:
@@ -518,25 +663,15 @@ def actor_part_copy_proof(
         used_origins = set()
 
         def selected_part_count(position: int) -> int | Unknown:
-            contexts = work_at.get((key, position), set())
-            if not contexts or any(
-                context is Unknown.Value
-                or any(
-                    origin[1] not in counts
-                    or not models[origin[0]] <= counts.keys()
-                    or origin[3]
-                    and not monotonic_guard(origin[2] | {origin[3]})
-                    for origin in context
-                )
-                for context in contexts
-            ):
+            origins = selected_origins(key, position)
+            if origins is Unknown.Value:
                 return Unknown.Value
-            used_origins.update(origin for context in contexts for origin in context)
-            return min(counts[origin[1]] for context in contexts for origin in context)
+            used_origins.update(origins)
+            return min(counts[origin[1]] for origin in origins)
 
         values = [Unknown.Value] * 256
         part_indices = {}
-        loops, checked = [], set()
+        loops, checked, indices = [], set(), {}
         position, steps, valid = program["entry"], 0, True
         while valid:
             steps += 1
@@ -591,6 +726,7 @@ def actor_part_copy_proof(
                 ):
                     valid = False
                     break
+                indices.setdefault(position, set()).add(index)
             elif opcode == 0x1D:
                 if position not in by_copy:
                     valid = False
@@ -621,23 +757,128 @@ def actor_part_copy_proof(
         if valid:
             allowed.update(checked)
             applied_origins.update(used_origins)
-    conditions = []
-    for origin in sorted(
-        applied_origins,
-        key=lambda item: (item[0], item[1], tuple(sorted(item[2])), item[3]),
-    ):
-        acquisition = origin[3]
-        if not acquisition:
+            scalar_indices.update(
+                {
+                    (key, position): frozenset(values)
+                    for position, values in indices.items()
+                }
+            )
+
+    source_writes = tuple(
+        SourceCopyWrite(
+            (key, position),
+            row["next"] + data[position + 2],
+            2 if data[position + 3] else 1,
+        )
+        for key, position in sorted(work_at)
+        if (row := commands[key][position])["opcode"] == 0x1D
+    )
+    actor_writes, part_writes, write_origins = [], [], set()
+    for key, position in sorted(work_at):
+        row = commands[key][position]
+        if row["opcode"] not in (0x34, 0x6E):
             continue
-        bank, bit, expected = acquisition
-        # A fresh clear acquisition flag is an entry precondition only while
-        # every source writer preserves its monotonic clear-to-set lifetime.
-        # The task can set its story guard after queuing, so that guard cannot
-        # substitute for the constructor's acquisition check in a fresh poll.
-        condition = {
-            "kind": "conditions",
-            "any_of": [[{"bank": bank, "bit": bit, "expected": expected}]],
-        }
-        if condition not in conditions:
-            conditions.append(condition)
-    return ActorPartCopyProof(frozenset(allowed), conditions)
+        origins = selected_origins(key, position)
+        if origins is Unknown.Value:
+            continue
+        owners = tuple(
+            sorted(
+                {
+                    ActorOwner(origin[0], origin[1], origin[4], counts[origin[1]])
+                    for origin in origins
+                },
+                key=lambda owner: (
+                    owner.enemy_slot,
+                    owner.model_type,
+                    owner.constructor_offset,
+                    owner.part_count,
+                ),
+            )
+        )
+        if row["opcode"] == 0x34:
+            if data[position + 1] != 23 or any(
+                write.target_offset < position + 2
+                and position < write.target_offset + write.width
+                for write in source_writes
+            ):
+                continue
+            actor_writes.append(
+                OwnedActorFieldWrite((key, position), owners, 23, 0x1D4, 2)
+            )
+        else:
+            selector = data[position + 3]
+            if selector >= len(PART_FIELD_WRITES) or any(
+                write.target_offset < position + 1
+                and position < write.target_offset + write.width
+                or write.target_offset < position + 4
+                and position + 3 < write.target_offset + write.width
+                for write in source_writes
+            ):
+                continue
+            if (key, position) in scalar_indices:
+                if any(
+                    write.target_offset < position + 3
+                    and position + 2 < write.target_offset + write.width
+                    and (write.location[0] != key or write.location[1] not in allowed)
+                    for write in source_writes
+                ):
+                    continue
+                indices = scalar_indices[key, position]
+            elif any(
+                write.target_offset < position + 3
+                and position + 2 < write.target_offset + write.width
+                for write in source_writes
+            ):
+                continue
+            else:
+                indices = frozenset({data[position + 2]})
+            if any(
+                index >= min(owner.part_count, 128)
+                for owner in owners
+                for index in indices
+            ):
+                continue
+            field_offset, width = PART_FIELD_WRITES[selector]
+            part_writes.append(
+                OwnedPartFieldWrite(
+                    (key, position), owners, indices, selector, field_offset, width
+                )
+            )
+        write_origins.update(origins)
+
+    def context_conditions(origins: set) -> list[dict]:
+        conditions = []
+        for origin in sorted(
+            origins,
+            key=lambda item: (
+                item[0],
+                item[1],
+                tuple(sorted(item[2])),
+                item[3],
+                item[4],
+            ),
+        ):
+            acquisition = origin[3]
+            if not acquisition:
+                continue
+            bank, bit, expected = acquisition
+            # A fresh clear flag is an entry requirement only while all source
+            # writers preserve its monotonic clear-to-set lifetime. The story
+            # guard cannot substitute after a skipped constructor queues work.
+            condition = {
+                "kind": "conditions",
+                "any_of": [[{"bank": bank, "bit": bit, "expected": expected}]],
+            }
+            if condition not in conditions:
+                conditions.append(condition)
+        return conditions
+
+    return ActorPartCopyProof(
+        frozenset(allowed),
+        context_conditions(applied_origins),
+        frozenset(reached),
+        source_writes,
+        tuple(actor_writes),
+        tuple(part_writes),
+        context_conditions(write_origins),
+    )

@@ -20,6 +20,75 @@ from games.runtime_identity import RuntimeSignature
 @pytest.mark.parametrize(
     "case",
     [
+        "missing-manifest",
+        "manifest-drift",
+        "missing-room-proof",
+        "not-list",
+        "duplicate-slot",
+        "boolean-slot",
+        "offset",
+        "duplicate-offset",
+        "competing-creator",
+        "locked",
+        "stage",
+        "context-missing",
+        "context-boolean",
+        "context-unproved",
+    ],
+)
+def test_immutable_open_door_catalog_requires_bound_revision_and_creator_evidence(
+    tmp_path, case
+):
+    """RE2-DOOR-007: malformed catalogs must not grant departed access."""
+    profile_path = ROOT / "profiles/re2_leon_a_slus00748.json"
+    raw = json.loads(profile_path.read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((profile_path.parent / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(room for room in document["rooms"] if room["id"] == "01-01")
+    proofs = room["immutable_open_doors"]
+    if case == "missing-manifest":
+        del document["room_entry_contract"]
+    elif case == "manifest-drift":
+        document["room_entry_contract"]["stage"] += 1
+    elif case == "missing-room-proof":
+        del room["immutable_open_doors"]
+    elif case == "not-list":
+        room["immutable_open_doors"] = None
+    elif case == "duplicate-slot":
+        proofs.append(proofs[0])
+    elif case == "boolean-slot":
+        proofs[0]["slot"] = False
+    elif case == "offset":
+        proofs[0]["creator_offsets"][0] += 1
+    elif case == "duplicate-offset":
+        proofs[0]["creator_offsets"].append(proofs[0]["creator_offsets"][0])
+    elif case == "competing-creator":
+        room["doors"][2]["room"] += 1
+    elif case == "locked":
+        room["doors"][0]["lock_id"] = 0x80
+    elif case == "stage":
+        room["stage"] = 0
+    elif case == "context-missing":
+        proofs[0]["context_conditions"] = []
+    elif case == "context-boolean":
+        proofs[0]["context_conditions"][0]["any_of"][0][0]["bit"] = True
+    else:
+        room["fixed_context_preserved"] = False
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(
+        ValueError, match="RE2 (room-entry|immutable open-door|scenario context)"
+    ):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
         "missing-metadata",
         "metadata-drift",
         "metadata-boolean",

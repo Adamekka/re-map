@@ -494,6 +494,78 @@ def snapshot(request, profile):
     return profile, ram, put, read
 
 
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_departed_immutable_doors_rebuild_from_fresh_conditions(snapshot):
+    """RE2-DOOR-007: no previous door observation or completion is retained."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-01"]
+    assert [proof["slot"] for proof in source["immutable_open_doors"]] == [0, 1]
+    address, _ = profile.flag_banks[6]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 1))
+    visits = None
+    for unavailable in (False, True, False, True):
+        put(address, 0x80000000 >> 24 if unavailable else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        doors = [door for door in tracker.doors if door.source == RoomId(1, 1)]
+        assert len(doors) == 4
+        assert {door.state for door in doors} == {
+            "UNCHECKED" if unavailable else "OPEN"
+        }
+        assert all(door.unlock_state is DoorUnlockState.Unknown for door in doors)
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 1))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.doors == tracker.doors
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["01-01"], indirect=True)
+@pytest.mark.parametrize("binding", ["missing", "inactive"])
+def test_immutable_source_proof_never_overrides_current_door_binding(snapshot, binding):
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-01"]
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    # The generic fixture registers every raw item alternative. These door-only
+    # cases must not publish an item excluded by the fixed scenario.
+    for item in source["items"]:
+        put(registry + item["slot"] * 4, 0, 4)
+    for proof in source["immutable_open_doors"]:
+        if binding == "missing":
+            put(registry + proof["slot"] * 4, 0, 4)
+        else:
+            for offset in proof["creator_offsets"]:
+                put(0x80100000 + offset + 2, 0, 1)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert {door.state for door in tracker.doors} == {
+        "UNCHECKED" if binding == "missing" else "BLOCKED"
+    }
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_departed_door_applicability_change_withholds_whole_publication(snapshot):
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 1))
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    address, _ = profile.flag_banks[6]
+
+    def changing_read(base, width):
+        if (base, width) == (address, 4):
+            # The initial value came from the bounded save block. Change the
+            # word when its independent coherence check reaches the emulator.
+            put(address, 0x80000000 >> 24, 4)
+        return read(base, width)
+
+    assert poll_re2(profile, tracker, changing_read).status is PollStatus.Retry
+    assert tracker == before
+
+
 def test_pickups_rewind_without_erasing_visits(snapshot):
     profile, _, put, read = snapshot
     tracker = Tracker()

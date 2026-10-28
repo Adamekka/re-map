@@ -30,7 +30,8 @@
     "RE2-LIFETIME-001",
     "RE2-DS-005",
     "RE2-CLIP-001",
-    "RE2-DISPATCH-001"
+    "RE2-DISPATCH-001",
+    "RE2-DOOR-007"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -83,6 +84,133 @@
       "resource_width": 174964
     }
   ],
+  "room_entry_contract": {
+    "audit": "slus00748-original-room-entry-v1",
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
+    "stage": 1,
+    "stage_resource": {
+      "path": "COMMON/BIN/STAGE2.BIN",
+      "width": 1626,
+      "sha256": "68ebe0f04063fb6d605d1a88b4ccdafa8704b08faae7e7d95d55bba3ab9de2af"
+    },
+    "actor_archive_path": "PL0/PLD/CDEMD0.EMS",
+    "constructor_presets": [
+      [
+        34,
+        17410
+      ]
+    ],
+    "actor_codes": [
+      {
+        "resource_index": 72,
+        "sector": 1363,
+        "width": 30360,
+        "load_address_ps1": "0x8010D000",
+        "sha256": "aafb77569b74428c6f925fc3529667026698fbcc2c6695dca208205d2971a334"
+      },
+      {
+        "resource_index": 73,
+        "sector": 1378,
+        "width": 30360,
+        "load_address_ps1": "0x80100000",
+        "sha256": "4644576bb38bde65c41193f9e28a3eb0a9ea93aac948777f954e2ea889f55f00"
+      }
+    ],
+    "doors": [
+      {
+        "model": 9,
+        "path": "COMMON/DOOR/DOOR09.DO2",
+        "width": 62736,
+        "sha256": "a21e7a8a7c8d5522aa5df48d2af3d490ce5447d9a6f79e7f21faf779bb284dc5",
+        "file_index": 243,
+        "lba": 48204,
+        "payload_sector": 12,
+        "payload_width": 38160,
+        "script_width": 572,
+        "script_sha256": "0fb7ed8b5e02e2b39917ab405cd87c63b9004df22f6ad3e5120f542e306c6981"
+      },
+      {
+        "model": 13,
+        "path": "COMMON/DOOR/DOOR0D.DO2",
+        "width": 57764,
+        "sha256": "3b9aab2f2e71f75010ff48bef7cd3a13ac1c32c2bff786f89bf12972362afd0f",
+        "file_index": 247,
+        "lba": 48333,
+        "payload_sector": 10,
+        "payload_width": 37284,
+        "script_width": 1520,
+        "script_sha256": "ebed1424be78f679594e957ecbf58aa35c0bbd13c2a84905a8675a138cb9568c"
+      }
+    ],
+    "minimum_source_address_ps1": "0x8011A000",
+    "roots": [
+      "16:0",
+      "17:0",
+      "17:1"
+    ],
+    "non_scheduling_interaction_kinds": [
+      4,
+      10,
+      13
+    ],
+    "native_layout": {
+      "executable_entry_address_ps1": "0x80078408",
+      "executable_global_pointer_ps1": "0x00000000",
+      "executable_load_address_ps1": "0x80010000",
+      "executable_text_width": 985088,
+      "executable_file_width": 987136,
+      "dispatch": [
+        {
+          "address_ps1": "0x800A74D4",
+          "handler_address_ps1": "0x80053878"
+        },
+        {
+          "address_ps1": "0x800A74D8",
+          "handler_address_ps1": "0x800538A4"
+        },
+        {
+          "address_ps1": "0x800A7528",
+          "handler_address_ps1": "0x800541A8"
+        },
+        {
+          "address_ps1": "0x800A73D8",
+          "handler_address_ps1": "0x80051980"
+        }
+      ],
+      "actor_resource_table_address_ps1": "0x8009ADF4",
+      "actor_model_origin": 16,
+      "actor_resources_per_model": 4,
+      "actor_primary_code_variant": 1,
+      "actor_code_pool_address_ps1": "0x80100000",
+      "actor_code_pool_stride": 53248,
+      "actor_code_pool_count": 2,
+      "door_model_table_address_ps1": "0x8009A520",
+      "door_model_record_width": 12,
+      "door_file_index_table_address_ps1": "0x8009A4B0",
+      "file_table_address_ps1": "0x800988A4",
+      "file_table_record_width": 8,
+      "sector_width": 2048
+    },
+    "write_partitions": {
+      "aot_address_ps1": "0x800CE558",
+      "aot_capacity": 32,
+      "object_address_ps1": "0x800D0324",
+      "object_capacity": 32,
+      "item_flag_count": 256,
+      "interaction_flag_count": 64
+    },
+    "stage_load": {
+      "recipe_table_address_ps1": "0x800A20B8",
+      "recipe_index": 9,
+      "file_index": 8,
+      "entry_address_ps1": "0x8011A004",
+      "destination_pointer_address_ps1": "0x80010810",
+      "destination_address_ps1": "0x8011A000",
+      "file_lba": 110,
+      "file_flags": 247,
+      "source_alignment": 4
+    }
+  },
   "script_item_dispatch": {
     "main_table_address_ps1": "0x800D8CBC",
     "message_preserved_flag_ranges": [
@@ -415,7 +543,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1010.RDT",
@@ -559,7 +688,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1020.RDT",
@@ -687,7 +817,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1030.RDT",
@@ -800,7 +931,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1040.RDT",
@@ -890,7 +1022,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1050.RDT",
@@ -1007,7 +1140,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1060.RDT",
@@ -1176,7 +1310,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1070.RDT",
@@ -1281,7 +1416,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1080.RDT",
@@ -1420,7 +1556,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1090.RDT",
@@ -1646,7 +1783,8 @@
             "sha256": "f0fd25eabd6c38b4208d557c71f29df1593cd6900c66a5cd9ddf5505b5d88b9d"
           }
         }
-      ]
+      ],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM10A0.RDT",
@@ -1781,7 +1919,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM10B0.RDT",
@@ -1938,7 +2077,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM10C0.RDT",
@@ -2097,7 +2237,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM10D0.RDT",
@@ -2225,7 +2366,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM10E0.RDT",
@@ -2341,7 +2483,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM10F0.RDT",
@@ -2542,7 +2685,8 @@
       ],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1100.RDT",
@@ -2725,7 +2869,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1110.RDT",
@@ -2842,7 +2987,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1120.RDT",
@@ -2985,7 +3131,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1130.RDT",
@@ -3209,7 +3356,8 @@
         }
       ],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1140.RDT",
@@ -3374,7 +3522,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1150.RDT",
@@ -3593,7 +3742,8 @@
         }
       ],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1160.RDT",
@@ -3736,7 +3886,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1170.RDT",
@@ -3841,7 +3992,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1180.RDT",
@@ -3958,7 +4110,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM1190.RDT",
@@ -4063,7 +4216,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM11A0.RDT",
@@ -4182,7 +4336,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM11B0.RDT",
@@ -4287,7 +4442,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM11C0.RDT",
@@ -4392,7 +4548,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM11D0.RDT",
@@ -4497,7 +4654,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2000.RDT",
@@ -4765,7 +4923,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2010.RDT",
@@ -4954,7 +5113,51 @@
           ]
         }
       ],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": [
+        {
+          "slot": 0,
+          "creator_offsets": [
+            3018,
+            4232
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 6,
+                    "bit": 24,
+                    "expected": 0
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "slot": 1,
+          "creator_offsets": [
+            3050,
+            4264
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 6,
+                    "bit": 24,
+                    "expected": 0
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "source": "PL0/RDT/ROOM2020.RDT",
@@ -5211,7 +5414,8 @@
       ],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2030.RDT",
@@ -5380,7 +5584,8 @@
       ],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2040.RDT",
@@ -5580,7 +5785,8 @@
             "sha256": "c1e3236de40f2846896c6cb6448a2a670963614ce47c9e249b3d4df7cba8ae1c"
           }
         }
-      ]
+      ],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2050.RDT",
@@ -5700,7 +5906,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2060.RDT",
@@ -5857,7 +6064,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2070.RDT",
@@ -6058,7 +6266,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2080.RDT",
@@ -6280,7 +6489,8 @@
       ],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2090.RDT",
@@ -6445,7 +6655,8 @@
       ],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM20A0.RDT",
@@ -6614,7 +6825,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM20B0.RDT",
@@ -6928,7 +7140,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM20C0.RDT",
@@ -7133,7 +7346,8 @@
         }
       ],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM20D0.RDT",
@@ -7279,7 +7493,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM20E0.RDT",
@@ -7528,7 +7743,8 @@
         }
       ],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM20F0.RDT",
@@ -7693,7 +7909,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2100.RDT",
@@ -7862,7 +8079,8 @@
         }
       ],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2110.RDT",
@@ -8069,7 +8287,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2120.RDT",
@@ -8186,7 +8405,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2130.RDT",
@@ -8310,7 +8530,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2140.RDT",
@@ -8475,7 +8696,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2150.RDT",
@@ -8579,7 +8801,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2160.RDT",
@@ -8696,7 +8919,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM2190.RDT",
@@ -8839,7 +9063,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM21A0.RDT",
@@ -8997,7 +9222,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM21B0.RDT",
@@ -9170,7 +9396,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3000.RDT",
@@ -9275,7 +9502,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3010.RDT",
@@ -9421,7 +9649,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3020.RDT",
@@ -9526,7 +9755,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3030.RDT",
@@ -9661,7 +9891,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3040.RDT",
@@ -9781,7 +10012,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3050.RDT",
@@ -9901,7 +10133,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3060.RDT",
@@ -10003,7 +10236,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3070.RDT",
@@ -10135,7 +10369,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3080.RDT",
@@ -10240,7 +10475,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM3090.RDT",
@@ -10345,7 +10581,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM30A0.RDT",
@@ -10450,7 +10687,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM30B0.RDT",
@@ -10619,7 +10857,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM30C0.RDT",
@@ -10735,7 +10974,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM30D0.RDT",
@@ -10820,7 +11060,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4000.RDT",
@@ -10963,7 +11204,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4010.RDT",
@@ -11206,7 +11448,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4020.RDT",
@@ -11334,7 +11577,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4030.RDT",
@@ -11551,7 +11795,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4040.RDT",
@@ -11701,7 +11946,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4050.RDT",
@@ -11855,7 +12101,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4070.RDT",
@@ -11975,7 +12222,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4080.RDT",
@@ -12136,7 +12384,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4090.RDT",
@@ -12286,7 +12535,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM40A0.RDT",
@@ -12391,7 +12641,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM40B0.RDT",
@@ -12496,7 +12747,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM40C0.RDT",
@@ -12570,7 +12822,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM40D0.RDT",
@@ -12675,7 +12928,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM40E0.RDT",
@@ -12818,7 +13072,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM40F0.RDT",
@@ -12892,7 +13147,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM4100.RDT",
@@ -13087,7 +13343,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5000.RDT",
@@ -13177,7 +13434,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5010.RDT",
@@ -13294,7 +13552,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5020.RDT",
@@ -13429,7 +13688,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5030.RDT",
@@ -13609,7 +13869,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5040.RDT",
@@ -13737,7 +13998,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5050.RDT",
@@ -13943,7 +14205,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5060.RDT",
@@ -14071,7 +14334,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5070.RDT",
@@ -14217,7 +14481,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5080.RDT",
@@ -14406,7 +14671,8 @@
         }
       ],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM5090.RDT",
@@ -14496,7 +14762,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6000.RDT",
@@ -14601,7 +14868,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6010.RDT",
@@ -14721,7 +14989,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6020.RDT",
@@ -14849,7 +15118,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6030.RDT",
@@ -15025,7 +15295,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6040.RDT",
@@ -15127,7 +15398,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6050.RDT",
@@ -15217,7 +15489,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6060.RDT",
@@ -15382,7 +15655,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6070.RDT",
@@ -15532,7 +15806,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6080.RDT",
@@ -15652,7 +15927,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6090.RDT",
@@ -15783,7 +16059,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM60A0.RDT",
@@ -15944,7 +16221,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM60B0.RDT",
@@ -16094,7 +16372,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM60C0.RDT",
@@ -16256,7 +16535,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM60D0.RDT",
@@ -16380,7 +16660,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM60E0.RDT",
@@ -16546,7 +16827,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM60F0.RDT",
@@ -16659,7 +16941,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6100.RDT",
@@ -16809,7 +17092,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6110.RDT",
@@ -16929,7 +17213,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6120.RDT",
@@ -17034,7 +17319,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6130.RDT",
@@ -17124,7 +17410,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6140.RDT",
@@ -17256,7 +17543,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6150.RDT",
@@ -17413,7 +17701,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6160.RDT",
@@ -17567,7 +17856,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM6170.RDT",
@@ -17672,7 +17962,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM7000.RDT",
@@ -17777,7 +18068,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM7010.RDT",
@@ -17905,7 +18197,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM7020.RDT",
@@ -18007,7 +18300,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM7030.RDT",
@@ -18127,7 +18421,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     },
     {
       "source": "PL0/RDT/ROOM7040.RDT",
@@ -18240,7 +18535,8 @@
       "scenario_absent_item_ids": [],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
-      "script_item_dispatch_relations": []
+      "script_item_dispatch_relations": [],
+      "immutable_open_doors": []
     }
   ]
 }

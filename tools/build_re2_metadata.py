@@ -14,6 +14,7 @@ import json
 import re
 import struct
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,17 +26,20 @@ from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
 from re2_map_interiors import add_collision_interiors
 
-from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
-from games.re2.script_dispatch_items import (
-    ScriptItemDispatchSupport,
-    script_dispatch_relations,
-    script_item_dispatch,
-)
+from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.immutable_open_doors import immutable_open_doors
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
+from games.re2.room_entry_contract import (
+    RoomEntryContractConfig,
+    RoomEntryContractFailure,
+    VerifiedRoomEntryContract,
+    bind_room_entry_contract,
+    room_entry_contract,
+)
 from games.re2.scenario_items import (
     scenario_effect_pool,
     scenario_flags,
@@ -43,6 +47,11 @@ from games.re2.scenario_items import (
     scenario_item_proofs,
     scenario_presence_flags,
     scenario_vibration_writes,
+)
+from games.re2.script_dispatch_items import (
+    ScriptItemDispatchSupport,
+    script_dispatch_relations,
+    script_item_dispatch,
 )
 
 AREA_NAMES = (
@@ -184,6 +193,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     actor_parts = scenario_actor_parts(profile)
     clipping = clipping_effect_proof(profile)
     dispatch = script_item_dispatch(profile)
+    entry_config = room_entry_contract(profile)
+    if isinstance(entry_config, RoomEntryContractFailure):
+        raise ValueError(entry_config.value)
+    entry_contract = entry_config
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -217,6 +230,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         )
         if identity != profile["executable_identity"]:
             raise ValueError("disc executable does not match the RE2 profile")
+        if isinstance(entry_config, RoomEntryContractConfig):
+
+            def entry_resource(path: str) -> bytes:
+                extent, size = _find(stream, root, root_size, path)
+                return _read_file(stream, extent, size)
+
+            entry_contract = bind_room_entry_contract(
+                entry_config,
+                executable,
+                entry_resource(entry_config.stage_resource.path),
+                entry_resource(entry_config.actor_archive_path),
+                {door.model: entry_resource(door.path) for door in entry_config.doors},
+            )
+            if isinstance(entry_contract, RoomEntryContractFailure):
+                raise ValueError(entry_contract.value)
         load = struct.unpack_from("<I", executable, 0x18)[0]
         table = int(flag_proof["bank_table_address_ps1"], 0)
         for bank in flag_proof["flag_banks"]:
@@ -363,6 +391,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 },
                 layout["aot_capacity"],
                 dispatch,
+            )
+        if isinstance(entry_contract, VerifiedRoomEntryContract):
+            open_doors = immutable_open_doors(
+                sources[room["id"]],
+                room,
+                profile,
+                entry_contract,
+                entry_contract.write_partitions,
+            )
+            # Unsupported native effects provide no departed access evidence.
+            # Keep the complete raw door catalog for live observations.
+            room["immutable_open_doors"] = (
+                [asdict(proof) for proof in open_doors]
+                if isinstance(open_doors, tuple)
+                else []
             )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
@@ -625,11 +668,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     if dispatch is not ScriptItemDispatchSupport.Unaudited
                     else []
                 ),
+                *(
+                    ["RE2-DOOR-007"]
+                    if isinstance(entry_contract, VerifiedRoomEntryContract)
+                    else []
+                ),
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {"room_entry_contract": profile["room_entry_contract"]}
+                if isinstance(entry_contract, VerifiedRoomEntryContract)
+                else {}
+            ),
             **(
                 {"script_item_dispatch": profile["script_item_dispatch"]}
                 if dispatch is not ScriptItemDispatchSupport.Unaudited

@@ -14,8 +14,8 @@ from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
-from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.re2.scenario_items import scenario_item_candidates
+from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.runtime_identity import MemoryResult
 from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
@@ -473,6 +473,17 @@ def poll_re2(
                 and not (visited == key and unresolved_registry)
             )
             evaluations.append((source_id, tuple(details), complete))
+            departed_open_offsets = {
+                offset
+                for proof in source.get("immutable_open_doors", [])
+                if visited != key
+                and context_valid
+                and all(
+                    presence_matches(condition, flag)
+                    for condition in proof["context_conditions"]
+                )
+                for offset in proof["creator_offsets"]
+            }
             for definition in source["doors"]:
                 observed = (
                     live_doors.get(definition["offset"]) if visited == key else None
@@ -517,7 +528,11 @@ def poll_re2(
                 unlocked = unlock_state is DoorUnlockState.Unlocked
                 if unlocked:
                     key_label = ""
-                if observed is None:
+                if observed is None and definition["offset"] in departed_open_offsets:
+                    # Source/native write proofs establish this binding for
+                    # the room lifetime. Fresh conditions revoke it on rewind.
+                    state, label = "OPEN", "Open"
+                elif observed is None:
                     # Unlock knowledge survives leaving a room. Its current
                     # activation can still depend on unresolved room events.
                     state = "UNCHECKED"

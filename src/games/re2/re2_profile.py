@@ -9,21 +9,26 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
-from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
-from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
+from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.map_layout import Re2MapLayout, Re2MapProjection
+from games.re2.room_entry_contract import (
+    RoomEntryContractConfig,
+    RoomEntryContractFailure,
+    room_entry_contract,
+)
+from games.re2.scenario_items import (
+    scenario_effect_pool,
+    scenario_flags,
+    scenario_item_candidates,
+    scenario_presence_flags,
+    scenario_vibration_writes,
+)
 from games.re2.script_dispatch_items import (
     ScriptItemDispatchConfig,
     ScriptItemDispatchSupport,
     script_item_dispatch,
-)
-from games.re2.scenario_items import (
-    scenario_flags,
-    scenario_item_candidates,
-    scenario_presence_flags,
-    scenario_effect_pool,
-    scenario_vibration_writes,
 )
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
@@ -145,6 +150,17 @@ class Re2Profile:
         actor_parts = scenario_actor_parts(raw)
         clipping = clipping_effect_proof(raw)
         dispatch = script_item_dispatch(raw)
+        entry_contract = room_entry_contract(raw)
+        if isinstance(entry_contract, RoomEntryContractFailure):
+            raise ValueError(entry_contract.value)
+        if isinstance(entry_contract, RoomEntryContractConfig) and (
+            raw["executable_identity"]
+            != target.executable_name + " SHA256 " + entry_contract.executable_sha256
+            or int(layout["aot_table_address_ps1"], 0)
+            != int(entry_contract.write_partitions.aot_address_ps1, 0)
+            or layout["aot_capacity"] != entry_contract.write_partitions.aot_capacity
+        ):
+            raise ValueError("RE2 room-entry proof disagrees with its revision layout")
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -233,6 +249,14 @@ class Re2Profile:
             raise ValueError(
                 "RE2 script item dispatch disagrees with its revision layout"
             )
+        if ("room_entry_contract" in document) != (
+            isinstance(entry_contract, RoomEntryContractConfig)
+        ) or (
+            isinstance(entry_contract, RoomEntryContractConfig)
+            and json.dumps(document["room_entry_contract"], sort_keys=True)
+            != json.dumps(raw["room_entry_contract"], sort_keys=True)
+        ):
+            raise ValueError("RE2 room-entry proof disagrees with its revision layout")
         # JSON types are part of the proof: Python equality would equate
         # boolean bank/bit operands with integer zero or one.
         if json.dumps(
@@ -333,6 +357,85 @@ class Re2Profile:
             for bit in range(width * 8)
         )
         for key, room in rooms.items():
+            context_conditions = room.get("scenario_context_conditions", [])
+            if (
+                actor_parts is not ActorPartSupport.Unaudited
+                and "scenario_context_conditions" not in room
+                or type(context_conditions) is not list
+                or any(
+                    not valid_presence(condition, context_flags)
+                    or condition["kind"] != "conditions"
+                    for condition in context_conditions
+                )
+                or context_conditions
+                and not room.get("fixed_context_preserved")
+            ):
+                raise ValueError("invalid or missing RE2 scenario context conditions")
+            open_doors = room.get("immutable_open_doors", [])
+            if (
+                isinstance(entry_contract, RoomEntryContractConfig)
+                and "immutable_open_doors" not in room
+                or not isinstance(entry_contract, RoomEntryContractConfig)
+                and "immutable_open_doors" in room
+                or type(open_doors) is not list
+                or len(open_doors) > layout["aot_capacity"]
+            ):
+                raise ValueError("invalid or missing RE2 immutable open-door proofs")
+            open_slots = set()
+            for proof in open_doors:
+                if (
+                    type(proof) is not dict
+                    or proof.keys() != {"slot", "creator_offsets", "context_conditions"}
+                    or type(proof["slot"]) is not int
+                    or not 0 <= proof["slot"] < layout["aot_capacity"]
+                    or proof["slot"] in open_slots
+                    or type(proof["creator_offsets"]) is not list
+                    or not proof["creator_offsets"]
+                    or any(
+                        type(offset) is not int for offset in proof["creator_offsets"]
+                    )
+                    or proof["creator_offsets"] != sorted(set(proof["creator_offsets"]))
+                    or type(proof["context_conditions"]) is not list
+                    or len(proof["context_conditions"]) > 32
+                    or any(
+                        not valid_presence(condition, context_flags)
+                        or condition["kind"] != "conditions"
+                        for condition in proof["context_conditions"]
+                    )
+                    or not room.get("fixed_context_preserved")
+                    or room["stage"] != entry_contract.stage
+                    or any(
+                        condition not in proof["context_conditions"]
+                        for condition in context_conditions
+                    )
+                ):
+                    raise ValueError("invalid RE2 immutable open-door proof")
+                creators = [
+                    door for door in room["doors"] if door["slot"] == proof["slot"]
+                ]
+                if (
+                    not creators
+                    or sorted(door["offset"] for door in creators)
+                    != proof["creator_offsets"]
+                    or any(
+                        door["lock_id"] != 0
+                        or door["lock_type"] != 0
+                        or {
+                            field: value
+                            for field, value in door.items()
+                            if field != "offset"
+                        }
+                        != {
+                            field: value
+                            for field, value in creators[0].items()
+                            if field != "offset"
+                        }
+                        for door in creators
+                    )
+                    or any(item["slot"] == proof["slot"] for item in room["items"])
+                ):
+                    raise ValueError("unbound RE2 immutable open-door proof")
+                open_slots.add(proof["slot"])
             relations = room.get("script_item_dispatch_relations", [])
             if (
                 dispatch is not ScriptItemDispatchSupport.Unaudited
@@ -449,20 +552,6 @@ class Re2Profile:
                 if identity in relation_keys:
                     raise ValueError("duplicate RE2 script item dispatch relation")
                 relation_keys.add(identity)
-            context_conditions = room.get("scenario_context_conditions", [])
-            if (
-                actor_parts is not ActorPartSupport.Unaudited
-                and "scenario_context_conditions" not in room
-                or type(context_conditions) is not list
-                or any(
-                    not valid_presence(condition, context_flags)
-                    or condition["kind"] != "conditions"
-                    for condition in context_conditions
-                )
-                or context_conditions
-                and not room.get("fixed_context_preserved")
-            ):
-                raise ValueError("invalid or missing RE2 scenario context conditions")
             if type(room.get("fixed_context_preserved")) is not bool:
                 raise ValueError("invalid or missing RE2 fixed-context presence proof")
             allowed_flags = scenario_presence_flags(

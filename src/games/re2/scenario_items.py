@@ -16,6 +16,7 @@ from games.re2.event_presence import (
     INITIALIZER_FALLTHROUGH,
     flag_write_conflicts,
 )
+from games.re2.room_write_partitions import ScaWritePartition, sca_write_partition
 
 # The pinned native actor search and shadow selector share this enemy table.
 ENEMY_SLOT_COUNT = 32
@@ -444,30 +445,15 @@ def scenario_item_proofs(
                 ):
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x37:
-                collision = struct.unpack_from("<I", data, 0x20)[0]
-                if not collision or collision % 4 or collision + 16 > len(data):
-                    return ScenarioItemProof(False, [], [])
-                count = struct.unpack_from("<I", data, collision + 4)[0]
-                limit = min(
-                    [len(data)]
-                    + [
-                        offset
-                        for offset in room["section_offsets"]
-                        if offset > collision
-                    ]
+                collision = sca_write_partition(
+                    data, tuple(room["section_offsets"]), row["offset"]
                 )
-                # The native index skips the 16-byte SCA header. Its halfword
-                # store must stay in a declared collision record, outside all
-                # script bytes, so it cannot rewrite a creator or fixed test.
-                if (
-                    count < 1
-                    or data[row["offset"] + 1] >= count - 1
-                    or collision + count * 16 > limit
-                    or any(
-                        collision < source["limit"]
-                        and source["entry"] < collision + count * 16
-                        for source in programs.values()
-                    )
+                # The shared native bounds do not establish this proof's
+                # protected script domain or require an actor heap capability.
+                if not isinstance(collision, ScaWritePartition) or any(
+                    collision.asset.offset < source["limit"]
+                    and source["entry"] < collision.asset.offset + collision.asset.width
+                    for source in programs.values()
                 ):
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x60:
