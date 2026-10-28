@@ -7,6 +7,8 @@ import struct
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
+from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
+
 
 class ActorPartSupport(Enum):
     Unaudited = auto()
@@ -510,7 +512,7 @@ def actor_part_copy_proof(
             continue
         if row["kind"] == "call":
             target = f"17:{row['procedure']}"
-            if target not in programs or depth >= 4:
+            if target not in programs or depth >= NATIVE_CALL_FRAME_COUNT - 1:
                 return ActorPartCopyProof(frozenset(), [])
             pending.append(
                 (

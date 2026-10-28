@@ -21,6 +21,7 @@ from games.re2.initializer_control_proof import (
     InitializerControlSupport,
 )
 from games.re2.room_write_partitions import ScaWritePartition, sca_write_partition
+from games.re2.script_control_limits import calls_fit_native_frames
 from games.re2.startup_effects import (
     StartupEffectAuditConfig,
     StartupEffectAuditSupport,
@@ -689,6 +690,15 @@ def scenario_item_proofs(
             # Calls may return; every callee entry is independently seeded.
             # Ignoring nontermination adds possible paths rather than hiding one.
             pending.append((key, row["next"], conditions))
+    # Independent procedure seeding retains possible creators, but loses call
+    # depth. Reconstruct reachable edges before granting negative certificates.
+    call_edges = {key: set() for key in programs}
+    for key, position in reached:
+        row = commands[key][position]
+        if row["kind"] == "call":
+            call_edges[key].add(f"17:{row['procedure']}")
+    if not calls_fit_native_frames(call_edges):
+        return ScenarioItemProof(False, [], [])
     targets = {}
     items = {item["offset"]: item for item in room["items"]}
     for key, program in programs.items():

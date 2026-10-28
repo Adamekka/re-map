@@ -651,7 +651,73 @@ def test_actor_context_condition_models_constructor_skip_explicitly(
     ) is (not acquired)
 
 
-@pytest.mark.parametrize("depth,expected", [(4, True), (5, False)])
+@pytest.mark.parametrize("depth", [3, 4])
+@pytest.mark.parametrize("guarded_call", [False, True])
+def test_scenario_absence_requires_calls_to_fit_native_frames(depth, guarded_call):
+    item = item_command(20, 15, 9)
+    leaf = (
+        bytes([6, 0])
+        + struct.pack("<H", len(item) + 6)
+        + bytes([0x21, 1, 1, 1])
+        + item
+        + bytes([8, 0, 1, 0])
+    )
+    procedures = [bytes([0x18, 2, 1, 0]), bytes([1, 0])]
+    procedures.extend(
+        bytes([0x18, number + 1, 1, 0]) if number < depth + 1 else leaf
+        for number in range(2, depth + 2)
+    )
+    if guarded_call:
+        # A preserved false predicate can exclude the outer call. Each callee
+        # can then be an independent root without reaching the fifth frame.
+        procedures[0] = bytes([6, 0, 8, 0, 0x21, 1, 1, 1, 0x18, 2, 8, 0, 1, 0])
+    data = synthetic_room(bytes([1, 0]), tuple(procedures))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    proof = scenario_item_proofs(
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())[
+            "flag_banks"
+        ],
+        SCENARIO_EFFECT_POOL,
+    )
+    expected = depth == 3 or guarded_call
+    assert proof.fixed_context_preserved is expected
+    assert proof.absent_item_ids == ([9] if expected else [])
+
+
+def test_recursive_scenario_calls_cannot_authorize_absence():
+    item = item_command(20, 15, 9)
+    leaf = (
+        bytes([0x18, 2, 6, 0])
+        + struct.pack("<H", len(item) + 6)
+        + bytes([0x21, 1, 1, 1])
+        + item
+        + bytes([8, 0, 1, 0])
+    )
+    data = synthetic_room(bytes([1, 0]), (bytes([0x18, 2, 1, 0]), bytes([1, 0]), leaf))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    proof = scenario_item_proofs(
+        data,
+        room,
+        [{"bank": 1, "bit": 1, "expected": 0}],
+        json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())[
+            "flag_banks"
+        ],
+        SCENARIO_EFFECT_POOL,
+    )
+    assert not proof.fixed_context_preserved
+    assert proof.absent_item_ids == []
+
+
+@pytest.mark.parametrize(
+    "depth,expected", [(2, True), (3, True), (4, False), (5, False)]
+)
 def test_actor_copy_callers_fit_the_native_call_stack(
     actor_copy_source, actor_config, depth, expected
 ):

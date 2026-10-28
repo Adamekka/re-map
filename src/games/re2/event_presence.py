@@ -10,6 +10,7 @@ from games.re2.initializer_control_proof import (
     InitializerControlProof,
     InitializerControlSupport,
 )
+from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
 from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 # Audited initializer effects shared with ordinary collection proofs. These
@@ -405,7 +406,10 @@ def source_presence(
                     )
             elif kind == "call":
                 target = f"17:{row['procedure']}"
-                if target not in programs or len(returns) >= 4:
+                if (
+                    target not in programs
+                    or len(returns) >= NATIVE_CALL_FRAME_COUNT - 1
+                ):
                     result = unresolved
                 else:
                     callee = programs[target]

@@ -15,12 +15,10 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from games.re2.actor_part_proofs import SourceCopyWrite
+from games.re2.script_control_limits import calls_fit_native_frames
 
 if TYPE_CHECKING:
     from games.re2.room_write_partitions import RoomWritePartitionConfig
-
-# Native depth-indexed IF/loop fields have four call frames, including root.
-NATIVE_CALL_FRAME_COUNT = 4
 
 AUDITED_INITIALIZER_CONTROL_SHA256 = (
     "dfd9d7f331c2d2a0cff02c2d599478057b2e81bd9148179a33b3544149c2f295"
@@ -324,18 +322,9 @@ def initializer_control_proof(
                     InitializerControlFailure.SourceBinding,
                 )
                 call_edges[key].add(target)
-        pending = [(key, (key,)) for key in programs]
-        while pending:
-            key, active = pending.pop()
-            # Native Gosub has no bound check. Call depths 0..3 own separate
-            # frames; depth 4 aliases the root loop byte and IF-pointer field.
-            require(
-                len(active) <= NATIVE_CALL_FRAME_COUNT,
-                InitializerControlFailure.CallDepth,
-            )
-            for target in call_edges[key]:
-                require(target not in active, InitializerControlFailure.CallDepth)
-                pending.append((target, active + (target,)))
+        require(
+            calls_fit_native_frames(call_edges), InitializerControlFailure.CallDepth
+        )
         count = (config.counter_limit - config.counter_address) // 2
         copies, predicate_copies, fallthrough, edges = [], set(), set(), []
         ram_writes = [(config.task_address, config.task_capacity * NATIVE_TASK_WIDTH)]

@@ -12,7 +12,6 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 
-from games.re2.initializer_control_proof import NATIVE_CALL_FRAME_COUNT
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
@@ -25,6 +24,7 @@ from games.re2.room_write_partitions import (
     static_object_packet,
 )
 from games.re2.scenario_items import scenario_flags
+from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 
 

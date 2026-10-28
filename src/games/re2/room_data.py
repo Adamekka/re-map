@@ -16,6 +16,7 @@ from games.re2.initializer_control_proof import (
     InitializerControlSupport,
     native_switch_labels,
 )
+from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
 from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 
@@ -704,7 +705,10 @@ def collection_presence(
                     # Native Gosub uses the main procedure table even when the
                     # caller is the separately scheduled init task.
                     target = f"17:{command['procedure']}"
-                    if target not in programs or len(returns) >= 4:
+                    if (
+                        target not in programs
+                        or len(returns) >= NATIVE_CALL_FRAME_COUNT - 1
+                    ):
                         return []
                     returns = returns + ((key, command["next"], conditions),)
                     key, position, conditions = target, programs[target]["entry"], ()

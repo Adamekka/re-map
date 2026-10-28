@@ -682,6 +682,48 @@ def test_init_gosub_uses_main_table_and_returns_to_its_caller():
     ]
 
 
+@pytest.mark.parametrize("depth", [3, 4])
+@pytest.mark.parametrize("proof", ["collection", "conditional"])
+def test_collection_presence_cannot_use_a_fifth_native_call_frame(depth, proof):
+    from games.re2.event_presence import source_presence
+
+    # Both branches declare the same identity, but the fifth native frame's
+    # IF stack aliases task control and cannot justify either declaration.
+    leaf = (
+        bytes([6, 0, 30, 0, 0x21, 4, 7, 1])
+        + item_command(20, 15, 9)
+        + bytes([7, 0, 28, 0])
+        + item_command(20, 30, 9)
+        + bytes([0, 0, 1, 0])
+    )
+    procedures = [bytes([0x18, 2, 1, 0]), bytes([1, 0])]
+    procedures.extend(
+        bytes([0x18, number + 1, 1, 0]) if number < depth + 1 else leaf
+        for number in range(2, depth + 2)
+    )
+    data = synthetic_room(bytes([1, 0]), tuple(procedures))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    if proof == "collection":
+        assert room["collection_item_ids"] == ([9] if depth == 3 else [])
+        return
+    targets = {
+        (key, row["offset"])
+        for key, program in room["programs"].items()
+        for row in program["commands"]
+        if row["kind"] == "item"
+    }
+    assert source_presence(
+        data,
+        room["programs"],
+        targets,
+        "startup",
+        PRESENCE_FLAGS,
+        fixed_flags=frozenset(),
+    ) == {"kind": "required" if depth == 3 else "unresolved"}
+
+
 @pytest.mark.parametrize(
     "prefix,suffix",
     [
