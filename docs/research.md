@@ -282,6 +282,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | [RE2-DOOR-005](research/re2/dualshock.md#re2-door-005-display-fresh-unlock-knowledge-separately-from-access) | explicit fresh unlock state and map/list padlock cues retain access uncertainty, side/creator binding and reversal; offline checks only |
 | [RE2-DOOR-006](research/re2/dualshock.md#re2-door-006-alternate-door-creators-share-one-detail-row) | equivalent registry-slot alternatives share a detail row while preserving all wall observations and unresolved completion |
 | [RE2-DS-003](research/re2/dualshock.md#re2-ds-003-vibration-writes-preserve-item-context) | bounded Leon vibration writes recover an explored corridor's item identity and departed presence; other RPD gaps remain unresolved |
+| [RE2-DS-005](research/re2/dualshock.md#re2-ds-005-bounded-actor-part-copies-resolve-waiting-room-identity) | resource-bounded part copies and a fresh constructor guard resolve the collected Waiting Room ammo identity and clearance; unsupported contexts stay unresolved |
 | [RE2-LIFETIME-001](research/re2/creator-lifetime.md#re2-lifetime-001-unreachable-generic-creators-preserve-pickup-presence) | shared fixed-context creator reachability preserves West Office pickup presence after departure; conditional award and native-validation limits stay separate |
 
 ## RE2 Leon A research

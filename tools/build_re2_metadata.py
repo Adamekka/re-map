@@ -26,6 +26,7 @@ from map_geometry import trace_floor_cells
 from re2_map_interiors import add_collision_interiors
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -137,10 +138,44 @@ def map_door_segments(cells: dict[tuple[int, int], int], rings: list) -> list:
     return segments
 
 
+def verify_actor_part_resource(
+    executable: bytes, archive: bytes, proof: dict, table_address: int
+) -> None:
+    """Bind generated actor bounds to the native lookup and owned model header."""
+    if len(executable) < 0x800:
+        raise ValueError("RE2 actor-part resource needs a complete executable")
+    load = struct.unpack_from("<I", executable, 0x18)[0]
+    # The audited model loader selects the last record of each four-entry
+    # enemy group. Matching a model hash alone would not bind its model type.
+    index = ((proof["model_type"] - 0x10) * 4) | 3
+    offset = 0x800 + table_address + index * 8 - load
+    if not 0x800 <= offset <= len(executable) - 8:
+        raise ValueError("RE2 actor-part resource table exceeds the executable")
+    sector, width = struct.unpack_from("<II", executable, offset)
+    if (sector, width) != (proof["resource_sector"], proof["resource_width"]):
+        raise ValueError("RE2 actor-part resource disagrees with the native table")
+    start = sector * 2048
+    if not 0 <= start <= len(archive) - width:
+        raise ValueError("RE2 actor-part resource exceeds its archive")
+    resource = archive[start : start + width]
+    if hashlib.sha256(resource).hexdigest() != proof["resource_sha256"]:
+        raise ValueError("RE2 actor-part resource hash does not match the profile")
+    directory, sections = struct.unpack_from("<II", resource)
+    if sections != 8 or not 8 <= directory <= len(resource) - 32:
+        raise ValueError("RE2 actor-part resource has an invalid section table")
+    model = struct.unpack_from("<I", resource, directory + 7 * 4)[0]
+    if not 8 <= model <= directory - 12:
+        raise ValueError("RE2 actor-part resource has an invalid model header")
+    objects = struct.unpack_from("<I", resource, model + 8)[0]
+    if objects != proof["part_count"] * 2:
+        raise ValueError("RE2 actor-part count disagrees with the owned model")
+
+
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     target = re2_target(profile)
     effect_pool = scenario_effect_pool(profile)
     vibration_writes = scenario_vibration_writes(profile)
+    actor_parts = scenario_actor_parts(profile)
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -182,6 +217,18 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "<I", executable, offset
             )[0] != int(bank["address_ps1"], 0):
                 raise ValueError("RE2 flag proof disagrees with the native bank table")
+        for proof in profile.get("scenario_actor_parts", []):
+            extent, size = _find(stream, root, root_size, proof["archive_path"])
+            archive = _read_file(stream, extent, size)
+            verify_actor_part_resource(
+                executable,
+                archive,
+                proof,
+                int(
+                    profile["metadata_layout"]["actor_part_resource_table_address_ps1"],
+                    0,
+                ),
+            )
         extent, size = _find(stream, root, root_size, "COMMON/DATA/MAPS.PIX")
         pixels = _read_file(stream, extent, size)
         if len(pixels) != 20 * 32768:
@@ -272,10 +319,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             profile["flag_banks"],
             effect_pool,
             vibration_writes=vibration_writes,
+            actor_parts=actor_parts,
         )
         room["fixed_context_preserved"] = proof.fixed_context_preserved
         room["scenario_absent_item_ids"] = proof.absent_item_ids
         room["scenario_item_variants"] = proof.item_variants
+        room["scenario_context_conditions"] = proof.context_conditions
         if proof.fixed_context_preserved:
             room["collection_item_ids"], room["conditional_item_presence"] = (
                 collection_presence(
@@ -542,10 +591,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SCD-002",
                 "RE2-DS-003",
                 "RE2-LIFETIME-001",
+                "RE2-DS-005",
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
+            "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {
+                    "actor_part_resource_table_address_ps1": profile["metadata_layout"][
+                        "actor_part_resource_table_address_ps1"
+                    ]
+                }
+                if actor_parts is not ActorPartSupport.Unaudited
+                else {}
+            ),
             "unsupported_sources": unsupported,
             "presence_counter_writes": profile["presence_counter_writes"],
             "presence_flag_writes": flag_proof,

@@ -20,6 +20,88 @@ from games.runtime_identity import RuntimeSignature
 @pytest.mark.parametrize(
     "case",
     [
+        "missing-metadata",
+        "metadata-drift",
+        "metadata-boolean",
+        "not-list",
+        "boolean-count",
+        "empty-count",
+        "bad-hash",
+        "missing-table",
+        "unaligned-table",
+        "metadata-table-drift",
+        "context-missing",
+        "context-not-list",
+        "context-required",
+        "context-bank",
+        "context-boolean-bit",
+        "context-unproved",
+        "context-too-many",
+    ],
+)
+def test_actor_part_resource_contract_is_bound_to_revision(tmp_path, case):
+    """RE2-DS-005: unverified model bounds cannot select an item variant."""
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
+    document = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
+    document["scenario_actor_parts"] = json.loads(
+        json.dumps(raw["scenario_actor_parts"])
+    )
+    document["actor_part_resource_table_address_ps1"] = raw["metadata_layout"][
+        "actor_part_resource_table_address_ps1"
+    ]
+    if case == "missing-metadata":
+        del document["scenario_actor_parts"]
+    elif case == "metadata-drift":
+        document["scenario_actor_parts"][0]["part_count"] -= 1
+    elif case == "metadata-boolean":
+        document["scenario_actor_parts"][0]["part_count"] = True
+    elif case == "not-list":
+        raw["scenario_actor_parts"] = None
+    elif case == "boolean-count":
+        raw["scenario_actor_parts"][0]["part_count"] = True
+    elif case == "empty-count":
+        raw["scenario_actor_parts"][0]["part_count"] = 0
+    elif case == "bad-hash":
+        raw["scenario_actor_parts"][0]["resource_sha256"] = "unverified"
+    elif case == "missing-table":
+        del raw["metadata_layout"]["actor_part_resource_table_address_ps1"]
+    elif case == "unaligned-table":
+        raw["metadata_layout"]["actor_part_resource_table_address_ps1"] = "0x8009ADF5"
+    elif case == "metadata-table-drift":
+        document["actor_part_resource_table_address_ps1"] = "0x8009ADF8"
+    else:
+        room = next(room for room in document["rooms"] if room["id"] == "01-01")
+        condition = {
+            "kind": "conditions",
+            "any_of": [[{"bank": 6, "bit": 24, "expected": 0}]],
+        }
+        room["scenario_context_conditions"] = [condition]
+        if case == "context-missing":
+            del room["scenario_context_conditions"]
+        elif case == "context-not-list":
+            room["scenario_context_conditions"] = None
+        elif case == "context-required":
+            room["scenario_context_conditions"] = [{"kind": "required"}]
+        elif case == "context-bank":
+            condition["any_of"][0][0]["bank"] = 99
+        elif case == "context-boolean-bit":
+            condition["any_of"][0][0]["bit"] = True
+        elif case == "context-unproved":
+            room["fixed_context_preserved"] = False
+        elif case == "context-too-many":
+            condition["any_of"] *= 33
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 (actor-part|scenario context)"):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
         "missing-region",
         "wrong-type",
         "width",

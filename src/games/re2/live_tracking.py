@@ -263,10 +263,23 @@ def poll_re2(
                 if source["stage"] < layout["item_bank_stage_boundary"]
                 else layout["item_bank_late"]
             )
-            candidates = scenario_item_candidates(source)
-            if visited == key and any(
-                item["offset"] in live_items and item not in candidates
-                for item in source["items"]
+            context_valid = all(
+                presence_matches(condition, flag)
+                for condition in source.get("scenario_context_conditions", [])
+            )
+            # Resource-dependent script proofs have explicit state requirements.
+            # A mismatching load keeps the raw catalog and fresh observations,
+            # but cannot retain exclusions, selected variants or clearance.
+            candidates = (
+                scenario_item_candidates(source) if context_valid else source["items"]
+            )
+            if (
+                context_valid
+                and visited == key
+                and any(
+                    item["offset"] in live_items and item not in candidates
+                    for item in source["items"]
+                )
             ):
                 # A live excluded creator contradicts the fixed-context proof.
                 # Retry without publishing instead of hiding the observation.
@@ -280,10 +293,14 @@ def poll_re2(
                 grouped.setdefault(item["global_id"], []).append(item)
             details = []
             identities_complete = True
-            conditional = {
-                rule["global_id"]: rule["presence"]
-                for rule in source["conditional_item_presence"]
-            }
+            conditional = (
+                {
+                    rule["global_id"]: rule["presence"]
+                    for rule in source["conditional_item_presence"]
+                }
+                if context_valid
+                else {}
+            )
             for gid, variants in grouped.items():
                 available = [
                     item
@@ -292,7 +309,7 @@ def poll_re2(
                     and item["offset"] in live_items
                     and live_items[item["offset"]][0] == "available"
                 ]
-                if gid in source["scenario_absent_item_ids"]:
+                if context_valid and gid in source["scenario_absent_item_ids"]:
                     if visited == key and any(
                         item["offset"] in live_items for item in variants
                     ):
@@ -324,8 +341,9 @@ def poll_re2(
                     state = "unknown"
                 elif available:
                     state = "available"
-                elif gid in source["collection_item_ids"] or (
-                    gid in conditional and presence_matches(conditional[gid], flag)
+                elif context_valid and (
+                    gid in source["collection_item_ids"]
+                    or (gid in conditional and presence_matches(conditional[gid], flag))
                 ):
                     state = "uncollected"
                 else:
@@ -359,7 +377,9 @@ def poll_re2(
                     collection["bank"], collection["bit"]
                 )
                 presence = award["presence"]
-                required = not taken and presence_matches(presence, flag)
+                required = (
+                    context_valid and not taken and presence_matches(presence, flag)
+                )
                 # Acquisition wins after delivery and use. Presence conditions
                 # are sufficient only; a mismatch cannot establish absence.
                 details.append(
@@ -377,6 +397,7 @@ def poll_re2(
                 )
             complete = (
                 source["candidate_list_complete"]
+                and context_valid
                 and identities_complete
                 and not (visited == key and unresolved_registry)
             )

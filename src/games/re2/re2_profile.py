@@ -10,6 +10,7 @@ from pathlib import Path
 from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
+from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.scenario_items import (
     scenario_flags,
     scenario_item_candidates,
@@ -133,6 +134,7 @@ class Re2Profile:
         presence_counter_indices(raw)
         scenario_effect_pool(raw)
         scenario_vibration_writes(raw)
+        actor_parts = scenario_actor_parts(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -195,6 +197,14 @@ class Re2Profile:
             document.get("scenario_vibration_writes", []), sort_keys=True
         ) != json.dumps(raw.get("scenario_vibration_writes", []), sort_keys=True):
             raise ValueError("RE2 vibration proof disagrees with its revision layout")
+        if json.dumps(
+            document.get("scenario_actor_parts", []), sort_keys=True
+        ) != json.dumps(raw.get("scenario_actor_parts", []), sort_keys=True) or (
+            actor_parts is not ActorPartSupport.Unaudited
+            and document.get("actor_part_resource_table_address_ps1")
+            != raw["metadata_layout"]["actor_part_resource_table_address_ps1"]
+        ):
+            raise ValueError("RE2 actor-part proof disagrees with its revision layout")
         # JSON types are part of the proof: Python equality would equate
         # boolean bank/bit operands with integer zero or one.
         if json.dumps(
@@ -289,7 +299,26 @@ class Re2Profile:
             return valid
 
         award_flags, pickup_flags = set(), set()
+        context_flags = frozenset(
+            (bank, bit)
+            for bank, (_, width) in banks.items()
+            for bit in range(width * 8)
+        )
         for key, room in rooms.items():
+            context_conditions = room.get("scenario_context_conditions", [])
+            if (
+                actor_parts is not ActorPartSupport.Unaudited
+                and "scenario_context_conditions" not in room
+                or type(context_conditions) is not list
+                or any(
+                    not valid_presence(condition, context_flags)
+                    or condition["kind"] != "conditions"
+                    for condition in context_conditions
+                )
+                or context_conditions
+                and not room.get("fixed_context_preserved")
+            ):
+                raise ValueError("invalid or missing RE2 scenario context conditions")
             if type(room.get("fixed_context_preserved")) is not bool:
                 raise ValueError("invalid or missing RE2 fixed-context presence proof")
             allowed_flags = scenario_presence_flags(

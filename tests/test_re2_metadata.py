@@ -2887,7 +2887,7 @@ def test_scenario_for_control_flow_bounds(case, incompatible_item, scenario_bank
         SCENARIO_EFFECT_POOL,
     )
     assert (proof.absent_item_ids, proof.item_variants) == (
-        [9] if case == "balanced" else [],
+        [9] if case in ("balanced", "mixed-while") else [],
         [],
     )
 

@@ -23,9 +23,11 @@
     "concatenated_sha256": "9aa05ab09809136807378c68766ae1893379d1b4ca6c8781b4df896432d6908c"
   },
   "research_ids": [
-    "RE2-DS-001"
+    "RE2-DS-001",
+    "RE2-DS-005"
   ],
   "metadata_layout": {
+    "actor_part_resource_table_address_ps1": "0x8009ADF4",
     "map_info_address_ps1": "0x800AAA38",
     "area_selector_ps1": "0x8006E7F0",
     "region_selector_ps1": "0x8006EAE8",
@@ -392,6 +394,16 @@
     {"address_ps1": "0x800A268C", "width": 8},
     {"address_ps1": "0x800EAAD8", "width": 320},
     {"address_ps1": "0x800EAC28", "width": 320}
+  ],
+  "scenario_actor_parts": [
+    {
+      "model_type": 34,
+      "part_count": 23,
+      "resource_sha256": "ca7ff21449ef664259cbcfef3ae8385f74b81390ebf8d316c8c8790f65584064",
+      "archive_path": "PL0/PLD/CDEMD0.EMS",
+      "resource_sector": 1426,
+      "resource_width": 174964
+    }
   ],
   "scenario_effect_pool": {
     "address_ps1": "0x800D8CF0",

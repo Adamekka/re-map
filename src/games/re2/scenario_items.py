@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import struct
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from games.re2.actor_part_proofs import (
+    ActorPartProofConfig,
+    ActorPartSupport,
+    actor_part_copy_proof,
+)
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
     INITIALIZER_FALLTHROUGH,
@@ -21,6 +26,7 @@ class ScenarioItemProof:
     absent_item_ids: list[int]
     item_variants: list[dict]
     unreachable_creator_offsets: frozenset[int] = frozenset()
+    context_conditions: list[dict] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         assert type(self.fixed_context_preserved) is bool
@@ -33,6 +39,7 @@ class ScenarioItemProof:
             not self.absent_item_ids
             and not self.item_variants
             and not self.unreachable_creator_offsets
+            and not self.context_conditions
         ), "item proofs require a preserved fixed context"
 
 
@@ -158,6 +165,7 @@ def scenario_item_proofs(
     flag_banks: list[dict],
     effect_pool: tuple[int, int],
     vibration_writes: tuple[tuple[int, int], ...] = (),
+    actor_parts: ActorPartProofConfig | ActorPartSupport = ActorPartSupport.Unaudited,
 ) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
@@ -234,89 +242,51 @@ def scenario_item_proofs(
     }
     opaque_loops = set()
     for key, program in programs.items():
-        if any(row["opcode"] in (0x0D, 0x0E) for row in program["commands"]):
-            # RE2-COLLECT-016: include every creator in a FOR procedure, even
-            # for a zero count or fixed-false guard. Only balanced local loops
-            # whose other branches cannot enter or escape a body are admitted.
-            if any(
-                row["opcode"] in (0x0F, 0x10, 0x11, 0x12) for row in program["commands"]
-            ):
-                return ScenarioItemProof(False, [], [])
-            loops, bodies, conditions = [], [], []
-            for row in program["commands"]:
-                # The opaque creator set skips the reachability walk below.
-                # Still enforce bounded IF frames; a malformed task stack
-                # cannot justify a negative claim about other procedures.
-                if row["kind"] == "if":
-                    test = commands[key].get(row["next"])
-                    if (
-                        len(conditions) >= 8
-                        or test is None
-                        or test["opcode"] not in predicates | {0x21}
-                    ):
-                        return ScenarioItemProof(False, [], [])
-                    conditions.append(row["target"])
-                elif row["opcode"] == 8:
-                    if not conditions or row["next"] != conditions.pop():
-                        return ScenarioItemProof(False, [], [])
-                elif row["opcode"] == 7 or (
-                    row["opcode"] in predicates | {0x21} and not conditions
-                ):
-                    return ScenarioItemProof(False, [], [])
-                if row["opcode"] == 0x0D:
-                    limit = (
-                        row["next"]
-                        + struct.unpack_from("<h", data, row["offset"] + 2)[0]
-                    )
-                    if (
-                        len(loops) >= 4
-                        or limit <= row["next"]
-                        or limit not in commands[key]
-                    ):
-                        return ScenarioItemProof(False, [], [])
-                    loops.append((row["next"], limit))
-                elif row["opcode"] == 0x0E:
-                    if not loops:
-                        return ScenarioItemProof(False, [], [])
-                    start, limit = loops.pop()
-                    if row["next"] != limit:
-                        return ScenarioItemProof(False, [], [])
-                    bodies.append((start, limit))
-            if loops or conditions:
-                return ScenarioItemProof(False, [], [])
-            for start, limit in bodies:
-                for row in program["commands"]:
-                    inside = start <= row["offset"] < limit
-                    if inside and (row["kind"] == "end" or row["opcode"] == 0x17):
-                        return ScenarioItemProof(False, [], [])
-                    if row["kind"] in ("if", "jump") and inside != (
-                        start <= row["target"] < limit
-                    ):
-                        return ScenarioItemProof(False, [], [])
-            opaque_loops.add(key)
-            continue
         if not any(
-            row["opcode"] in (0x0F, 0x10, 0x11, 0x12) for row in program["commands"]
+            row["opcode"] in (0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12)
+            for row in program["commands"]
         ):
             continue
-        # While/do-while actor waits need no reachability guess: every command in
-        # their procedure is possible. Require paired local bounds and one
-        # read-only predicate, so hidden condition bytecode cannot be a creator.
-        loops = []
+        # Loops and actor waits retain every decoded creator, including
+        # fixed-false branches. Validate their mixed structure before using
+        # that conservative set, so a malformed frame cannot hide a creator.
+        loops, bodies, conditions = [], [], []
+        loop_tests = set()
         for row in program["commands"]:
-            if row["opcode"] in (6, 7, 8, 0x17):
-                return ScenarioItemProof(False, [], [])
-            if row["opcode"] in (0x0F, 0x11):
-                if len(loops) >= 4:
+            opcode = row["opcode"]
+            if row["kind"] == "if":
+                test = commands[key].get(row["next"])
+                if (
+                    len(conditions) >= 8
+                    or test is None
+                    or test["opcode"] not in predicates | {0x21}
+                    or row["target"] <= row["next"]
+                    or row["target"] not in commands[key]
+                ):
                     return ScenarioItemProof(False, [], [])
-                loops.append(
-                    (
-                        row["opcode"],
-                        row["next"]
-                        + struct.unpack_from("<h", data, row["offset"] + 2)[0],
-                    )
+                conditions.append(row["target"])
+            elif opcode in (7, 8):
+                if not conditions or row["next"] != conditions.pop():
+                    return ScenarioItemProof(False, [], [])
+                if opcode == 7 and (
+                    row["target"] < row["next"] or row["target"] not in commands[key]
+                ):
+                    return ScenarioItemProof(False, [], [])
+            elif opcode in predicates | {0x21}:
+                if row["offset"] not in loop_tests and not conditions:
+                    return ScenarioItemProof(False, [], [])
+            if opcode in (0x0D, 0x0F, 0x11):
+                limit = (
+                    row["next"] + struct.unpack_from("<h", data, row["offset"] + 2)[0]
                 )
-                if row["opcode"] == 0x0F:
+                if (
+                    len(loops) >= 4
+                    or limit <= row["next"]
+                    or limit not in commands[key]
+                ):
+                    return ScenarioItemProof(False, [], [])
+                loops.append((opcode, row["next"], limit, tuple(conditions)))
+                if opcode == 0x0F:
                     test = commands[key].get(row["next"])
                     if (
                         test is None
@@ -324,31 +294,45 @@ def scenario_item_proofs(
                         or test["next"] - test["offset"] != data[row["offset"] + 1]
                     ):
                         return ScenarioItemProof(False, [], [])
-            elif row["opcode"] in (0x10, 0x12):
+                    loop_tests.add(test["offset"])
+            elif opcode in (0x0E, 0x10, 0x12):
                 if not loops:
                     return ScenarioItemProof(False, [], [])
-                opening, limit = loops.pop()
-                if row["opcode"] == 0x10:
-                    if (
-                        opening != 0x0F
-                        or row["next"] != limit
-                        or limit not in commands[key]
-                    ):
-                        return ScenarioItemProof(False, [], [])
-                else:
+                opening, start, limit, outer_conditions = loops.pop()
+                if {0x0E: 0x0D, 0x10: 0x0F, 0x12: 0x11}[opcode] != opening or tuple(
+                    conditions
+                ) != outer_conditions:
+                    return ScenarioItemProof(False, [], [])
+                if opcode == 0x12:
                     test = commands[key].get(row["next"])
                     if (
-                        opening != 0x11
-                        or test is None
+                        test is None
                         or test["opcode"] not in predicates | {0x21}
                         or test["next"] - test["offset"] != data[row["offset"] + 1]
                         or test["next"] != limit
-                        or limit not in commands[key]
                     ):
                         return ScenarioItemProof(False, [], [])
-        if loops:
+                    loop_tests.add(test["offset"])
+                elif row["next"] != limit:
+                    return ScenarioItemProof(False, [], [])
+                bodies.append((start, limit))
+        if loops or conditions:
             return ScenarioItemProof(False, [], [])
+        for start, limit in bodies:
+            for row in program["commands"]:
+                inside = start <= row["offset"] < limit
+                if inside and (row["kind"] == "end" or row["opcode"] == 0x17):
+                    return ScenarioItemProof(False, [], [])
+                if row["kind"] in ("if", "jump") and inside != (
+                    start <= row["target"] < limit
+                ):
+                    return ScenarioItemProof(False, [], [])
         opaque_loops.add(key)
+    # The bounded actor proof assumes the initial fixed context. Every other
+    # source write still passes the preservation guards below, so no unproved
+    # operation can establish the context used to admit these numeric copies.
+    actor_copy = actor_part_copy_proof(data, room, fixed, banks, actor_parts)
+    actor_copies = actor_copy.offsets
     reset_ids = set()
     slot_kinds = {}
     for item in room["items"]:
@@ -399,6 +383,8 @@ def scenario_item_proofs(
                 if key not in opaque_loops:
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x1D:
+                if row["offset"] in actor_copies:
+                    continue
                 width = 2 if data[row["offset"] + 3] else 1
                 target = row["next"] + data[row["offset"] + 2]
                 destination = next(
@@ -692,7 +678,9 @@ def scenario_item_proofs(
         if row["kind"] in ("item", "interaction", "door", "reset")
         and (key, row["offset"]) not in reached
     )
-    return ScenarioItemProof(True, absent, variants, unreachable_creators)
+    return ScenarioItemProof(
+        True, absent, variants, unreachable_creators, actor_copy.context_conditions
+    )
 
 
 def scenario_item_candidates(room: dict) -> list[dict]:
