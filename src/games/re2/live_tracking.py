@@ -328,6 +328,14 @@ def poll_re2(
                 presence_matches(condition, flag)
                 for condition in source.get("scenario_context_conditions", [])
             )
+            known_puzzle_ids = {
+                proof["global_id"]
+                for proof in source.get("known_puzzle_items", [])
+                if all(
+                    presence_matches(condition, flag)
+                    for condition in proof["context_conditions"]
+                )
+            }
             # Resource-dependent script proofs have explicit state requirements.
             # A mismatching load keeps the raw catalog and fresh observations,
             # but cannot retain exclusions, selected variants or clearance.
@@ -410,12 +418,20 @@ def poll_re2(
                     state = "unknown"
                 elif available:
                     state = "available"
-                elif dispatched:
-                    state = "uncollected"
-                elif context_valid and (
-                    gid in source["collection_item_ids"]
-                    or (gid in conditional and presence_matches(conditional[gid], flag))
+                elif (
+                    dispatched
+                    or gid in known_puzzle_ids
+                    or context_valid
+                    and (
+                        gid in source["collection_item_ids"]
+                        or (
+                            gid in conditional
+                            and presence_matches(conditional[gid], flag)
+                        )
+                    )
                 ):
+                    # A known puzzle target remains required before activation;
+                    # this does not establish its current access or quantity.
                     state = "uncollected"
                 else:
                     state = "unknown"

@@ -630,6 +630,63 @@ def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapsh
         assert set(tracker.rooms) == {"00-01", "00-18"}
 
 
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_declared_puzzle_stays_required_before_activation_and_rewinds(snapshot):
+    """RE2-PUZZLE-001: positive knowledge grants neither quantity nor clearance."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-00"]
+    assert not source["fixed_context_preserved"]
+    assert [proof["global_id"] for proof in source["known_puzzle_items"]] == [93]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0))
+    bank, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    story, _ = profile.flag_banks[4]
+    for acquired, activated in (
+        (False, False),
+        (False, True),
+        (True, True),
+        (False, False),
+    ):
+        put(bank + 8, 4 if acquired else 0, 4)
+        put(story + 8, 0x00800000 if activated else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        room = tracker.rooms["01-00"]
+        (key,) = (item for item in room.items if item.label == "Spade Key")
+        assert key.state == ("taken" if acquired else "uncollected")
+        assert key.quantity is ItemQuantityState.Unreconstructed
+        assert not room.list_complete
+        assert room.completion is (
+            RoomCompletion.Unknown if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-00"] == room
+        assert set(tracker.rooms) == {"00-01", "01-00"}
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_puzzle_mode_mismatch_and_torn_mode_do_not_publish(snapshot):
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0))
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    address = int(profile.runtime_layout["status_flags_address_ps1"], 0)
+    put(address, 0x02000000, 4)
+    assert poll_re2(profile, tracker, read).status is PollStatus.WrongGame
+    assert tracker == before
+    put(address, 0, 4)
+
+    def torn_read(base, width):
+        if (base, width) == (address, 4):
+            put(address, 0x02000000, 4)
+        return read(base, width)
+
+    assert poll_re2(profile, tracker, torn_read).status is PollStatus.Retry
+    assert tracker == before
+
+
 def test_pickups_rewind_without_erasing_visits(snapshot):
     profile, _, put, read = snapshot
     tracker = Tracker()

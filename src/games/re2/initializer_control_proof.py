@@ -298,8 +298,9 @@ def initializer_control_proof(
         # fixed upper arenas. Their VAB offset is nonnegative and their fixed
         # 128-program table remains inside the copied initialized resource.
         require(
-            source + partitions.heap_floor
-            <= min(start for start, _ in config.music_buffers),
+            partitions.retained_before(
+                source, min(start for start, _ in config.music_buffers)
+            ),
             InitializerControlFailure.Partition,
         )
         programs = room["programs"]

@@ -120,6 +120,31 @@ class RoomWritePartitions:
     objects: tuple[ObjectWritePartition, ...]
     source_writes: tuple[SourceWritePartition, ...]
 
+    def retained_before(self, source_address: int, boundary: int) -> bool:
+        """Keep retained source below another audited native work arena."""
+        assert type(source_address) is int and type(boundary) is int
+        return (
+            0x80000000 <= source_address
+            and source_address + self.heap_floor <= boundary <= 0x80200000
+        )
+
+
+def static_object_packet(packet: bytes) -> bool:
+    """Recognize the audited 2D form; resource/freshness proofs stay required."""
+    assert type(packet) is bytes
+    # Attachments and effect modes can change later native ownership. Only
+    # this static form shares the bounded object/model write interpretation.
+    return (
+        len(packet) == 38
+        and packet[0] == 0x2D
+        and packet[2:6] == bytes(4)
+        and packet[6] in (0, 1)
+        and packet[7:10] == bytes(3)
+        and packet[10:12] == b"\x0a\0"
+        and packet[12:14] in (b"\x10\0", b"\x30\0")
+        and not any(packet[26:])
+    )
+
 
 class _InvalidPartition(Exception):
     def __init__(self, reason: RoomWritePartitionFailure):

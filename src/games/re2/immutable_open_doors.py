@@ -18,8 +18,9 @@ from games.re2.room_write_partitions import (
     EmbeddedModelResource,
     RoomWritePartitionConfig,
     RoomWritePartitions,
-    room_write_partitions,
     SourceRange,
+    room_write_partitions,
+    static_object_packet,
 )
 from games.re2.scenario_items import (
     scenario_effect_pool,
@@ -98,7 +99,7 @@ def immutable_open_doors(
         # Native file/menu graphics start at this fixed upper arena. The
         # exact stage-derived source base, not merely a lower bound, must keep
         # every retained script/model/message/sound byte below that arena.
-        if entry_contract.source_address + partitions.heap_floor > 0x80198000:
+        if not partitions.retained_before(entry_contract.source_address, 0x80198000):
             return ImmutableOpenDoorFailure.Partition
         fixed_rows = scenario_flags(profile)
         fixed = {(row["bank"], row["bit"]): row["expected"] for row in fixed_rows}
@@ -210,14 +211,7 @@ def immutable_open_doors(
                 if packet[1] != 3 or packet[2] >= 32:
                     return ImmutableOpenDoorFailure.WriteEffects
             elif opcode == 0x2D:
-                if position not in model_writes or not (
-                    packet[2:6] == bytes(4)
-                    and packet[6] in (0, 1)
-                    and packet[7:10] == bytes(3)
-                    and packet[10:12] == b"\x0a\0"
-                    and packet[12:14] in (b"\x10\0", b"\x30\0")
-                    and not any(packet[26:])
-                ):
+                if position not in model_writes or not static_object_packet(packet):
                     return ImmutableOpenDoorFailure.WriteEffects
             elif opcode == 0x37:
                 if position not in source_writes:

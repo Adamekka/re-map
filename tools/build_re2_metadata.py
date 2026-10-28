@@ -37,6 +37,7 @@ from games.re2.initializer_control_proof import (
     initializer_control_config,
     initializer_control_proof,
 )
+from games.re2.known_puzzle_items import known_puzzle_items
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -56,6 +57,7 @@ from games.re2.scenario_items import (
     scenario_vibration_writes,
 )
 from games.re2.script_dispatch_items import (
+    ScriptItemDispatchConfig,
     ScriptItemDispatchSupport,
     script_dispatch_relations,
     script_item_dispatch,
@@ -439,6 +441,17 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 if isinstance(open_doors, tuple)
                 else []
             )
+            if isinstance(dispatch, ScriptItemDispatchConfig):
+                targets = known_puzzle_items(
+                    sources[room["id"]], room, profile, entry_contract, dispatch
+                )
+                # A declared puzzle requirement is independent of current
+                # access and cannot supply missing variants or list coverage.
+                room["known_puzzle_items"] = (
+                    [asdict(target) for target in targets]
+                    if isinstance(targets, tuple)
+                    else []
+                )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -713,6 +726,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 *(
                     ["RE2-CONTROL-001"]
                     if isinstance(control_config, InitializerControlConfig)
+                    else []
+                ),
+                *(
+                    ["RE2-PUZZLE-001"]
+                    if isinstance(entry_contract, VerifiedRoomEntryContract)
+                    and isinstance(dispatch, ScriptItemDispatchConfig)
                     else []
                 ),
             ],

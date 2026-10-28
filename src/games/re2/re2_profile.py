@@ -402,6 +402,89 @@ class Re2Profile:
                 and not room.get("fixed_context_preserved")
             ):
                 raise ValueError("invalid or missing RE2 scenario context conditions")
+            puzzle_capable = isinstance(
+                entry_contract, RoomEntryContractConfig
+            ) and isinstance(dispatch, ScriptItemDispatchConfig)
+            puzzle_items = room.get("known_puzzle_items", [])
+            if (
+                puzzle_capable
+                and "known_puzzle_items" not in room
+                or not puzzle_capable
+                and "known_puzzle_items" in room
+                or type(puzzle_items) is not list
+                or len(puzzle_items) > layout["aot_capacity"]
+            ):
+                raise ValueError("invalid or missing RE2 known puzzle-item proofs")
+            puzzle_ids = set()
+            for proof in puzzle_items:
+                if (
+                    type(proof) is not dict
+                    or proof.keys()
+                    != {
+                        "global_id",
+                        "item_type",
+                        "creator_offsets",
+                        "callback_offsets",
+                        "delivery_offsets",
+                        "context_conditions",
+                    }
+                    or type(proof["global_id"]) is not int
+                    or not 0 <= proof["global_id"] <= 255
+                    or proof["global_id"] in puzzle_ids
+                    or type(proof["item_type"]) is not int
+                    or not 0 <= proof["item_type"] < layout["file_type_min"]
+                    or type(room.get("stage")) is not int
+                    or room["stage"] != entry_contract.stage
+                    or type(room.get("size")) is not int
+                    or type(room.get("scenario_absent_item_ids")) is not list
+                    or proof["global_id"] in room["scenario_absent_item_ids"]
+                    or type(proof["context_conditions"]) is not list
+                    or len(proof["context_conditions"]) > 32
+                    or any(
+                        not valid_presence(condition, context_flags)
+                        or condition["kind"] != "conditions"
+                        for condition in proof["context_conditions"]
+                    )
+                    or any(
+                        type(proof[field]) is not list
+                        or not proof[field]
+                        or any(
+                            type(offset) is not int
+                            or not 0 <= offset <= room["size"] - width
+                            for offset in proof[field]
+                        )
+                        or proof[field] != sorted(set(proof[field]))
+                        for field, width in (
+                            ("creator_offsets", 22),
+                            ("callback_offsets", 20),
+                            ("delivery_offsets", 2),
+                        )
+                    )
+                ):
+                    raise ValueError("invalid RE2 known puzzle-item proof")
+                if type(room.get("items")) is not list or any(
+                    type(item) is not dict
+                    or not {"offset", "global_id", "type"} <= item.keys()
+                    or any(
+                        type(item[field]) is not int
+                        for field in ("offset", "global_id", "type")
+                    )
+                    for item in room["items"]
+                ):
+                    raise ValueError("invalid RE2 known puzzle-item source")
+                creators = [
+                    item
+                    for item in room["items"]
+                    if item["global_id"] == proof["global_id"]
+                ]
+                if (
+                    not creators
+                    or {item["type"] for item in creators} != {proof["item_type"]}
+                    or sorted(item["offset"] for item in creators)
+                    != proof["creator_offsets"]
+                ):
+                    raise ValueError("unbound RE2 known puzzle-item identity")
+                puzzle_ids.add(proof["global_id"])
             open_doors = room.get("immutable_open_doors", [])
             if (
                 isinstance(entry_contract, RoomEntryContractConfig)

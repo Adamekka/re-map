@@ -18,6 +18,66 @@ from games.runtime_identity import RuntimeSignature
 
 
 @pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "not-list",
+        "duplicate",
+        "boolean-id",
+        "type",
+        "creator",
+        "callback",
+        "delivery",
+        "context",
+        "absent",
+        "null-absent",
+        "null-items",
+    ],
+)
+def test_known_puzzle_catalog_requires_bound_declaration_and_callback_evidence(
+    tmp_path, case
+):
+    profile_path = ROOT / "profiles/re2_leon_a_slus00748.json"
+    raw = json.loads(profile_path.read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((profile_path.parent / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(room for room in document["rooms"] if room["id"] == "01-00")
+    proof = room["known_puzzle_items"][0]
+    if case == "missing":
+        del room["known_puzzle_items"]
+    elif case == "not-list":
+        room["known_puzzle_items"] = None
+    elif case == "duplicate":
+        room["known_puzzle_items"].append(proof)
+    elif case == "boolean-id":
+        proof["global_id"] = True
+    elif case == "type":
+        proof["item_type"] += 1
+    elif case == "creator":
+        proof["creator_offsets"][0] += 1
+    elif case == "callback":
+        proof["callback_offsets"] = []
+    elif case == "delivery":
+        proof["delivery_offsets"] = [room["size"]]
+    elif case == "context":
+        proof["context_conditions"] = [{"kind": "required"}]
+    elif case == "absent":
+        room["scenario_absent_item_ids"].append(proof["global_id"])
+    elif case == "null-absent":
+        room["scenario_absent_item_ids"] = None
+    else:
+        room["items"] = None
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 known puzzle-item"):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
     "case", ["missing", "drift", "boolean", "raw-invalid", "unconfigured"]
 )
 def test_initializer_control_catalog_is_bound_to_its_revision_audit(tmp_path, case):
