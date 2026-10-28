@@ -28,7 +28,8 @@
     "RE2-CLIP-001",
     "RE2-DISPATCH-001",
     "RE2-DOOR-007",
-    "RE2-STARTUP-001"
+    "RE2-STARTUP-001",
+    "RE2-CONTROL-001"
   ],
   "script_item_dispatch": {
     "main_table_address_ps1": "0x800D8CBC",
@@ -40,6 +41,19 @@
   "startup_effect_audit": {
     "audit": "slus00748-sca-clipping-v1",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
+  },
+  "initializer_control_audit": {
+    "audit": "slus00748-initializer-control-v1",
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
+    "counter_address_ps1": "0x800D47EC",
+    "counter_limit_address_ps1": "0x800D4834",
+    "task_address_ps1": "0x800D7860",
+    "task_capacity": 14,
+    "source_addresses": [{"stage": 0, "address_ps1": "0x8011A6A8"}],
+    "music_buffers": [
+      {"address_ps1": "0x801F2E00", "limit_address_ps1": "0x80200000"},
+      {"address_ps1": "0x801ECE00", "limit_address_ps1": "0x80200000"}
+    ]
   },
   "metadata_layout": {
     "actor_part_resource_table_address_ps1": "0x8009ADF4",

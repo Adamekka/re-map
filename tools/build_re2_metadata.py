@@ -30,6 +30,13 @@ from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.immutable_open_doors import immutable_open_doors
+from games.re2.initializer_control_proof import (
+    InitializerControlConfig,
+    InitializerControlProof,
+    InitializerControlSupport,
+    initializer_control_config,
+    initializer_control_proof,
+)
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -195,6 +202,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     clipping = clipping_effect_proof(profile)
     dispatch = script_item_dispatch(profile)
     startup_audit = startup_effect_audit(profile)
+    control_config = initializer_control_config(profile)
     entry_config = room_entry_contract(profile)
     if isinstance(entry_config, RoomEntryContractFailure):
         raise ValueError(entry_config.value)
@@ -337,6 +345,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             f"pinned {target.label} disc must contain {target.room_count} room sources"
         )
     layout = profile["runtime_layout"]
+    if isinstance(control_config, InitializerControlConfig) and not isinstance(
+        entry_contract, VerifiedRoomEntryContract
+    ):
+        raise ValueError(
+            "RE2 initializer control requires a verified room write layout"
+        )
     awards = bind_event_awards(
         rooms,
         sources,
@@ -350,6 +364,18 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     )
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
+        control = InitializerControlSupport.Unaudited
+        if isinstance(control_config, InitializerControlConfig):
+            candidate = initializer_control_proof(
+                sources[room["id"]],
+                room,
+                control_config,
+                entry_contract.write_partitions,
+            )
+            # Unsupported copies, branches or effects grant no continuation.
+            # Other interpretation still uses the complete source catalog.
+            if isinstance(candidate, InitializerControlProof):
+                control = candidate
         proof = scenario_item_proofs(
             sources[room["id"]],
             room,
@@ -360,6 +386,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             actor_parts=actor_parts,
             clipping=clipping,
             startup_audit=startup_audit,
+            initializer_control=control,
         )
         room["fixed_context_preserved"] = proof.fixed_context_preserved
         room["scenario_absent_item_ids"] = proof.absent_item_ids
@@ -380,6 +407,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     ),
                     unreachable_creator_offsets=proof.unreachable_creator_offsets,
                     startup_effects=proof.startup_effects,
+                    initializer_control=proof.initializer_control,
                 )
             )
         if dispatch is not ScriptItemDispatchSupport.Unaudited:
@@ -682,11 +710,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     if isinstance(startup_audit, StartupEffectAuditConfig)
                     else []
                 ),
+                *(
+                    ["RE2-CONTROL-001"]
+                    if isinstance(control_config, InitializerControlConfig)
+                    else []
+                ),
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {"initializer_control_audit": profile["initializer_control_audit"]}
+                if isinstance(control_config, InitializerControlConfig)
+                else {}
+            ),
             **(
                 {"startup_effect_audit": profile["startup_effect_audit"]}
                 if isinstance(startup_audit, StartupEffectAuditConfig)

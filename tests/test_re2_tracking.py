@@ -602,6 +602,34 @@ def test_startup_setup_preserves_all_departed_items_through_acquisition_reversal
         assert tracker.region_visits == visits
 
 
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapshot):
+    """RE2-CONTROL-001: source setup cannot erase a known remaining pickup."""
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 0x18))
+    bank, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    for taken in (False, True, False, True):
+        put(bank + 5 * 4, 0x40000000 if taken else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        room = tracker.rooms["00-18"]
+        assert room.list_complete
+        (item,) = room.items
+        assert (item.label, item.state, item.quantity) == (
+            "Handgun ammo",
+            "taken" if taken else "uncollected",
+            15,
+        )
+        assert room.completion is (
+            RoomCompletion.Cleared if taken else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 0x18))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["00-18"] == room
+        assert set(tracker.rooms) == {"00-01", "00-18"}
+
+
 def test_pickups_rewind_without_erasing_visits(snapshot):
     profile, _, put, read = snapshot
     tracker = Tracker()

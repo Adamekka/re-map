@@ -12,6 +12,10 @@ from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.initializer_control_proof import (
+    InitializerControlConfig,
+    initializer_control_config,
+)
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.room_entry_contract import (
     RoomEntryContractConfig,
@@ -152,9 +156,14 @@ class Re2Profile:
         clipping = clipping_effect_proof(raw)
         dispatch = script_item_dispatch(raw)
         startup_audit = startup_effect_audit(raw)
+        control_config = initializer_control_config(raw)
         entry_contract = room_entry_contract(raw)
         if isinstance(entry_contract, RoomEntryContractFailure):
             raise ValueError(entry_contract.value)
+        if isinstance(control_config, InitializerControlConfig) and not isinstance(
+            entry_contract, RoomEntryContractConfig
+        ):
+            raise ValueError("RE2 initializer control requires a room write layout")
         if isinstance(entry_contract, RoomEntryContractConfig) and (
             raw["executable_identity"]
             != target.executable_name + " SHA256 " + entry_contract.executable_sha256
@@ -221,6 +230,16 @@ class Re2Profile:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
         if document.get("scenario_effect_pool") != raw["scenario_effect_pool"]:
             raise ValueError("RE2 effect pool proof disagrees with its revision layout")
+        if ("initializer_control_audit" in document) != (
+            isinstance(control_config, InitializerControlConfig)
+        ) or (
+            isinstance(control_config, InitializerControlConfig)
+            and json.dumps(document["initializer_control_audit"], sort_keys=True)
+            != json.dumps(raw["initializer_control_audit"], sort_keys=True)
+        ):
+            raise ValueError(
+                "RE2 initializer control audit disagrees with its revision layout"
+            )
         if ("startup_effect_audit" in document) != (
             isinstance(startup_audit, StartupEffectAuditConfig)
         ) or (

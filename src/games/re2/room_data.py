@@ -11,6 +11,11 @@ from games.re2.event_presence import (
     initializer_fallthrough,
     source_presence,
 )
+from games.re2.initializer_control_proof import (
+    InitializerControlProof,
+    InitializerControlSupport,
+    native_switch_labels,
+)
 from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 
@@ -432,29 +437,9 @@ def decode_room(
                     # RE2-SCD-002: the native selector skips case bodies by
                     # their unsigned relative offsets. Queue every label so
                     # an early return cannot hide a later pickup or award.
-                    limit = following + struct.unpack_from("<H", packet, 2)[0]
-                    if not following < limit < stop or data[limit - 2] != 0x16:
-                        raise ValueError("invalid RE2 switch bounds")
-                    label = following
-                    while True:
-                        if not following <= label <= limit - 2:
-                            raise ValueError("RE2 switch case outside its bounds")
-                        marker = data[label]
-                        switch_labels.add(label)
-                        pending.append(label)
-                        if marker == 0x14 and label + 6 <= limit - 2:
-                            label += 6 + struct.unpack_from("<H", data, label + 2)[0]
-                        elif marker == 0x15 and label < limit - 2:
-                            # Default ends the native label search. Its body
-                            # is decoded normally; the closing marker and
-                            # post-switch path still need independent visits.
-                            switch_labels.add(limit - 2)
-                            pending.append(limit - 2)
-                            break
-                        elif marker == 0x16 and label == limit - 2:
-                            break
-                        else:
-                            raise ValueError("invalid RE2 switch label chain")
+                    limit, labels = native_switch_labels(data, position, stop)
+                    switch_labels.update(labels)
+                    pending.extend(labels)
                     pending.append(limit)
                 commands[position] = command
                 if command["kind"] not in ("end", "jump"):
@@ -544,6 +529,8 @@ def collection_presence(
     unreachable_creator_offsets: frozenset[int] = frozenset(),
     startup_effects: StartupEffectReceipt
     | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
+    initializer_control: InitializerControlProof
+    | InitializerControlSupport = InitializerControlSupport.Unaudited,
 ) -> tuple[list[int], list[dict]]:
     """Prove collection presence for an explicit set of source candidates."""
     assert isinstance(fixed_flags, frozenset), "fixed startup flags must be explicit"
@@ -560,6 +547,23 @@ def collection_presence(
         startup_effects.locations_for(data, programs, condition_flags, fixed_flags)
         if isinstance(startup_effects, StartupEffectReceipt)
         else frozenset()
+    )
+    assert initializer_control is InitializerControlSupport.Unaudited or isinstance(
+        initializer_control, InitializerControlProof
+    )
+    if isinstance(initializer_control, InitializerControlProof):
+        initializer_control = initializer_control.for_predicates(
+            data, programs, condition_flags, fixed_flags
+        )
+    control_locations = (
+        initializer_control.fallthrough_locations
+        if isinstance(initializer_control, InitializerControlProof)
+        else frozenset()
+    )
+    control_edges = (
+        {(key, start): end for key, start, end in initializer_control.switch_edges}
+        if isinstance(initializer_control, InitializerControlProof)
+        else {}
     )
     assert isinstance(unreachable_creator_offsets, frozenset)
     assert not unreachable_creator_offsets or fixed_flags, (
@@ -685,7 +689,9 @@ def collection_presence(
                 seen = seen | {state}
                 command = commands[key][position]
                 opcode, kind = command["opcode"], command["kind"]
-                if kind == "end":
+                if (key, position) in control_edges:
+                    position = control_edges[key, position]
+                elif kind == "end":
                     if returns:
                         key, position, conditions = returns[-1]
                         returns = returns[:-1]
@@ -750,6 +756,7 @@ def collection_presence(
                 elif (
                     initializer_fallthrough(command)
                     or (key, command["offset"]) in setup_locations
+                    or (key, command["offset"]) in control_locations
                 ):
                     # Audited fall-through commands: padding, flag writes,
                     # scalar/actor setup and camera replacement do not declare
@@ -802,6 +809,7 @@ def collection_presence(
             condition_flags,
             fixed_flags,
             startup_effects=startup_effects,
+            initializer_control=initializer_control,
         )
         if presence["kind"] != "unresolved":
             conditional.append({"global_id": gid, "presence": presence})

@@ -6,6 +6,10 @@ import struct
 from collections.abc import Callable
 from typing import Literal
 
+from games.re2.initializer_control_proof import (
+    InitializerControlProof,
+    InitializerControlSupport,
+)
 from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 # Audited initializer effects shared with ordinary collection proofs. These
@@ -219,6 +223,8 @@ def source_presence(
     *,
     startup_effects: StartupEffectReceipt
     | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
+    initializer_control: InitializerControlProof
+    | InitializerControlSupport = InitializerControlSupport.Unaudited,
 ) -> dict:
     assert mode in ("startup", "scheduled")
     assert targets and all(key in programs for key, _ in targets)
@@ -235,6 +241,28 @@ def source_presence(
         startup_effects.locations_for(data, programs, condition_flags, fixed_flags)
         if isinstance(startup_effects, StartupEffectReceipt)
         else frozenset()
+    )
+    assert initializer_control is InitializerControlSupport.Unaudited or isinstance(
+        initializer_control, InitializerControlProof
+    )
+    if isinstance(initializer_control, InitializerControlProof):
+        initializer_control = initializer_control.for_predicates(
+            data, programs, condition_flags, fixed_flags
+        )
+    control_locations = (
+        initializer_control.fallthrough_locations
+        if isinstance(initializer_control, InitializerControlProof)
+        else frozenset()
+    )
+    control_copies = (
+        initializer_control.predicate_copy_locations
+        if isinstance(initializer_control, InitializerControlProof)
+        else frozenset()
+    )
+    control_edges = (
+        {(key, start): end for key, start, end in initializer_control.switch_edges}
+        if isinstance(initializer_control, InitializerControlProof)
+        else {}
     )
     # An empty set means no sufficient condition was proved. The empty
     # conjunction means unconditional reachability, as in ordinary Boolean DNF.
@@ -360,7 +388,11 @@ def source_presence(
             active.add(state)
             row = commands[key][position]
             kind, opcode = row["kind"], row["opcode"]
-            if kind == "end":
+            if (key, position) in control_edges:
+                # Every matched case and the no-match path finish here.
+                # Validated bodies change only global music parameters.
+                result = walk(key, control_edges[key, position], returns)
+            elif kind == "end":
                 if opcode == 1 and data[row["offset"] + 1] != 0:
                     result = unresolved
                 elif returns:
@@ -398,11 +430,15 @@ def source_presence(
             elif kind == "if":
                 position = row["next"]
                 tests = []
-                while (
-                    position in commands[key]
-                    and commands[key][position]["kind"] == "flag_check"
-                ):
+                while position in commands[key]:
                     test = commands[key][position]
+                    if (key, position) in control_copies:
+                        # Copy returns one before the opaque comparison; its
+                        # numeric RHS cannot establish either outcome.
+                        position = test["next"]
+                        continue
+                    if test["kind"] != "flag_check":
+                        break
                     tests.append((test["bank"], test["bit"], test["expected"]))
                     position = test["next"]
                 predicate = commands[key].get(position)
@@ -473,6 +509,7 @@ def source_presence(
                     kind in ("item", "door", "interaction", "reset")
                     or opcode in fallthrough
                     or (key, row["offset"]) in setup_locations
+                    or (key, row["offset"]) in control_locations
                     or (
                         # Fresh predicates must survive startup. Decoding binds
                         # unrelated writes to canonical, alias-checked bits.

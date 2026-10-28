@@ -16,6 +16,10 @@ from games.re2.event_presence import (
     INITIALIZER_FALLTHROUGH,
     flag_write_conflicts,
 )
+from games.re2.initializer_control_proof import (
+    InitializerControlProof,
+    InitializerControlSupport,
+)
 from games.re2.room_write_partitions import ScaWritePartition, sca_write_partition
 from games.re2.startup_effects import (
     StartupEffectAuditConfig,
@@ -38,12 +42,19 @@ class ScenarioItemProof:
     startup_effects: StartupEffectReceipt | StartupEffectAuditSupport = (
         StartupEffectAuditSupport.Unaudited
     )
+    initializer_control: InitializerControlProof | InitializerControlSupport = (
+        InitializerControlSupport.Unaudited
+    )
 
     def __post_init__(self) -> None:
         assert type(self.fixed_context_preserved) is bool
         assert (
             self.startup_effects is StartupEffectAuditSupport.Unaudited
             or isinstance(self.startup_effects, StartupEffectReceipt)
+        )
+        assert (
+            self.initializer_control is InitializerControlSupport.Unaudited
+            or isinstance(self.initializer_control, InitializerControlProof)
         )
         assert type(self.unreachable_creator_offsets) is frozenset
         assert all(
@@ -56,6 +67,7 @@ class ScenarioItemProof:
             and not self.unreachable_creator_offsets
             and not self.context_conditions
             and self.startup_effects is StartupEffectAuditSupport.Unaudited
+            and self.initializer_control is InitializerControlSupport.Unaudited
         ), "item proofs require a preserved fixed context"
 
 
@@ -185,6 +197,8 @@ def scenario_item_proofs(
     clipping: ClipEffectProof | ClipEffectSupport = ClipEffectSupport.Unaudited,
     startup_audit: StartupEffectAuditConfig
     | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
+    initializer_control: InitializerControlProof
+    | InitializerControlSupport = InitializerControlSupport.Unaudited,
 ) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
@@ -213,6 +227,35 @@ def scenario_item_proofs(
         row["bank"]: (int(row["address_ps1"], 0), row["width"]) for row in flag_banks
     }
     fixed_words, forbidden = flag_write_conflicts(banks, frozenset(fixed))
+    assert initializer_control is InitializerControlSupport.Unaudited or isinstance(
+        initializer_control, InitializerControlProof
+    )
+    if isinstance(initializer_control, InitializerControlProof):
+        assert initializer_control.matches_source(data, room["programs"]), (
+            "initializer receipt belongs to another source"
+        )
+        if not initializer_control.preserves_fixed_words(fixed_words):
+            return ScenarioItemProof(False, [], [])
+    control_copies = (
+        initializer_control.predicate_copy_locations
+        if isinstance(initializer_control, InitializerControlProof)
+        else frozenset()
+    )
+    control_edges = (
+        {(key, start): end for key, start, end in initializer_control.switch_edges}
+        if isinstance(initializer_control, InitializerControlProof)
+        else {}
+    )
+    control_labels = {
+        (key, row["offset"])
+        for key, program in room["programs"].items()
+        for row in program["commands"]
+        if row["opcode"] in (0x13, 0x14, 0x16, 0x1A)
+        and any(
+            source_key == key and start <= row["offset"] < end
+            for (source_key, start), end in control_edges.items()
+        )
+    }
     # A negative claim needs every creator, including other tasks. Audited
     # event effects may change unrelated state, but cannot introduce an item
     # identity or change the fixed scenario bits. RE2-COLLECT-008.
@@ -285,6 +328,7 @@ def scenario_item_proofs(
                     len(conditions) >= 8
                     or test is None
                     or test["opcode"] not in predicates | {0x21}
+                    and (key, test["offset"]) not in control_copies
                     or row["target"] <= row["next"]
                     or row["target"] not in commands[key]
                 ):
@@ -408,7 +452,10 @@ def scenario_item_proofs(
                 if key not in opaque_loops:
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x1D:
-                if row["offset"] in actor_copies:
+                if (
+                    row["offset"] in actor_copies
+                    or (key, row["offset"]) in control_copies
+                ):
                     continue
                 width = 2 if data[row["offset"] + 3] else 1
                 target = row["next"] + data[row["offset"] + 2]
@@ -434,6 +481,10 @@ def scenario_item_proofs(
                     and target % 2
                 ):
                     return ScenarioItemProof(False, [], [])
+            elif (key, row["offset"]) in control_labels:
+                # This flat block contains only bounded music parameter
+                # writes and native switch frames. Its cases create no items.
+                continue
             elif row["opcode"] == 0x3A:
                 # RE2-COLLECT-019: reference zero reads a static transform.
                 # Allocation writes only the fixed 96-by-124-byte effect pool,
@@ -571,14 +622,22 @@ def scenario_item_proofs(
         row = commands[key][position]
         if row["kind"] == "end":
             continue
+        if (key, position) in control_edges:
+            pending.append((key, control_edges[key, position], conditions))
+            continue
         if row["kind"] == "if":
             position = row["next"]
             tests = []
-            while (
-                position in commands[key]
-                and commands[key][position]["kind"] == "flag_check"
-            ):
+            while position in commands[key]:
                 test = commands[key][position]
+                if (key, position) in control_copies:
+                    # Native Copy returns one, so it cannot fail this IF.
+                    # Its destination comparison still takes both outcomes.
+                    reached.add((key, position))
+                    position = test["next"]
+                    continue
+                if test["kind"] != "flag_check":
+                    break
                 tests.append(test)
                 steps += 1
                 position = test["next"]
@@ -706,6 +765,7 @@ def scenario_item_proofs(
         certify_startup_effects(
             data, room, frozenset(fixed), banks, clipping, startup_audit
         ),
+        initializer_control,
     )
 
 

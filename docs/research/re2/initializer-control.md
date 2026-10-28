@@ -1,0 +1,62 @@
+# RE2 numeric initializer control
+
+[Claim index](../../research.md) · [RE2 testing](../../testing/re2.md)
+
+## RE2-CONTROL-001: bounded comparison copies and music switches preserve pickups
+
+Status: Confirmed native 15-round pickup, acquisition reversal and exact earlier/later DuckStation restore in the named source below for Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748, Leon A, Original/Normal. The shared initializer interpretation remains Candidate outside the listed observations. This adds no support for another revision or stage placement.
+
+Executable `SLUS_007.48` SHA256 is `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`. Source `PL0/RDT/ROOM1180.RDT` SHA256 is `2804230a1df06d81d2f11361d9b9459f2643622ccf72a9401b2df6a4ad933f10`. Native tests use isolated DuckStation `0.1-12083-g00e299795`, commit `00e2997958d62de79d352cd680ec0c1ad95d491c`, executable SHA256 `5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173`.
+
+### Failure and sufficient correction
+
+The explored Liquor Store Alleyway remained gray with one Unknown Handgun ammo row. Its Original-mode pickup is selected by an enforced fixed mode predicate, but the whole-source interpreter rejected a Copy into a numeric comparison. Admitting that Copy alone produced zero resolved outcomes: startup also contains a flat music switch, bounded counter copies and SCA setup.
+
+The source-bound control receipt therefore validates the complete needed chain. Every source Copy must read a bounded native counter and write only the declared right-hand numeric operand of a counter comparison. It cannot modify an opcode, flag identity, item/door/callback, branch, pointer or loop field. The Copy's native return value is one, so its placement before the comparison cannot fail the surrounding IF. The comparison itself stays opaque.
+
+A switch receipt accepts a bounded flat CASE chain with only the audited music form and native BREAKs. All cases and no-match reach the same post-switch continuation, and no item, flag or script entry is skipped. Foreign entries, nested switches, malformed links, unknown bodies and unmatched control nodes withhold the proof. The decoder and compiler share the same unsigned native label traversal.
+
+The receipt is an explicit revision/configuration opt-in, bound to source bytes and the decoded program graph. Callers separately verify every remaining source effect and the exact fresh predicate words. SCA continuation still requires the independent [startup setup receipt](startup-presence.md#re2-startup-001-setup-effects-and-equivalent-creators-preserve-known-items). Neither receipt substitutes for the other, and failed whole-context proofs export neither capability.
+
+### Native domains and control limits
+
+All addresses below are PS1 virtual, little endian. RDT offsets are file byte offsets, not host addresses. Full pointer/word masks are `0xFFFFFFFF`, halfwords `0xFFFF`, bytes `0xFF`.
+
+| Domain | Audited interpretation |
+| --- | --- |
+| Counter work | `0x800D47EC..0x800D4834`, two-byte values. Copy reads must stay inside the declared region; writes additionally use the existing predicate/identity-safe counter set |
+| Task work | `0x800D7860`, 14 records of `0x174` bytes |
+| Actual Copy | RDT offset 8010, numeric RHS at 8018, two bytes; native handler `0x800542B4..0x80054310` |
+| Actual switch | Source `17:2`, offsets 8020..8266, including the post-ENDSWITCH continuation |
+| Stage-zero source base | `0x8011A000 + align4(1704) = 0x8011A6A8`, native stage file table index seven |
+| Music arenas | `0x801F2E00..0x80200000` and `0x801ECE00..0x80200000` |
+| Music handler | Opcode 51 at `0x80057E20`, controller `0x8005B6F0`; mode byte two must be zero, bank selector byte one is 0/1, program byte three is 0..128 |
+
+Music mode zero bypasses sound-library calls. Program zero changes global music VAB header volume/pan bytes; programs 1..128 change the corresponding fixed sixteen-byte program record. It does not use relocatable room bank two. Both initialized music resources stay in the declared upper arenas; source/control storage must end below them. Native loading and all 114 distinct owned resources selected by the two 64-entry tables were inspected. Their maximum copied end is `0x801F8660`. The room's nonzero section 22 is therefore not rejected by an unrelated room-sound rule.
+
+Two review counterexamples required explicit limits. SWITCH shares its native depth/storage with FOR/WHILE/DO; a skipped switch inside four loops would hide a fifth frame from the existing loop validator. A switch receipt now rejects a procedure containing those loops or encoded Goto until a combined model exists. Native Gosub has no capacity check: depths zero through three have separate frames, while depth four aliases the root loop byte and IF-pointer field. The new receipt rejects cycles and call paths requiring a fifth frame. These are conservative bounds; the actual source needs one call and no surrounding loop.
+
+The named native music/resource contract assumes legitimate initialized engine work. It is not a claim that arbitrary corrupt resource pointers, GPU state or RAM can never write elsewhere.
+
+### Native pickup and rewind
+
+Both achievement integrations are disabled before this private instance starts. Game overrides are absent, cards are None/None and its GDB port is 2347. No new health, ammunition, story, key or item-flag patch is applied. The restored seed already contains an equipped type-two quantity of 99; the test leaves that value unchanged and measures the separate type-20 ammunition stack. All audited core code in `0x80010814..0x800955C4` matches the owned executable. A broader raw executable comparison also includes initialized low globals/SDK storage and is not used as a code-identity claim.
+
+1. Restore the private retained source `01-0c` image. Prepare a controlled equivalent entry by copying the authentic twelve-byte destination from owned `ROOM1190.RDT` door offset 3082 into the private open door, plus the nine recorded pose fields. This is not ordinary passage through that original door. `control-native-entry-setup.json` records all writes. Use the configured native action key, K.
+2. After native loading completes, source `00-18` uses base `0x8011A6A8`; slot four binds `0x8011C5A4`, source creator 7930, kind/SAT `02 31`, type 20, quantity 15 and acquisition ID 161. The actual numeric RHS at 8018, counter four and camera are all ten, versus the original zero RHS. The tracker reports Available. The stable before image SHA256 is `fefb667ee82944570f4184156a9c0998982a6fffd6fb21791895f38f82e6c111`.
+3. Prepare the pickup center -18567/-7151 and facing 2048 using only the same recorded pose fields, then use native action/confirmation and dismiss the pickup UI. Inventory entry three at `0x800D4A48` changes `14 1E 00 00` to `14 2D 00 00`, thirty to forty-five rounds. Acquisition word `0x800D48D0`, width four, mask `0x40000000`, becomes set. The settled tracker reports Taken, quantity 15. Its image SHA256 is `57e77734e9fd3ff44f89d0f024d43887efcd34d4a9ff6777f1e8afb6fe820e87`.
+4. Native F2 checkpoints reproduce both complete RAM images exactly. Keep the private debugger connection open while paused; closing it allows execution to resume. Select the earlier private checkpoint at the direct-slot file, press actual F1 and capture. The complete RAM equals the first hash, acquisition is clear, the stack is thirty and the item is Available. Repeat with the later checkpoint: complete RAM equals the second hash, acquisition is set and the stack is forty-five. This validates DuckStation restore, not memory-card persistence.
+
+The native direct-slot path is observed in the emulator log as private `savestates/savestate_1.sav`. An initial helper read the stale game-named slot instead; that read is retained as an excluded harness control and supports no restore claim. UI-transition captures retain Retry. The renderer stays black, direct slot keys avoid the preview selector, and no game screenshot is published. Raw RAM, sound assets, RDTs, BIOS and RE2 saves stay outside Git.
+
+Private evidence is under `/tmp/re-map-loop-20261028/` and `/tmp/re-map-unresolved-20261028/`. `control-native-validation.json` records quantities, source/counter fields and exact restore hashes; `control-native-pose-writes.jsonl` records poses. Separate copied-native evidence includes thirty complete music-controller calls and sixty-four complete owned switch/music/BREAK chains across all four call frames and matching/no-match counter values, without stubs. The 1080-case Copy harness failed on a Unicorn translation boundary and is excluded; Copy semantics use exact native inspection, existing completed Waiting Copy evidence and the actual source RHS observation above. Copied runs are not relabeled as gameplay.
+
+### Tracker outcomes and review
+
+Owned-CUE regeneration changes only source `00-18`'s fixed-context result and adds required conditional presence for ID 161; all other room fields and the floor artifact remain identical, apart from the top-level audit/claim declaration. The retained user's row becomes Uncollected, quantity 15, and the room becomes Incomplete. Native current-room Available/Taken results remain unchanged.
+
+Private `control-item-replay.py/json` compares 32 unique captures. All 24 Display results preserve every other room, door, position and visit; twenty departed publications gain the remaining-ammo result and four current source publications retain their live result. Eight Retry results remain unchanged. Private exploration-history close/reopen plus fresh polling matches each Display result. Synthetic fresh acquisition reversals alternate Incomplete/Uncollected and Cleared/Taken without carrying completion through a rewind.
+
+The applicable full Python suite passes 3534 tests; parallel puzzle work is excluded from this increment. Fifty-seven dedicated control tests cover opt-in/configuration drift, source/graph and query binding, exact copy spans, all-source writes, native counter domains, flat switch structure and foreign entry rejection, music forms, shared loop/call limits, physical flag aliases and independent SCA/control requirements. Scoped Ruff formatting/lint and whitespace checks pass. Desktop/mobile rendering verifies the remaining-ammo overview link, room navigation, corrected color, removal from incomplete checks, no overflow and no browser errors; the README image is refreshed.
+
+Contributions, 2026-10-28: Codex `door_diagnosis`, exact model `gpt-6.1-sol`, diagnosed the full blocking chain, authored the shared compiler/integration and tests, and performed copied/native-resource audits. Root, the same exact verified model, authored generator/profile integration, reader regressions, strict stage/call guards, performed the native pickup/earlier/later restore, reviewed and wrote this record. Independent `metadata_diagnosis`, also `gpt-6.1-sol`, reviewed source/caller/config binding and found the shared loop/SWITCH depth defect; root fixed it and the reviewer confirmed rejection. Root separately verified the fifth-call-frame counterexample from native Gosub and added the bound/regressions. Configured external review providers remain disabled; no external endorsement is claimed.
