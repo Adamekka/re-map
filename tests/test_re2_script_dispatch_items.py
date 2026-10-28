@@ -245,6 +245,31 @@ def test_callback_table_entry_drift_cannot_reuse_the_old_body_proof(dispatch_sou
     )
 
 
+def test_callback_final_message_uses_the_actual_entry_without_a_synthetic_successor(
+    dispatch_source,
+):
+    original, room, banks = dispatch_source("repeat")
+    data = bytearray(original)
+    for row in room["programs"]["17:1"]["commands"]:
+        if row["opcode"] == 0x2B:
+            data[row["offset"] + 2] = 3
+    relations = script_dispatch_relations(
+        bytes(data), room, 8, banks, 32, dispatch_config(banks)
+    )
+    assert len(relations) == 1
+    proofs = relations[0]["message_proofs"]
+    for section in (13, 14):
+        table = room["section_offsets"][section]
+        entry = next(proof for proof in proofs if proof["offset"] == table + 6)
+        assert entry["width"] == 2
+        start = table + int.from_bytes(data[table + 6 : table + 8], "little")
+        text = next(proof for proof in proofs if proof["offset"] == start)
+        assert (
+            text["width"] == 2
+            and text["sha256"] == hashlib.sha256(b"\xfe\0").hexdigest()
+        )
+
+
 @pytest.mark.parametrize("case", ["self-slot", "oversized-body", "aliased-program"])
 def test_compiler_only_emits_loadable_unique_relations(dispatch_source, case):
     data, room, banks = dispatch_source("immediate")
@@ -331,7 +356,7 @@ def test_messages_require_both_bounded_nonchoice_resources(
     elif mutation == "odd-directory":
         data[table] = 9
     elif mutation == "missing-entry":
-        data[table : table + 2] = b"\x06\0"
+        data[table : table + 2] = b"\x04\0"
     elif mutation == "backward-entry":
         data[table + 6 : table + 8] = b"\x08\0"
     elif mutation == "outside-resource":

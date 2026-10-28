@@ -11,6 +11,11 @@ import itertools
 from dataclasses import dataclass
 from enum import Enum
 
+from games.re2.nonchoice_messages import (
+    NonchoiceMessageFailure,
+    nonchoice_message_proofs,
+)
+
 
 class ScriptItemDispatchSupport(Enum):
     Unaudited = "unaudited"
@@ -184,79 +189,14 @@ def script_dispatch_relations(
                 ):
                     valid_messages = False
                     break
-                for section in (13, 14):
-                    table = room["section_offsets"][section]
-                    boundary = min(
-                        (
-                            offset
-                            for offset in room["section_offsets"]
-                            if offset > table
-                        ),
-                        default=len(data),
-                    )
-                    if not 0 < table <= boundary - 2:
-                        valid_messages = False
-                        break
-                    table_width = int.from_bytes(data[table : table + 2], "little")
-                    if (
-                        table_width % 2
-                        or not 2 <= table_width <= 512
-                        or table + table_width > boundary
-                        or packet[2] + 1 >= table_width // 2
-                    ):
-                        valid_messages = False
-                        break
-                    entries = [
-                        int.from_bytes(data[position : position + 2], "little")
-                        for position in range(table, table + table_width, 2)
-                    ]
-                    if any(
-                        not table_width <= entry <= boundary - table
-                        for entry in entries
-                    ) or any(
-                        first > second for first, second in itertools.pairwise(entries)
-                    ):
-                        valid_messages = False
-                        break
-                    start, end = (
-                        table + entries[index] for index in (packet[2], packet[2] + 1)
-                    )
-                    if not 2 <= end - start <= 4096:
-                        valid_messages = False
-                        break
-                    position, terminated = start, False
-                    while position < end:
-                        command = data[position]
-                        position += 1
-                        if command <= 0xED or command == 0xFC:
-                            continue
-                        if (
-                            command not in (0xEE, 0xEF, 0xF0, 0xF9, 0xFA, 0xFD, 0xFE)
-                            or position == end
-                            or command == 0xFA
-                            and data[position] == 0
-                        ):
-                            break
-                        position += 1
-                        if command == 0xFE:
-                            terminated = not any(data[position:end])
-                            break
-                    if not terminated:
-                        valid_messages = False
-                        break
-                    for offset, width in (
-                        (table + packet[2] * 2, 4),
-                        (start, end - start),
-                    ):
-                        message_proofs[offset, width] = {
-                            "offset": offset,
-                            "width": width,
-                            "sha256": hashlib.sha256(
-                                data[offset : offset + width]
-                            ).hexdigest(),
-                        }
-                if not valid_messages:
+                proofs = nonchoice_message_proofs(
+                    data, tuple(room["section_offsets"]), packet[2]
+                )
+                if isinstance(proofs, NonchoiceMessageFailure):
+                    valid_messages = False
                     break
+                for proof in proofs:
+                    message_proofs[proof["offset"], proof["width"]] = proof
             if not valid_messages or len(message_proofs) > 64:
                 continue
             dispatches = {

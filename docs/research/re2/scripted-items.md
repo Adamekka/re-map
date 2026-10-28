@@ -56,6 +56,12 @@ Other writes include STATUS bit `0x40`, STOP's saved masks, input word `0x800CE3
 
 The Japanese branch is inspected and freshly bound, but no completed copied Japanese execution is claimed. Broader wrapper, Japanese and long-prompt harness attempts encounter Unicorn branch-transition exceptions. They are excluded controls, not native engine failures or endorsements. The accepted English parser and prompt workers complete independently.
 
+#### Follow-up: final message entry bounds, 2026-10-28
+
+The shared nonchoice parser now accepts a directory's final message without inventing a successor entry. It binds the real two-byte directory entry and consumes at most 4096 text bytes, stopping at the first valid native `FE` terminator inside the enclosing section. Non-final entries retain the original four-byte directory pair and complete padded-text witness. Both language resources remain mandatory. This source-only extension adds no runtime confirmation beyond the observations above.
+
+The 148 focused parser/dispatch tests pass. Regenerating all 125 owned sources leaves every existing metadata field and the floor artifact unchanged; the private 18-snapshot comparison recorded in `message-final-publication-replay.json` preserves all publications and Retry results. Codex `metadata_diagnosis`, exact model `gpt-6.1-sol`, authored the extraction and terminal-entry rule. Root, the same exact verified model, reviewed the bounds, reran the focused checks and verified the unchanged generated fields. No external review endorsement is available.
+
 ### Native reproduction and restore
 
 Private evidence is under `/tmp/re-map-loop-20261028/` and `/tmp/re-map-unresolved-20261028/`. Both achievement integrations are disabled before tests; game overrides are absent, memory cards are None/None and no health/ammunition aid is used. The renderer remains black; no game screenshot is published. The user's released history is never reopened for writes.
