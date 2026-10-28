@@ -27,6 +27,7 @@ from re2_map_interiors import add_collision_interiors
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
+from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -176,6 +177,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     effect_pool = scenario_effect_pool(profile)
     vibration_writes = scenario_vibration_writes(profile)
     actor_parts = scenario_actor_parts(profile)
+    clipping = clipping_effect_proof(profile)
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -320,6 +322,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             effect_pool,
             vibration_writes=vibration_writes,
             actor_parts=actor_parts,
+            clipping=clipping,
         )
         room["fixed_context_preserved"] = proof.fixed_context_preserved
         room["scenario_absent_item_ids"] = proof.absent_item_ids
@@ -592,11 +595,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-DS-003",
                 "RE2-LIFETIME-001",
                 "RE2-DS-005",
+                *(
+                    ["RE2-CLIP-001"]
+                    if clipping is not ClipEffectSupport.Unaudited
+                    else []
+                ),
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {"scenario_clipping": profile["scenario_clipping"]}
+                if clipping is not ClipEffectSupport.Unaudited
+                else {}
+            ),
             **(
                 {
                     "actor_part_resource_table_address_ps1": profile["metadata_layout"][

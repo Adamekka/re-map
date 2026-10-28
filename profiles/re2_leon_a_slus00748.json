@@ -6,7 +6,7 @@
   "scenario": "leon-a",
   "revision": "USA Dual Shock Ver. Disc 1; Original/Normal; revision pinned by executable SHA256",
   "executable_identity": "SLUS_007.48 SHA256 e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
-  "duckstation_version_tested": "0.1-12442-gdd4a0eb77",
+  "duckstation_version_tested": "0.1-12083-g00e299795",
   "address_space": "PS1 virtual address, little-endian",
   "stage_address_ps1": "0x800D481C",
   "room_address_ps1": "0x800D481E",
@@ -24,7 +24,8 @@
   },
   "research_ids": [
     "RE2-DS-001",
-    "RE2-DS-005"
+    "RE2-DS-005",
+    "RE2-CLIP-001"
   ],
   "metadata_layout": {
     "actor_part_resource_table_address_ps1": "0x8009ADF4",
@@ -405,6 +406,15 @@
       "resource_width": 174964
     }
   ],
+  "scenario_clipping": {
+    "status_address_ps1": "0x800CFBD8",
+    "parameter_writes": [
+      {"address_ps1": "0x800CFB7D", "width": 1},
+      {"address_ps1": "0x800CFB7E", "width": 2},
+      {"address_ps1": "0x800CFB82", "width": 2},
+      {"address_ps1": "0x800CFB80", "width": 2}
+    ]
+  },
   "scenario_effect_pool": {
     "address_ps1": "0x800D8CF0",
     "limit_address_ps1": "0x800DBB70"

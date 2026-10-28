@@ -10,6 +10,7 @@ from games.re2.actor_part_proofs import (
     ActorPartSupport,
     actor_part_copy_proof,
 )
+from games.re2.clip_effect_proof import ClipEffectProof, ClipEffectSupport
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
     INITIALIZER_FALLTHROUGH,
@@ -166,10 +167,14 @@ def scenario_item_proofs(
     effect_pool: tuple[int, int],
     vibration_writes: tuple[tuple[int, int], ...] = (),
     actor_parts: ActorPartProofConfig | ActorPartSupport = ActorPartSupport.Unaudited,
+    clipping: ClipEffectProof | ClipEffectSupport = ClipEffectSupport.Unaudited,
 ) -> ScenarioItemProof:
     """Prove absent acquisition IDs and surviving conflicting creator offsets."""
     fixed = {(row["bank"], row["bit"]): row["expected"] for row in flags}
     assert fixed and len(fixed) == len(flags)
+    assert clipping is ClipEffectSupport.Unaudited or isinstance(
+        clipping, ClipEffectProof
+    )
     pool_start, pool_limit = effect_pool
     assert 0x80000000 <= pool_start < pool_limit <= 0x80200000
     assert not vibration_writes or (
@@ -427,6 +432,15 @@ def scenario_item_proofs(
                     address < start + width and start < address + 4
                     for address in fixed_words
                     for start, width in vibration_writes
+                ):
+                    return ScenarioItemProof(False, [], [])
+            elif row["opcode"] == 0x73:
+                # RE2-CLIP-001: the native constructor needs startup enablement
+                # and owned model bounds before deferred geometry can run.
+                if not isinstance(
+                    clipping, ClipEffectProof
+                ) or not clipping.preserves_context(
+                    data, programs, key, row["offset"], fixed_words
                 ):
                     return ScenarioItemProof(False, [], [])
             elif row["opcode"] == 0x37:

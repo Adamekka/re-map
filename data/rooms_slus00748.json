@@ -28,7 +28,8 @@
     "RE2-SCD-002",
     "RE2-DS-003",
     "RE2-LIFETIME-001",
-    "RE2-DS-005"
+    "RE2-DS-005",
+    "RE2-CLIP-001"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -81,6 +82,27 @@
       "resource_width": 174964
     }
   ],
+  "scenario_clipping": {
+    "status_address_ps1": "0x800CFBD8",
+    "parameter_writes": [
+      {
+        "address_ps1": "0x800CFB7D",
+        "width": 1
+      },
+      {
+        "address_ps1": "0x800CFB7E",
+        "width": 2
+      },
+      {
+        "address_ps1": "0x800CFB82",
+        "width": 2
+      },
+      {
+        "address_ps1": "0x800CFB80",
+        "width": 2
+      }
+    ]
+  },
   "actor_part_resource_table_address_ps1": "0x8009ADF4",
   "unsupported_sources": [],
   "presence_counter_writes": {
@@ -7341,9 +7363,20 @@
       "stage": 1,
       "room": 14,
       "id": "01-0e",
-      "fixed_context_preserved": false,
-      "scenario_absent_item_ids": [],
-      "scenario_item_variants": [],
+      "fixed_context_preserved": true,
+      "scenario_absent_item_ids": [
+        61,
+        171
+      ],
+      "scenario_item_variants": [
+        {
+          "global_id": 56,
+          "offsets": [
+            6534,
+            6560
+          ]
+        }
+      ],
       "scenario_context_conditions": []
     },
     {

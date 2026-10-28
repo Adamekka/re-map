@@ -11,6 +11,7 @@ from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
+from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.scenario_items import (
     scenario_flags,
     scenario_item_candidates,
@@ -135,6 +136,7 @@ class Re2Profile:
         scenario_effect_pool(raw)
         scenario_vibration_writes(raw)
         actor_parts = scenario_actor_parts(raw)
+        clipping = clipping_effect_proof(raw)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -205,6 +207,14 @@ class Re2Profile:
             != raw["metadata_layout"]["actor_part_resource_table_address_ps1"]
         ):
             raise ValueError("RE2 actor-part proof disagrees with its revision layout")
+        if ("scenario_clipping" in document) != (
+            clipping is not ClipEffectSupport.Unaudited
+        ) or (
+            clipping is not ClipEffectSupport.Unaudited
+            and json.dumps(document["scenario_clipping"], sort_keys=True)
+            != json.dumps(raw["scenario_clipping"], sort_keys=True)
+        ):
+            raise ValueError("RE2 clipping proof disagrees with its revision layout")
         # JSON types are part of the proof: Python equality would equate
         # boolean bank/bit operands with integer zero or one.
         if json.dumps(
