@@ -79,6 +79,7 @@ def map_state(tracker: Tracker) -> dict:
                 "key_label": door.key_label,
                 "observation_id": door.observation_id,
                 "unlock_state": door.unlock_state.value,
+                "interaction_id": door.interaction_id,
             }
             for door in tracker.doors
         ],
@@ -775,7 +776,15 @@ function draw(state) {
     detail.append(listSymbol(status,status==='remaining'?visual.category:status==='collected'?'collected':'neutral'),text);row.append(name,detail);items.append(row);
   }
   const doors=document.getElementById('doors');doors.replaceChildren();
+  const listedDoors=new Set();
   for(const door of state.doors.filter(door=>door.source===visit.room)) {
+    if(door.interaction_id) {
+      // Alternate creators share one registry slot. Collapse identical list
+      // entries while retaining every source-offset observation for the map.
+      const entry=JSON.stringify([door.interaction_id,door.target,door.state,door.label,door.key_label,door.unlock_state]);
+      if(listedDoors.has(entry)) continue;
+      listedDoors.add(entry);
+    }
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
     name.className='entry-name';detail.className='entry-status';
     const label=document.createElement('span');label.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';name.append(listSymbol('door','neutral'),label);

@@ -56,6 +56,9 @@ class DoorDetail:
     # Access and activation do not establish a separately read unlock flag.
     # Readers without that knowledge, including RE1, leave it unknown.
     unlock_state: DoorUnlockState = DoorUnlockState.Unknown
+    # Alternate RE2 creators can occupy one registry slot. Keep this identity
+    # separate from the source-offset observation used to bind wall markers.
+    interaction_id: str = ""
 
     def __post_init__(self) -> None:
         assert isinstance(self.unlock_state, DoorUnlockState), (

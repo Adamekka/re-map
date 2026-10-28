@@ -456,6 +456,7 @@ def poll_re2(
                         key_label,
                         f"{visited}:{definition['offset']}",
                         unlock_state=unlock_state,
+                        interaction_id=f"{visited}:{definition['slot']}",
                     )
                 )
 
