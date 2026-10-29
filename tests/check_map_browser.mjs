@@ -25,10 +25,10 @@ def enter(stage, room, area, region, outlined=True):
 enter(0, 9, 'mansion1f', '09')
 tracker.update_room_items(RoomId(0, 9), 1, 0, True, True, False)
 tracker.rooms['00-09'].items = (
-    ItemDetail('Green Herb', 'available', 1),
-    ItemDetail('Sun Crest', 'uncollected', 1),
-    ItemDetail('Red Herb', 'taken', 1),
-    ItemDetail('Battery', 'unavailable', 1),
+    ItemDetail('Green Herb', 'available', 1, False),
+    ItemDetail('Sun Crest', 'uncollected', 1, False),
+    ItemDetail('Red Herb', 'taken', 1, False),
+    ItemDetail('Battery', 'unavailable', 1, False),
 )
 tracker.rooms['00-09'].reason = 'One item remains.'
 tracker.rooms['00-09'].door_reason = 'Door is locked.'
@@ -43,13 +43,13 @@ tracker.rooms['00-09'].reason = 'One item remains.'
 enter(3, 0, 'guardhouse1f', '00')
 states['crossing'] = map_state(tracker)
 tracker.update_room_items(RoomId(0, 9), 1, 1, True, False, False)
-tracker.rooms['00-09'].items = (ItemDetail('Green Herb', 'taken', 1),)
+tracker.rooms['00-09'].items = (ItemDetail('Green Herb', 'taken', 1, False),)
 tracker.rooms['00-09'].reason = 'All available items collected.'
 tracker.rooms['00-09'].door_reason = 'Door is unlocked.'
 tracker.doors = (DoorDetail(RoomId(0, 9), RoomId(0, 8), 'OPEN', 'Unlocked'),)
 states['collected'] = map_state(tracker)
 tracker.update_room_items(RoomId(0, 9), 1, 0, True, True, False)
-tracker.rooms['00-09'].items = (ItemDetail('Green Herb', 'available', 1),)
+tracker.rooms['00-09'].items = (ItemDetail('Green Herb', 'available', 1, False),)
 tracker.rooms['00-09'].reason = 'One item remains.'
 states['rewound'] = map_state(tracker)
 tracker = Tracker()
@@ -61,7 +61,7 @@ tracker = Tracker()
 enter(5, 0x10, 'mansionb1', '1E')
 enter(5, 0x10, 'mansion1f', '10')
 tracker.update_room_items(RoomId(5, 0x10), 1, 0, True, True, False)
-tracker.rooms['05-10'].items = (ItemDetail('Green Herb', 'available', 1),)
+tracker.rooms['05-10'].items = (ItemDetail('Green Herb', 'available', 1, False),)
 states['camera_alias'] = map_state(tracker)
 tracker = Tracker()
 enter(0, 9, 'mansion1f', '09')
@@ -363,8 +363,9 @@ try {
   assert(await zoomOut.isDisabled());
   assert(await fit.isDisabled());
   assert.match(await page.locator('#room-id').textContent(), /04-15.*Current room/);
-  const unoutlinedLink = checks.getByRole('button', { name: 'Elevator B3/B4', exact: true });
+  const unoutlinedLink = checks.getByRole('button', { name: /^Elevator B3\/B4/ });
   assert(await unoutlinedLink.isVisible());
+  assert.match(await unoutlinedLink.textContent(), /Item list incomplete/);
   await floor.selectOption('mansion2f');
   assert.equal(await page.locator('.room.current').count(), 0);
   await unoutlinedLink.click();

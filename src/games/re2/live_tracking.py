@@ -460,7 +460,14 @@ def poll_re2(
                     if item_type is not None and len(amounts) == 1
                     else ItemQuantityState.Unreconstructed
                 )
-                details.append(ItemDetail(label, state, quantity))
+                details.append(
+                    ItemDetail(
+                        label,
+                        state,
+                        quantity,
+                        item_type in profile.unit_count_item_types,
+                    )
+                )
             for award in source["event_awards"]:
                 if award["item_type"] >= layout["file_type_min"]:
                     continue
@@ -485,6 +492,7 @@ def poll_re2(
                         award["amount"]
                         if taken or required
                         else ItemQuantityState.Unreconstructed,
+                        award["item_type"] in profile.unit_count_item_types,
                     )
                 )
             complete = (

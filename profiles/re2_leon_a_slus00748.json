@@ -1,5 +1,6 @@
 {
   "profile_id": "re2_leon_a_slus00748",
+  "unit_count_item_types": [20, 21, 22, 24, 25, 26, 29, 30, 31],
   "game": "Resident Evil 2 DualShock",
   "region": "NTSC-U",
   "serial": "SLUS-00748",

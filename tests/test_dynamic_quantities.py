@@ -263,6 +263,7 @@ def test_map_payload_reports_remaining_and_collected_with_explicit_amount_state(
                 "Green Herb",
                 "taken" if taken else "available",
                 ItemQuantityState.Unreconstructed,
+                False,
             ),
         )
         payload = json.loads(json.dumps(map_state(tracker)))
@@ -276,4 +277,4 @@ def test_map_payload_reports_remaining_and_collected_with_explicit_amount_state(
 @pytest.mark.parametrize("quantity", [None, True, -1, "unreconstructed"])
 def test_invalid_quantity_does_not_silently_default(quantity):
     with pytest.raises(AssertionError, match="quantity"):
-        ItemDetail("Herb", "available", quantity)
+        ItemDetail("Herb", "available", quantity, False)

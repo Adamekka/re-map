@@ -26,13 +26,17 @@ class ItemDetail:
     label: str
     state: str
     quantity: int | ItemQuantityState
+    quantity_is_unit_count: bool
 
     def __post_init__(self) -> None:
         assert (
             type(self.quantity) is int
             and self.quantity >= 0
             or self.quantity is ItemQuantityState.Unreconstructed
-        ), "quantity must be a count or explicitly unreconstructed"
+        ), "quantity must be a nonnegative amount or explicitly unreconstructed"
+        assert type(self.quantity_is_unit_count) is bool, (
+            "quantity units must be explicit"
+        )
 
 
 class DoorUnlockState(Enum):

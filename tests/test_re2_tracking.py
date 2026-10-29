@@ -1207,19 +1207,53 @@ def test_pickup_quantity_mode_coherence_rejects_torn_or_short_reads(snapshot, sh
     assert tracker == before
 
 
-def test_pickup_quantity_override_does_not_change_event_delivery_amounts(snapshot):
+@pytest.mark.parametrize("unit_count", [False, True])
+def test_pickup_quantity_override_does_not_change_event_delivery_amounts(
+    snapshot, unit_count
+):
     profile, _, put, read = snapshot
     source = copy.deepcopy(profile.rooms["00-01"])
     award = copy.deepcopy(profile.rooms["01-02"]["event_awards"][0])
     award.update(item_type=30, amount=3)
     source["event_awards"] = [award]
-    profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    profile = replace(
+        profile,
+        rooms={**profile.rooms, "00-01": source},
+        unit_count_item_types=frozenset({30} if unit_count else ()),
+    )
     put(0x800C7CE4, 0x40000040, 4)
     put(0x800CC9E8, 0x04000000, 4)
     tracker = Tracker()
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     detail = tracker.rooms["00-01"].items[-1]
     assert detail.state == "taken" and detail.quantity == 3
+    assert detail.quantity_is_unit_count is unit_count
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_native_count_units_reach_live_items_without_changing_raw_amounts(snapshot):
+    """RE2-QUANTITY-002: display units follow resolved type, never the label."""
+    profile, _, _, read = snapshot
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    ammo = next(
+        item for item in tracker.rooms["00-01"].items if item.label == "Handgun ammo"
+    )
+    assert ammo.quantity == 15 and ammo.quantity_is_unit_count
+    before = json.loads(json.dumps(map_state(tracker)))
+    profile = replace(profile, unit_count_item_types=frozenset())
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    after = json.loads(json.dumps(map_state(tracker)))
+    for payload in (before, after):
+        for detail in [
+            payload["current_detail"],
+            *payload["rooms"],
+            *[room for rooms in payload["explored_areas"].values() for room in rooms],
+        ]:
+            for item in detail["items"]:
+                item.pop("quantity_is_unit_count")
+    assert before == after
+    assert not any(item.quantity_is_unit_count for item in tracker.rooms["00-01"].items)
 
 
 @pytest.mark.parametrize("already_observed", [False, True])

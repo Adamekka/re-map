@@ -47,7 +47,7 @@ def test_restart_restores_exact_visits_without_game_derived_verdicts(
     for room in (RoomId(0, 7), RoomId(0, 9), RoomId(3, 5), RoomId(6, 0)):
         tracker.mark_current(room)
         tracker.update_room_items(room, 1, 1, True, False, False)
-        tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "taken", 1),)
+        tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "taken", 1, False),)
     tracker.region_visits = {
         "mansion1f:07": "00-07",
         "mansion1f:1D": "00-07",

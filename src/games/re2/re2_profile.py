@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
+from games.item_quantity import parse_unit_count_item_types
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
@@ -118,10 +119,12 @@ class Re2Profile:
     names: dict
     map_layout: Re2MapLayout
     script_item_dispatch: ScriptItemDispatchConfig | ScriptItemDispatchSupport
+    unit_count_item_types: frozenset[int]
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
         raw = json.loads(path.read_text())
+        unit_counts = parse_unit_count_item_types(raw.get("unit_count_item_types"))
         target = re2_target(raw)
         if (
             raw["address_space"] != "PS1 virtual address, little-endian"
@@ -1051,6 +1054,7 @@ class Re2Profile:
                 Re2MapProjection(**raw["map_projection"]),
             ),
             dispatch,
+            unit_counts,
         )
 
     def verify_runtime(

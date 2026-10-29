@@ -495,7 +495,12 @@ def poll_once(
         )
         record = tracker.room_state(room)
         record.items = tuple(
-            ItemDetail(item.label or "Collectible item", item.state.value, item.amount)
+            ItemDetail(
+                item.label or "Collectible item",
+                item.state.value,
+                item.amount,
+                item.item_type in profile.unit_count_item_types,
+            )
             for item in normal_items
         )
         record.reason = "" if result.list_complete else result.coverage_reason

@@ -105,7 +105,9 @@ def test_floor_history_keeps_only_entered_regions_and_retains_item_door_states(l
         assert isinstance(selected, MapLocation) and selected.outlined
         tracker.mark_current(rid)
         tracker.update_room_items(rid, 1, 0, True, True, False)
-        tracker.rooms[str(rid)].items = (ItemDetail("Ink Ribbon", "available", 3),)
+        tracker.rooms[str(rid)].items = (
+            ItemDetail("Ink Ribbon", "available", 3, True),
+        )
         tracker.current_region = f"{selected.area}:{selected.region}"
         tracker.region_visits[tracker.current_region] = str(rid)
         tracker.doors = (

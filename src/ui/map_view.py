@@ -34,7 +34,12 @@ def map_state(tracker: Tracker) -> dict:
             "state": record.completion.value,
             "items_complete": record.list_complete,
             "items": [
-                {"label": item.label, "state": item.state, "quantity": item.quantity}
+                {
+                    "label": item.label,
+                    "state": item.state,
+                    "quantity": item.quantity,
+                    "quantity_is_unit_count": item.quantity_is_unit_count,
+                }
                 for item in record.items
             ],
             "reason": record.reason,
@@ -504,6 +509,11 @@ function itemVisual(label) {
   // story. Keep it neutral instead of classifying every unknown as a key item.
   return itemVisuals.get(label) || {category:'neutral',symbol:'collectible'};
 }
+function itemLabel(item) {
+  // Omit the usual single unit and never turn an unresolved amount into a count.
+  // Native amounts can encode weapon resources or key uses rather than object counts.
+  return !item.quantity_is_unit_count || item.quantity===1 || item.quantity==='unreconstructed' ? item.label : item.label+' ×'+item.quantity;
+}
 function listSymbol(symbol,color) {
   if(!symbolPaths.has(symbol)) throw new Error('Unknown list symbol: '+symbol);
   const icon=element('svg',{class:'list-symbol '+color,viewBox:'0 0 16 16','aria-hidden':'true',focusable:'false'});
@@ -771,7 +781,7 @@ function draw(state) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
     const visual=itemVisual(item.label), status=item.state==='taken'?'collected':itemRemains(item)?'remaining':item.state==='unknown'?'unresolved':item.state==='dormant'?'inactive':'unavailable';
     name.className='entry-name '+visual.category;detail.className='entry-status';
-    const label=document.createElement('span');label.textContent=item.label;name.append(listSymbol(visual.symbol,visual.category),label);
+    const label=document.createElement('span');label.textContent=itemLabel(item);name.append(listSymbol(visual.symbol,visual.category),label);
     const text=document.createElement('span');text.textContent={collected:'Collected',remaining:'Remaining',unresolved:'Unresolved',inactive:'Inactive',unavailable:'Not available'}[status];
     detail.append(listSymbol(status,status==='remaining'?visual.category:status==='collected'?'collected':'neutral'),text);row.append(name,detail);items.append(row);
   }
@@ -809,11 +819,15 @@ function draw(state) {
   for(const {area,visit} of observed.values()) {
     if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
     const entry={area,id:visit.id,room:visit.room,name:roomName(area,visit),labels:[]};
-    const labels=visit.items.filter(itemRemains).map(item=>item.label);
+    const labels=visit.items.filter(itemRemains).map(itemLabel);
     if(labels.length) remaining.push({...entry,labels});
     // A remaining item makes the room red even when other item checks are
     // incomplete. Completion color alone cannot identify those gaps.
-    if(!visit.items_complete || visit.items.some(item=>item.state==='unknown')) checks.push(entry);
+    const unresolved=visit.items.filter(item=>item.state==='unknown').map(itemLabel);
+    if(!visit.items_complete || unresolved.length) checks.push({...entry,labels:[
+      ...(unresolved.length ? ['Unresolved: '+unresolved.join(', ')] : []),
+      ...(!visit.items_complete ? ['Item list incomplete'] : []),
+    ]});
   }
   const key=JSON.stringify([remaining,checks]);
   // Keep focused overview links intact during unchanged game polls.

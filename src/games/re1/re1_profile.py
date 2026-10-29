@@ -9,6 +9,7 @@ from enum import Enum
 from pathlib import Path
 
 from games.game_profile import ItemListQuery, ItemQuery, RoomId, RoomItem, RoomQuery
+from games.item_quantity import parse_unit_count_item_types
 from games.re1.acquisition_state import AcquisitionLayout
 from games.re1.event_state import EventLayout
 from games.re1.map_layout import Re1MapLayout
@@ -84,6 +85,7 @@ class DoorStateLayout:
 @dataclass
 class Re1Profile:
     profile_id: str
+    unit_count_item_types: frozenset[int]
     # PS1 virtual addresses. None means unknown, not zero.
     # The pinned SLUS-00551 profile confirms Main/Sub at these addresses;
     # other revisions keep their own validation status in profile JSON.
@@ -120,6 +122,7 @@ class Re1Profile:
     @staticmethod
     def load(path: Path) -> Re1Profile:
         raw = json.loads(path.read_text())
+        unit_counts = parse_unit_count_item_types(raw.get("unit_count_item_types"))
 
         def _number(v: int | str) -> int:
             if isinstance(v, str):
@@ -576,6 +579,7 @@ class Re1Profile:
 
         return Re1Profile(
             profile_id=str(raw.get("profile_id", path.stem)),
+            unit_count_item_types=unit_counts,
             stage_address=_addr("stage_address_ps1"),
             room_address=_addr("room_address_ps1"),
             camera_address=_addr("camera_address_ps1"),

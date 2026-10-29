@@ -39,7 +39,7 @@ for area in p.map_layout.document['areas']:
         t.rooms[key]=RoomRecord(visited=True,completion=RoomCompletion.Unknown)
         t.region_visits[area['id']+':'+room['id']]=key
 t.mark_current(RoomId(0,1));t.player_heading=90;t.current_region='re2-00:01'
-t.rooms['00-01'].items=(ItemDetail('Handgun ammo','available',15),ItemDetail('Shotgun','unknown',5))
+t.rooms['00-01'].items=(ItemDetail('Handgun ammo','available',15, True),ItemDetail('Shotgun','unknown',5, False))
 t.rooms['00-01'].reason='Item conditions are unresolved.'
 t.rooms['00-01'].list_complete=True
 t.rooms['00-01'].completion=RoomCompletion.Incomplete
@@ -112,8 +112,9 @@ try {
   assert.equal(await page.locator('#map .door').count(), 2, 'the shop must show two doors without revealing either neighbor');
   Object.assign(state, allExploration);
   await page.waitForFunction(() => document.querySelectorAll('#map .room').length > 1);
-  assert.match(await page.locator('#remaining-items').textContent(), /Handgun ammo/);
-  assert.match(await page.locator('#incomplete-checks').textContent(), /Gun/);
+  assert.match(await page.locator('#items').textContent(), /Handgun ammo ×15/);
+  assert.match(await page.locator('#remaining-items').textContent(), /Handgun ammo ×15/);
+  assert.match(await page.locator('#incomplete-checks').textContent(), /Unresolved: Shotgun/);
   const originalVisit = structuredClone(state.current_detail);
   const roomName = await page.locator('#room-name').textContent();
   const visits = [state.current_detail, ...state.rooms, ...Object.values(state.explored_areas).flat()].filter(visit => visit.room === state.current);
@@ -121,16 +122,62 @@ try {
     Object.assign(visit, {
       state: 'UNKNOWN',
       items_complete: false,
-      items: [{ label: 'Collectible', state: 'taken', quantity: 'unreconstructed' }],
+      items: [{ label: 'Collectible', state: 'taken', quantity: 'unreconstructed', quantity_is_unit_count: false }],
     });
   }
   await page.waitForFunction(() => document.getElementById('items').textContent.includes('Collected'));
   assert.match(await page.locator('#items').textContent(), /Collectible/);
   assert.equal(await page.locator('#remaining-items .room-link').count(), 0);
-  assert.equal(await page.locator('#incomplete-checks').getByRole('button', { name: roomName, exact: true }).count(), 1);
+  const incompleteRoom = page.locator('#incomplete-checks .room-link').filter({ hasText: roomName });
+  assert.equal(await incompleteRoom.count(), 1);
+  assert.match(await incompleteRoom.textContent(), /Item list incomplete/);
+  assert.doesNotMatch(await page.locator('#items').textContent(), /×|unreconstructed/);
   assert((await page.locator('#map .room.selected').getAttribute('class')).includes('UNKNOWN'));
   for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
   await page.waitForFunction(() => document.getElementById('items').textContent.includes('Handgun ammo'));
+  const remainingRoom = page.locator('#remaining-items .room-link').filter({ hasText: roomName });
+  await remainingRoom.focus();
+  const focusedRoom = await remainingRoom.elementHandle();
+  state.player_heading = 180;
+  await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(180)'));
+  assert(await focusedRoom.evaluate(link => link === document.activeElement), 'pose-only polls must preserve overview keyboard focus');
+  for (const amount of [30, 'unreconstructed', 0, 1, 15]) {
+    for (const visit of visits) visit.items[0].quantity = amount;
+    const label = amount === 'unreconstructed' || amount === 1 ? 'Handgun ammo' : 'Handgun ammo ×' + amount;
+    await page.waitForFunction(expected => document.querySelector('#items .entry-name')?.textContent === expected, label);
+    assert.equal(await remainingRoom.locator('span').last().textContent(), label, 'overview quantities must refresh after a changed game state');
+    assert.equal(await page.locator('#completion').textContent(), 'Items remain');
+    assert.match(await page.locator('#incomplete-checks').textContent(), /Unresolved: Shotgun/);
+  }
+  for (const [label, amount, unitCount] of [
+    ['Shotgun', 5, false],
+    ['Spade Key', 2, false],
+    ['Fuel Tank', 100, false],
+    ['Small Key', 2, true],
+  ]) {
+    for (const itemState of ['available', 'unknown', 'taken']) {
+      for (const visit of visits) Object.assign(visit.items[0], { label, quantity: amount, quantity_is_unit_count: unitCount, state: itemState });
+      const expected = label + (unitCount ? ' ×' + amount : '');
+      await page.waitForFunction(([name, itemState]) => document.querySelector('#items .entry-name')?.textContent === name && lastState.current_detail.items[0].state === itemState, [expected, itemState]);
+      const summary = await page.locator('#overview').textContent();
+      if (itemState !== 'taken') assert(summary.includes(expected));
+      if (!unitCount) assert(!summary.includes(label + ' ×'), 'resource/use amounts must not become item counts');
+      assert.equal(await page.locator('#completion').textContent(), 'Items remain', 'quantity units do not change clearance');
+    }
+  }
+  for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
+  await page.waitForFunction(() => document.querySelector('#items .entry-name')?.textContent === 'Handgun ammo ×15');
+  for (const visit of visits) {
+    visit.items_complete = false;
+    visit.items[1].state = 'taken';
+  }
+  await page.waitForFunction(name => [...document.querySelectorAll('#incomplete-checks .room-link')].find(link => link.firstElementChild.textContent === name)?.textContent.includes('Item list incomplete'), roomName);
+  assert.doesNotMatch(await incompleteRoom.textContent(), /Unresolved: Shotgun/);
+  await incompleteRoom.press('Enter');
+  assert.equal(await page.locator('#room-name').textContent(), roomName);
+  assert.equal(await page.locator('#completion').textContent(), 'Items remain');
+  for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
+  await page.waitForFunction(name => [...document.querySelectorAll('#incomplete-checks .room-link')].find(link => link.firstElementChild.textContent === name)?.textContent.includes('Unresolved: Shotgun'), roomName);
   for (const movement of measurements) {
     state.player_heading = movement.published_heading;
     await page.waitForFunction(heading => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(' + heading + ')'), state.player_heading);
@@ -231,7 +278,7 @@ try {
     selected = null;
     let count = 0;
     for (const plan of catalog.areas) {
-      const visits = fixture.explored_areas[plan.id].map(visit => ({ ...visit, state: 'INCOMPLETE', items: [{ label: 'Valve Handle', state: 'available', quantity: 1 }] }));
+      const visits = fixture.explored_areas[plan.id].map(visit => ({ ...visit, state: 'INCOMPLETE', items: [{ label: 'Valve Handle', state: 'available', quantity: 1, quantity_is_unit_count: false }] }));
       for (const visit of visits) {
         // Bold current-room labels must also fit beside the interior geometry.
         draw({ ...fixture, area: plan.id, map_region: visit.id, current: visit.room, current_detail: visit, rooms: visits, explored_areas: { ...fixture.explored_areas, [plan.id]: visits } });
@@ -323,13 +370,13 @@ try {
       ['INCOMPLETE', 'available', 'available', 'rgb(104, 83, 49)'],
     ];
     for (const [state, keyState, supplyState, fill] of cases) {
-      const current = { ...visit, state, items: [{ label: 'Valve Handle', state: keyState, quantity: 1 }, { label: 'Shotgun shells', state: supplyState, quantity: 6 }] };
+      const current = { ...visit, state, items: [{ label: 'Valve Handle', state: keyState, quantity: 1, quantity_is_unit_count: false }, { label: 'Shotgun shells', state: supplyState, quantity: 6, quantity_is_unit_count: true }] };
       floorView = { mode: 'follow' };
       selected = null;
       draw({ ...fixture, area: 're2-02', map_region: visit.id, current: visit.room, current_detail: current, rooms: [current], explored_areas: { 're2-02': [current] } });
       if (getComputedStyle(document.querySelector('.room > path')).fill !== fill) throw new Error('Incorrect item-category room color');
       const names = [...document.querySelectorAll('#items .entry-name')];
-      if (names[0].textContent !== 'Valve Handle' || names[1].textContent !== 'Shotgun shells') throw new Error('Item symbols replaced the item names');
+      if (names[0].textContent !== 'Valve Handle' || names[1].textContent !== 'Shotgun shells ×6') throw new Error('Item symbols replaced the item names or quantities');
       if (!names[0].classList.contains('story') || !names[1].classList.contains('supplies')) throw new Error('Item categories lost their distinct colors');
       if (getComputedStyle(names[0]).color === getComputedStyle(names[1]).color) throw new Error('Item category colors are identical');
       for (const row of document.querySelectorAll('#items li,#doors li')) {

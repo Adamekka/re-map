@@ -49,7 +49,9 @@ def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
         tracker.mark_current(room)
         tracker.region_visits[region] = str(room)
         tracker.update_room_items(room, 1, 0, True, True, False)
-        tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "available", 1),)
+        tracker.rooms[str(room)].items = (
+            ItemDetail("Green Herb", "available", 1, False),
+        )
     tracker.current_region = "mansion2f:03"
     tracker.doors = (
         DoorDetail(herb_room, upper_room, "LOCKED", "Locked", key_label="Armor Key"),
@@ -68,7 +70,7 @@ def test_map_exposes_only_explored_floors_with_fresh_item_and_door_details():
 
     # A loaded game's fresh verdicts must update a browsable departed floor too.
     tracker.update_room_items(herb_room, 1, 1, True, False, False)
-    tracker.rooms[str(herb_room)].items = (ItemDetail("Green Herb", "taken", 1),)
+    tracker.rooms[str(herb_room)].items = (ItemDetail("Green Herb", "taken", 1, False),)
     tracker.doors = (DoorDetail(herb_room, upper_room, "OPEN", "Unlocked"),)
     state = map_state(tracker)
     previous_floor = state["explored_areas"]["mansion1f"][0]
@@ -122,7 +124,7 @@ def test_remaining_items_do_not_imply_complete_item_checks():
     tracker.current_region = "mansion1f:09"
     tracker.region_visits[tracker.current_region] = str(room)
     tracker.update_room_items(room, 1, 0, False, True, True)
-    tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "available", 1),)
+    tracker.rooms[str(room)].items = (ItemDetail("Green Herb", "available", 1, False),)
     tracker.rooms[str(room)].reason = "Other item conditions remain unresolved."
     detail = map_state(tracker)["explored_areas"]["mansion1f"][0]
     assert detail["state"] == "INCOMPLETE"

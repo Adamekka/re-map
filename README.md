@@ -33,7 +33,7 @@ Keep the terminal running while you play. Press Ctrl+C there to stop the tracker
 
 Rooms appear as you enter them. Gold means story/key items remain; red means supplies or other items remain; blue means cleared; gray means the item check is incomplete. Story/key items determine the color when both kinds remain. RE1 puzzle rewards keep their room incomplete until collected, even before the puzzle is solved. In RE1 and RE2, the cyan arrow follows your approximate position where placement is established and rotates with your facing direction. Placement is approximate because the original maps distort room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors.
 
-The item list uses gold symbols for story/key items and red symbols for supplies, alongside their names and status text. Check marks, question marks and door/key symbols distinguish collection and access states. An unresolved item identity uses a neutral collectible symbol.
+The item list uses gold symbols for story/key items and red symbols for supplies, alongside their names and status text. Verified item counts other than one appear beside item names, including in **Remaining items**. Weapon resources, key uses and unresolved amounts have no multiplier. Check marks, question marks and door/key symbols distinguish collection and access states. An unresolved item identity uses a neutral collectible symbol.
 
 Stair treads, rails and ladders appear inside explored room outlines.
 
@@ -45,7 +45,7 @@ Use **Floor** to browse explored floors. Click **Follow player** to stop inspect
 
 Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again.
 
-Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. **Incomplete item checks** lists rooms the tracker cannot fully check.
+Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. **Incomplete item checks** names unresolved items and identifies incomplete item lists, with links to their rooms.
 
 Explored rooms are saved automatically and stay revealed after restarts or earlier savestate loads. Items and doors update to match the loaded game.
 
@@ -69,4 +69,4 @@ python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
 
 Each revision and scenario has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identities and validation limits.
 
-![RE2 explored rooms with colored item symbols, door symbols and room states](docs/images/re2-map.png)
+![RE2 explored rooms with pickup quantities and named unresolved item checks](docs/images/re2-map.png)
