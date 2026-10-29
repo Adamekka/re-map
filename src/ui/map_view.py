@@ -198,6 +198,7 @@ main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; b
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
 #map { display:block; width:100%; height:65vh; min-height:410px; }
 #map { user-select:none; }
+#map:focus-visible { outline:2px solid #d9f6ff; outline-offset:-2px; }
 #map.navigable { cursor:grab; touch-action:none; }
 #map.panning,#map.panning .room { cursor:grabbing; }
 #zoom-level { min-width:4ch; text-align:center; font-size:13px; color:#abb9c5; }
@@ -211,6 +212,10 @@ cannot merge them with a decided state. */
 .room.UNKNOWN path { fill:#42515d; }
 .room.current path { stroke:#d9f6ff; stroke-width:1.05; }
 .room.selected:not(.current) > path:first-child { stroke:#f0cf8c; }
+/* Native SVG focus rings can cover nearby doors. Highlight the room wall instead. */
+.room:focus-visible { outline:none; }
+.room:focus-visible > path:first-child { stroke-width:1.35; }
+.room:focus-visible:not(.current) > path:first-child { stroke:#a5efff; }
 .room text { fill:#dce7ee; font:2.6px system-ui,sans-serif; pointer-events:none; text-anchor:middle; }
 .room.current text { font-weight:700; fill:#fff; }
 .room path.map-detail { fill:none; stroke:#bed0dd; stroke-width:1; stroke-linecap:square; pointer-events:none; }
@@ -285,7 +290,7 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 <nav id="map-controls" aria-label="Map controls"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
-<div id="map-shell"><svg id="map" role="img" aria-label="Explored rooms" aria-description="Use the zoom buttons or mouse wheel to zoom. Drag to move the map."></svg></div>
+<div id="map-shell"><svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag or use the mouse wheel."></svg></div>
 <aside><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
 </main>
 <div id="legend">
@@ -359,6 +364,7 @@ function applyViewport() {
   zoomIn.disabled=!navigable || viewport.zoom>=8;
   zoomOut.disabled=!navigable || viewport.zoom<=1;
   fitRooms.disabled=!navigable;
+  svg.setAttribute('tabindex',navigable ? '0' : '-1');
   document.getElementById('zoom-level').textContent=navigable ? Math.round(viewport.zoom*100)+'%' : '';
   svg.classList.toggle('navigable',navigable);
   if(viewport.mode!=='empty') {
@@ -386,6 +392,20 @@ for(const [button,factor] of [[zoomIn,.8],[zoomOut,1.25]]) {
 fitRooms.addEventListener('click',()=>{
   endPan();
   viewport={...viewport,mode:'fit',zoom:1,box:viewport.fitBox};
+  applyViewport();
+});
+svg.addEventListener('keydown',event=>{
+  if(event.ctrlKey || event.metaKey || event.altKey || lastState===null || lastState.status!=='display' || viewport.mode==='empty') return;
+  const button=event.key==='+' || event.key==='=' ? zoomIn : event.key==='-' ? zoomOut : event.key==='0' ? fitRooms : null;
+  const horizontal=event.key==='ArrowLeft' ? -1 : event.key==='ArrowRight' ? 1 : 0;
+  const vertical=event.key==='ArrowUp' ? -1 : event.key==='ArrowDown' ? 1 : 0;
+  if(!button && !horizontal && !vertical) return;
+  event.preventDefault();
+  if(button) {button.click();return;}
+  endPan();
+  const [x,y,width,height]=viewport.box;
+  // Scale movement with the visible map so arrow keys remain useful at every zoom.
+  viewport={...viewport,mode:'manual',box:[x+horizontal*width/10,y+vertical*height/10,width,height]};
   applyViewport();
 });
 svg.addEventListener('wheel',event=>{
@@ -561,6 +581,8 @@ function updatePlayer() {
 }
 function draw(state) {
   const status=document.getElementById('status');
+  const focusedRoom=svg.querySelector('.room:focus');
+  const focusedArea=viewport.mode==='empty' ? null : viewport.area;
   lastState=state;
   if(state.status!=='display') {
     floorSelect.disabled=true;
@@ -627,7 +649,7 @@ function draw(state) {
   for(const [id,visit] of visible) {
     const room=byId.get(id);
     const storyItems=visit.items.some(item=>itemRemains(item) && itemVisual(item.label).category==='story');
-    const group=element('g',{class:'room '+visit.state+(storyItems?' story-items':'')+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name});
+    const group=element('g',{class:'room '+visit.state+(storyItems?' story-items':'')+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name,'data-region':id});
     const path=room.rings.map(ring=>'M'+ring.map(point=>point.join(',')).join('L')+'Z').join('');
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
     const title=element('title',{});title.textContent=room.name;group.append(title);
@@ -710,8 +732,6 @@ function draw(state) {
     group.addEventListener('keydown',event=>{
       if(event.key==='Enter' || event.key===' ') {
         event.preventDefault();selected=id;draw(lastState);
-        // Drawing replaces the active SVG node; restore focus so Tab and Space still work.
-        svg.querySelector('.room.selected').focus({preventScroll:true});
       }
     });
   }
@@ -829,6 +849,12 @@ function draw(state) {
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');
   updateOverview(state);
+  if(focusedRoom) {
+    // Polls replace room nodes too. Keep the exact focused outline without changing selection or scrolling.
+    const room=[...svg.querySelectorAll('.room')].find(room=>focusedArea===displayedArea && room.dataset.region===focusedRoom.dataset.region);
+    if(room) room.focus({preventScroll:true});
+    else svg.focus({preventScroll:true});
+  }
 }
 function updateOverview(state) {
   // Camera outlines share a logical room's items. Prefer its current outline

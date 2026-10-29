@@ -43,7 +43,7 @@ In RE2, a green open padlock shows a freshly confirmed unlock. A dashed frame me
 
 Use **Floor** to browse explored floors. Click **Follow player** to stop inspecting a selected room and resume selecting each room you enter. The highlighted button shows when following is active.
 
-Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again. Use Tab to focus rooms, then Enter or Space to inspect them.
+Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again. With the map focused, arrow keys move the view, plus/minus zoom, and zero fits explored rooms. Use Tab to focus the map or rooms, then Enter or Space to inspect a focused room. See [map controls](docs/map-controls.md).
 
 Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. Off-screen outlines come into view at your chosen zoom, zooming out if needed to fit. **Incomplete item checks** names unresolved items and identifies incomplete item lists, with links to their rooms.
 
@@ -71,4 +71,4 @@ python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
 
 Each revision and scenario has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identities and validation limits.
 
-![RE2 explored rooms with pickup quantities and searchable remaining items and unresolved checks](docs/images/re2-map.png)
+![RE2 map with a focused room, pickup quantities and searchable remaining items and unresolved checks](docs/images/re2-map.png)
