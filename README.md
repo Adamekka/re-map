@@ -45,7 +45,7 @@ Use **Floor** to browse explored floors. Click **Follow player** to stop inspect
 
 Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again.
 
-Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. **Incomplete item checks** names unresolved items and identifies incomplete item lists, with links to their rooms.
+Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. Off-screen outlines come into view at your chosen zoom, zooming out if needed to fit. **Incomplete item checks** names unresolved items and identifies incomplete item lists, with links to their rooms.
 
 Use **Find item or room** to filter both lists across explored floors. Press Escape in the search field to clear it.
 

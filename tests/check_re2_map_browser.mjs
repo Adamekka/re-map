@@ -208,6 +208,36 @@ try {
   assert.equal(await page.locator('#completion').textContent(), 'Items remain');
   for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
   await page.waitForFunction(name => [...document.querySelectorAll('#incomplete-checks .room-link')].find(link => link.firstElementChild.textContent === name)?.textContent.includes('Unresolved: Shotgun'), roomName);
+  const visibleNavigationView = await page.locator('#map').getAttribute('viewBox');
+  await remainingRoom.press('Enter');
+  assert.equal(await page.locator('#map').getAttribute('viewBox'), visibleNavigationView, 'navigating to an already visible outline must preserve the view');
+  for (let i = 0; i < 7; i++) await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  const navigationMap = page.locator('#map'), navigationBounds = await navigationMap.boundingBox();
+  for (let i = 0; i < 4; i++) {
+    await page.mouse.move(navigationBounds.x + navigationBounds.width * .8, navigationBounds.y + navigationBounds.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(navigationBounds.x + navigationBounds.width * .2, navigationBounds.y + navigationBounds.height / 2, { steps: 4 });
+    await page.mouse.up();
+  }
+  const beforeNavigationZoom = Number.parseInt(await page.locator('#zoom-level').textContent());
+  const navigationRoomFits = await page.locator('.room.selected').evaluate(room => {
+    const bounds = room.getBoundingClientRect(), map = document.getElementById('map').getBoundingClientRect();
+    return bounds.width <= map.width && bounds.height <= map.height;
+  });
+  await remainingRoom.focus();
+  await remainingRoom.press('Enter');
+  assert(await page.locator('.room.selected').evaluate(room => {
+    const bounds = room.getBoundingClientRect(), map = document.getElementById('map').getBoundingClientRect();
+    return bounds.left >= map.left && bounds.right <= map.right && bounds.top >= map.top && bounds.bottom <= map.bottom;
+  }), 'item-list navigation must bring the entire selected outline into the zoomed map');
+  assert(Number.parseInt(await page.locator('#zoom-level').textContent()) <= beforeNavigationZoom, 'navigation must never zoom in past the chosen scale');
+  if (navigationRoomFits) assert.equal(Number.parseInt(await page.locator('#zoom-level').textContent()), beforeNavigationZoom, 'recentring a room that fits must retain the chosen zoom');
+  assert(await page.locator('.room.selected').evaluate(room => room === document.activeElement), 'keyboard navigation must focus the selected outline');
+  const navigationView = await navigationMap.getAttribute('viewBox');
+  state.player_heading = 270;
+  await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(270)'));
+  assert.equal(await navigationMap.getAttribute('viewBox'), navigationView, 'live updates must preserve the navigated view');
+  await page.getByRole('button', { name: 'Fit explored rooms', exact: true }).click();
   for (const movement of measurements) {
     state.player_heading = movement.published_heading;
     await page.waitForFunction(heading => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(' + heading + ')'), state.player_heading);

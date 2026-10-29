@@ -875,13 +875,27 @@ function updateOverview(state) {
           const labels=document.createElement('span');labels.textContent=entry.labels.join(', ');link.append(labels);
         }
         link.addEventListener('click',()=>{
+          endPan();
           floorView={mode:'browse',area:entry.area};
           // A floor switch otherwise clears selection at the start of draw.
           selectedArea=entry.area;selected=entry.id;
           draw(lastState);
+          const room=svg.querySelector('.room.selected');
+          if(room) {
+            const rect=room.getBoundingClientRect(),frame=svg.getBoundingClientRect();
+            if(rect.left<frame.left || rect.top<frame.top || rect.right>frame.right || rect.bottom>frame.bottom) {
+              const bounds=room.getBBox(),[,,width,height]=viewport.box;
+              // Screen bounds account for SVG letterboxing. Preserve zoom when the room fits;
+              // otherwise leave 5% margin on each side so the selection stroke stays visible.
+              const ratio=rect.width<=frame.width && rect.height<=frame.height ? 1 : Math.max(rect.width/(frame.width*.9),rect.height/(frame.height*.9));
+              const zoom=Math.max(1,viewport.zoom/ratio),scale=viewport.zoom/zoom;
+              viewport={...viewport,mode:'manual',zoom,box:[bounds.x+bounds.width/2-width*scale/2,bounds.y+bounds.height/2-height*scale/2,width*scale,height*scale]};
+              applyViewport();
+            }
+          }
           document.querySelector('main').scrollIntoView({block:'start'});
           // An unoutlined current room has details but no SVG focus target.
-          const target=svg.querySelector('.room.selected') || document.getElementById('room-name');
+          const target=room || document.getElementById('room-name');
           target.focus({preventScroll:true});
         });
         row.append(link);groups.get(entry.area).append(row);
