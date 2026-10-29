@@ -2,11 +2,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chromium } from 'playwright';
+import { mapHeaders } from './map_browser_response.mjs';
 
 assert(process.argv[2], 'Pass the Python executable used for tracker tests');
 const setup = spawnSync(process.argv[2], ['-c', `
 import json,sys
 from pathlib import Path
+from uuid import uuid4
 sys.path.insert(0,str(Path.cwd()/'src'))
 from games.game_profile import RoomId
 from games.re2.re2_profile import Re2Profile
@@ -22,7 +24,7 @@ for filename in ('floor_plans_slus00551.json','floor_plans_slus00748.json'):
         tracker.mark_current(RoomId(*[int(part,16) for part in source.split('-')]))
         tracker.current_region=area['id']+':'+region['id']
         tracker.region_visits[tracker.current_region]=source
-    cases.append({'document':map_page(catalog).decode(),'state':map_state(tracker)})
+    cases.append({'document':map_page(catalog,uuid4()).decode(),'state':map_state(tracker)})
 print(json.dumps(cases))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
@@ -41,7 +43,7 @@ try {
         return route.fulfill({ status: 204 });
       }
       assert(['/', '/state'].includes(path), 'Unexpected request: ' + path);
-      return route.fulfill({ contentType: path === '/' ? 'text/html' : 'application/json', body: path === '/' ? fixture.document : JSON.stringify(state) });
+      return route.fulfill({ headers: mapHeaders(fixture.document), contentType: path === '/' ? 'text/html' : 'application/json', body: path === '/' ? fixture.document : JSON.stringify(state) });
     });
     await page.goto('http://keyboard-map.test/');
     const map = page.locator('#map');

@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { mapHeaders } from './map_browser_response.mjs';
 
 assert(process.argv[2], 'Pass the Python executable used for the tracker tests');
 const setup = spawnSync(process.argv[2], ['-c', `
 import json, sys
 from pathlib import Path
+from uuid import uuid4
 sys.path.insert(0, str(Path.cwd() / 'src'))
 from games.game_profile import RoomId
 from tracker.exploration_state import Tracker, ItemDetail, DoorDetail
@@ -108,7 +110,7 @@ for plan in catalog['areas']:
         stage, room = region['room_ids'][0].split('-')
         enter(int(stage), int(room, 16), plan['id'], region['id'])
 states['labels'] = map_state(tracker)
-document = map_page(catalog).decode()
+document = map_page(catalog,uuid4()).decode()
 print(json.dumps({'document': document, 'states': states}))
 `], {
   cwd: fileURLToPath(new URL('..', import.meta.url)),
@@ -125,8 +127,8 @@ try {
   // Explicit test responses exercise the production page without booting a game.
   await page.route('http://map.test/**', route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === '/') return route.fulfill({ contentType: 'text/html', body: document });
-    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(state) });
+    if (path === '/') return route.fulfill({ headers: mapHeaders(document), contentType: 'text/html', body: document });
+    if (path === '/state') return route.fulfill({ headers: mapHeaders(document), contentType: 'application/json', body: JSON.stringify(state) });
     errors.push('Unexpected request: ' + path);
     return route.fulfill({ status: 404 });
   });

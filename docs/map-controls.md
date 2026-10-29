@@ -16,6 +16,8 @@ The mouse wheel and zoom buttons also zoom; dragging moves the map. Navigation k
 
 Use **Floor** to browse explored floors and **Follow player** to return to the current floor and resume selecting rooms as you enter them.
 
+Restarting the tracker refreshes an open map tab to load the matching game and playthrough. The tab clears the previous map while loading and resets search, Back history, zoom and pan. Saved exploration comes from the restarted tracker. Temporary game-read or connection errors during the same run retain the chosen view and search for recovery. If the map asks you to reload, reload the tab to reconnect.
+
 ## Find items and rooms
 
 Use **Find item or room** to filter remaining items and unresolved checks by their displayed names, room or floor. Matching **Cleared rooms** appear separately when you search by room or floor name. Select a result to inspect its room on the map. Collected items do not become remaining-item matches. Escape clears the search and restores the normal item overview. Results include explored rooms only and follow fresh tracking state.

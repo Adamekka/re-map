@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { mapHeaders } from './map_browser_response.mjs';
 
 const { measurements } = JSON.parse(readFileSync('tests/fixtures/re2/heading-movements.json', 'utf8'));
 const { observations } = JSON.parse(readFileSync('tests/fixtures/re2/position-observations.json', 'utf8'));
@@ -12,6 +13,7 @@ assert(process.argv[2], 'Pass the Python executable used for tracker tests');
 const setup = spawnSync(process.argv[2], ['-c', `
 import sys,json
 from pathlib import Path
+from uuid import uuid4
 sys.path.insert(0,str(Path.cwd()/'src'))
 from games.game_profile import RoomId
 from games.re2.re2_profile import Re2Profile
@@ -60,7 +62,7 @@ detail_tracker.mark_current(RoomId(0,2));detail_tracker.player_heading=90;detail
 detail_tracker.doors=(DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'LOCKED','Heart Key',key_label='Heart Key',observation_id='01-0b:12090'),DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'UNCHECKED','Door conditions unresolved',observation_id='01-0b:12126'))
 # Owned source00-03 creator13962 connects the city floor to the station floor.
 detail_tracker.doors += (DoorDetail(RoomId(0,3),RoomId(1,0),'UNCHECKED','Access unconfirmed',observation_id='00-03:13962'),)
-print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas'])}))
+print(json.dumps({'document':map_page(p.map_layout.document,uuid4()).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document,uuid4()).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas'])}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
 const { document, state, counts, markers, floorStates, detailDocument, detailState, detailCount } = JSON.parse(setup.stdout);
@@ -71,8 +73,8 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.route('http://re2-map.test/**', route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === '/') return route.fulfill({ contentType: 'text/html', body: document });
-    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(state) });
+    if (path === '/') return route.fulfill({ headers: mapHeaders(document), contentType: 'text/html', body: document });
+    if (path === '/state') return route.fulfill({ headers: mapHeaders(document), contentType: 'application/json', body: JSON.stringify(state) });
     errors.push('Unexpected request: ' + path);
     return route.fulfill({ status: 404 });
   });
@@ -368,8 +370,8 @@ try {
   roomSearchPage.on('pageerror', error => errors.push(error.message));
   await roomSearchPage.route('http://re2-room-search.test/**', route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === '/') return route.fulfill({ contentType: 'text/html', body: detailDocument });
-    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(searchPublication) });
+    if (path === '/') return route.fulfill({ headers: mapHeaders(detailDocument), contentType: 'text/html', body: detailDocument });
+    if (path === '/state') return route.fulfill({ headers: mapHeaders(detailDocument), contentType: 'application/json', body: JSON.stringify(searchPublication) });
     errors.push('Unexpected request: ' + path);
     return route.fulfill({ status: 404 });
   });
@@ -431,8 +433,8 @@ try {
   detailPage.on('pageerror', error => errors.push(error.message));
   await detailPage.route('http://re2-details.test/**', route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === '/') return route.fulfill({ contentType: 'text/html', body: detailDocument });
-    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(detailPublication) });
+    if (path === '/') return route.fulfill({ headers: mapHeaders(detailDocument), contentType: 'text/html', body: detailDocument });
+    if (path === '/state') return route.fulfill({ headers: mapHeaders(detailDocument), contentType: 'application/json', body: JSON.stringify(detailPublication) });
     errors.push('Unexpected detail request: ' + path);
     return route.fulfill({ status: 404 });
   });

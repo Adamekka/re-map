@@ -3,11 +3,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chromium } from 'playwright';
+import { mapHeaders } from './map_browser_response.mjs';
 
 assert(process.argv[2], 'Pass the Python executable used for tracker tests');
 const setup = spawnSync(process.argv[2], ['-c', `
 import json,sys
 from pathlib import Path
+from uuid import uuid4
 sys.path.insert(0,str(Path.cwd()/'src'))
 from games.game_profile import RoomId
 from games.re2.re2_profile import Re2Profile
@@ -27,7 +29,7 @@ t.update_room_items(room,1,0,True,True,False)
 before=map_state(t)
 t.rooms[str(room)].items=(ItemDetail('Handgun ammo','taken',15, True),)
 t.update_room_items(room,1,1,True,False,False)
-print(json.dumps({'document':map_page(p.map_layout.document).decode(),'before':before,'collected':map_state(t)}))
+print(json.dumps({'document':map_page(p.map_layout.document,uuid4()).decode(),'before':before,'collected':map_state(t)}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
 const fixture = JSON.parse(setup.stdout);
@@ -42,7 +44,7 @@ try {
   });
   await page.route('http://refresh.test/**', route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === '/') return route.fulfill({ contentType: 'text/html', body: fixture.document });
+    if (path === '/') return route.fulfill({ headers: mapHeaders(fixture.document), contentType: 'text/html', body: fixture.document });
     if (path === '/client-error') {
       reports.push(route.request().postDataJSON());
       return route.fulfill({ status: 204 });
@@ -50,7 +52,7 @@ try {
     assert.equal(path, '/state');
     requests++;
     if (requests === 2) { held = route; return; }
-    return route.fulfill({ contentType: 'application/json', body: JSON.stringify(requests === 1 ? fixture.before : fixture.collected) });
+    return route.fulfill({ headers: mapHeaders(fixture.document), contentType: 'application/json', body: JSON.stringify(requests === 1 ? fixture.before : fixture.collected) });
   });
   await page.goto('http://refresh.test/');
   await page.waitForFunction(() => document.getElementById('completion').textContent === 'Items remain');
@@ -76,7 +78,7 @@ try {
   assert.equal(await map.getAttribute('viewBox'), chosenView, 'reconnection must retain zoom and pan');
   assert.equal(await page.locator('#remaining-items .room-link').count(), 0);
   assert(reports.some(report => report.source === 'refresh' && report.message === 'Map state request timed out'));
-  await held.fulfill({ contentType: 'application/json', body: JSON.stringify(fixture.before) });
+  await held.fulfill({ headers: mapHeaders(fixture.document), contentType: 'application/json', body: JSON.stringify(fixture.before) });
   await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 150)));
   assert.equal(await page.locator('#remaining-items .room-link').count(), 0, 'a late expired response cannot restore a remaining pickup');
   assert.equal(await page.evaluate(() => lastState.current_detail.items[0].state), 'taken');
@@ -88,9 +90,9 @@ try {
   bodyPage.on('pageerror', error => errors.push(error.message));
   await bodyPage.route('http://body.test/**', route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === '/') return route.fulfill({ contentType: 'text/html', body: fixture.document });
+    if (path === '/') return route.fulfill({ headers: mapHeaders(fixture.document), contentType: 'text/html', body: fixture.document });
     if (path === '/client-error') return route.fulfill({ status: 204 });
-    return route.fulfill({ contentType: 'application/json', body: JSON.stringify(fixture.before) });
+    return route.fulfill({ headers: mapHeaders(fixture.document), contentType: 'application/json', body: JSON.stringify(fixture.before) });
   });
   await bodyPage.addInitScript(() => {
     const fetchState = window.fetch;

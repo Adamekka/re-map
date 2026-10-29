@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Map tabs across tracker restarts
+
+Each MapServer run creates a UUID shared by its page metadata and `X-Map-Instance` response header. The browser checks it before parsing state. A different run clears the previous page content and reloads the matching catalog, including same-profile restarts that may belong to another playthrough. Missing or malformed identity headers show an explicit reload message without a reload loop. Same-run game-read and connection failures retain the chosen view and search. Snapshot JSON, exploration storage and game interpretation are unchanged.
+
+Run `bun tests/check_map_restart_browser.mjs <python>`. The regression first reproduces an old RE2 page consuming RE1 state while retaining the RE2 catalog. It now verifies real loopback server restarts across Leon, Jill and Claire, a delayed replacement page exposing only the updating status, same-profile restart reset, same-run interruption/recovery, and missing/malformed-header recovery. These are synthetic tracker publications, with no emulator gameplay or new exploration. HTTP tests verify matching page/waiting/display identities, unchanged JSON and distinct same-profile server instances. All eight browser suites, 59 map/multi-area Python tests, scoped Ruff/formatting, local links and whitespace checks pass. The README image is re-rendered from the unchanged existing exploration and is byte-identical; desktop/mobile inspection remains usable.
+
+Implemented and directly reviewed on 2026-10-29 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Review covers page/state admission, reset versus recovery, response-body cancellation, serial polling, protocol compatibility, isolated test-server ownership and removal of previous-context UI. External review providers remain disabled; no external endorsement is claimed. Tabs loaded before this browser guard was installed need one manual reload to adopt it.
+
 ## Unmapped-room selector labels
 
 The Floor selector refreshes an unmapped room's ID when the current room changes while retaining its option node. Named floor labels stay unchanged. The RE1/RE2 history browser regression first reproduces the old room ID, then verifies fresh labels and stable selector focus for both selected and unselected unmapped options. Standard RE1/RE2 map browser checks, scoped Ruff/formatting, local links and whitespace checks pass. The README image is re-rendered from the same existing mapped publication and is byte-identical. No tracker state or native gameplay changes.

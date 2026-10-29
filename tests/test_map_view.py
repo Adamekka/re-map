@@ -145,9 +145,24 @@ def test_map_server_serves_page_and_current_snapshot(caplog):
         response = connection.getresponse()
         page = response.read().decode()
         assert response.status == 200
+        assert response.getheader("X-Map-Instance") == server.instance_id.hex
+        assert f'<meta name="map-instance" content="{server.instance_id.hex}">' in page
         assert "Winding Passage" in page
         assert "Check incomplete" in page
         assert ".room.UNKNOWN path" in page
+        connection.close()
+
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_port, timeout=3
+        )
+        connection.request("GET", "/state")
+        response = connection.getresponse()
+        assert response.getheader("X-Map-Instance") == server.instance_id.hex
+        assert json.loads(response.read()) == {
+            "status": "waiting",
+            "current": None,
+            "rooms": [],
+        }
         connection.close()
 
         snapshot = {
@@ -163,6 +178,7 @@ def test_map_server_serves_page_and_current_snapshot(caplog):
         response = connection.getresponse()
         assert response.status == 200
         assert response.getheader("Cache-Control") == "no-store"
+        assert response.getheader("X-Map-Instance") == server.instance_id.hex
         assert json.loads(response.read()) == snapshot
         connection.close()
         assert "HTTP" not in caplog.text
@@ -170,6 +186,17 @@ def test_map_server_serves_page_and_current_snapshot(caplog):
         server.shutdown()
         server.server_close()
         thread.join(timeout=2)
+
+
+def test_map_server_instances_have_distinct_page_identities_for_the_same_profile():
+    first = MapServer(0, catalog())
+    second = MapServer(0, catalog())
+    try:
+        assert first.instance_id != second.instance_id
+        assert first.document != second.document
+    finally:
+        first.server_close()
+        second.server_close()
 
 
 def test_map_records_browser_errors_and_rejects_invalid_reports(caplog):

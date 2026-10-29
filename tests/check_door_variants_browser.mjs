@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
+import { mapHeaders } from './map_browser_response.mjs';
 
 assert(process.argv[2] && process.argv[3], 'Pass Python and a private output directory');
 const output = resolve(process.argv[3]);
@@ -12,6 +13,7 @@ mkdirSync(output, { recursive: true });
 const setup = spawnSync(process.argv[2], ['-c', `
 import sys,json
 from pathlib import Path
+from uuid import uuid4
 sys.path.insert(0,str(Path.cwd()/'src'))
 from games.game_profile import RoomId
 from games.re2.re2_profile import Re2Profile
@@ -27,7 +29,7 @@ t.doors=tuple(
     DoorDetail(RoomId(1,1),RoomId(d['stage'],d['room']),'UNCHECKED','Door conditions unresolved',observation_id=f'01-01:{d["offset"]}',interaction_id=f'01-01:{d["slot"]}')
     for d in p.rooms['01-01']['doors']
 )
-print(json.dumps({'html':map_page(p.map_layout.document).decode(),'state':map_state(t)}))
+print(json.dumps({'html':map_page(p.map_layout.document,uuid4()).decode(),'state':map_state(t)}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
 const fixture = JSON.parse(setup.stdout);
@@ -40,8 +42,8 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.route('http://door-variants.test/**', route => {
       const path = new URL(route.request().url()).pathname;
-      if (path === '/') return route.fulfill({ contentType: 'text/html', body: fixture.html });
-      if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(fixture.state) });
+      if (path === '/') return route.fulfill({ headers: mapHeaders(fixture.html), contentType: 'text/html', body: fixture.html });
+      if (path === '/state') return route.fulfill({ headers: mapHeaders(fixture.html), contentType: 'application/json', body: JSON.stringify(fixture.state) });
       errors.push('Unexpected request: ' + path);
       return route.fulfill({ status: 404 });
     });

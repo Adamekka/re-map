@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from uuid import UUID, uuid4
 
 from tracker.exploration_state import Tracker
 from tracker.player_position import ApproximatePosition
@@ -91,13 +92,14 @@ def map_state(tracker: Tracker) -> dict:
     }
 
 
-def map_page(graph: dict) -> bytes:
+def map_page(graph: dict, instance_id: UUID) -> bytes:
     graph_json = json.dumps(graph).replace("<", "\\u003c")
     title = (
         "Resident Evil 2" if graph["profile_id"].startswith("re2_") else "Resident Evil"
     )
     return (
-        _PAGE.replace("__GRAPH__", graph_json)
+        _PAGE.replace("__INSTANCE_ID__", instance_id.hex)
+        .replace("__GRAPH__", graph_json)
         .replace("__GAME_TITLE__", title)
         .encode("utf-8")
     )
@@ -115,6 +117,7 @@ class MapRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Map-Instance", self.server.instance_id.hex)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -169,7 +172,9 @@ class MapRequestHandler(BaseHTTPRequestHandler):
 class MapServer(ThreadingHTTPServer):
     def __init__(self, port: int, graph: dict):
         super().__init__(("127.0.0.1", port), MapRequestHandler)
-        self.document = map_page(graph)
+        # A restarted tracker can serve another profile or playthrough on the same port.
+        self.instance_id = uuid4()
+        self.document = map_page(graph, self.instance_id)
         self.snapshot = b'{"status":"waiting","current":null,"rooms":[]}'
 
     def handle_error(self, request: object, client_address: tuple) -> None:
@@ -181,6 +186,7 @@ _PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="map-instance" content="__INSTANCE_ID__">
 <title>__GAME_TITLE__ room map</title>
 <style>
 :root { color-scheme:dark; font:15px system-ui,sans-serif; background:#10151b; color:#e7edf2; }
@@ -316,6 +322,9 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 </section>
 <script>
 const catalog = __GRAPH__;
+const instanceMeta = document.querySelector('meta[name="map-instance"]');
+if(instanceMeta===null) throw new Error('Map page instance metadata is missing');
+const mapInstance = instanceMeta.content;
 const isRe2 = catalog.profile_id.startsWith('re2_');
 const areas = new Map(catalog.areas.map(plan => [plan.id,plan]));
 const knownRooms = new Map(catalog.areas.flatMap(plan=>[...plan.rooms,...plan.unoutlined_rooms].flatMap(region=>region.room_ids.map(id=>[id,region.name]))));
@@ -1028,13 +1037,33 @@ function updateOverview(state) {
   }
 }
 let sceneKey='';
+let reloading=false;
 async function refresh() {
+  if(reloading) return;
   const controller=new AbortController();
+  let failureMessage='Map connection interrupted.';
   // A stalled response must clear live verdicts instead of leaving old game state on screen.
   const timeout=setTimeout(()=>controller.abort(new Error('Map state request timed out')),2000);
   try {
     const response=await fetch('/state',{cache:'no-store',signal:controller.signal});
     if(!response.ok) throw new Error('Map request failed: HTTP '+response.status);
+    const instance=response.headers.get('X-Map-Instance');
+    if(instance===null || !/^[0-9a-f]{32}$/.test(instance)) {
+      controller.abort();
+      failureMessage='Reload the map to reconnect to the tracker.';
+      throw new Error('Map state response has no valid instance identity');
+    }
+    if(instance!==mapInstance) {
+      reloading=true;
+      controller.abort();
+      endPan();
+      const status=document.getElementById('status');
+      status.textContent='Updating map...';
+      // The next run may use another playthrough, so remove its predecessor's rooms before navigation.
+      document.body.replaceChildren(status);
+      window.location.reload();
+      return;
+    }
     const state=await response.json();
     const {player_heading,player_position,...scene}=state;
     const position=state.status==='display' ? player_position : {kind:'waiting'};
@@ -1046,11 +1075,11 @@ async function refresh() {
   } catch(error) {
     reportError('refresh',error);
     sceneKey='';
-    draw({status:'waiting',error:'Map connection interrupted.'});
+    draw({status:'waiting',error:failureMessage});
   } finally {
     clearTimeout(timeout);
     // Serial requests prevent a delayed older snapshot from replacing a newer one.
-    setTimeout(refresh,100);
+    if(!reloading) setTimeout(refresh,100);
   }
 }
 refresh();
