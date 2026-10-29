@@ -233,6 +233,10 @@ try {
   assert(Number.parseInt(await page.locator('#zoom-level').textContent()) <= beforeNavigationZoom, 'navigation must never zoom in past the chosen scale');
   if (navigationRoomFits) assert.equal(Number.parseInt(await page.locator('#zoom-level').textContent()), beforeNavigationZoom, 'recentring a room that fits must retain the chosen zoom');
   assert(await page.locator('.room.selected').evaluate(room => room === document.activeElement), 'keyboard navigation must focus the selected outline');
+  for (const key of ['Enter', 'Space']) {
+    await page.keyboard.press(key);
+    assert(await page.locator('.room.selected').evaluate(room => room === document.activeElement), key + ' must retain focus after activating the selected map room');
+  }
   const navigationView = await navigationMap.getAttribute('viewBox');
   state.player_heading = 270;
   await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(270)'));

@@ -707,7 +707,13 @@ function draw(state) {
     label.setAttribute('transform','translate('+layout.center.join(' ')+') rotate('+layout.angle+') scale('+layout.scale+') translate('+layout.offset.join(' ')+')');
     setLines(layout.lines);
     group.addEventListener('click',()=>{selected=id;draw(lastState);});
-    group.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();selected=id;draw(lastState);}});
+    group.addEventListener('keydown',event=>{
+      if(event.key==='Enter' || event.key===' ') {
+        event.preventDefault();selected=id;draw(lastState);
+        // Drawing replaces the active SVG node; restore focus so Tab and Space still work.
+        svg.querySelector('.room.selected').focus({preventScroll:true});
+      }
+    });
   }
   const doorGroups=[];
   for(const marker of plan ? plan.doors : []) {

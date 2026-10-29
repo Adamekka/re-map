@@ -436,6 +436,11 @@ try {
   for (const name of ["Keeper's Room", 'Central Corridor']) {
     await map.getByRole('button', { name, exact: true }).focus();
     await page.keyboard.press('Enter');
+    assert(await map.getByRole('button', { name, exact: true }).evaluate(room => room === document.activeElement), 'Enter must retain map keyboard focus after selecting a room');
+    await page.keyboard.press('Space');
+    assert(await map.getByRole('button', { name, exact: true }).evaluate(room => room === document.activeElement), 'Space must remain usable after the selection redraw');
+    await page.keyboard.press('Tab');
+    assert(await map.evaluate(svg => svg.contains(document.activeElement) && document.activeElement.classList.contains('room')), 'Tab must continue to the next map room');
     assert.equal(await keeperDoor.locator('.key-symbol').count(), 0, 'selecting a direction must not hide conflicting key metadata');
   }
   await current.click();
