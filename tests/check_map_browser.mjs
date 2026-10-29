@@ -442,6 +442,11 @@ try {
   }
   assert.equal(await keeperDoor.locator('.key-symbol').count(), 0, 'an open door must not retain its key emblem');
   assert.equal(await trapDoor.locator('.key-symbol').count(), 0);
+  await page.locator('.room[aria-label="Winding Passage"]').press('Enter');
+  assert.equal(await page.locator('#doors .door-room-link').count(), 1, 'explored RE1 door destinations must use the shared inspection action');
+  await page.locator('#doors .door-room-link').press('Enter');
+  assert.equal(await page.locator('#room-id').textContent(), 'Room 00-15');
+  await current.click();
   assert.equal(await page.locator('.unlock-symbol,#doors .list-symbol.unlocked').count(), 0, 'RE1 access and label wording must not fabricate separate unlock knowledge');
   await page.evaluate(() => draw({ ...lastState, doors: [...lastState.doors].reverse() }));
   assert.match(await keeperDoor.getAttribute('class'), /\bOPEN\b/);

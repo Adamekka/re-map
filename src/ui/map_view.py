@@ -258,6 +258,8 @@ li { padding:8px 0; border-top:1px solid #2d3943; display:flex; gap:10px; justif
 li > span:last-child { color:#94a7b6; text-align:right; }
 .entry-name,.entry-status { display:flex; align-items:center; gap:8px; min-width:0; }
 .entry-status { justify-content:flex-end; max-width:48%; flex-shrink:0; }
+.door-room-link { padding:0; border:0; background:none; text-align:left; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.door-room-link:hover,.door-room-link:focus-visible { color:#a5efff; }
 .list-symbol { display:block; flex:none; width:18px; height:18px; overflow:visible; fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round; stroke-linejoin:round; }
 .entry-name.story,.list-symbol.story { color:#e9be72; }
 .entry-name.supplies,.list-symbol.supplies { color:#df9793; }
@@ -584,6 +586,7 @@ function updatePlayer() {
 function draw(state) {
   const status=document.getElementById('status');
   const focusedRoom=svg.querySelector('.room:focus');
+  const focusedDoor=document.querySelector('#doors .door-room-link:focus');
   const focusedArea=viewport.mode==='empty' ? null : viewport.area;
   lastState=state;
   if(state.status!=='display') {
@@ -616,6 +619,7 @@ function draw(state) {
       message.hidden=false;
       message.textContent='Tracking interrupted.';
     }
+    if(focusedDoor) document.getElementById('room-name').focus({preventScroll:true});
     return;
   }
   if(floorView.mode==='browse' && !Object.hasOwn(state.explored_areas,floorView.area)) {
@@ -833,6 +837,7 @@ function draw(state) {
     const text=document.createElement('span');text.textContent={collected:'Collected',remaining:'Remaining',unresolved:'Unresolved',inactive:'Inactive',unavailable:'Not available'}[status];
     detail.append(listSymbol(status,status==='remaining'?visual.category:status==='collected'?'collected':'neutral'),text);row.append(name,detail);items.append(row);
   }
+  const observed=observedRoomViews(state);
   const doors=document.getElementById('doors');doors.replaceChildren();
   const listedDoors=new Set();
   for(const door of state.doors.filter(door=>door.source===visit.room)) {
@@ -845,7 +850,15 @@ function draw(state) {
     }
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
     name.className='entry-name';detail.className='entry-status';
-    const label=document.createElement('span');label.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';name.append(listSymbol('door','neutral'),label);
+    const destination=door.target_visited ? observed.get(door.target) : undefined;
+    const label=document.createElement(destination ? 'button' : 'span');
+    label.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';
+    if(destination) {
+      label.type='button';label.className='door-room-link';label.setAttribute('aria-label','Inspect '+label.textContent);
+      label.dataset.source=door.source;label.dataset.target=door.target;label.dataset.observation=door.observation_id;
+      label.addEventListener('click',()=>inspectRoom(destination.area,destination.visit.id));
+    }
+    name.append(listSymbol('door','neutral'),label);
     const status={OPEN:'open',LOCKED:'locked',BLOCKED:'blocked',UNLOCKABLE:'unlockable',UNCHECKED:'unresolved'}[door.state];
     if(!status) throw new Error('Unknown door state: '+door.state);
     const unlocked=door.unlock_state==='UNLOCKED';
@@ -861,9 +874,38 @@ function draw(state) {
     const room=[...svg.querySelectorAll('.room')].find(room=>focusedArea===displayedArea && room.dataset.region===focusedRoom.dataset.region);
     if(room) room.focus({preventScroll:true});
     else svg.focus({preventScroll:true});
+  } else if(focusedDoor) {
+    // Door rows also redraw on live changes; keep focus on the same observed destination.
+    const door=[...document.querySelectorAll('#doors .door-room-link')].find(door=>door.dataset.source===focusedDoor.dataset.source && door.dataset.target===focusedDoor.dataset.target && door.dataset.observation===focusedDoor.dataset.observation);
+    if(door) door.focus({preventScroll:true});
+    else document.getElementById('room-name').focus({preventScroll:true});
   }
 }
-function updateOverview(state) {
+function inspectRoom(area,id) {
+  endPan();
+  floorView={mode:'browse',area};
+  // A floor switch otherwise clears selection at the start of draw.
+  selectedArea=area;selected=id;
+  draw(lastState);
+  const room=svg.querySelector('.room.selected');
+  if(room) {
+    const rect=room.getBoundingClientRect(),frame=svg.getBoundingClientRect();
+    if(rect.left<frame.left || rect.top<frame.top || rect.right>frame.right || rect.bottom>frame.bottom) {
+      const bounds=room.getBBox(),[,,width,height]=viewport.box;
+      // Screen bounds account for SVG letterboxing. Preserve zoom when the room fits;
+      // otherwise leave 5% margin on each side so the selection stroke stays visible.
+      const ratio=rect.width<=frame.width && rect.height<=frame.height ? 1 : Math.max(rect.width/(frame.width*.9),rect.height/(frame.height*.9));
+      const zoom=Math.max(1,viewport.zoom/ratio),scale=viewport.zoom/zoom;
+      viewport={...viewport,mode:'manual',zoom,box:[bounds.x+bounds.width/2-width*scale/2,bounds.y+bounds.height/2-height*scale/2,width*scale,height*scale]};
+      applyViewport();
+    }
+  }
+  document.querySelector('main').scrollIntoView({block:'start'});
+  // An unoutlined current room has details but no SVG focus target.
+  const target=room || document.getElementById('room-name');
+  target.focus({preventScroll:true});
+}
+function observedRoomViews(state) {
   // Camera outlines share a logical room's items. Prefer its current outline
   // for navigation, then retain one observed outline for each departed room.
   const observed=new Map([[state.current_detail.room,{area:state.area,visit:state.current_detail}]]);
@@ -872,8 +914,11 @@ function updateOverview(state) {
       if(!observed.has(visit.room)) observed.set(visit.room,{area,visit});
     }
   }
+  return observed;
+}
+function updateOverview(state) {
   const remaining=[],checks=[],cleared=[];
-  for(const {area,visit} of observed.values()) {
+  for(const {area,visit} of observedRoomViews(state).values()) {
     if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
     const entry={area,id:visit.id,room:visit.room,name:roomName(area,visit),labels:[]};
     if(visit.state==='CLEARED') cleared.push(entry);
@@ -914,30 +959,7 @@ function updateOverview(state) {
         if(entry.labels.length) {
           const labels=document.createElement('span');labels.textContent=entry.labels.join(', ');link.append(labels);
         }
-        link.addEventListener('click',()=>{
-          endPan();
-          floorView={mode:'browse',area:entry.area};
-          // A floor switch otherwise clears selection at the start of draw.
-          selectedArea=entry.area;selected=entry.id;
-          draw(lastState);
-          const room=svg.querySelector('.room.selected');
-          if(room) {
-            const rect=room.getBoundingClientRect(),frame=svg.getBoundingClientRect();
-            if(rect.left<frame.left || rect.top<frame.top || rect.right>frame.right || rect.bottom>frame.bottom) {
-              const bounds=room.getBBox(),[,,width,height]=viewport.box;
-              // Screen bounds account for SVG letterboxing. Preserve zoom when the room fits;
-              // otherwise leave 5% margin on each side so the selection stroke stays visible.
-              const ratio=rect.width<=frame.width && rect.height<=frame.height ? 1 : Math.max(rect.width/(frame.width*.9),rect.height/(frame.height*.9));
-              const zoom=Math.max(1,viewport.zoom/ratio),scale=viewport.zoom/zoom;
-              viewport={...viewport,mode:'manual',zoom,box:[bounds.x+bounds.width/2-width*scale/2,bounds.y+bounds.height/2-height*scale/2,width*scale,height*scale]};
-              applyViewport();
-            }
-          }
-          document.querySelector('main').scrollIntoView({block:'start'});
-          // An unoutlined current room has details but no SVG focus target.
-          const target=room || document.getElementById('room-name');
-          target.focus({preventScroll:true});
-        });
+        link.addEventListener('click',()=>inspectRoom(entry.area,entry.id));
         row.append(link);groups.get(entry.area).append(row);
       }
       container.dataset.entriesKey=entriesKey;

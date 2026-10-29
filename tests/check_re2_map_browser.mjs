@@ -58,6 +58,8 @@ for area in detail_profile.map_layout.document['areas']:
         detail_tracker.region_visits[area['id']+':'+room['id']]=key
 detail_tracker.mark_current(RoomId(0,2));detail_tracker.player_heading=90;detail_tracker.current_region='re2-00:02'
 detail_tracker.doors=(DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'LOCKED','Heart Key',key_label='Heart Key',observation_id='01-0b:12090'),DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'UNCHECKED','Door conditions unresolved',observation_id='01-0b:12126'))
+# Owned source00-03 creator13962 connects the city floor to the station floor.
+detail_tracker.doors += (DoorDetail(RoomId(0,3),RoomId(1,0),'UNCHECKED','Access unconfirmed',observation_id='00-03:13962'),)
 print(json.dumps({'document':map_page(p.map_layout.document).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas'])}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
@@ -103,6 +105,24 @@ try {
   assert.match(await entrance.getAttribute('class'), /LOCKED/);
   assert.equal(await entrance.locator('.key-symbol title').textContent(), 'Spade Key');
   assert.match(await exit.getAttribute('class'), /OPEN/);
+  const publicationBeforeDoorNavigation = await page.evaluate(() => lastState);
+  const inspectedExits = page.locator('#doors').getByRole('button', { name: 'Inspect Back Street Area West', exact: true });
+  assert.equal(await inspectedExits.count(), 2, 'both observed doors to the same explored destination must be inspectable');
+  await inspectedExits.first().press('Enter');
+  assert.match(await page.locator('#room-id').textContent(), /^Room 00-00$/);
+  assert.match(await page.locator('#doors').textContent(), /Club Key/);
+  assert(await page.locator('.room.selected').evaluate(node => node === document.activeElement));
+  await page.locator('#doors').getByRole('button', { name: "Inspect Kendo's Gun Shop", exact: true }).press('Space');
+  assert.match(await page.locator('#room-id').textContent(), /00-01.*Current room/);
+  assert.deepEqual(await page.evaluate(() => lastState), publicationBeforeDoorNavigation, 'inspecting a destination must not change game or exploration state');
+  await inspectedExits.last().focus();
+  const focusedObservation = await inspectedExits.last().getAttribute('data-observation');
+  const originalDoor = structuredClone(state.doors[0]);
+  Object.assign(state.doors[0], { state: 'BLOCKED', label: 'Door is inactive' });
+  await page.waitForFunction(() => lastState.doors[0].state === 'BLOCKED');
+  assert.equal(await page.evaluate(() => document.activeElement.dataset.observation), focusedObservation, 'a live door update must retain the exact focused doorway');
+  Object.assign(state.doors[0], originalDoor);
+  await page.waitForFunction(() => lastState.doors[0].state === 'LOCKED');
   const allExploration = structuredClone(state);
   const shopVisit = state.current_detail;
   state.rooms = [shopVisit];
@@ -110,6 +130,12 @@ try {
   state.doors = state.doors.filter(door => door.source === '00-01').map(door => ({ ...door, target_visited: false }));
   await page.waitForFunction(() => document.querySelectorAll('#map .room').length === 1);
   assert.equal(await page.locator('#map .door').count(), 2, 'the shop must show two doors without revealing either neighbor');
+  assert.equal(await page.locator('#doors button').count(), 0, 'unexplored destinations must not be navigable');
+  assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'removing a focused destination must return focus to the room details');
+  for (const door of state.doors) door.target_visited = true;
+  await page.waitForFunction(() => lastState.doors.every(door => door.target_visited));
+  assert.equal(await page.locator('#doors button').count(), 0, 'a visit without an observed map view must not borrow a catalog outline');
+  for (const door of state.doors) door.target_visited = false;
   const search = page.getByLabel('Find item or room', { exact: true });
   await search.fill('Basketball Court Alleyway');
   assert.equal(await page.locator('#overview .room-link').count(), 0, 'search must not reveal an unvisited catalog room');
@@ -400,17 +426,42 @@ try {
   assert(await roomSearchPage.locator('#cleared-section').isHidden());
   await roomSearchPage.close();
 
+  let detailPublication = detailState;
   const detailPage = await browser.newPage();
   detailPage.on('pageerror', error => errors.push(error.message));
   await detailPage.route('http://re2-details.test/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path === '/') return route.fulfill({ contentType: 'text/html', body: detailDocument });
-    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(detailState) });
+    if (path === '/state') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(detailPublication) });
     errors.push('Unexpected detail request: ' + path);
     return route.fulfill({ status: 404 });
   });
   await detailPage.goto('http://re2-details.test/');
   await detailPage.waitForFunction(() => document.querySelector('.room.current text'));
+  await detailPage.locator('.room[data-region="03"]').press('Enter');
+  const stationDestination = detailPage.locator('#doors').getByRole('button', { name: 'Inspect 1F RPD Main Hall', exact: true });
+  await stationDestination.press('Space');
+  assert.equal(await detailPage.getByLabel('Floor', { exact: true }).inputValue(), 're2-02', 'door inspection must browse an explored destination on another floor');
+  assert.match(await detailPage.locator('#room-id').textContent(), /^Room 01-00$/);
+  assert(await detailPage.locator('.room.selected').evaluate(node => node === document.activeElement));
+  await detailPage.getByLabel('Floor', { exact: true }).selectOption('re2-00');
+  await detailPage.locator('.room[data-region="03"]').press('Enter');
+  await stationDestination.focus();
+  const stationVisits = detailState.explored_areas['re2-02'];
+  detailState.explored_areas['re2-02'] = stationVisits.filter(visit => visit.room !== '01-00');
+  await detailPage.waitForFunction(() => document.querySelectorAll('#doors .door-room-link').length === 0);
+  assert.match(await detailPage.locator('#doors').textContent(), /1F RPD Main Hall/, 'known names may remain while unrecorded outlines stay unavailable');
+  assert(await detailPage.locator('#room-name').evaluate(node => node === document.activeElement));
+  detailState.explored_areas['re2-02'] = stationVisits;
+  await detailPage.waitForFunction(() => document.querySelectorAll('#doors .door-room-link').length === 1);
+  await stationDestination.focus();
+  detailPublication = { status: 'waiting', error: 'Tracking interrupted.' };
+  await detailPage.waitForFunction(() => document.getElementById('floor').disabled);
+  assert.equal(await detailPage.locator('#doors button').count(), 0);
+  assert(await detailPage.locator('#room-name').evaluate(node => node === document.activeElement), 'interruption must not strand focus on a removed door control');
+  detailPublication = detailState;
+  await detailPage.waitForFunction(() => !document.getElementById('floor').disabled);
+  await detailPage.getByRole('button', { name: 'Follow player', exact: true }).click();
   const detailLabels = await detailPage.evaluate(fixture => {
     floorView = { mode: 'follow' };
     selected = null;

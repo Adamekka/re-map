@@ -28,6 +28,8 @@ Items stay in one list, with symbols alongside their names and status text. Veri
 
 Find item or room filters Remaining items and Incomplete item checks across explored floors. Matching Cleared rooms appear separately for room or floor names, with the same navigation to the map. Collected item names do not create remaining-item matches. Search leaves exploration and completion unchanged and ignores case and leading/trailing spaces. Escape clears the field. Live updates and connection recovery retain the query; interrupted tracking clears stale results. See [map controls](map-controls.md#find-items-and-rooms).
 
+Underlined destination names in Doors inspect explored rooms through the same navigation as item/search results, including destinations on another floor. This changes tracker selection while leaving door access and game state intact. See [connected-room inspection](map-controls.md#inspect-connected-rooms).
+
 Uniquely matched doorways appear once on the shared wall. Selecting a room shows that side's access and key state. [RE2-MAP-004](research/re2.md#re2-map-004-one-marker-for-a-shared-doorway) records the shop correction and pairing limits.
 
 Freshly confirmed unlocks also show a green open padlock. Its frame stays dashed while access is unconfirmed, red while the door is inactive and cyan while open. Departed doors never become Open from visits or earlier passage alone. Ambiguous creator/side bindings keep unlock knowledge Unknown. [RE2-DOOR-005](research/re2/dualshock.md#re2-door-005-display-fresh-unlock-knowledge-separately-from-access) records the model and reversal checks.

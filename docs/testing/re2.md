@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Door destination inspection
+
+Underlined destination names in Doors inspect rooms with an observed map view. A shared observed-room lookup and inspection action serve door buttons and all item/search results. They retain current-outline preference, floor switching, recentering, zoom bounds and room/details focus. Known names without recorded views remain text. Door access, acquisition and exploration stay unchanged. Focus is restored by source/target/observation identity after a live redraw, and returns to room details when the control disappears or tracking is interrupted.
+
+The RE1/RE2 browser suites cover keyboard inspection, locked destinations, opposite-side access, two independent doors to one room, a metadata-derived cross-floor connection, unvisited and missing-view destinations, exact focused-door identity and interruption/recovery. The existing item/search, camera-alias, unoutlined-room, keyboard and refresh checks also pass, along with 58 map/multi-area Python tests, scoped Ruff/formatting, local links and whitespace checks. Private `/tmp/re-map-door-navigation-20261029/render-map.mjs` checks a round trip from the existing user publication at desktop/mobile sizes, recentering after zoom, focus, no overflow/page errors, and complete publication equality. The README screenshot is refreshed from that same exploration. No emulator gameplay or game-state interpretation is added.
+
+Implemented and directly reviewed on 2026-10-29 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Review checks observed-view admission, unchanged access/reveal, shared navigation, focus identity, readable controls and responsive rendering. External review providers remain disabled; no external endorsement is claimed.
+
 ## Cleared-room search
 
 The shared room search includes explored rooms whose fresh verdict is Cleared. It matches their room/floor names and uses the existing room navigation. The normal overview stays focused on outstanding items. Empty item groups hide when only cleared rooms match; interruption clears the result and restores the tracking messages. Per-list result keys preserve focused links while their result list is unchanged, and reset after interruption. No collection, clearance, door or exploration rule changes.

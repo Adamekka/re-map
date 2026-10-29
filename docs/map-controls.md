@@ -19,3 +19,7 @@ Use **Floor** to browse explored floors and **Follow player** to return to the c
 ## Find items and rooms
 
 Use **Find item or room** to filter remaining items and unresolved checks by their displayed names, room or floor. Matching **Cleared rooms** appear separately when you search by room or floor name. Select a result to inspect its room on the map. Collected items do not become remaining-item matches. Escape clears the search and restores the normal item overview. Results include explored rooms only and follow fresh tracking state.
+
+## Inspect connected rooms
+
+Select an underlined destination in **Doors** to inspect its explored room. The tracker switches floors when needed and centers the recorded outline, retaining zoom when it fits. The room details receive focus when the current room has no outline. Door access continues to reflect game state. Destinations without a recorded map view stay as text. **Follow player** resumes tracking the room you enter.
