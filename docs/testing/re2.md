@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Cleared-room search
+
+The shared room search includes explored rooms whose fresh verdict is Cleared. It matches their room/floor names and uses the existing room navigation. The normal overview stays focused on outstanding items. Empty item groups hide when only cleared rooms match; interruption clears the result and restores the tracking messages. Per-list result keys preserve focused links while their result list is unchanged, and reset after interruption. No collection, clearance, door or exploration rule changes.
+
+Run `bun tests/check_re2_map_browser.mjs <python>` and `bun tests/check_map_browser.mjs <python>`. The new cases cover room/floor matching, keyboard navigation across floors, case/space handling, clearance reversal, collected-item exclusion, interruption/recovery, unvisited-history removal, mobile overflow and one logical result for multiple RE1 camera outlines. A focused-link regression first fails on an unrelated item update, then passes with stable per-list rendering. The keyboard and refresh suites, 58 map/multi-area Python tests, scoped Ruff/formatting, local links and whitespace checks also pass. The README screenshot uses only existing user exploration and the unchanged captured publication. Private baseline/render scripts are under `/tmp/re-map-cleared-search-20261029/`. Baseline `da65cba` returns zero results for a known cleared room in that publication.
+
+Implemented and directly reviewed on 2026-10-29 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Review checks fresh-verdict admission, explored-only lookup, shared navigation, list-cache invalidation, keyboard focus and desktop/mobile rendering. Configured external review providers remain disabled; no external endorsement or new native gameplay is claimed.
+
 ## Keyboard map navigation
 
 Run `bun tests/check_map_keyboard_browser.mjs <python>`, using the Python environment for tracker tests and Playwright/Bun configured as for the other browser suites. The RE1 and RE2 cases check natural tab order, visible focus, accessible room controls, four pan directions, zoom/fit and shared limits, retained room focus/selection, pose-update stability, full item/door redraws, merely tabbed room identity, focused-outline removal, browser modifier shortcuts, typing outside the map, interrupted/empty maps and unchanged reveal. [Map controls](../map-controls.md) documents the shared behavior.

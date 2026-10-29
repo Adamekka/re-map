@@ -333,6 +333,14 @@ try {
   assert.match(await checks.textContent(), /Guardhouse/);
   assert.match(await page.locator('#doors').textContent(), /Unlocked/);
   assert.equal(await page.locator('.door.OPEN').count(), 1);
+  const roomSearch = page.getByLabel('Find item or room', { exact: true });
+  await roomSearch.fill('winding PASSAGE');
+  assert.equal(await page.locator('#cleared-rooms .room-link').count(), 1, 'cleared RE1 rooms must remain searchable');
+  await page.locator('#cleared-rooms .room-link').press('Enter');
+  assert.equal(await page.locator('#room-id').textContent(), 'Room 00-09');
+  assert.equal(await page.locator('#completion').textContent(), 'Cleared');
+  await roomSearch.press('Escape');
+  assert(await page.locator('#cleared-section').isHidden());
   state = states.rewound;
   await page.waitForFunction(() => document.getElementById('items').textContent.includes('Remaining'));
   assert.match(await remaining.textContent(), /Green Herb/);
@@ -385,6 +393,18 @@ try {
   await current.click();
   assert.equal(await page.locator('.room.current').count(), 1);
   assert.equal(await page.locator('.player').getAttribute('aria-label'), 'You · Elevator Stairway');
+  const clearedAliases = structuredClone(states.camera_alias);
+  for (const visit of [clearedAliases.current_detail, ...clearedAliases.rooms, ...Object.values(clearedAliases.explored_areas).flat()]) {
+    visit.state = 'CLEARED';
+    visit.items = visit.items.map(item => ({ ...item, state: 'taken' }));
+  }
+  state = clearedAliases;
+  await roomSearch.fill('Elevator Stairway');
+  await page.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
+  await page.locator('#cleared-rooms .room-link').press('Enter');
+  assert.equal(await floor.inputValue(), 'mansion1f', 'cleared camera aliases must prefer the current observed outline');
+  await roomSearch.press('Escape');
+  await current.click();
   state = states.helmet_doors;
   await page.waitForFunction(() => document.getElementById('room-id').textContent.includes('01-0b'));
   assert.equal(await page.locator('.door[data-door="0B-0C"].LOCKED').count(), 1, 'Lesson Room must match its returned-Mansion outline before the return');

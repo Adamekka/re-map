@@ -15,3 +15,7 @@ These controls work in both RE1 and RE2. Use Tab to focus the map or an explored
 The mouse wheel and zoom buttons also zoom; dragging moves the map. Navigation keeps the selected room and reveals no unexplored rooms. Live updates preserve the chosen view and focused room. If the focused outline disappears, focus moves to the map. Keyboard controls pause when tracking is interrupted or the floor has no outlined rooms. Browser shortcuts and typing outside the map keep their usual behavior.
 
 Use **Floor** to browse explored floors and **Follow player** to return to the current floor and resume selecting rooms as you enter them.
+
+## Find items and rooms
+
+Use **Find item or room** to filter remaining items and unresolved checks by their displayed names, room or floor. Matching **Cleared rooms** appear separately when you search by room or floor name. Select a result to inspect its room on the map. Collected items do not become remaining-item matches. Escape clears the search and restores the normal item overview. Results include explored rooms only and follow fresh tracking state.

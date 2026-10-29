@@ -274,6 +274,7 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 #overview { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:0 28px 28px; }
 #item-search-label { grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:13px; color:#abb9c5; }
 #item-search { box-sizing:border-box; width:min(100%,320px); }
+#cleared-section { grid-column:1/-1; }
 #overview h2 { margin:0 0 12px; }
 #overview h3 { margin:18px 0 8px; font-size:14px; font-weight:500; }
 #overview p { margin:0; font-size:13px; color:#91a5b4; }
@@ -306,9 +307,10 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key door-key unlocked-key"></i>Unlocked · access unconfirmed</span>
 </div>
 <section id="overview" aria-label="Explored room items">
-<label id="item-search-label" for="item-search">Find item or room<input id="item-search" type="search" autocomplete="off" aria-controls="remaining-items incomplete-checks" disabled></label>
-<section aria-labelledby="remaining-heading"><h2 id="remaining-heading">Remaining items</h2><p id="remaining-status">Waiting for game.</p><div id="remaining-items"></div></section>
-<section aria-labelledby="checks-heading"><h2 id="checks-heading">Incomplete item checks</h2><p id="checks-status">Waiting for game.</p><div id="incomplete-checks"></div></section>
+<label id="item-search-label" for="item-search">Find item or room<input id="item-search" type="search" autocomplete="off" aria-controls="remaining-items incomplete-checks cleared-rooms" disabled></label>
+<section id="cleared-section" aria-labelledby="cleared-heading" hidden><h2 id="cleared-heading">Cleared rooms</h2><div id="cleared-rooms"></div></section>
+<section id="remaining-section" aria-labelledby="remaining-heading"><h2 id="remaining-heading">Remaining items</h2><p id="remaining-status">Waiting for game.</p><div id="remaining-items"></div></section>
+<section id="checks-section" aria-labelledby="checks-heading"><h2 id="checks-heading">Incomplete item checks</h2><p id="checks-status">Waiting for game.</p><div id="incomplete-checks"></div></section>
 </section>
 <script>
 const catalog = __GRAPH__;
@@ -602,8 +604,13 @@ function draw(state) {
     document.getElementById('doors').replaceChildren();
     document.getElementById('note').textContent='';
     overviewKey='';
-    document.getElementById('remaining-items').replaceChildren();
-    document.getElementById('incomplete-checks').replaceChildren();
+    for(const id of ['remaining-items','incomplete-checks','cleared-rooms']) {
+      const container=document.getElementById(id);
+      container.replaceChildren();
+      delete container.dataset.entriesKey;
+    }
+    document.getElementById('cleared-section').hidden=true;
+    for(const id of ['remaining-section','checks-section']) document.getElementById(id).hidden=false;
     for(const id of ['remaining-status','checks-status']) {
       const message=document.getElementById(id);
       message.hidden=false;
@@ -865,10 +872,11 @@ function updateOverview(state) {
       if(!observed.has(visit.room)) observed.set(visit.room,{area,visit});
     }
   }
-  const remaining=[],checks=[];
+  const remaining=[],checks=[],cleared=[];
   for(const {area,visit} of observed.values()) {
     if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
     const entry={area,id:visit.id,room:visit.room,name:roomName(area,visit),labels:[]};
+    if(visit.state==='CLEARED') cleared.push(entry);
     const labels=visit.items.filter(itemRemains).map(itemLabel);
     if(labels.length) remaining.push({...entry,labels});
     // A remaining item makes the room red even when other item checks are
@@ -880,22 +888,22 @@ function updateOverview(state) {
     ]});
   }
   const query=itemSearch.value.trim().toLowerCase();
-  const key=JSON.stringify([query,remaining,checks]);
+  const key=JSON.stringify([query,remaining,checks,query ? cleared : []]);
   // Keep focused overview links intact during unchanged game polls.
   if(key!==overviewKey) {
     overviewKey=key;
-    function showEntries(containerId,messageId,entries,emptyMessage) {
+    function showEntries(containerId,entries) {
       entries=entries.filter(entry=>{
         const floor=areas.has(entry.area) ? areas.get(entry.area).name : 'Room '+entry.room;
         return [entry.name,floor,...entry.labels].join(' ').toLowerCase().includes(query);
-      });
+      }).sort((a,b)=>a.area.localeCompare(b.area)||a.name.localeCompare(b.name)||a.room.localeCompare(b.room));
       const container=document.getElementById(containerId);
+      const entriesKey=JSON.stringify(entries);
+      // Keep unchanged result lists intact during unrelated live updates.
+      if(container.dataset.entriesKey===entriesKey) return entries.length;
       container.replaceChildren();
-      const message=document.getElementById(messageId);
-      message.hidden=entries.length>0;
-      message.textContent=emptyMessage;
       const groups=new Map();
-      for(const entry of entries.sort((a,b)=>a.area.localeCompare(b.area)||a.name.localeCompare(b.name)||a.room.localeCompare(b.room))) {
+      for(const entry of entries) {
         if(!groups.has(entry.area)) {
           const heading=document.createElement('h3'),list=document.createElement('ul');
           heading.textContent=areas.has(entry.area) ? areas.get(entry.area).name : 'Room '+entry.room;
@@ -932,9 +940,21 @@ function updateOverview(state) {
         });
         row.append(link);groups.get(entry.area).append(row);
       }
+      container.dataset.entriesKey=entriesKey;
+      return entries.length;
     }
-    showEntries('remaining-items','remaining-status',remaining,query ? 'No matching remaining items.' : 'No known remaining items.');
-    showEntries('incomplete-checks','checks-status',checks,query ? 'No matching incomplete item checks.' : 'No incomplete item checks.');
+    // Cleared rooms are navigation results during search, while the normal overview stays focused on outstanding items.
+    const clearedCount=showEntries('cleared-rooms',query ? cleared : []);
+    document.getElementById('cleared-section').hidden=clearedCount===0;
+    for(const [containerId,messageId,entries,emptyMessage] of [
+      ['remaining-items','remaining-status',remaining,query ? 'No matching remaining items.' : 'No known remaining items.'],
+      ['incomplete-checks','checks-status',checks,query ? 'No matching incomplete item checks.' : 'No incomplete item checks.'],
+    ]) {
+      const count=showEntries(containerId,entries),message=document.getElementById(messageId);
+      message.hidden=count>0;
+      message.textContent=emptyMessage;
+      message.parentElement.hidden=clearedCount>0 && count===0;
+    }
   }
 }
 let sceneKey='';
