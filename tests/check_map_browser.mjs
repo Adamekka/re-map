@@ -296,11 +296,15 @@ try {
   assert.equal(await page.locator('#room-id').textContent(), 'Room 00-09');
   assert.equal(await page.locator('.room.selected').count(), 1);
   await current.click();
+  await remainingLink.focus();
   state = states.partial;
   await page.waitForFunction(() => document.getElementById('incomplete-checks').textContent.includes('Winding Passage'));
   assert.match(await remaining.textContent(), /Green Herb/);
+  assert(await remainingLink.evaluate(link => link === document.activeElement), 'adding an unresolved check must keep focus in Remaining items');
+  await checks.getByRole('button', { name: /^Winding Passage/ }).focus();
   state = states.initial;
   await page.waitForFunction(() => !document.getElementById('incomplete-checks').textContent.includes('Winding Passage'));
+  assert(await remainingLink.evaluate(link => link === document.activeElement), 'resolving a check must retain focus on the same room in Remaining items');
   assert.deepEqual(await floor.locator('option').evaluateAll(options => options.map(option => option.value)), ['mansion1f', 'mansion2f']);
   await page.locator('#map').getByRole('button', { name: 'Main Hall 2F', exact: true }).click();
   assert(!(await current.isDisabled()));
@@ -328,10 +332,12 @@ try {
   assert.equal(await floor.inputValue(), 'guardhouse1f');
   assert.equal(await page.locator('.room.current').count(), 1);
   await floor.selectOption('mansion1f');
+  await remainingLink.focus();
   state = states.collected;
   await page.waitForFunction(() => document.getElementById('items').textContent.includes('Green HerbCollected'));
   assert.equal(await remaining.getByRole('button').count(), 0);
   assert.equal(await page.locator('#remaining-status').textContent(), 'No known remaining items.');
+  assert(await page.getByLabel('Find item or room', { exact: true }).evaluate(input => input === document.activeElement), 'a room leaving all result groups must return focus to search');
   assert.match(await checks.textContent(), /Guardhouse/);
   assert.match(await page.locator('#doors').textContent(), /Unlocked/);
   assert.equal(await page.locator('.door.OPEN').count(), 1);
@@ -347,6 +353,7 @@ try {
   await page.waitForFunction(() => document.getElementById('items').textContent.includes('Remaining'));
   assert.match(await remaining.textContent(), /Green Herb/);
 
+  await remainingLink.focus();
   state = { status: 'waiting', error: 'Test connection interruption' };
   await page.waitForFunction(() => document.getElementById('floor').disabled);
   assert(await current.isDisabled());
@@ -356,10 +363,12 @@ try {
   assert.equal(await page.locator('#note').textContent(), '', 'interruption must clear stale verdict explanations');
   assert.equal(await page.locator('#overview button').count(), 0);
   assert.equal(await page.locator('#remaining-status').textContent(), 'Tracking interrupted.');
+  assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'interruption must move removed-result focus to room details');
   state = states.collected;
   await page.waitForFunction(() => !document.getElementById('floor').disabled);
   assert.equal(await floor.inputValue(), 'mansion1f');
   assert.match(await page.locator('#items').textContent(), /Collected/);
+  assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'recovery must preserve the current keyboard position');
 
   state = states.new_history;
   await page.waitForFunction(() => document.getElementById('floor').value === 'mansion2f');

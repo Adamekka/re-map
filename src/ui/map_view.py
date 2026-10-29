@@ -628,6 +628,7 @@ function draw(state) {
   const status=document.getElementById('status');
   const focusedRoom=svg.querySelector('.room:focus');
   const focusedDoor=document.querySelector('#doors .door-room-link:focus');
+  const focusedResult=document.querySelector('#overview .room-link:focus');
   const focusedArea=viewport.mode==='empty' ? null : viewport.area;
   lastState=state;
   if(state.status!=='display') {
@@ -660,7 +661,8 @@ function draw(state) {
       message.hidden=false;
       message.textContent='Tracking interrupted.';
     }
-    if(focusedDoor) document.getElementById('room-name').focus({preventScroll:true});
+    // Overview results can be far below the details; expose the replacement focus target when they disappear.
+    if(focusedDoor || focusedResult) document.getElementById('room-name').focus({preventScroll:focusedResult===null});
     return;
   }
   const availableViews=new Map(Object.entries(state.explored_areas).map(([area,visits])=>[area,new Set(visits.map(visit=>visit.id))]));
@@ -993,6 +995,8 @@ function updateOverview(state) {
   const key=JSON.stringify([query,remaining,checks,query ? cleared : []]);
   // Keep focused overview links intact during unchanged game polls.
   if(key!==overviewKey) {
+    const focusedResult=document.querySelector('#overview .room-link:focus');
+    const focusedList=focusedResult===null ? null : focusedResult.closest('[id]');
     overviewKey=key;
     function showEntries(containerId,entries) {
       entries=entries.filter(entry=>{
@@ -1012,7 +1016,7 @@ function updateOverview(state) {
           container.append(heading,list);groups.set(entry.area,list);
         }
         const row=document.createElement('li'),link=document.createElement('button'),name=document.createElement('span');
-        link.type='button';link.className='room-link';name.textContent=entry.name;link.append(name);
+        link.type='button';link.className='room-link';link.dataset.room=entry.room;name.textContent=entry.name;link.append(name);
         if(entry.labels.length) {
           const labels=document.createElement('span');labels.textContent=entry.labels.join(', ');link.append(labels);
         }
@@ -1033,6 +1037,13 @@ function updateOverview(state) {
       message.hidden=count>0;
       message.textContent=emptyMessage;
       message.parentElement.hidden=clearedCount>0 && count===0;
+    }
+    if(focusedResult!==null && !focusedResult.isConnected) {
+      // A logical room can move between result groups or floor outlines after a fresh read.
+      const matches=[...document.querySelectorAll('#overview .room-link')].filter(link=>link.dataset.room===focusedResult.dataset.room);
+      const target=matches.find(link=>focusedList.contains(link)) || matches[0] || itemSearch;
+      // Keep the page steady within a list; expose a different group or search field when focus moves there.
+      target.focus({preventScroll:focusedList.contains(target)});
     }
   }
 }

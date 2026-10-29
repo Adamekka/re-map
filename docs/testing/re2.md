@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Room-result keyboard focus
+
+A focused overview result now retains its logical room identity when fresh quantities, item labels, verdicts or floor observations rebuild the list. It prefers the same result section, follows that room into another section when needed, and returns to search when no result remains. Same-section changes preserve page scroll. Tracking interruption clears stale results and moves focus to visible room details; recovery leaves that keyboard position intact.
+
+The RE2 browser regression first fails on focus loss after a quantity update. It now checks changed/unknown/zero/unit quantities without scroll movement, same-room floor changes, clearance reversal, changed unresolved labels, result-group transitions, history removal and interruption/recovery. RE1 adds remaining/check transitions, result removal and interruption recovery. Both map suites, keyboard, Back, refresh and real-server restart browser checks pass, along with 59 map/multi-area Python tests, scoped Ruff/formatting, local links and whitespace checks. Private `/tmp/re-map-result-focus-20261030/render-map.mjs` verifies desktop/mobile inspection and visible replacement focus from a long item list using existing user exploration. Its restored publication equals the captured state. The README image is re-rendered and byte-identical. No game interpretation, persisted data or native gameplay changes.
+
+Fixed and directly reviewed on 2026-10-30 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Review covers logical identity, section preference, removed-control recovery, focus visibility, stable scrolling, shared navigation and unchanged exploration. External review providers remain disabled; no external endorsement is claimed.
+
 ## Map tabs across tracker restarts
 
 Each MapServer run creates a UUID shared by its page metadata and `X-Map-Instance` response header. The browser checks it before parsing state. A different run clears the previous page content and reloads the matching catalog, including same-profile restarts that may belong to another playthrough. Missing or malformed identity headers show an explicit reload message without a reload loop. Same-run game-read and connection failures retain the chosen view and search. Snapshot JSON, exploration storage and game interpretation are unchanged.

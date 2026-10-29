@@ -189,11 +189,14 @@ try {
   state.player_heading = 180;
   await page.waitForFunction(() => document.querySelector('.player path')?.getAttribute('transform').includes('rotate(180)'));
   assert(await focusedRoom.evaluate(link => link === document.activeElement), 'pose-only polls must preserve overview keyboard focus');
+  const resultScroll = await page.evaluate(() => scrollY);
   for (const amount of [30, 'unreconstructed', 0, 1, 15]) {
     for (const visit of visits) visit.items[0].quantity = amount;
     const label = amount === 'unreconstructed' || amount === 1 ? 'Handgun ammo' : 'Handgun ammo ×' + amount;
     await page.waitForFunction(expected => document.querySelector('#items .entry-name')?.textContent === expected, label);
     assert.equal(await remainingRoom.locator('span').last().textContent(), label, 'overview quantities must refresh after a changed game state');
+    assert(await remainingRoom.evaluate(link => link === document.activeElement), 'fresh quantities must retain the focused room result');
+    assert.equal(await page.evaluate(() => scrollY), resultScroll, 'fresh labels in the same result group must preserve page scroll');
     assert.equal(await page.locator('#completion').textContent(), 'Items remain');
     assert.match(await page.locator('#incomplete-checks').textContent(), /Unresolved: Shotgun/);
   }
@@ -333,12 +336,15 @@ try {
   assert.equal(await page.locator('#map .room').count(), 1);
   assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 1);
   assert.equal(await page.locator('[data-observations~="00-16:2522"]').count(), 0, 'a lower-floor trigger must not appear on the upper outline');
+  const floorResult = page.locator('#incomplete-checks .room-link[data-room="00-16"]');
+  await floorResult.focus();
   Object.assign(state, floorStates['lower-later']);
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-02');
   assert.deepEqual(await floor.locator('option').evaluateAll(options => options.map(option => option.value)), ['re2-02', 're2-03']);
   assert.equal(await page.locator('#map .room').count(), 1, 'a floor change must reveal only its visited region');
   assert.equal(await page.locator('[data-observations~="00-16:2522"]').count(), 1);
   assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 0);
+  assert(await floorResult.evaluate(node => node === document.activeElement), 'the same logical room must retain result focus after changing floors');
   await floor.selectOption('re2-03');
   assert.equal(await page.locator('.player').count(), 0, 'browsing another floor must hide the player');
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
@@ -405,24 +411,39 @@ try {
   await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 0);
   assert.match(await roomSearchPage.locator('#incomplete-checks').textContent(), /Unresolved: Green Herb/);
   assert(await roomSearch.evaluate(node => node === document.activeElement), 'a fresh verdict must preserve search focus');
+  for (const visit of targetVisits) { visit.state = 'CLEARED'; visit.items[0].state = 'taken'; }
+  await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
+  await clearedRooms.getByRole('button').focus();
+  for (const visit of targetVisits) { visit.state = 'UNKNOWN'; visit.items[0].state = 'unknown'; }
+  await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 0);
+  const focusedCheck = roomSearchPage.locator('#incomplete-checks .room-link');
+  assert(await focusedCheck.evaluate(node => node === document.activeElement), 'a reversed clearance must move room focus to its unresolved result');
+  for (const visit of targetVisits) visit.items[0].label = 'Blue Herb';
+  await roomSearchPage.waitForFunction(() => document.getElementById('incomplete-checks').textContent.includes('Unresolved: Blue Herb'));
+  assert(await focusedCheck.evaluate(node => node === document.activeElement), 'changed unresolved labels must retain room focus');
   for (const visit of targetVisits) Object.assign(visit, { state: 'CLEARED', items: [{ label: 'Green Herb', state: 'taken', quantity: 1, quantity_is_unit_count: false }] });
   await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
+  assert(await clearedRooms.getByRole('button').evaluate(node => node === document.activeElement), 'a resolved room must retain focus in Cleared rooms');
   await roomSearch.fill('Green Herb');
   assert.equal(await clearedRooms.getByRole('button').count(), 0, 'collected item names must not turn cleared rooms into remaining-item matches');
   await roomSearch.fill('Waiting Room');
+  await clearedRooms.getByRole('button').focus();
   searchPublication = { status: 'waiting', error: 'Tracking interrupted.' };
   await roomSearchPage.waitForFunction(() => document.getElementById('item-search').disabled);
   assert(await roomSearchPage.locator('#cleared-section').isHidden());
   assert.equal(await clearedRooms.getByRole('button').count(), 0, 'interruption must clear stale clearance results');
   assert(await roomSearchPage.locator('#remaining-section').isVisible());
   assert(await roomSearchPage.locator('#checks-section').isVisible());
+  assert(await roomSearchPage.locator('#room-name').evaluate(node => node === document.activeElement), 'tracking interruption must keep keyboard focus on available room details');
   searchPublication = searchSnapshot;
   await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
   await roomSearchPage.setViewportSize({ width: 390, height: 844 });
   assert.equal(await roomSearchPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await clearedRooms.getByRole('button').focus();
   for (const [area, visits] of Object.entries(searchSnapshot.explored_areas)) searchSnapshot.explored_areas[area] = visits.filter(visit => visit.room !== '01-01');
   await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 0);
   assert.equal(await roomSearchPage.locator('#overview .room-link').count(), 0, 'new exploration history must not retain catalog-only room results');
+  assert(await roomSearch.evaluate(node => node === document.activeElement), 'removing an explored result must return focus to search');
   await roomSearch.press('Escape');
   assert.equal(await roomSearch.inputValue(), '');
   assert(await roomSearchPage.locator('#cleared-section').isHidden());
