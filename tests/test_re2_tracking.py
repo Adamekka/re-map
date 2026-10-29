@@ -603,6 +603,63 @@ def test_startup_setup_preserves_all_departed_items_through_acquisition_reversal
 
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_startup_declaration_retains_departed_item_without_selecting_quantity(snapshot):
+    """RE2-STARTUP-002: positive declaration knowledge survives fresh flag reversal."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["00-02"]
+    assert not source["fixed_context_preserved"]
+    assert [proof["global_id"] for proof in source["startup_item_declarations"]] == [
+        154
+    ]
+    assert not source["collection_item_ids"]
+    assert not source["conditional_item_presence"]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 2))
+    bank, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
+    visits = None
+    for acquired in (False, True, False):
+        put(bank + 16, 0x20 if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        room = tracker.rooms["00-02"]
+        assert room.list_complete
+        (item,) = room.items
+        assert (item.label, item.state, item.quantity) == (
+            "Handgun ammo",
+            "taken" if acquired else "uncollected",
+            ItemQuantityState.Unreconstructed,
+        )
+        assert room.completion is (
+            RoomCompletion.Cleared if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 2))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["00-02"] == room
+        assert set(tracker.rooms) == {"00-01", "00-02"}
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+def test_startup_declaration_acquisition_must_stay_coherent(snapshot):
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 2))
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    address = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0] + 16
+
+    def torn_read(base, width):
+        if (base, width) == (address, 4):
+            put(address, 0x20, 4)
+        return read(base, width)
+
+    assert poll_re2(profile, tracker, torn_read).status is PollStatus.Retry
+    assert tracker == before
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
 def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapshot):
     """RE2-CONTROL-001: source setup cannot erase a known remaining pickup."""
     profile, _, put, read = snapshot

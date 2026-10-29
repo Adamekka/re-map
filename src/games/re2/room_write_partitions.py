@@ -129,9 +129,14 @@ class RoomWritePartitions:
         )
 
 
-def static_object_packet(packet: bytes) -> bool:
+def static_object_packet(
+    packet: bytes, *, render_flags: frozenset[int] = frozenset((0x10, 0x30))
+) -> bool:
     """Recognize the audited 2D form; resource/freshness proofs stay required."""
     assert type(packet) is bytes
+    assert type(render_flags) is frozenset and all(
+        type(value) is int and 0 <= value <= 0xFFFF for value in render_flags
+    )
     # Attachments and effect modes can change later native ownership. Only
     # this static form shares the bounded object/model write interpretation.
     return (
@@ -141,7 +146,7 @@ def static_object_packet(packet: bytes) -> bool:
         and packet[6] in (0, 1)
         and packet[7:10] == bytes(3)
         and packet[10:12] == b"\x0a\0"
-        and packet[12:14] in (b"\x10\0", b"\x30\0")
+        and int.from_bytes(packet[12:14], "little") in render_flags
         and not any(packet[26:])
     )
 
@@ -178,6 +183,75 @@ def sca_write_partition(
         SourceRange(collision, count * 16),
         SourceRange(collision + (index + 1) * 16 + 8, 2),
     )
+
+
+def embedded_model_resource(
+    data: bytes, entry: int, floor: int
+) -> EmbeddedModelResource | ModelResourceState | RoomWritePartitionFailure:
+    """Validate one MD1 directory entry without assigning it an execution lifetime."""
+    assert type(data) is bytes and type(entry) is int and type(floor) is int
+
+    def require(condition: bool, reason=RoomWritePartitionFailure.ObjectModel):
+        if not condition:
+            raise _InvalidPartition(reason)
+
+    try:
+        require(100 <= entry <= floor - 8 and floor <= len(data))
+        texture, model = struct.unpack_from("<II", data, entry)
+        require(texture < len(data))
+        if model == 0:
+            return ModelResourceState.Absent
+        require(model >= 100 and model % 4 == 0 and model + 12 <= floor)
+        body_width, flags, count = struct.unpack_from("<III", data, model)
+        require(
+            flags == 0
+            and count >= 2
+            and count % 2 == 0
+            and 12 + count * 28 <= body_width
+            and body_width % 4 == 0
+            and model + body_width <= floor,
+            RoomWritePartitionFailure.ObjectModel,
+        )
+        writes, uv_width = [], 0
+        # MD1 offsets are relative to the first object record, not its
+        # 12-byte header. Header word 0 excludes the appended UV records.
+        for index in range(count):
+            at = model + 12 + index * 28
+            vertex, vertices, normal, normals, primitive, primitives, uv = (
+                struct.unpack_from("<7I", data, at)
+            )
+            stride = 12 if index % 2 == 0 else 16
+            for pointer, width in (
+                (vertex, vertices * 8),
+                (normal, normals * 8),
+                (primitive, primitives * stride),
+            ):
+                require(
+                    pointer % 4 == 0
+                    and pointer >= count * 28
+                    and 12 + pointer + width <= body_width,
+                    RoomWritePartitionFailure.ObjectModel,
+                )
+            require(
+                12 + uv == body_width + uv_width
+                and model + body_width + uv_width + primitives * stride <= floor,
+                RoomWritePartitionFailure.ObjectModel,
+            )
+            # 2CFD8 relocates four pointers. Both mesh allocators can
+            # subsequently replace the fourth with a tagged packet cache.
+            writes.extend(SourceRange(at + field, 4) for field in (0, 8, 16, 24))
+            for primitive_index in range(primitives):
+                start = model + 12 + uv + primitive_index * stride
+                writes.extend((SourceRange(start, 4), SourceRange(start + 4, 4)))
+            uv_width += primitives * stride
+        asset = SourceRange(model, body_width + uv_width)
+        return EmbeddedModelResource(SourceRange(entry, 8), asset, count, tuple(writes))
+    except (_InvalidPartition, struct.error) as error:
+        return (
+            error.reason
+            if isinstance(error, _InvalidPartition)
+            else RoomWritePartitionFailure.ObjectModel
+        )
 
 
 def room_write_partitions(
@@ -387,69 +461,18 @@ def room_write_partitions(
                 RoomWritePartitionFailure.ObjectModel,
             )
             entry = sections[10] + slot * 8
-            texture, model = struct.unpack_from("<II", data, entry)
-            require(texture < len(data), RoomWritePartitionFailure.ObjectModel)
             record = RamRange(config.object_address + slot * 0x1F8, 0x1F8)
-            if model == 0:
-                # The relocated null field equals the RDT base; native 2D
-                # disables the object and skips its model-loader branch.
-                objects.append(
-                    ObjectWritePartition(
-                        position, slot, record, ModelResourceState.Absent
-                    )
-                )
+            resource = embedded_model_resource(data, entry, floor)
+            require(
+                not isinstance(resource, RoomWritePartitionFailure),
+                RoomWritePartitionFailure.ObjectModel,
+            )
+            if resource is ModelResourceState.Absent:
+                # Native null disables the object before its model-loader branch.
+                objects.append(ObjectWritePartition(position, slot, record, resource))
                 continue
-            require(
-                model >= 100 and model % 4 == 0 and model + 12 <= floor,
-                RoomWritePartitionFailure.ObjectModel,
-            )
-            body_width, flags, count = struct.unpack_from("<III", data, model)
-            require(
-                flags == 0
-                and count >= 2
-                and count % 2 == 0
-                and 12 + count * 28 <= body_width
-                and body_width % 4 == 0
-                and model + body_width <= floor,
-                RoomWritePartitionFailure.ObjectModel,
-            )
-            writes, uv_width = [], 0
-            # MD1 offsets are relative to the first object record, not its
-            # 12-byte header. Header word 0 excludes the appended UV records.
-            for index in range(count):
-                at = model + 12 + index * 28
-                vertex, vertices, normal, normals, primitive, primitives, uv = (
-                    struct.unpack_from("<7I", data, at)
-                )
-                stride = 12 if index % 2 == 0 else 16
-                for pointer, width in (
-                    (vertex, vertices * 8),
-                    (normal, normals * 8),
-                    (primitive, primitives * stride),
-                ):
-                    require(
-                        pointer % 4 == 0
-                        and pointer >= count * 28
-                        and 12 + pointer + width <= body_width,
-                        RoomWritePartitionFailure.ObjectModel,
-                    )
-                require(
-                    12 + uv == body_width + uv_width
-                    and model + body_width + uv_width + primitives * stride <= floor,
-                    RoomWritePartitionFailure.ObjectModel,
-                )
-                # 2CFD8 relocates four pointers. Both mesh allocators can
-                # subsequently replace the fourth with a tagged packet cache.
-                writes.extend(SourceRange(at + field, 4) for field in (0, 8, 16, 24))
-                for primitive_index in range(primitives):
-                    start = model + 12 + uv + primitive_index * stride
-                    writes.extend((SourceRange(start, 4), SourceRange(start + 4, 4)))
-                uv_width += primitives * stride
-            asset = SourceRange(model, body_width + uv_width)
-            reserve("model", asset)
-            resource = EmbeddedModelResource(
-                SourceRange(entry, 8), asset, count, tuple(writes)
-            )
+            assert isinstance(resource, EmbeddedModelResource)
+            reserve("model", resource.asset)
             objects.append(ObjectWritePartition(position, slot, record, resource))
             source_writes.append(SourceWritePartition(position, 0x2D, resource.writes))
 

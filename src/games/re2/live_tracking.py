@@ -336,6 +336,10 @@ def poll_re2(
                     for condition in proof["context_conditions"]
                 )
             }
+            declared_item_ids = {
+                declaration["global_id"]
+                for declaration in source.get("startup_item_declarations", [])
+            }
             # Resource-dependent script proofs have explicit state requirements.
             # A mismatching load keeps the raw catalog and fresh observations,
             # but cannot retain exclusions, selected variants or clearance.
@@ -421,6 +425,7 @@ def poll_re2(
                 elif (
                     dispatched
                     or gid in known_puzzle_ids
+                    or gid in declared_item_ids
                     or context_valid
                     and (
                         gid in source["collection_item_ids"]
@@ -430,8 +435,8 @@ def poll_re2(
                         )
                     )
                 ):
-                    # A known puzzle target remains required before activation;
-                    # this does not establish its current access or quantity.
+                    # A source-bound declaration or known puzzle target stays
+                    # required independently of current access and quantity.
                     state = "uncollected"
                 else:
                     state = "unknown"

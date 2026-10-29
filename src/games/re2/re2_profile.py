@@ -34,6 +34,10 @@ from games.re2.script_dispatch_items import (
     ScriptItemDispatchSupport,
     script_item_dispatch,
 )
+from games.re2.startup_declarations import (
+    StartupDeclarationAuditConfig,
+    startup_declaration_audit,
+)
 from games.re2.startup_effects import StartupEffectAuditConfig, startup_effect_audit
 from games.runtime_identity import MemoryResult, RuntimeSignature
 
@@ -157,6 +161,7 @@ class Re2Profile:
         dispatch = script_item_dispatch(raw)
         startup_audit = startup_effect_audit(raw)
         control_config = initializer_control_config(raw)
+        declaration_config = startup_declaration_audit(raw)
         entry_contract = room_entry_contract(raw)
         if isinstance(entry_contract, RoomEntryContractFailure):
             raise ValueError(entry_contract.value)
@@ -230,6 +235,16 @@ class Re2Profile:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
         if document.get("scenario_effect_pool") != raw["scenario_effect_pool"]:
             raise ValueError("RE2 effect pool proof disagrees with its revision layout")
+        if ("startup_declaration_audit" in document) != isinstance(
+            declaration_config, StartupDeclarationAuditConfig
+        ) or (
+            isinstance(declaration_config, StartupDeclarationAuditConfig)
+            and json.dumps(document["startup_declaration_audit"], sort_keys=True)
+            != json.dumps(raw["startup_declaration_audit"], sort_keys=True)
+        ):
+            raise ValueError(
+                "RE2 startup declaration audit disagrees with its revision"
+            )
         if ("initializer_control_audit" in document) != (
             isinstance(control_config, InitializerControlConfig)
         ) or (
@@ -402,6 +417,73 @@ class Re2Profile:
                 and not room.get("fixed_context_preserved")
             ):
                 raise ValueError("invalid or missing RE2 scenario context conditions")
+            declarations = room.get("startup_item_declarations", [])
+            declaration_capable = isinstance(
+                declaration_config, StartupDeclarationAuditConfig
+            )
+            if (
+                declaration_capable
+                and "startup_item_declarations" not in room
+                or not declaration_capable
+                and "startup_item_declarations" in room
+                or type(declarations) is not list
+                or len(declarations) > layout["aot_capacity"]
+            ):
+                raise ValueError("invalid or missing RE2 startup declarations")
+            declaration_ids = set()
+            for declaration in declarations:
+                # This native receipt covers the stage-zero loader only; it
+                # cannot authorize declarations in another stage's source arena.
+                if (
+                    type(declaration) is not dict
+                    or declaration.keys()
+                    != {"global_id", "item_type", "slot", "creator_offsets"}
+                    or type(declaration["global_id"]) is not int
+                    or not 0 <= declaration["global_id"] <= 255
+                    or declaration["global_id"] in declaration_ids
+                    or type(declaration["item_type"]) is not int
+                    or not 0 <= declaration["item_type"] < layout["file_type_min"]
+                    or type(declaration["slot"]) is not int
+                    or not 0 <= declaration["slot"] < layout["aot_capacity"]
+                    or type(room.get("stage")) is not int
+                    or room["stage"] != 0
+                    or type(room.get("size")) is not int
+                    or type(room.get("scenario_absent_item_ids")) is not list
+                    or declaration["global_id"] in room["scenario_absent_item_ids"]
+                    or type(declaration["creator_offsets"]) is not list
+                    or not declaration["creator_offsets"]
+                    or any(
+                        type(offset) is not int or not 0 <= offset <= room["size"] - 22
+                        for offset in declaration["creator_offsets"]
+                    )
+                    or declaration["creator_offsets"]
+                    != sorted(set(declaration["creator_offsets"]))
+                    or type(room.get("items")) is not list
+                    or any(
+                        type(item) is not dict
+                        or not {"offset", "global_id", "type", "slot"} <= item.keys()
+                        or any(
+                            type(item[field]) is not int
+                            for field in ("offset", "global_id", "type", "slot")
+                        )
+                        for item in room["items"]
+                    )
+                ):
+                    raise ValueError("invalid RE2 startup declaration")
+                creators = [
+                    item
+                    for item in room["items"]
+                    if item["global_id"] == declaration["global_id"]
+                ]
+                if (
+                    not creators
+                    or {(item["slot"], item["type"]) for item in creators}
+                    != {(declaration["slot"], declaration["item_type"])}
+                    or sorted(item["offset"] for item in creators)
+                    != declaration["creator_offsets"]
+                ):
+                    raise ValueError("unbound RE2 startup declaration identity")
+                declaration_ids.add(declaration["global_id"])
             puzzle_capable = isinstance(
                 entry_contract, RoomEntryContractConfig
             ) and isinstance(dispatch, ScriptItemDispatchConfig)

@@ -62,6 +62,14 @@ from games.re2.script_dispatch_items import (
     script_dispatch_relations,
     script_item_dispatch,
 )
+from games.re2.startup_declarations import (
+    StartupDeclarationAuditConfig,
+    StartupDeclarationFailure,
+    VerifiedStartupDeclarationContract,
+    bind_startup_declaration_audit,
+    startup_declaration_audit,
+    startup_declarations,
+)
 from games.re2.startup_effects import StartupEffectAuditConfig, startup_effect_audit
 
 AREA_NAMES = (
@@ -209,6 +217,8 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     if isinstance(entry_config, RoomEntryContractFailure):
         raise ValueError(entry_config.value)
     entry_contract = entry_config
+    declaration_config = startup_declaration_audit(profile)
+    declaration_contract = declaration_config
     projection = Re2MapProjection(**profile["map_projection"])
     fixed_flags = scenario_flags(profile)
     condition_flags = frozenset(
@@ -242,12 +252,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         )
         if identity != profile["executable_identity"]:
             raise ValueError("disc executable does not match the RE2 profile")
+
+        def entry_resource(path: str) -> bytes:
+            extent, size = _find(stream, root, root_size, path)
+            return _read_file(stream, extent, size)
+
         if isinstance(entry_config, RoomEntryContractConfig):
-
-            def entry_resource(path: str) -> bytes:
-                extent, size = _find(stream, root, root_size, path)
-                return _read_file(stream, extent, size)
-
             entry_contract = bind_room_entry_contract(
                 entry_config,
                 executable,
@@ -257,6 +267,14 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             )
             if isinstance(entry_contract, RoomEntryContractFailure):
                 raise ValueError(entry_contract.value)
+        declaration_resources = (
+            {
+                resource.path: entry_resource(resource.path)
+                for resource in declaration_config.resources
+            }
+            if isinstance(declaration_config, StartupDeclarationAuditConfig)
+            else {}
+        )
         load = struct.unpack_from("<I", executable, 0x18)[0]
         table = int(flag_proof["bank_table_address_ps1"], 0)
         for bank in flag_proof["flag_banks"]:
@@ -347,6 +365,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             f"pinned {target.label} disc must contain {target.room_count} room sources"
         )
     layout = profile["runtime_layout"]
+    if isinstance(declaration_config, StartupDeclarationAuditConfig):
+        declaration_contract = bind_startup_declaration_audit(
+            declaration_config, executable, declaration_resources, sources
+        )
+        if isinstance(declaration_contract, StartupDeclarationFailure):
+            raise ValueError(declaration_contract.value)
     if isinstance(control_config, InitializerControlConfig) and not isinstance(
         entry_contract, VerifiedRoomEntryContract
     ):
@@ -452,6 +476,17 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     if isinstance(targets, tuple)
                     else []
                 )
+        if isinstance(declaration_contract, VerifiedStartupDeclarationContract):
+            declarations = startup_declarations(
+                sources[room["id"]], room, profile, declaration_contract
+            )
+            # This is positive identity knowledge only. The full list, amount,
+            # absence and scenario-context proofs retain their independent scope.
+            room["startup_item_declarations"] = (
+                [asdict(item) for item in declarations]
+                if isinstance(declarations, tuple)
+                else []
+            )
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -734,11 +769,23 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     and isinstance(dispatch, ScriptItemDispatchConfig)
                     else []
                 ),
+                *(
+                    ["RE2-STARTUP-002"]
+                    if isinstance(
+                        declaration_contract, VerifiedStartupDeclarationContract
+                    )
+                    else []
+                ),
             ],
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),
             "scenario_actor_parts": profile.get("scenario_actor_parts", []),
+            **(
+                {"startup_declaration_audit": profile["startup_declaration_audit"]}
+                if isinstance(declaration_config, StartupDeclarationAuditConfig)
+                else {}
+            ),
             **(
                 {"initializer_control_audit": profile["initializer_control_audit"]}
                 if isinstance(control_config, InitializerControlConfig)

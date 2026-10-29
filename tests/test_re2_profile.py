@@ -24,6 +24,64 @@ from games.runtime_identity import RuntimeSignature
         "not-list",
         "duplicate",
         "boolean-id",
+        "wrong-type",
+        "wrong-slot",
+        "wrong-creators",
+        "empty-creators",
+        "extra-field",
+        "absent",
+        "null-items",
+        "header-drift",
+    ],
+)
+def test_startup_declarations_require_bound_item_identity(tmp_path, case):
+    profile_path = ROOT / "profiles/re2_leon_a_slus00748.json"
+    raw = json.loads(profile_path.read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((profile_path.parent / raw[field]).resolve())
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(room for room in document["rooms"] if room["id"] == "00-02")
+    proof = room["startup_item_declarations"][0]
+    if case == "missing":
+        del room["startup_item_declarations"]
+    elif case == "not-list":
+        room["startup_item_declarations"] = None
+    elif case == "duplicate":
+        room["startup_item_declarations"].append(proof)
+    elif case == "boolean-id":
+        proof["global_id"] = True
+    elif case == "wrong-type":
+        proof["item_type"] += 1
+    elif case == "wrong-slot":
+        proof["slot"] += 1
+    elif case == "wrong-creators":
+        proof["creator_offsets"][0] += 1
+    elif case == "empty-creators":
+        proof["creator_offsets"] = []
+    elif case == "extra-field":
+        proof["amount"] = 15
+    elif case == "absent":
+        room["scenario_absent_item_ids"].append(proof["global_id"])
+    elif case == "null-items":
+        room["items"] = None
+    else:
+        document["startup_declaration_audit"] = {}
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="RE2 startup declaration"):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "not-list",
+        "duplicate",
+        "boolean-id",
         "type",
         "creator",
         "callback",

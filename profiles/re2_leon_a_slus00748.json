@@ -30,7 +30,8 @@
     "RE2-DOOR-007",
     "RE2-STARTUP-001",
     "RE2-CONTROL-001",
-    "RE2-PUZZLE-001"
+    "RE2-PUZZLE-001",
+    "RE2-STARTUP-002"
   ],
   "script_item_dispatch": {
     "main_table_address_ps1": "0x800D8CBC",
@@ -55,6 +56,1710 @@
       {"address_ps1": "0x801F2E00", "limit_address_ps1": "0x80200000"},
       {"address_ps1": "0x801ECE00", "limit_address_ps1": "0x80200000"}
     ]
+  },
+  "startup_declaration_audit": {
+    "audit": "slus00748-startup-declarations-v1",
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
+    "resources": [
+      {
+        "path": "COMMON/BIN/CONFIG.BIN",
+        "width": 27756,
+        "sha256": "f0c2d7a6d1dfb6b494559bbb14a4b088f9dc58aeaa73c606a4934390de08cac7"
+      },
+      {
+        "path": "COMMON/BIN/DIEDEMO.BIN",
+        "width": 14536,
+        "sha256": "cf2caf129e238cb02acd0b341bf339e100f6f954b1ddb6337d1419c691766b24"
+      },
+      {
+        "path": "COMMON/BIN/ENDING.BIN",
+        "width": 47194,
+        "sha256": "62663a05207d073191ca97437e0fe8091530793446a559cb1ceef29a9e1d6850"
+      },
+      {
+        "path": "COMMON/BIN/OPENING.BIN",
+        "width": 13524,
+        "sha256": "97e6dc148aac168146dfc79212d05fa0a2361e4ce5f543c28060f4e4fc20afb7"
+      },
+      {
+        "path": "COMMON/BIN/RESULT.BIN",
+        "width": 17360,
+        "sha256": "ef17161e5dd4ca387dfd037e79d66cc073d346c47e4ffbc7e5d976683acca237"
+      },
+      {
+        "path": "COMMON/BIN/SELECT.BIN",
+        "width": 18760,
+        "sha256": "d3d84e11fc9aba538a183b9b4ca8add0f40a0f3cc60561fd0b73ca1b48d801de"
+      },
+      {
+        "path": "COMMON/BIN/STAGE1.BIN",
+        "width": 1704,
+        "sha256": "8e1c7fc3a99168a340dca2310ac0b7f41649bdea517ccd72678abef969c0e6ad"
+      },
+      {
+        "path": "COMMON/BIN/STAGE2.BIN",
+        "width": 1626,
+        "sha256": "68ebe0f04063fb6d605d1a88b4ccdafa8704b08faae7e7d95d55bba3ab9de2af"
+      },
+      {
+        "path": "COMMON/BIN/STAGE3.BIN",
+        "width": 1188,
+        "sha256": "2236a945a90dbfa59c62af4e9721a05b006297cc680c1bf301684c02a41cfbc0"
+      },
+      {
+        "path": "COMMON/BIN/STAGE4.BIN",
+        "width": 1152,
+        "sha256": "acf692c2dd98a301a5ea313ed7488a6b5fb1536ca6d3dc1b4280e3ebbc68cc98"
+      },
+      {
+        "path": "COMMON/BIN/STAGE5.BIN",
+        "width": 690,
+        "sha256": "3a4878d8533a70b099ed54bf15f3b66001d871e2ef224885aaebf5c69bf146d3"
+      },
+      {
+        "path": "COMMON/BIN/STAGE6.BIN",
+        "width": 9984,
+        "sha256": "9b829a69e90c95b27a3aa366d7d7fae639cb1c6b9ed15dd45ec8c2ef7238150b"
+      },
+      {
+        "path": "COMMON/BIN/STAGE7.BIN",
+        "width": 420,
+        "sha256": "d082c0d3ddfc14ae61f3d2e1f0dd6318bf082fe2e395733eae32748a4fbbb919"
+      },
+      {
+        "path": "COMMON/BIN/TITLE.BIN",
+        "width": 28740,
+        "sha256": "29cdb2f531cbe9a16a06daafa8b0ce50e8e43bd4566d67317bf66fef5fff5201"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR00.DO2",
+        "width": 56784,
+        "sha256": "604345d12d0dff0c921183476e2ad2a054c2907a25f51757f227a0471b4a53ce"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR01.DO2",
+        "width": 72304,
+        "sha256": "9bc20e77b26b56b630eb615748ada8ef21ed6d0c93b1e1953b0153c7f0349b4f"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR02.DO2",
+        "width": 58608,
+        "sha256": "ec337184ffda73acdde7a5945e489e66240650628a2ca317e1c4877990c84dbd"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR03.DO2",
+        "width": 56844,
+        "sha256": "ba9def344660e72eccc1f09e63eb8ec44cd92f3493772e781641951581e76072"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR04.DO2",
+        "width": 69560,
+        "sha256": "5cb8ae7ae44fbc608319818c61ddb1d61e35eb2b4d6d500101323faec21bc53b"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR05.DO2",
+        "width": 67564,
+        "sha256": "e1a85cd752d5a9717291f2a7ef41f1f6983819919effea8c561e9cc32dcd6f72"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR06.DO2",
+        "width": 57484,
+        "sha256": "7abf589b89ea52aabb83298c0f4a88e3ee03e00da9a5fe6bef2a8826ecb55ecc"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR07.DO2",
+        "width": 55908,
+        "sha256": "e2b92dbadc39b92de1e73772fc9535f7d7964a3c5d24211fb25b4db8f87fc60e"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR08.DO2",
+        "width": 58664,
+        "sha256": "1b0aae8c7a83da2b753858f55cd59357c2be3b5d851a5ca6437530beb84923d2"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR09.DO2",
+        "width": 62736,
+        "sha256": "a21e7a8a7c8d5522aa5df48d2af3d490ce5447d9a6f79e7f21faf779bb284dc5"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR0A.DO2",
+        "width": 77932,
+        "sha256": "ae6d3950611c0636f4f2d068d49ce3ef8f844f695a2a75465f12062731431d89"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR0B.DO2",
+        "width": 56944,
+        "sha256": "acc7ac6cf2acf8b3a9d3795f3d5ffc971abe7116206935e1c393c27b2c36768d"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR0C.DO2",
+        "width": 61468,
+        "sha256": "c7dc653d32975c1aa490edfac0a1fdf12cb0911145b5bc7739f645277d960fa1"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR0D.DO2",
+        "width": 57764,
+        "sha256": "3b9aab2f2e71f75010ff48bef7cd3a13ac1c32c2bff786f89bf12972362afd0f"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR0E.DO2",
+        "width": 59908,
+        "sha256": "b6cdd6c9cba38742bd9052fcc210dd4ce0761c94b6a14af720bfbced726f5e85"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR0F.DO2",
+        "width": 48076,
+        "sha256": "cd1ce0ec94a8646faa1e96af137e625ee462303e835d5e6169f766291d0e1628"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR10.DO2",
+        "width": 56728,
+        "sha256": "8e0581d89802c2c6b95f0c606b85d4e2c7c2765943205f3a9d317ff65f0959be"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR11.DO2",
+        "width": 63120,
+        "sha256": "6f0fc75f5a9bde8c8da5e6d26a5cae1f4095e29793b77ce79074791528c2c38e"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR12.DO2",
+        "width": 52172,
+        "sha256": "5779c466a0149d89e15621f688ad03ac961fe4a7d48120ec9551f62350de59d2"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR13.DO2",
+        "width": 54532,
+        "sha256": "9bd7d0b7fe30a637fa3ab6f79ae86a94e0921861477c268097275445babd9c1f"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR14.DO2",
+        "width": 63704,
+        "sha256": "31ca8f81e5eb45d9e92ae46c8f13b1052809a3d33c16dc9a55de4731cf86d82b"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR15.DO2",
+        "width": 62684,
+        "sha256": "affa3104472e4c0af5d50c6152c2aa916cf3ee367fe82bd7a0897d84c0ea2d2a"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR16.DO2",
+        "width": 58860,
+        "sha256": "9d044d9604c1c3ea2d131c04de2924562f19f9b9510436a19b0c404f92e4ea96"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR17.DO2",
+        "width": 64592,
+        "sha256": "de229a08349f77d51fd3cd45cd1e8d472179db05f8269ba523185e75bab45a66"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR18.DO2",
+        "width": 56780,
+        "sha256": "dfb8a858fc4b57a0b6b2f9b1ab84855b331926c6ddeb6ebb14581d7ed398d6bf"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR19.DO2",
+        "width": 70484,
+        "sha256": "7cc93504ef8c282a14e8468b7c251cc640b46646b5337d9193d1a7313c1c617c"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR1A.DO2",
+        "width": 60156,
+        "sha256": "33f3a97d513288931b243100a57e3ab43051991663ff03c5904d5e8ac95540f6"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR1B.DO2",
+        "width": 63272,
+        "sha256": "cfa1211ccb0fb3f064828056600a72705f96cc8f606555a1afbff244463c3d83"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR1C.DO2",
+        "width": 62700,
+        "sha256": "dd0299cd78e21e31e84373c06edb07d37712cfface2f005a8a80608fe19b9a41"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR1D.DO2",
+        "width": 60676,
+        "sha256": "5468c92e06effcef3a37b3996c04d181adb525a0144a15cbf9d0657749692a5b"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR1E.DO2",
+        "width": 73484,
+        "sha256": "c52ebdfc2409c7cd905b6bb2669509b0b64ca45492a67b0a140c1729d10b0a84"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR1F.DO2",
+        "width": 61560,
+        "sha256": "06ee72a85866bf63b1c671eb30eea1eaa80fb03a4726ddec4e5437d0e101e30a"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR20.DO2",
+        "width": 60428,
+        "sha256": "f770361d4c4ac7d613a8172b47236b2273a5c354fd6d0223a493346db0c67620"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR22.DO2",
+        "width": 54868,
+        "sha256": "742c4416a7acddf4355a2852558a8a0eeec577123e6fedf416a921eaab3e6f47"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR23.DO2",
+        "width": 62204,
+        "sha256": "9215d1cf2c167c02d434e861de2db405a6add9a6c116e5dc6d104260975de414"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR24.DO2",
+        "width": 67572,
+        "sha256": "337b83540e970df37b8d83c4eafa740260eae7f87059ab3868711bb5b95ebda2"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR25.DO2",
+        "width": 52732,
+        "sha256": "f680ce0faee46f3ff726ac7407d1d1f6f56f1f1833d6e109e42bb1cdf6d786b1"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR26.DO2",
+        "width": 81336,
+        "sha256": "d63d2c84e8b0031d9767260fce7e346ba71c9e4202a15f507befb110d1f43e8f"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR27.DO2",
+        "width": 78508,
+        "sha256": "bd49fca6c3e55d9f045a72829523f01c3844789fc1b5ffc91b59a2f81fe10121"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR28.DO2",
+        "width": 70356,
+        "sha256": "ab78772adb1117936200e18333146889c97bc93e7b8951220c94cf2e18012e7f"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR29.DO2",
+        "width": 73628,
+        "sha256": "b4e1ad674876c93b7204c2efaf5da467d1fe95dbb4cfd7f10154de561e9c8999"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR2A.DO2",
+        "width": 53076,
+        "sha256": "0e01890b1d623ace847dbe63e2e904d39c09bd3573653e1ba24ca724cd7ee6a0"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR2B.DO2",
+        "width": 57536,
+        "sha256": "f19770c6f574219409b4239df2046d1124bc9614b306d3c948eeca4028267281"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR2C.DO2",
+        "width": 63128,
+        "sha256": "21f134d335859e3b02a074a469b462d1f074422fbb5cfcb6507ad85074693f1b"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR2D.DO2",
+        "width": 78244,
+        "sha256": "1f97c780ab2754686168581ca34f90ebaddfefd6c835e8061788c7ed2b47fd86"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR2E.DO2",
+        "width": 75772,
+        "sha256": "48862e03e8e3ae3485fc29b763937a55d219ec0ffd5613916259ac94ef30abd8"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR2F.DO2",
+        "width": 56900,
+        "sha256": "5edfbced06dcfc71c75bfa80186c7d91bb73d9e03d2c35586a6338c946c44da6"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR30.DO2",
+        "width": 64748,
+        "sha256": "b11585f95bac36ed3af26f66aeeea16648b2a45c92ebe55456123aa52adbe575"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR31.DO2",
+        "width": 81336,
+        "sha256": "98b33a12018026abae1e2120363e31f778ba9cda3a6e600f051ce983daa868ad"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR32.DO2",
+        "width": 60428,
+        "sha256": "e17d064b005b6837c5cc967278f4527c387433327b26503e810d6a5e09c30802"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR33.DO2",
+        "width": 69436,
+        "sha256": "45ca28a620e8fc92d4decbe52310d3a1e3521094bd9b82697a867af60d1b1960"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR34.DO2",
+        "width": 60428,
+        "sha256": "bfafcc3cb1128bc18b4fc0fdb762d73343b621fe2c3889a0004a26ebf21d90d4"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR35.DO2",
+        "width": 69400,
+        "sha256": "87a5dffbaf96d5fed8aab4ed5c751f888afebb1a5be9506ae90e07eb0b19dfd0"
+      },
+      {
+        "path": "COMMON/DOOR/DOOR36.DO2",
+        "width": 58396,
+        "sha256": "49097193e1633f1ff0c164c3dbc66aab5b31fe01badd679a1043d3b1cb962e18"
+      },
+      {
+        "path": "PL0/PLD/CDEMD0.EMS",
+        "width": 11124736,
+        "sha256": "8724200c1ed5e8d3235ceb85640893467eb9878c2a016529aa84b49a79916fca"
+      }
+    ],
+    "selection": {
+      "audit": "slus00748-stage0-entry-selection-v1",
+      "scope": "leon-a-original-normal-duckstation-savestates",
+      "resource_lookup": [
+        {
+          "path": "COMMON/BIN/CONFIG.BIN",
+          "file_index": 0,
+          "lba": 25
+        },
+        {
+          "path": "COMMON/BIN/DIEDEMO.BIN",
+          "file_index": 1,
+          "lba": 39
+        },
+        {
+          "path": "COMMON/BIN/ENDING.BIN",
+          "file_index": 2,
+          "lba": 47
+        },
+        {
+          "path": "COMMON/BIN/OPENING.BIN",
+          "file_index": 4,
+          "lba": 83
+        },
+        {
+          "path": "COMMON/BIN/RESULT.BIN",
+          "file_index": 5,
+          "lba": 90
+        },
+        {
+          "path": "COMMON/BIN/SELECT.BIN",
+          "file_index": 6,
+          "lba": 99
+        },
+        {
+          "path": "COMMON/BIN/STAGE1.BIN",
+          "file_index": 7,
+          "lba": 109
+        },
+        {
+          "path": "COMMON/BIN/STAGE2.BIN",
+          "file_index": 8,
+          "lba": 110
+        },
+        {
+          "path": "COMMON/BIN/STAGE3.BIN",
+          "file_index": 9,
+          "lba": 111
+        },
+        {
+          "path": "COMMON/BIN/STAGE4.BIN",
+          "file_index": 10,
+          "lba": 112
+        },
+        {
+          "path": "COMMON/BIN/STAGE5.BIN",
+          "file_index": 11,
+          "lba": 113
+        },
+        {
+          "path": "COMMON/BIN/STAGE6.BIN",
+          "file_index": 12,
+          "lba": 114
+        },
+        {
+          "path": "COMMON/BIN/STAGE7.BIN",
+          "file_index": 13,
+          "lba": 119
+        },
+        {
+          "path": "COMMON/BIN/TITLE.BIN",
+          "file_index": 14,
+          "lba": 120
+        },
+        {
+          "path": "COMMON/DOOR/DOOR00.DO2",
+          "file_index": 234,
+          "lba": 47930
+        },
+        {
+          "path": "COMMON/DOOR/DOOR01.DO2",
+          "file_index": 235,
+          "lba": 47958
+        },
+        {
+          "path": "COMMON/DOOR/DOOR02.DO2",
+          "file_index": 236,
+          "lba": 47994
+        },
+        {
+          "path": "COMMON/DOOR/DOOR03.DO2",
+          "file_index": 237,
+          "lba": 48023
+        },
+        {
+          "path": "COMMON/DOOR/DOOR04.DO2",
+          "file_index": 238,
+          "lba": 48051
+        },
+        {
+          "path": "COMMON/DOOR/DOOR05.DO2",
+          "file_index": 239,
+          "lba": 48085
+        },
+        {
+          "path": "COMMON/DOOR/DOOR06.DO2",
+          "file_index": 240,
+          "lba": 48118
+        },
+        {
+          "path": "COMMON/DOOR/DOOR07.DO2",
+          "file_index": 241,
+          "lba": 48147
+        },
+        {
+          "path": "COMMON/DOOR/DOOR08.DO2",
+          "file_index": 242,
+          "lba": 48175
+        },
+        {
+          "path": "COMMON/DOOR/DOOR09.DO2",
+          "file_index": 243,
+          "lba": 48204
+        },
+        {
+          "path": "COMMON/DOOR/DOOR0A.DO2",
+          "file_index": 244,
+          "lba": 48235
+        },
+        {
+          "path": "COMMON/DOOR/DOOR0B.DO2",
+          "file_index": 245,
+          "lba": 48274
+        },
+        {
+          "path": "COMMON/DOOR/DOOR0C.DO2",
+          "file_index": 246,
+          "lba": 48302
+        },
+        {
+          "path": "COMMON/DOOR/DOOR0D.DO2",
+          "file_index": 247,
+          "lba": 48333
+        },
+        {
+          "path": "COMMON/DOOR/DOOR0E.DO2",
+          "file_index": 248,
+          "lba": 48362
+        },
+        {
+          "path": "COMMON/DOOR/DOOR0F.DO2",
+          "file_index": 249,
+          "lba": 48392
+        },
+        {
+          "path": "COMMON/DOOR/DOOR10.DO2",
+          "file_index": 250,
+          "lba": 48416
+        },
+        {
+          "path": "COMMON/DOOR/DOOR11.DO2",
+          "file_index": 251,
+          "lba": 48444
+        },
+        {
+          "path": "COMMON/DOOR/DOOR12.DO2",
+          "file_index": 252,
+          "lba": 48475
+        },
+        {
+          "path": "COMMON/DOOR/DOOR13.DO2",
+          "file_index": 253,
+          "lba": 48501
+        },
+        {
+          "path": "COMMON/DOOR/DOOR14.DO2",
+          "file_index": 254,
+          "lba": 48528
+        },
+        {
+          "path": "COMMON/DOOR/DOOR15.DO2",
+          "file_index": 255,
+          "lba": 48560
+        },
+        {
+          "path": "COMMON/DOOR/DOOR16.DO2",
+          "file_index": 256,
+          "lba": 48591
+        },
+        {
+          "path": "COMMON/DOOR/DOOR17.DO2",
+          "file_index": 257,
+          "lba": 48620
+        },
+        {
+          "path": "COMMON/DOOR/DOOR18.DO2",
+          "file_index": 258,
+          "lba": 48652
+        },
+        {
+          "path": "COMMON/DOOR/DOOR19.DO2",
+          "file_index": 259,
+          "lba": 48680
+        },
+        {
+          "path": "COMMON/DOOR/DOOR1A.DO2",
+          "file_index": 260,
+          "lba": 48715
+        },
+        {
+          "path": "COMMON/DOOR/DOOR1B.DO2",
+          "file_index": 261,
+          "lba": 48745
+        },
+        {
+          "path": "COMMON/DOOR/DOOR1C.DO2",
+          "file_index": 262,
+          "lba": 48776
+        },
+        {
+          "path": "COMMON/DOOR/DOOR1D.DO2",
+          "file_index": 263,
+          "lba": 48807
+        },
+        {
+          "path": "COMMON/DOOR/DOOR1E.DO2",
+          "file_index": 264,
+          "lba": 48837
+        },
+        {
+          "path": "COMMON/DOOR/DOOR1F.DO2",
+          "file_index": 265,
+          "lba": 48873
+        },
+        {
+          "path": "COMMON/DOOR/DOOR20.DO2",
+          "file_index": 266,
+          "lba": 48904
+        },
+        {
+          "path": "COMMON/DOOR/DOOR22.DO2",
+          "file_index": 268,
+          "lba": 48964
+        },
+        {
+          "path": "COMMON/DOOR/DOOR23.DO2",
+          "file_index": 269,
+          "lba": 48991
+        },
+        {
+          "path": "COMMON/DOOR/DOOR24.DO2",
+          "file_index": 270,
+          "lba": 49022
+        },
+        {
+          "path": "COMMON/DOOR/DOOR25.DO2",
+          "file_index": 271,
+          "lba": 49055
+        },
+        {
+          "path": "COMMON/DOOR/DOOR26.DO2",
+          "file_index": 272,
+          "lba": 49081
+        },
+        {
+          "path": "COMMON/DOOR/DOOR27.DO2",
+          "file_index": 273,
+          "lba": 49121
+        },
+        {
+          "path": "COMMON/DOOR/DOOR28.DO2",
+          "file_index": 274,
+          "lba": 49160
+        },
+        {
+          "path": "COMMON/DOOR/DOOR29.DO2",
+          "file_index": 275,
+          "lba": 49195
+        },
+        {
+          "path": "COMMON/DOOR/DOOR2A.DO2",
+          "file_index": 276,
+          "lba": 49231
+        },
+        {
+          "path": "COMMON/DOOR/DOOR2B.DO2",
+          "file_index": 277,
+          "lba": 49257
+        },
+        {
+          "path": "COMMON/DOOR/DOOR2C.DO2",
+          "file_index": 278,
+          "lba": 49286
+        },
+        {
+          "path": "COMMON/DOOR/DOOR2D.DO2",
+          "file_index": 279,
+          "lba": 49317
+        },
+        {
+          "path": "COMMON/DOOR/DOOR2E.DO2",
+          "file_index": 280,
+          "lba": 49356
+        },
+        {
+          "path": "COMMON/DOOR/DOOR2F.DO2",
+          "file_index": 281,
+          "lba": 49393
+        },
+        {
+          "path": "COMMON/DOOR/DOOR30.DO2",
+          "file_index": 282,
+          "lba": 49421
+        },
+        {
+          "path": "COMMON/DOOR/DOOR31.DO2",
+          "file_index": 283,
+          "lba": 49453
+        },
+        {
+          "path": "COMMON/DOOR/DOOR32.DO2",
+          "file_index": 284,
+          "lba": 49493
+        },
+        {
+          "path": "COMMON/DOOR/DOOR33.DO2",
+          "file_index": 285,
+          "lba": 49523
+        },
+        {
+          "path": "COMMON/DOOR/DOOR34.DO2",
+          "file_index": 286,
+          "lba": 49557
+        },
+        {
+          "path": "COMMON/DOOR/DOOR35.DO2",
+          "file_index": 287,
+          "lba": 49587
+        },
+        {
+          "path": "COMMON/DOOR/DOOR36.DO2",
+          "file_index": 288,
+          "lba": 49621
+        },
+        {
+          "path": "PL0/PLD/CDEMD0.EMS",
+          "file_index": 469,
+          "lba": 61405
+        }
+      ],
+      "sources": [
+        {
+          "room_id": "00-00",
+          "path": "PL0/RDT/ROOM1000.RDT",
+          "width": 114320,
+          "sha256": "19e4144c44d7c706250f393115a23b92256fff80b5a775d612e6d58afa86c817",
+          "file_index": 585,
+          "lba": 74927
+        },
+        {
+          "room_id": "00-01",
+          "path": "PL0/RDT/ROOM1010.RDT",
+          "width": 199360,
+          "sha256": "ece1ea515b65c4ef54222054eb8b140c19692248d71e958060fb098755636bf5",
+          "file_index": 586,
+          "lba": 74983
+        },
+        {
+          "room_id": "00-02",
+          "path": "PL0/RDT/ROOM1020.RDT",
+          "width": 184396,
+          "sha256": "30fc267de1ad566dcb61403822731ec5eae099d934f244538d34c33ebe64dddf",
+          "file_index": 587,
+          "lba": 75081
+        },
+        {
+          "room_id": "00-03",
+          "path": "PL0/RDT/ROOM1030.RDT",
+          "width": 68264,
+          "sha256": "21c3fe0b01fabfefe0159c340ff478c6d11c8750b39d4269c42344d1efab9d12",
+          "file_index": 588,
+          "lba": 75172
+        },
+        {
+          "room_id": "00-04",
+          "path": "PL0/RDT/ROOM1040.RDT",
+          "width": 112452,
+          "sha256": "f2a8f5c87a4b2e71dedb6d8a6efd641c3082ce27025bb5da5bacbc2d4e8da49e",
+          "file_index": 589,
+          "lba": 75206
+        },
+        {
+          "room_id": "00-05",
+          "path": "PL0/RDT/ROOM1050.RDT",
+          "width": 59504,
+          "sha256": "540d9620e05dcf0a73a3771d51ac47a0812f2d11ca0be768acdfb1b8258b0114",
+          "file_index": 590,
+          "lba": 75261
+        },
+        {
+          "room_id": "00-06",
+          "path": "PL0/RDT/ROOM1060.RDT",
+          "width": 150996,
+          "sha256": "8aa795529970f7d37fd15b5b30ece73fccda40c3d85f23a04aaeba2e6ef28299",
+          "file_index": 591,
+          "lba": 75291
+        },
+        {
+          "room_id": "00-07",
+          "path": "PL0/RDT/ROOM1070.RDT",
+          "width": 42732,
+          "sha256": "8e439b37a8956812a81583e51b67fbb8f13e12ad42a4c522bddf351eaf079e9e",
+          "file_index": 592,
+          "lba": 75365
+        },
+        {
+          "room_id": "00-08",
+          "path": "PL0/RDT/ROOM1080.RDT",
+          "width": 262624,
+          "sha256": "0f2975b8ae167c2b5ab6f4a605496d2a8ffeab0f5170c407e2d61a75da876fe6",
+          "file_index": 593,
+          "lba": 75386
+        },
+        {
+          "room_id": "00-09",
+          "path": "PL0/RDT/ROOM1090.RDT",
+          "width": 287656,
+          "sha256": "785c0c49c56f49a11829c1a98718a867d851893e372d0179d9ce06a63898c4d0",
+          "file_index": 594,
+          "lba": 75515
+        },
+        {
+          "room_id": "00-0a",
+          "path": "PL0/RDT/ROOM10A0.RDT",
+          "width": 142564,
+          "sha256": "27c879bf77d1c64d0a3bfdfb7baedcd964b0f5df73db1187dfefaf08116f276c",
+          "file_index": 595,
+          "lba": 75656
+        },
+        {
+          "room_id": "00-0b",
+          "path": "PL0/RDT/ROOM10B0.RDT",
+          "width": 165228,
+          "sha256": "7e628f4ac91a051f6c1974e95c5f400e7ecaf7a023989846537b3b15fe5b69dc",
+          "file_index": 596,
+          "lba": 75726
+        },
+        {
+          "room_id": "00-0c",
+          "path": "PL0/RDT/ROOM10C0.RDT",
+          "width": 165848,
+          "sha256": "0a8f0303762d87b297a1871d82c6d11da2185999b8058fec091ace8a9654f333",
+          "file_index": 597,
+          "lba": 75807
+        },
+        {
+          "room_id": "00-0d",
+          "path": "PL0/RDT/ROOM10D0.RDT",
+          "width": 24656,
+          "sha256": "fd3f061362f4adf48d51b9ef198600ee8d63ab76fff5c81563d48ac967159b85",
+          "file_index": 598,
+          "lba": 75888
+        },
+        {
+          "room_id": "00-0e",
+          "path": "PL0/RDT/ROOM10E0.RDT",
+          "width": 104004,
+          "sha256": "7b944b3bf5ea1670385bf0bbc224afd2480fbdb14a8d24e78b5de265285c7137",
+          "file_index": 599,
+          "lba": 75901
+        },
+        {
+          "room_id": "00-0f",
+          "path": "PL0/RDT/ROOM10F0.RDT",
+          "width": 171484,
+          "sha256": "36c6981d7ed1bc4453cc4a3f09d77111567ca4f1ca44b639651912ec937d161a",
+          "file_index": 600,
+          "lba": 75952
+        },
+        {
+          "room_id": "00-10",
+          "path": "PL0/RDT/ROOM1100.RDT",
+          "width": 150308,
+          "sha256": "c17e972ca6d3272c2b3cbd4130815b41a846f578a0c4e5ba7a27c996f4e271f2",
+          "file_index": 601,
+          "lba": 76036
+        },
+        {
+          "room_id": "00-11",
+          "path": "PL0/RDT/ROOM1110.RDT",
+          "width": 407508,
+          "sha256": "c1e920f4f747d2fa4a74055f5705cb81150b1761190a656b56b76f18794abbf2",
+          "file_index": 602,
+          "lba": 76110
+        },
+        {
+          "room_id": "00-12",
+          "path": "PL0/RDT/ROOM1120.RDT",
+          "width": 458232,
+          "sha256": "832014cd87b9a81442ca91ddfe036e5846bb43b5135de3aae0378148df2ec5bf",
+          "file_index": 603,
+          "lba": 76309
+        },
+        {
+          "room_id": "00-13",
+          "path": "PL0/RDT/ROOM1130.RDT",
+          "width": 188932,
+          "sha256": "1ab441e3691232aba6409bf3394229b524fc4f762d84eb76216aec799b7fc247",
+          "file_index": 604,
+          "lba": 76533
+        },
+        {
+          "room_id": "00-14",
+          "path": "PL0/RDT/ROOM1140.RDT",
+          "width": 49724,
+          "sha256": "30d297fdabee48cf34f3e647a07774ba797ca8a3fd32ef311e9ef668c03b11da",
+          "file_index": 605,
+          "lba": 76626
+        },
+        {
+          "room_id": "00-15",
+          "path": "PL0/RDT/ROOM1150.RDT",
+          "width": 347152,
+          "sha256": "31497f44bcebd06a799d730ffdf80d89f7dbb56a54d422e35641f16024e19db1",
+          "file_index": 606,
+          "lba": 76651
+        },
+        {
+          "room_id": "00-16",
+          "path": "PL0/RDT/ROOM1160.RDT",
+          "width": 48784,
+          "sha256": "d2d7b559870858710a17d34a99b449bf93792ad51a3f1c3b156a1d58a6725d7c",
+          "file_index": 607,
+          "lba": 76821
+        },
+        {
+          "room_id": "00-17",
+          "path": "PL0/RDT/ROOM1170.RDT",
+          "width": 49408,
+          "sha256": "4e7c39e6001c7675f77eacc26c58de1af76730e0cecf134977b86ad9d0d39d6f",
+          "file_index": 608,
+          "lba": 76845
+        },
+        {
+          "room_id": "00-18",
+          "path": "PL0/RDT/ROOM1180.RDT",
+          "width": 76560,
+          "sha256": "2804230a1df06d81d2f11361d9b9459f2643622ccf72a9401b2df6a4ad933f10",
+          "file_index": 609,
+          "lba": 76870
+        },
+        {
+          "room_id": "00-19",
+          "path": "PL0/RDT/ROOM1190.RDT",
+          "width": 43452,
+          "sha256": "692fe94d6963229a18204c1ba25cb05eddd81e6897148ddfed3c79d55b01bb8c",
+          "file_index": 610,
+          "lba": 76908
+        },
+        {
+          "room_id": "00-1a",
+          "path": "PL0/RDT/ROOM11A0.RDT",
+          "width": 43964,
+          "sha256": "527b8714df047837926567ffc8f19fbf0a40a0ddcf98c392a258c959e2c2dcdf",
+          "file_index": 611,
+          "lba": 76930
+        },
+        {
+          "room_id": "00-1b",
+          "path": "PL0/RDT/ROOM11B0.RDT",
+          "width": 99452,
+          "sha256": "a7faacce79a1f878561b897697b76dca4960d2d65d187c25904614b2be1dfcf2",
+          "file_index": 612,
+          "lba": 76952
+        },
+        {
+          "room_id": "00-1c",
+          "path": "PL0/RDT/ROOM11C0.RDT",
+          "width": 186416,
+          "sha256": "232770ed74b908ef963a2e0182441174383c706bb3a4b1c19da494a533beaa98",
+          "file_index": 613,
+          "lba": 77001
+        },
+        {
+          "room_id": "00-1d",
+          "path": "PL0/RDT/ROOM11D0.RDT",
+          "width": 142220,
+          "sha256": "9dea8d4af8bd8478105cc24c4864028ae735f7040895045a06f943fe5ee1ef55",
+          "file_index": 614,
+          "lba": 77093
+        },
+        {
+          "room_id": "01-00",
+          "path": "PL0/RDT/ROOM2000.RDT",
+          "width": 448820,
+          "sha256": "7586728196fd83ec3992964746efd8d7f793fee383963e11c70951ff307fe000",
+          "file_index": 615,
+          "lba": 77163
+        },
+        {
+          "room_id": "01-01",
+          "path": "PL0/RDT/ROOM2010.RDT",
+          "width": 196852,
+          "sha256": "48360046aa7758cb7a0df5a1306b8ecd2902374218fe330c57ccd786f4f26f37",
+          "file_index": 616,
+          "lba": 77383
+        },
+        {
+          "room_id": "01-02",
+          "path": "PL0/RDT/ROOM2020.RDT",
+          "width": 167840,
+          "sha256": "31a5b1206bfa71d28ae92a15bebb86f90d046e62474a5c7be1cc64d74cadc323",
+          "file_index": 617,
+          "lba": 77480
+        },
+        {
+          "room_id": "01-03",
+          "path": "PL0/RDT/ROOM2030.RDT",
+          "width": 121804,
+          "sha256": "4a6311f34cb1288ddf25b46123bbc2cbf938e746e358dbeb6d29da6385b189bc",
+          "file_index": 618,
+          "lba": 77562
+        },
+        {
+          "room_id": "01-04",
+          "path": "PL0/RDT/ROOM2040.RDT",
+          "width": 196792,
+          "sha256": "4816336f9147fc6179d7f39dca7e5a33ee302555091312ced2e1c1bca40afd46",
+          "file_index": 619,
+          "lba": 77622
+        },
+        {
+          "room_id": "01-05",
+          "path": "PL0/RDT/ROOM2050.RDT",
+          "width": 129352,
+          "sha256": "d3d9d84a8529768bf37c2a43548327820471046e6f710818f628645841a1000e",
+          "file_index": 620,
+          "lba": 77719
+        },
+        {
+          "room_id": "01-06",
+          "path": "PL0/RDT/ROOM2060.RDT",
+          "width": 97664,
+          "sha256": "1060b03c416fa992246e9762d1bfe100d1ffe142eeb3ecbbecddb5cbf086ea27",
+          "file_index": 621,
+          "lba": 77783
+        },
+        {
+          "room_id": "01-07",
+          "path": "PL0/RDT/ROOM2070.RDT",
+          "width": 89304,
+          "sha256": "07708bbe7b2c26b57dfb41a12324d90e0ada78ab0bac54df8ab88dd0d2355bbf",
+          "file_index": 622,
+          "lba": 77831
+        },
+        {
+          "room_id": "01-08",
+          "path": "PL0/RDT/ROOM2080.RDT",
+          "width": 185264,
+          "sha256": "7e341f8b33db336f41a61a859683c7dea6680735a3b9bc5d37673517202c4120",
+          "file_index": 623,
+          "lba": 77875
+        },
+        {
+          "room_id": "01-09",
+          "path": "PL0/RDT/ROOM2090.RDT",
+          "width": 78944,
+          "sha256": "852fcf2c2f26551d5903f2e74190190b9a91a6d3b2793a1cd5aa1d7f376cb982",
+          "file_index": 624,
+          "lba": 77966
+        },
+        {
+          "room_id": "01-0a",
+          "path": "PL0/RDT/ROOM20A0.RDT",
+          "width": 74824,
+          "sha256": "409068af4d7aeaaec6ce4450d50894cdbdeec492388e5e3431ad0ab5092521fe",
+          "file_index": 625,
+          "lba": 78005
+        },
+        {
+          "room_id": "01-0b",
+          "path": "PL0/RDT/ROOM20B0.RDT",
+          "width": 191432,
+          "sha256": "c6b1fe6135f346ffb71500328ffef35a62c6f3d755138ce2a8513411274fc7f6",
+          "file_index": 626,
+          "lba": 78042
+        },
+        {
+          "room_id": "01-0c",
+          "path": "PL0/RDT/ROOM20C0.RDT",
+          "width": 122020,
+          "sha256": "1e018a6940a199e91eb18e1c06a7073395dffe22bee4d22c1e4848aba1397332",
+          "file_index": 627,
+          "lba": 78136
+        },
+        {
+          "room_id": "01-0d",
+          "path": "PL0/RDT/ROOM20D0.RDT",
+          "width": 159828,
+          "sha256": "2f13b04271e283d60d795d5d1b15cae0943b8aa250dbc726afb899de75d3e214",
+          "file_index": 628,
+          "lba": 78196
+        },
+        {
+          "room_id": "01-0e",
+          "path": "PL0/RDT/ROOM20E0.RDT",
+          "width": 142220,
+          "sha256": "94f38aa44a170d207c7625a41e24c595da82af57ad46f9fad7383600a0e92a0e",
+          "file_index": 629,
+          "lba": 78275
+        },
+        {
+          "room_id": "01-0f",
+          "path": "PL0/RDT/ROOM20F0.RDT",
+          "width": 137536,
+          "sha256": "0ea9c0218c3b260a58e98061d5c9522ae081da5c3e48ea0a7c9691a9330218b6",
+          "file_index": 630,
+          "lba": 78345
+        },
+        {
+          "room_id": "01-10",
+          "path": "PL0/RDT/ROOM2100.RDT",
+          "width": 84128,
+          "sha256": "ba14d87ec3a680baf2fad6f1503242006e91637e553943112e1f642dd46cc121",
+          "file_index": 631,
+          "lba": 78413
+        },
+        {
+          "room_id": "01-11",
+          "path": "PL0/RDT/ROOM2110.RDT",
+          "width": 108496,
+          "sha256": "9a5ccd1bffbaec58fd5a9edd9371dbdd8d19fe6dd35e76499c01b04e9eb8c258",
+          "file_index": 632,
+          "lba": 78455
+        },
+        {
+          "room_id": "01-12",
+          "path": "PL0/RDT/ROOM2120.RDT",
+          "width": 65340,
+          "sha256": "08bc8d7d3eedb2224b27855e7ca8dadd9975b88c926fb50d1c26c2ecf8186014",
+          "file_index": 633,
+          "lba": 78508
+        },
+        {
+          "room_id": "01-13",
+          "path": "PL0/RDT/ROOM2130.RDT",
+          "width": 139448,
+          "sha256": "78227d7aac8266feccc018668ad6b25893e60fc30012fbd464977d00fc254ba1",
+          "file_index": 634,
+          "lba": 78540
+        },
+        {
+          "room_id": "01-14",
+          "path": "PL0/RDT/ROOM2140.RDT",
+          "width": 88224,
+          "sha256": "f1b4592412c007fc3531f00bf25510dc04dd6e53eead536b3f2e6c987836b9f0",
+          "file_index": 635,
+          "lba": 78609
+        },
+        {
+          "room_id": "01-15",
+          "path": "PL0/RDT/ROOM2150.RDT",
+          "width": 124684,
+          "sha256": "f48df5e0e6e0ab597721fa8d429a7f8da95cc65d1b243594e43969ec4a9c7398",
+          "file_index": 636,
+          "lba": 78653
+        },
+        {
+          "room_id": "01-16",
+          "path": "PL0/RDT/ROOM2160.RDT",
+          "width": 341304,
+          "sha256": "b01c81de8a86e6b878a08be868a6e7385f6ab87fd7e7535365ef86212e0c9af6",
+          "file_index": 637,
+          "lba": 78714
+        },
+        {
+          "room_id": "01-19",
+          "path": "PL0/RDT/ROOM2190.RDT",
+          "width": 138460,
+          "sha256": "8a43ce177e8f0bcc7b48bd55ee7f70d3c7010405958d614fc94c8845c5f5e3ba",
+          "file_index": 638,
+          "lba": 78881
+        },
+        {
+          "room_id": "01-1a",
+          "path": "PL0/RDT/ROOM21A0.RDT",
+          "width": 185672,
+          "sha256": "9272302a6237d7c4115222b10f152eba09b3bba964d15f9c00675735d7e7065f",
+          "file_index": 639,
+          "lba": 78949
+        },
+        {
+          "room_id": "01-1b",
+          "path": "PL0/RDT/ROOM21B0.RDT",
+          "width": 280496,
+          "sha256": "b572e90225560df83d0c433246ef20a243614a5bf3dabe110964dc812cd0f9ee",
+          "file_index": 640,
+          "lba": 79040
+        },
+        {
+          "room_id": "02-00",
+          "path": "PL0/RDT/ROOM3000.RDT",
+          "width": 149788,
+          "sha256": "ce226145d149cfa27b0db625b7d92d35c0975139ce4479a0fe41a56c95910d27",
+          "file_index": 641,
+          "lba": 79177
+        },
+        {
+          "room_id": "02-01",
+          "path": "PL0/RDT/ROOM3010.RDT",
+          "width": 300372,
+          "sha256": "0a313918f24dac823fd7eeaaeedc9022364da27d62a8c3757e0bc830cd397221",
+          "file_index": 642,
+          "lba": 79251
+        },
+        {
+          "room_id": "02-02",
+          "path": "PL0/RDT/ROOM3020.RDT",
+          "width": 120932,
+          "sha256": "f9004d61d5d3858a3df94040f0c92a569300c0bb36bee96d4afc40a93b5b8abe",
+          "file_index": 643,
+          "lba": 79398
+        },
+        {
+          "room_id": "02-03",
+          "path": "PL0/RDT/ROOM3030.RDT",
+          "width": 146156,
+          "sha256": "1a39cb649b7e98c5b56cbff9759a3536ec2a0c85c965fb38338b336ee3a0a886",
+          "file_index": 644,
+          "lba": 79458
+        },
+        {
+          "room_id": "02-04",
+          "path": "PL0/RDT/ROOM3040.RDT",
+          "width": 261920,
+          "sha256": "ccfb13c4f5616d02d540f449749a14f0b289283164689c21cbf5aff3a8c174cf",
+          "file_index": 645,
+          "lba": 79530
+        },
+        {
+          "room_id": "02-05",
+          "path": "PL0/RDT/ROOM3050.RDT",
+          "width": 162884,
+          "sha256": "977f60c29db4a6eac38f4da4c78971d39b3fa04d71787ca586f465e357392944",
+          "file_index": 646,
+          "lba": 79658
+        },
+        {
+          "room_id": "02-06",
+          "path": "PL0/RDT/ROOM3060.RDT",
+          "width": 198900,
+          "sha256": "c9517dc6925c82523c7b9c9a450acdc0c394b227bb74b5bbed5d8ab6b21edabb",
+          "file_index": 647,
+          "lba": 79738
+        },
+        {
+          "room_id": "02-07",
+          "path": "PL0/RDT/ROOM3070.RDT",
+          "width": 151196,
+          "sha256": "39ea55d00c4647080e30e4564e10ca5f282812f951991c5b605b8065dc5f961b",
+          "file_index": 648,
+          "lba": 79836
+        },
+        {
+          "room_id": "02-08",
+          "path": "PL0/RDT/ROOM3080.RDT",
+          "width": 60532,
+          "sha256": "7ec87f9c33ab656a6b1342188ee661818c7dfb0e2310f1a93e10706bea7f868b",
+          "file_index": 649,
+          "lba": 79910
+        },
+        {
+          "room_id": "02-09",
+          "path": "PL0/RDT/ROOM3090.RDT",
+          "width": 100796,
+          "sha256": "59bca28ed976129234e9040ad62727bab3a2b9d22536908c7a6da648aeacbdf4",
+          "file_index": 650,
+          "lba": 79940
+        },
+        {
+          "room_id": "02-0a",
+          "path": "PL0/RDT/ROOM30A0.RDT",
+          "width": 117768,
+          "sha256": "c123fbb09706682070472a3bf50d06f72b581c651efacaa1db628c582acf2322",
+          "file_index": 651,
+          "lba": 79990
+        },
+        {
+          "room_id": "02-0b",
+          "path": "PL0/RDT/ROOM30B0.RDT",
+          "width": 307900,
+          "sha256": "ec2bf02ac87da445657b410cabf701bec4eb90ee1076a2915269988ef67820b6",
+          "file_index": 652,
+          "lba": 80048
+        },
+        {
+          "room_id": "02-0c",
+          "path": "PL0/RDT/ROOM30C0.RDT",
+          "width": 141344,
+          "sha256": "c478ef242d3f0b2dda90a1f7e9082ea11e32a6731b9ac3927dd653e2b9861490",
+          "file_index": 653,
+          "lba": 80199
+        },
+        {
+          "room_id": "02-0d",
+          "path": "PL0/RDT/ROOM30D0.RDT",
+          "width": 119644,
+          "sha256": "4eb816e1d01ec6a3ba11ab7c1dc5aaabd4e0eccbb63c39fe606a9ba30f2b8451",
+          "file_index": 654,
+          "lba": 80269
+        },
+        {
+          "room_id": "03-00",
+          "path": "PL0/RDT/ROOM4000.RDT",
+          "width": 195780,
+          "sha256": "088eb4713607600feac1951b7bdddd79468e6a95f012668c296b9bf872f1b3a3",
+          "file_index": 655,
+          "lba": 80328
+        },
+        {
+          "room_id": "03-01",
+          "path": "PL0/RDT/ROOM4010.RDT",
+          "width": 335276,
+          "sha256": "608df588fd09af995b88167774c27348055be4051c05a387ba403b9091388cc1",
+          "file_index": 656,
+          "lba": 80424
+        },
+        {
+          "room_id": "03-02",
+          "path": "PL0/RDT/ROOM4020.RDT",
+          "width": 148832,
+          "sha256": "7c2e1eac85375f91e31fa77187c71fd7d0f83c6358c212d2de3cc7e0cfab64b4",
+          "file_index": 657,
+          "lba": 80588
+        },
+        {
+          "room_id": "03-03",
+          "path": "PL0/RDT/ROOM4030.RDT",
+          "width": 375584,
+          "sha256": "38b5df2ebd621b0af00437ba4372a0ecc6ff078cfce8c0ac499259c1c29789c5",
+          "file_index": 658,
+          "lba": 80661
+        },
+        {
+          "room_id": "03-04",
+          "path": "PL0/RDT/ROOM4040.RDT",
+          "width": 185172,
+          "sha256": "4c6245aa118fc62922bb470008e94989e8a36a76aa1295649d0fbf8b53a6062f",
+          "file_index": 659,
+          "lba": 80845
+        },
+        {
+          "room_id": "03-05",
+          "path": "PL0/RDT/ROOM4050.RDT",
+          "width": 170064,
+          "sha256": "3b461c8d9efc211a7e4b81585012a34dbe0f50371c8fa294e6296a9f0394ca08",
+          "file_index": 660,
+          "lba": 80936
+        },
+        {
+          "room_id": "03-07",
+          "path": "PL0/RDT/ROOM4070.RDT",
+          "width": 224484,
+          "sha256": "98bd9ff76ab6c3633819244d2b7970f915212b9358b3d666685d37b9e04b6e73",
+          "file_index": 661,
+          "lba": 81020
+        },
+        {
+          "room_id": "03-08",
+          "path": "PL0/RDT/ROOM4080.RDT",
+          "width": 299740,
+          "sha256": "d557b3c7c47c7a9c6a707e3b72c110835aac414da2892c00799f259cac7052cd",
+          "file_index": 662,
+          "lba": 81130
+        },
+        {
+          "room_id": "03-09",
+          "path": "PL0/RDT/ROOM4090.RDT",
+          "width": 417152,
+          "sha256": "2d1ffabb3a6a44313883fbb0f2c4d44caf53559732637a60ce390a611c9635cc",
+          "file_index": 663,
+          "lba": 81277
+        },
+        {
+          "room_id": "03-0a",
+          "path": "PL0/RDT/ROOM40A0.RDT",
+          "width": 262972,
+          "sha256": "9cc28adec7ae350cdeb90b18e682890437efd1cebeee05172327a451695f6a64",
+          "file_index": 664,
+          "lba": 81481
+        },
+        {
+          "room_id": "03-0b",
+          "path": "PL0/RDT/ROOM40B0.RDT",
+          "width": 50852,
+          "sha256": "7c69818f15bda27723637cad1f60a10e8688161c4ad9d00a503be71352f6093e",
+          "file_index": 665,
+          "lba": 81610
+        },
+        {
+          "room_id": "03-0c",
+          "path": "PL0/RDT/ROOM40C0.RDT",
+          "width": 121984,
+          "sha256": "8ec385660328e5b77b37fdb7d1182ebdcced7041b698843af660b498bbeabcda",
+          "file_index": 666,
+          "lba": 81635
+        },
+        {
+          "room_id": "03-0d",
+          "path": "PL0/RDT/ROOM40D0.RDT",
+          "width": 40624,
+          "sha256": "b09494784852e16b9f8fb7bdd70187794e104c4d902855586aa492196737d124",
+          "file_index": 667,
+          "lba": 81695
+        },
+        {
+          "room_id": "03-0e",
+          "path": "PL0/RDT/ROOM40E0.RDT",
+          "width": 240484,
+          "sha256": "3f74e90d449bb624360304d9c62078923e7efe919b24f222c80388886ec30f81",
+          "file_index": 668,
+          "lba": 81715
+        },
+        {
+          "room_id": "03-0f",
+          "path": "PL0/RDT/ROOM40F0.RDT",
+          "width": 14608,
+          "sha256": "6383a9d38dfac04a7c295b61b83a9d693e40b244435b8d35d20ef5f7424d56c1",
+          "file_index": 669,
+          "lba": 81833
+        },
+        {
+          "room_id": "03-10",
+          "path": "PL0/RDT/ROOM4100.RDT",
+          "width": 279252,
+          "sha256": "811b0174684695054cea3aba5a7998b0c8133b28d0a4577fd97c447a8ec54975",
+          "file_index": 670,
+          "lba": 81841
+        },
+        {
+          "room_id": "04-00",
+          "path": "PL0/RDT/ROOM5000.RDT",
+          "width": 219888,
+          "sha256": "43514e3c10357346487ea3761daec0be32a3cf972fbf6ef5842cbd50720eb974",
+          "file_index": 671,
+          "lba": 81978
+        },
+        {
+          "room_id": "04-01",
+          "path": "PL0/RDT/ROOM5010.RDT",
+          "width": 181120,
+          "sha256": "f04f220b6b5becc333c2e36906e4f2fdaae442f87810332bf227abcf88ad43b3",
+          "file_index": 672,
+          "lba": 82086
+        },
+        {
+          "room_id": "04-02",
+          "path": "PL0/RDT/ROOM5020.RDT",
+          "width": 62720,
+          "sha256": "499a4ae12acd9ea6162ee8c0bc11ab2783ed8e027742ec17523d7c061c0f6bd6",
+          "file_index": 673,
+          "lba": 82175
+        },
+        {
+          "room_id": "04-03",
+          "path": "PL0/RDT/ROOM5030.RDT",
+          "width": 229884,
+          "sha256": "2642be5aa137a9c17d13be601686b341259e271a3304f05aeb7265e683deb67b",
+          "file_index": 674,
+          "lba": 82206
+        },
+        {
+          "room_id": "04-04",
+          "path": "PL0/RDT/ROOM5040.RDT",
+          "width": 127532,
+          "sha256": "c726d2c9cdd552ec8411cb7446870a2afaea7c337f48e158f99a5e6bd11ffcab",
+          "file_index": 675,
+          "lba": 82319
+        },
+        {
+          "room_id": "04-05",
+          "path": "PL0/RDT/ROOM5050.RDT",
+          "width": 206076,
+          "sha256": "2ceeb9dd9088785aae51cfc058da27285a2d8c8294967b1869eead9b8410b0ca",
+          "file_index": 676,
+          "lba": 82382
+        },
+        {
+          "room_id": "04-06",
+          "path": "PL0/RDT/ROOM5060.RDT",
+          "width": 132796,
+          "sha256": "7a1877673b9aee140aca2e27c8d2be86c29617b6b0c74540e614031aa63a1770",
+          "file_index": 677,
+          "lba": 82483
+        },
+        {
+          "room_id": "04-07",
+          "path": "PL0/RDT/ROOM5070.RDT",
+          "width": 126236,
+          "sha256": "86cad4c8719e0cadd582734664ba030bbec597450cee474658bdc7843dda85eb",
+          "file_index": 678,
+          "lba": 82548
+        },
+        {
+          "room_id": "04-08",
+          "path": "PL0/RDT/ROOM5080.RDT",
+          "width": 64532,
+          "sha256": "efbcb217a0c97ac1004a6a1753193d1da3828afd4d1f74d9a285bebfb7f794c1",
+          "file_index": 679,
+          "lba": 82610
+        },
+        {
+          "room_id": "04-09",
+          "path": "PL0/RDT/ROOM5090.RDT",
+          "width": 98244,
+          "sha256": "b743140e95cdd5acd04d089fecdfa312b773e8977132407c0629da85bdb9a0a1",
+          "file_index": 680,
+          "lba": 82642
+        },
+        {
+          "room_id": "05-00",
+          "path": "PL0/RDT/ROOM6000.RDT",
+          "width": 29452,
+          "sha256": "9dbc4c8c397068ec225df67b6407d9e0c1e7763504be60cd22463026f0bd1747",
+          "file_index": 681,
+          "lba": 82690
+        },
+        {
+          "room_id": "05-01",
+          "path": "PL0/RDT/ROOM6010.RDT",
+          "width": 122344,
+          "sha256": "cf6556e000abfb010d6beb247c93dce7690b4abc9d10df71a0d35c347609319b",
+          "file_index": 682,
+          "lba": 82705
+        },
+        {
+          "room_id": "05-02",
+          "path": "PL0/RDT/ROOM6020.RDT",
+          "width": 237704,
+          "sha256": "05f7d6b19d1c831351ec01d49c4e525d8f9a3c132b71ccbbee50d4bfd3d44c1c",
+          "file_index": 683,
+          "lba": 82765
+        },
+        {
+          "room_id": "05-03",
+          "path": "PL0/RDT/ROOM6030.RDT",
+          "width": 446516,
+          "sha256": "b5328ddce75ffb02dd3c4a4f2d75157f1c8fab7e4b432b9be08fb195d8579a41",
+          "file_index": 684,
+          "lba": 82882
+        },
+        {
+          "room_id": "05-04",
+          "path": "PL0/RDT/ROOM6040.RDT",
+          "width": 322456,
+          "sha256": "a38eb9bc1a24ff1472a222575745710f5f87cbc296d04ada641ebc8e9b38ccff",
+          "file_index": 685,
+          "lba": 83101
+        },
+        {
+          "room_id": "05-05",
+          "path": "PL0/RDT/ROOM6050.RDT",
+          "width": 114156,
+          "sha256": "952567fcd81409e97c8ee08a26a37feecd91070b5d2481e2918d5ac0ee5d5f83",
+          "file_index": 686,
+          "lba": 83259
+        },
+        {
+          "room_id": "05-06",
+          "path": "PL0/RDT/ROOM6060.RDT",
+          "width": 62660,
+          "sha256": "b35589fe21392bacaa54ec533337a4da49efe970ce2f3511dfd5dc7b2f616627",
+          "file_index": 687,
+          "lba": 83315
+        },
+        {
+          "room_id": "05-07",
+          "path": "PL0/RDT/ROOM6070.RDT",
+          "width": 200540,
+          "sha256": "8decff7c05a984ac3dbadb649163f76e3df320dedaa91b3329f4e457c6160b97",
+          "file_index": 688,
+          "lba": 83346
+        },
+        {
+          "room_id": "05-08",
+          "path": "PL0/RDT/ROOM6080.RDT",
+          "width": 137360,
+          "sha256": "24e5a2742d0b5ee598bc47d30560bf89f69395fefb916e738dce383b405ceca2",
+          "file_index": 689,
+          "lba": 83444
+        },
+        {
+          "room_id": "05-09",
+          "path": "PL0/RDT/ROOM6090.RDT",
+          "width": 61080,
+          "sha256": "a71f4f6e5067c45b7c3212050654502aaee386c76dff549370a24b34636fe494",
+          "file_index": 690,
+          "lba": 83512
+        },
+        {
+          "room_id": "05-0a",
+          "path": "PL0/RDT/ROOM60A0.RDT",
+          "width": 278852,
+          "sha256": "0dfe0bfde368b029d9aa92547ad84961a1d50f70d152c660f8841fc1f88b96b5",
+          "file_index": 691,
+          "lba": 83542
+        },
+        {
+          "room_id": "05-0b",
+          "path": "PL0/RDT/ROOM60B0.RDT",
+          "width": 133672,
+          "sha256": "c1dd151210696b4e12477681e81cae9b81eb55e2b158e36ec9a32ac323c98fa0",
+          "file_index": 692,
+          "lba": 83679
+        },
+        {
+          "room_id": "05-0c",
+          "path": "PL0/RDT/ROOM60C0.RDT",
+          "width": 351208,
+          "sha256": "209e6fda530670a48f1507fbb0e3f54e7c8019d43b2c6445ecd7e183719685ce",
+          "file_index": 693,
+          "lba": 83745
+        },
+        {
+          "room_id": "05-0d",
+          "path": "PL0/RDT/ROOM60D0.RDT",
+          "width": 196068,
+          "sha256": "7f2cca7a9539f08a66da113597f9f182f885e07ff902152a3cd687640a6b9ee6",
+          "file_index": 694,
+          "lba": 83917
+        },
+        {
+          "room_id": "05-0e",
+          "path": "PL0/RDT/ROOM60E0.RDT",
+          "width": 64980,
+          "sha256": "e7de7b050f3cb12b6533c20aaab03c1c4a3bae6ac7ad8e8e4bd9434925f422bc",
+          "file_index": 695,
+          "lba": 84013
+        },
+        {
+          "room_id": "05-0f",
+          "path": "PL0/RDT/ROOM60F0.RDT",
+          "width": 76432,
+          "sha256": "26f76f9ce3bd1f11652b277eea4134eb293915c3634fa5722a34c94ffe9c2b76",
+          "file_index": 696,
+          "lba": 84045
+        },
+        {
+          "room_id": "05-10",
+          "path": "PL0/RDT/ROOM6100.RDT",
+          "width": 135312,
+          "sha256": "d3ad1e3ea470a510b61a5e48fe6b2b410395ac99a8f93b2d4f1396097c9d30df",
+          "file_index": 697,
+          "lba": 84083
+        },
+        {
+          "room_id": "05-11",
+          "path": "PL0/RDT/ROOM6110.RDT",
+          "width": 234008,
+          "sha256": "75f13fda0e68eb2394de01bcebe3649bd3d27dc31e6e3ad8c334658ea6967179",
+          "file_index": 698,
+          "lba": 84150
+        },
+        {
+          "room_id": "05-12",
+          "path": "PL0/RDT/ROOM6120.RDT",
+          "width": 193932,
+          "sha256": "d490f8f5ff832ff9b056210a97acb9a708a1c7f2b39f3b72d6b07a07b79811a8",
+          "file_index": 699,
+          "lba": 84265
+        },
+        {
+          "room_id": "05-13",
+          "path": "PL0/RDT/ROOM6130.RDT",
+          "width": 189268,
+          "sha256": "106980d8d9f4e160241a4623d4764c0676d132ba5435da2afdf8c9d32b6916b5",
+          "file_index": 700,
+          "lba": 84360
+        },
+        {
+          "room_id": "05-14",
+          "path": "PL0/RDT/ROOM6140.RDT",
+          "width": 112008,
+          "sha256": "2e1e0d4495ecda15ee40caeddc63fb120af1cbadf7df91671004c2ffda9a500b",
+          "file_index": 701,
+          "lba": 84453
+        },
+        {
+          "room_id": "05-15",
+          "path": "PL0/RDT/ROOM6150.RDT",
+          "width": 243124,
+          "sha256": "dbb5b0d230d419b33c38647ec5feef67667dece668ad644700df3c6a4081742e",
+          "file_index": 702,
+          "lba": 84508
+        },
+        {
+          "room_id": "05-16",
+          "path": "PL0/RDT/ROOM6160.RDT",
+          "width": 184204,
+          "sha256": "e7b1b01fcd1be513eee17c1fef08b5b968bfe09f8f54e2c4064266db3493dba9",
+          "file_index": 703,
+          "lba": 84627
+        },
+        {
+          "room_id": "05-17",
+          "path": "PL0/RDT/ROOM6170.RDT",
+          "width": 208000,
+          "sha256": "615bef42fdd7aa235cea247119f6c4880dd3dc8a9d23c9335a9188b5fba8a7f0",
+          "file_index": 704,
+          "lba": 84717
+        },
+        {
+          "room_id": "06-00",
+          "path": "PL0/RDT/ROOM7000.RDT",
+          "width": 175544,
+          "sha256": "745129191b1ddb5166e34fcccdd60a56b5ed51dd61595e6c424988944114e020",
+          "file_index": 705,
+          "lba": 84819
+        },
+        {
+          "room_id": "06-01",
+          "path": "PL0/RDT/ROOM7010.RDT",
+          "width": 215824,
+          "sha256": "2dc79b24eecb55cf817b152e696916fd5085fb9068c6fdf2794fc8b01a064887",
+          "file_index": 706,
+          "lba": 84905
+        },
+        {
+          "room_id": "06-02",
+          "path": "PL0/RDT/ROOM7020.RDT",
+          "width": 160188,
+          "sha256": "0d9b9cacc034d4b525c46560da3888d7fd197d4692a649f6ec5b28d7db5cdebd",
+          "file_index": 707,
+          "lba": 85011
+        },
+        {
+          "room_id": "06-03",
+          "path": "PL0/RDT/ROOM7030.RDT",
+          "width": 255092,
+          "sha256": "0e8a10a0648f2aadfcad802ca7468c92e92f607dc91f2a99e65f6fffe39a1e25",
+          "file_index": 708,
+          "lba": 85090
+        },
+        {
+          "room_id": "06-04",
+          "path": "PL0/RDT/ROOM7040.RDT",
+          "width": 245348,
+          "sha256": "95675a27e56a2a852e593e3357dd5ac38ce48810cdb2812e645123c8f935250d",
+          "file_index": 709,
+          "lba": 85215
+        }
+      ]
+    }
   },
   "metadata_layout": {
     "actor_part_resource_table_address_ps1": "0x8009ADF4",

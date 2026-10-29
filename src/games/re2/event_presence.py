@@ -11,6 +11,10 @@ from games.re2.initializer_control_proof import (
     InitializerControlSupport,
 )
 from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
+from games.re2.startup_declarations import (
+    StartupDeclarationReceipt,
+    StartupDeclarationSupport,
+)
 from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
 # Audited initializer effects shared with ordinary collection proofs. These
@@ -218,16 +222,34 @@ def source_presence(
     data: bytes,
     programs: dict,
     targets: set[tuple[str, int]],
-    mode: Literal["startup", "scheduled"],
+    mode: Literal["startup", "scheduled", "declaration"],
     condition_flags: frozenset[tuple[int, int]],
     fixed_flags: frozenset[tuple[int, int, int]],
     *,
     startup_effects: StartupEffectReceipt
     | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
+    declaration_effects: StartupDeclarationReceipt
+    | StartupDeclarationSupport = StartupDeclarationSupport.Unaudited,
     initializer_control: InitializerControlProof
     | InitializerControlSupport = InitializerControlSupport.Unaudited,
 ) -> dict:
-    assert mode in ("startup", "scheduled")
+    assert mode in ("startup", "scheduled", "declaration")
+    assert declaration_effects is StartupDeclarationSupport.Unaudited or isinstance(
+        declaration_effects, StartupDeclarationReceipt
+    )
+
+    declaration = mode == "declaration"
+    if declaration:
+        if (
+            not isinstance(declaration_effects, StartupDeclarationReceipt)
+            or condition_flags
+            or fixed_flags
+            or not declaration_effects.matches_source(data, programs)
+        ):
+            return {"kind": "unresolved"}
+        declaration_locations = declaration_effects.locations
+    else:
+        declaration_locations = frozenset()
     assert targets and all(key in programs for key, _ in targets)
     assert isinstance(fixed_flags, frozenset) and all(
         (bank, bit) in condition_flags and type(value) is int and value in (0, 1)
@@ -295,7 +317,7 @@ def source_presence(
 
     # Later counter aliases can invalidate fresh presence predicates. Reject
     # them anywhere in the source, as with task cancellation/replacement.
-    for program in programs.values():
+    for program in () if declaration else programs.values():
         for row in program["commands"]:
             if (
                 row["kind"] == "counter_write"
@@ -370,16 +392,18 @@ def source_presence(
                 )
             )
 
-        def walk(key, position, returns):
+        def walk(key, position, returns, frames=(), seen=frozenset()):
             nonlocal steps
             if goal != "startup-end" and (key, position) in goal:
                 return unconditional
-            state = key, position, returns
+            state = key, position, returns, frames, seen
             steps += 1
             # Bound both work and Python call depth for malformed/deep sources.
             if (
                 steps > 4096
                 or len(active) >= 256
+                or declaration
+                and (key, position) in seen
                 or state in active
                 or position not in commands[key]
             ):
@@ -387,17 +411,48 @@ def source_presence(
             if state in cache:
                 return cache[state]
             active.add(state)
+
+            def advance(next_key, next_position, next_returns, next_frames=frames):
+                # Reentered allocation code can relocate an embedded model twice.
+                # Preserve execution history across Gosub returns as well as branches.
+                return walk(
+                    next_key,
+                    next_position,
+                    next_returns,
+                    next_frames,
+                    seen | {(state[0], state[1])} if declaration else seen,
+                )
+
             row = commands[key][position]
             kind, opcode = row["kind"], row["opcode"]
-            if (key, position) in control_edges:
+            if declaration and opcode in (7, 8):
+                result = (
+                    advance(
+                        key,
+                        row["target"] if opcode == 7 else row["next"],
+                        returns,
+                        frames[:-1],
+                    )
+                    if frames and frames[-1] == row["next"]
+                    else unresolved
+                )
+            elif (key, position) in control_edges:
                 # Every matched case and the no-match path finish here.
                 # Validated bodies change only global music parameters.
-                result = walk(key, control_edges[key, position], returns)
+                result = advance(key, control_edges[key, position], returns)
             elif kind == "end":
                 if opcode == 1 and data[row["offset"] + 1] != 0:
                     result = unresolved
+                elif declaration and frames:
+                    result = unresolved
                 elif returns:
-                    result = walk(*returns[-1], returns[:-1])
+                    caller = returns[-1]
+                    result = advance(
+                        caller[0],
+                        caller[1],
+                        returns[:-1],
+                        caller[2] if declaration else (),
+                    )
                 else:
                     result = (
                         unconditional
@@ -425,13 +480,24 @@ def source_presence(
                     # only exit returns without changing flags or skipping the
                     # caller's later award, so suspension does not erase it.
                     result = (
-                        walk(key, row["next"], returns)
+                        advance(key, row["next"], returns)
                         if waiting and not symbolic_flags
-                        else walk(
-                            target, callee["entry"], returns + ((key, row["next"]),)
+                        else advance(
+                            target,
+                            callee["entry"],
+                            returns
+                            + (
+                                (key, row["next"], frames)
+                                if declaration
+                                else (key, row["next"]),
+                            ),
+                            (),
                         )
                     )
             elif kind == "if":
+                if declaration and (len(frames) >= 8 or row["target"] <= row["next"]):
+                    active.remove(state)
+                    return unresolved
                 position = row["next"]
                 tests = []
                 while position in commands[key]:
@@ -472,7 +538,7 @@ def source_presence(
                     and tests[0][:2] in fixed
                     and (len(tests) == 1 or fixed[tests[0][:2]] != tests[0][2])
                 ):
-                    result = walk(
+                    result = advance(
                         key,
                         position
                         if fixed[tests[0][:2]] == tests[0][2]
@@ -482,8 +548,13 @@ def source_presence(
                     active.remove(state)
                     cache[state] = result
                     return result
-                yes = walk(key, position, returns)
-                no = walk(key, row["target"], returns)
+                yes = advance(
+                    key,
+                    position,
+                    returns,
+                    frames + (row["target"],) if declaration else frames,
+                )
+                no = advance(key, row["target"], returns, frames)
                 # Only explicitly supported stable flags become predicates.
                 # Lifecycle/input flags can change outside the source during
                 # room initialization, so their fresh values prove neither path.
@@ -505,7 +576,13 @@ def source_presence(
                 else:
                     result = conjunction(yes, no)
             elif opcode == 7:
-                result = walk(key, row["target"], returns)
+                result = advance(key, row["target"], returns)
+            elif declaration:
+                result = (
+                    advance(key, row["next"], returns, frames)
+                    if (key, row["offset"]) in declaration_locations
+                    else unresolved
+                )
             elif (
                 opcode == 4
                 and goal == "startup-end"
@@ -522,7 +599,7 @@ def source_presence(
                     )
                 )
             ):
-                result = walk(key, row["next"], returns)
+                result = advance(key, row["next"], returns)
             else:
                 # Startup writes, task control, loops and unsupported effects
                 # cannot authorize a condition evaluated from fresh flags.
@@ -536,12 +613,12 @@ def source_presence(
     # Queuing is insufficient if startup later transitions, loops or changes
     # flags before the task can run. Require both synchronous roots to finish
     # using only the audited initializer effects, including after the fork.
-    for root in ("16:0", "17:0"):
+    for root in ("16:0",) if declaration else ("16:0", "17:0"):
         if required_before("startup-end", root, True) != unconditional:
             return {"kind": "unresolved"}
 
     conditions = unresolved
-    if mode == "startup":
+    if mode in ("startup", "declaration"):
         for target in target_groups:
             for root in ("16:0", "17:0"):
                 conditions = simplify(conditions | required_before(target, root, True))
