@@ -18,7 +18,7 @@ Default histories are `.local/re2-leon-a-slus00748.json` and `.local/re2-claire-
 
 Match the existing tracker behavior: spatial floor plans revealed by entering rooms, room names, actual facing, floor browsing, zoom and pan, persistent exploration isolated by game/revision/scenario/playthrough, remaining items, separate unresolved checks, game-derived door access, and fresh item/door/story state after savestate changes. Exploration survives earlier savestates; acquired items and unlocked doors must rewind with the game.
 
-The shared [map controls](map-controls.md) support keyboard panning, zoom and fit, alongside mouse controls and floor browsing.
+The shared [map controls](map-controls.md) support keyboard panning, zoom and fit, alongside mouse controls and floor browsing. [Back](map-controls.md#return-to-previous-inspections) retraces manual inspections with the chosen zoom/pan and fresh game state.
 
 [Shared-slot item presence](research/re2/shared-item-slots.md) reuses proven scenario exclusions when checking conflicting pickup identities. It recovers two Leon and three Claire remaining-item rules without deleting raw declarations or weakening live contradiction checks. One Leon pickup has native collection, departure/reentry and four exact savestate restores. A second has native collection and two current-state restores, with departure/reentry unverified. The Claire outcomes remain source-validated.
 

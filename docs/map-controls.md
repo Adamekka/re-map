@@ -23,3 +23,9 @@ Use **Find item or room** to filter remaining items and unresolved checks by the
 ## Inspect connected rooms
 
 Select an underlined destination in **Doors** to inspect its explored room. The tracker switches floors when needed and centers the recorded outline, retaining zoom when it fits. The room details receive focus when the current room has no outline. Door access continues to reflect game state. Destinations without a recorded map view stay as text. **Follow player** resumes tracking the room you enter.
+
+## Return to previous inspections
+
+**Back** retraces room selections, door/item results and floor browsing in the current browser session. It restores the previous zoom and pan while showing fresh items, completion and door access. Zooming, panning and live player movement do not add entries. Repeatedly selecting the same view adds no extra step. **Follow player** clears this inspection history and resumes following.
+
+Only views still available in explored history remain accessible. A room without an outline can be revisited through Back while it remains the same current room. Back is disabled during interrupted tracking and recovers valid entries when tracking returns.

@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Back through room inspections
+
+The browser keeps session-local view identities and numeric viewport settings for room selections, door/item results and floor browsing. Back restores those views through the current publication. It stores no acquisition, completion, door or exploration values. Same-view repeats collapse; zoom, pan and live movement create no entry. Follow player clears the stack. Fresh reads prune unavailable views; interrupted tracking disables Back while retaining valid entries for recovery. Outlined views and current-room details are explicit alternatives, so distinct unmapped rooms cannot share an empty region identity.
+
+Run `bun tests/check_map_history_browser.mjs <python>`. Its RE1/RE2 fixtures cover fresh completion after Back, exact zoom/pan restoration, map selection, item results, cross-floor browsing and synthetic door inspection, repeated views, reset, interruption/recovery, removed history and unoutlined current-room return. Two development regressions expose lost focus when Back is disabled and a collision between different unmapped rooms; both now pass. The existing RE1, RE2, keyboard and refresh browser suites, 58 map/multi-area Python tests, scoped Ruff/formatting, local links and whitespace checks also pass. Private `/tmp/re-map-inspection-history-20261029/render-map.mjs` verifies desktop/mobile navigation from existing user exploration, returning through Back after zoom/drag with complete publication equality. The README image is refreshed. No native gameplay or tracking interpretation changes.
+
+Implemented and directly reviewed on 2026-10-29 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Review checks fresh-data admission, view identity, viewport restoration, history pruning, focus, disabled controls and responsive layout. External review providers remain disabled; no external endorsement is claimed.
+
 ## Door destination inspection
 
 Underlined destination names in Doors inspect rooms with an observed map view. A shared observed-room lookup and inspection action serve door buttons and all item/search results. They retain current-outline preference, floor switching, recentering, zoom bounds and room/details focus. Known names without recorded views remain text. Door access, acquisition and exploration stay unchanged. Focus is restored by source/target/observation identity after a live redraw, and returns to room details when the control disappears or tracking is interrupted.

@@ -290,7 +290,7 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 </head>
 <body>
 <header><h1>__GAME_TITLE__</h1><span id="place"></span></header>
-<nav id="map-controls" aria-label="Map controls"><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
+<nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
 <div id="map-shell"><svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag or use the mouse wheel."></svg></div>
@@ -324,6 +324,7 @@ const ns = 'http://www.w3.org/2000/svg';
 let selected = null;
 let selectedArea = null;
 let floorView = {mode:'follow'};
+let viewHistory = [];
 let lastState = null;
 let lastReportedError = '';
 let overviewKey = '';
@@ -331,6 +332,7 @@ const labelLayouts = new Map();
 let viewport = {mode:'empty'};
 let pan = {mode:'idle'};
 let suppressMapClick = false;
+const backRoomButton = document.getElementById('back-room');
 const floorSelect = document.getElementById('floor');
 const itemSearch = document.getElementById('item-search');
 const currentRoomButton = document.getElementById('current-room');
@@ -347,11 +349,13 @@ itemSearch.addEventListener('keydown',event=>{
   }
 });
 floorSelect.addEventListener('change',()=>{
+  rememberView();
   floorView={mode:'browse',area:floorSelect.value};
   selected=null;
   draw(lastState);
 });
 currentRoomButton.addEventListener('click',()=>{
+  viewHistory=[];
   floorView={mode:'follow'};
   selected=null;
   endPan();
@@ -359,9 +363,37 @@ currentRoomButton.addEventListener('click',()=>{
   viewport={mode:'empty'};
   draw(lastState);
 });
+function rememberView() {
+  // Interrupted maps retain room outlines, but those clicks cannot add a readable view to history.
+  if(lastState===null || lastState.status!=='display') return;
+  if(selectedArea===null) throw new Error('Cannot record an uninitialized map view');
+  const room=svg.querySelector('.room.selected');
+  if(!room && selectedArea!==lastState.area) throw new Error('Only the current room can have an unoutlined view');
+  const view=room ? {kind:'outline',area:selectedArea,id:room.dataset.region} : {kind:'details',area:selectedArea,id:lastState.map_region,room:lastState.current};
+  // Snapshots retain display choices so Back can render fresh game-derived state.
+  viewHistory.push({...view,viewport:structuredClone(viewport)});
+}
+backRoomButton.addEventListener('click',()=>{
+  if(lastState===null || lastState.status!=='display' || viewHistory.length===0) throw new Error('Back requires readable inspection history');
+  const previous=viewHistory.pop();
+  endPan();
+  floorView={mode:'browse',area:previous.area};
+  selectedArea=previous.area;selected=previous.id;viewport=previous.viewport;
+  draw(lastState);
+  focusInspectedRoom();
+});
 function applyViewport() {
   const ready=lastState!==null && lastState.status==='display';
   const navigable=ready && viewport.mode!=='empty';
+  if(ready) {
+    const room=svg.querySelector('.room.selected'),id=room ? room.dataset.region : lastState.map_region;
+    // Reselecting the displayed view should not add a Back step.
+    while(viewHistory.length && viewHistory.at(-1).area===selectedArea && viewHistory.at(-1).id===id) viewHistory.pop();
+  }
+  // Disabling a focused control would otherwise drop keyboard focus onto the page.
+  const focusedBack=document.activeElement===backRoomButton;
+  backRoomButton.disabled=!ready || viewHistory.length===0;
+  if(focusedBack && backRoomButton.disabled) document.getElementById('room-name').focus({preventScroll:true});
   const following=ready && floorView.mode==='follow' && selected===null;
   currentRoomButton.setAttribute('aria-pressed',String(following));
   currentRoomButton.disabled=!ready || following && viewport.mode!=='manual';
@@ -622,6 +654,13 @@ function draw(state) {
     if(focusedDoor) document.getElementById('room-name').focus({preventScroll:true});
     return;
   }
+  const availableViews=new Map(Object.entries(state.explored_areas).map(([area,visits])=>[area,new Set(visits.map(visit=>visit.id))]));
+  viewHistory=viewHistory.filter(entry=>{
+    if(entry.kind==='outline') return availableViews.has(entry.area) && availableViews.get(entry.area).has(entry.id);
+    // Distinct unmapped rooms can share a region ID; details are valid only for that same current room.
+    if(entry.kind==='details') return entry.area===state.area && entry.id===state.map_region && entry.room===state.current;
+    throw new Error('Unknown inspection history view kind');
+  });
   if(floorView.mode==='browse' && !Object.hasOwn(state.explored_areas,floorView.area)) {
     // A new playthrough can remove the browsed floor. Resume following instead
     // of retaining geometry or verdicts from the previous exploration history.
@@ -739,10 +778,10 @@ function draw(state) {
     }
     label.setAttribute('transform','translate('+layout.center.join(' ')+') rotate('+layout.angle+') scale('+layout.scale+') translate('+layout.offset.join(' ')+')');
     setLines(layout.lines);
-    group.addEventListener('click',()=>{selected=id;draw(lastState);});
+    group.addEventListener('click',()=>{rememberView();selected=id;draw(lastState);});
     group.addEventListener('keydown',event=>{
       if(event.key==='Enter' || event.key===' ') {
-        event.preventDefault();selected=id;draw(lastState);
+        event.preventDefault();rememberView();selected=id;draw(lastState);
       }
     });
   }
@@ -882,6 +921,7 @@ function draw(state) {
   }
 }
 function inspectRoom(area,id) {
+  rememberView();
   endPan();
   floorView={mode:'browse',area};
   // A floor switch otherwise clears selection at the start of draw.
@@ -900,7 +940,11 @@ function inspectRoom(area,id) {
       applyViewport();
     }
   }
+  focusInspectedRoom();
+}
+function focusInspectedRoom() {
   document.querySelector('main').scrollIntoView({block:'start'});
+  const room=svg.querySelector('.room.selected');
   // An unoutlined current room has details but no SVG focus target.
   const target=room || document.getElementById('room-name');
   target.focus({preventScroll:true});
