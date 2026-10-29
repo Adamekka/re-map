@@ -103,3 +103,50 @@ Private source/native evidence includes `known-puzzle-opposite-entry-audit.json/
 The private emulator has both achievement integrations disabled, None/None memory cards, muted audio and black post-processing. No health, ammunition, story or key patch is enabled. Agent histories remain separate; the user's history stays released. This documentation task performs no emulator or history operation.
 
 Contributions and review, 2026-10-28: the human user supplied the unresolved-room report and requested the repair loop. The `procedure_entries` agent, exact model `gpt-6.1-sol` verified by authoritative T3 runtime metadata, researched the bounded rule, authored the compiler and focused tests, inspected the native entry/transition instructions and authored this record. Root, the same exact model, authored generator/profile/reader integration, shared predicate reuse and call-frame correction, performed the native entry/departure, replay/history comparisons and full validation, and reviewed the combined change. The `door_diagnosis` agent, exact model `gpt-6.1-sol`, supplied the independently inspected message, camera and immediate-door write domains. The `metadata_diagnosis` agent, exact model `gpt-6.1-sol`, independently found the historical-mode counterexample, verified the narrower opposite-entry argument and reviewed caller/control closure, physical aliases, complete Copy/text protection, native message/door boundaries, source bounds and knowledge-versus-access separation. Its final review reported no remaining verified blocker. Configured external review providers were unavailable; they returned no reviews and provide no endorsement. Earlier research authorship and rejected movie/window and access experiments retain their separate scope.
+
+## RE2-PUZZLE-002: source 00-12 needs incoming-resource and opposite-mode bounds
+
+Status: Candidate source investigation and copied native-handler experiments for the same USA Dual Shock Ver., SLUS-00748, Leon A Original/Normal executable identified above. A stage-address-only extension is rejected. This increment changes no production rule, item/door outcome or clearance result and adds no gameplay observation.
+
+### Reproduced gap and positive relation
+
+Baseline `df90c60` reconstructs the existing unresolved checks from retained RAM and a read-only copy of the user's visits-only history. Seven bounded source diagnostics reproduce the checked-in catalogs exactly. Source `00-12` still reports acquisition ID 21, Bishop Plug, as Unknown after departure. Its other unresolved pickup remains separate.
+
+Owned `PL0/RDT/ROOM1120.RDT` is 458232 bytes, SHA256 `832014cd87b9a81442ca91ddfe036e5846bb43b5135de3aae0378148df2ec5bf`. File offsets below refer to that source. Root `17:0` has a mode-return guard, declares slot eleven/type 59/ID 21 at 10656, initializes a static object at 10678 and calls `17:2`. That procedure declares active callback slot seven at 10804, naming `17:12`, before unsupported effect `0x54` at 10844. The callback references slot eleven through `Aot_on` at 13272. Camera thirteen has a real matching RVD record at 1560. These relations identify a candidate for the existing positive-knowledge rule; they do not establish all of its entry or mode requirements.
+
+The existing verified stage-zero loader recipe places this source at PS1 virtual `0x8011A6A8`. Its retained-data boundary is offset 88916, ending at `0x801301FC`, below the graphics arena at `0x80198000`. Embedded model five uses an owned 1708-byte asset at source offset 24320. These resource facts do not replace the existing contract's stage-one address `0x8011A65C`. The incoming models are `01/0D`; the current room-entry contract audits `09/0D`, and the separate positive-declaration contract admits `02/0A`. A resource-selection receipt identifies an incoming model but does not prove that model's native entry effects.
+
+Root `16:0` starts with doors and a conditional kind-four reset. Its mode-dependent return is in the second root, so the existing leading-first-root recognizer cannot simply be reused. Under the opposite entry setting, frame root `17:1` still calls `17:3`, which can schedule `17:13` at 11968. That path must preserve the enforced mode before current flags can justify a historical declaration.
+
+### Bounded motion writes
+
+All addresses in this subsection are PS1 virtual addresses. Data is little endian; word/pointer fields use four bytes and mask `0xFFFFFFFF`, and halfwords use two bytes and mask `0xFFFF`. Source packet offsets are distinct from these addresses.
+
+Worker packet `2e0404` at 13306 selects fixed object four, record `0x800D0B04` with width 504. It does not select an inherited actor pointer. The following exact operations have a smaller write obligation than model or animation-resource ownership:
+
+| Operation | Native code | Writes |
+| --- | --- | --- |
+| Work selection `0x2E` | `0x80055904` | Task work pointer at `+0x154`, six cleared words at `+0x158..0x16F`, task PC at `+0x1C` |
+| Delta setter `0x2F` | `0x80055A84` | Source selectors one/seven write task halfwords `+0x15A/+0x166`; task PC advances four bytes |
+| Motion `0x30` | `0x80055AB0` | Object coordinates `+0x38/+0x3C/+0x40` as words, rotations `+0x74/+0x76/+0x78` as halfwords; task PC advances one byte |
+| Delta update `0x31` | `0x80055B2C` | Six task halfwords `+0x158..+0x162`, each adding its corresponding halfword at `+0x164..+0x16E` modulo 65536; task PC advances one byte |
+
+The task pool begins at `0x800D7860`, stride `0x174`, fourteen records, ending at `0x800D8CB8` exclusive. Root reproduces 70 copied opcode-31 executions over all fourteen records and five seeds, including signed boundaries and wraparound. Another 490 copied executions use the source's Work/delta packets and two motion/delta-update iterations. Every complete two-MiB RAM comparison permits only the predicted task and object writes. This supports the local write domain without asserting that a scheduler, loop or game interaction actually executes that sequence.
+
+Static inspection of scalar packet `340ce0ac` at 13350 selects member twelve and stores signed value -21280 to object four's Y field at `+0x3C`. Its full copied handler raises `UC_ERR_EXCEPTION`, so this increment claims static instruction evidence only for that setter. A reused Unicorn MIPS CPU also skipped a second handler entry; the accepted motion experiments use a fresh CPU for every invocation. Both failed harness variants remain private as diagnostics.
+
+### Remaining entry and sound obligations
+
+All explicit and kind-six flag writers avoid SYSTEM word `0x800CFB74`, mask `0x40`, and STATUS word `0x800CFBD8`, mask `0xC2000000`. Native bank-nine bit 128 aliases four-byte word `0x800D491C`, mask `0x80000000`, still disjoint from those mode words. All 53 Copy commands avoid the complete positive-prefix, callback and opposite-frame/worker packets checked in this investigation. These checks do not authorize other native effects or arbitrary alternate entries.
+
+Worker sound packets at 13294/13322 call `0x80056428` and helper `0x8005BA28` for bank-two sounds `0A/0D`. They perform real VAB tone writes. The source's EDT/VAB offsets are 85108/85300, and section 22 is 36468. The corresponding four-byte EDT records are `00004400` and `00007300`. The existing immutable-door sound receipt requires section 22 zero, so it cannot be reused unchanged. Owned sound relocation/write bounds and incoming model `01` entry effects remain necessary, followed by the second-root guard and opposite-mode control argument. Unsupported effect `0x54` after the positive prefix remains unadmitted.
+
+Private reproducible evidence:
+
+- `/tmp/re-map-next-presence-df90c60-vugqupib/diagnose.py` pins production source/data to `df90c60` and reproduces the seven unchanged catalog outcomes.
+- `opposite-mode-writes.py/json` in that directory records exact source packets, physical flag aliases, Copy destinations, native instruction spans and sound operands. The root reruns it independently. `stage-zero-compatibility.json` and its addendum retain the initial compatibility investigation and corrections.
+- `/tmp/re-map-accuracy-20261030/native-object-motion.py/json` records the 560 accepted copied executions and complete-RAM comparisons. The separate reused-CPU and scalar-exception variants are not accepted executions. No DuckStation instance, game input/load, settings change, history write, live guest patch or screenshot occurs.
+
+The focused known-puzzle, room-entry and startup-declaration suites pass 163 tests. Local links/anchors and whitespace checks pass. Direct review distinguishes the positive source relation, local copied-write evidence, incoming-resource and sound limits, and unchanged publication. External review providers remain disabled; no external endorsement is claimed.
+
+Contributions, 2026-10-30: the human user requested continued autonomous RE2 improvements. The `startup_experience` agent, exact model `gpt-6.1-sol` from inherited authoritative T3 runtime metadata, diagnosed the seven sources and authored the static compatibility, packet, alias and Copy reports. Root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata, reproduced the retained publication and source diagnostics, independently inspected the native dispatch/handlers, ran the copied motion experiments, checked additional packet protection, reviewed the limits and authored this dated record. Earlier authorship, gameplay evidence and approved collection/identity policy remain unchanged.
