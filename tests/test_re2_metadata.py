@@ -2999,3 +2999,109 @@ def test_fixed_context_presence_requires_a_whole_source_proof(writer, scenario_b
         if proof.fixed_context_preserved
         else []
     )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "different-id",
+        "different-type",
+        "reachable-other",
+        "mutable-guard",
+        "fixed-writer",
+        "alias-writer",
+        "door",
+        "unreachable-door",
+        "reset",
+        "unreachable-reset",
+    ],
+)
+def test_unreachable_item_identity_does_not_conflict_with_required_pickup(
+    case, scenario_banks
+):
+    """RE2-COLLECT-023: only proven-impossible item creators lose their conflict."""
+    from games.re2.room_data import collection_presence
+    from games.re2.scenario_items import scenario_item_proofs, scenario_presence_flags
+
+    other_type = 20 if case == "different-id" else 21
+    first = item_command(20, 15, 9)
+    second = item_command(other_type, 15, 10)
+    startup = (
+        bytes(
+            [
+                6,
+                0,
+                30,
+                0,
+                0x21,
+                4 if case == "mutable-guard" else 1,
+                7 if case == "mutable-guard" else 1,
+                0,
+            ]
+        )
+        + first
+        + bytes([7, 0, 28, 0])
+        + second
+        + bytes([0, 0, 1, 0])
+    )
+    extra = bytes([1, 0])
+    if case == "reachable-other":
+        extra = second + extra
+    elif case in ("fixed-writer", "alias-writer"):
+        extra = bytes([0x22, 99 if case == "alias-writer" else 1, 1, 1]) + extra
+    elif case in ("door", "unreachable-door", "reset", "unreachable-reset"):
+        if case.endswith("door"):
+            packet = bytes([0x3B, 8, 1, 0x31]) + bytes(28)
+        else:
+            packet = bytes([0x46, 8, 2, 0x31]) + struct.pack("<3H", 21, 15, 10)
+        if case.startswith("unreachable-"):
+            # Item reachability must not widen the separate door/reset policy.
+            packet = (
+                bytes([6, 0])
+                + struct.pack("<H", len(packet) + 6)
+                + bytes([0x21, 1, 1, 1])
+                + packet
+                + bytes([8, 0])
+            )
+        extra = packet + extra
+    data = synthetic_room(bytes([1, 0]), (startup, extra))
+    room = decode_room(
+        data, "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    banks = [
+        *scenario_banks,
+        {"bank": 99, "address_ps1": "0x800C7D04", "width": 4},
+    ]
+    fixed = [{"bank": 1, "bit": 1, "expected": 0}]
+    proof = scenario_item_proofs(data, room, fixed, banks, SCENARIO_EFFECT_POOL)
+    assert proof.fixed_context_preserved is (
+        case not in ("fixed-writer", "alias-writer")
+    )
+    if case in ("different-id", "different-type"):
+        assert proof.absent_item_ids == [10]
+    elif case in ("fixed-writer", "alias-writer", "mutable-guard"):
+        assert not proof.unreachable_creator_offsets
+    if case.startswith("unreachable-"):
+        assert any(
+            row["offset"] in proof.unreachable_creator_offsets
+            for program in room["programs"].values()
+            for row in program["commands"]
+            if row["kind"] == ("door" if case.endswith("door") else "reset")
+        )
+    room["fixed_context_preserved"] = proof.fixed_context_preserved
+    raw_items = json.dumps(room["items"], sort_keys=True)
+    result = collection_presence(
+        data,
+        room,
+        scenario_presence_flags(PRESENCE_FLAGS, fixed, proof.fixed_context_preserved),
+        frozenset(item["offset"] for item in room["items"]),
+        frozenset({(1, 1, 0)}) if proof.fixed_context_preserved else frozenset(),
+        unreachable_creator_offsets=proof.unreachable_creator_offsets,
+    )
+    assert result == (
+        [],
+        [{"global_id": 9, "presence": {"kind": "required"}}]
+        if case in ("different-id", "different-type")
+        else [],
+    )
+    assert json.dumps(room["items"], sort_keys=True) == raw_items

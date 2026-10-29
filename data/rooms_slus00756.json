@@ -24,6 +24,7 @@
     "RE2-COLLECT-018",
     "RE2-COLLECT-019",
     "RE2-COLLECT-020",
+    "RE2-COLLECT-023",
     "RE2-SOURCE-001",
     "RE2-SCD-002",
     "RE2-DS-003"
@@ -2370,6 +2371,12 @@
         },
         {
           "global_id": 139,
+          "presence": {
+            "kind": "required"
+          }
+        },
+        {
+          "global_id": 157,
           "presence": {
             "kind": "required"
           }
@@ -5079,7 +5086,14 @@
         35,
         153
       ],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 39,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 3,
@@ -6102,7 +6116,14 @@
         72,
         73
       ],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 70,
+          "presence": {
+            "kind": "required"
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 9,

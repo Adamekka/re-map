@@ -600,6 +600,8 @@ def collection_presence(
                 (item["global_id"], item["type"])
                 for item in eligible.values()
                 if item["slot"] == slot
+                # RE2-COLLECT-023: the whole-source proof already excluded this creator.
+                and item["offset"] not in unreachable_creator_offsets
             }
         )
         > 1

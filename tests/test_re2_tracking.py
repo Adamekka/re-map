@@ -2621,7 +2621,14 @@ def test_conditional_pickup_gate_is_part_of_coherent_publication(snapshot, failu
 @pytest.mark.parametrize("shared_acquisition", [False, True])
 @pytest.mark.parametrize(
     "excluded_source,excluded_gid",
-    [("00-0f", 157), ("01-02", 249), ("01-02", 116), ("01-08", 158), ("01-09", 70)],
+    [
+        ("00-0f", 157),
+        ("01-02", 249),
+        ("01-02", 116),
+        ("01-03", 36),
+        ("01-08", 158),
+        ("01-09", 70),
+    ],
 )
 def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
     snapshot, departed, unproven, shared_acquisition, excluded_source, excluded_gid
@@ -2695,6 +2702,116 @@ def test_scenario_exclusions_allow_only_resolved_clearance_and_rewind(
         fresh.mark_current(RoomId(0, 15))
     assert poll_re2(profile, fresh, read).status is PollStatus.Display
     assert fresh.rooms[source] == tracker.rooms[source]
+
+
+@pytest.mark.parametrize(
+    "profile,snapshot,source_id,gid,item_type,amount,bind_current",
+    [
+        (profile, current, source, gid, item_type, amount, bound)
+        for profile, source, gid, item_type, amount in (
+            ("re2_leon_a_slus00748", "01-03", 34, 20, 15),
+            ("re2_leon_a_slus00748", "01-09", 69, 68, 1),
+            ("re2_claire_b_slus00756", "00-0f", 157, 20, 30),
+            ("re2_claire_b_slus00756", "01-03", 39, 47, 1),
+            ("re2_claire_b_slus00756", "01-09", 70, 69, 1),
+        )
+        for current, bound in ((source, False), (source, True), ("00-01", False))
+    ],
+    indirect=["profile", "snapshot"],
+)
+def test_excluded_slot_alternatives_preserve_required_items_and_fresh_collection(
+    snapshot, source_id, gid, item_type, amount, bind_current
+):
+    """RE2-COLLECT-023: an impossible creator must not hide the reachable pickup."""
+    profile, _, put, read = snapshot
+    source = profile.rooms[source_id]
+    assert {"global_id": gid, "presence": {"kind": "required"}} in source[
+        "conditional_item_presence"
+    ]
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+    for item in source["items"]:
+        other = item["global_id"]
+        if (
+            other != gid
+            and other not in source["scenario_absent_item_ids"]
+            and item["type"] < profile.runtime_layout["file_type_min"]
+        ):
+            address = bank + other // 32 * 4
+            value = int.from_bytes(read(address, 4).data, "little")
+            put(address, value | (0x80000000 >> (other % 32)), 4)
+    definition = max(
+        (item for item in source["items"] if item["global_id"] == gid),
+        key=lambda item: item["offset"],
+    )
+    tracker = Tracker()
+    source_room = RoomId(source["stage"], source["room"])
+    tracker.mark_current(source_room)
+    visits = None
+    for acquired in (False, True, False):
+        address, mask = bank + gid // 32 * 4, 0x80000000 >> (gid % 32)
+        value = int.from_bytes(read(address, 4).data, "little") & ~mask
+        put(address, value | (mask if acquired else 0), 4)
+        put(
+            registry + definition["slot"] * 4,
+            0x80100000 + definition["offset"] + 2
+            if bind_current and not acquired
+            else 0,
+            4,
+        )
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[source_id]
+        target = next(
+            item
+            for item in record.items
+            if item.label == profile.names["items"][str(item_type)]
+        )
+        assert (target.state, target.quantity) == (
+            "taken" if acquired else "available" if bind_current else "uncollected",
+            amount,
+        )
+        assert record.list_complete
+        assert record.completion is (
+            RoomCompletion.Cleared if acquired else RoomCompletion.Incomplete
+        )
+        fresh = Tracker()
+        fresh.mark_current(source_room)
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms[source_id] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize(
+    "profile", ["re2_leon_a_slus00748", "re2_claire_b_slus00756"], indirect=True
+)
+@pytest.mark.parametrize("snapshot", ["00-0f", "01-03", "01-09"], indirect=True)
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_unreachable_item_stays_in_live_contradiction_checks(snapshot, sat):
+    profile, _, put, read = snapshot
+    source_id = str(profile.read_current_room(read).room)
+    source = profile.rooms[source_id]
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    excluded = next(
+        item
+        for item in source["items"]
+        if item["global_id"] in source["scenario_absent_item_ids"]
+    )
+    pointer = 0x80100000 + excluded["offset"] + 2
+    put(pointer + 1, sat, 1)
+    put(registry + excluded["slot"] * 4, pointer, 4)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Pickup disagrees with fixed scenario proof"
+    assert tracker == before
 
 
 @pytest.mark.parametrize("sat", [0, 0x31])
