@@ -124,9 +124,22 @@ try {
     assert.equal(await floor.inputValue(), 'unmapped');
     assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'Back to an unoutlined room must focus its details');
     await floor.selectOption(fixture.second);
+    const unmappedOption = await floor.locator('option[value="unmapped"]').elementHandle();
+    await floor.focus();
     state = { ...state, current: mappedOther.room, current_detail: { ...mappedOther, id: '' } };
     await page.waitForFunction(current => lastState.current === current, mappedOther.room);
     assert(await back.isDisabled(), 'distinct unmapped rooms must not share one Back identity');
+    assert.equal(await floor.locator('option[value="unmapped"]').textContent(), 'Room ' + mappedOther.room, 'unmapped floor labels must follow the fresh room identity');
+    assert(await unmappedOption.evaluate(node => node.isConnected), 'updating a room label must preserve the native option');
+    assert(await floor.evaluate(node => node === document.activeElement), 'updating a room label must preserve selector focus');
+    await follow.click();
+    await floor.focus();
+    state = { ...state, current: unmappedDetails.room, current_detail: unmappedDetails };
+    await page.waitForFunction(current => lastState.current === current, unmappedDetails.room);
+    assert.equal(await floor.inputValue(), 'unmapped');
+    assert.equal(await floor.locator('option[value="unmapped"]').textContent(), 'Room ' + unmappedDetails.room);
+    assert(await unmappedOption.evaluate(node => node.isConnected));
+    assert(await floor.evaluate(node => node === document.activeElement), 'a selected unmapped option must also retain focus while its label changes');
     assert.deepEqual(errors, []);
     await page.close();
   }

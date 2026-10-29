@@ -2,6 +2,12 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Unmapped-room selector labels
+
+The Floor selector refreshes an unmapped room's ID when the current room changes while retaining its option node. Named floor labels stay unchanged. The RE1/RE2 history browser regression first reproduces the old room ID, then verifies fresh labels and stable selector focus for both selected and unselected unmapped options. Standard RE1/RE2 map browser checks, scoped Ruff/formatting, local links and whitespace checks pass. The README image is re-rendered from the same existing mapped publication and is byte-identical. No tracker state or native gameplay changes.
+
+Fixed and directly reviewed on 2026-10-29 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Review covers fresh caption data, option identity, keyboard focus and the existing floor-selection path. External review providers remain disabled; no external endorsement is claimed.
+
 ## Back through room inspections
 
 The browser keeps session-local view identities and numeric viewport settings for room selections, door/item results and floor browsing. Back restores those views through the current publication. It stores no acquisition, completion, door or exploration values. Same-view repeats collapse; zoom, pan and live movement create no entry. Follow player clears the stack. Fresh reads prune unavailable views; interrupted tracking disables Back while retaining valid entries for recovery. Outlined views and current-room details are explicit alternatives, so distinct unmapped rooms cannot share an empty region identity.

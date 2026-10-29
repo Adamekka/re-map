@@ -677,9 +677,13 @@ function draw(state) {
     for(const id of floorIds) {
       const option=document.createElement('option');
       option.value=id;
-      option.textContent=areas.has(id) ? areas.get(id).name : 'Room '+state.current;
       floorSelect.append(option);
     }
+  }
+  for(const option of floorSelect.options) {
+    const name=areas.has(option.value) ? areas.get(option.value).name : 'Room '+state.current;
+    // Unmapped rooms share a floor ID, so their label can change without replacing the focused option.
+    if(option.textContent!==name) option.textContent=name;
   }
   floorSelect.value=displayedArea;
   floorSelect.disabled=false;
