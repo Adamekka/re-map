@@ -110,6 +110,12 @@ try {
   state.doors = state.doors.filter(door => door.source === '00-01').map(door => ({ ...door, target_visited: false }));
   await page.waitForFunction(() => document.querySelectorAll('#map .room').length === 1);
   assert.equal(await page.locator('#map .door').count(), 2, 'the shop must show two doors without revealing either neighbor');
+  const search = page.getByLabel('Find item or room', { exact: true });
+  await search.fill('Basketball Court Alleyway');
+  assert.equal(await page.locator('#overview .room-link').count(), 0, 'search must not reveal an unvisited catalog room');
+  assert.equal(await page.locator('#map .room').count(), 1);
+  await search.press('Escape');
+  assert.equal(await search.inputValue(), '');
   Object.assign(state, allExploration);
   await page.waitForFunction(() => document.querySelectorAll('#map .room').length > 1);
   assert.match(await page.locator('#items').textContent(), /Handgun ammo ×15/);
@@ -117,6 +123,20 @@ try {
   assert.match(await page.locator('#incomplete-checks').textContent(), /Unresolved: Shotgun/);
   const originalVisit = structuredClone(state.current_detail);
   const roomName = await page.locator('#room-name').textContent();
+  await search.fill('  shOTGUN  ');
+  assert.equal(await page.locator('#remaining-items .room-link').count(), 0, 'an unresolved item must not become a remaining result');
+  assert.equal(await page.locator('#incomplete-checks .room-link').count(), 1);
+  assert.match(await page.locator('#incomplete-checks').textContent(), /Unresolved: Shotgun/);
+  assert.equal(await page.locator('#completion').textContent(), 'Items remain');
+  await page.locator('#incomplete-checks .room-link').press('Enter');
+  assert.equal(await page.locator('#room-name').textContent(), roomName);
+  assert.equal(await search.inputValue(), '  shOTGUN  ');
+  await search.fill('no such item');
+  assert.equal(await page.locator('#overview .room-link').count(), 0);
+  assert.equal(await page.locator('#remaining-status').textContent(), 'No matching remaining items.');
+  assert.equal(await page.locator('#checks-status').textContent(), 'No matching incomplete item checks.');
+  await search.press('Escape');
+  assert(await search.evaluate(input => input === document.activeElement), 'clearing search must preserve input focus');
   const visits = [state.current_detail, ...state.rooms, ...Object.values(state.explored_areas).flat()].filter(visit => visit.room === state.current);
   for (const visit of visits) {
     Object.assign(visit, {
@@ -167,6 +187,16 @@ try {
   }
   for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
   await page.waitForFunction(() => document.querySelector('#items .entry-name')?.textContent === 'Handgun ammo ×15');
+  await search.fill('Handgun ammo ×30');
+  assert.equal(await page.locator('#remaining-items .room-link').count(), 0);
+  for (const visit of visits) visit.items[0].quantity = 30;
+  await page.waitForFunction(() => document.getElementById('remaining-items').textContent.includes('Handgun ammo ×30'));
+  assert.equal(await page.locator('#remaining-items .room-link').count(), 1);
+  for (const visit of visits) visit.items[0].quantity = 15;
+  await page.waitForFunction(() => document.querySelectorAll('#remaining-items .room-link').length === 0);
+  assert.equal(await search.inputValue(), 'Handgun ammo ×30', 'fresh state must retain the player\'s filter');
+  assert(await search.evaluate(input => input === document.activeElement), 'fresh state must preserve search input focus');
+  await search.press('Escape');
   for (const visit of visits) {
     visit.items_complete = false;
     visit.items[1].state = 'taken';
@@ -212,6 +242,8 @@ try {
   await page.mouse.move(bounds.x + bounds.width / 2 + 30, bounds.y + bounds.height / 2 + 20, { steps: 4 });
   await page.mouse.up();
   const chosenView = await map.getAttribute('viewBox');
+  await search.fill('handgun ammo');
+  assert.equal(await map.getAttribute('viewBox'), chosenView, 'filtering the overview must preserve manual zoom and pan');
   state.player_position = positions[1].marker;
   await page.waitForFunction(point => document.querySelector('.player')?.getAttribute('transform') === 'translate(' + point.join(' ') + ')', positions[1].marker.point);
   assert(await player.evaluate(node => node.isConnected), 'walking must retain the player node');
@@ -226,10 +258,15 @@ try {
   state.error = 'Waiting for game.';
   await page.waitForFunction(() => !document.querySelector('.player'));
   assert(await floor.isDisabled(), 'an interrupted read must disable floor controls');
+  assert(await search.isDisabled(), 'an interrupted read must disable item search');
+  assert.equal(await search.inputValue(), 'handgun ammo');
   // Fresh display publications omit the interrupted-read error field.
   delete state.error;
   Object.assign(state, floorStates['native-upper-approach']);
   await page.waitForFunction(() => document.getElementById('floor').value === 're2-03');
+  assert(!(await search.isDisabled()));
+  assert.equal(await search.inputValue(), 'handgun ammo', 'recovery must retain the search query');
+  await search.press('Escape');
   assert.equal(await floor.locator('option').count(), 1, 'another floor must stay hidden until entered');
   assert.equal(await page.locator('#map .room').count(), 1);
   assert.equal(await page.locator('[data-observations~="00-16:2554"]').count(), 1);

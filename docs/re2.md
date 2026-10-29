@@ -22,6 +22,8 @@ Items stay in one list, with symbols alongside their names and status text. Veri
 
 [RE2-DS-003](research/re2/dualshock.md#re2-ds-003-vibration-writes-preserve-item-context) restores source-proven item presence and one selected identity in the explored Media Room Corridor. The identity's presence remains Unknown. Main Hall, West Office and East Office retain their unresolved checks; this offline correction adds no DualShock gameplay confirmation.
 
+Find item or room filters Remaining items and Incomplete item checks across explored floors. It matches room names, floor names and the displayed item summaries without changing map reveal or room completion. Search ignores case and leading/trailing spaces. Escape clears the field. Live updates and connection recovery retain the query.
+
 Uniquely matched doorways appear once on the shared wall. Selecting a room shows that side's access and key state. [RE2-MAP-004](research/re2.md#re2-map-004-one-marker-for-a-shared-doorway) records the shop correction and pairing limits.
 
 Freshly confirmed unlocks also show a green open padlock. Its frame stays dashed while access is unconfirmed, red while the door is inactive and cyan while open. Departed doors never become Open from visits or earlier passage alone. Ambiguous creator/side bindings keep unlock knowledge Unknown. [RE2-DOOR-005](research/re2/dualshock.md#re2-door-005-display-fresh-unlock-knowledge-separately-from-access) records the model and reversal checks.

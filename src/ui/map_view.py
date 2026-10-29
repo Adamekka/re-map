@@ -190,8 +190,8 @@ h1 { margin:0; font-size:21px; font-weight:600; }
 #place { color:#b0beca; }
 #map-controls { padding:0 28px 14px; display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
 #zoom-controls { display:inline-flex; align-items:center; gap:10px; }
-select,button { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
-select:disabled,button:disabled { opacity:.55; }
+select,button,input { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
+select:disabled,button:disabled,input:disabled { opacity:.55; }
 #current-room[aria-pressed="true"] { border-color:#71b6cf; background:#244c6e; }
 #status { padding:0 28px 14px; min-height:20px; color:#abb9c5; }
 main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; border:1px solid #303d48; background:#151e27; }
@@ -267,6 +267,8 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 .key.unlocked-key { height:0; border-top:3px dashed #a5d5ac; }
 #note { color:#91a5b4; font-size:13px; line-height:1.5; }
 #overview { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:0 28px 28px; }
+#item-search-label { grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:13px; color:#abb9c5; }
+#item-search { box-sizing:border-box; width:min(100%,320px); }
 #overview h2 { margin:0 0 12px; }
 #overview h3 { margin:18px 0 8px; font-size:14px; font-weight:500; }
 #overview p { margin:0; font-size:13px; color:#91a5b4; }
@@ -299,6 +301,7 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key door-key unlocked-key"></i>Unlocked · access unconfirmed</span>
 </div>
 <section id="overview" aria-label="Explored room items">
+<label id="item-search-label" for="item-search">Find item or room<input id="item-search" type="search" autocomplete="off" aria-controls="remaining-items incomplete-checks" disabled></label>
 <section aria-labelledby="remaining-heading"><h2 id="remaining-heading">Remaining items</h2><p id="remaining-status">Waiting for game.</p><div id="remaining-items"></div></section>
 <section aria-labelledby="checks-heading"><h2 id="checks-heading">Incomplete item checks</h2><p id="checks-status">Waiting for game.</p><div id="incomplete-checks"></div></section>
 </section>
@@ -320,10 +323,20 @@ let viewport = {mode:'empty'};
 let pan = {mode:'idle'};
 let suppressMapClick = false;
 const floorSelect = document.getElementById('floor');
+const itemSearch = document.getElementById('item-search');
 const currentRoomButton = document.getElementById('current-room');
 const zoomIn = document.getElementById('zoom-in');
 const zoomOut = document.getElementById('zoom-out');
 const fitRooms = document.getElementById('fit-rooms');
+itemSearch.addEventListener('input',()=>{if(lastState!==null && lastState.status==='display') updateOverview(lastState);});
+itemSearch.addEventListener('keydown',event=>{
+  if(event.key==='Escape' && itemSearch.value!=='') {
+    event.preventDefault();
+    itemSearch.value='';
+    // Keyboard clearing follows the same update path as typing or the native clear control.
+    itemSearch.dispatchEvent(new Event('input'));
+  }
+});
 floorSelect.addEventListener('change',()=>{
   floorView={mode:'browse',area:floorSelect.value};
   selected=null;
@@ -551,6 +564,7 @@ function draw(state) {
   lastState=state;
   if(state.status!=='display') {
     floorSelect.disabled=true;
+    itemSearch.disabled=true;
     endPan();
     applyViewport();
     status.textContent=state.error || 'Waiting for a readable game.';
@@ -597,6 +611,7 @@ function draw(state) {
   }
   floorSelect.value=displayedArea;
   floorSelect.disabled=false;
+  itemSearch.disabled=false;
   svg.replaceChildren();
   const plan=areas.get(displayedArea);
   if(selectedArea!==displayedArea) {selected=null;selectedArea=displayedArea;}
@@ -807,10 +822,13 @@ function draw(state) {
     detail.append(listSymbol(symbol,status==='unresolved'?'neutral':status),text);row.append(name,detail);doors.append(row);
   }
   document.getElementById('note').textContent=[visit.reason, visit.door_reason].filter(Boolean).join(' ');
+  updateOverview(state);
+}
+function updateOverview(state) {
   // Camera outlines share a logical room's items. Prefer its current outline
   // for navigation, then retain one observed outline for each departed room.
   const observed=new Map([[state.current_detail.room,{area:state.area,visit:state.current_detail}]]);
-  for(const area of floorIds) {
+  for(const area of Object.keys(state.explored_areas).sort()) {
     for(const visit of state.explored_areas[area]) {
       if(!observed.has(visit.room)) observed.set(visit.room,{area,visit});
     }
@@ -829,11 +847,16 @@ function draw(state) {
       ...(!visit.items_complete ? ['Item list incomplete'] : []),
     ]});
   }
-  const key=JSON.stringify([remaining,checks]);
+  const query=itemSearch.value.trim().toLowerCase();
+  const key=JSON.stringify([query,remaining,checks]);
   // Keep focused overview links intact during unchanged game polls.
   if(key!==overviewKey) {
     overviewKey=key;
     function showEntries(containerId,messageId,entries,emptyMessage) {
+      entries=entries.filter(entry=>{
+        const floor=areas.has(entry.area) ? areas.get(entry.area).name : 'Room '+entry.room;
+        return [entry.name,floor,...entry.labels].join(' ').toLowerCase().includes(query);
+      });
       const container=document.getElementById(containerId);
       container.replaceChildren();
       const message=document.getElementById(messageId);
@@ -864,8 +887,8 @@ function draw(state) {
         row.append(link);groups.get(entry.area).append(row);
       }
     }
-    showEntries('remaining-items','remaining-status',remaining,'No known remaining items.');
-    showEntries('incomplete-checks','checks-status',checks,'No incomplete item checks.');
+    showEntries('remaining-items','remaining-status',remaining,query ? 'No matching remaining items.' : 'No known remaining items.');
+    showEntries('incomplete-checks','checks-status',checks,query ? 'No matching incomplete item checks.' : 'No incomplete item checks.');
   }
 }
 let sceneKey='';

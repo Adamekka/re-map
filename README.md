@@ -47,6 +47,8 @@ Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it.
 
 Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. **Incomplete item checks** names unresolved items and identifies incomplete item lists, with links to their rooms.
 
+Use **Find item or room** to filter both lists across explored floors. Press Escape in the search field to clear it.
+
 Explored rooms are saved automatically and stay revealed after restarts or earlier savestate loads. Items and doors update to match the loaded game.
 
 For a new playthrough, run `python3 tools/track.py --map --new-playthrough`. Use `--history-file <path>` to keep another playthrough separate.
@@ -69,4 +71,4 @@ python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
 
 Each revision and scenario has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identities and validation limits.
 
-![RE2 explored rooms with pickup quantities and named unresolved item checks](docs/images/re2-map.png)
+![RE2 explored rooms with pickup quantities and searchable remaining items and unresolved checks](docs/images/re2-map.png)

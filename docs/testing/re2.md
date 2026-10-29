@@ -22,6 +22,14 @@ The shared browser now serializes state requests and keeps a two-second cancella
 
 Direct review by `gpt-6.1-sol` checks timer cleanup on success/failure, cancellation through JSON parsing, serial retry scheduling, clear-on-failure behavior, existing viewport/selection semantics, bounded diagnostics and shared RE1 behavior. External review providers remain disabled; no external endorsement or new emulator validation is claimed. See [Tracker diagnostics](diagnostics.md) for recovery behavior and the focused command.
 
+## Search in explored-room item lists
+
+2026-10-29. Find item or room filters the existing explored-room overview. The shared overview renderer handles both search input and fresh game publications, preserving the map's SVG nodes during typing. Search keeps known remaining items separate from unresolved checks and cannot introduce catalog rooms absent from the playthrough's visits.
+
+The RE2 browser regression checks case/whitespace handling, unresolved-only matches, empty results, Escape clearing and input focus, result navigation, quantity changes and rewind, unvisited-room isolation, manual view/player-node stability and query retention across interruption/recovery. The 334 map/quantity/RE2 Python checks, shared RE1 browser regression and stalled-refresh regression pass. Five retained-capture fixtures also pass search/clear/navigation checks at desktop `1280x1060` and mobile `390x844`, with unchanged publications and no overflow or page errors. Private renders and checks are under `/tmp/re-map-item-search-20261029.e3q30fn1/`; the README screenshot is refreshed from its pre-collection tracker render.
+
+Direct review by `gpt-6.1-sol` checks explored-only matching, consistent remaining/unknown grouping, text-safe filtering, current-state refreshes, shared rendering, keyboard clearing/focus, disabled behavior during interruption and desktop/mobile layout. No new emulator test or item-presence rule is claimed. The configured external review providers remain disabled.
+
 ## DualShock profiles
 
 The active targets are USA Dual Shock Ver. Disc 1, SLUS-00748, Leon A, and Disc 2, SLUS-00756, Claire B, Original/Normal in Casual/Softcore. Use `profiles/re2_leon_a_slus00748.json` or `profiles/re2_claire_b_slus00756.json`; their default histories are separate from each other and the original-release profiles. [RE2-DS-001](../research/re2/dualshock.md#re2-ds-001-leon-a-dualshock-revision-port) records Leon's exact identity, generation, native observations and limitations. [RE2-DS-002](../research/re2/dualshock.md#re2-ds-002-claire-b-dualshock-revision-port) records the corresponding Claire checks. Run the focused command below with `tests/test_visit_history.py tests/test_logging.py` for revision isolation and runner/history checks. The original-release coverage below remains historical evidence for its named revisions.
