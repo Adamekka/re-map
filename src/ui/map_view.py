@@ -870,8 +870,11 @@ function draw(state) {
 }
 let sceneKey='';
 async function refresh() {
+  const controller=new AbortController();
+  // A stalled response must clear live verdicts instead of leaving old game state on screen.
+  const timeout=setTimeout(()=>controller.abort(new Error('Map state request timed out')),2000);
   try {
-    const response=await fetch('/state',{cache:'no-store'});
+    const response=await fetch('/state',{cache:'no-store',signal:controller.signal});
     if(!response.ok) throw new Error('Map request failed: HTTP '+response.status);
     const state=await response.json();
     const {player_heading,player_position,...scene}=state;
@@ -885,9 +888,13 @@ async function refresh() {
     reportError('refresh',error);
     sceneKey='';
     draw({status:'waiting',error:'Map connection interrupted.'});
+  } finally {
+    clearTimeout(timeout);
+    // Serial requests prevent a delayed older snapshot from replacing a newer one.
+    setTimeout(refresh,100);
   }
 }
-refresh();setInterval(refresh,100);
+refresh();
 </script>
 </body>
 </html>
