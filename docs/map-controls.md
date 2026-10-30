@@ -4,6 +4,8 @@
 
 These controls work in both RE1 and RE2. Use Tab to focus the map or an explored room. A bright border marks the focused map. Focused rooms have a thicker wall highlight; the current room keeps its white outline.
 
+Each room button has an accessible description of completion and whether it is current or selected. Hovering an outline shows the same status. These descriptions update with the game and report "Tracking interrupted" while tracking is unavailable.
+
 | Key | Action while the map or a room has focus |
 | --- | --- |
 | Arrow keys | Move the view in that direction |

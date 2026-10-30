@@ -725,16 +725,18 @@ function draw(state) {
     endPan();
     applyViewport();
     status.textContent=state.error || 'Waiting for a readable game.';
+    const interruptedMessage='Tracking interrupted';
     // Retain visit geometry; completion colors need a fresh game read after a load or reconnect.
     svg.querySelectorAll('.room').forEach(room=>{
       room.classList.remove('current','INCOMPLETE','CLEARED','VISITED');
       room.classList.add('UNKNOWN');
       room.setAttribute('tabindex','-1');
       room.setAttribute('aria-disabled','true');
+      room.querySelector('title').textContent=interruptedMessage;
     });
     svg.querySelectorAll('.door,.player').forEach(marker=>marker.remove());
     document.getElementById('room-id').textContent=document.getElementById('room-id').textContent.replace(' · Current room','');
-    document.getElementById('completion').textContent='Tracking interrupted';
+    document.getElementById('completion').textContent=interruptedMessage;
     document.getElementById('items').replaceChildren();
     document.getElementById('doors').replaceChildren();
     document.getElementById('note').textContent='';
@@ -800,13 +802,17 @@ function draw(state) {
   status.textContent=plan ? visible.size+' '+(visible.size===1?'room':'rooms')+' explored' : state.map_error;
   if(plan && showingCurrentFloor && !byId.has(currentId)) status.textContent+=' · This room has no outline on the game map.';
   document.getElementById('player-label').textContent=state.player_position.kind==='approximate' ? 'You · approximate' : 'You · room only';
+  const completion={INCOMPLETE:'Items remain',CLEARED:'Cleared',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   for(const [id,visit] of visible) {
     const room=byId.get(id);
+    if(!Object.hasOwn(completion,visit.state)) throw new Error('Unknown room completion: '+visit.state);
     const storyItems=visit.items.some(item=>itemRemains(item) && itemVisual(item.label).category==='story');
     const group=element('g',{class:'room '+visit.state+(storyItems?' story-items':'')+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name,'data-region':id});
     const path=room.rings.map(ring=>'M'+ring.map(point=>point.join(',')).join('L')+'Z').join('');
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
-    const title=element('title',{});title.textContent=room.name;group.append(title);
+    // The button keeps its room name; its SVG title exposes fresh status as
+    // the accessible description and hover tooltip instead of repeating it.
+    const title=element('title',{});title.textContent=[completion[visit.state],...(id===currentId ? ['Current room'] : []),...(id===picked ? ['Selected room'] : [])].join(' · ');group.append(title);
     const detail=room.detail_segments.map(([a,b])=>'M'+a.join(',')+'L'+b.join(',')).join('');
     if(detail) {
       // Paint all borders before all cores so adjacent native strokes form
@@ -1005,7 +1011,6 @@ function draw(state) {
   if(!visit) throw new Error('Explored floor has no selected room');
   document.getElementById('room-name').textContent=roomName(displayedArea,visit);
   document.getElementById('room-id').textContent='Room '+visit.room+(showingCurrentFloor && picked===currentId?' · Current room':'');
-  const completion={INCOMPLETE:'Items remain',CLEARED:'Cleared',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   document.getElementById('completion').textContent=completion[visit.state];
   const items=document.getElementById('items');items.replaceChildren();
   for(const item of visit.items) {
