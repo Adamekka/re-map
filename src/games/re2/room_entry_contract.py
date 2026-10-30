@@ -20,7 +20,7 @@ from games.re2.room_write_partitions import RoomWritePartitionConfig
 # The profile owns revision data. This digest selects the inspected recipe;
 # changing a resource hash must not silently grant its native capabilities.
 AUDITED_ROOM_ENTRY_MANIFEST_SHA256 = (
-    "c090e63f8726cfd647041ed358cc1b822c0459bf22c7e62d73be9ace7ea95d35"
+    "4884802bc04ea26380f4f8846ea3ba7193d30e6292fc3594135b917786bf2f7b"
 )
 
 
@@ -68,6 +68,18 @@ class StageEntryLoad:
     file_lba: int
     file_flags: int
     source_alignment: int
+
+
+@dataclass(frozen=True)
+class StageEntry:
+    stage: int
+    resource: StageEntryResource
+    load: StageEntryLoad
+
+    def __post_init__(self) -> None:
+        assert type(self.stage) is int and 0 <= self.stage <= 255
+        assert isinstance(self.resource, StageEntryResource)
+        assert isinstance(self.load, StageEntryLoad)
 
 
 @dataclass(frozen=True)
@@ -176,9 +188,7 @@ def _write_partitions(layout: RoomEntryWriteLayout) -> RoomWritePartitionConfig:
 class RoomEntryContractConfig:
     audit: str
     executable_sha256: str
-    stage: int
-    stage_resource: StageEntryResource
-    stage_load: StageEntryLoad
+    stage_entries: tuple[StageEntry, ...]
     actor_archive_path: str
     constructor_presets: tuple[tuple[int, int], ...]
     actor_codes: tuple[ActorEntryResource, ...]
@@ -191,9 +201,9 @@ class RoomEntryContractConfig:
 
     def __post_init__(self) -> None:
         assert type(self.audit) is str and type(self.executable_sha256) is str
-        assert type(self.stage) is int
-        assert isinstance(self.stage_resource, StageEntryResource)
-        assert isinstance(self.stage_load, StageEntryLoad)
+        assert type(self.stage_entries) is tuple and self.stage_entries
+        assert all(isinstance(row, StageEntry) for row in self.stage_entries)
+        assert len({row.stage for row in self.stage_entries}) == len(self.stage_entries)
         assert type(self.actor_archive_path) is str
         assert type(self.constructor_presets) is tuple and all(
             type(row) is tuple
@@ -220,13 +230,12 @@ class RoomEntryContractConfig:
         assert _manifest_digest(asdict(self)) == AUDITED_ROOM_ENTRY_MANIFEST_SHA256
 
 
-def _source_address(config: RoomEntryContractConfig) -> int:
-    load = config.stage_load
+def _source_address(stage: StageEntry) -> int:
+    load = stage.load
     # The room loader retains the stage binary before the RDT and rounds its
     # byte count up to this audited alignment before selecting the RDT base.
     return int(load.destination_address_ps1, 0) + (
-        (config.stage_resource.width + load.source_alignment - 1)
-        & -load.source_alignment
+        (stage.resource.width + load.source_alignment - 1) & -load.source_alignment
     )
 
 
@@ -236,7 +245,7 @@ class VerifiedRoomEntryContract:
     audit: str
     executable_sha256: str
     minimum_source_address: int
-    source_address: int
+    source_addresses: tuple[tuple[int, int], ...]
     stages: frozenset[int]
     roots: tuple[str, ...]
     door_models: frozenset[int]
@@ -253,7 +262,12 @@ class VerifiedRoomEntryContract:
         assert type(self.audit) is str
         assert type(self.executable_sha256) is str
         assert type(self.minimum_source_address) is int
-        assert type(self.source_address) is int
+        assert type(self.source_addresses) is tuple and all(
+            type(row) is tuple
+            and len(row) == 2
+            and all(type(value) is int for value in row)
+            for row in self.source_addresses
+        )
         assert all(
             type(values) is frozenset and all(type(value) is int for value in values)
             for values in (
@@ -275,9 +289,14 @@ class VerifiedRoomEntryContract:
         assert self.minimum_source_address == int(
             self.config.minimum_source_address_ps1, 0
         )
-        assert self.source_address == _source_address(self.config)
-        assert self.source_address >= self.minimum_source_address
-        assert self.stages == frozenset({self.config.stage})
+        assert self.source_addresses == tuple(
+            (row.stage, _source_address(row)) for row in self.config.stage_entries
+        )
+        assert all(
+            address >= self.minimum_source_address
+            for _, address in self.source_addresses
+        )
+        assert self.stages == frozenset(row.stage for row in self.config.stage_entries)
         assert self.roots == self.config.roots
         assert self.door_models == frozenset(door.model for door in self.config.doors)
         assert self.non_scheduling_interaction_kinds == frozenset(
@@ -310,9 +329,14 @@ def room_entry_contract(
         return RoomEntryContractConfig(
             audit=raw["audit"],
             executable_sha256=raw["executable_sha256"],
-            stage=raw["stage"],
-            stage_resource=StageEntryResource(**raw["stage_resource"]),
-            stage_load=StageEntryLoad(**raw["stage_load"]),
+            stage_entries=tuple(
+                StageEntry(
+                    stage=row["stage"],
+                    resource=StageEntryResource(**row["resource"]),
+                    load=StageEntryLoad(**row["load"]),
+                )
+                for row in raw["stage_entries"]
+            ),
             actor_archive_path=raw["actor_archive_path"],
             constructor_presets=tuple(tuple(row) for row in raw["constructor_presets"]),
             actor_codes=tuple(ActorEntryResource(**row) for row in raw["actor_codes"]),
@@ -344,15 +368,16 @@ class _InvalidContract(Exception):
 def bind_room_entry_contract(
     config: RoomEntryContractConfig,
     executable: bytes,
-    stage_resource: bytes,
+    stage_resources: dict[int, bytes],
     actor_code_archive: bytes,
     door_resources: dict[int, bytes],
 ) -> VerifiedRoomEntryContract | RoomEntryContractFailure:
     """Verify required bytes; no source reachability or activation is inferred."""
     assert isinstance(config, RoomEntryContractConfig)
-    assert all(
-        type(value) is bytes
-        for value in (executable, stage_resource, actor_code_archive)
+    assert all(type(value) is bytes for value in (executable, actor_code_archive))
+    assert type(stage_resources) is dict and all(
+        type(stage) is int and type(value) is bytes
+        for stage, value in stage_resources.items()
     )
     assert type(door_resources) is dict and all(
         type(model) is int and type(value) is bytes
@@ -405,44 +430,49 @@ def bind_room_entry_contract(
                 RoomEntryContractFailure.NativeLayout,
             )
         require(
-            len(stage_resource) == config.stage_resource.width
-            and hashlib.sha256(stage_resource).hexdigest()
-            == config.stage_resource.sha256,
+            stage_resources.keys() == {row.stage for row in config.stage_entries},
             RoomEntryContractFailure.StageResource,
         )
-        stage_load = config.stage_load
-        require(
-            struct.unpack(
-                "<3I",
-                native(
-                    int(stage_load.recipe_table_address_ps1, 0)
-                    + stage_load.recipe_index * 12,
-                    12,
-                ),
+        for stage in config.stage_entries:
+            stage_resource = stage_resources[stage.stage]
+            require(
+                len(stage_resource) == stage.resource.width
+                and hashlib.sha256(stage_resource).hexdigest() == stage.resource.sha256,
+                RoomEntryContractFailure.StageResource,
             )
-            == (
-                stage_load.file_index,
-                int(stage_load.entry_address_ps1, 0),
-                int(stage_load.destination_pointer_address_ps1, 0),
+            stage_load = stage.load
+            require(
+                struct.unpack(
+                    "<3I",
+                    native(
+                        int(stage_load.recipe_table_address_ps1, 0)
+                        + stage_load.recipe_index * 12,
+                        12,
+                    ),
+                )
+                == (
+                    stage_load.file_index,
+                    int(stage_load.entry_address_ps1, 0),
+                    int(stage_load.destination_pointer_address_ps1, 0),
+                )
+                and int.from_bytes(
+                    native(int(stage_load.destination_pointer_address_ps1, 0), 4),
+                    "little",
+                )
+                == int(stage_load.destination_address_ps1, 0),
+                RoomEntryContractFailure.StageResource,
             )
-            and int.from_bytes(
-                native(int(stage_load.destination_pointer_address_ps1, 0), 4),
-                "little",
+            stage_record = native(
+                int(layout.file_table_address_ps1, 0)
+                + stage_load.file_index * layout.file_table_record_width,
+                layout.file_table_record_width,
             )
-            == int(stage_load.destination_address_ps1, 0),
-            RoomEntryContractFailure.StageResource,
-        )
-        stage_record = native(
-            int(layout.file_table_address_ps1, 0)
-            + stage_load.file_index * layout.file_table_record_width,
-            layout.file_table_record_width,
-        )
-        require(
-            int.from_bytes(stage_record[:4], "little") == config.stage_resource.width
-            and int.from_bytes(stage_record[4:7], "little") == stage_load.file_lba
-            and stage_record[7] == stage_load.file_flags,
-            RoomEntryContractFailure.StageResource,
-        )
+            require(
+                int.from_bytes(stage_record[:4], "little") == stage.resource.width
+                and int.from_bytes(stage_record[4:7], "little") == stage_load.file_lba
+                and stage_record[7] == stage_load.file_flags,
+                RoomEntryContractFailure.StageResource,
+            )
         model_types = {model for model, _ in config.constructor_presets}
         require(len(model_types) == 1, RoomEntryContractFailure.ActorResource)
         model_type = next(iter(model_types))
@@ -551,8 +581,10 @@ def bind_room_entry_contract(
         audit=config.audit,
         executable_sha256=config.executable_sha256,
         minimum_source_address=minimum_source_address,
-        source_address=_source_address(config),
-        stages=frozenset({config.stage}),
+        source_addresses=tuple(
+            (row.stage, _source_address(row)) for row in config.stage_entries
+        ),
+        stages=frozenset(row.stage for row in config.stage_entries),
         roots=config.roots,
         door_models=frozenset(door.model for door in config.doors),
         non_scheduling_interaction_kinds=frozenset(

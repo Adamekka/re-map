@@ -12,14 +12,17 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 
+from games.re2.event_presence import flag_write_conflicts
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
 )
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
+from games.re2.room_sound_bindings import RoomSoundBindings, room_sound_bindings
 from games.re2.room_write_partitions import (
     EmbeddedModelResource,
     RoomWritePartitions,
+    SourceRange,
     room_write_partitions,
     static_object_packet,
 )
@@ -105,7 +108,9 @@ def known_puzzle_items(
         # Native UI/camera work uses the upper graphics arena. An exact source
         # base is required; a lower bound cannot prove the retained bytes fit.
         require(
-            partitions.retained_before(entry_contract.source_address, 0x80198000),
+            partitions.retained_before(
+                dict(entry_contract.source_addresses)[room["stage"]], 0x80198000
+            ),
             KnownPuzzleItemFailure.NativeContract,
         )
         programs = room["programs"]
@@ -140,6 +145,9 @@ def known_puzzle_items(
             for row in fixed_rows
         }
         require(bool(all_fixed))
+        _, flag_aliases = flag_write_conflicts(
+            banks, frozenset((row["bank"], row["bit"]) for row in fixed_rows)
+        )
         all_rows = [row for program in programs.values() for row in program["commands"]]
         for row in all_rows:
             if row["kind"] == "flag_write":
@@ -184,7 +192,13 @@ def known_puzzle_items(
                     packet == bytes((row["opcode"], row["bank"], row["bit"], operand))
                 )
             protected.append((position, 1))
-            if row["opcode"] in (1, 3, 4, 5, 6, 7, 8, 0x17, 0x18, 0x1D, 0x21, 0x22):
+            if row["opcode"] in (0x21, 0x22) and not any(
+                bank == packet[1] for bank, _ in flag_aliases
+            ):
+                # A copied byte may select any native bit in this bank only
+                # when all 256 physical aliases avoid the enforced mode.
+                protected.extend(((position, 2), (position + 3, 1)))
+            elif row["opcode"] in (1, 3, 4, 5, 6, 7, 8, 0x17, 0x18, 0x1D, 0x21, 0x22):
                 protected.append((position, len(packet)))
             if row["kind"] in ("item", "door", "interaction", "reset"):
                 protected.append((position, len(packet)))
@@ -241,14 +255,16 @@ def known_puzzle_items(
                 KnownPuzzleItemFailure.SourceMutation,
             )
 
-        # Only a leading native mode-return guard may restrict entry settings.
+        # Only one leading native mode-return guard may restrict entry settings.
         # All later scenario branches must agree on the same target/callback;
         # fresh mode flags cannot select a historical item alternative.
         fixed = {}
-        first = commands["16:0"][programs["16:0"]["entry"]]
-        if first["kind"] == "if":
-            test = commands["16:0"].get(first["next"])
-            terminal = commands["16:0"].get(test["next"]) if test else None
+        for root in ("16:0", "17:0"):
+            first = commands[root][programs[root]["entry"]]
+            if first["kind"] != "if":
+                continue
+            test = commands[root].get(first["next"])
+            terminal = commands[root].get(test["next"]) if test else None
             if (
                 test
                 and test["kind"] == "flag_check"
@@ -258,6 +274,9 @@ def known_puzzle_items(
                 target = flag_key(test["bank"], test["bit"])
                 if target in all_fixed:
                     fixed[target] = all_fixed[target]
+                    # Flipping several independent settings together would
+                    # omit historical entries where only one setting differed.
+                    break
         required_settings = [
             row for row in fixed_rows if flag_key(row["bank"], row["bit"]) in fixed
         ]
@@ -265,31 +284,47 @@ def known_puzzle_items(
         # Tokens describe identities rather than one branch's source offset.
         # Alternate declarations can therefore agree without selecting a variant.
         outcomes, steps, prefix_packets, expanded = [], 0, set(), set()
+        predicate_packets = set()
+        counter_address = int(layout["script_counter_address_ps1"], 0)
 
-        def branch(key, row, frames, values):
+        def branch(key, row, frames, values, work, native_predicates):
             if row["opcode"] == 6:
                 require(
                     len(frames) < 8 and row["target"] > row["next"],
                     KnownPuzzleItemFailure.Prefix,
                 )
-                following, predicates = row["next"], []
-                while (
-                    following in commands[key]
-                    and commands[key][following]["kind"] == "flag_check"
-                ):
+                following, matches = row["next"], []
+                while following in commands[key]:
                     test = commands[key][following]
-                    require(test["expected"] in (0, 1))
-                    predicates.append(
-                        (flag_key(test["bank"], test["bit"]), bool(test["expected"]))
-                    )
+                    packet = data[following : test["next"]]
+                    if test["kind"] == "flag_check":
+                        require(test["expected"] in (0, 1))
+                        flag = flag_key(test["bank"], test["bit"])
+                        matches.append(
+                            values[flag] == bool(test["expected"])
+                            if flag in values
+                            else "symbolic"
+                        )
+                    elif native_predicates and (
+                        packet[0] == 0x23
+                        and packet[1] == 0
+                        and save_base
+                        <= counter_address + 2 * packet[2]
+                        <= save_limit - 2
+                        and packet[3] == 0
+                        or packet[0] == 0x50
+                        and packet[1] in (0, 1)
+                        or packet[:4] == b"\x3e\0\x0c\x04"
+                        and work[0] == "object"
+                    ):
+                        # These exact native predicates only read bounded
+                        # state. Both boolean outcomes preserve the mode proof.
+                        matches.append("symbolic")
+                    else:
+                        break
+                    predicate_packets.add((following, test["next"] - following))
                     following = test["next"]
-                require(bool(predicates), KnownPuzzleItemFailure.Prefix)
-                matches = [
-                    values.get(flag, "symbolic") == expected
-                    if flag in values
-                    else "symbolic"
-                    for flag, expected in predicates
-                ]
+                require(bool(matches), KnownPuzzleItemFailure.Prefix)
                 result = []
                 if False not in matches:
                     result.append((following, frames + (row["target"],)))
@@ -302,20 +337,52 @@ def known_puzzle_items(
             )
             return [(row["target"] if row["opcode"] == 7 else row["next"], frames[:-1])]
 
-        opposite_packets, opposite_text = set(), set()
+        def bounded_camera(camera, flags):
+            # Cut_chg searches without a sentinel bound. Require a real first
+            # match and keep its STATUS writes disjoint from proof predicates.
+            match = False
+            for record in range(rvd, rvd_end - 19, 20) if rvd else ():
+                if data[record : record + 2] == b"\xff\xff":
+                    break
+                if data[record + 2] == camera:
+                    match = True
+                    break
+            return (
+                camera < room["cameras"]
+                and match
+                and not any(
+                    address == int(layout["status_flags_address_ps1"], 0)
+                    and mask & 0x00100100
+                    for address, mask in flags
+                )
+            )
+
+        opposite_packets, opposite_text, opposite_resources = set(), set(), set()
+        required_sounds = set()
         if fixed:
             # If entry skipped the declaration, this smaller source closure
             # must preserve that mode until departure. Normal future effects
             # need no lifetime theorem after a real target is already known.
             opposite = {target: not value for target, value in fixed.items()}
             pending = [
-                (root, programs[root]["entry"], (), (), frozenset())
+                (
+                    root,
+                    programs[root]["entry"],
+                    (),
+                    (),
+                    ("unselected", 0),
+                    frozenset(),
+                    "root",
+                    frozenset(),
+                )
                 for root in entry_contract.roots
             ]
             expanded_opposite = set()
             while pending:
-                key, position, returns, frames, seen = pending.pop()
-                state = key, position, returns, frames
+                key, position, returns, frames, work, owners, origin, seen = (
+                    pending.pop()
+                )
+                state = key, position, returns, frames, work, owners, origin
                 require(
                     state not in seen and len(seen) < 256,
                     KnownPuzzleItemFailure.NativeContract,
@@ -334,8 +401,10 @@ def known_puzzle_items(
                 opcode = row["opcode"]
                 if opcode in (6, 7, 8):
                     pending.extend(
-                        (key, target, returns, next_frames, seen)
-                        for target, next_frames in branch(key, row, frames, opposite)
+                        (key, target, returns, next_frames, work, owners, origin, seen)
+                        for target, next_frames in branch(
+                            key, row, frames, opposite, work, True
+                        )
                     )
                     continue
                 if row["kind"] == "end":
@@ -346,7 +415,16 @@ def known_puzzle_items(
                     if returns:
                         caller, target, caller_frames = returns[-1]
                         pending.append(
-                            (caller, target, returns[:-1], caller_frames, seen)
+                            (
+                                caller,
+                                target,
+                                returns[:-1],
+                                caller_frames,
+                                work,
+                                owners,
+                                origin,
+                                seen,
+                            )
                         )
                     continue
                 if row["kind"] == "call":
@@ -362,17 +440,164 @@ def known_puzzle_items(
                             programs[callee]["entry"],
                             returns + ((key, row["next"], frames),),
                             (),
+                            work,
+                            owners,
+                            origin,
                             seen,
                         )
                     )
                     continue
-                if opcode == 0:
+                if opcode in (0, 2):
+                    # Yield preserves mode; every independently runnable task
+                    # is checked in this same closure before it is accepted.
                     pass
+                elif opcode == 4:
+                    callee = f"17:{packet[3]}"
+                    require(
+                        packet[1:3] == b"\xff\x18"
+                        and callee in programs
+                        and origin == "root",
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                    # Automatic slots 2..9 cannot replace startup/frame tasks
+                    # 0/1. Workers start at depth zero with inherited Work
+                    # unknown, and may not schedule another replacing worker.
+                    pending.append(
+                        (
+                            callee,
+                            programs[callee]["entry"],
+                            (),
+                            (),
+                            ("unselected", 0),
+                            frozenset(),
+                            "worker",
+                            frozenset(),
+                        )
+                    )
+                elif row["kind"] == "flag_write":
+                    require(
+                        packet[3] in (0, 1, 7)
+                        and physical_flag_key(packet[1], packet[2]) not in all_fixed,
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                elif opcode == 0x29:
+                    require(
+                        bounded_camera(packet[1] & 0x7F, fixed),
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                elif opcode == 0x2A:
+                    require(
+                        any(
+                            commands[prior[0]][prior[1]]["opcode"] == 0x29
+                            for prior in seen
+                        )
+                        and all(
+                            bounded_camera(camera, fixed)
+                            for camera in range(room["cameras"])
+                        ),
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                    # A validated Cut_chg on this path must first save a live
+                    # camera. Every camera it could restore needs a bounded RVD.
+                elif opcode == 0x2E:
+                    require(
+                        packet[1] == 4 and packet[2] < config.object_capacity,
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                    work = "object", packet[2]
+                elif opcode == 0x2F:
+                    require(packet[1] < 12, KnownPuzzleItemFailure.NativeContract)
+                elif opcode == 0x31:
+                    # Delta update touches only the task's bounded halfwords.
+                    pass
+                elif opcode in (0x30, 0x34):
+                    # Coordinate handlers never dereference a model pointer.
+                    # Fixed Work suffices for mode safety before model setup.
+                    require(
+                        work[0] == "object" and (opcode == 0x30 or packet[1] == 12),
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                elif opcode == 9:
+                    require(
+                        packet[1] == 0x0A
+                        and int.from_bytes(packet[2:], "little")
+                        and not frames,
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                    # The finite 09/0A macro yields on every tick and restores
+                    # its task-local loop index before the next source packet.
+                elif opcode == 0x0F:
+                    # Prove a mode-preserving zero-or-more-iteration block.
+                    # Restrict the body so shared IF/loop storage cannot change
+                    # across its native backedge. No termination is inferred.
+                    condition = row["next"]
+                    body = condition + packet[1]
+                    end = row["next"] + int.from_bytes(
+                        packet[2:], "little", signed=True
+                    )
+                    require(
+                        origin == "worker"
+                        and not returns
+                        and not frames
+                        and packet[1] == 6
+                        and work[0] == "object"
+                        and data[condition:body][:4] == b"\x3e\0\x0c\x04"
+                        and condition in commands[key]
+                        and commands[key][condition]["next"] == body
+                        and end - 2 in commands[key]
+                        and data[end - 2 : end] == b"\x10\0"
+                        and commands[key][end - 2]["next"] == end
+                        and end in commands[key],
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                    opposite_packets.add((condition, 6))
+                    cursor = body
+                    while cursor < end - 2:
+                        require(
+                            cursor in commands[key],
+                            KnownPuzzleItemFailure.NativeContract,
+                        )
+                        command = commands[key][cursor]
+                        require(
+                            command["opcode"] in (0, 2, 0x30, 0x31)
+                            and command["next"] <= end - 2,
+                            KnownPuzzleItemFailure.NativeContract,
+                        )
+                        opposite_packets.add((cursor, command["next"] - cursor))
+                        cursor = command["next"]
+                    require(cursor == end - 2, KnownPuzzleItemFailure.NativeContract)
+                    opposite_packets.add((end - 2, 2))
+                    pending.append(
+                        (key, end, returns, frames, work, owners, origin, seen)
+                    )
+                    continue
+                elif opcode == 0x36:
+                    require(
+                        packet[1] == 2
+                        and packet[3] == 1
+                        and packet[4] == 4
+                        and packet[5] < config.object_capacity
+                        and not any(packet[6:]),
+                        KnownPuzzleItemFailure.NativeContract,
+                    )
+                    required_sounds.add(packet[2])
                 elif (
                     opcode == 0x2C
                     and packet[2:4] == b"\x04\x31"
                     and packet[16:] == b"\0\0\xff\xff"
+                    or opcode == 0x46
+                    and packet[2:4] == b"\x04\x31"
+                    and packet[6:] == b"\0\0\xff\xff"
                 ):
+                    if opcode == 0x46:
+                        require(
+                            any(slot == packet[1] for slot, _ in owners),
+                            KnownPuzzleItemFailure.NativeContract,
+                        )
+                    else:
+                        owners = frozenset(
+                            (slot, at) for slot, at in owners if slot != packet[1]
+                        ) | {(packet[1], position)}
                     require(
                         4 in entry_contract.non_scheduling_interaction_kinds,
                         KnownPuzzleItemFailure.NativeContract,
@@ -385,7 +610,10 @@ def known_puzzle_items(
                         ),
                         KnownPuzzleItemFailure.NativeContract,
                     )
-                    message = int.from_bytes(packet[14:16], "little")
+                    message_at = 4 if opcode == 0x46 else 14
+                    message = int.from_bytes(
+                        packet[message_at : message_at + 2], "little"
+                    )
                     require(message <= 255, KnownPuzzleItemFailure.NativeContract)
                     proofs = nonchoice_message_proofs(
                         data, tuple(room["section_offsets"]), message
@@ -420,9 +648,55 @@ def known_puzzle_items(
                     # The unlocked callback preserves STATUS. Its loader ORs
                     # STATUS00020000, then sets SYSTEM02000000 before animation;
                     # polling excludes that transition until reinitialization.
+                    owners = frozenset(
+                        (slot, at) for slot, at in owners if slot != packet[1]
+                    ) | {(packet[1], position)}
                 else:
                     raise _InvalidTarget(KnownPuzzleItemFailure.NativeContract)
-                pending.append((key, row["next"], returns, frames, seen))
+                pending.append(
+                    (key, row["next"], returns, frames, work, owners, origin, seen)
+                )
+
+        if required_sounds:
+            # This opposite-mode closure admits no compaction/rebinding opcode,
+            # constructor or arbitrary native entry. Audited incoming auxiliary
+            # scripts also have no compactor entry. Section22 need not be null.
+            sounds = room_sound_bindings(
+                data,
+                tuple(room["section_offsets"]),
+                partitions.heap_floor,
+                frozenset(required_sounds),
+            )
+            require(
+                isinstance(sounds, RoomSoundBindings),
+                KnownPuzzleItemFailure.NativeContract,
+            )
+            other_resources = [
+                *partitions.protected_source,
+                *(SourceRange(offset, width) for offset, width in opposite_text),
+                *(
+                    model.model.asset
+                    for model in partitions.objects
+                    if isinstance(model.model, EmbeddedModelResource)
+                ),
+                *(
+                    region
+                    for write in partitions.source_writes
+                    for region in write.writes
+                ),
+            ]
+            require(
+                not any(
+                    sound.offset < other.offset + other.width
+                    and other.offset < sound.offset + sound.width
+                    for sound in sounds.resources
+                    for other in other_resources
+                ),
+                KnownPuzzleItemFailure.NativeContract,
+            )
+            opposite_resources.update(
+                (region.offset, region.width) for region in sounds.resources
+            )
 
         def prefix(key, position, returns, frames, loaded, work, found, seen):
             nonlocal steps
@@ -446,7 +720,7 @@ def known_puzzle_items(
             packet = data[position : row["next"]]
             opcode = row["opcode"]
             if opcode in (6, 7, 8):
-                for target, next_frames in branch(key, row, frames, fixed):
+                for target, next_frames in branch(key, row, frames, fixed, work, False):
                     prefix(key, target, returns, next_frames, loaded, work, found, seen)
                 return
             if row["kind"] == "end":
@@ -649,7 +923,9 @@ def known_puzzle_items(
                         packet = data[position : row["next"]]
                         opcode = row["opcode"]
                         if opcode in (6, 7, 8):
-                            edges = branch(procedure, row, frames, values)
+                            edges = branch(
+                                procedure, row, frames, values, ("unselected", 0), False
+                            )
                             require(len(edges) == 1, KnownPuzzleItemFailure.Prefix)
                             position, frames = edges[0]
                             continue
@@ -683,25 +959,8 @@ def known_puzzle_items(
                             pass
                         elif opcode == 0x29:
                             camera = packet[1] & 0x7F
-                            # Cut_chg's search has no sentinel check. A valid
-                            # camera number alone cannot bound that native read.
-                            match = False
-                            for record in range(rvd, rvd_end - 19, 20) if rvd else ():
-                                if data[record : record + 2] == b"\xff\xff":
-                                    break
-                                if data[record + 2] == camera:
-                                    match = True
-                                    break
-                            status_address = int(layout["status_flags_address_ps1"], 0)
-                            if (
-                                camera >= room["cameras"]
-                                or not match
-                                or any(
-                                    address == status_address and mask & 0x00100100
-                                    for address, mask in read_flags
-                                    | fixed.keys()
-                                    | {acquisition}
-                                )
+                            if not bounded_camera(
+                                camera, read_flags | fixed.keys() | {acquisition}
                             ):
                                 break
                         else:
@@ -715,8 +974,10 @@ def known_puzzle_items(
             if deliveries:
                 protected_paths = [
                     *prefix_packets,
+                    *predicate_packets,
                     *opposite_packets,
                     *opposite_text,
+                    *opposite_resources,
                     *(
                         (row["offset"], row["next"] - row["offset"])
                         for callback_offset in related_callbacks

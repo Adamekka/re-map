@@ -688,14 +688,25 @@ def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapsh
 
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
-def test_declared_puzzle_stays_required_before_activation_and_rewinds(snapshot):
-    """RE2-PUZZLE-001: positive knowledge grants neither quantity nor clearance."""
+@pytest.mark.parametrize(
+    "room_key,gid,story_bit,item_type,quantity,list_complete",
+    [
+        ("01-00", 93, 72, 89, ItemQuantityState.Unreconstructed, False),
+        ("00-12", 21, 24, 59, 1, True),
+    ],
+)
+def test_declared_puzzle_stays_required_before_activation_and_rewinds(
+    snapshot, room_key, gid, story_bit, item_type, quantity, list_complete
+):
+    """RE2-PUZZLE-001/002: knowledge grants neither quantity nor clearance."""
     profile, _, put, read = snapshot
-    source = profile.rooms["01-00"]
+    source = profile.rooms[room_key]
     assert not source["fixed_context_preserved"]
-    assert [proof["global_id"] for proof in source["known_puzzle_items"]] == [93]
+    assert [proof["global_id"] for proof in source["known_puzzle_items"]] == [gid]
+    stage, room_hex = room_key.split("-")
+    room_id = RoomId(int(stage), int(room_hex, 16))
     tracker = Tracker()
-    tracker.mark_current(RoomId(1, 0))
+    tracker.mark_current(room_id)
     bank, _ = profile.flag_banks[profile.runtime_layout["item_bank_early"]]
     story, _ = profile.flag_banks[4]
     for acquired, activated in (
@@ -704,22 +715,30 @@ def test_declared_puzzle_stays_required_before_activation_and_rewinds(snapshot):
         (True, True),
         (False, False),
     ):
-        put(bank + 8, 4 if acquired else 0, 4)
-        put(story + 8, 0x00800000 if activated else 0, 4)
+        put(bank + gid // 32 * 4, (0x80000000 >> (gid % 32)) if acquired else 0, 4)
+        put(
+            story + story_bit // 32 * 4,
+            (0x80000000 >> (story_bit % 32)) if activated else 0,
+            4,
+        )
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
-        room = tracker.rooms["01-00"]
-        (key,) = (item for item in room.items if item.label == "Spade Key")
+        room = tracker.rooms[room_key]
+        (key,) = (
+            item
+            for item in room.items
+            if item.label == profile.names["items"][str(item_type)]
+        )
         assert key.state == ("taken" if acquired else "uncollected")
-        assert key.quantity is ItemQuantityState.Unreconstructed
-        assert not room.list_complete
+        assert key.quantity == quantity
+        assert room.list_complete is list_complete
         assert room.completion is (
             RoomCompletion.Unknown if acquired else RoomCompletion.Incomplete
         )
         fresh = Tracker()
-        fresh.mark_current(RoomId(1, 0))
+        fresh.mark_current(room_id)
         assert poll_re2(profile, fresh, read).status is PollStatus.Display
-        assert fresh.rooms["01-00"] == room
-        assert set(tracker.rooms) == {"00-01", "01-00"}
+        assert fresh.rooms[room_key] == room
+        assert set(tracker.rooms) == {"00-01", room_key}
 
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)

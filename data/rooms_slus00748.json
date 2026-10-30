@@ -36,6 +36,7 @@
     "RE2-STARTUP-001",
     "RE2-CONTROL-001",
     "RE2-PUZZLE-001",
+    "RE2-PUZZLE-002",
     "RE2-STARTUP-002"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
@@ -1822,14 +1823,48 @@
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
   },
   "room_entry_contract": {
-    "audit": "slus00748-original-room-entry-v1",
+    "audit": "slus00748-original-room-entry-v2",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
-    "stage": 1,
-    "stage_resource": {
-      "path": "COMMON/BIN/STAGE2.BIN",
-      "width": 1626,
-      "sha256": "68ebe0f04063fb6d605d1a88b4ccdafa8704b08faae7e7d95d55bba3ab9de2af"
-    },
+    "stage_entries": [
+      {
+        "stage": 0,
+        "resource": {
+          "path": "COMMON/BIN/STAGE1.BIN",
+          "width": 1704,
+          "sha256": "8e1c7fc3a99168a340dca2310ac0b7f41649bdea517ccd72678abef969c0e6ad"
+        },
+        "load": {
+          "recipe_table_address_ps1": "0x800A20B8",
+          "recipe_index": 8,
+          "file_index": 7,
+          "entry_address_ps1": "0x8011A004",
+          "destination_pointer_address_ps1": "0x80010810",
+          "destination_address_ps1": "0x8011A000",
+          "file_lba": 109,
+          "file_flags": 97,
+          "source_alignment": 4
+        }
+      },
+      {
+        "stage": 1,
+        "resource": {
+          "path": "COMMON/BIN/STAGE2.BIN",
+          "width": 1626,
+          "sha256": "68ebe0f04063fb6d605d1a88b4ccdafa8704b08faae7e7d95d55bba3ab9de2af"
+        },
+        "load": {
+          "recipe_table_address_ps1": "0x800A20B8",
+          "recipe_index": 9,
+          "file_index": 8,
+          "entry_address_ps1": "0x8011A004",
+          "destination_pointer_address_ps1": "0x80010810",
+          "destination_address_ps1": "0x8011A000",
+          "file_lba": 110,
+          "file_flags": 247,
+          "source_alignment": 4
+        }
+      }
+    ],
     "actor_archive_path": "PL0/PLD/CDEMD0.EMS",
     "constructor_presets": [
       [
@@ -1854,6 +1889,18 @@
       }
     ],
     "doors": [
+      {
+        "model": 1,
+        "path": "COMMON/DOOR/DOOR01.DO2",
+        "width": 72304,
+        "sha256": "9bc20e77b26b56b630eb615748ada8ef21ed6d0c93b1e1953b0153c7f0349b4f",
+        "file_index": 235,
+        "lba": 47958,
+        "payload_sector": 12,
+        "payload_width": 47728,
+        "script_width": 1356,
+        "script_sha256": "563dfcda4a37163ca973f9a104d8136f138f26fcf0228d7d4365f837be4bfbe7"
+      },
       {
         "model": 9,
         "path": "COMMON/DOOR/DOOR09.DO2",
@@ -1935,17 +1982,6 @@
       "object_capacity": 32,
       "item_flag_count": 256,
       "interaction_flag_count": 64
-    },
-    "stage_load": {
-      "recipe_table_address_ps1": "0x800A20B8",
-      "recipe_index": 9,
-      "file_index": 8,
-      "entry_address_ps1": "0x8011A004",
-      "destination_pointer_address_ps1": "0x80010810",
-      "destination_address_ps1": "0x8011A000",
-      "file_lba": 110,
-      "file_flags": 247,
-      "source_alignment": 4
     }
   },
   "script_item_dispatch": {
@@ -4916,7 +4952,35 @@
       "scenario_context_conditions": [],
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
-      "known_puzzle_items": [],
+      "known_puzzle_items": [
+        {
+          "global_id": 21,
+          "item_type": 59,
+          "creator_offsets": [
+            10656
+          ],
+          "callback_offsets": [
+            10804
+          ],
+          "delivery_offsets": [
+            13272
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 1,
+                    "bit": 6,
+                    "expected": 0
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ],
       "startup_item_declarations": []
     },
     {

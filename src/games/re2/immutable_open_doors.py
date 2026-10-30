@@ -14,6 +14,7 @@ from games.re2.nonchoice_messages import (
     nonchoice_message_proofs,
 )
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
+from games.re2.room_sound_bindings import RoomSoundBindingFailure, room_sound_bindings
 from games.re2.room_write_partitions import (
     EmbeddedModelResource,
     RoomWritePartitionConfig,
@@ -99,7 +100,9 @@ def immutable_open_doors(
         # Native file/menu graphics start at this fixed upper arena. The
         # exact stage-derived source base, not merely a lower bound, must keep
         # every retained script/model/message/sound byte below that arena.
-        if not partitions.retained_before(entry_contract.source_address, 0x80198000):
+        if not partitions.retained_before(
+            dict(entry_contract.source_addresses)[room["stage"]], 0x80198000
+        ):
             return ImmutableOpenDoorFailure.Partition
         fixed_rows = scenario_flags(profile)
         fixed = {(row["bank"], row["bit"]): row["expected"] for row in fixed_rows}
@@ -349,30 +352,14 @@ def immutable_open_doors(
             # source/control immutability preserves that room-lifetime premise.
             if sections[22] or any(row["opcode"] == 0x6C for row in reached.values()):
                 return ImmutableOpenDoorFailure.SoundBinding
-            edt, vab = sections[:2]
-            boundary = min(
-                (offset for offset in sections if offset > vab), default=len(data)
+            sound = room_sound_bindings(
+                data, tuple(sections), partitions.heap_floor, frozenset(required_sounds)
             )
-            if not (
-                100 <= edt
-                and edt % 4 == 0
-                and vab == edt + 48 * 4
-                and vab % 4 == 0
-                and vab + 32 <= boundary <= partitions.heap_floor
-            ):
+            if isinstance(sound, RoomSoundBindingFailure):
                 return ImmutableOpenDoorFailure.SoundBinding
-            programs_count = struct.unpack_from("<H", data, vab + 18)[0]
-            if (
-                data[vab : vab + 4] != b"pBAV"
-                or struct.unpack_from("<I", data, vab + 4)[0] != 7
-                or not 1 <= programs_count <= 128
-                or vab + 0x820 + programs_count * 0x200 + 0x200 > boundary
-            ):
-                return ImmutableOpenDoorFailure.SoundBinding
-            sound_resources = (SourceRange(edt, 192), SourceRange(vab, boundary - vab))
             if any(
-                overlaps(sound, protected)
-                for sound in sound_resources
+                overlaps(resource, protected)
+                for resource in (*sound.resources, *sound.tone_writes)
                 for protected in (
                     *partitions.protected_source,
                     *mutable_resources,
@@ -381,37 +368,6 @@ def immutable_open_doors(
                 )
             ):
                 return ImmutableOpenDoorFailure.SoundBinding
-            for sample in required_sounds:
-                packet = data[edt + sample * 4 : edt + sample * 4 + 4]
-                if packet == b"\xff" * 4:
-                    continue
-                program, tone, extra, voice = (
-                    packet[1] & 0x7F,
-                    packet[2] >> 4,
-                    packet[3] >> 5,
-                    packet[3] & 0x1F,
-                )
-                if (
-                    program >= programs_count
-                    or tone + extra >= 16
-                    or voice + extra >= 24
-                    or tone + extra >= data[vab + 32 + program * 16]
-                ):
-                    return ImmutableOpenDoorFailure.SoundBinding
-                for index in range(extra + 1):
-                    tone_write = SourceRange(
-                        vab + 0x821 + program * 0x200 + (tone + index) * 0x20, 1
-                    )
-                    if tone_write.offset >= boundary or any(
-                        overlaps(tone_write, protected)
-                        for protected in (
-                            *partitions.protected_source,
-                            *mutable_resources,
-                            *model_assets,
-                            *message_resources,
-                        )
-                    ):
-                        return ImmutableOpenDoorFailure.SoundBinding
 
         def descendants(roots: set[str]) -> set[str]:
             pending, seen = list(roots), set()

@@ -41,6 +41,8 @@ Native room initialization clears ordinary task frames and AOT slots before root
 
 The profile-owned entry manifest binds `STAGE2.BIN`, both pool-specific actor code resources for model `0x22` and preset `0x4402`, and door models `0x09`/`0x0D`. Each complete resource is hash checked against the audited recipe. Door scripts use a separate table while ordinary room execution is stopped; local auxiliary procedure seven is not room procedure seven. The type-22 native state, graphics callbacks and stage routine do not enter another room procedure. The binder checks the native lookup tables as well as full resource hashes. This is a bounded logical engine-work contract, not a proof that arbitrary corrupt pointers or GPU/DMA state cannot write RAM.
 
+Dated extension, 2026-10-30: [RE2-PUZZLE-002](known-puzzle-items.md#bounded-source-correction-2026-10-30) adds stage zero's exact `STAGE1.BIN` recipe and audited incoming model `01`. Entry receipts now bind both stages explicitly and expose their distinct source addresses. Immutable-door callers select the base for the actual stage; their reachable-effect and sound-lifetime restrictions stay intact. The shared EDT/VAB parser replaces the duplicated layout/sample arithmetic, while this caller still requires null section 22. No additional immutable-door result follows from this extension. Root and the `mode_design`/`sound_bindings` agents, verified exact model `gpt-6.1-sol`, authored and checked this extension.
+
 ### Callbacks and sound are real writes
 
 Kinds 4, 10 and 13 are admitted only in their audited forms. Non-scheduling does not mean no writes.

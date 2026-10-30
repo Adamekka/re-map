@@ -261,7 +261,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             entry_contract = bind_room_entry_contract(
                 entry_config,
                 executable,
-                entry_resource(entry_config.stage_resource.path),
+                {
+                    row.stage: entry_resource(row.resource.path)
+                    for row in entry_config.stage_entries
+                },
                 entry_resource(entry_config.actor_archive_path),
                 {door.model: entry_resource(door.path) for door in entry_config.doors},
             )
@@ -765,7 +768,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     else []
                 ),
                 *(
-                    ["RE2-PUZZLE-001"]
+                    ["RE2-PUZZLE-001", "RE2-PUZZLE-002"]
                     if isinstance(entry_contract, VerifiedRoomEntryContract)
                     and isinstance(dispatch, ScriptItemDispatchConfig)
                     else []

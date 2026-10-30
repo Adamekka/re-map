@@ -222,7 +222,7 @@ def test_immutable_open_door_catalog_requires_bound_revision_and_creator_evidenc
     if case == "missing-manifest":
         del document["room_entry_contract"]
     elif case == "manifest-drift":
-        document["room_entry_contract"]["stage"] += 1
+        document["room_entry_contract"]["stage_entries"][0]["stage"] += 1
     elif case == "missing-room-proof":
         del room["immutable_open_doors"]
     elif case == "not-list":
@@ -240,7 +240,7 @@ def test_immutable_open_door_catalog_requires_bound_revision_and_creator_evidenc
     elif case == "locked":
         room["doors"][0]["lock_id"] = 0x80
     elif case == "stage":
-        room["stage"] = 0
+        room["stage"] = 2
     elif case == "context-missing":
         proofs[0]["context_conditions"] = []
     elif case == "context-boolean":

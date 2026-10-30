@@ -180,6 +180,8 @@ class Re2Profile:
             or layout["aot_capacity"] != entry_contract.write_partitions.aot_capacity
         ):
             raise ValueError("RE2 room-entry proof disagrees with its revision layout")
+        if isinstance(entry_contract, RoomEntryContractConfig):
+            entry_stages = frozenset(row.stage for row in entry_contract.stage_entries)
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -519,7 +521,7 @@ class Re2Profile:
                     or type(proof["item_type"]) is not int
                     or not 0 <= proof["item_type"] < layout["file_type_min"]
                     or type(room.get("stage")) is not int
-                    or room["stage"] != entry_contract.stage
+                    or room["stage"] not in entry_stages
                     or type(room.get("size")) is not int
                     or type(room.get("scenario_absent_item_ids")) is not list
                     or proof["global_id"] in room["scenario_absent_item_ids"]
@@ -602,7 +604,7 @@ class Re2Profile:
                         for condition in proof["context_conditions"]
                     )
                     or not room.get("fixed_context_preserved")
-                    or room["stage"] != entry_contract.stage
+                    or room["stage"] not in entry_stages
                     or any(
                         condition not in proof["context_conditions"]
                         for condition in context_conditions

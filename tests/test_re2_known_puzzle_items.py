@@ -40,8 +40,8 @@ def receipt(profile):
         audit=config.audit,
         executable_sha256=config.executable_sha256,
         minimum_source_address=0x8011A000,
-        source_address=0x8011A65C,
-        stages=frozenset({1}),
+        source_addresses=((0, 0x8011A6A8), (1, 0x8011A65C)),
+        stages=frozenset({0, 1}),
         roots=config.roots,
         door_models=frozenset(door.model for door in config.doors),
         non_scheduling_interaction_kinds=frozenset(
@@ -588,8 +588,273 @@ def test_exact_source_entry_and_revision_binding_is_mandatory(profile, receipt, 
         profile = copy.deepcopy(profile)
         profile["executable_identity"] = "SLUS_007.48 SHA256 " + "0" * 64
     else:
-        room["stage"] = 0
+        room["stage"] = 2
     result = known_puzzle_items(
         data, room, profile, receipt, script_item_dispatch(profile)
     )
     assert isinstance(result, KnownPuzzleItemFailure)
+
+
+def mode_worker_source(worker, frame):
+    # The declaration guard lives in the second root. Under the opposite
+    # setting only the frame task and its independent worker remain reachable.
+    data, room, layout = source(
+        END,
+        (
+            conditional(1, 6, 1, END) + item() + callback() + END,
+            frame + END,
+            delivery(),
+            worker + END,
+        ),
+        (),
+        (0,),
+    )
+    room["stage"] = 1
+    return data, room, layout
+
+
+def test_second_root_guard_can_establish_a_target_after_first_root_finishes(
+    profile, receipt
+):
+    data, room, _ = mode_worker_source(b"\0", b"\x04\xff\x18\x03")
+    result = known_puzzle_items(
+        data, room, profile, receipt, script_item_dispatch(profile)
+    )
+    assert len(result) == 1
+    assert result[0].context_conditions == [
+        {"kind": "conditions", "any_of": [[{"bank": 1, "bit": 6, "expected": 0}]]}
+    ]
+
+
+def test_independent_leading_guards_cannot_be_flipped_together(profile, receipt):
+    result = compile_source(
+        profile,
+        receipt,
+        conditional(1, 1, 1, END) + END,
+        (conditional(1, 6, 1, END) + item() + callback() + END, END, delivery()),
+    )
+    assert isinstance(result, KnownPuzzleItemFailure) or result == ()
+
+
+@pytest.mark.parametrize("predicate", [b"\x23\0\x1a\0\x07\0", b"\x50\x01\0\x10"])
+@pytest.mark.parametrize("unsafe", [False, True])
+def test_readonly_predicates_keep_both_possible_opposite_branches(
+    profile, receipt, predicate, unsafe
+):
+    body = bytes((0x54,)) + bytes(21) if unsafe else b"\x22\x04\x18\x01"
+    worker = b"\x06\0" + struct.pack("<H", len(predicate) + len(body) + 2)
+    worker += predicate + body + b"\x08\0"
+    data, room, _ = mode_worker_source(worker, b"\x04\xff\x18\x03")
+    result = known_puzzle_items(
+        data, room, profile, receipt, script_item_dispatch(profile)
+    )
+    assert isinstance(result, KnownPuzzleItemFailure) if unsafe else len(result) == 1
+
+
+def test_worker_work_selection_survives_a_call_and_return(profile, receipt):
+    data, room, _ = source(
+        END,
+        (
+            conditional(1, 6, 1, END) + item() + callback() + END,
+            b"\x04\xff\x18\x03" + END,
+            delivery(),
+            b"\x18\x04\x30" + END,
+            b"\x2e\x04\x04" + END,
+        ),
+        (),
+        (0,),
+    )
+    room["stage"] = 1
+    assert (
+        len(
+            known_puzzle_items(
+                data, room, profile, receipt, script_item_dispatch(profile)
+            )
+        )
+        == 1
+    )
+
+
+@pytest.mark.parametrize(
+    "worker,frame",
+    [
+        (b"\x30", b"\x04\xff\x18\x03"),
+        (b"\x30", b"\x2e\x04\x04\x04\xff\x18\x03"),
+        (b"\x2e\x03\x04\x30", b"\x04\xff\x18\x03"),
+        (b"\x2e\x04\x20\x30", b"\x04\xff\x18\x03"),
+        (b"\x2f\x0c\0\0", b"\x04\xff\x18\x03"),
+        (b"\x2a", b"\x04\xff\x18\x03"),
+        (b"\x04\xff\x18\x03", b"\x04\xff\x18\x03"),
+        (b"\0", b"\x04\x02\x18\x03"),
+    ],
+)
+def test_worker_cannot_inherit_unproved_work_or_replace_itself(
+    profile, receipt, worker, frame
+):
+    data, room, _ = mode_worker_source(worker, frame)
+    assert isinstance(
+        known_puzzle_items(data, room, profile, receipt, script_item_dispatch(profile)),
+        KnownPuzzleItemFailure,
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "valid",
+        "missing-work",
+        "condition-width",
+        "member",
+        "tail",
+        "call",
+        "sleep",
+        "nested",
+    ],
+)
+def test_opposite_while_requires_a_balanced_immutable_coordinate_body(
+    profile, receipt, case
+):
+    body = {
+        "call": b"\x18\x02",
+        "sleep": b"\x09\x0a\x05\0",
+        "nested": b"\x0f\x06\x08\0\x3e\0\x0c\x04\0\xfb\x10\0",
+    }.get(case, b"\x02\x30\x31\0")
+    condition = b"\x3e\0" + bytes((13 if case == "member" else 12, 4)) + b"\0\xfb"
+    loop = bytes((0x0F, 4 if case == "condition-width" else 6))
+    loop += struct.pack("<h", len(condition) + len(body) + 2) + condition + body
+    loop += b"\x10\x01" if case == "tail" else b"\x10\0"
+    work = b"" if case == "missing-work" else b"\x2e\x04\x04"
+    worker = work + b"\x09\x0a\x05\0" + loop + b"\x34\x0c\xe0\xac\x09\x0a\x0f\0"
+    data, room, _ = mode_worker_source(worker, b"\x04\xff\x18\x03")
+    result = known_puzzle_items(
+        data, room, profile, receipt, script_item_dispatch(profile)
+    )
+    assert (
+        len(result) == 1
+        if case == "valid"
+        else isinstance(result, KnownPuzzleItemFailure)
+    )
+
+
+@pytest.mark.parametrize(
+    "target", ["unrelated-bit", "proof-bit", "bank", "operation", "alias"]
+)
+def test_copied_flag_indices_require_a_disjoint_bank_and_immutable_proof_path(
+    profile, receipt, target
+):
+    # Put an independent later Copy before a flag packet, then re-decode so
+    # offsets and source identities remain real input bindings.
+    init = item() + END
+    later = bytes((0x1D, 0, 2, 0)) + b"\x22\x05\0\x01" + END
+    if target == "proof-bit":
+        later = bytes((0x1D, 0, 6, 0)) + conditional(5, 0, 1, b"\0") + END
+        data, room, _ = mode_worker_source(later[:-2], b"\x04\xff\x18\x03")
+    else:
+        if target == "bank":
+            later = later[:2] + b"\x01" + later[3:]
+        elif target == "operation":
+            later = later[:2] + b"\x03" + later[3:]
+        data, room, _ = source(
+            init, (callback() + END, END, delivery(), later), (), (0,)
+        )
+        room["stage"] = 1
+    if target == "alias":
+        profile = copy.deepcopy(profile)
+        next(row for row in profile["flag_banks"] if row["bank"] == 5)[
+            "address_ps1"
+        ] = "0x800CFB74"
+    result = known_puzzle_items(
+        data, room, profile, receipt, script_item_dispatch(profile)
+    )
+    assert (
+        len(result) == 1
+        if target == "unrelated-bit"
+        else isinstance(result, KnownPuzzleItemFailure)
+    )
+
+
+@pytest.mark.parametrize(
+    "case", ["valid", "compactor", "unbound-bank", "mutable-resource"]
+)
+def test_worker_sound_requires_owned_immutable_resources_and_closed_entries(
+    profile, receipt, case
+):
+    worker = (
+        b"\x36" + bytes((1 if case == "unbound-bank" else 2, 10, 1, 4, 4)) + bytes(6)
+    )
+    if case == "compactor":
+        worker += b"\x6c\0\0\0"
+    if case == "mutable-resource":
+        worker = bytes((0x1D, 0, 0, 0)) + worker
+    original, original_room, layout = mode_worker_source(worker, b"\x04\xff\x18\x03")
+    data = bytearray(original[: layout["floor"]])
+    sections = list(struct.unpack_from("<23I", data, 8))
+    edt = sections[0] = len(data)
+    data.extend(b"\xff" * 192)
+    data[edt + 40 : edt + 44] = b"\0\0\x44\0"
+    vab = sections[1] = len(data)
+    data.extend(bytes(0xC20))
+    data[vab : vab + 4] = b"pBAV"
+    struct.pack_into("<I", data, vab + 4, 7)
+    struct.pack_into("<H", data, vab + 18, 1)
+    data[vab + 32] = 16
+    sections[2] = len(data)
+    # A nonzero compaction directory does not matter when no admitted entry
+    # can invoke the compactor. The parser grants no such lifetime permission.
+    sections[22] = edt
+    data.extend(bytes(32))
+    if case == "mutable-resource":
+        at = original_room["programs"]["17:3"]["entry"]
+        data[at + 2] = edt - (at + 4)
+    struct.pack_into("<23I", data, 8, *sections)
+    room = decode_room(
+        bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    room["stage"] = 1
+    result = known_puzzle_items(
+        bytes(data), room, profile, receipt, script_item_dispatch(profile)
+    )
+    assert (
+        len(result) == 1
+        if case == "valid"
+        else isinstance(result, KnownPuzzleItemFailure)
+    )
+
+
+@pytest.mark.parametrize(
+    "case", ["valid", "missing-owner", "conditional-owner", "choice"]
+)
+def test_opposite_reset_requires_a_fresh_owner_and_bounded_nonchoice_callback(
+    profile, receipt, case
+):
+    door = bytearray(32)
+    door[:4] = b"\x3b\x02\x01\x31"
+    door[26] = 13
+    reset = b"\x46\x02\x04\x31\0\0\0\0\xff\xff"
+    owner = b"" if case == "missing-owner" else bytes(door)
+    if case == "conditional-owner":
+        owner = conditional(4, 0, 1, owner)
+    init = owner + conditional(1, 6, 1, reset) + END
+    main = (conditional(1, 6, 1, END) + item() + callback() + END, END, delivery())
+    original, _, layout = source(init, main, (), (0,))
+    data = bytearray(original)
+    floor = layout["floor"]
+    text = b"\x02\0A\xfe\0\0\0\0"
+    data[floor:floor] = text * 2
+    struct.pack_into("<I", data, 8 + 2 * 4, floor + 16)
+    struct.pack_into("<I", data, 8 + 13 * 4, floor)
+    struct.pack_into("<I", data, 8 + 14 * 4, floor + 8)
+    if case == "choice":
+        data[floor + 2] = 0xF7
+    room = decode_room(
+        bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
+    )
+    room["stage"] = 1
+    result = known_puzzle_items(
+        bytes(data), room, profile, receipt, script_item_dispatch(profile)
+    )
+    assert (
+        len(result) == 1
+        if case == "valid"
+        else isinstance(result, KnownPuzzleItemFailure)
+    )
