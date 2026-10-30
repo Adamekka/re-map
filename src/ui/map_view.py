@@ -988,7 +988,7 @@ function draw(state) {
     }
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
     name.className='entry-name';detail.className='entry-status';
-    const destination=door.target_visited ? observed.get(door.target) : undefined;
+    const destination=door.target_visited ? observed.get(door.target)?.[0] : undefined;
     const label=document.createElement(destination ? 'button' : 'span');
     label.textContent=door.target_visited ? knownRooms.get(door.target) || 'Room '+door.target : 'Unexplored room';
     if(destination) {
@@ -1050,32 +1050,44 @@ function focusInspectedRoom() {
 }
 function observedRoomViews(state) {
   // Camera outlines share a logical room's items. Prefer its current outline
-  // for navigation, then retain one observed outline for each departed room.
-  const observed=new Map([[state.current_detail.room,{area:state.area,visit:state.current_detail}]]);
+  // for navigation, while retaining other explored floors for search.
+  const observed=new Map([[state.current_detail.room,[{area:state.area,visit:state.current_detail}]]]);
   for(const area of Object.keys(state.explored_areas).sort()) {
     for(const visit of state.explored_areas[area]) {
-      if(!observed.has(visit.room)) observed.set(visit.room,{area,visit});
+      if(!observed.has(visit.room)) observed.set(visit.room,[]);
+      observed.get(visit.room).push({area,visit});
     }
   }
   return observed;
 }
 function updateOverview(state) {
   const remaining=[],checks=[],cleared=[];
-  for(const {area,visit} of observedRoomViews(state).values()) {
+  const query=itemSearch.value.trim().toLowerCase();
+  for(const views of observedRoomViews(state).values()) {
+    const {visit}=views[0];
     if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
-    const entry={area,id:visit.id,room:visit.room,name:roomName(area,visit),labels:[]};
-    if(visit.state==='CLEARED') cleared.push(entry);
+    function addResult(entries,labels) {
+      // Match explored outlines before choosing one logical-room result, so
+      // searching another visited floor can navigate to that floor's outline.
+      const match=views.find(({area,visit})=>{
+        const floor=areas.has(area) ? areas.get(area).name : 'Room '+visit.room;
+        return [roomName(area,visit),floor,...labels].join(' ').toLowerCase().includes(query);
+      });
+      if(!match) return;
+      const {area,visit}=match;
+      entries.push({area,id:visit.id,room:visit.room,name:roomName(area,visit),labels});
+    }
+    if(visit.state==='CLEARED') addResult(cleared,[]);
     const labels=visit.items.filter(itemRemains).map(itemLabel);
-    if(labels.length) remaining.push({...entry,labels});
+    if(labels.length) addResult(remaining,labels);
     // A remaining item makes the room red even when other item checks are
     // incomplete. Completion color alone cannot identify those gaps.
     const unresolved=visit.items.filter(item=>item.state==='unknown').map(itemLabel);
-    if(!visit.items_complete || unresolved.length) checks.push({...entry,labels:[
+    if(!visit.items_complete || unresolved.length) addResult(checks,[
       ...(unresolved.length ? ['Unresolved: '+unresolved.join(', ')] : []),
       ...(!visit.items_complete ? ['Item list incomplete'] : []),
-    ]});
+    ]);
   }
-  const query=itemSearch.value.trim().toLowerCase();
   const key=JSON.stringify([query,remaining,checks,query ? cleared : []]);
   // Keep focused overview links intact during unchanged game polls.
   if(key!==overviewKey) {
@@ -1083,10 +1095,7 @@ function updateOverview(state) {
     const focusedList=focusedResult===null ? null : focusedResult.closest('[id]');
     overviewKey=key;
     function showEntries(containerId,entries) {
-      entries=entries.filter(entry=>{
-        const floor=areas.has(entry.area) ? areas.get(entry.area).name : 'Room '+entry.room;
-        return [entry.name,floor,...entry.labels].join(' ').toLowerCase().includes(query);
-      }).sort((a,b)=>a.area.localeCompare(b.area)||a.name.localeCompare(b.name)||a.room.localeCompare(b.room));
+      entries=[...entries].sort((a,b)=>a.area.localeCompare(b.area)||a.name.localeCompare(b.name)||a.room.localeCompare(b.room));
       const container=document.getElementById(containerId);
       const entriesKey=JSON.stringify(entries);
       // Keep unchanged result lists intact during unrelated live updates.

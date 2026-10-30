@@ -404,16 +404,71 @@ try {
   await current.click();
   assert.equal(await page.locator('.room.current').count(), 1);
   assert.equal(await page.locator('.player').getAttribute('aria-label'), 'You · Elevator Stairway');
+  await zoomIn.click();
+  const aliasView = await map.getAttribute('viewBox');
+  const back = page.getByRole('button', { name: 'Back to previous room', exact: true });
+  await roomSearch.fill('B1');
+  assert.equal(await remaining.getByRole('button').count(), 1, 'floor search must find an explored noncurrent outline of the same logical room');
+  assert.equal(await remaining.locator('h3').textContent(), 'Mansion · B1');
+  await remaining.getByRole('button').press('Enter');
+  assert.equal(await floor.inputValue(), 'mansionb1');
+  assert(await page.locator('.room.selected').evaluate(node => node === document.activeElement));
+  await back.press('Enter');
+  assert.equal(await floor.inputValue(), 'mansion1f');
+  assert.equal(await map.getAttribute('viewBox'), aliasView, 'Back from a matching-floor result must restore the chosen view');
+  for (const query of ['Green Herb', 'Elevator Stairway']) {
+    await roomSearch.fill(query);
+    assert.equal(await remaining.getByRole('button').count(), 1, 'item and room searches must deduplicate camera aliases');
+    await remaining.getByRole('button').press('Enter');
+    assert.equal(await floor.inputValue(), 'mansion1f', 'ordinary searches must retain current-outline preference');
+  }
+  assert.deepEqual(await page.evaluate(() => lastState), states.camera_alias, 'search navigation must not change exploration or game state');
+  const partialAliases = structuredClone(states.camera_alias);
+  for (const visit of [partialAliases.current_detail, ...partialAliases.rooms, ...Object.values(partialAliases.explored_areas).flat()]) {
+    visit.items_complete = false;
+    visit.items.push({ label: 'Red Herb', state: 'unknown', quantity: 1, quantity_is_unit_count: false });
+  }
+  await roomSearch.fill('B1');
+  await remaining.getByRole('button').focus();
+  const aliasResult = await remaining.getByRole('button').elementHandle();
+  state = partialAliases;
+  await page.waitForFunction(() => document.querySelectorAll('#incomplete-checks .room-link').length === 1);
+  assert.equal(await remaining.getByRole('button').count(), 1);
+  assert.equal(await checks.locator('h3').textContent(), 'Mansion · B1');
+  assert(await aliasResult.evaluate(node => node.isConnected && node === document.activeElement), 'adding checks must preserve an unchanged matching-floor result');
+  await roomSearch.fill('Red Herb');
+  assert.equal(await remaining.getByRole('button').count(), 0, 'unresolved names must match only incomplete checks');
+  assert.equal(await checks.getByRole('button').count(), 1);
+  await checks.getByRole('button').press('Enter');
+  assert.equal(await floor.inputValue(), 'mansion1f', 'check-label queries must retain current-outline preference');
+  await roomSearch.fill('B1');
+  await checks.getByRole('button').focus();
   const clearedAliases = structuredClone(states.camera_alias);
   for (const visit of [clearedAliases.current_detail, ...clearedAliases.rooms, ...Object.values(clearedAliases.explored_areas).flat()]) {
     visit.state = 'CLEARED';
     visit.items = visit.items.map(item => ({ ...item, state: 'taken' }));
   }
   state = clearedAliases;
-  await roomSearch.fill('Elevator Stairway');
   await page.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
+  assert.equal(await remaining.getByRole('button').count(), 0);
+  assert.equal(await checks.getByRole('button').count(), 0);
+  assert(await page.locator('#cleared-rooms .room-link').evaluate(node => node === document.activeElement), 'a fresh clearance must carry matching-floor focus into Cleared rooms');
+  await page.locator('#cleared-rooms .room-link').press('Enter');
+  assert.equal(await floor.inputValue(), 'mansionb1', 'cleared results must navigate to the searched explored floor');
+  await roomSearch.fill('Elevator Stairway');
   await page.locator('#cleared-rooms .room-link').press('Enter');
   assert.equal(await floor.inputValue(), 'mansion1f', 'cleared camera aliases must prefer the current observed outline');
+  await roomSearch.fill('B1');
+  await page.locator('#cleared-rooms .room-link').focus();
+  const singleAlias = structuredClone(clearedAliases);
+  delete singleAlias.explored_areas.mansionb1;
+  state = singleAlias;
+  await page.waitForFunction(() => !('mansionb1' in lastState.explored_areas));
+  assert.equal(await page.locator('#overview .room-link').count(), 0, 'catalog-only floor aliases must not match search');
+  assert(await roomSearch.evaluate(node => node === document.activeElement), 'removing the matching explored outline must return focus to search');
+  assert.equal(await page.locator('#map .room').count(), 1);
+  state = clearedAliases;
+  await page.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
   await roomSearch.press('Escape');
   await current.click();
   state = states.helmet_doors;

@@ -62,10 +62,20 @@ detail_tracker.mark_current(RoomId(0,2));detail_tracker.player_heading=90;detail
 detail_tracker.doors=(DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'LOCKED','Heart Key',key_label='Heart Key',observation_id='01-0b:12090'),DoorDetail(RoomId(1,0x0b),RoomId(1,0x0f),'UNCHECKED','Door conditions unresolved',observation_id='01-0b:12126'))
 # Owned source00-03 creator13962 connects the city floor to the station floor.
 detail_tracker.doors += (DoorDetail(RoomId(0,3),RoomId(1,0),'UNCHECKED','Access unconfirmed',observation_id='00-03:13962'),)
-print(json.dumps({'document':map_page(p.map_layout.document,uuid4()).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document,uuid4()).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas'])}))
+alias_tracker=Tracker(player_heading=90)
+alias_room=RoomId(0,0x12)
+alias_tracker.mark_current(alias_room)
+for area in detail_profile.map_layout.document['areas']:
+    for region in area['rooms']:
+        if '00-12' in region['room_ids']:
+            alias_tracker.region_visits[area['id']+':'+region['id']]='00-12'
+alias_tracker.current_region='re2-03:09'
+alias_tracker.update_room_items(alias_room,1,0,True,True,False)
+alias_tracker.rooms['00-12'].items=(ItemDetail('Green Herb','available',1,False),)
+print(json.dumps({'document':map_page(p.map_layout.document,uuid4()).decode(),'state':map_state(t),'counts':counts,'markers':markers,'floorStates':floor_states,'detailDocument':map_page(detail_profile.map_layout.document,uuid4()).decode(),'detailState':map_state(detail_tracker),'detailCount':sum(len(area['rooms']) for area in detail_profile.map_layout.document['areas']),'aliasState':map_state(alias_tracker)}))
 `], { encoding: 'utf8' });
 assert.equal(setup.status, 0, setup.stderr);
-const { document, state, counts, markers, floorStates, detailDocument, detailState, detailCount } = JSON.parse(setup.stdout);
+const { document, state, counts, markers, floorStates, detailDocument, detailState, detailCount, aliasState } = JSON.parse(setup.stdout);
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
@@ -460,6 +470,78 @@ try {
   await roomSearch.press('Escape');
   assert.equal(await roomSearch.inputValue(), '');
   assert(await roomSearchPage.locator('#cleared-section').isHidden());
+
+  searchPublication = structuredClone(aliasState);
+  await roomSearchPage.waitForFunction(() => lastState.current === '00-12');
+  const aliasFloor = roomSearchPage.getByLabel('Floor', { exact: true });
+  await aliasFloor.selectOption('re2-04');
+  assert.equal(await roomSearchPage.locator('#map .room').count(), 1, 'the alternate floor must already have an explored outline');
+  await roomSearchPage.getByRole('button', { name: 'Follow player', exact: true }).click();
+  const aliasRemaining = roomSearchPage.locator('#remaining-items .room-link');
+  const aliasChecks = roomSearchPage.locator('#incomplete-checks .room-link');
+  await roomSearchPage.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  const aliasView = await roomSearchPage.locator('#map').getAttribute('viewBox');
+  for (const query of ['3F', '3F Green Herb']) {
+    await roomSearch.fill(query);
+    assert.equal(await aliasRemaining.count(), 1, 'search must match an explored alternate floor before collapsing logical-room aliases');
+    assert.equal(await roomSearchPage.locator('#remaining-items h3').textContent(), 'Police station 3F');
+  }
+  await aliasRemaining.press('Enter');
+  assert.equal(await aliasFloor.inputValue(), 're2-04');
+  assert(await roomSearchPage.locator('.room.selected').evaluate(node => node === document.activeElement));
+  await roomSearchPage.getByRole('button', { name: 'Back to previous room', exact: true }).press('Enter');
+  assert.equal(await aliasFloor.inputValue(), 're2-03');
+  assert.equal(await roomSearchPage.locator('#map').getAttribute('viewBox'), aliasView, 'Back must restore the view before matching-floor navigation');
+  for (const query of ['Green Herb', '2F RPD Library']) {
+    await roomSearch.fill(query);
+    assert.equal(await aliasRemaining.count(), 1, 'ordinary searches must keep one logical-room result');
+    await aliasRemaining.press('Enter');
+    assert.equal(await aliasFloor.inputValue(), 're2-03', 'item and room queries must prefer the current observed outline');
+  }
+  assert.deepEqual(await roomSearchPage.evaluate(() => lastState), aliasState, 'filtering and navigation must not change exploration');
+  await roomSearch.fill('3F');
+  await aliasRemaining.focus();
+  const aliasResult = await aliasRemaining.elementHandle();
+  for (const visit of [searchPublication.current_detail, ...searchPublication.rooms, ...Object.values(searchPublication.explored_areas).flat()]) {
+    visit.items_complete = false;
+    visit.items.push({ label: 'Blue Herb', state: 'unknown', quantity: 1, quantity_is_unit_count: false });
+  }
+  await roomSearchPage.waitForFunction(() => document.querySelectorAll('#incomplete-checks .room-link').length === 1);
+  assert.equal(await aliasRemaining.count(), 1, 'remaining and incomplete sections must each deduplicate aliases');
+  assert.equal(await roomSearchPage.locator('#incomplete-checks h3').textContent(), 'Police station 3F');
+  assert(await aliasResult.evaluate(node => node.isConnected && node === document.activeElement), 'an unchanged matching-floor result must retain focus during fresh checks');
+  await roomSearch.fill('3F Unresolved: Blue Herb');
+  assert.equal(await aliasRemaining.count(), 0, 'check labels must not become remaining-item matches');
+  assert.equal(await aliasChecks.count(), 1, 'floor and unresolved label must use the same candidate match');
+  await aliasChecks.press('Enter');
+  assert.equal(await aliasFloor.inputValue(), 're2-04');
+  await roomSearch.fill('3F');
+  await aliasChecks.focus();
+  searchPublication = structuredClone(aliasState);
+  for (const visit of [searchPublication.current_detail, ...searchPublication.rooms, ...Object.values(searchPublication.explored_areas).flat()]) {
+    visit.state = 'CLEARED';
+    visit.items = visit.items.map(item => ({ ...item, state: 'taken' }));
+  }
+  await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
+  assert.equal(await aliasRemaining.count(), 0);
+  assert.equal(await aliasChecks.count(), 0);
+  assert(await clearedRooms.getByRole('button').evaluate(node => node === document.activeElement), 'fresh clearance must move matching-floor focus to Cleared rooms');
+  await clearedRooms.getByRole('button').press('Enter');
+  assert.equal(await aliasFloor.inputValue(), 're2-04');
+  await roomSearch.fill('2F RPD Library');
+  assert.equal(await clearedRooms.getByRole('button').count(), 1);
+  await clearedRooms.getByRole('button').press('Enter');
+  assert.equal(await aliasFloor.inputValue(), 're2-03', 'cleared room-name queries must preserve current-outline preference');
+  await roomSearch.fill('3F');
+  await clearedRooms.getByRole('button').focus();
+  const bothAliases = structuredClone(searchPublication);
+  delete searchPublication.explored_areas['re2-04'];
+  await roomSearchPage.waitForFunction(() => !('re2-04' in lastState.explored_areas));
+  assert.equal(await roomSearchPage.locator('#overview .room-link').count(), 0, 'an unvisited catalog alias must not match a floor query');
+  assert.equal(await roomSearchPage.locator('#map .room').count(), 1);
+  assert(await roomSearch.evaluate(node => node === document.activeElement), 'removing the matching outline must return focus to search');
+  searchPublication = bothAliases;
+  await roomSearchPage.waitForFunction(() => document.querySelectorAll('#cleared-rooms .room-link').length === 1);
   await roomSearchPage.close();
 
   let detailPublication = detailState;

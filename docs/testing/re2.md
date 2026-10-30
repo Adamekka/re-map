@@ -2,6 +2,16 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Search across explored floors
+
+At baseline `45b0d49`, a logical room explored on two floors returns one result for its preferred floor and zero for the other floor, even while the other outline is displayed. The isolated RE1 and RE2 reproductions retain identical tracker publications. Search now matches the room name, floor and section-specific item/check labels against already-observed outlines before selecting one result per logical room. Matching floor queries navigate to that outline. The current outline retains priority when several candidates match, and door navigation keeps its prior preferred destination.
+
+Both `bun tests/check_map_browser.mjs <python>` and `bun tests/check_re2_map_browser.mjs <python>` pass with regressions for Remaining items, Incomplete item checks and Cleared rooms. They cover combined floor/label queries, item and room queries, matching-floor navigation, Back with the prior viewport, keyboard focus, fresh clearance and removal/restoration of an explored alias. Catalog-only outlines cannot match. All nine browser suites and 59 map/multi-area Python tests pass; scoped Ruff F, formatting, 179 local documentation links and whitespace pass. The current-reader desktop/mobile render preserves navigation and fresh-state behavior. The README image is regenerated and byte-identical; user history is unchanged.
+
+Two initial RE2 runs exceed the existing Enter-action timeout. Private stack capture locates the slow work in unchanged room-label fitting before overview rendering; an instrumented run completes that action in 8.7 seconds and passes, a forced-HEAD control reaches the expected new floor-search failure, and the final plain RE2 run passes. The label-layout cost remains a separate performance investigation. Reproduction, logs and renders are under `/tmp/re-map-floor-search-20261030/`.
+
+Implemented on 2026-10-30 by `gdb_latency`, with writing and direct review by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Independent source/test review by `next_identity_evidence`, the same verified model, checks both observed-view consumers, query matching before deduplication, current-first navigation, fresh state and focus/Back regressions. No new gameplay, physical-device or screen-reader validation is claimed. Configured external review providers remain disabled.
+
 ## Unsupported-settings recovery
 
 The RE2 reader distinguishes unsupported game settings from a wrong game or scenario. The map preserves the actionable request to load a supported savestate for the selected profile. Continuous tracking waits and resumes automatically on a coherent supported read; `--once` retains exit code 2. The rejection remains a warning in diagnostics and cannot mutate exploration, item or door results. This changes error presentation only; the existing mode guard and its interpretation limits are unchanged. No named game setting is inferred from its bit mask.

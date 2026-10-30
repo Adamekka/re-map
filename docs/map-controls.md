@@ -26,6 +26,8 @@ Restarting the tracker refreshes an open map tab to load the matching game and p
 
 Use **Find item or room** to filter remaining items and unresolved checks by their displayed names, room or floor. Matching **Cleared rooms** appear separately when you search by room or floor name. Select a result to inspect its room on the map. Collected items do not become remaining-item matches. Escape clears the search and restores the normal item overview. Results include explored rooms only and follow fresh tracking state.
 
+When a room has explored outlines on several floors, a floor search opens its matching outline. Each section still lists the room once.
+
 Live updates keep keyboard focus on the same room result, preferring its current section. Focus follows a room into another section or returns to search when the room leaves the results. Updates within one section preserve page scroll. An interruption moves result focus to the room details; recovery keeps that keyboard position.
 
 ## Inspect connected rooms
