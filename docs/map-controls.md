@@ -16,6 +16,8 @@ The mouse wheel and zoom buttons also zoom; dragging moves the map. Navigation k
 
 Use **Floor** to browse explored floors and **Follow player** to return to the current floor and resume selecting rooms as you enter them.
 
+Keyboard actions that disable **Follow player** or a zoom button return focus to the map. If a focused control becomes unavailable during interrupted tracking or on an empty floor, focus moves to visible room details. Recovery keeps that keyboard position.
+
 Restarting the tracker refreshes an open map tab to load the matching game and playthrough. The tab clears the previous map while loading and resets search, Back history, zoom and pan. Saved exploration comes from the restarted tracker. Temporary game-read or connection errors during the same run retain the chosen view and search for recovery. If the map asks you to reload, reload the tab to reconnect.
 
 ## Find items and rooms

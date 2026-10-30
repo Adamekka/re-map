@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Map-control keyboard focus
+
+Keyboard activation of Follow player and the zoom limits now moves focus to the map when the button disables, retaining scroll and immediate arrow navigation. Control readiness and focus recovery share one update path. Interrupted tracking moves focus from unavailable buttons, Floor or search to visible room details; recovery retains that position. An empty floor also uses room details. Back keeps its established details target when its last entry disappears.
+
+Run `bun tests/check_map_keyboard_browser.mjs <python>`. Regressions first reproduce focus loss after Follow player and interrupted Floor use. They cover Enter/Space activation, both zoom limits, visible map focus, immediate panning, interruption/recovery from each control, empty-floor recovery and unchanged exploration in both games at desktop/mobile sizes. All eight browser suites and 59 map/multi-area Python tests pass, alongside scoped Ruff F checks, formatting, local links and whitespace. The restart suite initially raises `Route is already handled!` during asynchronous route teardown after its assertions pass; a clean rerun passes without changing that test. Private `/tmp/re-map-control-focus-20261030/render-map.mjs` checks desktop/mobile inspection from a current-reader reconstruction of retained native RAM and read-only user visits. The README image is refreshed and byte-identical. No emulator gameplay or persisted data changes.
+
+Fixed and directly reviewed on 2026-10-30 by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. The `next_experience_gap` agent, the same verified model, identifies the button-focus gap and independently reviews the final source/test change. Review checks focus before disabling, map versus details recovery, Back behavior, unchanged-poll focus, scroll and shared control handling. External review providers remain disabled; no external endorsement is claimed. Browser checks do not establish screen-reader behavior.
+
 ## Room-result keyboard focus
 
 A focused overview result now retains its logical room identity when fresh quantities, item labels, verdicts or floor observations rebuild the list. It prefers the same result section, follows that room into another section when needed, and returns to search when no result remains. Same-section changes preserve page scroll. Tracking interruption clears stale results and moves focus to visible room details; recovery leaves that keyboard position intact.

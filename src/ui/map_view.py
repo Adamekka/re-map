@@ -399,10 +399,10 @@ function applyViewport() {
     // Reselecting the displayed view should not add a Back step.
     while(viewHistory.length && viewHistory.at(-1).area===selectedArea && viewHistory.at(-1).id===id) viewHistory.pop();
   }
-  // Disabling a focused control would otherwise drop keyboard focus onto the page.
-  const focusedBack=document.activeElement===backRoomButton;
+  const focusedControl=document.activeElement;
+  floorSelect.disabled=!ready;
+  itemSearch.disabled=!ready;
   backRoomButton.disabled=!ready || viewHistory.length===0;
-  if(focusedBack && backRoomButton.disabled) document.getElementById('room-name').focus({preventScroll:true});
   const following=ready && floorView.mode==='follow' && selected===null;
   currentRoomButton.setAttribute('aria-pressed',String(following));
   currentRoomButton.disabled=!ready || following && viewport.mode!=='manual';
@@ -410,6 +410,13 @@ function applyViewport() {
   zoomOut.disabled=!navigable || viewport.zoom<=1;
   fitRooms.disabled=!navigable;
   svg.setAttribute('tabindex',navigable ? '0' : '-1');
+  if([backRoomButton,currentRoomButton,zoomIn,zoomOut,fitRooms,floorSelect,itemSearch].includes(focusedControl) && focusedControl.disabled) {
+    // Disabled controls lose keyboard focus. Back retains its room-details
+    // recovery; viewport actions return to the map while it is navigable.
+    const target=navigable && focusedControl!==backRoomButton ? svg : document.getElementById('room-name');
+    // Expose the recovery target when an interrupted or empty map cannot be used.
+    target.focus({preventScroll:navigable});
+  }
   document.getElementById('zoom-level').textContent=navigable ? Math.round(viewport.zoom*100)+'%' : '';
   svg.classList.toggle('navigable',navigable);
   if(viewport.mode!=='empty') {
@@ -632,8 +639,6 @@ function draw(state) {
   const focusedArea=viewport.mode==='empty' ? null : viewport.area;
   lastState=state;
   if(state.status!=='display') {
-    floorSelect.disabled=true;
-    itemSearch.disabled=true;
     endPan();
     applyViewport();
     status.textContent=state.error || 'Waiting for a readable game.';
@@ -697,8 +702,6 @@ function draw(state) {
     if(option.textContent!==name) option.textContent=name;
   }
   floorSelect.value=displayedArea;
-  floorSelect.disabled=false;
-  itemSearch.disabled=false;
   svg.replaceChildren();
   const plan=areas.get(displayedArea);
   if(selectedArea!==displayedArea) {selected=null;selectedArea=displayedArea;}

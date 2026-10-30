@@ -30,9 +30,9 @@ print(json.dumps(cases))
 assert.equal(setup.status, 0, setup.stderr);
 const browser = await chromium.launch();
 try {
-  for (const fixture of JSON.parse(setup.stdout)) {
-    let state = fixture.state;
-    const page = await browser.newPage();
+  for (const fixture of JSON.parse(setup.stdout)) for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+    let state = structuredClone(fixture.state);
+    const page = await browser.newPage({ viewport });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.route('http://keyboard-map.test/**', route => {
@@ -51,6 +51,27 @@ try {
     assert.equal(await map.getAttribute('role'), 'group', 'interactive rooms must remain accessible inside the map');
     const view = () => map.getAttribute('viewBox').then(value => value.split(' ').map(Number));
     const initial = await view(), scene = await page.locator('#map .room').count();
+    for (const control of ['current-room', 'zoom-out', 'zoom-in']) {
+      if (control === 'current-room') await page.locator('#map .room').first().press('Enter');
+      else {
+        await map.focus();
+        await page.keyboard.press('=');
+      }
+      const button = page.locator('#' + control);
+      await button.focus();
+      const scroll = await page.evaluate(() => scrollY);
+      for (let presses = 0; presses < 12 && !await button.isDisabled(); presses++) await page.keyboard.press(control === 'zoom-out' ? 'Space' : 'Enter');
+      assert(await button.isDisabled(), control + ' must reach its disabled state');
+      assert(await map.evaluate(node => node === document.activeElement), control + ' must return focus to the map when it disables');
+      assert.equal(await map.evaluate(node => getComputedStyle(node).outlineWidth), '2px', 'recovered keyboard focus must stay visible');
+      assert.equal(await page.evaluate(() => scrollY), scroll, 'control focus recovery must retain page scroll');
+      const before = await view();
+      await page.keyboard.press('ArrowRight');
+      assert(Math.abs((await view())[0] - before[0] - before[2] / 10) < 1e-8, control + ' must allow immediate map navigation');
+      assert.equal(await page.locator('#map .room').count(), scene, 'control navigation must not reveal rooms');
+      await page.getByRole('button', { name: 'Follow player', exact: true }).click();
+      assert.deepEqual(await view(), initial);
+    }
     await page.getByRole('button', { name: 'Fit explored rooms', exact: true }).focus();
     await page.keyboard.press('Tab');
     assert(await map.evaluate(node => node === document.activeElement), 'the map must be reachable in the normal tab order');
@@ -143,6 +164,27 @@ try {
     assert.equal(await map.getAttribute('tabindex'), '-1');
     for (const key of ['ArrowRight', '+', '0']) await map.press(key);
     assert.deepEqual(await view(), manual, 'empty maps must ignore viewport keys');
+    for (const control of ['floor', 'item-search', 'current-room', 'zoom-in', 'zoom-out', 'fit-rooms']) {
+      state = structuredClone(fixture.state);
+      await page.waitForFunction(() => document.getElementById('map').getAttribute('tabindex') === '0');
+      await map.focus();
+      await page.keyboard.press('0');
+      await page.keyboard.press('=');
+      await page.locator('#' + control).focus();
+      state = { status: 'waiting', error: 'Waiting for game.' };
+      await page.waitForFunction(() => document.getElementById('completion').textContent === 'Tracking interrupted');
+      assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), control + ' must expose room details when tracking interrupts');
+      assert(await page.locator('#room-name').evaluate(node => { const box = node.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight; }), 'interrupted control focus must move into view');
+      state = structuredClone(fixture.state);
+      await page.waitForFunction(() => document.getElementById('map').getAttribute('tabindex') === '0');
+      assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'tracking recovery must retain the replacement focus');
+    }
+    await page.locator('#zoom-in').focus();
+    state = structuredClone(fixture.state);
+    state.map_region = 'unoutlined';
+    state.explored_areas = { [state.area]: [] };
+    await page.waitForFunction(() => document.getElementById('map').getAttribute('tabindex') === '-1');
+    assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'an empty floor must expose details instead of focusing a disabled map');
     assert.deepEqual(errors, []);
     await page.close();
   }
