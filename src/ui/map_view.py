@@ -828,7 +828,35 @@ function draw(state) {
         variants.push({lines,bounds:label.getBBox()});
       }
       const outline=group.querySelector('path');
-      const interior=[...group.querySelectorAll('.map-detail-core')];
+      const interior=[...group.querySelectorAll('.map-detail-core')].map(path=>{
+        const style=getComputedStyle(path),strokeWidth=Number(style.strokeWidth.slice(0,-2));
+        if(!style.strokeWidth.endsWith('px') || !Number.isFinite(strokeWidth) || strokeWidth<=0) throw new Error('Interior stroke width must be finite positive pixels');
+        if(style.strokeLinecap!=='square' || style.vectorEffect!=='none' || style.transform!=='none' || getComputedStyle(group).transform!=='none' || path.hasAttribute('transform') || group.hasAttribute('transform')) throw new Error('Interior stroke index requires untransformed square caps');
+        if(path.getAttribute('d')!==detail) throw new Error('Interior stroke index must match the emitted independent segments');
+        const cells=new Map();
+        // Two stroke widths keep buckets small; bucket size changes only
+        // lookup cost because native SVG still decides every possible hit.
+        const cellSize=strokeWidth*2;
+        for(const [a,b] of room.detail_segments) {
+          // Keep float32 path parsing error below one 128th of the width per
+          // coordinate, well inside the (1-1/sqrt(2))*width padding slack.
+          if(![...a,...b].every(coordinate=>Number.isFinite(coordinate) && Math.abs(coordinate)<=strokeWidth*2**16)) throw new Error('Interior stroke coordinates exceed the index precision bound');
+          // Each emitted M-L subpath has no joins. Full-width padding covers
+          // its square caps, whose axis extension is at most width/sqrt(2).
+          const bounds=[Math.min(a[0],b[0])-strokeWidth,Math.min(a[1],b[1])-strokeWidth,Math.max(a[0],b[0])+strokeWidth,Math.max(a[1],b[1])+strokeWidth];
+          for(let x=Math.floor(bounds[0]/cellSize);x<=Math.floor(bounds[2]/cellSize);x++) {
+            for(let y=Math.floor(bounds[1]/cellSize);y<=Math.floor(bounds[3]/cellSize);y++) {
+              const key=x+','+y;
+              if(!cells.has(key)) cells.set(key,[]);
+              cells.get(key).push(bounds);
+            }
+          }
+        }
+        return point=>{
+          const candidates=cells.get(Math.floor(point.x/cellSize)+','+Math.floor(point.y/cellSize));
+          return candidates!==undefined && candidates.some(([minX,minY,maxX,maxY])=>point.x>=minX && point.x<=maxX && point.y>=minY && point.y<=maxY) && path.isPointInStroke(point);
+        };
+      });
       const points=room.rings.flat().concat(isRe2 ? room.detail_segments.flat() : []);
       const xs=[...new Set(points.map(point=>point[0]))].sort((a,b)=>a-b);
       const ys=[...new Set(points.map(point=>point[1]))].sort((a,b)=>a-b);
@@ -856,13 +884,19 @@ function draw(state) {
             for(const center of centers) {
               if(![-1,1].every(x=>[-1,1].every(y=>outline.isPointInFill(new DOMPoint(center[0]+x*width/2,center[1]+y*height/2))))) continue;
               const columns=Math.ceil(width/.5),rows=Math.ceil(height/.5);
+              function sampleFits(x,y) {
+                const point=new DOMPoint(center[0]-width/2+x*width/columns,center[1]-height/2+y*height/rows);
+                return outline.isPointInFill(point) && !interior.some(contains=>contains(point));
+              }
+              // Check a few existing grid samples first to reject blocked
+              // candidates sooner; the complete grid still verifies every fit.
+              if(![0,Math.floor(columns/2),columns].every(x=>[0,Math.floor(rows/2),rows].every(y=>sampleFits(x,y)))) continue;
               let fits=true;
               // Native outlines use a one-unit grid; sampling every half unit
               // also catches corridor bends and interior gaps between corners.
               for(let x=0;x<=columns && fits;x++) {
                 for(let y=0;y<=rows;y++) {
-                  const point=new DOMPoint(center[0]-width/2+x*width/columns,center[1]-height/2+y*height/rows);
-                  if(!outline.isPointInFill(point) || interior.some(path=>path.isPointInStroke(point))) {fits=false;break;}
+                  if(!sampleFits(x,y)) {fits=false;break;}
                 }
               }
               if(fits) {layout={lines,angle,scale,center,offset:[-bounds.x-bounds.width/2,-bounds.y-bounds.height/2]};break fitting;}
