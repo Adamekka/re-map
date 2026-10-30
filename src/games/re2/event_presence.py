@@ -7,6 +7,8 @@ from collections.abc import Callable
 from typing import Literal
 
 from games.re2.initializer_control_proof import (
+    InitializerContinuationProof,
+    InitializerContinuationSupport,
     InitializerControlProof,
     InitializerControlSupport,
 )
@@ -232,6 +234,8 @@ def source_presence(
     | StartupDeclarationSupport = StartupDeclarationSupport.Unaudited,
     initializer_control: InitializerControlProof
     | InitializerControlSupport = InitializerControlSupport.Unaudited,
+    initializer_continuations: InitializerContinuationProof
+    | InitializerContinuationSupport = InitializerContinuationSupport.Unaudited,
 ) -> dict:
     assert mode in ("startup", "scheduled", "declaration")
     assert declaration_effects is StartupDeclarationSupport.Unaudited or isinstance(
@@ -285,6 +289,23 @@ def source_presence(
     control_edges = (
         {(key, start): end for key, start, end in initializer_control.switch_edges}
         if isinstance(initializer_control, InitializerControlProof)
+        else {}
+    )
+    assert (
+        initializer_continuations is InitializerContinuationSupport.Unaudited
+        or isinstance(initializer_continuations, InitializerContinuationProof)
+    )
+    if isinstance(initializer_continuations, InitializerContinuationProof):
+        assert mode == "startup", "scalar continuations apply only to startup presence"
+        initializer_continuations = initializer_continuations.for_predicates(
+            data, programs, condition_flags, fixed_flags
+        )
+    scalar_ends = (
+        {
+            (summary.program, summary.entry): summary.end
+            for summary in initializer_continuations.scalar_continuations
+        }
+        if isinstance(initializer_continuations, InitializerContinuationProof)
         else {}
     )
     # An empty set means no sufficient condition was proved. The empty
@@ -436,6 +457,10 @@ def source_presence(
                     if frames and frames[-1] == row["next"]
                     else unresolved
                 )
+            elif (key, position) in scalar_ends:
+                # The receipt proves the entire leaf finishes under its context.
+                # Keep the real END and caller return handling on the normal path.
+                result = advance(key, scalar_ends[key, position], returns)
             elif (key, position) in control_edges:
                 # Every matched case and the no-match path finish here.
                 # Validated bodies change only global music parameters.
@@ -641,6 +666,19 @@ def source_presence(
                         conditions
                         | required_before(frozenset({(key, row["offset"])}), root, True)
                     )
+    if isinstance(initializer_continuations, InitializerContinuationProof):
+        # Resource ownership is conditional. Export every receipt assumption so
+        # later flag changes cannot turn a conditional proof into presence.
+        for context in initializer_continuations.context_conditions:
+            conditions = conjunction(
+                conditions,
+                frozenset(
+                    frozenset(
+                        (test["bank"], test["bit"], test["expected"]) for test in clause
+                    )
+                    for clause in context["any_of"]
+                ),
+            )
     if conditions == unconditional:
         return {"kind": "required"}
     if not conditions:
@@ -669,3 +707,45 @@ def presence_matches(presence: dict, flag: Callable[[int, int], bool]) -> bool:
             for clause in presence["any_of"]
         )
     )
+
+
+def valid_presence(
+    presence: object,
+    allowed_flags: frozenset[tuple[int, int]],
+    banks: dict[int, tuple[int, int]],
+) -> bool:
+    """Validate the shared bounded formula format against explicit flag banks."""
+    if type(presence) is not dict or presence.get("kind") not in (
+        "unresolved",
+        "required",
+        "conditions",
+    ):
+        return False
+    if presence["kind"] in ("unresolved", "required"):
+        valid = presence.keys() == {"kind"}
+    else:
+        clauses = presence.get("any_of")
+        valid = (
+            presence.keys() == {"kind", "any_of"}
+            and type(clauses) is list
+            and 1 <= len(clauses) <= 32
+            and all(
+                type(clause) is list
+                and 1 <= len(clause) <= 32
+                and all(
+                    type(test) is dict
+                    and test.keys() == {"bank", "bit", "expected"}
+                    and type(test["bank"]) is int
+                    and test["bank"] in banks
+                    and type(test["bit"]) is int
+                    and 0 <= test["bit"] < banks[test["bank"]][1] * 8
+                    and (test["bank"], test["bit"]) in allowed_flags
+                    and type(test["expected"]) is int
+                    and test["expected"] in (0, 1)
+                    for test in clause
+                )
+                and len({(test["bank"], test["bit"]) for test in clause}) == len(clause)
+                for clause in clauses
+            )
+        )
+    return valid

@@ -35,6 +35,7 @@
     "RE2-DOOR-007",
     "RE2-STARTUP-001",
     "RE2-CONTROL-001",
+    "RE2-CONTROL-002",
     "RE2-PUZZLE-001",
     "RE2-PUZZLE-002",
     "RE2-PUZZLE-003",
@@ -7115,7 +7116,38 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [],
+      "conditional_item_presence": [
+        {
+          "global_id": 92,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 6,
+                  "bit": 24,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "global_id": 94,
+          "presence": {
+            "kind": "conditions",
+            "any_of": [
+              [
+                {
+                  "bank": 6,
+                  "bit": 24,
+                  "expected": 0
+                }
+              ]
+            ]
+          }
+        }
+      ],
       "event_awards": [],
       "stage": 1,
       "room": 1,

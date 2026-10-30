@@ -12,6 +12,8 @@ from games.re2.event_presence import (
     source_presence,
 )
 from games.re2.initializer_control_proof import (
+    InitializerContinuationProof,
+    InitializerContinuationSupport,
     InitializerControlProof,
     InitializerControlSupport,
     native_switch_labels,
@@ -590,11 +592,17 @@ def collection_presence(
     | StartupEffectAuditSupport = StartupEffectAuditSupport.Unaudited,
     initializer_control: InitializerControlProof
     | InitializerControlSupport = InitializerControlSupport.Unaudited,
+    initializer_continuations: InitializerContinuationProof
+    | InitializerContinuationSupport = InitializerContinuationSupport.Unaudited,
 ) -> tuple[list[int], list[dict]]:
     """Prove collection presence for an explicit set of source candidates."""
     assert isinstance(fixed_flags, frozenset), "fixed startup flags must be explicit"
     assert not fixed_flags or room.get("fixed_context_preserved") is True, (
         "fixed startup flags require the whole-source context proof"
+    )
+    assert (
+        initializer_continuations is InitializerContinuationSupport.Unaudited
+        or isinstance(initializer_continuations, InitializerContinuationProof)
     )
     items = {item["offset"]: item for item in room["items"]}
     eligible = {offset: item for offset, item in items.items() if offset in offsets}
@@ -858,23 +866,40 @@ def collection_presence(
             continue
         # Reuse the award proof's guarded startup paths. Identity/lifetime
         # exclusions still apply even if one creator can be reached reliably.
+        targets = {
+            (key, command["offset"])
+            for key, program in programs.items()
+            for command in program["commands"]
+            if command["kind"] == "item"
+            and command["item"] in eligible
+            and items[command["item"]]["global_id"] == gid
+        }
         presence = source_presence(
             data,
             programs,
-            {
-                (key, command["offset"])
-                for key, program in programs.items()
-                for command in program["commands"]
-                if command["kind"] == "item"
-                and command["item"] in eligible
-                and items[command["item"]]["global_id"] == gid
-            },
+            targets,
             "startup",
             condition_flags,
             fixed_flags,
             startup_effects=startup_effects,
             initializer_control=initializer_control,
         )
+        if presence["kind"] == "unresolved" and isinstance(
+            initializer_continuations, InitializerContinuationProof
+        ):
+            # Retry only missing conditional proofs. Existing unconditional
+            # identities must not inherit a resource guard they cannot express.
+            presence = source_presence(
+                data,
+                programs,
+                targets,
+                "startup",
+                condition_flags,
+                fixed_flags,
+                startup_effects=startup_effects,
+                initializer_control=initializer_control,
+                initializer_continuations=initializer_continuations,
+            )
         if presence["kind"] != "unresolved":
             conditional.append({"global_id": gid, "presence": presence})
 

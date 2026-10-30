@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import struct
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
+from games.re2.script_control_limits import (
+    NATIVE_CALL_FRAME_COUNT,
+    NATIVE_LOOP_FRAME_COUNT,
+    SCALAR_PROGRAM_STEP_LIMIT,
+    programs_digest,
+)
 
 
 class ActorPartSupport(Enum):
@@ -158,6 +164,37 @@ class OwnedPartFieldWrite:
 
 
 @dataclass(frozen=True)
+class ScalarProgramContinuation:
+    program: str
+    entry: int
+    end: int
+    source_sha256: str
+    programs_sha256: str
+    max_loop_depth: int
+    steps: int
+
+    def __post_init__(self) -> None:
+        assert type(self.program) is str and self.program
+        assert type(self.entry) is int and type(self.end) is int
+        assert 0 <= self.entry < self.end
+        assert all(
+            type(digest) is str and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+            for digest in (self.source_sha256, self.programs_sha256)
+        )
+        assert (
+            type(self.max_loop_depth) is int
+            and 0 <= self.max_loop_depth <= NATIVE_LOOP_FRAME_COUNT
+        )
+        assert type(self.steps) is int and 1 <= self.steps <= SCALAR_PROGRAM_STEP_LIMIT
+
+    def matches_source(self, data: bytes, programs: dict) -> bool:
+        return (
+            hashlib.sha256(data).hexdigest() == self.source_sha256
+            and programs_digest(programs) == self.programs_sha256
+        )
+
+
+@dataclass(frozen=True)
 class ActorPartCopyProof:
     offsets: frozenset[int]
     context_conditions: list[dict]
@@ -166,6 +203,16 @@ class ActorPartCopyProof:
     actor_writes: tuple[OwnedActorFieldWrite, ...] = ()
     part_writes: tuple[OwnedPartFieldWrite, ...] = ()
     write_context_conditions: list[dict] = field(default_factory=list)
+    scalar_continuations: tuple[ScalarProgramContinuation, ...] = ()
+
+    def __post_init__(self) -> None:
+        assert type(self.scalar_continuations) is tuple and all(
+            isinstance(continuation, ScalarProgramContinuation)
+            for continuation in self.scalar_continuations
+        )
+        assert len({row.program for row in self.scalar_continuations}) == len(
+            self.scalar_continuations
+        )
 
 
 def scenario_actor_parts(profile: dict) -> ActorPartProofConfig | ActorPartSupport:
@@ -309,7 +356,7 @@ def actor_part_copy_proof(
                 limit = (
                     row["next"] + struct.unpack_from("<h", data, row["offset"] + 2)[0]
                 )
-                if len(stack) >= 4 or limit not in commands[key]:
+                if len(stack) >= NATIVE_LOOP_FRAME_COUNT or limit not in commands[key]:
                     return ActorPartCopyProof(frozenset(), [])
                 stack.append((opcode, row["next"], limit))
                 if opcode != 0x11:
@@ -631,6 +678,7 @@ def actor_part_copy_proof(
         return frozenset(origin for context in contexts for origin in context)
 
     allowed, applied_origins, scalar_indices = set(), set(), {}
+    scalar_programs = []
     for key, program in programs.items():
         candidates = []
         for row in program["commands"]:
@@ -661,6 +709,12 @@ def actor_part_copy_proof(
             row["offset"]: (destination, target, width)
             for row, destination, target, width in candidates
         }
+        # Other Calc operations can trap even when their result is unused.
+        # Preserve their old write analysis without certifying continuation.
+        summary_eligible = all(
+            row["opcode"] != 0x26 or data[row["offset"] + 2] in (0, 1)
+            for row in program["commands"]
+        )
 
         used_origins = set()
 
@@ -674,10 +728,11 @@ def actor_part_copy_proof(
         values = [Unknown.Value] * 256
         part_indices = {}
         loops, checked, indices = [], set(), {}
+        max_loop_depth = 0
         position, steps, valid = program["entry"], 0, True
         while valid:
             steps += 1
-            if steps > 8192 or position not in commands[key]:
+            if steps > SCALAR_PROGRAM_STEP_LIMIT or position not in commands[key]:
                 valid = False
                 break
             row = commands[key][position]
@@ -703,11 +758,12 @@ def actor_part_copy_proof(
             elif opcode == 0x0D:
                 count = struct.unpack_from("<H", data, position + 4)[0]
                 limit = following + struct.unpack_from("<h", data, position + 2)[0]
-                if len(loops) >= 4 or limit not in commands[key]:
+                if len(loops) >= NATIVE_LOOP_FRAME_COUNT or limit not in commands[key]:
                     valid = False
                     break
                 if count:
                     loops.append((following, limit, count))
+                    max_loop_depth = max(max_loop_depth, len(loops))
                 else:
                     following = limit
             elif opcode == 0x0E:
@@ -765,6 +821,22 @@ def actor_part_copy_proof(
                     for position, values in indices.items()
                 }
             )
+            if (
+                summary_eligible
+                and program["entry"] < position
+                and data[position : row["next"]] == b"\x01\0"
+            ):
+                scalar_programs.append(
+                    (
+                        key,
+                        program["entry"],
+                        position,
+                        max_loop_depth,
+                        steps,
+                        frozenset(checked),
+                        frozenset(indices),
+                    )
+                )
 
     source_writes = tuple(
         SourceCopyWrite(
@@ -848,6 +920,29 @@ def actor_part_copy_proof(
             )
         write_origins.update(origins)
 
+    owned_parts = {write.location for write in part_writes}
+    checked_copies = {
+        write.location for write in source_writes if write.location[1] in allowed
+    }
+    # Later cross-program mutation checks can withdraw an owned part bound.
+    # A continuation cannot retain effects that the complete write proof lost.
+    scalar_programs = [
+        (key, entry, end, depth, steps)
+        for key, entry, end, depth, steps, copies, parts in scalar_programs
+        if {(key, position) for position in copies} <= checked_copies
+        and {(key, position) for position in parts} <= owned_parts
+    ]
+    scalar_continuations = ()
+    if scalar_programs:
+        source_sha256 = hashlib.sha256(data).hexdigest()
+        programs_sha256 = programs_digest(programs)
+        scalar_continuations = tuple(
+            ScalarProgramContinuation(
+                key, entry, end, source_sha256, programs_sha256, depth, steps
+            )
+            for key, entry, end, depth, steps in scalar_programs
+        )
+
     def context_conditions(origins: set) -> list[dict]:
         conditions = []
         for origin in sorted(
@@ -883,4 +978,5 @@ def actor_part_copy_proof(
         tuple(actor_writes),
         tuple(part_writes),
         context_conditions(write_origins),
+        scalar_continuations,
     )

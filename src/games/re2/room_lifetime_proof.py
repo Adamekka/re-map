@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import struct
 from dataclasses import dataclass
 from enum import Enum
@@ -14,7 +13,19 @@ from games.re2.actor_part_proofs import (
     scenario_actor_parts,
 )
 from games.re2.clip_effect_proof import clipping_effect_proof
-from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.event_presence import (
+    presence_counter_indices,
+    presence_flag_write_proof,
+    valid_presence,
+)
+from games.re2.initializer_control_proof import (
+    NATIVE_TASK_WIDTH,
+    InitializerContinuationFailure,
+    InitializerContinuationProof,
+    InitializerContinuationSupport,
+    InitializerControlConfig,
+    initializer_control_config,
+)
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
@@ -35,6 +46,12 @@ from games.re2.scenario_items import (
     scenario_item_proofs,
     scenario_vibration_writes,
 )
+from games.re2.script_control_limits import (
+    NATIVE_LOOP_FRAME_COUNT,
+    SCALAR_PROGRAM_STEP_LIMIT,
+    calls_fit_native_frames,
+    programs_digest,
+)
 
 
 class RoomLifetimeFailure(Enum):
@@ -48,12 +65,6 @@ class RoomLifetimeFailure(Enum):
     RepeatedAllocation = "allocation is not a fresh single startup execution"
     CallbackEffects = "native interaction write effects are unproved"
     SoundBinding = "room sound writes are not bound to immutable resources"
-
-
-def _programs_digest(programs: dict) -> str:
-    return hashlib.sha256(
-        json.dumps(programs, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -107,7 +118,7 @@ class RoomLifetimeProof:
     def matches_source(self, data: bytes, programs: dict) -> bool:
         return (
             hashlib.sha256(data).hexdigest() == self.source_sha256
-            and _programs_digest(programs) == self.programs_sha256
+            and programs_digest(programs) == self.programs_sha256
         )
 
 
@@ -474,7 +485,7 @@ def room_lifetime_proof(
         )
         return RoomLifetimeProof(
             hashlib.sha256(data).hexdigest(),
-            _programs_digest(programs),
+            programs_digest(programs),
             entry_contract,
             partitions,
             writes,
@@ -489,3 +500,167 @@ def room_lifetime_proof(
         )
     except (KeyError, IndexError, TypeError, ValueError, struct.error):
         return RoomLifetimeFailure.InputBinding
+
+
+def initializer_continuation_proof(
+    data: bytes,
+    room: dict,
+    profile: dict,
+    entry_contract: VerifiedRoomEntryContract,
+    partition_config: RoomWritePartitionConfig,
+) -> (
+    InitializerContinuationProof
+    | InitializerContinuationFailure
+    | InitializerContinuationSupport
+    | RoomLifetimeFailure
+):
+    """Qualify finite scalar programs with closed native ownership and guards."""
+    assert type(data) is bytes and type(room) is dict and type(profile) is dict
+    assert isinstance(entry_contract, VerifiedRoomEntryContract)
+    assert isinstance(partition_config, RoomWritePartitionConfig)
+    try:
+        config = initializer_control_config(profile)
+    except ValueError:
+        return InitializerContinuationFailure.NativeContract
+    if not isinstance(config, InitializerControlConfig):
+        return InitializerContinuationSupport.Unaudited
+    if config.executable_sha256 != entry_contract.executable_sha256:
+        return InitializerContinuationFailure.NativeContract
+    if room.get("fixed_context_preserved") is not True:
+        return InitializerContinuationFailure.FixedContext
+    lifetime = room_lifetime_proof(
+        data, room, profile, entry_contract, partition_config
+    )
+    if isinstance(lifetime, RoomLifetimeFailure):
+        return lifetime
+    try:
+        programs = room["programs"]
+        if not lifetime.matches_source(data, programs):
+            return InitializerContinuationFailure.SourceBinding
+        summaries = lifetime.actor_write_proof.scalar_continuations
+        if not summaries:
+            return InitializerContinuationSupport.Unaudited
+        banks = {
+            row["bank"]: (int(row["address_ps1"], 0), row["width"])
+            for row in profile["flag_banks"]
+        }
+
+        context_flags = frozenset(
+            (bank, bit)
+            for bank, (_, width) in banks.items()
+            for bit in range(width * 8)
+        )
+        room_context = room.get("scenario_context_conditions")
+        if type(room_context) is not list or not all(
+            valid_presence(condition, context_flags, banks)
+            and condition["kind"] == "conditions"
+            for condition in room_context
+        ):
+            return InitializerContinuationFailure.Context
+        conditions = []
+        for condition in (
+            *lifetime.actor_write_proof.context_conditions,
+            *lifetime.actor_write_proof.write_context_conditions,
+            *lifetime.context_conditions,
+        ):
+            if (
+                not valid_presence(condition, context_flags, banks)
+                or condition["kind"] != "conditions"
+                or condition not in room_context
+            ):
+                return InitializerContinuationFailure.Context
+            if condition not in conditions:
+                conditions.append(condition)
+        if not calls_fit_native_frames(
+            {key: set(targets) for key, targets in lifetime.call_edges}
+        ):
+            return InitializerContinuationFailure.CallDepth
+        commands = {
+            key: {row["offset"]: row for row in program["commands"]}
+            for key, program in programs.items()
+        }
+        qualified = []
+        # Native scalar execution also updates only its own bounded task.
+        ram_writes = {(config.task_address, config.task_capacity * NATIVE_TASK_WIDTH)}
+        for summary in summaries:
+            if not summary.matches_source(data, programs):
+                return InitializerContinuationFailure.SourceBinding
+            if (
+                summary.program not in programs
+                or summary.entry != programs[summary.program]["entry"]
+                or summary.end not in commands[summary.program]
+                or commands[summary.program][summary.end]["kind"] != "end"
+                or data[summary.end : summary.end + 2] != b"\x01\0"
+                or commands[summary.program][summary.end]["next"] != summary.end + 2
+                or not 0 <= summary.max_loop_depth <= NATIVE_LOOP_FRAME_COUNT
+                or not 1 <= summary.steps <= SCALAR_PROGRAM_STEP_LIMIT
+            ):
+                return InitializerContinuationFailure.Summary
+            if summary.entry == summary.end:
+                # A normal END needs no substitution or new capability.
+                continue
+            if summary.entry > summary.end or any(
+                (summary.program, position)
+                not in lifetime.actor_write_proof.reached_locations
+                for position in (summary.entry, summary.end)
+            ):
+                return InitializerContinuationFailure.Summary
+            for row in programs[summary.program]["commands"]:
+                opcode = row["opcode"]
+                if opcode not in (0x24, 0x25, 0x26):
+                    continue
+                packet = data[row["offset"] : row["next"]]
+                index = packet[3] if opcode == 0x26 else packet[1]
+                if index not in config.writable_counters or (
+                    opcode == 0x26 and packet[2] not in (0, 1)
+                ):
+                    return InitializerContinuationFailure.Counter
+                ram_writes.add((config.counter_address + index * 2, 2))
+            qualified.append(summary)
+        if not qualified:
+            return InitializerContinuationSupport.Unaudited
+        if len({summary.program for summary in qualified}) != len(qualified):
+            return InitializerContinuationFailure.Summary
+        source = dict(entry_contract.source_addresses)[room["stage"]]
+        ram_writes.update(
+            (source + write.target_offset, write.width)
+            for write in lifetime.actor_write_proof.source_writes
+        )
+        fixed = frozenset(lifetime.fixed_flags)
+        predicates = (
+            frozenset(
+                (row["bank"], row["bit"]) for row in profile["presence_condition_flags"]
+            )
+            | frozenset((bank, bit) for bank, bit, _ in fixed)
+            | frozenset(
+                (test["bank"], test["bit"])
+                for condition in conditions
+                for clause in condition["any_of"]
+                for test in clause
+            )
+        )
+        if not predicates <= config.predicate_flags:
+            return InitializerContinuationFailure.FlagAlias
+        for bank, bit in predicates:
+            word = banks[bank][0] + bit // 32 * 4
+            # Closed entry owns model/actor/part allocations above the source
+            # heap floor. Fresh predicates must stay in fixed RAM below it.
+            if (
+                not 0x80000000 <= word <= 0x80100000 - 4
+                or word + 4 > source + lifetime.partitions.heap_floor
+                or any(
+                    address < word + 4 and word < address + width
+                    for address, width in ram_writes
+                )
+            ):
+                return InitializerContinuationFailure.FlagAlias
+        return InitializerContinuationProof(
+            lifetime.source_sha256,
+            lifetime.programs_sha256,
+            tuple(qualified),
+            predicates,
+            fixed,
+            tuple(conditions),
+        )
+    except (KeyError, IndexError, TypeError, ValueError, struct.error):
+        return InitializerContinuationFailure.InputBinding

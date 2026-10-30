@@ -996,6 +996,39 @@ def test_conditional_pickup_rules_require_valid_explicit_metadata(tmp_path, case
         Re2Profile.load(profile)
 
 
+@pytest.mark.parametrize("case", ["room", "missing", "other-room", "unrelated"])
+def test_conditional_pickup_context_flags_are_local_to_the_guarded_room(tmp_path, case):
+    profile_path = ROOT / "profiles/re2_leon_a_slus00748.json"
+    raw = json.loads(profile_path.read_text())
+    for field in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[field] = str((profile_path.parent / raw[field]).resolve())
+    assert {"bank": 6, "bit": 24} not in raw["presence_condition_flags"]
+    document = json.loads(Path(raw["room_metadata_path"]).read_text())
+    room = next(room for room in document["rooms"] if room["id"] == "01-01")
+    assert [rule["global_id"] for rule in room["conditional_item_presence"]] == [92, 94]
+    if case in ("missing", "other-room"):
+        contexts = room["scenario_context_conditions"]
+        room["scenario_context_conditions"] = []
+        # Remove the independent door proof so this test reaches pickup
+        # validation instead of correctly rejecting that proof's lost guard.
+        room["immutable_open_doors"] = []
+        if case == "other-room":
+            other = next(room for room in document["rooms"] if room["id"] == "01-04")
+            other["scenario_context_conditions"] = contexts
+    elif case == "unrelated":
+        room["conditional_item_presence"][0]["presence"]["any_of"][0][0]["bit"] = 25
+    metadata = tmp_path / "rooms.json"
+    metadata.write_text(json.dumps(document))
+    raw["room_metadata_path"] = str(metadata)
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    if case == "room":
+        Re2Profile.load(path)
+    else:
+        with pytest.raises(ValueError, match="RE2 conditional pickup presence"):
+            Re2Profile.load(path)
+
+
 @pytest.mark.parametrize(
     "case",
     ["missing", "empty", "duplicate", "bad-bank", "boolean-bit", "unsupported-rule"],

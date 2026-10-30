@@ -31,6 +31,8 @@ from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.immutable_open_doors import immutable_open_doors
 from games.re2.initializer_control_proof import (
+    InitializerContinuationProof,
+    InitializerContinuationSupport,
     InitializerControlConfig,
     InitializerControlProof,
     InitializerControlSupport,
@@ -48,6 +50,7 @@ from games.re2.room_entry_contract import (
     bind_room_entry_contract,
     room_entry_contract,
 )
+from games.re2.room_lifetime_proof import initializer_continuation_proof
 from games.re2.scenario_items import (
     scenario_effect_pool,
     scenario_flags,
@@ -422,6 +425,17 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         room["scenario_item_variants"] = proof.item_variants
         room["scenario_context_conditions"] = proof.context_conditions
         if proof.fixed_context_preserved:
+            continuations = InitializerContinuationSupport.Unaudited
+            if isinstance(entry_contract, VerifiedRoomEntryContract):
+                candidate = initializer_continuation_proof(
+                    sources[room["id"]],
+                    room,
+                    profile,
+                    entry_contract,
+                    entry_contract.write_partitions,
+                )
+                if isinstance(candidate, InitializerContinuationProof):
+                    continuations = candidate
             room["collection_item_ids"], room["conditional_item_presence"] = (
                 collection_presence(
                     sources[room["id"]],
@@ -437,6 +451,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     unreachable_creator_offsets=proof.unreachable_creator_offsets,
                     startup_effects=proof.startup_effects,
                     initializer_control=proof.initializer_control,
+                    initializer_continuations=continuations,
                 )
             )
         if dispatch is not ScriptItemDispatchSupport.Unaudited:
@@ -798,6 +813,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 *(
                     ["RE2-CONTROL-001"]
                     if isinstance(control_config, InitializerControlConfig)
+                    else []
+                ),
+                *(
+                    ["RE2-CONTROL-002"]
+                    if isinstance(entry_contract, VerifiedRoomEntryContract)
+                    and isinstance(control_config, InitializerControlConfig)
                     else []
                 ),
                 *(

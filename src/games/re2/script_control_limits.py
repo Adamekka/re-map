@@ -1,8 +1,25 @@
 """Native SCD control storage shared by the bounded source interpreters."""
 
+import hashlib
+import json
+
 # Depth-indexed IF/loop fields have four frames including the root. A fifth
 # frame aliases other task fields even though native Gosub has no bounds check.
 NATIVE_CALL_FRAME_COUNT = 4
+
+# Each call frame has four loop start/end pointers, counters and saved IF
+# levels. A fifth loop aliases the next frame even without a native guard.
+NATIVE_LOOP_FRAME_COUNT = 4
+
+# Keep the established scalar work cap so summaries cannot certify a leaf
+# that the write interpreter would stop before completion.
+SCALAR_PROGRAM_STEP_LIMIT = 8192
+
+
+def programs_digest(programs: dict) -> str:
+    return hashlib.sha256(
+        json.dumps(programs, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def calls_fit_native_frames(edges: dict[str, set[str]]) -> bool:

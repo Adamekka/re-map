@@ -32,6 +32,9 @@ def test_actor_context_and_acquisition_rebuild_without_cached_clearance(snapshot
         (True, False, True),
         (True, True, True),
         (True, True, False),
+        (False, True, False),
+        (False, False, True),
+        (False, True, True),
         (False, False, False),
         (True, False, False),
         (True, False, True),
@@ -42,7 +45,9 @@ def test_actor_context_and_acquisition_rebuild_without_cached_clearance(snapshot
         assert poll_re2(p, tracker, read).status is PollStatus.Display
         record = tracker.rooms["01-01"]
         (item,) = record.items
-        assert item.state == ("taken" if acquired else "unknown")
+        assert item.state == (
+            "taken" if acquired else "unknown" if enemy_dead else "uncollected"
+        )
         assert item.label == ("Collectible" if enemy_dead else "Handgun ammo")
         assert item.quantity == (
             ItemQuantityState.Unreconstructed if enemy_dead else 15
@@ -52,6 +57,8 @@ def test_actor_context_and_acquisition_rebuild_without_cached_clearance(snapshot
             RoomCompletion.Cleared
             if acquired and not enemy_dead
             else RoomCompletion.Unknown
+            if enemy_dead
+            else RoomCompletion.Incomplete
         )
         fresh = Tracker()
         fresh.mark_current(RoomId(1, 1))

@@ -12,7 +12,11 @@ from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.item_quantity import parse_unit_count_item_types
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
-from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.event_presence import (
+    presence_counter_indices,
+    presence_flag_write_proof,
+    valid_presence,
+)
 from games.re2.initializer_control_proof import (
     InitializerControlConfig,
     initializer_control_config,
@@ -368,43 +372,6 @@ class Re2Profile:
         supported = raw["presence_condition_flags"]
         condition_flags = frozenset((row["bank"], row["bit"]) for row in supported)
 
-        def valid_presence(presence, allowed_flags):
-            if type(presence) is not dict or presence.get("kind") not in (
-                "unresolved",
-                "required",
-                "conditions",
-            ):
-                return False
-            if presence["kind"] in ("unresolved", "required"):
-                valid = presence.keys() == {"kind"}
-            else:
-                clauses = presence.get("any_of")
-                valid = (
-                    presence.keys() == {"kind", "any_of"}
-                    and type(clauses) is list
-                    and 1 <= len(clauses) <= 32
-                    and all(
-                        type(clause) is list
-                        and 1 <= len(clause) <= 32
-                        and all(
-                            type(test) is dict
-                            and test.keys() == {"bank", "bit", "expected"}
-                            and type(test["bank"]) is int
-                            and test["bank"] in banks
-                            and type(test["bit"]) is int
-                            and 0 <= test["bit"] < banks[test["bank"]][1] * 8
-                            and (test["bank"], test["bit"]) in allowed_flags
-                            and type(test["expected"]) is int
-                            and test["expected"] in (0, 1)
-                            for test in clause
-                        )
-                        and len({(test["bank"], test["bit"]) for test in clause})
-                        == len(clause)
-                        for clause in clauses
-                    )
-                )
-            return valid
-
         award_flags, pickup_flags = set(), set()
         context_flags = frozenset(
             (bank, bit)
@@ -418,7 +385,7 @@ class Re2Profile:
                 and "scenario_context_conditions" not in room
                 or type(context_conditions) is not list
                 or any(
-                    not valid_presence(condition, context_flags)
+                    not valid_presence(condition, context_flags, banks)
                     or condition["kind"] != "conditions"
                     for condition in context_conditions
                 )
@@ -628,7 +595,7 @@ class Re2Profile:
                     or type(proof["context_conditions"]) is not list
                     or len(proof["context_conditions"]) > 32
                     or any(
-                        not valid_presence(condition, context_flags)
+                        not valid_presence(condition, context_flags, banks)
                         or condition["kind"] != "conditions"
                         for condition in proof["context_conditions"]
                     )
@@ -729,7 +696,7 @@ class Re2Profile:
                     or type(proof["context_conditions"]) is not list
                     or len(proof["context_conditions"]) > 32
                     or any(
-                        not valid_presence(condition, context_flags)
+                        not valid_presence(condition, context_flags, banks)
                         or condition["kind"] != "conditions"
                         for condition in proof["context_conditions"]
                     )
@@ -801,7 +768,7 @@ class Re2Profile:
                     or type(proof["context_conditions"]) is not list
                     or len(proof["context_conditions"]) > 32
                     or any(
-                        not valid_presence(condition, context_flags)
+                        not valid_presence(condition, context_flags, banks)
                         or condition["kind"] != "conditions"
                         for condition in proof["context_conditions"]
                     )
@@ -1018,7 +985,7 @@ class Re2Profile:
                         raise ValueError("aliased RE2 event award collection rule")
                     award_flags.add(identity)
                 presence = award.get("presence")
-                if not valid_presence(presence, condition_flags) or (
+                if not valid_presence(presence, condition_flags, banks) or (
                     presence["kind"] != "unresolved" and collection["kind"] != "flag"
                 ):
                     raise ValueError("invalid or unbound RE2 event award presence rule")
@@ -1151,6 +1118,14 @@ class Re2Profile:
             ):
                 raise ValueError("invalid RE2 collection identity proof")
             conditional = room.get("conditional_item_presence")
+            # These predicates are valid only inside this room's resource
+            # context. The reader checks that context before using presence.
+            conditional_flags = allowed_flags | frozenset(
+                (test["bank"], test["bit"])
+                for condition in context_conditions
+                for clause in condition["any_of"]
+                for test in clause
+            )
             if (
                 type(conditional) is not list
                 or any(
@@ -1166,7 +1141,7 @@ class Re2Profile:
                         }
                     )
                     != 1
-                    or not valid_presence(rule["presence"], allowed_flags)
+                    or not valid_presence(rule["presence"], conditional_flags, banks)
                     or rule["presence"]["kind"] == "unresolved"
                     for rule in conditional
                 )

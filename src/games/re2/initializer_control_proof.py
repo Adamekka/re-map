@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from games.re2.actor_part_proofs import SourceCopyWrite
-from games.re2.script_control_limits import calls_fit_native_frames
+from games.re2.actor_part_proofs import ScalarProgramContinuation, SourceCopyWrite
+from games.re2.script_control_limits import calls_fit_native_frames, programs_digest
 
 if TYPE_CHECKING:
     from games.re2.room_write_partitions import RoomWritePartitionConfig
@@ -42,6 +42,100 @@ class InitializerControlFailure(Enum):
     CallDepth = "initializer exceeds audited native call frames"
     Music = "unsupported native music control form"
     FlagAlias = "initializer writes may change a fresh flag predicate"
+
+
+class InitializerContinuationSupport(Enum):
+    Unaudited = "unaudited"
+
+
+class InitializerContinuationFailure(Enum):
+    InputBinding = "invalid initializer continuation inputs"
+    NativeContract = "initializer continuation native contract is unproved"
+    FixedContext = "initializer continuation requires the preserved fixed context"
+    Context = "initializer continuation applicability is not covered"
+    SourceBinding = "initializer continuation belongs to another source"
+    Summary = "initializer continuation is not a finite whole program"
+    CallDepth = "initializer continuation exceeds native call frames"
+    Counter = "initializer continuation counter writes are unproved"
+    FlagAlias = "initializer continuation may change a fresh predicate"
+
+
+@dataclass(frozen=True)
+class InitializerContinuationProof:
+    source_sha256: str
+    programs_sha256: str
+    scalar_continuations: tuple[ScalarProgramContinuation, ...]
+    predicate_flags: frozenset[tuple[int, int]]
+    fixed_flags: frozenset[tuple[int, int, int]]
+    context_conditions: tuple[dict, ...]
+
+    def __post_init__(self) -> None:
+        assert all(
+            type(digest) is str
+            and len(digest) == 64
+            and all(character in "0123456789abcdef" for character in digest)
+            for digest in (self.source_sha256, self.programs_sha256)
+        )
+        assert type(self.scalar_continuations) is tuple and self.scalar_continuations
+        assert all(
+            isinstance(summary, ScalarProgramContinuation)
+            and summary.source_sha256 == self.source_sha256
+            and summary.programs_sha256 == self.programs_sha256
+            and summary.entry < summary.end
+            for summary in self.scalar_continuations
+        )
+        assert len({summary.program for summary in self.scalar_continuations}) == len(
+            self.scalar_continuations
+        )
+        assert type(self.predicate_flags) is frozenset and all(
+            type(bank) is int
+            and type(bit) is int
+            and 0 <= bank <= 255
+            and 0 <= bit <= 255
+            for bank, bit in self.predicate_flags
+        )
+        assert type(self.fixed_flags) is frozenset and all(
+            type(expected) is int
+            and expected in (0, 1)
+            and (bank, bit) in self.predicate_flags
+            for bank, bit, expected in self.fixed_flags
+        )
+        assert len({(bank, bit) for bank, bit, _ in self.fixed_flags}) == len(
+            self.fixed_flags
+        )
+        assert type(self.context_conditions) is tuple
+
+    def matches_source(self, data: bytes, programs: dict) -> bool:
+        return (
+            hashlib.sha256(data).hexdigest() == self.source_sha256
+            and programs_digest(programs) == self.programs_sha256
+        )
+
+    def for_predicates(
+        self,
+        data: bytes,
+        programs: dict,
+        condition_flags: frozenset[tuple[int, int]],
+        fixed_flags: frozenset[tuple[int, int, int]],
+    ) -> InitializerContinuationProof | InitializerContinuationSupport:
+        assert type(condition_flags) is frozenset and type(fixed_flags) is frozenset
+        assert self.matches_source(data, programs), (
+            "initializer continuation receipt belongs to another source"
+        )
+        guards = frozenset(
+            (test["bank"], test["bit"])
+            for condition in self.context_conditions
+            for clause in condition["any_of"]
+            for test in clause
+        )
+        # An entry path analyzed under different fixed assignments cannot
+        # authorize continuation, even if it mentions the same flag bits.
+        return (
+            self
+            if fixed_flags == self.fixed_flags
+            and condition_flags | guards <= self.predicate_flags
+            else InitializerContinuationSupport.Unaudited
+        )
 
 
 def native_switch_labels(
@@ -144,10 +238,7 @@ class InitializerControlProof:
     def matches_source(self, data: bytes, programs: dict) -> bool:
         return (
             hashlib.sha256(data).hexdigest() == self.source_sha256
-            and hashlib.sha256(
-                json.dumps(programs, sort_keys=True, separators=(",", ":")).encode()
-            ).hexdigest()
-            == self.programs_sha256
+            and programs_digest(programs) == self.programs_sha256
         )
 
     def preserves_fixed_words(self, words: dict[int, int]) -> bool:
