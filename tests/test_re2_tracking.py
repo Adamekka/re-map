@@ -1200,7 +1200,7 @@ def test_native_pickup_quantities_reconstruct_from_fresh_mode_and_collection_fla
                     before = copy.deepcopy(observation)
                     assert (
                         poll_re2(profile, observation, read).status
-                        is PollStatus.WrongGame
+                        is PollStatus.UnsupportedSettings
                     )
                     assert observation == before
                     continue
@@ -1290,6 +1290,16 @@ def test_native_count_units_reach_live_items_without_changing_raw_amounts(snapsh
     assert not any(item.quantity_is_unit_count for item in tracker.rooms["00-01"].items)
 
 
+@pytest.mark.parametrize(
+    "profile",
+    [
+        "re2_leon_a_slus00421",
+        "re2_claire_b_slus00592",
+        "re2_leon_a_slus00748",
+        "re2_claire_b_slus00756",
+    ],
+    indirect=True,
+)
 @pytest.mark.parametrize("already_observed", [False, True])
 def test_mode_mismatch_cannot_publish_or_erase_prior_exploration(
     snapshot, already_observed
@@ -1299,15 +1309,17 @@ def test_mode_mismatch_cannot_publish_or_erase_prior_exploration(
     if already_observed:
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
     before = copy.deepcopy(tracker)
-    put(0x800C7CE4, 0x40000000, 4)
+    layout = profile.runtime_layout
+    address = int(layout["system_flags_address_ps1"], 0)
+    put(address, layout["gameplay_mask"], 4)
     result = poll_re2(profile, tracker, read)
-    assert result.status is PollStatus.WrongGame
+    assert result.status is PollStatus.UnsupportedSettings
     assert (
         result.text
-        == "Unsupported RE2 game settings. Load a supported Leon A savestate."
+        == f"Unsupported RE2 game settings. Load a supported {profile.target.label} savestate."
     )
     assert tracker == before
-    put(0x800C7CE4, 0x40000040, 4)
+    put(address, layout["gameplay_mask"] | layout["system_mode_value"], 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert set(tracker.rooms) == {"00-01"}
 

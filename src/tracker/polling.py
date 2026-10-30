@@ -8,6 +8,7 @@ class PollStatus(Enum):
     Display = "display"
     ReadFailure = "read-failure"
     UnsupportedRoom = "unsupported-room"
+    UnsupportedSettings = "unsupported-settings"
     Retry = "retry"
     WrongGame = "wrong-game"
     NonGameplay = "non-gameplay"

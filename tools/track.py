@@ -790,7 +790,11 @@ def main() -> int:
                             else "Waiting for Resident Evil Director's Cut, Jill."
                             if result.status == PollStatus.WrongGame
                             else result.text
-                            if result.status == PollStatus.UnsupportedRoom
+                            if result.status
+                            in (
+                                PollStatus.UnsupportedRoom,
+                                PollStatus.UnsupportedSettings,
+                            )
                             else "Game connection interrupted. Check DuckStation and its GDB server."
                         ),
                     }
@@ -804,7 +808,11 @@ def main() -> int:
                     if result.status == PollStatus.ReadFailure
                     else logging.WARNING
                     if result.status
-                    in (PollStatus.WrongGame, PollStatus.UnsupportedRoom)
+                    in (
+                        PollStatus.WrongGame,
+                        PollStatus.UnsupportedRoom,
+                        PollStatus.UnsupportedSettings,
+                    )
                     else logging.INFO
                 )
                 logger.log(
@@ -818,13 +826,20 @@ def main() -> int:
                     logger.info("Map state: %s", map_server.snapshot.decode("utf-8"))
                 last_logged_result = result
                 next_log_at = now + 30.0
-            if result.status == PollStatus.WrongGame:
+            if result.status in (PollStatus.WrongGame, PollStatus.UnsupportedSettings):
                 if args.once:
                     print(result.text, file=sys.stderr)
                     return 2
                 if result.text != last_wait_reason:
                     print(
-                        "\x1b[2J\x1b[H" + result.text + "; waiting for game" + map_line
+                        "\x1b[2J\x1b[H"
+                        + result.text
+                        + (
+                            "; waiting for game"
+                            if result.status == PollStatus.WrongGame
+                            else ""
+                        )
+                        + map_line
                     )
                     last_wait_reason = result.text
                 time.sleep(period)

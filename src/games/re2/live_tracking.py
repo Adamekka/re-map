@@ -102,7 +102,7 @@ def poll_re2(
         # Reject a mismatch before any absent-item proof can affect clearance.
         if system & layout["system_mode_mask"] != layout["system_mode_value"]:
             return PollResult(
-                PollStatus.WrongGame,
+                PollStatus.UnsupportedSettings,
                 f"Unsupported RE2 game settings. Load a supported {profile.target.label} savestate.",
             )
         rid = RoomId(value(profile.stage_address, 2), value(profile.room_address, 2))

@@ -2,6 +2,14 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Unsupported-settings recovery
+
+The RE2 reader distinguishes unsupported game settings from a wrong game or scenario. The map preserves the actionable request to load a supported savestate for the selected profile. Continuous tracking waits and resumes automatically on a coherent supported read; `--once` retains exit code 2. The rejection remains a warning in diagnostics and cannot mutate exploration, item or door results. This changes error presentation only; the existing mode guard and its interpretation limits are unchanged. No named game setting is inferred from its bit mask.
+
+Run `python3 -m pytest -q tests/test_re2_tracking.py tests/test_logging.py`. All 347 tests pass. Reader regressions cover all four supported revision profiles, rejection before and after a valid observation, unchanged tracker state and recovery. CLI checks cover actionable map publication, one-shot failure and continuous recovery. A final logging-only rerun passes 13 tests; scoped Ruff F, formatting and whitespace pass. The README image is regenerated from the retained supported-state publication and remains byte-identical.
+
+Implemented on 2026-10-30 by `native_seed_research`, with writing and direct review by root, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. Independent source/test review by `next_identity_evidence`, the same verified model, checks all poll-status consumers, safe messages, exit codes, warning logs, unchanged tracker state and recovery. No new emulator experiment or interpretation rule is claimed. Configured external review providers remain disabled.
+
 ## Touch map navigation
 
 Two-finger gestures now zoom and move explored maps around the midpoint, using the shared bounded zoom calculation. Adding a second finger preserves the current view; lifting one finger continues panning with the other. Native samples update both contacts before rendering, so coincident contacts establish a real scale baseline without a jump. Release applies its final coordinates even without a preceding move. Cancellation discards queued movement and releases captures. Ignored contacts cannot inspect rooms during another pointer's gesture or after its owner releases.
