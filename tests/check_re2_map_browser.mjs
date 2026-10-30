@@ -181,6 +181,19 @@ try {
   assert.match(await incompleteRoom.textContent(), /Item list incomplete/);
   assert.doesNotMatch(await page.locator('#items').textContent(), /×|unreconstructed/);
   assert((await page.locator('#map .room.selected').getAttribute('class')).includes('UNKNOWN'));
+  for (const visit of visits) {
+    visit.state = 'INCOMPLETE';
+    visit.items[0].state = 'uncollected';
+  }
+  await page.waitForFunction(() => document.getElementById('items').textContent.includes('Remaining'));
+  assert.equal(await page.locator('#completion').textContent(), 'Items remain');
+  assert.equal(await page.locator('#items .entry-name.neutral').count(), 1, 'a known target with unresolved identity must stay neutral');
+  assert.equal(await page.locator('#map .room.selected.story-items').count(), 0, 'generic presence cannot establish a story item');
+  const genericRemaining = page.locator('#remaining-items .room-link').filter({ hasText: roomName });
+  assert.equal(await genericRemaining.count(), 1);
+  assert.match(await genericRemaining.textContent(), /Collectible/);
+  assert.doesNotMatch(await genericRemaining.textContent(), /×|unreconstructed/);
+  assert.match(await incompleteRoom.textContent(), /Item list incomplete/);
   for (const visit of visits) Object.assign(visit, structuredClone(originalVisit));
   await page.waitForFunction(() => document.getElementById('items').textContent.includes('Handgun ammo'));
   const remainingRoom = page.locator('#remaining-items .room-link').filter({ hasText: roomName });

@@ -37,6 +37,7 @@
     "RE2-CONTROL-001",
     "RE2-PUZZLE-001",
     "RE2-PUZZLE-002",
+    "RE2-PUZZLE-003",
     "RE2-STARTUP-002",
     "RE2-STARTUP-004"
   ],
@@ -2289,6 +2290,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4246,
@@ -2418,6 +2420,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6050,
@@ -2554,6 +2557,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6146,
@@ -2696,6 +2700,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 13962,
@@ -2790,6 +2795,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2994,
@@ -2896,6 +2902,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4538,
@@ -3050,6 +3057,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3006,
@@ -3178,6 +3186,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2750,
@@ -3321,6 +3330,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6446,
@@ -3475,6 +3485,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 8326,
@@ -3660,6 +3671,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6602,
@@ -3866,6 +3878,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5518,
@@ -3983,6 +3996,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6302,
@@ -4146,6 +4160,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1974,
@@ -4278,6 +4293,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7346,
@@ -4420,6 +4436,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1470,
@@ -4592,6 +4609,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 10056,
@@ -4779,6 +4797,19 @@
           ]
         }
       ],
+      "reset_item_variants": [
+        {
+          "offset": 11172,
+          "creator_offsets": [
+            8270
+          ],
+          "slot": 2,
+          "type": 61,
+          "amount": 1,
+          "global_id": 55,
+          "sat": 49
+        }
+      ],
       "doors": [
         {
           "offset": 8158,
@@ -4824,7 +4855,25 @@
       "scenario_context_conditions": [],
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
-      "known_puzzle_items": [],
+      "known_puzzle_items": [
+        {
+          "global_id": 55,
+          "item_types": [
+            57,
+            61
+          ],
+          "creator_offsets": [
+            8270
+          ],
+          "callback_offsets": [
+            8312
+          ],
+          "delivery_offsets": [
+            12932
+          ],
+          "context_conditions": []
+        }
+      ],
       "known_direct_pickups": [],
       "startup_item_declarations": []
     },
@@ -4911,6 +4960,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 10418,
@@ -4974,7 +5024,9 @@
       "known_puzzle_items": [
         {
           "global_id": 21,
-          "item_type": 59,
+          "item_types": [
+            59
+          ],
           "creator_offsets": [
             10656
           ],
@@ -5153,6 +5205,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3344,
@@ -5314,6 +5367,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2466,
@@ -5583,6 +5637,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4888,
@@ -5740,6 +5795,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2522,
@@ -5853,6 +5909,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3268,
@@ -5974,6 +6031,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7690,
@@ -6090,6 +6148,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3082,
@@ -6211,6 +6270,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1186,
@@ -6322,6 +6382,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2282,
@@ -6431,6 +6492,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2282,
@@ -6540,6 +6602,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6654,
@@ -6707,6 +6770,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 9528,
@@ -6860,7 +6924,9 @@
       "known_puzzle_items": [
         {
           "global_id": 93,
-          "item_type": 89,
+          "item_types": [
+            89
+          ],
           "creator_offsets": [
             9826,
             9852
@@ -6984,6 +7050,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3018,
@@ -7264,6 +7331,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7066,
@@ -7514,6 +7582,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1726,
@@ -7660,6 +7729,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6366,
@@ -7830,6 +7900,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5918,
@@ -8021,6 +8092,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5334,
@@ -8054,7 +8126,9 @@
       "known_puzzle_items": [
         {
           "global_id": 31,
-          "item_type": 51,
+          "item_types": [
+            51
+          ],
           "creator_offsets": [
             5428
           ],
@@ -8153,6 +8227,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3862,
@@ -8435,6 +8510,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4806,
@@ -8617,6 +8693,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3258,
@@ -8749,6 +8826,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2090,
@@ -8988,6 +9066,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 12050,
@@ -9284,6 +9363,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7082,
@@ -9493,6 +9573,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4250,
@@ -9720,6 +9801,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5910,
@@ -9910,6 +9992,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5938,
@@ -10090,6 +10173,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4730,
@@ -10219,6 +10303,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5830,
@@ -10430,6 +10515,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1986,
@@ -10573,6 +10659,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3714,
@@ -10723,6 +10810,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 874,
@@ -10848,6 +10936,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4744,
@@ -10956,6 +11045,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3770,
@@ -11088,6 +11178,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2394,
@@ -11235,6 +11326,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6902,
@@ -11397,6 +11489,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 9334,
@@ -11551,6 +11644,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5186,
@@ -11716,6 +11810,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6678,
@@ -11810,6 +11905,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2538,
@@ -11919,6 +12015,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5560,
@@ -12058,6 +12155,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4100,
@@ -12182,6 +12280,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5862,
@@ -12318,6 +12417,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7654,
@@ -12424,6 +12524,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4178,
@@ -12548,6 +12649,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2450,
@@ -12657,6 +12759,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4696,
@@ -12766,6 +12869,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5780,
@@ -12909,6 +13013,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2902,
@@ -13071,6 +13176,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1026,
@@ -13163,6 +13269,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 566,
@@ -13280,6 +13387,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5414,
@@ -13482,6 +13590,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 8682,
@@ -13674,6 +13783,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2134,
@@ -13850,6 +13960,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 8634,
@@ -14004,6 +14115,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3350,
@@ -14192,6 +14304,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3630,
@@ -14316,6 +14429,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1686,
@@ -14496,6 +14610,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 10174,
@@ -14650,6 +14765,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 8598,
@@ -14759,6 +14875,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 9474,
@@ -14868,6 +14985,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 790,
@@ -14977,6 +15095,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [],
       "candidate_list_complete": true,
       "collection_item_ids": [],
@@ -15055,6 +15174,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3802,
@@ -15187,6 +15307,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 13902,
@@ -15311,6 +15432,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [],
       "candidate_list_complete": true,
       "collection_item_ids": [],
@@ -15434,6 +15556,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4526,
@@ -15588,6 +15711,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5470,
@@ -15694,6 +15818,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4866,
@@ -15826,6 +15951,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5286,
@@ -15987,6 +16113,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1950,
@@ -16149,6 +16276,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7166,
@@ -16314,6 +16442,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2862,
@@ -16491,6 +16620,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3378,
@@ -16656,6 +16786,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 8466,
@@ -16784,6 +16915,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5074,
@@ -16943,6 +17075,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6526,
@@ -17037,6 +17170,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5498,
@@ -17146,6 +17280,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1218,
@@ -17293,6 +17428,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2162,
@@ -17458,6 +17594,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 10698,
@@ -17594,6 +17731,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 8112,
@@ -17688,6 +17826,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 6578,
@@ -17782,6 +17921,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3594,
@@ -17996,6 +18136,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2870,
@@ -18105,6 +18246,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 10034,
@@ -18263,6 +18405,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1036,
@@ -18420,6 +18563,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1522,
@@ -18529,6 +18673,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4398,
@@ -18695,6 +18840,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3850,
@@ -18883,6 +19029,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2210,
@@ -18995,6 +19142,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 910,
@@ -19170,6 +19318,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 1814,
@@ -19309,6 +19458,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3838,
@@ -19418,6 +19568,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 12654,
@@ -19542,6 +19693,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4698,
@@ -19651,6 +19803,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 3652,
@@ -19757,6 +19910,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 2994,
@@ -19948,6 +20102,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 11158,
@@ -20076,6 +20231,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7402,
@@ -20200,6 +20356,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 13698,
@@ -20309,6 +20466,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 5178,
@@ -20441,6 +20599,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7762,
@@ -20562,6 +20721,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4358,
@@ -20656,6 +20816,7 @@
         }
       ],
       "items": [],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 7256,
@@ -20803,6 +20964,7 @@
           ]
         }
       ],
+      "reset_item_variants": [],
       "doors": [
         {
           "offset": 4350,

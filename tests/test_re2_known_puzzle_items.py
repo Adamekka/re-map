@@ -119,7 +119,7 @@ def test_declared_player_callback_target_is_known_before_its_puzzle_guard(
     )
     assert isinstance(result, tuple) and len(result) == 1
     proof = result[0]
-    assert (proof.global_id, proof.item_type) == (93, 89)
+    assert (proof.global_id, proof.item_types) == (93, (89,))
     assert (
         len(proof.creator_offsets)
         == len(proof.callback_offsets)
@@ -301,7 +301,6 @@ def test_catalog_or_opaque_reference_alone_does_not_establish_knowledge(
         "other-slot-type",
         "door",
         "generic",
-        "reset-type",
         "other-slot-reset-type",
         "reset-geometry",
     ],
@@ -317,8 +316,6 @@ def test_target_identity_and_binding_aliases_withhold_knowledge(profile, receipt
         alias = bytes((0x3B, 9, 1, 0x31)) + bytes(28)
     elif case == "generic":
         alias = bytes((0x2C, 9, 4, 0x31)) + bytes(16)
-    elif case == "reset-type":
-        alias = bytes((0x46, 9, 2, 0x31)) + struct.pack("<3H", 90, 2, 93)
     elif case == "other-slot-reset-type":
         alias = bytes((0x46, 8, 2, 0x31)) + struct.pack("<3H", 90, 2, 93)
     else:
@@ -340,6 +337,110 @@ def test_same_identity_reset_is_a_puzzle_activation_relationship(profile, receip
         profile, receipt, item() + END, (callback() + END, END, delivery(), reset + END)
     )
     assert len(result) == 1
+
+
+def test_reset_only_types_keep_one_known_acquisition_without_selecting_an_identity(
+    profile, receipt
+):
+    resets = b"".join(
+        bytes((0x46, 9, 2, 0x31)) + struct.pack("<3H", item_type, amount, 93)
+        for item_type, amount in ((90, 1), (91, 7), (90, 3))
+    )
+    body = delivery()[:-2] + conditional(11, 31, 0, b"\0") + END
+    data, room, _ = source(
+        item() + END, (callback() + END, END, body, resets + END), (), (0,)
+    )
+    room["stage"] = 1
+    assert not room["candidate_list_complete"]
+    result = puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
+    assert len(result) == 1
+    proof = result[0]
+    assert (proof.global_id, proof.item_types) == (93, (89, 90, 91))
+    assert proof.creator_offsets == (room["items"][0]["offset"],)
+    assert not hasattr(proof, "amount")
+    assert not room["candidate_list_complete"]
+    assert {item["type"] for item in room["items"]} == {89}
+
+
+@pytest.mark.parametrize(
+    "slot,kind,item_type,gid,sat",
+    [
+        (8, 2, 90, 93, 0x31),
+        (8, 2, 89, 93, 0x31),
+        (9, 2, 90, 94, 0x31),
+        (9, 2, 104, 93, 0x31),
+        (9, 5, 90, 93, 0x31),
+        (9, 2, 90, 93, 0xB1),
+    ],
+)
+def test_reset_alternatives_must_preserve_the_ordinary_acquisition_owner(
+    profile, receipt, slot, kind, item_type, gid, sat
+):
+    reset = bytes((0x46, slot, kind, sat)) + struct.pack("<3H", item_type, 1, gid)
+    result = compile_source(
+        profile, receipt, item() + END, (callback() + END, END, delivery(), reset + END)
+    )
+    assert result == ()
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "missing",
+        "not-list",
+        "missing-row",
+        "duplicate-row",
+        "extra-field",
+        "boolean",
+        "source-offset",
+        "creator-offset",
+        "empty-creators",
+        "duplicate-creators",
+        "slot",
+        "type",
+        "amount",
+        "global-id",
+        "sat",
+    ],
+)
+def test_reset_variant_records_are_bound_to_the_actual_source_and_creator(
+    profile, receipt, fault
+):
+    reset = bytes((0x46, 9, 2, 0x31)) + struct.pack("<3H", 90, 1, 93)
+    data, room, _ = source(
+        item() + END, (callback() + END, END, delivery(), reset + END), (), (0,)
+    )
+    room["stage"] = 1
+    variants = room["reset_item_variants"]
+    assert len(variants) == 1
+    proof = variants[0]
+    if fault == "missing":
+        del room["reset_item_variants"]
+    elif fault == "not-list":
+        room["reset_item_variants"] = None
+    elif fault == "missing-row":
+        variants.clear()
+    elif fault == "duplicate-row":
+        variants.append(copy.deepcopy(proof))
+    elif fault == "extra-field":
+        proof["presence"] = True
+    elif fault == "boolean":
+        proof["amount"] = True
+    elif fault == "source-offset":
+        proof["offset"] += 1
+    elif fault == "creator-offset":
+        proof["creator_offsets"][0] += 1
+    elif fault == "empty-creators":
+        proof["creator_offsets"] = []
+    elif fault == "duplicate-creators":
+        proof["creator_offsets"] *= 2
+    else:
+        field = "global_id" if fault == "global-id" else fault
+        proof[field] += 1
+    assert (
+        puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
+        is KnownDeclaredItemFailure.InputBinding
+    )
 
 
 def test_prefix_flags_may_not_rewrite_enforced_entry_settings(profile, receipt):
@@ -466,6 +567,121 @@ def test_callback_effects_are_bounded_before_the_delivery_reference(
         )
         else 1
     )
+
+
+@pytest.mark.parametrize("bank,bit", [(1, 0), (11, 31)])
+@pytest.mark.parametrize("before", [False, True])
+def test_callback_dependencies_stop_at_first_delivery(
+    profile, receipt, bank, bit, before
+):
+    unsupported = conditional(bank, bit, 0, b"\0")
+    body = unsupported + delivery() if before else delivery()[:-2] + unsupported + END
+    result = compile_source(
+        profile, receipt, item() + END, (callback() + END, END, body)
+    )
+    assert len(result) == (0 if before else 1)
+
+
+@pytest.mark.parametrize("bank,bit", [(1, 0), (11, 31)])
+@pytest.mark.parametrize("opaque", [False, True])
+def test_unsupported_callback_branch_does_not_erase_an_independent_delivery(
+    profile, receipt, bank, bit, opaque
+):
+    prefix = b"\x2b\0\x06\0\xff\xff" if opaque else b""
+    blocked = conditional(4, 72, 0, prefix + conditional(bank, bit, 0, b"\x47\x09"))
+    result = compile_source(
+        profile,
+        receipt,
+        item() + END,
+        (callback() + END, END, blocked + delivery()),
+    )
+    assert len(result) == 1
+
+
+@pytest.mark.parametrize("overwritten", [False, True])
+@pytest.mark.parametrize("alias", [False, True])
+def test_callback_flag_assignments_remain_consistent_across_branches_and_writes(
+    profile, receipt, overwritten, alias
+):
+    # The same initial flag cannot satisfy both values. An audited intervening
+    # write can establish the second value without changing acquisition.
+    bank = 99 if alias else 4
+    if alias:
+        profile = copy.deepcopy(profile)
+        row = next(row for row in profile["flag_banks"] if row["bank"] == 4)
+        profile["flag_banks"].append({**row, "bank": bank})
+    write = bytes((0x22, bank, 72, 1)) if overwritten else b""
+    body = conditional(4, 72, 0, write + conditional(bank, 72, 1, b"\x47\x09")) + END
+    result = compile_source(
+        profile, receipt, item() + END, (callback() + END, END, body)
+    )
+    assert len(result) == int(overwritten)
+
+
+@pytest.mark.parametrize("count", [8, 9])
+def test_callback_saved_input_limit_applies_before_delivery(profile, receipt, count):
+    predicates = b"".join(bytes((0x21, 4, bit, 1)) for bit in range(count))
+    body = (
+        b"\x06\0"
+        + struct.pack("<H", len(predicates) + 4)
+        + predicates
+        + b"\x47\x09\x08\0"
+        + END
+    )
+    result = compile_source(
+        profile, receipt, item() + END, (callback() + END, END, body)
+    )
+    assert len(result) == int(count == 8)
+
+
+def test_callback_command_limit_withholds_a_later_delivery(profile, receipt):
+    result = compile_source(
+        profile,
+        receipt,
+        item() + END,
+        (callback() + END, END, bytes(256) + delivery()),
+    )
+    assert result == ()
+
+
+def test_callback_cannot_claim_delivery_through_an_opaque_backward_jump(
+    profile, receipt
+):
+    loop = b"\x17\xff\xff\0\0\0"
+    result = compile_source(
+        profile,
+        receipt,
+        item() + END,
+        (callback() + END, END, loop + b"\x47\x09" + END),
+    )
+    assert result == ()
+
+
+@pytest.mark.parametrize("camera_first", [False, True])
+def test_camera_writes_cannot_change_a_later_callback_predicate(
+    profile, receipt, camera_first
+):
+    profile = copy.deepcopy(profile)
+    layout = profile["runtime_layout"]
+    # Real STATUS predicates fail the save-window guard. Bind test STATUS to
+    # a saved word to isolate the camera's physical write-disjointness guard.
+    layout["status_flags_address_ps1"] = next(
+        bank["address_ps1"] for bank in profile["flag_banks"] if bank["bank"] == 33
+    )
+    camera = b"\x29\x03"
+    body = (
+        camera + conditional(33, 11, 1, b"\x47\x09")
+        if camera_first
+        else conditional(33, 11, 1, camera + b"\x47\x09")
+    ) + END
+    result = compile_source(
+        profile,
+        receipt,
+        item() + END,
+        (callback() + END, END, body),
+        cameras=(0, 3),
+    )
+    assert result == ()
 
 
 def test_copy_cannot_redirect_the_declared_identity(profile, receipt):

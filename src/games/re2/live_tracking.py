@@ -14,7 +14,7 @@ from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
-from games.re2.scenario_items import scenario_item_candidates
+from games.re2.scenario_items import item_identity_candidates, scenario_item_candidates
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.runtime_identity import MemoryResult
 from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
@@ -183,6 +183,7 @@ def poll_re2(
             int(layout["aot_table_address_ps1"], 0), layout["aot_capacity"] * 4
         )
         live_items, live_doors = {}, {}
+        current_item_candidates = item_identity_candidates(room)
         unresolved_registry = False
         for slot in range(layout["aot_capacity"]):
             pointer = int.from_bytes(registry[slot * 4 : slot * 4 + 4], "little")
@@ -233,13 +234,22 @@ def poll_re2(
                     int.from_bytes(packet[index : index + 2], "little")
                     for index in range(operand, operand + 6, 2)
                 )
-                if (item_type, gid) != (definition["type"], definition["global_id"]):
+                if not any(
+                    item["offset"] == offset
+                    and item["slot"] == slot
+                    and (item["type"], item["global_id"]) == (item_type, gid)
+                    for item in current_item_candidates
+                ):
                     unresolved_registry = True
                     continue
                 # A zero SAT byte skips native activation before geometry or
                 # dispatch. Keep the creator for scenario checks, but do not
                 # infer presence from it. RE2-COLLECT-022, RE2-CLAIRE-009.
-                live_items[offset] = ("available" if packet[1] else "inactive", amount)
+                live_items[offset] = (
+                    "available" if packet[1] else "inactive",
+                    amount,
+                    item_type,
+                )
             elif kind == 0 and definition in room["doors"]:
                 live_doors[offset] = {**definition, "inactive": True}
             elif kind == 1:
@@ -311,9 +321,9 @@ def poll_re2(
                     # Native Aot_on dispatches directly, bypassing SAT zero and
                     # the parked item's rectangle. The fresh callback, table,
                     # code and item binding prove a player can still collect it.
-                    state, amount = live_items[item_offset]
+                    state, amount, item_type = live_items[item_offset]
                     if state == "inactive":
-                        live_items[item_offset] = ("uncollected", amount)
+                        live_items[item_offset] = ("uncollected", amount, item_type)
 
         evaluations, doors = [], []
         for visited in sorted(set(tracker.rooms) | {key}):
@@ -345,14 +355,18 @@ def poll_re2(
             # A mismatching load keeps the raw catalog and fresh observations,
             # but cannot retain exclusions, selected variants or clearance.
             candidates = (
-                scenario_item_candidates(source) if context_valid else source["items"]
+                scenario_item_candidates(source)
+                if context_valid
+                else item_identity_candidates(source)
             )
             if (
                 context_valid
                 and visited == key
                 and any(
-                    item["offset"] in live_items and item not in candidates
-                    for item in source["items"]
+                    item["offset"] in live_items
+                    and live_items[item["offset"]][2] == item["type"]
+                    and item not in candidates
+                    for item in current_item_candidates
                 )
             ):
                 # A live excluded creator contradicts the fixed-context proof.
@@ -361,8 +375,13 @@ def poll_re2(
                     PollStatus.Retry, "Pickup disagrees with fixed scenario variant"
                 )
             grouped = {}
+            ordinary_ids = {
+                item["global_id"]
+                for item in candidates
+                if item["type"] < layout["file_type_min"]
+            }
             for item in candidates:
-                if item["type"] >= layout["file_type_min"]:
+                if item["global_id"] not in ordinary_ids:
                     continue
                 grouped.setdefault(item["global_id"], []).append(item)
             details = []
@@ -382,6 +401,8 @@ def poll_re2(
                     if visited == key
                     and item["offset"] in live_items
                     and live_items[item["offset"]][0] == "available"
+                    and live_items[item["offset"]][2] == item["type"]
+                    and item["type"] < layout["file_type_min"]
                 ]
                 dispatched = [
                     item
@@ -389,6 +410,8 @@ def poll_re2(
                     if visited == key
                     and item["offset"] in live_items
                     and live_items[item["offset"]][0] == "uncollected"
+                    and live_items[item["offset"]][2] == item["type"]
+                    and item["type"] < layout["file_type_min"]
                 ]
                 if context_valid and gid in source["scenario_absent_item_ids"]:
                     if visited == key and any(
@@ -420,7 +443,9 @@ def poll_re2(
                 if taken:
                     state = "taken"
                 elif item_type is None:
-                    state = "unknown"
+                    # A stable acquisition identity can establish a remaining
+                    # target while its possible collectible types stay generic.
+                    state = "uncollected" if gid in known_item_ids else "unknown"
                 elif available:
                     state = "available"
                 elif (

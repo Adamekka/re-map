@@ -516,6 +516,13 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     for item in room["known_direct_pickups"]
                     if item["global_id"] not in existing
                 ]
+        if not (
+            isinstance(entry_contract, VerifiedRoomEntryContract)
+            and isinstance(dispatch, ScriptItemDispatchConfig)
+        ):
+            # Reset-derived identities require the same revision capability as
+            # positive puzzle targets; other profiles keep their raw catalog.
+            del room["reset_item_variants"]
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -794,7 +801,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     else []
                 ),
                 *(
-                    ["RE2-PUZZLE-001", "RE2-PUZZLE-002"]
+                    ["RE2-PUZZLE-001", "RE2-PUZZLE-002", "RE2-PUZZLE-003"]
                     if isinstance(entry_contract, VerifiedRoomEntryContract)
                     and isinstance(dispatch, ScriptItemDispatchConfig)
                     else []

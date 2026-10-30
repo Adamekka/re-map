@@ -496,6 +496,96 @@ class Re2Profile:
             puzzle_capable = isinstance(
                 entry_contract, RoomEntryContractConfig
             ) and isinstance(dispatch, ScriptItemDispatchConfig)
+            reset_variants = room.get("reset_item_variants", [])
+            if (
+                puzzle_capable
+                and "reset_item_variants" not in room
+                or not puzzle_capable
+                and "reset_item_variants" in room
+                or type(reset_variants) is not list
+            ):
+                raise ValueError("invalid or missing RE2 reset item variants")
+            reset_offsets = []
+            for variant in reset_variants:
+                if (
+                    type(variant) is not dict
+                    or variant.keys()
+                    != {
+                        "offset",
+                        "creator_offsets",
+                        "slot",
+                        "type",
+                        "amount",
+                        "global_id",
+                        "sat",
+                    }
+                    or any(
+                        type(variant[field]) is not int
+                        for field in (
+                            "offset",
+                            "slot",
+                            "type",
+                            "amount",
+                            "global_id",
+                            "sat",
+                        )
+                    )
+                    or type(room.get("size")) is not int
+                    or not 0 <= variant["offset"] <= room["size"] - 10
+                    or not 0 <= variant["slot"] < layout["aot_capacity"]
+                    or not 0 <= variant["type"] <= 0xFFFF
+                    or not 0 <= variant["amount"] <= 0xFFFF
+                    or not 0 <= variant["global_id"] < 256
+                    or not 0 <= variant["sat"] < 0x80
+                    or type(variant["creator_offsets"]) is not list
+                    or not variant["creator_offsets"]
+                    or any(
+                        type(offset) is not int or not 0 <= offset <= room["size"] - 22
+                        for offset in variant["creator_offsets"]
+                    )
+                    or variant["creator_offsets"]
+                    != sorted(set(variant["creator_offsets"]))
+                    or type(room.get("items")) is not list
+                    or any(
+                        type(item) is not dict
+                        or not {"offset", "slot", "type", "global_id", "four_point"}
+                        <= item.keys()
+                        or any(
+                            type(item[field]) is not int
+                            for field in ("offset", "slot", "type", "global_id")
+                        )
+                        or type(item["four_point"]) is not bool
+                        for item in room["items"]
+                    )
+                ):
+                    raise ValueError("invalid RE2 reset item variant")
+                creators = [
+                    item
+                    for item in room["items"]
+                    if item["slot"] == variant["slot"]
+                    and item["global_id"] == variant["global_id"]
+                    and not item["four_point"]
+                ]
+                if (
+                    not creators
+                    or sorted(item["offset"] for item in creators)
+                    != variant["creator_offsets"]
+                    or variant["type"] in {item["type"] for item in creators}
+                    or any(
+                        offset < variant["offset"] + 10
+                        and variant["offset"] < offset + 22
+                        for offset in variant["creator_offsets"]
+                    )
+                ):
+                    raise ValueError("unbound RE2 reset item variant")
+                reset_offsets.append(variant["offset"])
+            if reset_offsets != sorted(set(reset_offsets)) or any(
+                first + 10 > second
+                for first, second in zip(reset_offsets, reset_offsets[1:])
+            ):
+                raise ValueError(
+                    "duplicate, overlapping or unordered RE2 reset item variants"
+                )
             puzzle_items = room.get("known_puzzle_items", [])
             if (
                 puzzle_capable
@@ -513,7 +603,7 @@ class Re2Profile:
                     or proof.keys()
                     != {
                         "global_id",
-                        "item_type",
+                        "item_types",
                         "creator_offsets",
                         "callback_offsets",
                         "delivery_offsets",
@@ -522,8 +612,14 @@ class Re2Profile:
                     or type(proof["global_id"]) is not int
                     or not 0 <= proof["global_id"] <= 255
                     or proof["global_id"] in puzzle_ids
-                    or type(proof["item_type"]) is not int
-                    or not 0 <= proof["item_type"] < layout["file_type_min"]
+                    or type(proof["item_types"]) is not list
+                    or not proof["item_types"]
+                    or any(
+                        type(item_type) is not int
+                        or not 0 <= item_type < layout["file_type_min"]
+                        for item_type in proof["item_types"]
+                    )
+                    or proof["item_types"] != sorted(set(proof["item_types"]))
                     or type(room.get("stage")) is not int
                     or room["stage"] not in entry_stages
                     or type(room.get("size")) is not int
@@ -570,7 +666,16 @@ class Re2Profile:
                 ]
                 if (
                     not creators
-                    or {item["type"] for item in creators} != {proof["item_type"]}
+                    or len({item["type"] for item in creators}) != 1
+                    or sorted(
+                        {item["type"] for item in creators}
+                        | {
+                            variant["type"]
+                            for variant in reset_variants
+                            if variant["global_id"] == proof["global_id"]
+                        }
+                    )
+                    != proof["item_types"]
                     or sorted(item["offset"] for item in creators)
                     != proof["creator_offsets"]
                 ):

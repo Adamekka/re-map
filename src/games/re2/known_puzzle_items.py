@@ -21,6 +21,7 @@ from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
 )
+from games.re2.room_data import reset_item_variants
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
 from games.re2.room_sound_bindings import RoomSoundBindings, room_sound_bindings
 from games.re2.room_write_partitions import (
@@ -50,7 +51,7 @@ class KnownDeclaredItemFailure(Enum):
 @dataclass(frozen=True)
 class KnownPuzzleItem:
     global_id: int
-    item_type: int
+    item_types: tuple[int, ...]
     creator_offsets: tuple[int, ...]
     callback_offsets: tuple[int, ...]
     delivery_offsets: tuple[int, ...]
@@ -58,7 +59,9 @@ class KnownPuzzleItem:
 
     def __post_init__(self) -> None:
         assert type(self.global_id) is int and 0 <= self.global_id <= 255
-        assert type(self.item_type) is int and 0 <= self.item_type <= 255
+        assert type(self.item_types) is tuple and self.item_types
+        assert all(type(value) is int and 0 <= value < 104 for value in self.item_types)
+        assert tuple(sorted(set(self.item_types))) == self.item_types
         for offsets in (
             self.creator_offsets,
             self.callback_offsets,
@@ -299,6 +302,42 @@ def known_declared_items(
                 (item["slot"], item["type"], item["global_id"], item["amount"])
                 == (slot, item_type, gid, amount)
             )
+        variant_rows = room["reset_item_variants"]
+        require(
+            type(variant_rows) is list
+            and all(
+                type(row) is dict
+                and row.keys()
+                == {
+                    "offset",
+                    "creator_offsets",
+                    "slot",
+                    "type",
+                    "amount",
+                    "global_id",
+                    "sat",
+                }
+                and all(
+                    type(row[field]) is int
+                    for field in (
+                        "offset",
+                        "slot",
+                        "type",
+                        "amount",
+                        "global_id",
+                        "sat",
+                    )
+                )
+                and type(row["creator_offsets"]) is list
+                and all(type(offset) is int for offset in row["creator_offsets"])
+                for row in variant_rows
+            )
+            and variant_rows == reset_item_variants(data, room["items"], programs)
+        )
+        # A reset alternative names its real source packet and original AOT
+        # owner. It cannot turn a foreign-slot or uncatalogued reset into a
+        # synthetic ordinary creator or establish item-list completeness.
+        reset_variants = {row["offset"]: row for row in variant_rows}
         require(
             not any(
                 row["kind"] == "interaction" and row["interaction"] == 2
@@ -1044,19 +1083,40 @@ def known_declared_items(
                 for _, other_type, other_gid, _ in identities.values()
             ):
                 continue
-            if any(
-                row["kind"] == "reset"
-                and data[row["offset"] + 2] == 2
-                and struct.unpack_from("<3H", data, row["offset"] + 4)[2] == gid
-                and struct.unpack_from("<3H", data, row["offset"] + 4)[0] != item_type
-                for row in all_rows
-            ):
-                continue
             creators = [
                 position
                 for position, identity in identities.items()
                 if identity[:3] == (slot, item_type, gid)
             ]
+            item_types = {item_type}
+            replacements = [
+                row
+                for row in all_rows
+                if row["kind"] == "reset"
+                and data[row["offset"] + 2] == 2
+                and struct.unpack_from("<H", data, row["offset"] + 8)[0] == gid
+            ]
+            if any(
+                data[row["offset"] + 1] != slot
+                or data[row["offset"] + 3] & 0x80
+                or not 0
+                <= struct.unpack_from("<H", data, row["offset"] + 4)[0]
+                < layout["file_type_min"]
+                or struct.unpack_from("<H", data, row["offset"] + 4)[0] != item_type
+                and (
+                    row["offset"] not in reset_variants
+                    or reset_variants[row["offset"]]["creator_offsets"]
+                    != sorted(creators)
+                )
+                for row in replacements
+            ):
+                continue
+            # A future reset can change the award type while keeping this
+            # acquisition identity. Preserve every alternative, not one mode.
+            item_types.update(
+                struct.unpack_from("<H", data, row["offset"] + 4)[0]
+                for row in replacements
+            )
             if any(
                 row["kind"] != "item"
                 and not (
@@ -1066,8 +1126,9 @@ def known_declared_items(
                         data[row["offset"] + 2] == 0
                         and not any(data[row["offset"] + 4 : row["next"]])
                         or data[row["offset"] + 2] == 2
-                        and struct.unpack_from("<3H", data, row["offset"] + 4)[::2]
-                        == (item_type, gid)
+                        and struct.unpack_from("<H", data, row["offset"] + 4)[0]
+                        in item_types
+                        and struct.unpack_from("<H", data, row["offset"] + 8)[0] == gid
                     )
                 )
                 or row["kind"] == "item"
@@ -1090,91 +1151,149 @@ def known_declared_items(
                     for row in bindings[callback_slot]
                 ):
                     continue
-                if any(
-                    row["bank"] not in banks
-                    or not 0 <= row["bit"] < banks[row["bank"]][1] * 8
-                    for row in programs[procedure]["commands"]
-                    if row["kind"] == "flag_check"
-                ):
-                    continue
-                read_flags = {
-                    flag_key(row["bank"], row["bit"])
-                    for row in programs[procedure]["commands"]
-                    if row["kind"] == "flag_check"
-                }
-                if any(not saved_flag(target) for target in read_flags - fixed.keys()):
-                    continue
-                if len(read_flags - fixed.keys() - {acquisition}) > 8:
-                    continue
                 callback_deliveries = set()
-                for combination in itertools.product(
-                    (False, True), repeat=len(read_flags - fixed.keys() - {acquisition})
-                ):
-                    values = (
-                        fixed
-                        | dict(
-                            zip(
-                                sorted(read_flags - fixed.keys() - {acquisition}),
-                                combination,
-                                strict=True,
-                            )
-                        )
-                        | {acquisition: False}
+                pending = [
+                    (
+                        programs[procedure]["entry"],
+                        (),
+                        fixed | {acquisition: False},
+                        frozenset(),
+                        frozenset(),
+                        frozenset(),
                     )
-                    position, frames, seen = programs[procedure]["entry"], (), set()
-                    for _ in range(256):
-                        if position in seen or position not in commands[procedure]:
-                            break
-                        seen.add(position)
-                        row = commands[procedure][position]
-                        packet = data[position : row["next"]]
-                        opcode = row["opcode"]
-                        if opcode in (6, 7, 8):
+                ]
+                callback_steps = 0
+                # Preserve the old limit of 256 assignments, each following
+                # at most 256 commands, while discovering inputs per path.
+                while pending and callback_steps < 256 * 256:
+                    position, frames, values, read_flags, cameras, seen = pending.pop()
+                    callback_steps += 1
+                    if (
+                        len(seen) >= 256
+                        or position in seen
+                        or position not in commands[procedure]
+                    ):
+                        continue
+                    seen = seen | {position}
+                    row = commands[procedure][position]
+                    packet = data[position : row["next"]]
+                    opcode = row["opcode"]
+                    if opcode in (6, 7, 8):
+                        if opcode == 6:
+                            following, tests = row["next"], []
+                            while (
+                                following in commands[procedure]
+                                and commands[procedure][following]["kind"]
+                                == "flag_check"
+                            ):
+                                test = commands[procedure][following]
+                                if (
+                                    test["bank"] not in banks
+                                    or not 0 <= test["bit"] < banks[test["bank"]][1] * 8
+                                    or test["expected"] not in (0, 1)
+                                ):
+                                    break
+                                target = flag_key(test["bank"], test["bit"])
+                                if target not in fixed and not saved_flag(target):
+                                    break
+                                tests.append(target)
+                                following = test["next"]
+                            else:
+                                read_flags = read_flags | frozenset(tests)
+                                if (
+                                    tests
+                                    and len(read_flags - fixed.keys() - {acquisition})
+                                    <= 8
+                                ):
+                                    unknown = sorted(read_flags - values.keys())
+                                    for combination in itertools.product(
+                                        (False, True), repeat=len(unknown)
+                                    ):
+                                        next_values = values | dict(
+                                            zip(unknown, combination, strict=True)
+                                        )
+                                        edges = branch(
+                                            procedure,
+                                            row,
+                                            frames,
+                                            next_values,
+                                            ("unselected", 0),
+                                            False,
+                                        )
+                                        require(
+                                            len(edges) == 1,
+                                            KnownDeclaredItemFailure.Prefix,
+                                        )
+                                        target, next_frames = edges[0]
+                                        pending.append(
+                                            (
+                                                target,
+                                                next_frames,
+                                                next_values,
+                                                read_flags,
+                                                cameras,
+                                                seen,
+                                            )
+                                        )
+                            # An unsupported predicate ends only this path.
+                            # Reads after first delivery or an opaque effect
+                            # never become dependencies of an earlier target.
+                            continue
+                        else:
                             edges = branch(
                                 procedure, row, frames, values, ("unselected", 0), False
                             )
                             require(len(edges) == 1, KnownDeclaredItemFailure.Prefix)
                             position, frames = edges[0]
-                            continue
-                        if opcode == 0x47:
-                            if packet[1] == slot:
-                                callback_deliveries.add(position)
-                            break
-                        if opcode == 0:
-                            pass
-                        elif row["kind"] == "flag_write":
-                            target = flag_key(packet[1], packet[2])
-                            if (
-                                target == acquisition
-                                or target in all_fixed
-                                or packet[3] not in (0, 1)
-                                or not saved_flag(target)
-                                and target != flag_key(2, 7)
-                            ):
-                                break
-                            # STOP bit7 pauses player control. The audited
-                            # scheduler/Sce_Event gate is bit6, so accepting
-                            # arbitrary control-word writes here would be wrong.
-                            values[target] = bool(packet[3])
-                        elif (
-                            opcode == 9
-                            and packet[1] == 0x0A
-                            and int.from_bytes(packet[2:], "little")
-                        ):
-                            # The complete 09/0A sleep macro uses a task-local
-                            # counter and restores its frame before continuing.
-                            pass
-                        elif opcode == 0x29:
-                            camera = packet[1] & 0x7F
-                            if not bounded_camera(
+                    elif opcode == 0x47:
+                        if packet[1] == slot and all(
+                            bounded_camera(
                                 camera, read_flags | fixed.keys() | {acquisition}
-                            ):
-                                break
-                        else:
-                            # Other branches may display a message or await a
-                            # future event. No delivery/progress claim uses them.
-                            break
+                            )
+                            for camera in cameras
+                        ):
+                            # Check earlier camera writes against the complete
+                            # path, including predicates reached after the cut.
+                            callback_deliveries.add(position)
+                        continue
+                    elif opcode == 0:
                         position = row["next"]
+                    elif row["kind"] == "flag_write":
+                        target = flag_key(packet[1], packet[2])
+                        if (
+                            target == acquisition
+                            or target in all_fixed
+                            or packet[3] not in (0, 1)
+                            or not saved_flag(target)
+                            and target != flag_key(2, 7)
+                        ):
+                            continue
+                        # STOP bit7 pauses player control. The audited
+                        # scheduler/Sce_Event gate is bit6, so accepting
+                        # arbitrary control-word writes here would be wrong.
+                        values[target] = bool(packet[3])
+                        position = row["next"]
+                    elif (
+                        opcode == 9
+                        and packet[1] == 0x0A
+                        and int.from_bytes(packet[2:], "little")
+                    ):
+                        # The complete 09/0A sleep macro uses a task-local
+                        # counter and restores its frame before continuing.
+                        position = row["next"]
+                    elif opcode == 0x29:
+                        camera = packet[1] & 0x7F
+                        if not bounded_camera(camera, fixed.keys() | {acquisition}):
+                            continue
+                        cameras = cameras | {camera}
+                        position = row["next"]
+                    else:
+                        # Other branches may display a message or await a
+                        # future event. No delivery/progress claim uses them.
+                        continue
+                    pending.append(
+                        (position, frames, values, read_flags, cameras, seen)
+                    )
                 if callback_deliveries:
                     related_callbacks.add(callback_offset)
                     deliveries.update(callback_deliveries)
@@ -1225,7 +1344,7 @@ def known_declared_items(
                     result.append(
                         KnownPuzzleItem(
                             gid,
-                            item_type,
+                            tuple(sorted(item_types)),
                             tuple(sorted(creators)),
                             tuple(sorted(related_callbacks)),
                             tuple(sorted(deliveries)),

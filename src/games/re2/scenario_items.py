@@ -779,14 +779,41 @@ def scenario_item_proofs(
     )
 
 
+def item_identity_candidates(room: dict) -> list[dict]:
+    """Keep reset-only identities attached to the real descriptor offsets."""
+    if "reset_item_variants" not in room:
+        # Other revision profiles have no audited reset-identity catalog. The
+        # loader requires this field for profiles that advertise the capability.
+        return room["items"]
+    items = list(room["items"])
+    for variant in room["reset_item_variants"]:
+        for item in room["items"]:
+            if item["offset"] not in variant["creator_offsets"]:
+                continue
+            items.append(
+                {
+                    **item,
+                    "type": variant["type"],
+                    "amount": variant["amount"],
+                    "amounts": [variant["amount"]],
+                }
+            )
+    return items
+
+
 def scenario_item_candidates(room: dict) -> list[dict]:
     """Apply source-proven variant selection without discarding the raw catalog."""
     selected = {
         row["global_id"]: set(row["offsets"]) for row in room["scenario_item_variants"]
     }
+    selected_types = {
+        gid: {item["type"] for item in room["items"] if item["offset"] in offsets}
+        for gid, offsets in selected.items()
+    }
     return [
         item
-        for item in room["items"]
+        for item in item_identity_candidates(room)
         if item["global_id"] not in selected
         or item["offset"] in selected[item["global_id"]]
+        and item["type"] in selected_types[item["global_id"]]
     ]

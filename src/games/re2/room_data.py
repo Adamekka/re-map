@@ -245,6 +245,61 @@ OPCODE_WIDTHS = (
 )
 
 
+def reset_item_variants(data: bytes, items: list[dict], programs: dict) -> list[dict]:
+    """Bind reset-only types to their original ordinary descriptor creators."""
+    result = {}
+    for program in programs.values():
+        for row in program["commands"]:
+            if row["opcode"] != 0x46:
+                continue
+            packet = data[row["offset"] : row["next"]]
+            if (
+                len(packet) != 10
+                or packet[0] != 0x46
+                or row["kind"] != "reset"
+                or row["slot"] != packet[1]
+                or row["interaction"] != packet[2]
+                or row["data"] != list(packet[4:])
+            ):
+                raise ValueError("RE2 reset command does not match its source")
+            if packet[2] != 2 or packet[1] >= 32 or packet[3] & 0x80:
+                continue
+            item_type, amount, gid = struct.unpack_from("<3H", packet, 4)
+            creators = [
+                item
+                for item in items
+                if item["slot"] == packet[1]
+                and item["global_id"] == gid
+                and not item["four_point"]
+                and data[item["offset"] : item["offset"] + 3]
+                == bytes((0x4E, item["slot"], 2))
+                and not data[item["offset"] + 3] & 0x80
+            ]
+            if not creators or item_type in {item["type"] for item in creators}:
+                continue
+            for item in creators:
+                offset = item["offset"]
+                if (
+                    not 0 <= offset <= len(data) - 22
+                    or data[offset] != 0x4E
+                    or data[offset + 1] != item["slot"]
+                    or struct.unpack_from("<3H", data, offset + 14)[::2]
+                    != (item["type"], gid)
+                ):
+                    raise ValueError("RE2 reset creator does not match its source")
+            # Aliased script tables can decode the same physical reset twice.
+            result[row["offset"]] = {
+                "offset": row["offset"],
+                "creator_offsets": sorted(item["offset"] for item in creators),
+                "slot": packet[1],
+                "type": item_type,
+                "amount": amount,
+                "global_id": gid,
+                "sat": packet[3],
+            }
+    return [result[offset] for offset in sorted(result)]
+
+
 def decode_room(
     data: bytes,
     source: str,
@@ -506,6 +561,9 @@ def decode_room(
         "proofs": proofs,
         "sound_proofs": sound_proofs,
         "items": list(items.values()),
+        "reset_item_variants": reset_item_variants(
+            data, list(items.values()), programs
+        ),
         "doors": list(doors.values()),
         "programs": programs,
         "candidate_list_complete": complete,

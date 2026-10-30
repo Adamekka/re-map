@@ -111,7 +111,7 @@ def test_known_puzzle_catalog_requires_bound_declaration_and_callback_evidence(
     elif case == "boolean-id":
         proof["global_id"] = True
     elif case == "type":
-        proof["item_type"] += 1
+        proof["item_types"][0] += 1
     elif case == "creator":
         proof["creator_offsets"][0] += 1
     elif case == "callback":
