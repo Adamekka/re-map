@@ -2,6 +2,16 @@
 
 [Documentation index](../README.md) · [Testing index](../testing.md)
 
+## Touch map navigation
+
+Two-finger gestures now zoom and move explored maps around the midpoint, using the shared bounded zoom calculation. Adding a second finger preserves the current view; lifting one finger continues panning with the other. Native samples update both contacts before rendering, so coincident contacts establish a real scale baseline without a jump. Release applies its final coordinates even without a preceding move. Cancellation discards queued movement and releases captures. Ignored contacts cannot inspect rooms during another pointer's gesture or after its owner releases.
+
+Run `bun tests/check_map_touch_browser.mjs <python>` with Playwright available through `NODE_PATH` when needed. Trusted Chromium CDP touch input covers RE1 and RE2 pinch scale and midpoint movement, live heading updates, one-finger transitions, zoom bounds, coincident contacts, extra contacts, final release coordinates, queued-frame release/cancellation, click suppression and the next normal tap. It also covers mouse/touch ownership with both release orders, capture loss, blur, resize, tracking interruption, empty floors, floor switching and zoom controls. Assertions retain the original room count and tracker publication.
+
+All nine browser suites and 59 map/multi-area Python tests pass, alongside scoped Ruff F checks, formatting, 95 local documentation links and whitespace. A current-reader desktop/mobile render retains room inspection, door navigation, Back, item search and fresh-state behavior. The README image is regenerated and byte-identical; the user history checksum is unchanged.
+
+Implemented and directly reviewed on 2026-10-30 by root and the `gdb_latency` implementation agent, exact model `gpt-6.1-sol` from authoritative T3 runtime metadata. The independent `next_identity_evidence` reviewer, the same verified model, checks gesture ownership, scaling, limits, queued cleanup, release transitions, zero-distance contacts, click suppression and existing controls. Its trusted reproductions identify the final-release sample and mixed-pointer click defects; focused regressions cover both fixes. Browser evidence does not establish physical-device or Safari behavior, screen-reader output or gameplay correctness. Configured external review providers remain disabled and supply no endorsement. Private baseline reproduction, logs and current-reader desktop/mobile renders are under `/tmp/re-map-touch-20261030/`. No emulator gameplay or persisted data changes.
+
 ## Map-control keyboard focus
 
 Keyboard activation of Follow player and the zoom limits now moves focus to the map when the button disables, retaining scroll and immediate arrow navigation. Control readiness and focus recovery share one update path. Interrupted tracking moves focus from unavailable buttons, Floor or search to visible room details; recovery retains that position. An empty floor also uses room details. Back keeps its established details target when its last entry disappears.

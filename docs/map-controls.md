@@ -12,7 +12,9 @@ These controls work in both RE1 and RE2. Use Tab to focus the map or an explored
 | `0` | Fit all explored rooms on the displayed floor |
 | Enter or Space | Inspect the focused room |
 
-The mouse wheel and zoom buttons also zoom; dragging moves the map. Navigation keeps the selected room and reveals no unexplored rooms. Live updates preserve the chosen view and focused room. If the focused outline disappears, focus moves to the map. Keyboard controls pause when tracking is interrupted or the floor has no outlined rooms. Browser shortcuts and typing outside the map keep their usual behavior.
+The mouse wheel and zoom buttons also zoom; dragging moves the map. On a touch screen, drag with one finger or pinch with two fingers to zoom and move the view. Lift one finger to continue dragging with the other. Gestures keep the selected room; tap a room to inspect it.
+
+Navigation reveals no unexplored rooms. Live updates preserve the chosen view and focused room. If the focused outline disappears, focus moves to the map. Keyboard controls pause when tracking is interrupted or the floor has no outlined rooms. Browser shortcuts and typing outside the map keep their usual behavior.
 
 Use **Floor** to browse explored floors and **Follow player** to return to the current floor and resume selecting rooms as you enter them.
 

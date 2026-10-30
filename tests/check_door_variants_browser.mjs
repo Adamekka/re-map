@@ -59,7 +59,8 @@ try {
       const bound = [...document.querySelectorAll('[data-observations]')].flatMap(marker => marker.dataset.observations.split(' '));
       if (!base.doors.every(door => bound.includes(door.observation_id))) throw new Error('Grouping dropped a wall observation');
       const before = svg.getAttribute('viewBox');
-      zoomMap(.8, new DOMPoint(...viewport.box.slice(0, 2)));
+      const zoomPoint = new DOMPoint(...viewport.box.slice(0, 2));
+      zoomMap(.8, zoomPoint, zoomPoint);
       const zoomed = svg.getAttribute('viewBox');
       const checks = [];
       for (const [field, value] of [

@@ -137,7 +137,8 @@ try {
       draw(hidden);
       if (document.querySelectorAll('#map .room').length !== 1 || !document.querySelector(selector + ' .unlock-symbol') || !document.querySelector('#doors .entry-name').textContent.includes('Unexplored room')) throw new Error('Unlock knowledge revealed an unexplored room');
       const box = svg.getAttribute('viewBox');
-      zoomMap(.8, new DOMPoint(...viewport.box.slice(0, 2)));
+      const zoomPoint = new DOMPoint(...viewport.box.slice(0, 2));
+      zoomMap(.8, zoomPoint, zoomPoint);
       const zoomed = svg.getAttribute('viewBox');
       draw({ ...hidden, doors: [{ ...hidden.doors[0], unlock_state: 'LOCKED', key_label: 'Spade Key', label: 'Door conditions unresolved' }] });
       if (svg.getAttribute('viewBox') !== zoomed || box === zoomed) throw new Error('Flag reversal reset the chosen map view');

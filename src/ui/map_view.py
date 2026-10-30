@@ -299,7 +299,7 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 <nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
 <div id="status" role="status">Waiting for game.</div>
 <main>
-<div id="map-shell"><svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag or use the mouse wheel."></svg></div>
+<div id="map-shell"><svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag, pinch or use the mouse wheel."></svg></div>
 <aside><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
 </main>
 <div id="legend">
@@ -341,6 +341,7 @@ const labelLayouts = new Map();
 let viewport = {mode:'empty'};
 let pan = {mode:'idle'};
 let suppressMapClick = false;
+let mapClickOwner = {mode:'none'};
 const backRoomButton = document.getElementById('back-room');
 const floorSelect = document.getElementById('floor');
 const itemSearch = document.getElementById('item-search');
@@ -358,6 +359,7 @@ itemSearch.addEventListener('keydown',event=>{
   }
 });
 floorSelect.addEventListener('change',()=>{
+  endPan();
   rememberView();
   floorView={mode:'browse',area:floorSelect.value};
   selected=null;
@@ -425,20 +427,21 @@ function applyViewport() {
   }
   if(lastState && lastState.status==='display') updatePlayer();
 }
-function zoomMap(factor,point) {
+function zoomMap(factor,anchor,destination) {
   if(viewport.mode==='empty') throw new Error('Cannot zoom an empty map');
-  // Bound wheel zoom so the view cannot collapse to a point after repeated input.
+  // Bound zoom so repeated or extreme input cannot collapse the view to a point.
   const zoom=Math.max(1,Math.min(8,viewport.zoom/factor));
-  if(zoom===viewport.zoom) return;
+  if(zoom===viewport.zoom && anchor.x===destination.x && anchor.y===destination.y) return;
   const ratio=viewport.zoom/zoom,[x,y,width,height]=viewport.box;
-  viewport={...viewport,mode:'manual',zoom,box:[point.x+(x-point.x)*ratio,point.y+(y-point.y)*ratio,width*ratio,height*ratio]};
+  viewport={...viewport,mode:'manual',zoom,box:[anchor.x+(x-destination.x)*ratio,anchor.y+(y-destination.y)*ratio,width*ratio,height*ratio]};
   applyViewport();
 }
 for(const [button,factor] of [[zoomIn,.8],[zoomOut,1.25]]) {
   button.addEventListener('click',()=>{
     endPan();
     const [x,y,width,height]=viewport.box;
-    zoomMap(factor,new DOMPoint(x+width/2,y+height/2));
+    const point=new DOMPoint(x+width/2,y+height/2);
+    zoomMap(factor,point,point);
   });
 }
 fitRooms.addEventListener('click',()=>{
@@ -469,26 +472,82 @@ svg.addEventListener('wheel',event=>{
   const unit=event.deltaMode===1 ? 16 : event.deltaMode===2 ? svg.clientHeight : 1;
   const factor=Math.exp(Math.max(-1,Math.min(1,event.deltaY*unit/400)));
   const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse());
-  zoomMap(factor,point);
+  zoomMap(factor,point,point);
 },{passive:false});
 function endPan() {
   if(pan.mode==='idle') return;
-  // Cancellation can still be followed by a browser click on the original room.
-  suppressMapClick=suppressMapClick || pan.mode==='panning';
-  const pointerId=pan.pointerId;
+  // Even a cancelled pending touch can produce a click on its original room.
+  // A completed ordinary tap explicitly restores clicks in pointerup below.
+  suppressMapClick=true;
+  if(pan.mode==='pinching' && pan.update.mode==='queued') cancelAnimationFrame(pan.update.id);
+  const pointerIds=pan.mode==='pinching' ? pan.pointers.map(pointer=>pointer.pointerId) : [pan.pointerId];
   pan={mode:'idle'};
   svg.classList.remove('panning');
-  if(svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
+  for(const pointerId of pointerIds) if(svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
+}
+function ownsPanPointer(pointerId) {
+  return pan.mode==='pinching' ? pan.pointers.some(pointer=>pointer.pointerId===pointerId) : pan.mode!=='idle' && pan.pointerId===pointerId;
+}
+function beginPan(pointerId,pointerType,point,mode) {
+  if(mode!=='pending' && mode!=='panning') throw new Error('Invalid single-pointer gesture mode');
+  if(pan.mode==='pinching' && pan.update.mode==='queued') throw new Error('A queued pinch must finish before starting a pan');
+  pan={mode,pointerId,pointerType,start:point,point,matrix:svg.getScreenCTM().inverse(),box:viewport.box,zoom:viewport.zoom};
+  svg.classList.toggle('panning',mode==='panning');
+  if(mode==='panning') svg.setPointerCapture(pointerId);
+}
+function updatePinch() {
+  if(pan.mode!=='pinching') throw new Error('Only a pinch can update its viewport');
+  pan={...pan,update:{mode:'idle'}};
+  const [[ax,ay],[bx,by]]=pan.pointers.map(pointer=>pointer.point);
+  const distance=Math.hypot(bx-ax,by-ay);
+  const destination=new DOMPoint((ax+bx)/2,(ay+by)/2).matrixTransform(svg.getScreenCTM().inverse());
+  if(distance===0 || pan.distance===0) {
+    // Coincident contacts have no scale ratio. Rebase at the next separated
+    // sample instead of inventing a distance that would jump the viewport.
+    pan={...pan,anchor:destination,distance,zoom:viewport.zoom};
+    return;
+  }
+  // Retain the original scale reference through clamping, so the result
+  // describes the complete gesture rather than each contact's event order.
+  zoomMap(viewport.zoom/(pan.zoom*distance/pan.distance),pan.anchor,destination);
 }
 svg.addEventListener('pointerdown',event=>{
-  if(event.button!==0 || !event.isPrimary || lastState===null || lastState.status!=='display' || viewport.mode==='empty') return;
-  endPan();
+  if(event.button!==0 || lastState===null || lastState.status!=='display' || viewport.mode==='empty') return;
+  if(pan.mode!=='idle') {
+    // Keep the owned pointer type and pair; another contact must not replace
+    // their anchor or switch a mouse/pen gesture into a touch gesture.
+    if(pan.mode==='pinching' || pan.pointerType!=='touch' || event.pointerType!=='touch' || pan.pointerId===event.pointerId) return;
+    const pointers=[{pointerId:pan.pointerId,point:pan.point},{pointerId:event.pointerId,point:[event.clientX,event.clientY]}];
+    const [[ax,ay],[bx,by]]=pointers.map(pointer=>pointer.point);
+    const anchor=new DOMPoint((ax+bx)/2,(ay+by)/2).matrixTransform(svg.getScreenCTM().inverse());
+    pan={mode:'pinching',pointers,anchor,distance:Math.hypot(bx-ax,by-ay),zoom:viewport.zoom,update:{mode:'idle'}};
+    suppressMapClick=true;
+    viewport={...viewport,mode:'manual'};
+    for(const pointer of pointers) svg.setPointerCapture(pointer.pointerId);
+    svg.classList.add('panning');
+    applyViewport();
+    event.preventDefault();
+    return;
+  }
+  if(!event.isPrimary) return;
   suppressMapClick=false;
-  pan={mode:'pending',pointerId:event.pointerId,start:[event.clientX,event.clientY],matrix:svg.getScreenCTM().inverse(),box:viewport.box,zoom:viewport.zoom};
+  mapClickOwner={mode:'pointer',pointerId:event.pointerId};
+  beginPan(event.pointerId,event.pointerType,[event.clientX,event.clientY],'pending');
 });
 window.addEventListener('pointermove',event=>{
-  if(pan.mode==='idle' || event.pointerId!==pan.pointerId) return;
+  if(!ownsPanPointer(event.pointerId)) return;
   if(event.buttons===0) {endPan();return;}
+  if(pan.mode==='pinching') {
+    pan={...pan,pointers:pan.pointers.map(pointer=>pointer.pointerId===event.pointerId ? {...pointer,point:[event.clientX,event.clientY]} : pointer)};
+    if(pan.update.mode==='idle') {
+      // One native touch sample emits separate pointer events. Read both
+      // contacts together before choosing a scale or a coincident baseline.
+      pan={...pan,update:{mode:'queued',id:requestAnimationFrame(updatePinch)}};
+    }
+    event.preventDefault();
+    return;
+  }
+  pan={...pan,point:[event.clientX,event.clientY]};
   if(pan.mode==='pending') {
     // A small movement is still a room click; capture only an actual drag.
     if(Math.hypot(event.clientX-pan.start[0],event.clientY-pan.start[1])<4) return;
@@ -503,15 +562,37 @@ window.addEventListener('pointermove',event=>{
   applyViewport();
 });
 window.addEventListener('pointerup',event=>{
-  if(pan.mode==='idle' || event.pointerId!==pan.pointerId) return;
-  suppressMapClick=pan.mode==='panning';
+  if(!ownsPanPointer(event.pointerId)) return;
+  if(pan.mode==='pinching') {
+    // Release can carry a new position without a preceding move event.
+    const point=pan.pointers.find(pointer=>pointer.pointerId===event.pointerId).point;
+    const needsUpdate=pan.update.mode==='queued' || point[0]!==event.clientX || point[1]!==event.clientY;
+    pan={...pan,pointers:pan.pointers.map(pointer=>pointer.pointerId===event.pointerId ? {...pointer,point:[event.clientX,event.clientY]} : pointer)};
+    if(pan.update.mode==='queued') cancelAnimationFrame(pan.update.id);
+    if(needsUpdate) updatePinch();
+    const remaining=pan.pointers.find(pointer=>pointer.pointerId!==event.pointerId);
+    beginPan(remaining.pointerId,'touch',remaining.point,'panning');
+    if(svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+    return;
+  }
+  const dragged=pan.mode==='panning';
   endPan();
+  suppressMapClick=dragged;
 });
-window.addEventListener('pointercancel',event=>{if(pan.mode!=='idle' && event.pointerId===pan.pointerId) endPan();});
-svg.addEventListener('lostpointercapture',event=>{if(pan.mode!=='idle' && event.pointerId===pan.pointerId) endPan();});
+window.addEventListener('pointercancel',event=>{if(ownsPanPointer(event.pointerId)) endPan();});
+svg.addEventListener('lostpointercapture',event=>{
+  // Transferring a touch's implicit room capture to the SVG also emits loss.
+  // Cancel only when the SVG itself no longer owns the tracked pointer.
+  if(ownsPanPointer(event.pointerId) && !svg.hasPointerCapture(event.pointerId)) endPan();
+});
 window.addEventListener('blur',endPan);
+window.addEventListener('resize',endPan);
 svg.addEventListener('click',event=>{
-  if(suppressMapClick && event.detail>0) {suppressMapClick=false;event.preventDefault();event.stopPropagation();}
+  // Multiple released contacts can produce clicks. Only a fresh pointerdown
+  // restores ordinary clicking, so the rest of a cancelled gesture stays inert.
+  // A rejected contact can also click after the owned gesture has ended.
+  const unowned='pointerId' in event && (mapClickOwner.mode==='none' || event.pointerId!==mapClickOwner.pointerId);
+  if(event.detail>0 && (suppressMapClick || pan.mode!=='idle' || unowned)) {event.preventDefault();event.stopPropagation();}
 },{capture:true});
 function reportError(source,error) {
   const details = {source,message:(error instanceof Error ? error.message : String(error)).slice(0,500),stack:(error instanceof Error && typeof error.stack === 'string' ? error.stack : '').slice(0,2000)};
