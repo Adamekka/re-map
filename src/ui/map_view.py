@@ -209,6 +209,7 @@ main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; b
 #map.panning,#map.panning .room { cursor:grabbing; }
 #zoom-level { min-width:4ch; text-align:center; font-size:13px; color:#abb9c5; }
 .room { cursor:pointer; }
+.room[aria-disabled="true"] { cursor:default; }
 .room path { stroke:#8a9ca9; stroke-width:.65; fill:#42515d; stroke-linejoin:miter; }
 .room.INCOMPLETE path { fill:#743e40; }
 .room.INCOMPLETE.story-items > path:first-child { fill:#685331; }
@@ -715,6 +716,7 @@ function updatePlayer() {
 function draw(state) {
   const status=document.getElementById('status');
   const focusedRoom=svg.querySelector('.room:focus');
+  const focusedMap=document.activeElement===svg;
   const focusedDoor=document.querySelector('#doors .door-room-link:focus');
   const focusedResult=document.querySelector('#overview .room-link:focus');
   const focusedArea=viewport.mode==='empty' ? null : viewport.area;
@@ -727,6 +729,8 @@ function draw(state) {
     svg.querySelectorAll('.room').forEach(room=>{
       room.classList.remove('current','INCOMPLETE','CLEARED','VISITED');
       room.classList.add('UNKNOWN');
+      room.setAttribute('tabindex','-1');
+      room.setAttribute('aria-disabled','true');
     });
     svg.querySelectorAll('.door,.player').forEach(marker=>marker.remove());
     document.getElementById('room-id').textContent=document.getElementById('room-id').textContent.replace(' · Current room','');
@@ -747,8 +751,9 @@ function draw(state) {
       message.hidden=false;
       message.textContent='Tracking interrupted.';
     }
-    // Overview results can be far below the details; expose the replacement focus target when they disappear.
-    if(focusedDoor || focusedResult) document.getElementById('room-name').focus({preventScroll:focusedResult===null});
+    // Disabled outlines and removed results can be far from the details.
+    // Expose the recovery target instead of leaving focus on unusable controls.
+    if(focusedRoom || focusedMap || focusedDoor || focusedResult) document.getElementById('room-name').focus({preventScroll:!focusedRoom && !focusedMap && focusedResult===null});
     return;
   }
   const availableViews=new Map(Object.entries(state.explored_areas).map(([area,visits])=>[area,new Set(visits.map(visit=>visit.id))]));
@@ -911,8 +916,10 @@ function draw(state) {
     }
     label.setAttribute('transform','translate('+layout.center.join(' ')+') rotate('+layout.angle+') scale('+layout.scale+') translate('+layout.offset.join(' ')+')');
     setLines(layout.lines);
-    group.addEventListener('click',()=>{rememberView();selected=id;draw(lastState);});
+    // Retained SVG buttons need their own activation guard while tracking is interrupted.
+    group.addEventListener('click',()=>{if(lastState.status!=='display') return;rememberView();selected=id;draw(lastState);});
     group.addEventListener('keydown',event=>{
+      if(lastState.status!=='display') return;
       if(event.key==='Enter' || event.key===' ') {
         event.preventDefault();rememberView();selected=id;draw(lastState);
       }
