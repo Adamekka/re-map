@@ -9,9 +9,11 @@ from test_re2_metadata import ROOT, item_command
 from test_re2_room_write_partitions import CONFIG, END, md1, source
 from test_re2_scenario_reachability import actor_copy_source as actor_copy_source
 
-from games.re2.immutable_open_doors import (
-    ImmutableOpenDoorFailure,
-    immutable_open_doors,
+from games.re2.immutable_open_doors import immutable_open_doors
+from games.re2.room_lifetime_proof import (
+    RoomLifetimeFailure,
+    RoomLifetimeProof,
+    room_lifetime_proof,
 )
 from games.re2.room_entry_contract import (
     RoomEntryContractConfig,
@@ -70,6 +72,31 @@ def compiled(init, main, models, profile, entry_contract):
     data, room, _ = source(init, main, models, [0])
     room["stage"] = 1
     return immutable_open_doors(data, room, profile, entry_contract, CONFIG)
+
+
+def test_shared_lifetime_receipt_binds_source_and_programs_without_requiring_a_door(
+    profile, entry_contract
+):
+    data, room, _ = source(END, (object_command(0) + END, END), [md1(1, 1)], [0])
+    room["stage"] = 1
+    proof = room_lifetime_proof(data, room, profile, entry_contract, CONFIG)
+    assert isinstance(proof, RoomLifetimeProof)
+    assert proof.matches_source(data, room["programs"])
+    assert proof.entry_contract is entry_contract
+    assert proof.allocation_programs == frozenset({"17:0"})
+    assert dict(proof.startup_visits)["17:0"] == 1
+    assert (
+        proof.partitions.objects[0].command_offset == room["programs"]["17:0"]["entry"]
+    )
+    assert proof.actor_write_proof.reached_locations
+    assert immutable_open_doors(data, room, profile, entry_contract, CONFIG) == ()
+
+    changed_data = bytearray(data)
+    changed_data[-1] ^= 1
+    assert not proof.matches_source(bytes(changed_data), room["programs"])
+    changed_programs = copy.deepcopy(room["programs"])
+    changed_programs["17:0"]["commands"][0]["kind"] = "changed"
+    assert not proof.matches_source(data, changed_programs)
 
 
 def test_partitioned_collision_prefix_proves_both_identical_door_bindings(
@@ -189,7 +216,7 @@ def test_models_require_fresh_single_startup_execution(profile, entry_contract, 
         main = (END, END)
     assert (
         compiled(init, main, [md1(1, 1)], profile, entry_contract)
-        is ImmutableOpenDoorFailure.RepeatedAllocation
+        is RoomLifetimeFailure.RepeatedAllocation
     )
 
 
@@ -197,7 +224,7 @@ def test_unknown_callback_namespace_is_not_an_entry_proof(profile, entry_contrac
     callback = bytes([0x2C, 3, 5, 0x31]) + bytes(10) + bytes([0xFF, 0, 0x18, 2, 0, 0])
     assert (
         compiled(door() + callback + END, (END, END, END), [], profile, entry_contract)
-        is ImmutableOpenDoorFailure.EntryContract
+        is RoomLifetimeFailure.EntryContract
     )
 
 
@@ -208,7 +235,7 @@ def test_non_scheduling_callback_alone_does_not_certify_its_writes(
     callback = bytes([0x2C, 3, kind, 0x31]) + bytes(16)
     assert (
         compiled(door() + callback + END, (END, END), [], profile, entry_contract)
-        is ImmutableOpenDoorFailure.CallbackEffects
+        is RoomLifetimeFailure.CallbackEffects
     )
 
 
@@ -218,13 +245,13 @@ def test_source_or_counter_mutations_cannot_borrow_an_actor_domain(
     mutated = bytes([0x1D, 0, 0, 0]) + door() + END
     assert (
         compiled(mutated, (END, END), [], profile, entry_contract)
-        is ImmutableOpenDoorFailure.FixedContext
+        is RoomLifetimeFailure.FixedContext
     )
     altered = copy.deepcopy(profile)
     altered["runtime_layout"]["script_counter_address_ps1"] = "0x800CE558"
     assert (
         compiled(door() + END, (END, END), [], altered, entry_contract)
-        is ImmutableOpenDoorFailure.InputBinding
+        is RoomLifetimeFailure.InputBinding
     )
 
 
@@ -266,7 +293,7 @@ def test_embedded_model_packets_cannot_hide_attach_or_effect_writes(
             profile,
             entry_contract,
         )
-        is ImmutableOpenDoorFailure.WriteEffects
+        is RoomLifetimeFailure.WriteEffects
     )
 
 
@@ -288,7 +315,7 @@ def test_constructors_cannot_grow_the_heap_by_reentry(profile, entry_contract, c
         main = (constructor + constructor + END, END)
     assert (
         compiled(door() + END, main, [], profile, entry_contract)
-        is ImmutableOpenDoorFailure.RepeatedAllocation
+        is RoomLifetimeFailure.RepeatedAllocation
     )
 
 
@@ -415,9 +442,7 @@ def test_callback_resource_or_binding_changes_withhold_open(
             if row["kind"] == "interaction"
         )
         struct.pack_into("<H", data, camera["offset"] + 16, 0)
-    assert isinstance(
-        compile_data(data, profile, entry_contract), ImmutableOpenDoorFailure
-    )
+    assert isinstance(compile_data(data, profile, entry_contract), RoomLifetimeFailure)
 
 
 def test_owned_source_artifact_contains_two_applicable_immutable_doors():
@@ -452,11 +477,11 @@ def test_native_contract_cannot_be_reused_with_another_layout_or_revision(
         immutable_open_doors(
             bytes(data), room, profile, entry_contract, replace(CONFIG, aot_capacity=64)
         )
-        is ImmutableOpenDoorFailure.EntryContract
+        is RoomLifetimeFailure.EntryContract
     )
     other = copy.deepcopy(profile)
     other["executable_identity"] = "SLUS_004.21 SHA256 " + "0" * 64
     assert (
         immutable_open_doors(bytes(data), room, other, entry_contract, CONFIG)
-        is ImmutableOpenDoorFailure.EntryContract
+        is RoomLifetimeFailure.EntryContract
     )
