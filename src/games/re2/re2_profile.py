@@ -182,6 +182,10 @@ class Re2Profile:
             raise ValueError("RE2 room-entry proof disagrees with its revision layout")
         if isinstance(entry_contract, RoomEntryContractConfig):
             entry_stages = frozenset(row.stage for row in entry_contract.stage_entries)
+        if isinstance(declaration_config, StartupDeclarationAuditConfig):
+            declaration_sources = {
+                row.room_id: row for row in declaration_config.selection.sources
+            }
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -572,6 +576,99 @@ class Re2Profile:
                 ):
                     raise ValueError("unbound RE2 known puzzle-item identity")
                 puzzle_ids.add(proof["global_id"])
+            direct_capable = puzzle_capable and isinstance(
+                declaration_config, StartupDeclarationAuditConfig
+            )
+            direct_pickups = room.get("known_direct_pickups", [])
+            if (
+                direct_capable
+                and "known_direct_pickups" not in room
+                or not direct_capable
+                and "known_direct_pickups" in room
+                or type(direct_pickups) is not list
+                or len(direct_pickups) > layout["aot_capacity"]
+            ):
+                raise ValueError("invalid or missing RE2 known direct-pickup proofs")
+            direct_ids = set()
+            for proof in direct_pickups:
+                if (
+                    type(proof) is not dict
+                    or proof.keys()
+                    != {
+                        "global_id",
+                        "item_type",
+                        "slot",
+                        "creator_offsets",
+                        "context_conditions",
+                    }
+                    or type(proof["global_id"]) is not int
+                    or not 0 <= proof["global_id"] <= 255
+                    or proof["global_id"] in direct_ids | declaration_ids | puzzle_ids
+                    or type(proof["item_type"]) is not int
+                    or not 0 <= proof["item_type"] < layout["file_type_min"]
+                    or type(proof["slot"]) is not int
+                    or not 0 <= proof["slot"] < layout["aot_capacity"]
+                    or type(room.get("stage")) is not int
+                    or room["stage"] != 0
+                    or room["stage"] not in entry_stages
+                    or type(room.get("size")) is not int
+                    or type(room.get("scenario_absent_item_ids")) is not list
+                    or proof["global_id"] in room["scenario_absent_item_ids"]
+                    or type(proof["creator_offsets"]) is not list
+                    or not proof["creator_offsets"]
+                    or any(
+                        type(offset) is not int or not 0 <= offset <= room["size"] - 22
+                        for offset in proof["creator_offsets"]
+                    )
+                    or proof["creator_offsets"] != sorted(set(proof["creator_offsets"]))
+                    or type(proof["context_conditions"]) is not list
+                    or len(proof["context_conditions"]) > 32
+                    or any(
+                        not valid_presence(condition, context_flags)
+                        or condition["kind"] != "conditions"
+                        for condition in proof["context_conditions"]
+                    )
+                ):
+                    raise ValueError("invalid RE2 known direct-pickup proof")
+                # The source/routing receipt qualifies stage zero only. Its
+                # exact corpus identity is required even for an empty context.
+                if key not in declaration_sources or (
+                    room.get("source"),
+                    room.get("size"),
+                    room.get("sha256"),
+                ) != (
+                    declaration_sources[key].path,
+                    declaration_sources[key].width,
+                    declaration_sources[key].sha256,
+                ):
+                    raise ValueError("unbound RE2 known direct-pickup source")
+                if type(room.get("items")) is not list or any(
+                    type(item) is not dict
+                    or not {"offset", "global_id", "type", "slot", "four_point"}
+                    <= item.keys()
+                    or any(
+                        type(item[field]) is not int
+                        for field in ("offset", "global_id", "type", "slot")
+                    )
+                    or type(item["four_point"]) is not bool
+                    for item in room["items"]
+                ):
+                    raise ValueError("invalid RE2 known direct-pickup source")
+                creators = [
+                    item
+                    for item in room["items"]
+                    if item["global_id"] == proof["global_id"]
+                ]
+                if (
+                    not creators
+                    or {(item["slot"], item["type"]) for item in creators}
+                    != {(proof["slot"], proof["item_type"])}
+                    or any(item["four_point"] for item in creators)
+                    or sorted(item["offset"] for item in creators)
+                    != proof["creator_offsets"]
+                ):
+                    raise ValueError("unbound RE2 known direct-pickup identity")
+                direct_ids.add(proof["global_id"])
             open_doors = room.get("immutable_open_doors", [])
             if (
                 isinstance(entry_contract, RoomEntryContractConfig)

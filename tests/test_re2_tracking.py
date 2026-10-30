@@ -689,14 +689,29 @@ def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapsh
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
 @pytest.mark.parametrize(
-    "room_key,gid,story_bit,item_type,quantity,list_complete",
+    "room_key,gid,story_bit,item_type,quantity,list_complete,completion_when_taken",
     [
-        ("01-00", 93, 72, 89, ItemQuantityState.Unreconstructed, False),
-        ("00-12", 21, 24, 59, 1, True),
+        (
+            "01-00",
+            93,
+            72,
+            89,
+            ItemQuantityState.Unreconstructed,
+            False,
+            RoomCompletion.Unknown,
+        ),
+        ("00-12", 21, 24, 59, 1, True, RoomCompletion.Incomplete),
     ],
 )
 def test_declared_puzzle_stays_required_before_activation_and_rewinds(
-    snapshot, room_key, gid, story_bit, item_type, quantity, list_complete
+    snapshot,
+    room_key,
+    gid,
+    story_bit,
+    item_type,
+    quantity,
+    list_complete,
+    completion_when_taken,
 ):
     """RE2-PUZZLE-001/002: knowledge grants neither quantity nor clearance."""
     profile, _, put, read = snapshot
@@ -732,7 +747,7 @@ def test_declared_puzzle_stays_required_before_activation_and_rewinds(
         assert key.quantity == quantity
         assert room.list_complete is list_complete
         assert room.completion is (
-            RoomCompletion.Unknown if acquired else RoomCompletion.Incomplete
+            completion_when_taken if acquired else RoomCompletion.Incomplete
         )
         fresh = Tracker()
         fresh.mark_current(room_id)

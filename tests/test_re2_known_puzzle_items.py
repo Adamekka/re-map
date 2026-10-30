@@ -9,7 +9,11 @@ import pytest
 from test_re2_metadata import PRESENCE_COUNTERS, PRESENCE_FLAGS, PRESENCE_WRITES
 from test_re2_room_write_partitions import END, md1, source
 
-from games.re2.known_puzzle_items import KnownPuzzleItemFailure, known_puzzle_items
+from games.re2.known_puzzle_items import (
+    KnownDeclaredItemFailure,
+    KnownDeclaredItems,
+    known_declared_items,
+)
 from games.re2.room_data import decode_room
 from games.re2.room_entry_contract import (
     RoomEntryContractConfig,
@@ -18,6 +22,18 @@ from games.re2.room_entry_contract import (
 )
 from games.re2.room_write_partitions import RoomWritePartitionConfig
 from games.re2.script_dispatch_items import script_item_dispatch
+from games.re2.startup_declarations import StartupDeclarationSupport
+
+
+def puzzle_items(data, room, profile, receipt, dispatch):
+    # These tests isolate the puzzle projection. Direct pickup selection has
+    # separate tests with an explicitly bound routing/declaration receipt.
+    compiled = known_declared_items(
+        data, room, profile, receipt, dispatch, StartupDeclarationSupport.Unaudited
+    )
+    return (
+        compiled.puzzle_items if isinstance(compiled, KnownDeclaredItems) else compiled
+    )
 
 
 @pytest.fixture
@@ -91,9 +107,7 @@ def delivery(prefix=b"", slot=9):
 def compile_source(profile, receipt, init, main, models=(), cameras=(0,)):
     data, room, _ = source(init, main, models, cameras)
     room["stage"] = 1
-    return known_puzzle_items(
-        data, room, profile, receipt, script_item_dispatch(profile)
-    )
+    return puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
 
 
 def test_declared_player_callback_target_is_known_before_its_puzzle_guard(
@@ -135,7 +149,7 @@ def test_declaration_cannot_use_a_fifth_native_call_frame(profile, receipt):
             leaf,
         ),
     )
-    assert result is KnownPuzzleItemFailure.Prefix
+    assert result is KnownDeclaredItemFailure.Prefix
 
 
 def test_only_a_leading_mode_return_guard_is_a_historical_entry_requirement(
@@ -169,7 +183,7 @@ def test_opposite_entry_mode_must_have_a_closed_native_effect_set(
     main = (conditional(1, 6, 1, effect + END) + callback() + END, END, delivery())
     assert (
         compile_source(profile, receipt, init, main)
-        is KnownPuzzleItemFailure.NativeContract
+        is KnownDeclaredItemFailure.NativeContract
     )
 
 
@@ -186,7 +200,7 @@ def test_opposite_entry_door_stops_at_the_audited_transition_boundary(
     assert (
         len(result) == 1
         if (model, lock) == (13, 0)
-        else result is KnownPuzzleItemFailure.NativeContract
+        else result is KnownDeclaredItemFailure.NativeContract
     )
 
 
@@ -217,13 +231,13 @@ def test_opposite_mode_nonchoice_message_binds_both_owned_language_resources(
         bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     room["stage"] = 1
-    result = known_puzzle_items(
+    result = puzzle_items(
         bytes(data), room, profile, receipt, script_item_dispatch(profile)
     )
     assert (
         len(result) == 1
         if case == "both-languages"
-        else result is KnownPuzzleItemFailure.NativeContract
+        else result is KnownDeclaredItemFailure.NativeContract
     )
 
 
@@ -335,7 +349,7 @@ def test_prefix_flags_may_not_rewrite_enforced_entry_settings(profile, receipt):
         b"\x22\x01\x01\0" + item() + END,
         (callback() + END, END, delivery()),
     )
-    assert result is KnownPuzzleItemFailure.SourceMutation
+    assert result is KnownDeclaredItemFailure.SourceMutation
 
 
 @pytest.mark.parametrize(
@@ -366,7 +380,7 @@ def test_later_fixed_mode_writers_cannot_authorize_a_skipped_historical_declarat
     result = compile_source(
         profile, receipt, init, (callback() + END, writer + END, delivery())
     )
-    assert result is KnownPuzzleItemFailure.SourceMutation
+    assert result is KnownDeclaredItemFailure.SourceMutation
 
 
 def test_native_flag_setter_outside_reader_bank_width_is_checked_by_physical_mask(
@@ -458,7 +472,7 @@ def test_copy_cannot_redirect_the_declared_identity(profile, receipt):
     # Copy's target is the following item's type halfword.
     init = bytes((0x1D, 0, 14, 1)) + item() + END
     result = compile_source(profile, receipt, init, (callback() + END, END, delivery()))
-    assert result is KnownPuzzleItemFailure.SourceMutation
+    assert result is KnownDeclaredItemFailure.SourceMutation
 
 
 @pytest.mark.parametrize("target", ["aot-slot", "cut-camera", "object-mode"])
@@ -519,10 +533,10 @@ def test_copy_cannot_change_any_operand_used_by_the_positive_proof(
     )
     room["stage"] = 1
     assert (
-        known_puzzle_items(
+        puzzle_items(
             bytes(changed), room, profile, receipt, script_item_dispatch(profile)
         )
-        is KnownPuzzleItemFailure.SourceMutation
+        is KnownDeclaredItemFailure.SourceMutation
     )
 
 
@@ -540,7 +554,7 @@ def test_long_startup_is_a_modeled_analysis_limit(profile, receipt):
     result = compile_source(
         profile, receipt, bytes(300) + item() + END, (callback() + END, END, delivery())
     )
-    assert result is KnownPuzzleItemFailure.Prefix
+    assert result is KnownDeclaredItemFailure.Prefix
 
 
 def test_retained_source_may_not_overlap_native_upper_graphics_work(profile, receipt):
@@ -555,10 +569,8 @@ def test_retained_source_may_not_overlap_native_upper_graphics_work(profile, rec
     )
     room["stage"] = 1
     assert (
-        known_puzzle_items(
-            bytes(data), room, profile, receipt, script_item_dispatch(profile)
-        )
-        is KnownPuzzleItemFailure.NativeContract
+        puzzle_items(bytes(data), room, profile, receipt, script_item_dispatch(profile))
+        is KnownDeclaredItemFailure.NativeContract
     )
 
 
@@ -589,10 +601,8 @@ def test_exact_source_entry_and_revision_binding_is_mandatory(profile, receipt, 
         profile["executable_identity"] = "SLUS_007.48 SHA256 " + "0" * 64
     else:
         room["stage"] = 2
-    result = known_puzzle_items(
-        data, room, profile, receipt, script_item_dispatch(profile)
-    )
-    assert isinstance(result, KnownPuzzleItemFailure)
+    result = puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
+    assert isinstance(result, KnownDeclaredItemFailure)
 
 
 def mode_worker_source(worker, frame):
@@ -617,9 +627,7 @@ def test_second_root_guard_can_establish_a_target_after_first_root_finishes(
     profile, receipt
 ):
     data, room, _ = mode_worker_source(b"\0", b"\x04\xff\x18\x03")
-    result = known_puzzle_items(
-        data, room, profile, receipt, script_item_dispatch(profile)
-    )
+    result = puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
     assert len(result) == 1
     assert result[0].context_conditions == [
         {"kind": "conditions", "any_of": [[{"bank": 1, "bit": 6, "expected": 0}]]}
@@ -633,7 +641,7 @@ def test_independent_leading_guards_cannot_be_flipped_together(profile, receipt)
         conditional(1, 1, 1, END) + END,
         (conditional(1, 6, 1, END) + item() + callback() + END, END, delivery()),
     )
-    assert isinstance(result, KnownPuzzleItemFailure) or result == ()
+    assert isinstance(result, KnownDeclaredItemFailure) or result == ()
 
 
 @pytest.mark.parametrize("predicate", [b"\x23\0\x1a\0\x07\0", b"\x50\x01\0\x10"])
@@ -645,10 +653,8 @@ def test_readonly_predicates_keep_both_possible_opposite_branches(
     worker = b"\x06\0" + struct.pack("<H", len(predicate) + len(body) + 2)
     worker += predicate + body + b"\x08\0"
     data, room, _ = mode_worker_source(worker, b"\x04\xff\x18\x03")
-    result = known_puzzle_items(
-        data, room, profile, receipt, script_item_dispatch(profile)
-    )
-    assert isinstance(result, KnownPuzzleItemFailure) if unsafe else len(result) == 1
+    result = puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
+    assert isinstance(result, KnownDeclaredItemFailure) if unsafe else len(result) == 1
 
 
 def test_worker_work_selection_survives_a_call_and_return(profile, receipt):
@@ -666,11 +672,7 @@ def test_worker_work_selection_survives_a_call_and_return(profile, receipt):
     )
     room["stage"] = 1
     assert (
-        len(
-            known_puzzle_items(
-                data, room, profile, receipt, script_item_dispatch(profile)
-            )
-        )
+        len(puzzle_items(data, room, profile, receipt, script_item_dispatch(profile)))
         == 1
     )
 
@@ -693,8 +695,8 @@ def test_worker_cannot_inherit_unproved_work_or_replace_itself(
 ):
     data, room, _ = mode_worker_source(worker, frame)
     assert isinstance(
-        known_puzzle_items(data, room, profile, receipt, script_item_dispatch(profile)),
-        KnownPuzzleItemFailure,
+        puzzle_items(data, room, profile, receipt, script_item_dispatch(profile)),
+        KnownDeclaredItemFailure,
     )
 
 
@@ -726,13 +728,11 @@ def test_opposite_while_requires_a_balanced_immutable_coordinate_body(
     work = b"" if case == "missing-work" else b"\x2e\x04\x04"
     worker = work + b"\x09\x0a\x05\0" + loop + b"\x34\x0c\xe0\xac\x09\x0a\x0f\0"
     data, room, _ = mode_worker_source(worker, b"\x04\xff\x18\x03")
-    result = known_puzzle_items(
-        data, room, profile, receipt, script_item_dispatch(profile)
-    )
+    result = puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
     assert (
         len(result) == 1
         if case == "valid"
-        else isinstance(result, KnownPuzzleItemFailure)
+        else isinstance(result, KnownDeclaredItemFailure)
     )
 
 
@@ -763,13 +763,11 @@ def test_copied_flag_indices_require_a_disjoint_bank_and_immutable_proof_path(
         next(row for row in profile["flag_banks"] if row["bank"] == 5)[
             "address_ps1"
         ] = "0x800CFB74"
-    result = known_puzzle_items(
-        data, room, profile, receipt, script_item_dispatch(profile)
-    )
+    result = puzzle_items(data, room, profile, receipt, script_item_dispatch(profile))
     assert (
         len(result) == 1
         if target == "unrelated-bit"
-        else isinstance(result, KnownPuzzleItemFailure)
+        else isinstance(result, KnownDeclaredItemFailure)
     )
 
 
@@ -811,13 +809,13 @@ def test_worker_sound_requires_owned_immutable_resources_and_closed_entries(
         bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     room["stage"] = 1
-    result = known_puzzle_items(
+    result = puzzle_items(
         bytes(data), room, profile, receipt, script_item_dispatch(profile)
     )
     assert (
         len(result) == 1
         if case == "valid"
-        else isinstance(result, KnownPuzzleItemFailure)
+        else isinstance(result, KnownDeclaredItemFailure)
     )
 
 
@@ -850,11 +848,11 @@ def test_opposite_reset_requires_a_fresh_owner_and_bounded_nonchoice_callback(
         bytes(data), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     room["stage"] = 1
-    result = known_puzzle_items(
+    result = puzzle_items(
         bytes(data), room, profile, receipt, script_item_dispatch(profile)
     )
     assert (
         len(result) == 1
         if case == "valid"
-        else isinstance(result, KnownPuzzleItemFailure)
+        else isinstance(result, KnownDeclaredItemFailure)
     )

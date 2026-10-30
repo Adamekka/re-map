@@ -145,6 +145,7 @@ def startup_declarations(
     from games.re2.room_write_partitions import (
         EmbeddedModelResource,
         ScaWritePartition,
+        direct_pickup_packet,
         embedded_model_resource,
         sca_write_partition,
         static_object_packet,
@@ -398,22 +399,7 @@ def startup_declarations(
             len(constructors) <= 4 and len(set(constructors)) == len(constructors),
             StartupDeclarationFailure.Prefix,
         )
-        model_heap = sum(
-            sum(
-                int.from_bytes(
-                    data[
-                        m.asset.offset + 12 + i * 28 + 20 : m.asset.offset
-                        + 12
-                        + i * 28
-                        + 24
-                    ],
-                    "little",
-                )
-                * (80 if i % 2 == 0 else 104)
-                for i in range(m.render_objects)
-            )
-            for m in models.values()
-        )
+        model_heap = sum(model.primitive_heap_width for model in models.values())
         # All live actors may allocate both ordinary and shadow packets. The
         # shared model/UV and incoming Door arenas must remain separate even
         # when every constructor's acquisition guard permits allocation.
@@ -519,13 +505,7 @@ def startup_declarations(
                 if row["offset"] not in offsets:
                     continue
                 packet = data[row["offset"] : row["next"]]
-                if (
-                    row["opcode"] != 0x4E
-                    or packet[2:4] != b"\x02\x31"
-                    or not all(struct.unpack_from("<2H", packet, 10))
-                    or not int.from_bytes(packet[16:18], "little")
-                    or packet[21] != 0
-                ):
+                if not direct_pickup_packet(packet):
                     targets.clear()
                     break
                 targets.add((key, row["offset"]))

@@ -37,7 +37,7 @@ from games.re2.initializer_control_proof import (
     initializer_control_config,
     initializer_control_proof,
 )
-from games.re2.known_puzzle_items import known_puzzle_items
+from games.re2.known_puzzle_items import KnownDeclaredItems, known_declared_items
 from games.re2.map_layout import Re2MapProjection
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -469,16 +469,27 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 else []
             )
             if isinstance(dispatch, ScriptItemDispatchConfig):
-                targets = known_puzzle_items(
-                    sources[room["id"]], room, profile, entry_contract, dispatch
+                targets = known_declared_items(
+                    sources[room["id"]],
+                    room,
+                    profile,
+                    entry_contract,
+                    dispatch,
+                    declaration_contract,
                 )
                 # A declared puzzle requirement is independent of current
                 # access and cannot supply missing variants or list coverage.
                 room["known_puzzle_items"] = (
-                    [asdict(target) for target in targets]
-                    if isinstance(targets, tuple)
+                    [asdict(target) for target in targets.puzzle_items]
+                    if isinstance(targets, KnownDeclaredItems)
                     else []
                 )
+                if isinstance(declaration_contract, VerifiedStartupDeclarationContract):
+                    room["known_direct_pickups"] = (
+                        [asdict(target) for target in targets.direct_pickups]
+                        if isinstance(targets, KnownDeclaredItems)
+                        else []
+                    )
         if isinstance(declaration_contract, VerifiedStartupDeclarationContract):
             declarations = startup_declarations(
                 sources[room["id"]], room, profile, declaration_contract
@@ -490,6 +501,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 if isinstance(declarations, tuple)
                 else []
             )
+            if "known_direct_pickups" in room:
+                # Keep the established proof when either earlier compiler
+                # already supplies this item's positive identity knowledge.
+                existing = {
+                    item["global_id"]
+                    for item in (
+                        *room["known_puzzle_items"],
+                        *room["startup_item_declarations"],
+                    )
+                }
+                room["known_direct_pickups"] = [
+                    item
+                    for item in room["known_direct_pickups"]
+                    if item["global_id"] not in existing
+                ]
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -776,6 +802,15 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 *(
                     ["RE2-STARTUP-002"]
                     if isinstance(
+                        declaration_contract, VerifiedStartupDeclarationContract
+                    )
+                    else []
+                ),
+                *(
+                    ["RE2-STARTUP-004"]
+                    if isinstance(entry_contract, VerifiedRoomEntryContract)
+                    and isinstance(dispatch, ScriptItemDispatchConfig)
+                    and isinstance(
                         declaration_contract, VerifiedStartupDeclarationContract
                     )
                     else []

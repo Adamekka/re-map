@@ -1,8 +1,8 @@
-"""Positive knowledge of declared puzzle pickups, separate from access proof.
+"""Positive knowledge of declared pickups, separate from access proof.
 
-A startup declaration and a player callback referring to it establish a known
-target even while a puzzle guard blocks delivery. This does not prove that the
-guard will change, that a future event finishes, or that other items are absent.
+A bounded startup prefix can establish a direct pickup or a puzzle target with
+a player callback referring to it. This does not prove current access, future
+event completion or the absence of other items.
 """
 
 from __future__ import annotations
@@ -12,7 +12,11 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 
-from games.re2.event_presence import flag_write_conflicts
+from games.re2.event_presence import flag_write_conflicts, presence_counter_indices
+from games.re2.immediate_effect_resource import (
+    ImmediateEffectResource,
+    immediate_effect_resource,
+)
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
@@ -23,19 +27,24 @@ from games.re2.room_write_partitions import (
     EmbeddedModelResource,
     RoomWritePartitions,
     SourceRange,
+    direct_pickup_packet,
+    object_setup_packet,
     room_write_partitions,
-    static_object_packet,
 )
-from games.re2.scenario_items import scenario_flags
+from games.re2.scenario_items import scenario_effect_pool, scenario_flags
 from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
+from games.re2.startup_declarations import (
+    StartupDeclarationSupport,
+    VerifiedStartupDeclarationContract,
+)
 
 
-class KnownPuzzleItemFailure(Enum):
-    InputBinding = "invalid puzzle-target source inputs"
-    NativeContract = "unsupported puzzle-target native contract"
-    SourceMutation = "puzzle-target declaration or callback can change identity"
-    Prefix = "puzzle-target startup prefix is not bounded"
+class KnownDeclaredItemFailure(Enum):
+    InputBinding = "invalid declared-item source inputs"
+    NativeContract = "unsupported declared-item native contract"
+    SourceMutation = "declared-item source can change identity"
+    Prefix = "declared-item startup prefix is not bounded"
 
 
 @dataclass(frozen=True)
@@ -61,29 +70,91 @@ class KnownPuzzleItem:
         assert type(self.context_conditions) is list
 
 
+@dataclass(frozen=True)
+class KnownDirectPickup:
+    global_id: int
+    item_type: int
+    slot: int
+    creator_offsets: tuple[int, ...]
+    context_conditions: list[dict]
+
+    def __post_init__(self) -> None:
+        assert type(self.global_id) is int and 0 <= self.global_id <= 255
+        assert type(self.item_type) is int and 0 <= self.item_type < 104
+        assert type(self.slot) is int and 0 <= self.slot < 32
+        assert type(self.creator_offsets) is tuple and self.creator_offsets
+        assert all(
+            type(offset) is int and offset >= 0 for offset in self.creator_offsets
+        )
+        assert tuple(sorted(set(self.creator_offsets))) == self.creator_offsets
+        assert type(self.context_conditions) is list
+
+
+@dataclass(frozen=True)
+class KnownDeclaredItems:
+    puzzle_items: tuple[KnownPuzzleItem, ...]
+    direct_pickups: tuple[KnownDirectPickup, ...]
+
+    def __post_init__(self) -> None:
+        assert type(self.puzzle_items) is tuple and all(
+            isinstance(item, KnownPuzzleItem) for item in self.puzzle_items
+        )
+        assert type(self.direct_pickups) is tuple and all(
+            isinstance(item, KnownDirectPickup) for item in self.direct_pickups
+        )
+        ids = [item.global_id for item in (*self.puzzle_items, *self.direct_pickups)]
+        assert len(ids) == len(set(ids))
+
+
+@dataclass(frozen=True)
+class _ModelSetup:
+    assets: frozenset[int]
+    slots: frozenset[int]
+    last_asset: int
+    heap_width: int
+
+    def __post_init__(self) -> None:
+        assert type(self.assets) is frozenset and all(
+            type(asset) is int and asset >= 100 for asset in self.assets
+        )
+        assert type(self.slots) is frozenset and all(
+            type(slot) is int and 0 <= slot < 32 for slot in self.slots
+        )
+        assert type(self.last_asset) is int
+        assert self.last_asset in self.assets if self.assets else self.last_asset == 0
+        assert type(self.heap_width) is int and self.heap_width >= 0
+
+
 class _InvalidTarget(Exception):
-    def __init__(self, reason: KnownPuzzleItemFailure):
+    def __init__(self, reason: KnownDeclaredItemFailure):
         self.reason = reason
 
 
-def known_puzzle_items(
+def known_declared_items(
     data: bytes,
     room: dict,
     profile: dict,
     entry_contract: VerifiedRoomEntryContract,
     dispatch: ScriptItemDispatchConfig,
-) -> tuple[KnownPuzzleItem, ...] | KnownPuzzleItemFailure:
+    declaration_contract: VerifiedStartupDeclarationContract
+    | StartupDeclarationSupport,
+) -> KnownDeclaredItems | KnownDeclaredItemFailure:
     """Compile target knowledge; consumers must reread acquisition and context.
 
-    Only the two synchronous startup prefixes establish declarations. An opaque
-    later effect stops that path's prefix, without erasing prior knowledge or
-    granting permission to prune any creator, variant or future event.
+    Only the two synchronous startup prefixes establish declarations. Direct
+    pickups additionally require source/routing selection from the declaration
+    receipt. An empty result proves no absence. An opaque later effect stops
+    that path's prefix without erasing earlier knowledge or granting permission
+    to prune a creator, variant or future event.
     """
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert isinstance(entry_contract, VerifiedRoomEntryContract)
     assert isinstance(dispatch, ScriptItemDispatchConfig)
+    assert declaration_contract is StartupDeclarationSupport.Unaudited or isinstance(
+        declaration_contract, VerifiedStartupDeclarationContract
+    )
 
-    def require(condition: bool, reason=KnownPuzzleItemFailure.InputBinding) -> None:
+    def require(condition: bool, reason=KnownDeclaredItemFailure.InputBinding) -> None:
         if not condition:
             raise _InvalidTarget(reason)
 
@@ -99,19 +170,20 @@ def known_puzzle_items(
             and config.aot_address == int(layout["aot_table_address_ps1"], 0)
             and config.aot_capacity == layout["aot_capacity"]
             and layout["transition_mask"] == 0x02000000
+            and layout["file_type_min"] == 104
+            and int(layout["script_counter_address_ps1"], 0) == 0x800D47EC
             and dispatch.main_table_address
             == int(profile["script_item_dispatch"]["main_table_address_ps1"], 0),
-            KnownPuzzleItemFailure.NativeContract,
+            KnownDeclaredItemFailure.NativeContract,
         )
         partitions = room_write_partitions(data, room, config)
         require(isinstance(partitions, RoomWritePartitions))
+        source_address = dict(entry_contract.source_addresses)[room["stage"]]
         # Native UI/camera work uses the upper graphics arena. An exact source
         # base is required; a lower bound cannot prove the retained bytes fit.
         require(
-            partitions.retained_before(
-                dict(entry_contract.source_addresses)[room["stage"]], 0x80198000
-            ),
-            KnownPuzzleItemFailure.NativeContract,
+            partitions.retained_before(source_address, 0x80198000),
+            KnownDeclaredItemFailure.NativeContract,
         )
         programs = room["programs"]
         commands = {
@@ -153,7 +225,7 @@ def known_puzzle_items(
             if row["kind"] == "flag_write":
                 require(
                     physical_flag_key(row["bank"], row["bit"]) not in all_fixed,
-                    KnownPuzzleItemFailure.SourceMutation,
+                    KnownDeclaredItemFailure.SourceMutation,
                 )
             if row["kind"] in ("interaction", "reset") and row["interaction"] == 6:
                 payload = row["offset"] + (
@@ -162,7 +234,7 @@ def known_puzzle_items(
                 bank, bit, _value = struct.unpack_from("<3H", data, payload)
                 require(
                     physical_flag_key(bank, bit) not in all_fixed,
-                    KnownPuzzleItemFailure.SourceMutation,
+                    KnownDeclaredItemFailure.SourceMutation,
                 )
         identities, callbacks, bindings = {}, {}, {}
         protected = [(0, 100)]
@@ -232,7 +304,7 @@ def known_puzzle_items(
                 row["kind"] == "interaction" and row["interaction"] == 2
                 for row in all_rows
             ),
-            KnownPuzzleItemFailure.SourceMutation,
+            KnownDeclaredItemFailure.SourceMutation,
         )
         rvd = room["section_offsets"][8]
         rvd_end = min(
@@ -252,7 +324,7 @@ def known_puzzle_items(
                     target < start + size and start < target + width
                     for start, size in protected
                 ),
-                KnownPuzzleItemFailure.SourceMutation,
+                KnownDeclaredItemFailure.SourceMutation,
             )
 
         # Only one leading native mode-return guard may restrict entry settings.
@@ -280,18 +352,48 @@ def known_puzzle_items(
         required_settings = [
             row for row in fixed_rows if flag_key(row["bank"], row["bit"]) in fixed
         ]
+
+        def context_conditions():
+            return (
+                [
+                    {
+                        "kind": "conditions",
+                        "any_of": [[dict(row) for row in required_settings]],
+                    }
+                ]
+                if required_settings
+                else []
+            )
+
+        direct_eligible = False
+        if isinstance(declaration_contract, VerifiedStartupDeclarationContract):
+            selection = declaration_contract.selection
+            require(
+                declaration_contract.executable_sha256
+                == entry_contract.executable_sha256
+                and selection.executable_sha256 == entry_contract.executable_sha256,
+                KnownDeclaredItemFailure.NativeContract,
+            )
+            if selection.covers_source(data, room):
+                incoming = selection.models_for(room["id"])
+                direct_eligible = (
+                    bool(incoming) and set(incoming) <= entry_contract.door_models
+                )
         model_writes = {row.command_offset: row for row in partitions.objects}
         # Tokens describe identities rather than one branch's source offset.
         # Alternate declarations can therefore agree without selecting a variant.
         outcomes, steps, prefix_packets, expanded = [], 0, set(), set()
+        prefix_resources = set()
         predicate_packets = set()
         counter_address = int(layout["script_counter_address_ps1"], 0)
+        writable_counters = presence_counter_indices(profile)
+        effect_pool = scenario_effect_pool(profile)
 
         def branch(key, row, frames, values, work, native_predicates):
             if row["opcode"] == 6:
                 require(
                     len(frames) < 8 and row["target"] > row["next"],
-                    KnownPuzzleItemFailure.Prefix,
+                    KnownDeclaredItemFailure.Prefix,
                 )
                 following, matches = row["next"], []
                 while following in commands[key]:
@@ -324,7 +426,7 @@ def known_puzzle_items(
                         break
                     predicate_packets.add((following, test["next"] - following))
                     following = test["next"]
-                require(bool(matches), KnownPuzzleItemFailure.Prefix)
+                require(bool(matches), KnownDeclaredItemFailure.Prefix)
                 result = []
                 if False not in matches:
                     result.append((following, frames + (row["target"],)))
@@ -333,7 +435,7 @@ def known_puzzle_items(
                 return result
             require(
                 bool(frames) and frames[-1] == row["next"],
-                KnownPuzzleItemFailure.Prefix,
+                KnownDeclaredItemFailure.Prefix,
             )
             return [(row["target"] if row["opcode"] == 7 else row["next"], frames[:-1])]
 
@@ -385,14 +487,14 @@ def known_puzzle_items(
                 state = key, position, returns, frames, work, owners, origin
                 require(
                     state not in seen and len(seen) < 256,
-                    KnownPuzzleItemFailure.NativeContract,
+                    KnownDeclaredItemFailure.NativeContract,
                 )
                 if state in expanded_opposite:
                     continue
                 expanded_opposite.add(state)
                 require(
                     len(expanded_opposite) <= 4096 and position in commands[key],
-                    KnownPuzzleItemFailure.NativeContract,
+                    KnownDeclaredItemFailure.NativeContract,
                 )
                 seen = seen | {state}
                 row = commands[key][position]
@@ -410,7 +512,7 @@ def known_puzzle_items(
                 if row["kind"] == "end":
                     require(
                         packet == b"\x01\0" and (not returns or not frames),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     if returns:
                         caller, target, caller_frames = returns[-1]
@@ -432,7 +534,7 @@ def known_puzzle_items(
                     require(
                         callee in programs
                         and len(returns) < NATIVE_CALL_FRAME_COUNT - 1,
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     pending.append(
                         (
@@ -457,7 +559,7 @@ def known_puzzle_items(
                         packet[1:3] == b"\xff\x18"
                         and callee in programs
                         and origin == "root",
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     # Automatic slots 2..9 cannot replace startup/frame tasks
                     # 0/1. Workers start at depth zero with inherited Work
@@ -478,12 +580,12 @@ def known_puzzle_items(
                     require(
                         packet[3] in (0, 1, 7)
                         and physical_flag_key(packet[1], packet[2]) not in all_fixed,
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                 elif opcode == 0x29:
                     require(
                         bounded_camera(packet[1] & 0x7F, fixed),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                 elif opcode == 0x2A:
                     require(
@@ -495,18 +597,18 @@ def known_puzzle_items(
                             bounded_camera(camera, fixed)
                             for camera in range(room["cameras"])
                         ),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     # A validated Cut_chg on this path must first save a live
                     # camera. Every camera it could restore needs a bounded RVD.
                 elif opcode == 0x2E:
                     require(
                         packet[1] == 4 and packet[2] < config.object_capacity,
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     work = "object", packet[2]
                 elif opcode == 0x2F:
-                    require(packet[1] < 12, KnownPuzzleItemFailure.NativeContract)
+                    require(packet[1] < 12, KnownDeclaredItemFailure.NativeContract)
                 elif opcode == 0x31:
                     # Delta update touches only the task's bounded halfwords.
                     pass
@@ -515,14 +617,14 @@ def known_puzzle_items(
                     # Fixed Work suffices for mode safety before model setup.
                     require(
                         work[0] == "object" and (opcode == 0x30 or packet[1] == 12),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                 elif opcode == 9:
                     require(
                         packet[1] == 0x0A
                         and int.from_bytes(packet[2:], "little")
                         and not frames,
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     # The finite 09/0A macro yields on every tick and restores
                     # its task-local loop index before the next source packet.
@@ -548,24 +650,24 @@ def known_puzzle_items(
                         and data[end - 2 : end] == b"\x10\0"
                         and commands[key][end - 2]["next"] == end
                         and end in commands[key],
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     opposite_packets.add((condition, 6))
                     cursor = body
                     while cursor < end - 2:
                         require(
                             cursor in commands[key],
-                            KnownPuzzleItemFailure.NativeContract,
+                            KnownDeclaredItemFailure.NativeContract,
                         )
                         command = commands[key][cursor]
                         require(
                             command["opcode"] in (0, 2, 0x30, 0x31)
                             and command["next"] <= end - 2,
-                            KnownPuzzleItemFailure.NativeContract,
+                            KnownDeclaredItemFailure.NativeContract,
                         )
                         opposite_packets.add((cursor, command["next"] - cursor))
                         cursor = command["next"]
-                    require(cursor == end - 2, KnownPuzzleItemFailure.NativeContract)
+                    require(cursor == end - 2, KnownDeclaredItemFailure.NativeContract)
                     opposite_packets.add((end - 2, 2))
                     pending.append(
                         (key, end, returns, frames, work, owners, origin, seen)
@@ -578,7 +680,7 @@ def known_puzzle_items(
                         and packet[4] == 4
                         and packet[5] < config.object_capacity
                         and not any(packet[6:]),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     required_sounds.add(packet[2])
                 elif (
@@ -592,7 +694,7 @@ def known_puzzle_items(
                     if opcode == 0x46:
                         require(
                             any(slot == packet[1] for slot, _ in owners),
-                            KnownPuzzleItemFailure.NativeContract,
+                            KnownDeclaredItemFailure.NativeContract,
                         )
                     else:
                         owners = frozenset(
@@ -600,7 +702,7 @@ def known_puzzle_items(
                         ) | {(packet[1], position)}
                     require(
                         4 in entry_contract.non_scheduling_interaction_kinds,
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     require(
                         not any(
@@ -608,24 +710,24 @@ def known_puzzle_items(
                             and mask & 0x40
                             for address, mask in fixed
                         ),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     message_at = 4 if opcode == 0x46 else 14
                     message = int.from_bytes(
                         packet[message_at : message_at + 2], "little"
                     )
-                    require(message <= 255, KnownPuzzleItemFailure.NativeContract)
+                    require(message <= 255, KnownDeclaredItemFailure.NativeContract)
                     proofs = nonchoice_message_proofs(
                         data, tuple(room["section_offsets"]), message
                     )
                     require(
                         not isinstance(proofs, NonchoiceMessageFailure),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     for proof in proofs:
                         require(
                             proof["offset"] + proof["width"] <= partitions.heap_floor,
-                            KnownPuzzleItemFailure.NativeContract,
+                            KnownDeclaredItemFailure.NativeContract,
                         )
                         opposite_text.add((proof["offset"], proof["width"]))
                 elif (
@@ -635,7 +737,7 @@ def known_puzzle_items(
                 ):
                     require(
                         packet[26] in entry_contract.door_models,
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     require(
                         not any(
@@ -643,7 +745,7 @@ def known_puzzle_items(
                             and mask & 0x00020000
                             for address, mask in fixed
                         ),
-                        KnownPuzzleItemFailure.NativeContract,
+                        KnownDeclaredItemFailure.NativeContract,
                     )
                     # The unlocked callback preserves STATUS. Its loader ORs
                     # STATUS00020000, then sets SYSTEM02000000 before animation;
@@ -652,7 +754,7 @@ def known_puzzle_items(
                         (slot, at) for slot, at in owners if slot != packet[1]
                     ) | {(packet[1], position)}
                 else:
-                    raise _InvalidTarget(KnownPuzzleItemFailure.NativeContract)
+                    raise _InvalidTarget(KnownDeclaredItemFailure.NativeContract)
                 pending.append(
                     (key, row["next"], returns, frames, work, owners, origin, seen)
                 )
@@ -669,7 +771,7 @@ def known_puzzle_items(
             )
             require(
                 isinstance(sounds, RoomSoundBindings),
-                KnownPuzzleItemFailure.NativeContract,
+                KnownDeclaredItemFailure.NativeContract,
             )
             other_resources = [
                 *partitions.protected_source,
@@ -692,7 +794,7 @@ def known_puzzle_items(
                     for sound in sounds.resources
                     for other in other_resources
                 ),
-                KnownPuzzleItemFailure.NativeContract,
+                KnownDeclaredItemFailure.NativeContract,
             )
             opposite_resources.update(
                 (region.offset, region.width) for region in sounds.resources
@@ -703,7 +805,7 @@ def known_puzzle_items(
             state = key, position, returns, frames
             require(
                 len(seen) < 256 and state not in seen and position in commands[key],
-                KnownPuzzleItemFailure.Prefix,
+                KnownDeclaredItemFailure.Prefix,
             )
             analysis_state = state, loaded, work, found
             if analysis_state in expanded:
@@ -713,19 +815,28 @@ def known_puzzle_items(
             # merging different identities or dropping an allocation history.
             expanded.add(analysis_state)
             steps += 1
-            require(steps <= 4096, KnownPuzzleItemFailure.Prefix)
+            require(steps <= 4096, KnownDeclaredItemFailure.Prefix)
             seen = seen | {state}
             row = commands[key][position]
             prefix_packets.add((position, row["next"] - position))
             packet = data[position : row["next"]]
             opcode = row["opcode"]
+            if (
+                opcode == 6
+                and row["next"] in commands[key]
+                and commands[key][row["next"]]["kind"] != "flag_check"
+            ):
+                # An unmodeled predicate ends this positive prefix just like
+                # an opaque effect. It cannot erase declarations made earlier.
+                outcomes.append(found)
+                return
             if opcode in (6, 7, 8):
                 for target, next_frames in branch(key, row, frames, fixed, work, False):
                     prefix(key, target, returns, next_frames, loaded, work, found, seen)
                 return
             if row["kind"] == "end":
                 require(
-                    packet == b"\x01\0" and not frames, KnownPuzzleItemFailure.Prefix
+                    packet == b"\x01\0" and not frames, KnownDeclaredItemFailure.Prefix
                 )
                 if returns:
                     caller, target, caller_frames = returns[-1]
@@ -757,7 +868,7 @@ def known_puzzle_items(
                 callee = f"17:{row['procedure']}"
                 require(
                     len(returns) < NATIVE_CALL_FRAME_COUNT - 1 and callee in programs,
-                    KnownPuzzleItemFailure.Prefix,
+                    KnownDeclaredItemFailure.Prefix,
                 )
                 prefix(
                     callee,
@@ -778,32 +889,126 @@ def known_puzzle_items(
                     packet[3] in (0, 1, 7)
                     and target not in all_fixed
                     and saved_flag(target),
-                    KnownPuzzleItemFailure.Prefix,
+                    KnownDeclaredItemFailure.Prefix,
                 )
             elif row["kind"] in ("item", "door", "interaction"):
                 if position in identities and opcode == 0x4E and packet[2] == 2:
+                    require(
+                        packet[20] < config.object_capacity or packet[20] == 0xFF,
+                        KnownDeclaredItemFailure.Prefix,
+                    )
                     slot, item_type, gid, amount = identities[position]
                     if amount and item_type < layout["file_type_min"]:
                         found = found | {("item", slot, item_type, gid)}
+                        if direct_eligible and direct_pickup_packet(packet):
+                            # Keep directness in the path token. Combining a
+                            # parked branch with an active branch cannot prove
+                            # a directly declared pickup on every entry path.
+                            found = found | {("direct", slot, item_type, gid)}
                 if position in callbacks:
                     slot, procedure = callbacks[position]
                     found = found | {("callback", slot, procedure)}
             elif opcode == 0x2D:
                 model = model_writes[position].model
                 if not (
-                    static_object_packet(packet)
+                    object_setup_packet(packet)
                     and isinstance(model, EmbeddedModelResource)
-                    and ("asset", model.asset.offset) not in loaded
-                    and ("slot", packet[1]) not in loaded
+                    and packet[1] not in loaded.slots
+                    and (
+                        model.asset.offset not in loaded.assets
+                        or model.asset.offset == loaded.last_asset
+                    )
+                    and source_address
+                    + partitions.heap_floor
+                    + loaded.heap_width
+                    + model.primitive_heap_width
+                    <= 0x8018EF3C
                 ):
                     outcomes.append(found)
                     return
-                loaded = loaded | {("asset", model.asset.offset), ("slot", packet[1])}
-            elif opcode == 0x2E and packet[1] == 4 and ("slot", packet[2]) in loaded:
+                # Native CE54C skips relocation only for the last loaded asset.
+                # Every object still allocates fresh primitive packets below
+                # the revision's shared model/UV work at 0x8018EF3C.
+                loaded = _ModelSetup(
+                    loaded.assets | {model.asset.offset},
+                    loaded.slots | {packet[1]},
+                    model.asset.offset,
+                    loaded.heap_width + model.primitive_heap_width,
+                )
+                prefix_resources.update(
+                    (region.offset, region.width)
+                    for region in (model.directory_entry, model.asset)
+                )
+            elif opcode == 0x54:
+                effect = immediate_effect_resource(
+                    data,
+                    tuple(room["section_offsets"]),
+                    partitions.heap_floor,
+                    position,
+                )
+                protected_resources = [
+                    *partitions.protected_source,
+                    *(
+                        model.model.asset
+                        for model in partitions.objects
+                        if isinstance(model.model, EmbeddedModelResource)
+                    ),
+                    *(
+                        region
+                        for write in partitions.source_writes
+                        for region in write.writes
+                    ),
+                    *(
+                        SourceRange(offset, width)
+                        for offset, width in opposite_text | opposite_resources
+                    ),
+                ]
+                if not (
+                    effect_pool == (0x800D8CF0, 0x800DBB70)
+                    and isinstance(effect, ImmediateEffectResource)
+                    and not any(
+                        region.offset < protected.offset + protected.width
+                        and protected.offset < region.offset + region.width
+                        for region in effect.resources
+                        for protected in protected_resources
+                    )
+                ):
+                    outcomes.append(found)
+                    return
+                # The audited initializer binds these source resources before
+                # the roots. This prefix has no rebinding or cooperative yield.
+                # Native 54 returns one even if its fixed effect pool is full;
+                # continuation grants no deferred-effect or GPU permission.
+                prefix_resources.update(
+                    (region.offset, region.width) for region in effect.resources
+                )
+            elif opcode == 0x2E and packet[1] == 4 and packet[2] in loaded.slots:
                 work = "object", packet[2]
             elif opcode == 0x32 and packet[1] == 0 and work[0] == "object":
                 # Native Pos_set changes only coordinates in this already
                 # initialized fixed object record, not source or flag words.
+                pass
+            elif opcode == 0x24 and packet[1] in writable_counters:
+                # This setter writes only the profile's audited counter range.
+                pass
+            elif (
+                opcode == 0x26
+                and packet[1:3] == b"\0\x05"
+                and packet[3] in writable_counters
+            ):
+                # Native operator five ORs an immediate into this halfword.
+                # It does not change a script operand or selected Work pointer.
+                pass
+            elif (
+                opcode == 0x3D
+                and packet[1] in writable_counters
+                and packet[2] == 1
+                or opcode == 0x35
+                and packet[1] == 1
+                and packet[2] in writable_counters
+            ) and work[0] == "object":
+                # Member one reads/writes only the fixed object's flags
+                # halfword at +2. No renderer or model callback runs here.
                 pass
             else:
                 outcomes.append(found)
@@ -815,19 +1020,21 @@ def known_puzzle_items(
             programs["16:0"]["entry"],
             (),
             (),
-            frozenset(),
+            # Native object initialization clears CE54C and selects the source
+            # floor for free work before either synchronous startup root.
+            _ModelSetup(frozenset(), frozenset(), 0, 0),
             ("unselected", 0),
             frozenset(),
             frozenset(),
         )
-        require(bool(outcomes), KnownPuzzleItemFailure.Prefix)
+        require(bool(outcomes), KnownDeclaredItemFailure.Prefix)
         guaranteed = set.intersection(*(set(outcome) for outcome in outcomes))
         item_bank = (
             layout["item_bank_early"]
             if room["stage"] < layout["item_bank_stage_boundary"]
             else layout["item_bank_late"]
         )
-        result = []
+        result, direct_result = [], []
         for token in sorted(guaranteed):
             if token[0] != "item":
                 continue
@@ -926,7 +1133,7 @@ def known_puzzle_items(
                             edges = branch(
                                 procedure, row, frames, values, ("unselected", 0), False
                             )
-                            require(len(edges) == 1, KnownPuzzleItemFailure.Prefix)
+                            require(len(edges) == 1, KnownDeclaredItemFailure.Prefix)
                             position, frames = edges[0]
                             continue
                         if opcode == 0x47:
@@ -971,9 +1178,24 @@ def known_puzzle_items(
                 if callback_deliveries:
                     related_callbacks.add(callback_offset)
                     deliveries.update(callback_deliveries)
-            if deliveries:
+            direct = (
+                direct_eligible
+                and ("direct", slot, item_type, gid) in guaranteed
+                and all(row["kind"] == "item" for row in bindings[slot])
+                and all(
+                    identity[:3] == (slot, item_type, gid)
+                    and direct_pickup_packet(data[at : at + 22])
+                    and (
+                        data[at + 20] < config.object_capacity or data[at + 20] == 0xFF
+                    )
+                    for at, identity in identities.items()
+                    if identity[2] == gid
+                )
+            )
+            if deliveries or direct:
                 protected_paths = [
                     *prefix_packets,
+                    *prefix_resources,
                     *predicate_packets,
                     *opposite_packets,
                     *opposite_text,
@@ -997,27 +1219,33 @@ def known_puzzle_items(
                             target < start + size and start < target + width
                             for start, size in protected_paths
                         ),
-                        KnownPuzzleItemFailure.SourceMutation,
+                        KnownDeclaredItemFailure.SourceMutation,
                     )
-                result.append(
-                    KnownPuzzleItem(
-                        gid,
-                        item_type,
-                        tuple(sorted(creators)),
-                        tuple(sorted(related_callbacks)),
-                        tuple(sorted(deliveries)),
-                        [
-                            {
-                                "kind": "conditions",
-                                "any_of": [[dict(row) for row in required_settings]],
-                            }
-                        ]
-                        if required_settings
-                        else [],
+                if deliveries:
+                    result.append(
+                        KnownPuzzleItem(
+                            gid,
+                            item_type,
+                            tuple(sorted(creators)),
+                            tuple(sorted(related_callbacks)),
+                            tuple(sorted(deliveries)),
+                            context_conditions(),
+                        )
                     )
-                )
-        return tuple(result)
+                else:
+                    direct_result.append(
+                        KnownDirectPickup(
+                            gid,
+                            item_type,
+                            slot,
+                            tuple(sorted(creators)),
+                            context_conditions(),
+                        )
+                    )
+        ids = [item.global_id for item in (*result, *direct_result)]
+        require(len(ids) == len(set(ids)), KnownDeclaredItemFailure.SourceMutation)
+        return KnownDeclaredItems(tuple(result), tuple(direct_result))
     except _InvalidTarget as error:
         return error.reason
     except (KeyError, IndexError, TypeError, ValueError, struct.error):
-        return KnownPuzzleItemFailure.InputBinding
+        return KnownDeclaredItemFailure.InputBinding

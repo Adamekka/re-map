@@ -88,7 +88,11 @@ class EmbeddedModelResource:
     directory_entry: SourceRange
     asset: SourceRange
     render_objects: int
+    primitive_heap_width: int
     writes: tuple[SourceRange, ...]
+
+    def __post_init__(self) -> None:
+        assert type(self.primitive_heap_width) is int and self.primitive_heap_width >= 0
 
 
 @dataclass(frozen=True)
@@ -129,25 +133,48 @@ class RoomWritePartitions:
         )
 
 
-def static_object_packet(
-    packet: bytes, *, render_flags: frozenset[int] = frozenset((0x10, 0x30))
+def object_setup_packet(
+    packet: bytes, *, render_flags: frozenset[int] = frozenset((0, 0x10, 0x30))
 ) -> bool:
-    """Recognize the audited 2D form; resource/freshness proofs stay required."""
+    """Recognize synchronous 2D setup; resource/cache/heap proofs stay required."""
     assert type(packet) is bytes
     assert type(render_flags) is frozenset and all(
         type(value) is int and 0 <= value <= 0xFFFF for value in render_flags
     )
-    # Attachments and effect modes can change later native ownership. Only
-    # this static form shares the bounded object/model write interpretation.
+    # The zero attachment/reference fields select the fixed matrix. Mode eight
+    # adds fixed-record collision extents, with no extra queue or model owner.
     return (
         len(packet) == 38
         and packet[0] == 0x2D
         and packet[2:6] == bytes(4)
         and packet[6] in (0, 1)
         and packet[7:10] == bytes(3)
-        and packet[10:12] == b"\x0a\0"
+        and int.from_bytes(packet[10:12], "little") in (8, 10)
         and int.from_bytes(packet[12:14], "little") in render_flags
+    )
+
+
+def static_object_packet(
+    packet: bytes, *, render_flags: frozenset[int] = frozenset((0x10, 0x30))
+) -> bool:
+    """Keep whole-room static proofs narrower than synchronous setup."""
+    return (
+        object_setup_packet(packet, render_flags=render_flags)
+        and packet[10:12] == b"\x0a\0"
         and not any(packet[26:])
+    )
+
+
+def direct_pickup_packet(packet: bytes) -> bool:
+    """Recognize a direct ordinary declaration, without reachability proof."""
+    assert type(packet) is bytes
+    return (
+        len(packet) == 22
+        and packet[:1] == b"\x4e"
+        and packet[2:4] == b"\x02\x31"
+        and all(struct.unpack_from("<2H", packet, 10))
+        and int.from_bytes(packet[16:18], "little") != 0
+        and packet[21] == 0
     )
 
 
@@ -212,7 +239,7 @@ def embedded_model_resource(
             and model + body_width <= floor,
             RoomWritePartitionFailure.ObjectModel,
         )
-        writes, uv_width = [], 0
+        writes, uv_width, primitive_heap_width = [], 0, 0
         # MD1 offsets are relative to the first object record, not its
         # 12-byte header. Header word 0 excludes the appended UV records.
         for index in range(count):
@@ -244,8 +271,13 @@ def embedded_model_resource(
                 start = model + 12 + uv + primitive_index * stride
                 writes.extend((SourceRange(start, 4), SourceRange(start + 4, 4)))
             uv_width += primitives * stride
+            # Each model use allocates ordinary/shadow primitive packets,
+            # including when the native last-asset cache skips relocation.
+            primitive_heap_width += primitives * (80 if index % 2 == 0 else 104)
         asset = SourceRange(model, body_width + uv_width)
-        return EmbeddedModelResource(SourceRange(entry, 8), asset, count, tuple(writes))
+        return EmbeddedModelResource(
+            SourceRange(entry, 8), asset, count, primitive_heap_width, tuple(writes)
+        )
     except (_InvalidPartition, struct.error) as error:
         return (
             error.reason

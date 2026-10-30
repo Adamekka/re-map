@@ -328,9 +328,10 @@ def poll_re2(
                 presence_matches(condition, flag)
                 for condition in source.get("scenario_context_conditions", [])
             )
-            known_puzzle_ids = {
+            known_item_ids = {
                 proof["global_id"]
-                for proof in source.get("known_puzzle_items", [])
+                for field in ("known_puzzle_items", "known_direct_pickups")
+                for proof in source.get(field, [])
                 if all(
                     presence_matches(condition, flag)
                     for condition in proof["context_conditions"]
@@ -424,7 +425,7 @@ def poll_re2(
                     state = "available"
                 elif (
                     dispatched
-                    or gid in known_puzzle_ids
+                    or gid in known_item_ids
                     or gid in declared_item_ids
                     or context_valid
                     and (

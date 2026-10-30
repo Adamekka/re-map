@@ -37,7 +37,8 @@
     "RE2-CONTROL-001",
     "RE2-PUZZLE-001",
     "RE2-PUZZLE-002",
-    "RE2-STARTUP-002"
+    "RE2-STARTUP-002",
+    "RE2-STARTUP-004"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "fixed_scenario_flags": [
@@ -2319,6 +2320,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -2466,6 +2468,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -2597,6 +2600,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": [
         {
           "global_id": 154,
@@ -2723,6 +2727,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -2816,6 +2821,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -2936,6 +2942,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -3108,6 +3115,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -3216,6 +3224,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -3358,6 +3367,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -3587,6 +3597,7 @@
       ],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -3725,6 +3736,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -3885,6 +3897,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4047,6 +4060,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4178,6 +4192,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4297,6 +4312,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4501,6 +4517,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4687,6 +4704,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4807,6 +4825,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -4964,6 +4983,30 @@
           ],
           "delivery_offsets": [
             13272
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 1,
+                    "bit": 6,
+                    "expected": 0
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "known_direct_pickups": [
+        {
+          "global_id": 22,
+          "item_type": 39,
+          "slot": 12,
+          "creator_offsets": [
+            11272
           ],
           "context_conditions": [
             {
@@ -5208,6 +5251,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -5376,6 +5420,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -5598,6 +5643,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -5744,6 +5790,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -5852,6 +5899,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -5979,6 +6027,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -6087,6 +6136,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -6209,6 +6259,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -6317,6 +6368,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -6425,6 +6477,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -6533,6 +6586,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -6833,6 +6887,7 @@
           ]
         }
       ],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -7068,6 +7123,7 @@
         }
       ],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -7328,6 +7384,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -7506,6 +7563,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -7709,6 +7767,7 @@
       ],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -7832,6 +7891,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -8007,6 +8067,7 @@
           "context_conditions": []
         }
       ],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -8211,6 +8272,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -8436,6 +8498,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -8611,6 +8674,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -8783,6 +8847,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -9100,6 +9165,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -9308,6 +9374,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -9457,6 +9524,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -9734,6 +9802,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -9902,6 +9971,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10074,6 +10144,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10284,6 +10355,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10404,6 +10476,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10531,6 +10604,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10699,6 +10773,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10806,6 +10881,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -10926,6 +11002,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11072,6 +11149,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11233,6 +11311,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11409,6 +11488,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11517,6 +11597,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11666,6 +11747,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11774,6 +11856,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -11912,6 +11995,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12035,6 +12119,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12158,6 +12243,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12263,6 +12349,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12398,6 +12485,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12506,6 +12594,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12614,6 +12703,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12722,6 +12812,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -12894,6 +12985,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13013,6 +13105,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13101,6 +13194,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13247,6 +13341,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13493,6 +13588,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13624,6 +13720,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13844,6 +13941,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -13997,6 +14095,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14154,6 +14253,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14277,6 +14377,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14441,6 +14542,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14594,6 +14696,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14702,6 +14805,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14810,6 +14914,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14887,6 +14992,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -14995,6 +15101,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15141,6 +15248,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15218,6 +15326,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15416,6 +15525,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15509,6 +15619,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15629,6 +15740,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15767,6 +15879,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -15950,6 +16063,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16081,6 +16195,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16290,6 +16405,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16421,6 +16537,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16570,6 +16687,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16762,6 +16880,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16855,6 +16974,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -16963,6 +17083,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17086,6 +17207,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17217,6 +17339,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17396,6 +17519,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17501,6 +17625,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17594,6 +17719,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17762,6 +17888,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -17915,6 +18042,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18038,6 +18166,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18172,6 +18301,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18336,6 +18466,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18489,6 +18620,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18654,6 +18786,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18781,6 +18914,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -18950,6 +19084,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19066,6 +19201,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19219,6 +19355,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19342,6 +19479,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19450,6 +19588,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19543,6 +19682,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19678,6 +19818,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19838,6 +19979,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -19995,6 +20137,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -20103,6 +20246,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -20211,6 +20355,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -20342,6 +20487,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -20447,6 +20593,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -20570,6 +20717,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     },
     {
@@ -20686,6 +20834,7 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
+      "known_direct_pickups": [],
       "startup_item_declarations": []
     }
   ]
