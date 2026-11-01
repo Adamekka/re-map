@@ -161,8 +161,13 @@ def test_direct_pickup_catalog_rejects_unbound_or_ambiguous_evidence(
     else:
         del raw["startup_declaration_audit"]
         del document["startup_declaration_audit"]
+        # Remove the dependent scoped contract too, so this case reaches the
+        # direct-pickup audit check rather than failing its runtime guard ABI.
+        del raw["runtime_layout"]["scenario_reset_mask"]
+        del raw["runtime_layout"]["scenario_work_address_ps1"]
         for source in document["rooms"]:
             del source["startup_item_declarations"]
+            del source["scoped_scenario_items"]
     with pytest.raises(ValueError, match="RE2 (known direct-pickup|known puzzle-item)"):
         load_catalog(tmp_path, raw, document)
 

@@ -17,6 +17,11 @@ from games.re2.immediate_effect_resource import (
     ImmediateEffectResource,
     immediate_effect_resource,
 )
+from games.re2.initializer_control_proof import (
+    InitializerControlProof,
+    initializer_control_config,
+    initializer_control_proof,
+)
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
@@ -33,6 +38,15 @@ from games.re2.room_write_partitions import (
     room_write_partitions,
 )
 from games.re2.scenario_items import scenario_effect_pool, scenario_flags
+from games.re2.scenario_selection import (
+    ScenarioContextLayout,
+    ScenarioSelectionSupport,
+    ScenarioSourceWriteWitnesses,
+    VerifiedScenarioContext,
+    VerifiedScenarioEntryScope,
+    scenario_context_layout,
+    scenario_source_write_witnesses,
+)
 from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.re2.startup_declarations import (
@@ -141,6 +155,11 @@ def known_declared_items(
     dispatch: ScriptItemDispatchConfig,
     declaration_contract: VerifiedStartupDeclarationContract
     | StartupDeclarationSupport,
+    *,
+    scenario_context: VerifiedScenarioContext
+    | ScenarioSelectionSupport = ScenarioSelectionSupport.Unaudited,
+    scenario_entries: VerifiedScenarioEntryScope
+    | ScenarioSelectionSupport = ScenarioSelectionSupport.Unaudited,
 ) -> KnownDeclaredItems | KnownDeclaredItemFailure:
     """Compile target knowledge; consumers must reread acquisition and context.
 
@@ -156,6 +175,12 @@ def known_declared_items(
     assert declaration_contract is StartupDeclarationSupport.Unaudited or isinstance(
         declaration_contract, VerifiedStartupDeclarationContract
     )
+    assert (
+        scenario_context is ScenarioSelectionSupport.Unaudited
+        and scenario_entries is ScenarioSelectionSupport.Unaudited
+        or isinstance(scenario_context, VerifiedScenarioContext)
+        and isinstance(scenario_entries, VerifiedScenarioEntryScope)
+    ), "scenario prefix knowledge requires both independent native receipts"
 
     def require(condition: bool, reason=KnownDeclaredItemFailure.InputBinding) -> None:
         if not condition:
@@ -189,6 +214,30 @@ def known_declared_items(
             KnownDeclaredItemFailure.NativeContract,
         )
         programs = room["programs"]
+        scoped = isinstance(scenario_context, VerifiedScenarioContext)
+        source_witnesses = ScenarioSelectionSupport.Unaudited
+        immutable = {}
+        if scoped:
+            assert isinstance(scenario_entries, VerifiedScenarioEntryScope)
+            assert isinstance(scenario_context, VerifiedScenarioContext)
+            scenario_layout = scenario_context_layout(profile)
+            require(
+                isinstance(scenario_layout, ScenarioContextLayout)
+                and scenario_context.declaration_contract == declaration_contract
+                and scenario_context.status_address == scenario_layout.status_address
+                and scenario_context.scenario_mask == scenario_layout.scenario_mask
+                and scenario_context.fixed_flags == scenario_layout.fixed_flags
+                and scenario_entries.executable_sha256
+                == entry_contract.executable_sha256
+                and scenario_entries.matches_source(data, programs)
+                and {"16:0", "17:0"} <= scenario_entries.protected_programs,
+                KnownDeclaredItemFailure.NativeContract,
+            )
+            source_witnesses = scenario_source_write_witnesses(data, room, profile)
+            require(
+                isinstance(source_witnesses, ScenarioSourceWriteWitnesses),
+                KnownDeclaredItemFailure.SourceMutation,
+            )
         commands = {
             key: {row["offset"]: row for row in program["commands"]}
             for key, program in programs.items()
@@ -207,6 +256,12 @@ def known_declared_items(
         def flag_key(bank: int, bit: int) -> tuple[int, int]:
             require(bank in banks and 0 <= bit < banks[bank][1] * 8)
             return physical_flag_key(bank, bit)
+
+        if scoped:
+            immutable = {
+                flag_key(bank, bit): bool(value)
+                for bank, bit, value in scenario_context.fixed_flags
+            }
 
         save_base = int(layout["save_block_address_ps1"], 0)
         save_limit = save_base + layout["save_block_width"]
@@ -383,7 +438,7 @@ def known_declared_items(
                 and terminal["kind"] == "end"
             ):
                 target = flag_key(test["bank"], test["bit"])
-                if target in all_fixed:
+                if target in all_fixed and target not in immutable:
                     fixed[target] = all_fixed[target]
                     # Flipping several independent settings together would
                     # omit historical entries where only one setting differed.
@@ -405,6 +460,10 @@ def known_declared_items(
             )
 
         direct_eligible = False
+        # Flag one preserves the selected descriptor while entering the
+        # audited alternate pickup controller. Older native contracts retain
+        # their original flag-zero declaration domain.
+        pickup_flags = frozenset((0, 1)) if scoped else frozenset((0,))
         if isinstance(declaration_contract, VerifiedStartupDeclarationContract):
             selection = declaration_contract.selection
             require(
@@ -418,6 +477,11 @@ def known_declared_items(
                 direct_eligible = (
                     bool(incoming) and set(incoming) <= entry_contract.door_models
                 )
+                if scoped:
+                    # The separate native entry/work receipt covers the
+                    # initialized incoming actor domain. Source selection is
+                    # still mandatory; this does not invent a room route.
+                    direct_eligible = bool(incoming)
         model_writes = {row.command_offset: row for row in partitions.objects}
         # Tokens describe identities rather than one branch's source offset.
         # Alternate declarations can therefore agree without selecting a variant.
@@ -427,6 +491,44 @@ def known_declared_items(
         counter_address = int(layout["script_counter_address_ps1"], 0)
         writable_counters = presence_counter_indices(profile)
         effect_pool = scenario_effect_pool(profile)
+        control_config = initializer_control_config(profile)
+        controls = {}
+        permitted_copies = set()
+
+        def prefix_control(key):
+            if key not in controls:
+                controls[key] = initializer_control_proof(
+                    data,
+                    room,
+                    control_config,
+                    config,
+                    program_scope=frozenset({key}),
+                )
+            proof = controls[key]
+            if not isinstance(proof, InitializerControlProof) or not (
+                proof.matches_source(data, programs)
+                and proof.preserves_fixed_words(
+                    {address: 0 for address, _mask in all_fixed | immutable}
+                )
+            ):
+                return ScenarioSelectionSupport.Unaudited
+            return proof
+
+        def prefix_predicate(key, row):
+            if row["kind"] == "flag_check":
+                return True
+            if not scoped:
+                return False
+            packet = data[row["offset"] : row["next"]]
+            proof = prefix_control(key)
+            return (
+                isinstance(proof, InitializerControlProof)
+                and (key, row["offset"]) in proof.predicate_copy_locations
+                or packet[0] == 0x23
+                and packet[1] == 0
+                and save_base <= counter_address + 2 * packet[2] <= save_limit - 2
+                and packet[3] < 7
+            )
 
         def branch(key, row, frames, values, work, native_predicates):
             if row["opcode"] == 6:
@@ -446,6 +548,16 @@ def known_declared_items(
                             if flag in values
                             else "symbolic"
                         )
+                    elif scoped and native_predicates and prefix_predicate(key, test):
+                        proof = prefix_control(key)
+                        if packet[0] == 0x1D:
+                            assert isinstance(proof, InitializerControlProof)
+                            permitted_copies.update(proof.source_writes)
+                            # The native Copy predicate returns true after
+                            # replacing only a certified comparison RHS.
+                            matches.append(True)
+                        else:
+                            matches.append("symbolic")
                     elif native_predicates and (
                         packet[0] == 0x23
                         and packet[1] == 0
@@ -504,7 +616,9 @@ def known_declared_items(
             # If entry skipped the declaration, this smaller source closure
             # must preserve that mode until departure. Normal future effects
             # need no lifetime theorem after a real target is already known.
-            opposite = {target: not value for target, value in fixed.items()}
+            opposite = {
+                target: not value for target, value in fixed.items()
+            } | immutable
             pending = [
                 (
                     root,
@@ -839,6 +953,10 @@ def known_declared_items(
                 (region.offset, region.width) for region in sounds.resources
             )
 
+        # Immutable scenario bits are never flipped by the independent legacy
+        # leading-mode closure. They apply to every historical startup prefix.
+        fixed |= immutable
+
         def prefix(key, position, returns, frames, loaded, work, found, seen):
             nonlocal steps
             state = key, position, returns, frames
@@ -857,20 +975,27 @@ def known_declared_items(
             require(steps <= 4096, KnownDeclaredItemFailure.Prefix)
             seen = seen | {state}
             row = commands[key][position]
+            if scoped:
+                require(
+                    key in scenario_entries.protected_programs,
+                    KnownDeclaredItemFailure.NativeContract,
+                )
             prefix_packets.add((position, row["next"] - position))
             packet = data[position : row["next"]]
             opcode = row["opcode"]
             if (
                 opcode == 6
                 and row["next"] in commands[key]
-                and commands[key][row["next"]]["kind"] != "flag_check"
+                and not prefix_predicate(key, commands[key][row["next"]])
             ):
                 # An unmodeled predicate ends this positive prefix just like
                 # an opaque effect. It cannot erase declarations made earlier.
                 outcomes.append(found)
                 return
             if opcode in (6, 7, 8):
-                for target, next_frames in branch(key, row, frames, fixed, work, False):
+                for target, next_frames in branch(
+                    key, row, frames, fixed, work, scoped
+                ):
                     prefix(key, target, returns, next_frames, loaded, work, found, seen)
                 return
             if row["kind"] == "end":
@@ -920,8 +1045,53 @@ def known_declared_items(
                     seen,
                 )
                 return
+            if scoped and opcode == 0x13:
+                proof = prefix_control(key)
+                edge = (
+                    next(
+                        (
+                            end
+                            for program, start, end in proof.switch_edges
+                            if (program, start) == (key, position)
+                        ),
+                        None,
+                    )
+                    if isinstance(proof, InitializerControlProof)
+                    else None
+                )
+                if edge is None:
+                    outcomes.append(found)
+                    return
+                # The producer checks every case and default, including the
+                # absence of a matching case. All finite outcomes reconverge
+                # with unchanged pickup/model knowledge at this exact edge.
+                prefix_packets.update(
+                    (item["offset"], item["next"] - item["offset"])
+                    for item in programs[key]["commands"]
+                    if position <= item["offset"] < edge
+                )
+                prefix(key, edge, returns, frames, loaded, work, found, seen)
+                return
             if opcode == 0:
                 pass
+            elif scoped and opcode in (0x38, 0x4B, 0x61):
+                assert isinstance(source_witnesses, ScenarioSourceWriteWitnesses)
+                # These native record operations return synchronously. The
+                # collective footprint proof keeps their mutable tables away
+                # from scripts, models and all later record-lookup inputs.
+                prefix_resources.update(
+                    (region.offset, region.width)
+                    for region in source_witnesses.record_reads
+                )
+            elif scoped and opcode in (0x1D, 0x25, 0x51):
+                proof = prefix_control(key)
+                if not (
+                    isinstance(proof, InitializerControlProof)
+                    and (key, position) in proof.fallthrough_locations
+                ):
+                    outcomes.append(found)
+                    return
+                permitted_copies.update(proof.source_writes)
             elif row["kind"] == "flag_write":
                 target = flag_key(packet[1], packet[2])
                 require(
@@ -939,7 +1109,9 @@ def known_declared_items(
                     slot, item_type, gid, amount = identities[position]
                     if amount and item_type < layout["file_type_min"]:
                         found = found | {("item", slot, item_type, gid)}
-                        if direct_eligible and direct_pickup_packet(packet):
+                        if direct_eligible and direct_pickup_packet(
+                            packet, pickup_flags=pickup_flags
+                        ):
                             # Keep directness in the path token. Combining a
                             # parked branch with an active branch cannot prove
                             # a directly declared pickup on every entry path.
@@ -950,7 +1122,14 @@ def known_declared_items(
             elif opcode == 0x2D:
                 model = model_writes[position].model
                 if not (
-                    object_setup_packet(packet)
+                    object_setup_packet(
+                        packet,
+                        render_flags=(
+                            frozenset((0, 0x10, 0x12, 0x30))
+                            if scoped
+                            else frozenset((0, 0x10, 0x30))
+                        ),
+                    )
                     and isinstance(model, EmbeddedModelResource)
                     and packet[1] not in loaded.slots
                     and (
@@ -1303,7 +1482,9 @@ def known_declared_items(
                 and all(row["kind"] == "item" for row in bindings[slot])
                 and all(
                     identity[:3] == (slot, item_type, gid)
-                    and direct_pickup_packet(data[at : at + 22])
+                    and direct_pickup_packet(
+                        data[at : at + 22], pickup_flags=pickup_flags
+                    )
                     and (
                         data[at + 20] < config.object_capacity or data[at + 20] == 0xFF
                     )
@@ -1334,7 +1515,13 @@ def known_declared_items(
                     packet = data[row["offset"] : row["next"]]
                     target, width = row["next"] + packet[2], 2 if packet[3] else 1
                     require(
-                        not any(
+                        any(
+                            copy.location[1] == row["offset"]
+                            and copy.target_offset == target
+                            and copy.width == width
+                            for copy in permitted_copies
+                        )
+                        or not any(
                             target < start + size and start < target + width
                             for start, size in protected_paths
                         ),

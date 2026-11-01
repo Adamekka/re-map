@@ -84,6 +84,10 @@ def poll_re2(
         system = value(int(layout["system_flags_address_ps1"], 0), 4)
         status = value(int(layout["status_flags_address_ps1"], 0), 4)
         active = value(int(layout["player_active_address_ps1"], 0), 4)
+        if "scenario_reset_mask" in layout and system & layout["scenario_reset_mask"]:
+            # Soft reset clears scenario before acquisition/player state. Its
+            # persistent reset bit closes that otherwise publishable interval.
+            return PollResult(PollStatus.Retry, "Game reset is in progress")
         if (
             not system & layout["gameplay_mask"]
             or system & (layout["demo_mask"] | layout["game_over_mask"])
@@ -159,6 +163,20 @@ def poll_re2(
             if hashlib.sha256(packet).hexdigest() != proof["sha256"]:
                 return PollResult(
                     PollStatus.Retry, "Loaded room does not match its source"
+                )
+        if "scenario_work_address_ps1" in layout:
+            work = value(int(layout["scenario_work_address_ps1"], 0), 4)
+            # The scoped native contract reserves all SCD bytes below section2
+            # for the loaded room. A bad work owner cannot authorize old-room
+            # identity/exclusion facts, even when its scenario bits look valid.
+            if not (
+                base >= 0x80100000
+                and sections[2] >= base + 100
+                and sections[2] <= work <= 0x80200000
+                and work % 4 == 0
+            ):
+                return PollResult(
+                    PollStatus.Retry, "Native work ownership is not yet coherent"
                 )
         floor = value(int(layout["floor_address_ps1"], 0), 1)
         yaw = value(int(layout["player_facing_address_ps1"], 0), 2)
@@ -630,6 +648,7 @@ def poll_re2(
             | layout["game_over_mask"]
             | layout["transition_mask"]
             | layout["system_mode_mask"]
+            | layout.get("scenario_reset_mask", 0)
             | quantity_override["system_mask"],
             (int(layout["status_flags_address_ps1"], 0), 4): layout["scenario_mask"],
             (int(layout["player_active_address_ps1"], 0), 4): 1,

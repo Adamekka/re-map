@@ -51,6 +51,7 @@ from games.re2.room_entry_contract import (
     room_entry_contract,
 )
 from games.re2.room_lifetime_proof import initializer_continuation_proof
+from games.re2.scenario_entry_scope import scenario_entry_scope
 from games.re2.scenario_items import (
     scenario_effect_pool,
     scenario_flags,
@@ -58,6 +59,15 @@ from games.re2.scenario_items import (
     scenario_item_proofs,
     scenario_presence_flags,
     scenario_vibration_writes,
+)
+from games.re2.scenario_selection import (
+    ScenarioSelectionFailure,
+    ScenarioSelectionSupport,
+    ScopedScenarioItems,
+    VerifiedScenarioContext,
+    VerifiedScenarioEntryScope,
+    bind_scenario_context,
+    scoped_scenario_items,
 )
 from games.re2.script_dispatch_items import (
     ScriptItemDispatchConfig,
@@ -371,12 +381,16 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             f"pinned {target.label} disc must contain {target.room_count} room sources"
         )
     layout = profile["runtime_layout"]
+    scenario_context = ScenarioSelectionFailure.NativeContract
     if isinstance(declaration_config, StartupDeclarationAuditConfig):
         declaration_contract = bind_startup_declaration_audit(
             declaration_config, executable, declaration_resources, sources
         )
         if isinstance(declaration_contract, StartupDeclarationFailure):
             raise ValueError(declaration_contract.value)
+        scenario_context = bind_scenario_context(profile, declaration_contract)
+        if isinstance(scenario_context, ScenarioSelectionFailure):
+            raise ValueError(scenario_context.value)
     if isinstance(control_config, InitializerControlConfig) and not isinstance(
         entry_contract, VerifiedRoomEntryContract
     ):
@@ -396,6 +410,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     )
     for room in rooms:
         room["event_awards"] = awards[room["id"]]
+        scope = (
+            scenario_entry_scope(sources[room["id"]], room, profile, scenario_context)
+            if isinstance(scenario_context, VerifiedScenarioContext)
+            else ScenarioSelectionSupport.Unaudited
+        )
         control = InitializerControlSupport.Unaudited
         if isinstance(control_config, InitializerControlConfig):
             candidate = initializer_control_proof(
@@ -491,6 +510,16 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     entry_contract,
                     dispatch,
                     declaration_contract,
+                    scenario_context=(
+                        scenario_context
+                        if isinstance(scope, VerifiedScenarioEntryScope)
+                        else ScenarioSelectionSupport.Unaudited
+                    ),
+                    scenario_entries=(
+                        scope
+                        if isinstance(scope, VerifiedScenarioEntryScope)
+                        else ScenarioSelectionSupport.Unaudited
+                    ),
                 )
                 # A declared puzzle requirement is independent of current
                 # access and cannot supply missing variants or list coverage.
@@ -531,6 +560,32 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     for item in room["known_direct_pickups"]
                     if item["global_id"] not in existing
                 ]
+            scoped = (
+                scoped_scenario_items(
+                    sources[room["id"]], room, profile, scenario_context, scope
+                )
+                if isinstance(scope, VerifiedScenarioEntryScope)
+                else scope
+            )
+            # Unsupported source entry/control supplies no local facts. Keep
+            # the whole-source capabilities and raw alternatives unchanged.
+            existing_ids = set(room["scenario_absent_item_ids"]) | {
+                item["global_id"] for item in room["scenario_item_variants"]
+            }
+            room["scoped_scenario_items"] = (
+                {
+                    "absent_item_ids": [
+                        gid for gid in scoped.absent_item_ids if gid not in existing_ids
+                    ],
+                    "item_variants": [
+                        asdict(item)
+                        for item in scoped.item_variants
+                        if item.global_id not in existing_ids
+                    ],
+                }
+                if isinstance(scoped, ScopedScenarioItems)
+                else {"absent_item_ids": [], "item_variants": []}
+            )
         if not (
             isinstance(entry_contract, VerifiedRoomEntryContract)
             and isinstance(dispatch, ScriptItemDispatchConfig)
@@ -788,6 +843,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SOURCE-001",
                 "RE2-SCD-002",
                 "RE2-DS-003",
+                *(
+                    ["RE2-SCENARIO-001"]
+                    if isinstance(scenario_context, VerifiedScenarioContext)
+                    else []
+                ),
                 *(["RE2-DS-006"] if vibration_writes else []),
                 "RE2-LIFETIME-001",
                 "RE2-DS-005",

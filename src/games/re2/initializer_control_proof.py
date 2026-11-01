@@ -44,6 +44,10 @@ class InitializerControlFailure(Enum):
     FlagAlias = "initializer writes may change a fresh flag predicate"
 
 
+class InitializerControlScope(Enum):
+    All = "all source procedures"
+
+
 class InitializerContinuationSupport(Enum):
     Unaudited = "unaudited"
 
@@ -227,6 +231,7 @@ class InitializerControlConfig:
 class InitializerControlProof:
     source_sha256: str
     programs_sha256: str
+    program_scope: frozenset[str]
     rhs_copy_offsets: frozenset[int]
     predicate_copy_locations: frozenset[tuple[str, int]]
     switch_edges: tuple[tuple[str, int, int], ...]
@@ -234,6 +239,18 @@ class InitializerControlProof:
     source_writes: tuple[SourceCopyWrite, ...]
     ram_writes: tuple[tuple[int, int], ...]
     predicate_flags: frozenset[tuple[int, int]]
+
+    def __post_init__(self) -> None:
+        assert type(self.program_scope) is frozenset and self.program_scope
+        assert all(type(key) is str for key in self.program_scope)
+        assert all(
+            key in self.program_scope
+            for key, _ in self.predicate_copy_locations | self.fallthrough_locations
+        )
+        assert all(key in self.program_scope for key, _, _ in self.switch_edges)
+        assert all(
+            write.location[0] in self.program_scope for write in self.source_writes
+        )
 
     def matches_source(self, data: bytes, programs: dict) -> bool:
         return (
@@ -351,6 +368,9 @@ def initializer_control_proof(
     room: dict,
     config: InitializerControlConfig | InitializerControlSupport,
     partition_config: RoomWritePartitionConfig,
+    *,
+    program_scope: frozenset[str]
+    | InitializerControlScope = InitializerControlScope.All,
 ) -> InitializerControlProof | InitializerControlFailure | InitializerControlSupport:
     """Validate every source Copy before granting the new control receipts."""
     assert type(data) is bytes and type(room) is dict
@@ -393,6 +413,18 @@ def initializer_control_proof(
             InitializerControlFailure.Partition,
         )
         programs = room["programs"]
+        selected = (
+            frozenset(programs)
+            if program_scope is InitializerControlScope.All
+            else program_scope
+        )
+        require(
+            type(selected) is frozenset
+            and bool(selected)
+            and all(type(key) is str for key in selected)
+            and selected <= programs.keys(),
+            InitializerControlFailure.SourceBinding,
+        )
         commands = {
             key: {row["offset"]: row for row in program["commands"]}
             for key, program in programs.items()
@@ -446,18 +478,21 @@ def initializer_control_proof(
                     and data[destination["offset"] + 3] < 7,
                     InitializerControlFailure.Copy,
                 )
-                copies.append(SourceCopyWrite((key, position), target, width))
-                predicate_copies.add((key, position))
-                fallthrough.add((key, position))
-                ram_writes.append((source + target, width))
-            elif opcode == 0x25:
+                # Every Copy remains checked across the whole source. A
+                # scoped receipt exports only the selected procedures' rights.
+                if key in selected:
+                    copies.append(SourceCopyWrite((key, position), target, width))
+                    predicate_copies.add((key, position))
+                    fallthrough.add((key, position))
+                    ram_writes.append((source + target, width))
+            elif opcode == 0x25 and key in selected:
                 require(
                     packet[1] in config.writable_counters and packet[2] < count,
                     InitializerControlFailure.Counter,
                 )
                 fallthrough.add((key, position))
                 ram_writes.append((config.counter_address + packet[1] * 2, 2))
-            elif opcode == 0x51:
+            elif opcode == 0x51 and key in selected:
                 # Mode zero bypasses every sound-library call. Program zero
                 # writes VH header volume/pan; 1..128 writes one of its fixed
                 # 128 sixteen-byte program records. This is global music VH,
@@ -475,7 +510,7 @@ def initializer_control_proof(
 
         covered = set()
         for (key, start), opening in locations.items():
-            if opening["opcode"] != 0x13:
+            if key not in selected or opening["opcode"] != 0x13:
                 continue
             # SWITCH shares native depth/storage with FOR/WHILE/DO. This
             # receipt skips the block, so it cannot hide a fifth shared frame
@@ -540,7 +575,8 @@ def initializer_control_proof(
             all(
                 location in covered
                 for location, row in locations.items()
-                if row["opcode"] in (0x13, 0x14, 0x15, 0x16, 0x1A)
+                if location[0] in selected
+                and row["opcode"] in (0x13, 0x14, 0x15, 0x16, 0x1A)
             ),
             InitializerControlFailure.Switch,
         )
@@ -557,6 +593,7 @@ def initializer_control_proof(
             programs_sha256=hashlib.sha256(
                 json.dumps(programs, sort_keys=True, separators=(",", ":")).encode()
             ).hexdigest(),
+            program_scope=selected,
             rhs_copy_offsets=frozenset(write.location[1] for write in copies),
             predicate_copy_locations=frozenset(predicate_copies),
             switch_edges=tuple(sorted(edges)),

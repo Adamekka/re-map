@@ -496,6 +496,12 @@ def snapshot(request, profile):
     put(profile.stage_address, int(stage), 2)
     put(profile.room_address, int(number, 16), 2)
     put(int(layout["loaded_rdt_address_ps1"], 0), 0x80100000, 4)
+    if "scenario_work_address_ps1" in layout:
+        put(
+            int(layout["scenario_work_address_ps1"], 0),
+            0x80100000 + room["section_offsets"][2],
+            4,
+        )
     for index, offset in enumerate(room["section_offsets"]):
         put(0x80100008 + index * 4, 0x80100000 + offset if offset else 0, 4)
     for kind, definitions in ((2, room["items"]), (1, room["doors"])):
@@ -734,7 +740,7 @@ def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapsh
             72,
             89,
             ItemQuantityState.Unreconstructed,
-            False,
+            True,
             RoomCompletion.Unknown,
         ),
         ("00-12", 21, 24, 59, 1, True, RoomCompletion.Incomplete),

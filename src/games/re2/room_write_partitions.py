@@ -165,16 +165,21 @@ def static_object_packet(
     )
 
 
-def direct_pickup_packet(packet: bytes) -> bool:
+def direct_pickup_packet(
+    packet: bytes, *, pickup_flags: frozenset[int] = frozenset((0,))
+) -> bool:
     """Recognize a direct ordinary declaration, without reachability proof."""
     assert type(packet) is bytes
+    assert type(pickup_flags) is frozenset and all(
+        type(value) is int and value in (0, 1) for value in pickup_flags
+    )
     return (
         len(packet) == 22
         and packet[:1] == b"\x4e"
         and packet[2:4] == b"\x02\x31"
         and all(struct.unpack_from("<2H", packet, 10))
         and int.from_bytes(packet[16:18], "little") != 0
-        and packet[21] == 0
+        and packet[21] in pickup_flags
     )
 
 

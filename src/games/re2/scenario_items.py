@@ -235,6 +235,9 @@ def scenario_item_proofs(
         assert initializer_control.matches_source(data, room["programs"]), (
             "initializer receipt belongs to another source"
         )
+        if initializer_control.program_scope != frozenset(room["programs"]):
+            # A local music block cannot certify the rest of the source.
+            return ScenarioItemProof(False, [], [])
         if not initializer_control.preserves_fixed_words(fixed_words):
             return ScenarioItemProof(False, [], [])
     control_copies = (

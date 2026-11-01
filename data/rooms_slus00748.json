@@ -28,6 +28,7 @@
     "RE2-SOURCE-001",
     "RE2-SCD-002",
     "RE2-DS-003",
+    "RE2-SCENARIO-001",
     "RE2-DS-006",
     "RE2-LIFETIME-001",
     "RE2-DS-005",
@@ -2325,7 +2326,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1010.RDT",
@@ -2474,7 +2479,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1020.RDT",
@@ -2617,7 +2626,11 @@
             7864
           ]
         }
-      ]
+      ],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1030.RDT",
@@ -2735,7 +2748,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1040.RDT",
@@ -2830,7 +2847,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1050.RDT",
@@ -2952,7 +2973,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1060.RDT",
@@ -3126,7 +3151,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1070.RDT",
@@ -3236,7 +3265,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1080.RDT",
@@ -3380,7 +3413,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1090.RDT",
@@ -3611,7 +3648,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM10A0.RDT",
@@ -3751,7 +3792,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM10B0.RDT",
@@ -3912,8 +3957,34 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
-      "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "known_direct_pickups": [
+        {
+          "global_id": 99,
+          "item_type": 21,
+          "slot": 3,
+          "creator_offsets": [
+            6166,
+            6230
+          ],
+          "context_conditions": []
+        },
+        {
+          "global_id": 95,
+          "item_type": 62,
+          "slot": 16,
+          "creator_offsets": [
+            6076
+          ],
+          "context_conditions": []
+        }
+      ],
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [
+          98
+        ],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM10C0.RDT",
@@ -4077,7 +4148,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM10D0.RDT",
@@ -4210,7 +4285,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM10E0.RDT",
@@ -4331,7 +4410,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM10F0.RDT",
@@ -4537,7 +4620,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1100.RDT",
@@ -4706,7 +4793,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1110.RDT",
@@ -4858,7 +4949,11 @@
         }
       ],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1120.RDT",
@@ -5059,7 +5154,11 @@
           ]
         }
       ],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1130.RDT",
@@ -5288,7 +5387,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1140.RDT",
@@ -5458,7 +5561,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1150.RDT",
@@ -5682,7 +5789,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1160.RDT",
@@ -5830,7 +5941,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1170.RDT",
@@ -5940,7 +6055,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1180.RDT",
@@ -6069,7 +6188,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM1190.RDT",
@@ -6179,7 +6302,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM11A0.RDT",
@@ -6303,7 +6430,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM11B0.RDT",
@@ -6413,7 +6544,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM11C0.RDT",
@@ -6523,7 +6658,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM11D0.RDT",
@@ -6633,7 +6772,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2000.RDT",
@@ -6937,7 +7080,18 @@
         }
       ],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": [
+          {
+            "global_id": 152,
+            "offsets": [
+              10168
+            ]
+          }
+        ]
+      }
     },
     {
       "source": "PL0/RDT/ROOM2010.RDT",
@@ -7205,7 +7359,11 @@
       ],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2020.RDT",
@@ -7467,7 +7625,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2030.RDT",
@@ -7647,7 +7809,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2040.RDT",
@@ -7852,7 +8018,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2050.RDT",
@@ -7977,7 +8147,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2060.RDT",
@@ -8156,7 +8330,11 @@
         }
       ],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2070.RDT",
@@ -8362,7 +8540,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2080.RDT",
@@ -8589,7 +8771,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2090.RDT",
@@ -8766,7 +8952,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM20A0.RDT",
@@ -8940,7 +9130,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM20B0.RDT",
@@ -9259,7 +9453,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM20C0.RDT",
@@ -9469,7 +9667,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM20D0.RDT",
@@ -9620,7 +9822,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM20E0.RDT",
@@ -9899,7 +10105,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM20F0.RDT",
@@ -10069,7 +10279,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2100.RDT",
@@ -10243,7 +10457,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2110.RDT",
@@ -10455,7 +10673,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2120.RDT",
@@ -10577,7 +10799,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2130.RDT",
@@ -10706,7 +10932,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2140.RDT",
@@ -10876,7 +11106,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2150.RDT",
@@ -10985,7 +11219,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2160.RDT",
@@ -11107,7 +11345,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM2190.RDT",
@@ -11255,7 +11497,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM21A0.RDT",
@@ -11418,7 +11664,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM21B0.RDT",
@@ -11596,7 +11846,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3000.RDT",
@@ -11706,7 +11960,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3010.RDT",
@@ -11857,7 +12115,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3020.RDT",
@@ -11967,7 +12229,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3030.RDT",
@@ -12107,7 +12373,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3040.RDT",
@@ -12232,7 +12502,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3050.RDT",
@@ -12357,7 +12631,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3060.RDT",
@@ -12464,7 +12742,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3070.RDT",
@@ -12601,7 +12883,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3080.RDT",
@@ -12711,7 +12997,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM3090.RDT",
@@ -12821,7 +13111,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM30A0.RDT",
@@ -12931,7 +13225,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM30B0.RDT",
@@ -13105,7 +13403,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM30C0.RDT",
@@ -13226,7 +13528,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM30D0.RDT",
@@ -13316,7 +13622,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4000.RDT",
@@ -13464,7 +13774,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4010.RDT",
@@ -13712,7 +14026,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4020.RDT",
@@ -13845,7 +14163,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4030.RDT",
@@ -14067,7 +14389,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4040.RDT",
@@ -14222,7 +14548,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4050.RDT",
@@ -14381,7 +14711,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4070.RDT",
@@ -14506,7 +14840,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4080.RDT",
@@ -14672,7 +15010,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4090.RDT",
@@ -14827,7 +15169,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM40A0.RDT",
@@ -14937,7 +15283,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM40B0.RDT",
@@ -15047,7 +15397,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM40C0.RDT",
@@ -15126,7 +15480,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM40D0.RDT",
@@ -15236,7 +15594,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM40E0.RDT",
@@ -15384,7 +15746,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM40F0.RDT",
@@ -15463,7 +15829,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM4100.RDT",
@@ -15663,7 +16033,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5000.RDT",
@@ -15758,7 +16132,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5010.RDT",
@@ -15880,7 +16258,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5020.RDT",
@@ -16020,7 +16402,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5030.RDT",
@@ -16205,7 +16591,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5040.RDT",
@@ -16338,7 +16728,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5050.RDT",
@@ -16549,7 +16943,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5060.RDT",
@@ -16682,7 +17080,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5070.RDT",
@@ -16833,7 +17235,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5080.RDT",
@@ -17027,7 +17433,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM5090.RDT",
@@ -17122,7 +17532,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6000.RDT",
@@ -17232,7 +17646,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6010.RDT",
@@ -17357,7 +17775,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6020.RDT",
@@ -17490,7 +17912,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6030.RDT",
@@ -17671,7 +18097,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6040.RDT",
@@ -17778,7 +18208,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6050.RDT",
@@ -17873,7 +18307,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6060.RDT",
@@ -18043,7 +18481,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6070.RDT",
@@ -18198,7 +18640,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6080.RDT",
@@ -18323,7 +18769,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6090.RDT",
@@ -18459,7 +18909,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM60A0.RDT",
@@ -18625,7 +19079,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM60B0.RDT",
@@ -18780,7 +19238,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM60C0.RDT",
@@ -18947,7 +19409,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM60D0.RDT",
@@ -19076,7 +19542,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM60E0.RDT",
@@ -19247,7 +19717,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM60F0.RDT",
@@ -19365,7 +19839,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6100.RDT",
@@ -19520,7 +19998,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6110.RDT",
@@ -19645,7 +20127,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6120.RDT",
@@ -19755,7 +20241,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6130.RDT",
@@ -19850,7 +20340,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6140.RDT",
@@ -19987,7 +20481,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6150.RDT",
@@ -20149,7 +20647,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6160.RDT",
@@ -20308,7 +20810,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM6170.RDT",
@@ -20418,7 +20924,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM7000.RDT",
@@ -20528,7 +21038,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM7010.RDT",
@@ -20661,7 +21175,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM7020.RDT",
@@ -20768,7 +21286,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM7030.RDT",
@@ -20893,7 +21415,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     },
     {
       "source": "PL0/RDT/ROOM7040.RDT",
@@ -21011,7 +21537,11 @@
       "immutable_open_doors": [],
       "known_puzzle_items": [],
       "known_direct_pickups": [],
-      "startup_item_declarations": []
+      "startup_item_declarations": [],
+      "scoped_scenario_items": {
+        "absent_item_ids": [],
+        "item_variants": []
+      }
     }
   ]
 }

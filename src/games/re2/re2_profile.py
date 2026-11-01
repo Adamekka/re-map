@@ -34,6 +34,7 @@ from games.re2.scenario_items import (
     scenario_presence_flags,
     scenario_vibration_writes,
 )
+from games.re2.scenario_selection import ScenarioContextLayout, scenario_context_layout
 from games.re2.script_dispatch_items import (
     ScriptItemDispatchConfig,
     ScriptItemDispatchSupport,
@@ -190,6 +191,13 @@ class Re2Profile:
             declaration_sources = {
                 row.room_id: row for row in declaration_config.selection.sources
             }
+            if not isinstance(scenario_context_layout(raw), ScenarioContextLayout):
+                raise ValueError("invalid RE2 scoped-scenario runtime guards")
+        elif any(
+            field in layout
+            for field in ("scenario_work_address_ps1", "scenario_reset_mask")
+        ):
+            raise ValueError("RE2 scoped-scenario guards require the audited revision")
         if layout["aot_capacity"] != 32 or any(
             not 0x80000000 <= int(value, 0) < 0x80200000
             for key, value in layout.items()
@@ -379,6 +387,33 @@ class Re2Profile:
             for bit in range(width * 8)
         )
         for key, room in rooms.items():
+            scoped_capable = isinstance(
+                declaration_config, StartupDeclarationAuditConfig
+            )
+            if scoped_capable != ("scoped_scenario_items" in room):
+                raise ValueError("invalid or missing RE2 scoped-scenario items")
+            scoped = (
+                room["scoped_scenario_items"]
+                if scoped_capable
+                else {"absent_item_ids": [], "item_variants": []}
+            )
+            if (
+                type(scoped) is not dict
+                or scoped.keys() != {"absent_item_ids", "item_variants"}
+                or type(scoped["absent_item_ids"]) is not list
+                or type(scoped["item_variants"]) is not list
+                or len(scoped["absent_item_ids"]) > 256
+                or len(scoped["item_variants"]) > 256
+            ):
+                raise ValueError("invalid RE2 scoped-scenario item structure")
+            if scoped["absent_item_ids"] or scoped["item_variants"]:
+                source = declaration_sources.get(key)
+                if source is None or (
+                    room.get("source"),
+                    room.get("size"),
+                    room.get("sha256"),
+                ) != (source.path, source.width, source.sha256):
+                    raise ValueError("unbound RE2 scoped-scenario item source")
             context_conditions = room.get("scenario_context_conditions", [])
             if (
                 actor_parts is not ActorPartSupport.Unaudited
@@ -1035,10 +1070,11 @@ class Re2Profile:
                 raise ValueError(
                     "RE2 source requires explicit collection identity proofs"
                 )
-            variants = room.get("scenario_item_variants")
+            global_variants = room.get("scenario_item_variants")
             diagnostic = f"RE2 scenario item variants in {key}"
-            if type(variants) is not list:
+            if type(global_variants) is not list:
                 raise ValueError(f"{diagnostic}: expected a list")
+            variants = global_variants + scoped["item_variants"]
             if variants and not room["candidate_list_complete"]:
                 raise ValueError(f"{diagnostic}: source list is incomplete")
             variant_ids = set()
@@ -1148,11 +1184,16 @@ class Re2Profile:
                 or len({rule["global_id"] for rule in conditional}) != len(conditional)
             ):
                 raise ValueError("invalid or missing RE2 conditional pickup presence")
-            absent = room.get("scenario_absent_item_ids")
-            if not room["fixed_context_preserved"] and (absent or variants):
+            global_absent = room.get("scenario_absent_item_ids")
+            if not room["fixed_context_preserved"] and (
+                global_absent or global_variants
+            ):
                 raise ValueError(
                     "RE2 scenario item proofs require a preserved fixed context"
                 )
+            if type(global_absent) is not list:
+                raise ValueError("invalid RE2 global scenario pickup exclusions")
+            absent = global_absent + scoped["absent_item_ids"]
             if (
                 type(absent) is not list
                 or bool(absent)
@@ -1211,6 +1252,11 @@ class Re2Profile:
                 for door in room["doors"]
             ):
                 raise ValueError("invalid RE2 door activation floor")
+            # Scoped identity/exclusion facts use the reader's existing fresh
+            # contradiction checks. They grant no whole-source presence or
+            # continuation capability, so fixed_context_preserved stays intact.
+            room["scenario_item_variants"] = variants
+            room["scenario_absent_item_ids"] = absent
         if award_flags & pickup_flags:
             raise ValueError("aliased RE2 event award and pickup collection rules")
         return Re2Profile(

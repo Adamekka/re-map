@@ -25,6 +25,7 @@
   },
   "research_ids": [
     "RE2-DS-001",
+    "RE2-SCENARIO-001",
     "RE2-DS-006",
     "RE2-DS-005",
     "RE2-CLIP-001",
@@ -1896,6 +1897,8 @@
     "script_flag_table_address_ps1": "0x800A78C8",
     "system_flags_address_ps1": "0x800CFB74",
     "status_flags_address_ps1": "0x800CFBD8",
+    "scenario_work_address_ps1": "0x800CE32C",
+    "scenario_reset_mask": 4096,
     "player_active_address_ps1": "0x800CFBF8",
     "player_facing_address_ps1": "0x800CFC6E",
     "player_position_address_ps1": "0x800CFC30",
