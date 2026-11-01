@@ -38,6 +38,43 @@ HEADING_MOVEMENTS = json.loads(
 
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["00-01", "00-10"], indirect=True)
+def test_vibration_ramp_preserves_scenario_exclusion_and_fresh_contradictions(snapshot):
+    """RE2-DS-006: an opposite-scenario item cannot block this room's clearance."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["00-10"]
+    assert source["fixed_context_preserved"]
+    assert source["scenario_absent_item_ids"] == [17]
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    # The generic fixture creates every raw alternative. Remove the excluded
+    # creator here; its deliberate live contradiction is checked below.
+    item = next(item for item in source["items"] if item["global_id"] == 17)
+    target_is_current = (
+        int.from_bytes(read(profile.room_address, 2).data, "little") == 0x10
+    )
+    if target_is_current:
+        put(registry + item["slot"] * 4, 0, 4)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 0x10))
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+    for acquired in (False, True, False):
+        put(bank + 17 // 32 * 4, (0x80000000 >> (17 % 32)) if acquired else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-10"]
+        assert record.list_complete and record.items == ()
+        assert record.completion is RoomCompletion.Cleared
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 0x10))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["00-10"] == record
+    if target_is_current:
+        put(registry + item["slot"] * 4, 0x80100000 + item["offset"] + 2, 4)
+        before = copy.deepcopy(tracker)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Retry
+        assert tracker == before
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
 @pytest.mark.parametrize("snapshot", ["00-01", "01-0c"], indirect=True)
 def test_dualshock_vibration_proof_preserves_identity_and_departed_presence(snapshot):
     """RE2-DS-003: fresh flags rewind independently of the presence proof."""

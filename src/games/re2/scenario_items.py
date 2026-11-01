@@ -496,10 +496,10 @@ def scenario_item_proofs(
                     for address in fixed_words
                 ):
                     return ScenarioItemProof(False, [], [])
-            elif row["opcode"] in (0x8A, 0x8B):
-                # RE2-DS-003: these synchronous handlers only enqueue bounded
-                # vibration records and update their scratch pointers. Require
-                # the revision's complete write proof before preserving bits.
+            elif row["opcode"] in (0x8A, 0x8B, 0x8C):
+                # RE2-DS-003/006: the ramp uses the same bounded vibration
+                # queue as 8B. All three synchronous handlers need the revision's
+                # complete queue/scratch write proof before preserving bits.
                 if not vibration_writes or any(
                     address < start + width and start < address + 4
                     for address in fixed_words

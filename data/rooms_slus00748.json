@@ -28,6 +28,7 @@
     "RE2-SOURCE-001",
     "RE2-SCD-002",
     "RE2-DS-003",
+    "RE2-DS-006",
     "RE2-LIFETIME-001",
     "RE2-DS-005",
     "RE2-CLIP-001",
@@ -4690,34 +4691,15 @@
       ],
       "candidate_list_complete": true,
       "collection_item_ids": [],
-      "conditional_item_presence": [
-        {
-          "global_id": 17,
-          "presence": {
-            "kind": "conditions",
-            "any_of": [
-              [
-                {
-                  "bank": 1,
-                  "bit": 1,
-                  "expected": 1
-                },
-                {
-                  "bank": 1,
-                  "bit": 6,
-                  "expected": 0
-                }
-              ]
-            ]
-          }
-        }
-      ],
+      "conditional_item_presence": [],
       "event_awards": [],
       "stage": 0,
       "room": 16,
       "id": "00-10",
-      "fixed_context_preserved": false,
-      "scenario_absent_item_ids": [],
+      "fixed_context_preserved": true,
+      "scenario_absent_item_ids": [
+        17
+      ],
       "scenario_item_variants": [],
       "scenario_context_conditions": [],
       "script_item_dispatch_relations": [],

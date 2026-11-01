@@ -788,6 +788,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SOURCE-001",
                 "RE2-SCD-002",
                 "RE2-DS-003",
+                *(["RE2-DS-006"] if vibration_writes else []),
                 "RE2-LIFETIME-001",
                 "RE2-DS-005",
                 *(

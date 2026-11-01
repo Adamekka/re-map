@@ -72,7 +72,7 @@ def test_dualshock_effect_pool_rejects_native_fixed_word_aliases(offset):
 def test_vibration_context_requires_all_writes_disjoint_from_fixed_words(
     opcode, proof, scenario_banks
 ):
-    """RE2-DS-003: a vibration command cannot authorize another revision."""
+    """RE2-DS-003/006: vibration cannot authorize another revision or alias."""
     from games.re2.scenario_items import scenario_item_proofs, scenario_vibration_writes
 
     raw = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
@@ -113,7 +113,7 @@ def test_vibration_context_requires_all_writes_disjoint_from_fixed_words(
         SCENARIO_EFFECT_POOL,
         vibration_writes=regions,
     )
-    accepted = proof == "disjoint" and opcode in (0x8A, 0x8B)
+    accepted = proof == "disjoint"
     assert result.fixed_context_preserved is accepted
     assert result.absent_item_ids == ([9] if accepted else [])
 
