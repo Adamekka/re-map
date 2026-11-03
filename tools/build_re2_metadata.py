@@ -24,7 +24,7 @@ from build_item_table import _read_file
 from extract_psx_file import _find
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
-from re2_map_interiors import add_collision_interiors
+from re2_map_interiors import add_collision_interiors, add_control_room_connections
 
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
@@ -736,6 +736,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                             room["id"], "Room " + room["id"]
                         )
     add_collision_interiors(profile["profile_id"], sources, plans, projection)
+    add_control_room_connections(profile["profile_id"], sources, plans)
     for plan in plans:
         # Extra native shapes can belong exclusively to another character or an unsupported
         # scenario. They stay outside this profile's revealable geometry.

@@ -613,6 +613,22 @@ try {
   }, detailState);
   assert.equal(detailLabels, detailCount);
   await detailPage.evaluate(fixture => {
+    for (const [area, region] of [['re2-07', '03'], ['re2-08', '02']]) {
+      const visit = fixture.explored_areas[area].find(visit => visit.id === region);
+      floorView = { mode: 'follow' };
+      selected = null;
+      draw({ ...fixture, area, map_region: region, current: visit.room, current_detail: visit, rooms: [visit], explored_areas: { [area]: [visit] } });
+      const room = document.querySelector('.room.current');
+      const detail = room.querySelector('.map-detail-core').getAttribute('d');
+      if (!detail.includes('M243,89.5L243,94.5') || !detail.includes('M245,89.5L245,94.5')) throw new Error('North Control Room ladder is missing on ' + area);
+      if (!detail.includes('M254,105.5L258,105.5') || !detail.includes('M256,106.5L256,110')) throw new Error('North Control Room lift is missing on ' + area);
+      if (document.querySelectorAll('#map .room').length !== 1) throw new Error('Connection symbols revealed an unvisited room or floor');
+      const view = svg.getAttribute('viewBox');
+      draw({ ...fixture, area, map_region: region, current: visit.room, current_detail: visit, rooms: [visit], explored_areas: { [area]: [visit] } });
+      if (svg.getAttribute('viewBox') !== view) throw new Error('Connection symbols changed the live map view');
+    }
+  }, detailState);
+  await detailPage.evaluate(fixture => {
     const visits = fixture.explored_areas['re2-02'];
     for (const id of ['00', '0B']) {
       const current = visits.find(visit => visit.id === (id === '00' ? '0B' : '00'));

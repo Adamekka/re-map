@@ -14,7 +14,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 
-from re2_map_interiors import add_collision_interiors, collision_detail_segments
+from re2_map_interiors import (
+    add_collision_interiors,
+    add_control_room_connections,
+    collision_detail_segments,
+)
 
 from games.re2.map_layout import Re2MapProjection
 
@@ -203,6 +207,56 @@ def test_changed_collision_source_cannot_reuse_the_pinned_room_interpretation():
             [],
             PROJECTION,
         )
+
+
+@pytest.mark.parametrize(
+    "profile_id",
+    ["re2_leon_a_slus00421", "re2_claire_b_slus00592", "re2_claire_b_slus00756"],
+)
+def test_control_room_symbols_do_not_transfer_to_unaudited_profiles(profile_id):
+    plans = [{"id": "re2-07", "rooms": [], "doors": [{"retained": True}]}]
+    before = copy.deepcopy(plans)
+    add_control_room_connections(profile_id, {}, plans)
+    assert plans == before
+
+
+def test_control_room_symbols_reject_changed_room_source():
+    with pytest.raises(ValueError, match="differs from RE2-MAP-007"):
+        add_control_room_connections("re2_leon_a_slus00748", {"03-03": b"changed"}, [])
+
+
+@pytest.mark.parametrize("area_id,region_id", [("re2-07", "03"), ("re2-08", "02")])
+def test_control_room_ladder_and_lift_survive_on_both_native_levels(area_id, region_id):
+    """RE2-MAP-007: original symbols stay inside the explored room outline."""
+    maps = json.loads((ROOT / "data/floor_plans_slus00748.json").read_text())
+    room = next(
+        room
+        for area in maps["areas"]
+        if area["id"] == area_id
+        for room in area["rooms"]
+        if room["id"] == region_id
+    )
+    assert room["room_ids"] == ["03-03"]
+    details = room["detail_segments"]
+    assert [[243, 89.5], [243, 94.5]] in details
+    assert [[245, 89.5], [245, 94.5]] in details
+    for y in (90.5, 92, 93.5):
+        assert [[243, y], [245, y]] in details
+    for first, last in (
+        ([254, 105.5], [258, 105.5]),
+        ([254, 105.5], [254, 111]),
+        ([258, 105.5], [258, 111]),
+        ([254, 111], [258, 111]),
+        ([256, 106.5], [256, 110]),
+        ([255, 107.5], [256, 106.5]),
+        ([257, 107.5], [256, 106.5]),
+        ([255, 109], [256, 110]),
+        ([257, 109], [256, 110]),
+    ):
+        assert [first, last] in details
+    floor = Polygon(room["rings"][0]).buffer(-0.7, join_style="mitre")
+    assert all(floor.covers(LineString(segment)) for segment in details)
+    assert len({tuple(map(tuple, segment)) for segment in details}) == len(details)
 
 
 @pytest.mark.parametrize("serial", ["00748", "00756"])

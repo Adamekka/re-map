@@ -1,4 +1,4 @@
-"""RE2-MAP-006: conservative, offline SCA footprints for two DualShock rooms.
+"""Offline RE2 interiors from pinned room sources and original map symbols.
 
 Requires Shapely 2.1 for generation only. These collision contours do not prove
 visible walls. Unknown shapes and misplaced perimeter blockers stay omitted.
@@ -163,3 +163,47 @@ def add_collision_interiors(
         for segment in collision_detail_segments(data, entry, projection):
             if segment not in entry["detail_segments"]:
                 entry["detail_segments"].append(segment)
+
+
+def add_control_room_connections(
+    profile_id: str, sources: dict[str, bytes], plans: list
+) -> None:
+    """RE2-MAP-007: depict the west ladder and south lift on both levels."""
+    if profile_id != "re2_leon_a_slus00748":
+        # Other revision/scenario room scripts have not received this audit.
+        return
+    if (
+        hashlib.sha256(sources["03-03"]).hexdigest()
+        != "38b5df2ebd621b0af00437ba4372a0ecc6ff078cfce8c0ac499259c1c29789c5"
+    ):
+        raise ValueError("03-03 connection source differs from RE2-MAP-007")
+    # The native tiles omit these connections, and their distorted floor plan
+    # does not contain the projected ladder trigger. These original symbols
+    # occupy its west recess and south lift platform, not guessed world meshes.
+    segments = [
+        [[243, 89.5], [243, 94.5]],
+        [[245, 89.5], [245, 94.5]],
+        *[[[243, y], [245, y]] for y in (90.5, 92, 93.5)],
+        [[254, 105.5], [258, 105.5]],
+        [[254, 105.5], [254, 111]],
+        [[258, 105.5], [258, 111]],
+        [[254, 111], [258, 111]],
+        [[256, 106.5], [256, 110]],
+        [[255, 107.5], [256, 106.5]],
+        [[257, 107.5], [256, 106.5]],
+        [[255, 109], [256, 110]],
+        [[257, 109], [256, 110]],
+    ]
+    for area_id, region_id in (("re2-07", "03"), ("re2-08", "02")):
+        entries = [
+            entry
+            for plan in plans
+            if plan["id"] == area_id
+            for entry in plan["rooms"]
+            if entry["id"] == region_id
+        ]
+        if len(entries) != 1 or entries[0]["room_ids"] != ["03-03"]:
+            raise ValueError("03-03 connection requires its own map region per level")
+        for segment in segments:
+            if segment not in entries[0]["detail_segments"]:
+                entries[0]["detail_segments"].append(segment)
