@@ -44,6 +44,8 @@ Uniquely matched doorways appear once on the shared wall. Selecting a room shows
 
 Freshly confirmed unlocks also show a green open padlock. Its frame stays dashed while access is unconfirmed, red while the door is inactive and cyan while open. Departed doors never become Open from visits or earlier passage alone. Ambiguous creator/side bindings keep unlock knowledge Unknown. [RE2-DOOR-005](research/re2/dualshock.md#re2-door-005-display-fresh-unlock-knowledge-separately-from-access) records the model and reversal checks.
 
+Used keys retain their unlock cue after departure when compatible open-door or item interactions share their script slot. This reads fresh unlock flags, without assuming the door is active or the competing item is absent. Conflicting door identities remain unresolved. [RE2-DOOR-008](research/re2/dualshock.md#re2-door-008-used-keys-retain-positive-unlock-evidence-after-departure) records the Spade/Heart correction and saved-state checks.
+
 Interior structures use dark cores with thin outlines, and room names avoid those structures. [RE2-MAP-003](research/re2.md#interior-presentation-follow-up-2026-10-27) records the alleyway presentation check.
 
 The DualShock Main Hall and East Office also show source-derived collision footprints and ramp/step envelopes where their original map sprites are empty. These are approximate navigation shapes; exact visible walls and stair treads remain unverified. [RE2-MAP-006](research/re2/interiors.md#re2-map-006-collision-footprints-supplement-two-empty-native-room-sprites) records the geometry and limits.

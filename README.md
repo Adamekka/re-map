@@ -71,4 +71,4 @@ python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
 
 Each revision and scenario has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identities and validation limits.
 
-![RE2 map with the cleared Main Hall and separate remaining items and incomplete checks](docs/images/re2-map.png)
+![RE2 map with the cleared Main Hall, unlocked doors, remaining items and incomplete checks](docs/images/re2-map.png)

@@ -580,24 +580,52 @@ def poll_re2(
                     else ""
                 )
                 unlock_state = DoorUnlockState.Unknown
-                # Current payloads can change targets and locks, so source
-                # operands cannot replace a missing live binding. Departed
-                # competing creators also cannot identify this side's lock;
-                # never cache the last creator through departure or rewind.
-                if lock["lock_id"] & 0x80 and (
-                    observed is not None
-                    or visited != key
-                    and sum(
-                        creator["slot"] == definition["slot"]
-                        for creator in source["doors"] + source["items"]
-                    )
-                    == 1
-                ):
-                    unlock_state = (
-                        DoorUnlockState.Unlocked
-                        if flag(layout["key_bank"], lock["lock_id"] & 0x3F)
-                        else DoorUnlockState.Locked
-                    )
+                if lock["lock_id"] & 0x80:
+                    key_unlocked = flag(layout["key_bank"], lock["lock_id"] & 0x3F)
+                    # Current payloads can change targets and locks, so source
+                    # operands cannot replace a missing live binding.
+                    bound = observed is not None
+                    if visited != key:
+                        creators = [
+                            creator
+                            for creator in source["doors"] + source["items"]
+                            if creator["slot"] == definition["slot"]
+                        ]
+                        # RE2-DOOR-008: native key use records an unlock before
+                        # later open/item creators can replace the interaction.
+                        # That positive history does not prove activation or a
+                        # lock from an unset bit, nor identify a different door.
+                        bound = len(creators) == 1 or (
+                            key_unlocked
+                            and len({creator["offset"] for creator in creators})
+                            == len(creators)
+                            and all(
+                                all(
+                                    creator[field] == definition[field]
+                                    for field in (
+                                        "stage",
+                                        "room",
+                                        "floor",
+                                        "center",
+                                        "four_point",
+                                        "activation_floor",
+                                    )
+                                )
+                                and (
+                                    not creator["lock_id"] & 0x80
+                                    or (creator["lock_id"], creator["lock_type"])
+                                    == (definition["lock_id"], definition["lock_type"])
+                                )
+                                for creator in source["doors"]
+                                if creator["slot"] == definition["slot"]
+                            )
+                        )
+                    if bound:
+                        unlock_state = (
+                            DoorUnlockState.Unlocked
+                            if key_unlocked
+                            else DoorUnlockState.Locked
+                        )
                 unlocked = unlock_state is DoorUnlockState.Unlocked
                 if unlocked:
                     key_label = ""

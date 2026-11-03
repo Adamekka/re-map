@@ -1894,9 +1894,13 @@ def test_live_door_slot_suppresses_only_superseded_current_variants(snapshot):
             for door in departed
             if door.observation_id == f"00-01:{alternative['offset']}"
         )
-        assert alternative_door.label == "Door conditions unresolved"
-        assert alternative_door.unlock_state is DoorUnlockState.Unknown
-        assert alternative_door.key_label == "Spade Key"
+        assert alternative_door.label == (
+            "Unlocked; access unconfirmed" if flags else "Door conditions unresolved"
+        )
+        assert alternative_door.unlock_state is (
+            DoorUnlockState.Unlocked if flags else DoorUnlockState.Unknown
+        )
+        assert alternative_door.key_label == ("" if flags else "Spade Key")
 
 
 @pytest.mark.parametrize(
@@ -2380,7 +2384,7 @@ def test_departed_door_retains_fresh_unlock_knowledge_without_claiming_access(sn
 @pytest.mark.parametrize("departed", [False, True])
 @pytest.mark.parametrize("fault", ["missing", "geometry", "duplicate", "item"])
 def test_unbound_door_creators_do_not_gain_unlock_knowledge(snapshot, departed, fault):
-    """RE2-DOOR-005: source/slot ambiguity cannot choose a lock from a set bit."""
+    """RE2-DOOR-005/008: binding and positive historical unlock stay separate."""
     profile, _, put, read = snapshot
     source = copy.deepcopy(profile.rooms["00-01"])
     definition = source["doors"][0]
@@ -2418,7 +2422,7 @@ def test_unbound_door_creators_do_not_gain_unlock_knowledge(snapshot, departed, 
             assert door.state == "UNCHECKED"
             assert door.unlock_state is (
                 DoorUnlockState.Unlocked
-                if departed and fault in ("missing", "geometry") and flags
+                if departed and fault in ("missing", "geometry", "item") and flags
                 else DoorUnlockState.Locked
                 if departed and fault in ("missing", "geometry")
                 else DoorUnlockState.Unknown
