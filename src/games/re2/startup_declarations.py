@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from games.bit_flags import msb_flag_location
+
 if TYPE_CHECKING:
     from games.re2.startup_entry_selection import (
         EntrySelectionConfig,
@@ -297,7 +299,7 @@ def startup_declarations(
                     and bit < banks[bank][1] * 8
                     and operation in (0, 1, 7)
                 ):
-                    address = banks[bank][0] + bit // 32 * 4
+                    address, _ = msb_flag_location(banks[bank][0], bit)
                     if save <= address <= save_end - 4:
                         locations.add(loc)
             elif (

@@ -12,6 +12,7 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 
+from games.bit_flags import msb_flag_location
 from games.re2.event_presence import flag_write_conflicts, presence_counter_indices
 from games.re2.immediate_effect_resource import (
     ImmediateEffectResource,
@@ -251,7 +252,7 @@ def known_declared_items(
             require(bank in banks and 0 <= bit <= 0xFFFF)
             # The native kind6 halfword operand wraps its word index to eight
             # words. Its write may exceed this reader's configured bank width.
-            return banks[bank][0] + ((bit // 32) & 7) * 4, 0x80000000 >> (bit % 32)
+            return msb_flag_location(banks[bank][0], bit & 0xFF)
 
         def flag_key(bank: int, bit: int) -> tuple[int, int]:
             require(bank in banks and 0 <= bit < banks[bank][1] * 8)

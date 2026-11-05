@@ -6,6 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from enum import Enum
 
+from games.bit_flags import msb_flag_location
 from games.re2.clip_effect_proof import ClipEffectProof, ClipEffectSupport
 
 
@@ -129,7 +130,7 @@ def certify_startup_effects(
     predicate_flags = frozenset(
         (bank, bit)
         for bank, bit in candidates
-        if banks[bank][0] + bit // 32 * 4
+        if msb_flag_location(banks[bank][0], bit)[0]
         in (clipping.system_address, clipping.status_address)
     )
     programs = room["programs"]
@@ -149,7 +150,7 @@ def certify_startup_effects(
                     programs,
                     key,
                     offset,
-                    {banks[bank][0] + bit // 32 * 4: 0x80000000 >> (bit % 32)},
+                    dict([msb_flag_location(banks[bank][0], bit)]),
                 )
                 for key, offset in clipping_commands
             )
@@ -158,8 +159,8 @@ def certify_startup_effects(
         return StartupEffectAuditSupport.Unaudited
     words = {}
     for bank, bit in predicate_flags:
-        address = banks[bank][0] + bit // 32 * 4
-        words[address] = words.get(address, 0) | (0x80000000 >> (bit % 32))
+        address, mask = msb_flag_location(banks[bank][0], bit)
+        words[address] = words.get(address, 0) | mask
     spans = set(
         (row["offset"], row["next"])
         for program in programs.values()

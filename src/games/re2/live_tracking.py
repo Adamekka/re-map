@@ -10,6 +10,7 @@ import hashlib
 import struct
 from collections.abc import Callable
 
+from games.bit_flags import msb_flag_location
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.player_heading import heading_degrees
@@ -195,8 +196,8 @@ def poll_re2(
         def flag(bank: int, bit: int) -> bool:
             address, width = profile.flag_banks[bank]
             assert 0 <= bit < width * 8, "flag index must fit the pinned bank"
-            word = value(address + bit // 32 * 4, 4)
-            return bool(word & (0x80000000 >> (bit % 32)))
+            address, mask = msb_flag_location(address, bit)
+            return bool(value(address, 4) & mask)
 
         registry = read(
             int(layout["aot_table_address_ps1"], 0), layout["aot_capacity"] * 4

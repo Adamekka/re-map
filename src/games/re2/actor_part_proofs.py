@@ -8,6 +8,7 @@ import struct
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
+from games.bit_flags import msb_flag_location
 from games.re2.script_control_limits import (
     NATIVE_CALL_FRAME_COUNT,
     NATIVE_LOOP_FRAME_COUNT,
@@ -322,7 +323,7 @@ def actor_part_copy_proof(
     if (
         any(
             bank not in banks
-            or banks[bank][0] + bit // 32 * 4
+            or msb_flag_location(banks[bank][0], bit)[0]
             not in (config.system_address, config.status_address)
             for bank, bit in fixed
         )
@@ -386,7 +387,7 @@ def actor_part_copy_proof(
     def flag_location(bank: int, bit: int) -> tuple[int, int] | Unknown:
         if bank not in banks or not 0 <= bit < banks[bank][1] * 8:
             return Unknown.Value
-        return banks[bank][0] + bit // 32 * 4, 0x80000000 >> (bit % 32)
+        return msb_flag_location(banks[bank][0], bit)
 
     fixed_locations = {
         flag_location(bank, bit): value for (bank, bit), value in fixed.items()

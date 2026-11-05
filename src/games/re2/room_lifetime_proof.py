@@ -7,6 +7,7 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 
+from games.bit_flags import msb_flag_location
 from games.re2.actor_part_proofs import (
     ActorPartCopyProof,
     actor_part_copy_proof,
@@ -284,7 +285,7 @@ def room_lifetime_proof(
             elif row["kind"] == "flag_write":
                 base, width = banks[row["bank"]]
                 if not 0 <= row["bit"] < width * 8 or not fixed_ram_write(
-                    base + row["bit"] // 32 * 4, 4
+                    msb_flag_location(base, row["bit"])[0], 4
                 ):
                     return RoomLifetimeFailure.WriteEffects
             elif opcode in (0x24, 0x25, 0x26):
@@ -642,7 +643,7 @@ def initializer_continuation_proof(
         if not predicates <= config.predicate_flags:
             return InitializerContinuationFailure.FlagAlias
         for bank, bit in predicates:
-            word = banks[bank][0] + bit // 32 * 4
+            word, _ = msb_flag_location(banks[bank][0], bit)
             # Closed entry owns model/actor/part allocations above the source
             # heap floor. Fresh predicates must stay in fixed RAM below it.
             if (

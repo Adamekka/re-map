@@ -6,6 +6,7 @@ import struct
 from collections.abc import Callable
 from typing import Literal
 
+from games.bit_flags import msb_flag_location
 from games.re2.initializer_control_proof import (
     InitializerContinuationProof,
     InitializerContinuationSupport,
@@ -45,17 +46,17 @@ def flag_write_conflicts(
 ) -> tuple[dict[int, int], frozenset[tuple[int, int]]]:
     words = {}
     for bank, bit in flags:
-        address = banks[bank][0] + bit // 32 * 4
-        words[address] = words.get(address, 0) | (0x80000000 >> (bit % 32))
+        address, mask = msb_flag_location(banks[bank][0], bit)
+        words[address] = words.get(address, 0) | mask
     # Native bank numbers can alias, including through an out-of-range bit.
     # Compare the actual PS1 word/mask before applying each proof's bounds.
-    aliases = frozenset(
-        (bank, bit)
-        for bank, (address, _) in banks.items()
-        for bit in range(256)
-        if words.get(address + bit // 32 * 4, 0) & (0x80000000 >> (bit % 32))
-    )
-    return words, aliases
+    aliases = set()
+    for bank, (address, _) in banks.items():
+        for bit in range(256):
+            word, mask = msb_flag_location(address, bit)
+            if words.get(word, 0) & mask:
+                aliases.add((bank, bit))
+    return words, frozenset(aliases)
 
 
 def presence_flag_write_proof(

@@ -11,6 +11,7 @@ import itertools
 from dataclasses import dataclass
 from enum import Enum
 
+from games.bit_flags import msb_flag_location
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
@@ -119,7 +120,7 @@ def script_dispatch_relations(
 
     def flag_key(bank: int, bit: int) -> tuple[int, int]:
         assert bank in flag_banks and 0 <= bit < flag_banks[bank][1] * 8
-        return flag_banks[bank][0] + bit // 32 * 4, 0x80000000 >> (bit % 32)
+        return msb_flag_location(flag_banks[bank][0], bit)
 
     for source in programs.values():
         for callback in source["commands"]:
