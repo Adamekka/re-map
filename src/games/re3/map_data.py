@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import struct
 
+from games.player_heading import heading_degrees
 from games.re3 import EXECUTABLE_SHA256
 from games.re3.capture_data import capture_failure
 from games.re3.room_data import RoomFormatFailure, decode_map
@@ -196,6 +197,7 @@ def decode_native_map_position(
         )
     world_x = struct.unpack_from("<i", ram, 0xCCBF8)[0]
     world_z = struct.unpack_from("<i", ram, 0xCCC00)[0]
+    facing = struct.unpack_from("<H", ram, 0xCCC32)[0]
     system = struct.unpack_from("<I", ram, 0xCC858)[0]
     flag_1fb8 = struct.unpack_from("<I", ram, 0xD1FB8)[0]
     flag_1fc0 = struct.unpack_from("<I", ram, 0xD1FC0)[0]
@@ -282,6 +284,12 @@ def decode_native_map_position(
         "status": "candidate-native-map-binding",
         "source_stage_room": [stage, room],
         "world_position_xz": [world_x, world_z],
+        # RE3-MAP-007: both movement and native arrow selection use the low
+        # twelve bits; this Candidate conversion does not admit gameplay.
+        "raw_facing_u16": facing,
+        "player_heading_degrees": heading_degrees(facing, 90, 1),
+        # Predict fresh marker initialization; cached native packets can lag.
+        "native_arrow_sector": ((facing + 0x100) >> 9) & 7,
         "native_stage_room": [native_stage, native_room],
         "map_record_index": record_index,
         "native_layer_index": layer,

@@ -2,7 +2,7 @@
 
 [RE3 scope](../../re3.md) · [Room and MAP directories](room-format.md)
 
-Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard is the user-selected target, verified separately in [RE3-INPUT-002](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms). Claims 001/002 are the original Candidate source/copy-execution findings. Claims 003/004 add bounded metadata and two observed native map positions using DuckStation `0.1-12083-g00e299795`. Claims 005/006 add source contours and selection counterexamples without new gameplay observations.
+Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard is the user-selected target, verified separately in [RE3-INPUT-002](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms). Claims 001/002 are the original Candidate source/copy-execution findings. Claims 003/004 add bounded metadata and two observed native map positions using DuckStation `0.1-12083-g00e299795`. Claims 005/006/007 add source contours, selection counterexamples and heading interpretation without new gameplay observations.
 
 The tracking blocker is spatial interpretation. RE3-ROOM-004 establishes resource directories but cannot supply actual room outlines. Later increments resolve Candidate native rows, layers, position projection and per-quad source-texel contours. Room ownership, tracker floor identity, visibility and completion still need separate contracts.
 
@@ -197,6 +197,48 @@ Row 27 also contains a 323-cell outline with a 1,848-cell hole, a separate fill 
 
 The two retained map captures in RE3-MAP-004 have signed byte values 1 and 0 respectively. Their projected points lie inside the source-selected 2,961-cell and 2,144-cell masks. Both native visit bits are set and map-acquisition bit zero is clear. These observations do not establish tracker visit admission, physical floor identity, general shape ownership or new gameplay coverage. The private `retained-point-checks.json` has SHA256 `ac6b676429cb71711dce535b67f954db7c14faa2f1240c19010fa15477fc131c`; `contract-report.json` has SHA256 `71821f93e0c9fc2f37533d60cf74093ffa6fdc28f848089dc21dedddde070c05`.
 
+## RE3-MAP-007: yaw phase determines heading and native marker sector
+
+Status: Candidate general conversion for the named revision. Source/copy execution and the retained controlled observations corroborate the rule. Further cardinal, reverse-wrap and other-group gameplay observations remain untested. This increment starts no emulator.
+
+Raw player facing is a u16 LE at PS1 virtual `0x800CCC32`, capture offset `0xCCC32`, full mask `0xFFFF`. Its orientation phase uses mask `0x0FFF`; higher stored bits are preserved diagnostically. Raw values above 4095 are valid, not a reason to reject a capture.
+
+The actor forward step reads yaw at actor byte `+0x6E`, rotates the local movement vector at `+0xC0`, then adds the result to world X/Z at `+0x34`/`+0x3C`. The pure-MIPS yaw-only matrix has first column `[cos(theta), 0, -sin(theta)]` with `theta = phase * 2*pi/4096`. The existing map projection has differential `[world X, -world Z]`, so yaw zero points right and increasing yaw rotates clockwise on the map:
+
+```text
+phase = raw_facing_u16 & 0x0FFF
+heading_degrees = (90 + phase * 360 / 4096) % 360
+native_arrow_sector = ((raw_facing_u16 + 0x100) >> 9) & 7
+```
+
+Heading zero points up. Raw phases `0`, `1024`, `2048`, `3072` point right, down, left, up respectively. Native map initialization rounds to eight sectors and writes texture U `sector * 8` into both marker buffers at PS1 virtual `0x801AFE80` and `0x801AFEA8`. Their edge V coordinates are 240/248. No stage, row or camera rotation appears in the traced initialization/placement path. All nine owned MAP records have matching numeric marker coverage signatures; this is not gameplay confirmation of other map contexts.
+
+| Owned source | PS1 virtual interval, end exclusive | SHA256 |
+| --- | --- | --- |
+| Actor forward step | `0x80017DF0..0x80017EAC` | `54c9a1b05bd5d60c955e3a1ea21b1dfa69115549e4fef5ee93ed08a0aaccc108` |
+| Marker initialization | `0x8006F0F4..0x8006F174` | `76aba3c0a430c6d9aab7f2237f693c31607bdcffbbcdc10d107dd72d8cd0f483` |
+| Marker placement | `0x80070608..0x8007085C` | `aea441385ccd7d13e272d50a121883d4692b2fe23cb7957b178475be6787ca6b` |
+| Pure-MIPS matrix | `0x800894E4..0x80089770` | `b2ceb5cbcb3d21497ca1bce6abbaeb2841463522aebcc0711487c836f1e2e3ac` |
+| Optimized movement matrix | `0x8008A0E4..0x8008A2F4` | `acb0b00cb3dbae11866b320bd8978d6c644d6391e3c0812fba535a1e657bba5c` |
+| Trig table | `0x800A41B0..0x800A81B0` | `b40c47b014ca8650c539760fd4c519cabce6f091628566ca0dd22318bb2c5b7a` |
+
+The [snapshot decoder](../../../src/games/re3/map_data.py) now returns `raw_facing_u16`, `player_heading_degrees` and the computed `native_arrow_sector` after its existing executable, capture and map-context checks. The sector predicts fresh native marker initialization; cached marker packets can retain an earlier facing until the map reopens. These numeric fields do not admit gameplay or establish a loaded-room witness. The [shared heading formula](../../../src/games/player_heading.py) also serves RE1 and RE2, with explicit offset/direction parameters. RE1 retains its complete-halfword input check; RE2 retains its existing profile orientation and coherent-pose read. RE2 profile loading rejects missing or malformed direction and nonfinite/nonnumeric offsets before polling; required settings receive no fallback.
+
+### Retained and copied-code comparisons
+
+The retained first-room forward observation at raw facing 2048 moved `[-1184, 0]` in world X/Z, exactly map-left at 270 degrees. The independent second-room pair moved `[535, 1306]`, net heading 22.276 degrees, while final facing 3328 predicts 22.5 degrees. That pair includes an earlier turn, and collision can change net displacement; it is corroboration rather than an exact facing measurement. Stationary Right turning from raw 3888 to 4448 preserves position and crosses the phase boundary clockwise by 49.21875 degrees. Earlier/later restores retain their corresponding raw yaw and heading. Both retained native maps agree with the predicted marker U at their sampled facing.
+
+The parent compared the production decoder with all eleven retained heading captures and independently checked the six source hashes. Copied execution covered all 4,096 orientation phases plus seven high-bit cases through the pure-MIPS matrix, and 38 marker initialization cases around rounding/wrap boundaries. Every call passed the code-hook store audit and complete 2 MiB before/after comparison. Maximum direction discrepancy from the fixed-point matrix was 0.009569 degrees. All 65,536 unsigned yaw values also agree with the nearest-sector interval `[-22.5, 22.5)` degrees. The optimized GTE movement routine was inspected, not executed. No memory-write hook, substituted matrix, guest patch or new gameplay observation was used.
+
+Private discovery evidence is under `/tmp/re-map-re3-heading-20261105-415748fee063/`. Parent integration evidence is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-heading-integration-20261105-z3z70zzm/`; copy its `verify.py` into a fresh private directory before rerunning, with the supplied test interpreter and retained owned inputs. Original reports were not overwritten.
+
+| Heading evidence | Bytes | SHA256 |
+| --- | ---: | --- |
+| Discovery `audit.py` | 9942 | `fe856d4c29c7f4ae6f1ef7e1f16fdc3de11733d9a62edcbae51bc9bff68caa2f` |
+| Discovery `report.json` | 11864 | `752d029b9f462008bb402bf457613914912ea7511f5bdf5a3304aa397043c771` |
+| Parent `verify.py` | 5650 | `e6152719cca17825d6924ef75fc289f3f429cda862248876c37d69281e9ae4e8` |
+| Parent `verification.json` | 3426 | `83b5045b51d17182150a5cabbeadd72a35ed0fd264affc14568d6f4d534e040d` |
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
@@ -239,10 +281,10 @@ The parent used Unicorn 2.1.4 to execute the exact renderer and its header helpe
 Run with the [test environment](../../testing.md#python-test-environment):
 
 ```sh
-python3 -m pytest -q tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py
+python3 -m pytest -q tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py tests/test_player_heading.py tests/test_re2_tracking.py
 ```
 
-All 800 focused RE3 and shared-geometry checks pass, including the original 25 primitive cases, 43 binding cases and 27 new contour cases. The contour tests cover palette-plane crossing, full-word transparency, holes and components, shade detail, upload replacement, absent texture words, TIM bounds, unsupported UVs and no partial export on later failure. Existing checks cover executable/capture gating, independent table bounds, signed origins, native truncation, early returns, ordered/chained remaps, raw-stage folding, position/story thresholds, layer/previous-state overrides, alternate records and earlier-snapshot reversal. They contain no owned executable, RAM or artwork bytes.
+The 27 synthetic contour cases cover palette-plane crossing, full-word transparency, holes and components, shade detail, upload replacement, absent texture words, TIM bounds, unsupported UVs and no partial export on later failure. Binding checks cover executable/capture gating, independent table bounds, signed origins, native truncation, early returns, ordered/chained remaps, raw-stage folding, position/story thresholds, layer/previous-state overrides, alternate records and earlier-snapshot reversal. Thirteen additional RE3 heading cases cover cardinal phases, rounded-sector boundaries, unsigned high bits and reversal; RE1/RE2 heading checks retain native-displacement references and coherent publication. Synthetic RE3 fixtures contain no owned executable, RAM or artwork bytes.
 
 A useful tracker map still needs physical floor identity/labels, complete native selection contracts for both drawing groups, and room/door/stair ownership of the source contours. Candidate row/layer/projection contracts exist, with only two native positions observed. Per-quad coverage and shade detail now survive export; those masks are not automatically room outlines. General lifecycle admission, ordinary room reentry and item/door/story interpretation remain unresolved. No runtime profile, UI, persistence or user exploration changed. Visits and completion remain unresolved.
 
@@ -257,3 +299,7 @@ A useful tracker map still needs physical floor identity/labels, complete native
 - 2026-11-05; independent source investigator and internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; authored the private mask/selection evidence for RE3-MAP-005/006, checked native variant sets, upload relocation, packed-plane patterns and primary GPU references, and reread the two retained captures. Final source review of the new exporter and 27 tests found no actionable issues. It independently passed those tests, verified the owned fingerprints, exported 792 decoded quads plus one unresolved quad and compared 80 palette masks with its earlier numeric audit. No new emulator/UI operation or gameplay validation occurred.
 - 2026-11-05; Codex root, exact runtime model `gpt-6.1-sol`; authored the bounded contour exporter, synthetic regressions and RE3-MAP-005/006 integration record. Verified source hashes, exact boundary/area agreement for 2,010 masks and 5,729 shades, 2,013 copied renderer calls and full RAM write effects. Local review covered identity and TIM bounds, upload order, absent data, full palette words, class-zero membership, plane crossing, directed/wrapping UVs, shared contour logic, source-only claims and conditional-ownership limits.
 - 2026-11-05; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the contour exporter, synthetic fixtures, shared tracer and format/layout context, with bounds, native formulas, failures, test risks, maintainability and research-claim limits in scope. It ran no tests or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
+- 2026-11-05 UTC; independent heading investigator, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; authored the private RE3-MAP-007 source and retained-capture evidence, traced marker selection and both matrix paths, checked nine numeric glyph signatures and repeated its report byte-identically. No repository edit, new emulator observation or gameplay admission was performed.
+- 2026-11-05 UTC; Codex root, exact runtime model `gpt-6.1-sol`; integrated the shared yaw formula and Candidate RE3 fields, added thirteen heading/reversal cases and explicit orientation tests, checked eleven retained captures, repeated 4,141 copied native calls with full RAM store auditing and checked all unsigned yaw/sector intervals. Local review covered field widths, signed/high-bit behavior, axis convention, preserved RE1/RE2 semantics, native glyph rounding, stale packet limits and refusal of gameplay admission. All 4,940 tests passed after the configuration correction.
+- 2026-11-05 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; checked the shared helper, three game callers, tests, source hashes, rounding, stale-packet limits and Candidate claims. It identified that malformed external RE2 orientation could reach a programmer assertion after room mutation. The root reproduced this and added mandatory profile-loading validation with fifteen configuration regressions. The reviewer independently passed 72 tests, excluding six fixture-dependent cases; it did not run the root's full suite, edit files or operate an emulator.
+- 2026-11-05 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the final shared formula, three game callers, startup validation, synthetic tests and RE3-MAP-007 claims. Review covered native signs/phase/rounding, widths, identity checks, configuration failure before mutation, preserved supported-profile behavior and unresolved admission. It ran no tests or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.

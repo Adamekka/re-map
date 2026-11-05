@@ -12,6 +12,7 @@ from collections.abc import Callable
 
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
+from games.player_heading import heading_degrees
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
 from games.re2.scenario_items import item_identity_candidates, scenario_item_candidates
@@ -716,10 +717,9 @@ def poll_re2(
         return PollResult(PollStatus.Retry, str(error))
     tracker.mark_current(rid)
     tracker.player_position = position
-    tracker.player_heading = (
-        layout["heading_offset_degrees"]
-        + layout["heading_direction"] * (yaw & 0xFFF) * 360 / 4096
-    ) % 360
+    tracker.player_heading = heading_degrees(
+        yaw, layout["heading_offset_degrees"], layout["heading_direction"]
+    )
     tracker.current_region = f"{area}:{region}"
     tracker.map_error = (
         "No floor outline is established for this room." if area == "unmapped" else ""

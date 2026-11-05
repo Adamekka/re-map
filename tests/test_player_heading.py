@@ -8,10 +8,21 @@ from test_live_items import REPO, RamReader, fixture_ram
 from track import PollStatus, poll_once
 
 from emulator.duckstation_gdb import MemRead
+from games.player_heading import heading_degrees
 from games.re1.map_layout import decode_player_heading
 from games.re1.re1_profile import Re1Profile
 from tracker.exploration_state import Tracker
 from ui.map_view import map_state
+
+
+@pytest.mark.parametrize(
+    "yaw,offset,direction,expected",
+    [(0, 0, 1, 0), (1024, 0, -1, 270), (3072, 180, -1, 270), (0xFC00, 90, 1, 0)],
+)
+def test_shared_yaw_conversion_keeps_explicit_orientation(
+    yaw, offset, direction, expected
+):
+    assert heading_degrees(yaw, offset, direction) == expected
 
 
 @pytest.mark.parametrize(

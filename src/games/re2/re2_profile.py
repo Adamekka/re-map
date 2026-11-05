@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -160,6 +161,24 @@ class Re2Profile:
         ):
             raise ValueError("invalid RE2 runtime identity or room addresses")
         layout = raw["runtime_layout"]
+        # Reject malformed external orientation settings before a poll can
+        # mutate exploration and reach the shared heading's programmer checks.
+        if (
+            "heading_direction" not in layout
+            or type(layout["heading_direction"]) is not int
+            or layout["heading_direction"] not in (-1, 1)
+        ):
+            raise ValueError("RE2 heading_direction must be -1 or 1")
+        if "heading_offset_degrees" not in layout:
+            raise ValueError("RE2 requires heading_offset_degrees")
+        offset = layout["heading_offset_degrees"]
+        try:
+            valid_offset = type(offset) in (int, float) and math.isfinite(offset)
+        except OverflowError:
+            # Unbounded JSON integers must fit the floating-point calculation.
+            valid_offset = False
+        if not valid_offset:
+            raise ValueError("RE2 heading_offset_degrees must be a finite number")
         _, flag_proof = presence_flag_write_proof(raw)
         presence_counter_indices(raw)
         scenario_effect_pool(raw)

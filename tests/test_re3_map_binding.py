@@ -315,3 +315,51 @@ def test_restoring_an_earlier_capture_reverses_the_binding_and_projection(contex
         map_data.decode_native_map_position(context.data, context.executable, initial)
         == before
     )
+
+
+@pytest.mark.parametrize(
+    "raw,heading,sector",
+    [
+        (0, 90, 0),
+        (255, 112.412109375, 0),
+        (256, 112.5, 1),
+        (767, 157.412109375, 1),
+        (768, 157.5, 2),
+        (1024, 180, 2),
+        (2048, 270, 4),
+        (3072, 0, 6),
+        (4095, 89.912109375, 0),
+        (4096, 90, 0),
+        (4448, 120.9375, 1),
+        (65535, 89.912109375, 0),
+    ],
+)
+def test_native_heading_keeps_raw_unsigned_yaw_and_rounded_arrow_sectors(
+    context, raw, heading, sector
+):
+    struct.pack_into("<H", context.ram, 0xCCC32, raw)
+    result = map_data.decode_native_map_position(
+        context.data, context.executable, context.ram
+    )
+    assert result["raw_facing_u16"] == raw
+    assert result["player_heading_degrees"] == heading
+    assert result["native_arrow_sector"] == sector
+    assert result["campaign_admission"] == "unresolved"
+
+
+def test_heading_reverses_after_an_earlier_snapshot_without_carrying_turns(context):
+    struct.pack_into("<H", context.ram, 0xCCC32, 3888)
+    before = bytes(context.ram)
+    first = map_data.decode_native_map_position(
+        context.data, context.executable, before
+    )
+    struct.pack_into("<H", context.ram, 0xCCC32, 4448)
+    turned = map_data.decode_native_map_position(
+        context.data, context.executable, context.ram
+    )
+    assert first["player_heading_degrees"] == 71.71875
+    assert turned["player_heading_degrees"] == 120.9375
+    assert (
+        map_data.decode_native_map_position(context.data, context.executable, before)
+        == first
+    )

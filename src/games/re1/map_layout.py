@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from games.game_profile import RoomId
+from games.player_heading import heading_degrees
 
 
 def decode_player_heading(data: bytes) -> float:
@@ -20,7 +21,7 @@ def decode_player_heading(data: bytes) -> float:
     """
     if len(data) != 2:
         raise ValueError("player facing requires a complete little-endian halfword")
-    return (90 + (int.from_bytes(data, "little") & 0xFFF) * 360 / 4096) % 360
+    return heading_degrees(int.from_bytes(data, "little"), 90, 1)
 
 
 @dataclass(frozen=True)

@@ -18,6 +18,48 @@ from games.runtime_identity import RuntimeSignature
 
 
 @pytest.mark.parametrize(
+    "field,value",
+    [
+        ("heading_direction", 0),
+        ("heading_direction", 2),
+        ("heading_direction", True),
+        ("heading_direction", 1.0),
+        ("heading_direction", "1"),
+        ("heading_direction", None),
+        ("heading_offset_degrees", float("nan")),
+        ("heading_offset_degrees", float("inf")),
+        ("heading_offset_degrees", -float("inf")),
+        ("heading_offset_degrees", True),
+        ("heading_offset_degrees", "90"),
+        ("heading_offset_degrees", None),
+        ("heading_offset_degrees", 10**400),
+    ],
+)
+def test_invalid_heading_configuration_fails_during_profile_loading(
+    tmp_path, field, value
+):
+    profile_path = ROOT / "profiles/re2_leon_a_slus00421.json"
+    raw = json.loads(profile_path.read_text())
+    for name in ("room_metadata_path", "floor_plans_path", "names_path"):
+        raw[name] = str((profile_path.parent / raw[name]).resolve())
+    raw["runtime_layout"][field] = value
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match=field):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize("field", ["heading_direction", "heading_offset_degrees"])
+def test_heading_configuration_stays_required(tmp_path, field):
+    raw = json.loads((ROOT / "profiles/re2_leon_a_slus00421.json").read_text())
+    del raw["runtime_layout"][field]
+    path = tmp_path / "profile.json"
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match=field):
+        Re2Profile.load(path)
+
+
+@pytest.mark.parametrize(
     "case",
     [
         "missing",
