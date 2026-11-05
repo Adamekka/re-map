@@ -216,11 +216,35 @@ def test_timed_out_request_cannot_leave_a_reply_for_next_read(packet_pair):
     assert not next_read.ok and next_read.error == "not connected"
 
 
-def test_gdb_error_response_keeps_aligned_connection(packet_pair):
+@pytest.mark.parametrize("operation", ["memory", "register"])
+def test_gdb_error_response_keeps_aligned_connection(packet_pair, operation):
     gdb, server = packet_pair
     server.sendall(_encode_packet(b"E01") + _encode_packet(b"1234"))
-    result = gdb.read_memory(0x80000000, 2)
-    assert not result.ok and "gdb error" in result.error
+    result = (
+        gdb.read_memory(0x80000000, 2)
+        if operation == "memory"
+        else gdb.read_register(37)
+    )
+    assert not result.ok and "gdb error" in result.error.lower()
+    next_read = gdb.read_memory(0x80000004, 2)
+    assert next_read.ok and next_read.data == bytes.fromhex("1234")
+
+
+@pytest.mark.parametrize(
+    "operation,reply",
+    [("memory", b"EF"), ("memory", b"EF123456"), ("register", b"EF123456")],
+)
+def test_hex_data_starting_with_uppercase_e_is_not_an_error(
+    packet_pair, operation, reply
+):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(reply) + _encode_packet(b"1234"))
+    result = (
+        gdb.read_memory(0x80000000, len(reply) // 2)
+        if operation == "memory"
+        else gdb.read_register(37)
+    )
+    assert result.ok and result.data == bytes.fromhex(reply.decode("ascii"))
     next_read = gdb.read_memory(0x80000004, 2)
     assert next_read.ok and next_read.data == bytes.fromhex("1234")
 

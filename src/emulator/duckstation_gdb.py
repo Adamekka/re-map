@@ -81,6 +81,11 @@ def _is_stop_reply(payload: bytes) -> bool:
     )
 
 
+def _is_error_reply(payload: bytes) -> bool:
+    # A leading E is also a valid hex data nibble. Error replies have the Enn form.
+    return re.fullmatch(rb"E[0-9a-fA-F]{2}", payload) is not None
+
+
 def _read_packet(sock: socket.socket, deadline: float) -> bytes:
     def receive(width: int) -> bytes:
         received = bytearray()
@@ -234,7 +239,7 @@ class DuckStationGdb:
             # Do not reuse a partially consumed reply during watchpoint cleanup.
             self.close()
             raise
-        if resp.startswith(b"E"):
+        if _is_error_reply(resp):
             return MemRead(ok=False, data=b"", error=f"gdb error: {resp[:16]!r}")
         if len(resp) != length * 2:
             self.close()
@@ -271,7 +276,7 @@ class DuckStationGdb:
                     self._watch_stops.append(stop)
             if not reply:
                 return MemRead(False, b"", "GDB command is unsupported")
-            if reply.startswith(b"E"):
+            if _is_error_reply(reply):
                 return MemRead(False, b"", f"GDB error: {reply[:16]!r}")
             return MemRead(True, reply)
         except (OSError, ValueError) as error:
