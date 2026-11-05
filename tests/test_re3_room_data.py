@@ -150,3 +150,14 @@ def test_truncations_never_escape_as_unpack_errors():
         assert isinstance(result, (dict, RoomFormatFailure))
         if size < 196:
             assert isinstance(result, RoomFormatFailure)
+
+
+def test_required_section_alias_cannot_manufacture_two_geometry_interpretations():
+    data = synthetic_room()
+    struct.pack_into("<I", data, 8 + 6 * 4, 96)
+    # These camera attribute words also look like a collision count of one.
+    # Bounds alone must not authorize both incompatible section layouts.
+    struct.pack_into("<2H", data, 96, 1, 0)
+    result = decode_room(data)
+    assert isinstance(result, RoomFormatFailure)
+    assert "alias" in result.detail

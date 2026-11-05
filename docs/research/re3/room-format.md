@@ -12,7 +12,7 @@ Independent reads from the owned MODE2/2352 image on 2026-11-05 reproduced the i
 - PS-X entry `0x80011B80`, load `0x80010000`, declared text size 866,304 bytes. These are executable header observations, not live process addresses.
 - No emulator was booted. Tested DuckStation version: none in this workstream. No RAM, savestates, patches, settings or playthrough histories were used.
 
-Private evidence is under `/tmp/re-map-re3-room-20261105/`. It includes independently regenerated `files.json`, `initial-scan.json`, `structure-scan.json`, `table-scan.json` and `room-catalog-initial.json`. Extracted executable, ARD and RDT bytes remain private. The repository contains original parser code, synthetic tests and numeric findings only.
+Private evidence is under `/tmp/re-map-re3-room-20261105/`. It includes independently regenerated `files.json`, `initial-scan.json`, `structure-scan.json`, `table-scan.json`, `room-catalog-initial.json` and the final CLI-generated `catalog.json`. Extracted executable, ARD, RDT and MAP bytes remain private. The repository contains original parser code, synthetic tests and numeric findings only.
 
 ## Primary source leads
 
@@ -77,16 +77,70 @@ Rejected hypothesis: decode slot 17 as RE2's second SCD directory. It is nonzero
 
 Reuse decision: existing RE2 procedure-boundary checks informed the bounds, but its decoder also couples RE2 opcodes to presence and completion rules. It is not called or generalized here. Existing ISO traversal/sector helpers can be reused by a catalog tool without changing RE1/RE2 behavior. Shared map tracing should be considered only after this disc's spatial representation and floor/source binding are established.
 
+## RE3-ROOM-004: native map resource directories
+
+Status: Candidate for this executable and `CD_DATA/ETC/MAP_U.MAP` only. This claim comes from owned-byte inspection, with no primary source format implementation adopted for this resource. Room/floor binding and payload semantics remain unresolved.
+
+The resource is 634,880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. Nine records cover it exactly when each record's end is rounded up to the next 2048-byte boundary. Each has four contiguous sections, and section 0 begins with a bounded directory.
+
+| Record | File byte offset | Unpadded size | Directory rows | Shared-offset rows |
+| --- | --- | --- | --- | --- |
+| 0 | 0 | 73708 | 65 | 28 |
+| 1 | 73728 | 74584 | 78 | 25 |
+| 2 | 149504 | 39380 | 13 | 0 |
+| 3 | 190464 | 72572 | 23 | 10 |
+| 4 | 264192 | 72548 | 18 | 1 |
+| 5 | 337920 | 71956 | 11 | 0 |
+| 6 | 411648 | 71992 | 12 | 2 |
+| 7 | 485376 | 73448 | 65 | 28 |
+| 8 | 559104 | 73916 | 78 | 25 |
+
+The 363 rows include 119 aliases beyond the distinct payload offsets in each record. These counts are not room, floor or map coverage. A row's two attribute words are preserved without interpreting them as item counts, room identity, polygon count or completion state. Section payloads are hashed and never exported as standalone assets.
+
+| Field | Address space / offset | Width, endian, mask | Observed contract |
+| --- | --- | --- | --- |
+| Section count | MAP file record base | u32 LE, `0xFFFFFFFF` | Four |
+| Section offset | Record base plus `4 + 8*i` | u32 LE, `0xFFFFFFFF` | Relative to record base; first is 36 |
+| Section size | Record base plus `8 + 8*i` | u32 LE, `0xFFFFFFFF` | Nonzero; next section starts at prior offset plus size |
+| Directory count | Section-0 start | u32 LE, `0xFFFFFFFF` | Complete `count * 8` table follows |
+| Entry offset | Section-0 start plus `4 + 8*j` | u32 LE, `0xFFFFFFFF` | Relative to section 0, at or after table end and within that section |
+| Entry attributes | Section-0 start plus `8 + 8*j` | Two u16 LE, each `0xFFFF` | Opaque |
+| Payload bound | Section-0 relative byte offset | Derived integer, no stored mask | Next strictly greater entry offset or section-0 end, preserving aliases |
+
+Rejected hypothesis: require strictly increasing unique entry offsets as with the SCD procedure table. Shared offsets and unsorted rows occur in these native map records. This directory must preserve source order and aliases without claiming their spatial relationship. The catalog provides no traced contours or artwork, and `spatial_semantics` remains `unresolved`.
+
+## Reproduction and interface
+
+Run from the repository root with the supplied verified test interpreter:
+
+```sh
+/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-improvement-_b504zzf/clean-venv/bin/python \
+  tools/re3_room_catalog.py \
+  '/Users/adamekka/Games/DuckStation/Resident Evil 3 - Nemesis.bin' \
+  /tmp/re-map-re3-room-20261105/catalog.json \
+  --executable SLUS_009.23 \
+  --expected-executable-sha256 2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29
+```
+
+The owned run reports `rooms=169 unsupported=0`. Catalog SHA256 is `47268e42f9eb9d567e4009e00b305431a420ded31afce32198a07e244687ce5d`. The tool reuses `_read_dir`, `_sector_data` and `_read_file`, adding extent bounds, directory-cycle rejection, exact source sizes and an explicit caller-supplied executable fingerprint. It leaves the existing helpers unchanged.
+
+`decode_ard`, `decode_room` and `decode_map` return numeric dictionaries or `RoomFormatFailure`, carrying format kind, byte offset in the relevant input, and a diagnostic. Disc/OS failures use kind `disc`, with offset zero when no format-field location applies. The tool records malformed room/map sources in `unsupported`; it never substitutes an empty collectible list. CLI exit 0 means every requested source fits these static bounds, exit 1 means a written partial catalog contains unsupported sources, and exit 2 means disc identity, I/O or top-level structure failed. This is a research command, with no application profile or history integration.
+
+For runtime source matching, each room row exposes ISO path, source stage digit, source number, ARD object-8 position/size, complete RDT hash, 22 header words, camera values, candidate geometry and initializer envelopes. Source stage digits remain one-based filename values. A runtime profile must supply the live encoding and compare fresh loaded bytes before selecting these records. The map rows currently supply section and payload bounds only. Associating a native map row with a room/floor, then establishing coordinate projection and outlines, is the next map interface requirement.
+
 ## Verification and limits
 
 `tests/test_re3_room_data.py` uses synthetic data only. It covers exact-sector alignment, zero-sized objects, malformed sizes, opaque slot 2, the 22-word header, signed geometry, unknown collision fields, nested-table truncation, missing required sections, invalid procedure offsets and slot 17 remaining undecoded. Successful parsing always retains `script_semantics = unresolved` and `completion = unknown`.
 
-The initial increment passed 76 RE3 cases and 570 checks including `tests/test_re2_metadata.py` and `tests/test_rdt_global_id.py`, using the supplied clean test interpreter. No formatter or linter is configured in this checkout.
+The initial increment passed 76 RE3 cases and 570 checks including `tests/test_re2_metadata.py` and `tests/test_rdt_global_id.py`, using the supplied clean test interpreter. The final focused run passes 600 checks, including all 106 RE3 cases. The broader `python -m pytest -q` run passed 4,620 collected tests in 169.61 seconds. Its collection preceded the final three input/output-alias cases; the final focused run covers those cases and their CLI guard. The two owned-disc catalog runs reproduce identical JSON bytes. No formatter or linter is configured in this checkout.
+
+`tests/test_re3_room_catalog.py` adds a wholly synthetic MODE2/2352 image to exercise shared ISO reads, executable mismatch, missing sources, short tracks, invalid extents, directory cycles, nested room/map failures, partial-catalog exit status and output errors. It also covers map aliases, unsorted rows, section overlaps and counts. The CLI rejects an output path, symlink or hard link referring to the input image, preserving owned bytes.
 
 Runtime integration still needs fresh room identity and loaded-RDT base/extent observations, immutable source witnesses, section relocation rules and difficulty/scenario state. Item and door support then needs RE3 command widths and native constructor layouts, control-flow and condition semantics, acquisition/unlock banks with masks, and earlier/later restoration checks. A first spatial map needs floor/source associations, coordinate projection, true room outlines, stair geometry and door-wall anchors. Source counts do not satisfy these contracts.
 
 ## Dated contributions
 
 - 2026-11-05, `gpt-6.1-sol`: authored parser, synthetic tests and this note; independently read the owned disc and compared pinned primary source leads. Executing model verified from the matching local Codex session's latest `turn_context.payload.model`, with `session_meta.payload.id` matching `CODEX_THREAD_ID`. No model identifier was inferred from a catalog or review model.
+- 2026-11-05, `gpt-6.1-sol`: added the metadata-only catalog CLI and native MAP directory experiment, preserving alias counterexamples. Added an incompatible required-section alias regression and shared ARD/MAP block alignment. No command decoder, difficulty selector or runtime profile was added.
 - Human contribution: supplied owned media, selected Hard mode and set the research/privacy constraints. Parent agent supplied the initial static executable fingerprint and file listing, independently reproduced here.
 - No external model review or gameplay endorsement is claimed. The parent owns cross-stream integration and final review.

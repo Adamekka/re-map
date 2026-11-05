@@ -1,4 +1,4 @@
-"""Bounded candidate RE3 PS1 layouts. See RE3-ROOM-001 through RE3-ROOM-003.
+"""Bounded candidate RE3 PS1 layouts. See RE3-ROOM-001 through RE3-ROOM-004.
 
 Successful decoding establishes source boundaries, not script execution,
 item presence, door access, room clearance or a playable floor plan.
@@ -19,6 +19,12 @@ class RoomFormatFailure:
     detail: str
 
 
+def aligned_block_size(size: int) -> int:
+    assert size >= 0, "block alignment requires a nonnegative size"
+    # ARD objects and MAP records both pad to the same 2048-byte block boundary.
+    return (size + 2047) & ~2047
+
+
 def decode_ard(data: bytes) -> dict | RoomFormatFailure:
     """Read the ten-object layout observed on SLUS-00923, without exporting bytes."""
     if len(data) < 2048 or len(data) % 2048:
@@ -36,7 +42,7 @@ def decode_ard(data: bytes) -> dict | RoomFormatFailure:
         )
         # RE3-ROOM-001: exact-boundary objects consume no extra block. The
         # pinned reevengi loader's strict-next alignment fails on this disc.
-        offset = (offset + size + 2047) & ~2047
+        offset = aligned_block_size(offset + size)
     if offset != length or objects[8]["size"] == 0:
         return RoomFormatFailure("ard", offset, "unsupported ARD end or empty RDT")
     return {"size": length, "sha256": hashlib.sha256(data).hexdigest(), "objects": objects}
@@ -55,6 +61,8 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
     for section in (6, 7, 8, 16):
         if not offsets[section] or offsets[section] == len(data):
             return RoomFormatFailure("rdt", 8 + section * 4, "required section is empty")
+    if len({offsets[section] for section in (6, 7, 8, 16)}) != 4:
+        return RoomFormatFailure("rdt", 8, "required sections alias incompatible layouts")
 
     def section_end(section: int) -> int:
         return min(
@@ -155,4 +163,57 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
         # particular slot 17 is not decoded as RE2's second script section.
         "script_semantics": "unresolved",
         "completion": "unknown",
+    }
+
+
+def decode_map(data: bytes) -> dict | RoomFormatFailure:
+    """Catalog MAP_U's record/section directories without decoding image payloads."""
+    if not data or len(data) % 2048:
+        return RoomFormatFailure("map", 0, "MAP needs complete 2048-byte blocks")
+    records, base = [], 0
+    while base < len(data):
+        count = struct.unpack_from("<I", data, base)[0]
+        if count != 4:
+            return RoomFormatFailure("map", base, "unsupported MAP section count")
+        sections, expected = [], 36
+        for index in range(count):
+            offset, size = struct.unpack_from("<II", data, base + 4 + index * 8)
+            if offset != expected or not size or base + offset + size > len(data):
+                return RoomFormatFailure("map", base + 4 + index * 8, "invalid MAP section extent")
+            sections.append({
+                "index": index, "offset": offset, "size": size,
+                "sha256": hashlib.sha256(data[base + offset : base + offset + size]).hexdigest(),
+            })
+            expected = offset + size
+        start = base + sections[0]["offset"]
+        size = sections[0]["size"]
+        if size < 4:
+            return RoomFormatFailure("map", start, "truncated MAP directory")
+        entries = struct.unpack_from("<I", data, start)[0]
+        table_end = 4 + entries * 8
+        if not entries or table_end > size:
+            return RoomFormatFailure("map", start, "invalid MAP directory count")
+        rows = []
+        for index in range(entries):
+            offset, attribute0, attribute1 = struct.unpack_from("<IHH", data, start + 4 + index * 8)
+            if not table_end <= offset <= size:
+                return RoomFormatFailure("map", start + 4 + index * 8, "MAP entry exceeds section 0")
+            rows.append({"index": index, "offset": offset, "attributes": [attribute0, attribute1]})
+        # RE3-ROOM-004: directory entries can share payload offsets. A repeated
+        # offset is an alias, not proof that a room has zero geometry/items.
+        bounds = sorted({row["offset"] for row in rows} | {size})
+        ends = dict(pairwise(bounds))
+        for row in rows:
+            row["bounded_size"] = 0 if row["offset"] == size else ends[row["offset"]] - row["offset"]
+        padded_end = aligned_block_size(base + expected)
+        if padded_end > len(data):
+            return RoomFormatFailure("map", base, "truncated MAP record padding")
+        records.append({
+            "index": len(records), "offset": base, "size": expected,
+            "padded_size": padded_end - base, "sections": sections, "directory": rows,
+        })
+        base = padded_end
+    return {
+        "size": len(data), "sha256": hashlib.sha256(data).hexdigest(),
+        "records": records, "spatial_semantics": "unresolved",
     }
