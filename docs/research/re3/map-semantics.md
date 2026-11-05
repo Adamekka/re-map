@@ -1,10 +1,10 @@
-# RE3 native map metadata and projection
+# RE3 native map metadata, projection and source contours
 
 [RE3 scope](../../re3.md) · [Room and MAP directories](room-format.md)
 
-Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard is the user-selected target, verified separately in [RE3-INPUT-002](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms). Claims 001/002 are the original Candidate source/copy-execution findings. Claims 003/004 add bounded metadata and two observed native map positions using DuckStation `0.1-12083-g00e299795`.
+Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard is the user-selected target, verified separately in [RE3-INPUT-002](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms). Claims 001/002 are the original Candidate source/copy-execution findings. Claims 003/004 add bounded metadata and two observed native map positions using DuckStation `0.1-12083-g00e299795`. Claims 005/006 add source contours and selection counterexamples without new gameplay observations.
 
-The tracking blocker is spatial interpretation. RE3-ROOM-004 establishes resource directories but cannot supply actual room outlines. The original increment identifies drawing records; the later increment resolves Candidate native rows, layers and position projection. Room contours, tracker floor identity, visibility and completion still need separate contracts.
+The tracking blocker is spatial interpretation. RE3-ROOM-004 establishes resource directories but cannot supply actual room outlines. Later increments resolve Candidate native rows, layers, position projection and per-quad source-texel contours. Room ownership, tracker floor identity, visibility and completion still need separate contracts.
 
 ## RE3-MAP-001: directory words count two groups of textured quads
 
@@ -133,6 +133,70 @@ Private integration evidence is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80
 
 Retained preparation, launch, controller and load scripts refer to those exact private paths. Reproduction needs fresh process/port checks and explicit path updates. Cleanup matched PID 39024's complete command and listener ownership, closed the debugger client, stopped that process only, verified the launch wrapper exited successfully and confirmed port 2357 free. No native state, RAM, owned executable/disc/BIOS bytes or image enters Git. Checkpoint reversal here does not establish memory-card persistence.
 
+## RE3-MAP-005: packed texture planes supply separate source contours
+
+Status: Candidate for the pinned executable and MAP fingerprint. Source inspection, owned-data comparisons and copied renderer execution only. This increment starts no emulator and adds no gameplay validation.
+
+The atlas packs two independent two-bit planes into four-bit palette indices. Treating every nonzero nibble as occupied includes texels belonging to the other plane. The native renderer at `0x80071354..0x800713A8` computes:
+
+```text
+effective_variant = 0 if style[0] == 7 else requested_variant
+relative_clut_row = 8 * (style[1] & 1) + style[0] + effective_variant
+texture_page_x_words = (((style[1] >> 1) + 7) & 15) * 64
+texture_page_y_rows = 256
+CLUT word position = [304, 490 + relative_clut_row]
+```
+
+Group 0 requests variants `{0, 2, 5}` through `0x8007275C..0x80072AC4`. Group 1 requests `{0, 2}` through the Boolean conversion and shift at `0x80070530..0x8007053C`. Style kind 7 forces effective variant zero at `0x800711A4..0x800711B4`; requested variants remain separately identified in the export. All 14 actual group/style combinations stay within main CLUT rows `0..15` for their requested variants.
+
+These are little-endian file fields and VRAM word coordinates, not live PS1 RAM addresses:
+
+| TIM field | Width and mask | Supported source contract |
+| --- | --- | --- |
+| Magic and flags | Two u32 LE, full width | `16`, `8`, a four-bit indexed TIM with CLUT |
+| Block size | u32 LE, full width | Exactly `12 + 2 * word_width * height` |
+| Block rectangle | Four u16 LE, each `0xFFFF` | X/Y, word width and row height |
+| Main CLUT | Sixteen rows of sixteen u16 LE entries | File X 304; upload Y 490 |
+| Overlay CLUT | One row of sixteen u16 LE entries | File X 304; upload Y 506 |
+| Main image | 64 or 128 words by 256 rows | Upload X/Y replaced with `[448, 256]` |
+| Overlay image | 64 words by 40 rows, file Y 216 | Upload X replaced with 512; Y becomes `256 + 216` |
+
+The loader resets page/CLUT slots at `0x800714CC..0x800714F8`. Main upload `0x800784E0..0x800785E4` precedes overlay upload `0x8006EBEC..0x8006ECB0`; TIM block interpretation is at `0x8008DF40..0x8008E058`. Palette X is preserved. Both palette Ys, both image Xs and main image Y are overwritten. Original rectangles remain in numeric provenance. The overlay replaces overlapping words in the main image's second page. Record 2's narrower main image leaves part of that page unloaded; absent words are an explicit failure, never transparent padding.
+
+Within each VRAM u16, the nibble is `(word >> (4 * (u & 3))) & 15`. Main CLUT rows `0..7` repeat by the lower two bits; rows `8..15` repeat by the upper two bits. The decoder checks full-word repetition before sampling. Only CLUT word zero is transparent; `0x8000` still contributes coverage. These addressing and transparency rules agree with the pinned DuckStation [GPU register definitions](https://raw.githubusercontent.com/stenzek/duckstation/00e299795/src/core/gpu_types.h), `GPUDrawModeReg` and `GPUTexturePaletteReg`, and [software rasterizer](https://raw.githubusercontent.com/stenzek/duckstation/00e299795/src/core/gpu_sw_rasterizer.inl), `ShadePixel` lines 90–96 and 116–117.
+
+`extract_map_contours(data, executable)` in [the offline exporter](../../../tools/re3_map_geometry.py) first uses the mandatory full executable gate and bounded layout decoder. It checks exact TIM section consumption, supported dimensions and palettes before returning numeric coverage. Each quad keeps its own requested/effective palette variants, CLUT row, plane shift, nontransparent-class membership, coverage rings and separate shade-class rings. Class zero membership is computed from the supplied palette too. The shared [contour tracer](../../../tools/map_geometry.py) preserves components, holes and exact cell area. No colors or image payloads are exported.
+
+The effective CLUT row selects the plane after variant addition. Record 0/7, row 0, group 0, primitive 1 has style `[4, 0, 0, 0]`: requested variants 0/2 use the lower plane, but variant 5 addresses row 9 and uses the upper plane. Its area changes from 440 to 23 cells. Style parity alone is insufficient. For actual kind-0 draws, variant 5 hides class 2 and retains classes 1/3; other supported combinations retain classes 1/2/3. These memberships come from the actual CLUT, not hardcoded role or clearance rules.
+
+The renderer stores upper UV endpoints plus one into byte fields at `0x80071300..0x80071350`. Reversed endpoints and upper endpoints of 255 therefore remain `unresolved-directed-or-wrapping-uv`; the exporter does not normalize them or invent GPU interpolation. The owned resource has one reversed quad and no upper endpoints of 255. Coverage describes nontransparent source texels before clipping, modulation and blending, not final framebuffer visibility or room ownership.
+
+### Source and copied-code verification
+
+The owned export contains 792 decoded quads and one explicitly unresolved quad, retaining all 427 group-0 and 366 group-1 records. Its 2,010 supported palette variants matched an independent, earlier sampler in occupied cells, exact directed unit boundary edges and signed area. Another 5,729 shade contours matched their sampled class cells. Of 426 forward group-0 quads, 269 variant-zero masks are smaller than their rectangles.
+
+Unicorn 2.1.4 executed the exact renderer for all 2,013 quad/requested-variant combinations, including the reversed quad. GPU CLUT/page registers and all four UV pairs matched the formulas and byte storage above. The shared code-hook store auditor predicted every write; complete 2 MiB before/after comparisons matched. No memory-write hook, substituted renderer or guest-game patch was used. Copied execution does not confirm gameplay admission or geometry ownership.
+
+Private evidence is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-contours-integration-20261105-_f9fzukh/`. `verify.py` repeats the numeric sampler and copied-code comparisons. Discovery and selection evidence remain under `/tmp/re-map-re3-contours-20261105-Xb0Fz0/` and `/tmp/re-map-re3-contour-contract-20261105-NyxDb3/`; original files were not overwritten.
+
+| Integration evidence | Bytes | SHA256 |
+| --- | ---: | --- |
+| `contours.json` | 33439459 | `db2dda034593c17f809245e829e184cf7551d4b96d4f36c3895a7344311039cd` |
+| `source-audit.py` | 8248 | `a90e11047865e31af72b050af6c50f638af05dd8ad185dc023b3f44ce91c02b8` |
+| `mask-report.json` | 425592 | `d4c1b28234ed3e19d2ade8c6608937de697e6718c5775b9b9f8399c861f0c099` |
+| `verify.py` | 6877 | `1e52b66b8ccd1937c39d6ce3b58c4a3292e7396deb225a657729f7e321b55b8a` |
+| `verification.json` | 1126 | `072346992155ec65a2828a9f143f33c8f4e7fd77008a90cdfec71ef4bf5e97c0` |
+
+## RE3-MAP-006: static quad unions do not establish room ownership
+
+Status: Candidate source interpretation and retained-capture comparisons. The new exporter preserves alternatives; it does not implement conditional draw admission or tracker visibility.
+
+At `0x80071ACC..0x80071B40`, current native map key `0x0001` and signed i8 at PS1 virtual `0x800CCBCD` below 3 exclude row-1 primitives 1/2. Values at least 3 exclude primitive 0 instead, subject to earlier filters. The source masks differ: primitive 0 covers 2,961 cells, while the later pair covers 2,416. At `0x80071B44..0x80071B68`, current key `0x000D` excludes row-13 primitive 1. Primitive 0 covers 2,144 cells with 12 corners; including the connector yields 2,444 cells with 16 corners. An unconditional union changes the room's extent.
+
+Row 27 also contains a 323-cell outline with a 1,848-cell hole, a separate fill matching that hole exactly, and fragmented detail. Source selection at `0x80071C58..0x80071CB4` distinguishes alternatives. Neither all of group 0 nor one palette class automatically defines a floor or door.
+
+The two retained map captures in RE3-MAP-004 have signed byte values 1 and 0 respectively. Their projected points lie inside the source-selected 2,961-cell and 2,144-cell masks. Both native visit bits are set and map-acquisition bit zero is clear. These observations do not establish tracker visit admission, physical floor identity, general shape ownership or new gameplay coverage. The private `retained-point-checks.json` has SHA256 `ac6b676429cb71711dce535b67f954db7c14faa2f1240c19010fa15477fc131c`; `contract-report.json` has SHA256 `71821f93e0c9fc2f37533d60cf74093ffa6fdc28f848089dc21dedddde070c05`.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
@@ -147,6 +211,7 @@ sys.path[:0] = ['src', 'tools']
 from build_item_table import _read_file
 from games.re3.map_data import decode_map_layout, decode_map_primitives
 from games.re3.room_data import RoomFormatFailure
+from re3_map_geometry import extract_map_contours
 with Path(sys.argv[1]).open('rb') as image:
     executable = _read_file(image, 288380, 868352)
     data = _read_file(image, 6807, 634880)
@@ -157,6 +222,9 @@ Path('/tmp/re3-map-primitives.json').write_text(json.dumps(result, indent=2) + '
 layout = decode_map_layout(data, executable)
 assert not isinstance(layout, RoomFormatFailure), layout
 Path('/tmp/re3-map-layout.json').write_text(json.dumps(layout, indent=2) + '\n')
+contours = extract_map_contours(data, executable)
+assert not isinstance(contours, RoomFormatFailure), contours
+Path('/tmp/re3-map-contours.json').write_text(json.dumps(contours, indent=2) + '\n')
 PY
 ```
 
@@ -171,12 +239,12 @@ The parent used Unicorn 2.1.4 to execute the exact renderer and its header helpe
 Run with the [test environment](../../testing.md#python-test-environment):
 
 ```sh
-python3 -m pytest -q tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py
+python3 -m pytest -q tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py
 ```
 
-All 267 focused tests pass, including the original 25 primitive cases and 43 binding cases. They cover exact executable/capture gating, independent table bounds, signed origins, native truncation, early returns, ordered/chained remaps, raw-stage folding, position/story thresholds, layer/previous-state overrides, alternate records and earlier-snapshot reversal. The original primitive tests retain inclusive/reversed endpoints, opaque styles, aliases, group selection, unconsumed tails and no partial export on later failure. They contain no owned executable, RAM or artwork bytes.
+All 800 focused RE3 and shared-geometry checks pass, including the original 25 primitive cases, 43 binding cases and 27 new contour cases. The contour tests cover palette-plane crossing, full-word transparency, holes and components, shade detail, upload replacement, absent texture words, TIM bounds, unsupported UVs and no partial export on later failure. Existing checks cover executable/capture gating, independent table bounds, signed origins, native truncation, early returns, ordered/chained remaps, raw-stage folding, position/story thresholds, layer/previous-state overrides, alternate records and earlier-snapshot reversal. They contain no owned executable, RAM or artwork bytes.
 
-A useful tracker map still needs physical floor identity/labels, the native selection conditions for both drawing groups and true outline/door/stair geometry. Candidate row/layer/projection contracts now exist, with only two native positions observed. Textured quads may include artwork or overlays; their rectangles are not automatically room contours. General lifecycle admission, ordinary room reentry and item/door/story interpretation remain unresolved. No runtime profile, UI, persistence or user exploration changed. Visits and completion remain unresolved.
+A useful tracker map still needs physical floor identity/labels, complete native selection contracts for both drawing groups, and room/door/stair ownership of the source contours. Candidate row/layer/projection contracts exist, with only two native positions observed. Per-quad coverage and shade detail now survive export; those masks are not automatically room outlines. General lifecycle admission, ordinary room reentry and item/door/story interpretation remain unresolved. No runtime profile, UI, persistence or user exploration changed. Visits and completion remain unresolved.
 
 ## Contributions and review
 
@@ -186,3 +254,6 @@ A useful tracker map still needs physical floor identity/labels, the native sele
 - 2026-11-05; Codex root, exact runtime model `gpt-6.1-sol`; authored RE3-MAP-003/004, traced remapping/anchors/layers/projection, added bounded metadata and snapshot decoders, shared capture witnesses, checked 424 copied-code contexts and two native map positions, and verified private cleanup. Local review covered address spaces, masks, ordered control flow, signed arithmetic, independent bounds, raw layer limits, capture identity, input preservation and unresolved admission. No model agreement substitutes for gameplay observations.
 - 2026-11-05; independent internal source checker, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues after checking remap order/early returns, raw-stage folding, flag masks, layer selection, signed projection, parser bounds and shared capture checks. Independently verified the executable fingerprint and 49-row remap table, and inspected the copied-code report and both retained projection pairs. It did not rerun tests or emulator experiments, change files or establish gameplay behavior.
 - 2026-11-05; external review attempt, `gemini-3.8-flash` at high reasoning through Antigravity; the provider returned no content for 15 minutes and T3 stopped the run. Claude Opus 5.5 was disabled in the provider inventory. Neither supplied a completed review or an endorsement.
+- 2026-11-05; independent source investigator and internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; authored the private mask/selection evidence for RE3-MAP-005/006, checked native variant sets, upload relocation, packed-plane patterns and primary GPU references, and reread the two retained captures. Final source review of the new exporter and 27 tests found no actionable issues. It independently passed those tests, verified the owned fingerprints, exported 792 decoded quads plus one unresolved quad and compared 80 palette masks with its earlier numeric audit. No new emulator/UI operation or gameplay validation occurred.
+- 2026-11-05; Codex root, exact runtime model `gpt-6.1-sol`; authored the bounded contour exporter, synthetic regressions and RE3-MAP-005/006 integration record. Verified source hashes, exact boundary/area agreement for 2,010 masks and 5,729 shades, 2,013 copied renderer calls and full RAM write effects. Local review covered identity and TIM bounds, upload order, absent data, full palette words, class-zero membership, plane crossing, directed/wrapping UVs, shared contour logic, source-only claims and conditional-ownership limits.
+- 2026-11-05; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the contour exporter, synthetic fixtures, shared tracer and format/layout context, with bounds, native formulas, failures, test risks, maintainability and research-claim limits in scope. It ran no tests or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.

@@ -1,4 +1,4 @@
-"""Numeric contours shared by the owned RE1 and RE2 map generators."""
+"""Numeric contours shared by the owned game-map generators."""
 
 
 def trace_floor_cells(
