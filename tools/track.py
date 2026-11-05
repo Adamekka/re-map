@@ -544,8 +544,10 @@ def main() -> int:
         / "profiles/re1_directors_cut_slus00551.json",
     )
     ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--port", type=int, default=2345)
-    ap.add_argument("--hz", type=float, default=10.0)
+    ap.add_argument("--port", type=int, default=2345, help="GDB server port (1..65535)")
+    ap.add_argument(
+        "--hz", type=float, default=10.0, help="polling rate in Hz (1..30; default: 10)"
+    )
     ap.add_argument("--once", action="store_true", help="read one snapshot and exit")
     ap.add_argument(
         "--map",
@@ -570,6 +572,10 @@ def main() -> int:
         help="start a fresh exploration history for the selected history file",
     )
     args = ap.parse_args()
+    if not 1.0 <= args.hz <= 30.0:
+        ap.error("--hz must be finite and between 1 and 30")
+    if not 1 <= args.port <= 65535:
+        ap.error("--port must be between 1 and 65535")
     log_path = args.log_file.expanduser().resolve()
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -727,7 +733,7 @@ def main() -> int:
                 return 1
             print("Room map: http://127.0.0.1:8765")
             logger.info("Map listening at http://127.0.0.1:8765")
-        period = 1.0 / max(1.0, min(args.hz, 30.0))
+        period = 1.0 / args.hz
         map_line = "\nRoom map: http://127.0.0.1:8765" if map_server is not None else ""
         map_line += f"\nLog file: {log_path}"
         last_wait_reason = ""

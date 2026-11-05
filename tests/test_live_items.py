@@ -288,10 +288,11 @@ def test_profile_rejects_ambiguous_or_invalid_identity_config(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    ("map_enabled", "initially_offline"), [(True, True), (True, False), (False, False)]
+    ("map_enabled", "initially_offline", "hz", "port"),
+    [(True, True, 1, 1), (True, False, 12.5, 65535), (False, False, 30, 2345)],
 )
 def test_live_tracker_reconnects_after_startup_or_runtime_failure(
-    tmp_path, monkeypatch, map_enabled, initially_offline
+    tmp_path, monkeypatch, map_enabled, initially_offline, hz, port
 ):
     ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
 
@@ -344,6 +345,10 @@ def test_live_tracker_reconnects_after_startup_or_runtime_failure(
             str(log),
             "--history-file",
             str(tmp_path / "visits.json"),
+            "--hz",
+            str(hz),
+            "--port",
+            str(port),
         ],
     )
     now = 0.0
@@ -360,6 +365,7 @@ def test_live_tracker_reconnects_after_startup_or_runtime_failure(
 
     def advance(period):
         nonlocal now
+        assert period == pytest.approx(1 / hz)
         if server is not None:
             snapshots.append(json.loads(server.snapshot))
         now += 2

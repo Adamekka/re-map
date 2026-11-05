@@ -18,6 +18,38 @@ import track
 from tracker.polling import PollResult, PollStatus
 
 
+@pytest.mark.parametrize(
+    "option,value,diagnostic",
+    [
+        *(
+            ("--hz", value, "--hz must be finite and between 1 and 30")
+            for value in ("0", "-1", "0.5", "30.01", "nan", "inf", "-inf")
+        ),
+        *(
+            ("--port", value, "--port must be between 1 and 65535")
+            for value in ("0", "-1", "65536")
+        ),
+    ],
+)
+def test_invalid_numeric_options_fail_before_startup(
+    monkeypatch, capsys, option, value, diagnostic
+):
+    log_handler = Mock()
+    history = Mock()
+    gdb = Mock()
+    monkeypatch.setattr(track, "RotatingFileHandler", log_handler)
+    monkeypatch.setattr(track, "VisitHistory", history)
+    monkeypatch.setattr(track, "DuckStationGdb", gdb)
+    monkeypatch.setattr(sys, "argv", ["track.py", f"{option}={value}"])
+    with pytest.raises(SystemExit) as exc:
+        track.main()
+    assert exc.value.code == 2
+    assert diagnostic in capsys.readouterr().err
+    log_handler.assert_not_called()
+    history.assert_not_called()
+    gdb.assert_not_called()
+
+
 def test_connection_failure_is_written_to_file(tmp_path: Path):
     log = tmp_path / "logs/tracker.log"
     # A bound, non-listening port gives a connection refusal without another server racing us.
