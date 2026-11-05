@@ -370,4 +370,23 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re2-claire-013-pickup-157-room-clearance-and-restore-reversal"></a>[RE2-CLAIRE-013](research/re2.md#re2-claire-013-pickup-157-room-clearance-and-restore-reversal) | pickup 157 awards 30 units natively and clears the room with pickup 139 preserved; departure/reentry and four exact restores verify clearance and reversal; source union remains eight |
 | <a id="re2-claire-014-pickup-17-and-native-floor-inputs"></a>[RE2-CLAIRE-014](research/re2.md#re2-claire-014-pickup-17-and-native-floor-inputs) | pickup 17 retains departed remaining status, awards one unit and clears its room; native floor-byte zero/four inputs, five passages and four exact restores preserve prior clearance; source union becomes nine |
 
+## RE3 investigation
+
+The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. Every finding below remains Candidate. Static source coverage and debugger access do not establish campaign gameplay, room completion or usable map coverage.
+
+| Claim | Finding |
+| --- | --- |
+| [RE3-ID-001](research/re3/identity.md#re3-id-001-repeatable-static-identity-for-the-supplied-disc) | Exact owned-media and boot-executable identity, bounded ISO inspection and metadata-only helper |
+| [RE3-ROOM-001](research/re3/room-format.md#re3-room-001-ard-object-8-contains-bounded-room-data) | Bounded ARD object 8 across 169 sources; exact-sector alignment counterexample |
+| [RE3-ROOM-002](research/re3/room-format.md#re3-room-002-room-header-and-geometry-boundaries) | Room header, cameras, camera zones and opaque collision records; spatial projection unresolved |
+| [RE3-ROOM-003](research/re3/room-format.md#re3-room-003-initializer-procedure-directory-without-opcode-semantics) | Initializer envelopes without command execution, item or door interpretation |
+| [RE3-ROOM-004](research/re3/room-format.md#re3-room-004-native-map-resource-directories) | Native map directories preserve aliases; room/floor binding and outlines unresolved |
+| [RE3-RUNTIME-001](research/re3/runtime.md#re3-runtime-001-disc-binding-and-isolated-debugger-access) | Private emulator setup and repeated runtime code-window equality |
+| [RE3-RUNTIME-002](research/re3/runtime.md#re3-runtime-002-pose-and-lifecycle-leads-are-insufficient-for-admission) | No-input player fields reject pose/health alone as a campaign admission rule |
+| [RE3-RUNTIME-003](research/re3/runtime.md#re3-runtime-003-targeted-input-and-bounded-startup-result) | Targeted native cardless menu input; Hard selection and campaign control unverified |
+
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.
+
+2026-11-05 contribution: Codex root, `gpt-6.1-sol`, integrated the three RE3 investigations and added their discovery links. Parent verification reproduced the owned-media identity and byte-identical room catalog, passed all 188 RE3/parser/GDB checks together, and independently checked all six private capture hashes, four code windows per capture and documented pose values. No emulator was operated during integration, and no new gameplay interpretation was accepted.
+
+2026-11-05 internal review: `gpt-6.1-sol`, verified from the reviewer's own session metadata, found no actionable defects in the identity helper, room parser and catalog changes. The review checked input bounds, shared ISO assumptions, required executable fingerprints, input/output aliases, procedure envelopes, map aliases and Candidate claims against pinned sources. All 149 RE3 tests and 6,000 deterministic malformed-layout probes passed. This was an internal review; configured external reviewers remained unavailable, and neither review establishes gameplay behavior.
