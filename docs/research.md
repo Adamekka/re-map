@@ -389,6 +389,7 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. E
 | [RE3-RUNTIME-001](research/re3/runtime.md#re3-runtime-001-disc-binding-and-isolated-debugger-access) | Private emulator setup and repeated runtime code-window equality |
 | [RE3-RUNTIME-002](research/re3/runtime.md#re3-runtime-002-pose-and-lifecycle-leads-are-insufficient-for-admission) | No-input player fields reject pose/health alone as a campaign admission rule |
 | [RE3-RUNTIME-003](research/re3/runtime.md#re3-runtime-003-targeted-input-and-bounded-startup-result) | Targeted native cardless menu input; Hard selection and campaign control unverified |
+| [RE3-INPUT-001](research/re3/hard-start.md#re3-input-001-targeted-paused-menu-input-remains-insufficient-to-verify-hard) | Interrupted paused-menu/macro experiment, retained private evidence and verified cleanup; Hard/control/reentry unverified |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.
 
