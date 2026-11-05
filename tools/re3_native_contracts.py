@@ -21,12 +21,12 @@ from build_item_table import _read_file
 from re3_room_catalog import build_catalog
 
 from games.re3 import EXECUTABLE_SHA256
-from games.re3.room_data import RoomFormatFailure, decode_room, room_section_end
 
-RAM_SIZE = 2 * 1024 * 1024
-# The four baseline code witnesses reject a different executable, without
-# establishing campaign gameplay or accepting a loaded-room interpretation.
-CODE_WINDOWS = (0x80011B80, 0x80020000, 0x80040000, 0x80060000)
+# Retained private capture scripts import these constants from the audit tool.
+from games.re3.capture_data import CODE_WINDOWS as CODE_WINDOWS
+from games.re3.capture_data import RAM_SIZE as RAM_SIZE
+from games.re3.capture_data import capture_failure
+from games.re3.room_data import RoomFormatFailure, decode_room, room_section_end
 
 
 class ContractError(ValueError):
@@ -57,17 +57,9 @@ def audit_capture(
     executable: bytes, ram: bytes, sources: tuple[RoomSource, ...]
 ) -> dict:
     verify_executable(executable)
-    if len(ram) != RAM_SIZE:
-        raise ContractError("Capture must contain exactly 2 MiB of PS1 RAM")
-    for address in CODE_WINDOWS:
-        offset = 0x800 + address - 0x80010000
-        if (
-            ram[address - 0x80000000 : address - 0x80000000 + 32]
-            != executable[offset : offset + 32]
-        ):
-            raise ContractError(
-                f"Capture code window differs at PS1 virtual 0x{address:08X}"
-            )
+    failure = capture_failure(executable, ram)
+    if failure is not None:
+        raise ContractError(failure.detail)
 
     def executable_word(address: int, width: int) -> int:
         offset = 0x800 + address - 0x80010000

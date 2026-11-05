@@ -383,6 +383,8 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. C
 | [RE3-ROOM-004](research/re3/room-format.md#re3-room-004-native-map-resource-directories) | Native map directories preserve aliases; room/floor binding and outlines unresolved |
 | [RE3-MAP-001](research/re3/map-semantics.md#re3-map-001-directory-words-count-two-groups-of-textured-quads) | Native drawing-group counts and bounded numeric textured-quad export |
 | [RE3-MAP-002](research/re3/map-semantics.md#re3-map-002-native-edges-retain-inclusive-and-reversed-endpoints) | Signed inclusive edges, including a real negative width; copied renderer checks remain separate from gameplay |
+| [RE3-MAP-003](research/re3/map-semantics.md#re3-map-003-section-1-contains-bounded-projection-anchors) | Bounded signed anchors, layer metadata and ordered native remap export |
+| [RE3-MAP-004](research/re3/map-semantics.md#re3-map-004-native-room-remapping-and-position-projection) | Candidate position/story-aware row/layer binding and projection; two native map positions agree |
 | [RE3-NATIVE-001](research/re3/native-contracts.md#re3-native-001-native-selectors-agree-with-owned-room-sources) | Native stage/room/camera and loaded-source candidates, relocated witnesses and all 169 source-table checks |
 | [RE3-NATIVE-002](research/re3/native-contracts.md#re3-native-002-recorded-input-rejects-plausible-player-states) | Recorded-input rejection and selector/source disagreement in retained captures; campaign admission unresolved |
 | [RE3-NATIVE-003](research/re3/native-contracts.md#re3-native-003-raw-mode-words-cannot-identify-hard) | Original raw mode-word leads still supply no Hard discriminator |
