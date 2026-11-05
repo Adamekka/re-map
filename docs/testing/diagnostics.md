@@ -14,6 +14,8 @@ The log retains startup details, room and item changes, state snapshots, read ad
 
 Small state reads include hex values. Larger reads, including executable signature windows, include SHA256 hashes instead of game code bytes. Logs rotate at 2 MiB, retaining three previous files. The `logs/` directory is excluded from Git.
 
+The log and its three backup paths must differ from the selected profile, exploration history and its writer lock, including symbolic and hard links. Startup rejects conflicts before opening any log output. An explicit `--history-file` protects that history; otherwise startup protects every built-in history path before loading the profile so profile errors can still be logged safely. Choose another `--log-file` when a conflict is reported.
+
 To choose another path:
 
 ```sh
@@ -35,10 +37,10 @@ If writing or replacing the history file fails, the previous saved history remai
 Run the history regressions with the [test environment](../testing.md#python-test-environment):
 
 ```sh
-python3 -m pytest -q tests/test_visit_history.py
+python3 -m pytest -q tests/test_visit_history.py tests/test_track_log_safety.py tests/test_logging.py
 ```
 
-These tests use temporary history files and cover invalid history, writer exclusion, failed writes and replacement, cleanup failure, retry and restored exploration.
+These tests use temporary history files and cover invalid history, writer exclusion, failed writes and replacement, cleanup failure, retry and restored exploration. Logging checks cover aliases, rotation destinations, profile/lock preservation, new histories, default paths and malformed-profile tracebacks.
 
 ## Offline RE1 snapshots
 

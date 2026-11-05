@@ -18,6 +18,8 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from threading import Thread
 
+from output_safety import aliases_input
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import DuckStationGdb
@@ -40,7 +42,7 @@ from games.re1.tracking_engine import (
 )
 from games.re1.tracking_rules import read_rule_snapshot
 from games.re2.live_tracking import poll_re2
-from games.re2.re2_profile import Re2Profile
+from games.re2.re2_profile import RE2_TARGETS, Re2Profile
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
 from tracker.visit_history import HistoryError, HistoryIdentity, VisitHistory
@@ -577,11 +579,49 @@ def main() -> int:
     if not 1 <= args.port <= 65535:
         ap.error("--port must be between 1 and 65535")
     log_path = args.log_file.expanduser().resolve()
+    history_directory = Path(__file__).resolve().parents[1] / ".local"
+    re1_history_path = history_directory / "visit-history.json"
+    re2_history_paths = {
+        key: history_directory / target.history_filename
+        for key, target in RE2_TARGETS.items()
+    }
+    history_paths = (
+        [args.history_file]
+        if hasattr(args, "history_file")
+        else [re1_history_path, *re2_history_paths.values()]
+    )
+    backup_count = 3
+    try:
+        # Protect the profile and every default before loading, so malformed
+        # profiles can still log their traceback without corrupting inputs first.
+        # Profile reads retain literal Path semantics; only histories expand ~.
+        protected_paths = [args.profile.resolve()]
+        for path in history_paths:
+            path = path.expanduser().resolve()
+            protected_paths.extend((path, path.with_name(path.name + ".lock")))
+        for protected in protected_paths:
+            for index in range(backup_count + 1):
+                # Rotation renames backups and can detach a live flock inode.
+                output = log_path if index == 0 else Path(f"{log_path}.{index}")
+                if aliases_input(protected, output):
+                    print(
+                        "log output must differ from exploration history, its "
+                        f"lock and the profile: {output} aliases {protected}; "
+                        "choose another --log-file",
+                        file=sys.stderr,
+                    )
+                    return 2
+    except OSError as exc:
+        print(f"cannot check log output paths: {exc}", file=sys.stderr)
+        return 2
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         # Continuous polling must not grow diagnostics without a limit.
         handler = RotatingFileHandler(
-            log_path, maxBytes=2 * 1024 * 1024, backupCount=3, encoding="utf-8"
+            log_path,
+            maxBytes=2 * 1024 * 1024,
+            backupCount=backup_count,
+            encoding="utf-8",
         )
     except OSError as exc:
         print(f"cannot open log file {log_path}: {exc}", file=sys.stderr)
@@ -616,9 +656,9 @@ def main() -> int:
     history_path = (
         args.history_file
         if hasattr(args, "history_file")
-        else Path(__file__).resolve().parents[1]
-        / ".local"
-        / (profile.target.history_filename if is_re2 else "visit-history.json")
+        else re2_history_paths[profile_id]
+        if is_re2
+        else re1_history_path
     )
     logger.info(
         "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision

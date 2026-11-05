@@ -6,5 +6,5 @@ from pathlib import Path
 def aliases_input(source: Path, output: Path) -> bool:
     # Resolving catches path and symbolic aliases; samefile also catches hard links.
     return source.resolve() == output.resolve() or (
-        output.exists() and output.samefile(source)
+        source.exists() and output.exists() and output.samefile(source)
     )

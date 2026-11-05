@@ -64,6 +64,8 @@ def test_connection_failure_is_written_to_file(tmp_path: Path):
                 str(reserved.getsockname()[1]),
                 "--log-file",
                 str(log),
+                "--history-file",
+                str(tmp_path / "history.json"),
             ],
             capture_output=True,
             text=True,
