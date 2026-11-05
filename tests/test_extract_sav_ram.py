@@ -11,6 +11,33 @@ sys.path.insert(0, str(REPO / "tools"))
 import extract_sav_ram
 
 
+@pytest.mark.parametrize("alias", ["same-path", "symlink", "hardlink"])
+def test_output_alias_preserves_original_savestate(
+    tmp_path, monkeypatch, capsys, alias
+):
+    original = (REPO / "tests/fixtures/slus00551_green_herb_after.sav").read_bytes()
+    source = tmp_path / "input.sav"
+    source.write_bytes(original)
+    output = source if alias == "same-path" else tmp_path / "output.bin"
+    if alias == "symlink":
+        output.symlink_to(source)
+    elif alias == "hardlink":
+        output.hardlink_to(source)
+    monkeypatch.setattr(sys, "argv", ["extract_sav_ram.py", str(source), str(output)])
+
+    assert extract_sav_ram.main() == 2
+    failure = capsys.readouterr()
+    assert "output must differ from the input savestate" in failure.err
+    assert failure.out == ""
+    assert source.read_bytes() == original
+
+    capture = tmp_path / "safe-ram.bin"
+    monkeypatch.setattr(sys, "argv", ["extract_sav_ram.py", str(source), str(capture)])
+    assert extract_sav_ram.main() == 0
+    assert len(capture.read_bytes()) == extract_sav_ram.RAM_SIZE
+    assert source.read_bytes() == original
+
+
 @pytest.mark.parametrize("existing_capture", [False, True])
 def test_truncated_savestate_preserves_capture_and_accepts_valid_retry(
     tmp_path, monkeypatch, capsys, existing_capture

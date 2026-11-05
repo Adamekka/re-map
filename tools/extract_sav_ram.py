@@ -20,6 +20,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from output_safety import aliases_input
+
 RAM_SIZE = 0x200000
 ZSTD_MAGIC = bytes.fromhex("28b52ffd")
 # Region serial observed in RAM at 0x1004c, e.g. b'US-0' for SLUS USA.
@@ -81,6 +83,14 @@ def main() -> int:
     ap.add_argument("input", type=Path)
     ap.add_argument("output", type=Path)
     args = ap.parse_args()
+
+    try:
+        if aliases_input(args.input, args.output):
+            print("RAM output must differ from the input savestate", file=sys.stderr)
+            return 2
+    except OSError as exc:
+        print(f"Cannot check RAM output path: {exc}", file=sys.stderr)
+        return 2
 
     data = args.input.read_bytes()
     if data[:4] != b"DUCC":

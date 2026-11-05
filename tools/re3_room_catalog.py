@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from build_item_table import _read_file
 from list_psx_files import _read_dir, _sector_data
+from output_safety import aliases_input
 
 from games.re3.room_data import (
     RoomFormatFailure,
@@ -139,9 +140,7 @@ def main() -> int:
     try:
         # The output is metadata, and must never replace owned input bytes,
         # including when a symlink or hard link names the same image.
-        if args.output.resolve() == args.image.resolve() or (
-            args.output.exists() and args.output.samefile(args.image)
-        ):
+        if aliases_input(args.image, args.output):
             print("Catalog output must differ from the input image", file=sys.stderr)
             return 2
         args.output.write_text(json.dumps(result, indent=2) + "\n")

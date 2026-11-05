@@ -56,4 +56,6 @@ python3 tools/extract_sav_ram.py input.sav /tmp/re-map-ram.bin
 
 The extractor accepts decompressed bytes only after `zstd` succeeds. A truncated frame can yield a full RAM window before `zstd` reports an error, so partial output is rejected. If no frame yields accepted RAM, the command fails before writing the output. Retry with a complete input file.
 
-Run `python3 -m pytest -q tests/test_extract_sav_ram.py tests/test_herb_fixture.py tests/test_chemical_fixture.py`. The extraction regression removes the final byte from a copy of an existing fixture, checks that rejection preserves an existing capture or leaves a missing output absent, and retries with the complete fixture. This validates offline extraction and recovery, not new gameplay behavior.
+Choose a separate RAM output file. The command rejects an output path, symlink or hard link referring to the input savestate, preserving the original restore point.
+
+Run `python3 -m pytest -q tests/test_extract_sav_ram.py tests/test_herb_fixture.py tests/test_chemical_fixture.py`. The extraction regressions remove the final byte from a copy of an existing fixture, check that rejection preserves an existing capture or leaves a missing output absent, and retry with the complete fixture. They also check input/output aliases and a successful retry to a separate RAM file. This validates offline extraction and recovery, not new gameplay behavior.
