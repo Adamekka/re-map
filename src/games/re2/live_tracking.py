@@ -247,6 +247,12 @@ def poll_re2(
                     PollStatus.Retry, "Room interaction extends beyond its source"
                 )
             packet = read(pointer, operand + (18 if kind == 1 else 6))
+            if packet[:2] != prefix:
+                # The prefix selected this payload layout. Matching each read
+                # separately at recheck cannot reconcile contradictory headers.
+                return PollResult(
+                    PollStatus.Retry, "Room interaction changed during read"
+                )
             if kind == 2:
                 item_type, amount, gid = (
                     int.from_bytes(packet[index : index + 2], "little")

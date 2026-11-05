@@ -220,6 +220,18 @@ Reproduce with `python3 -m pytest -q tests/test_re2_live_door_targets.py`. The c
 
 Contribution and local review, 2026-11-05: implementation agent, exact executing model `gpt-6.1-sol`, reproduced the software defect, authored the bounded guard and regressions, and reviewed catalog isolation, mutable payload geometry, atomic failure, reconstruction and reversal. The parent reported external Claude Opus/Gemini Flash providers unavailable; no external review or endorsement is claimed. The parent handles combined integration review.
 
+Integration review, 2026-11-05: root and internal peer `/root/review_re2_destination`, both verified executing model `gpt-6.1-sol`, inspected source binding, activation precedence, catalog membership, atomic rejection and fresh reconstruction. Root independently checked all 1,282 static door declarations across the four catalogs and ran 411 related tests. The peer reported no findings after its code/catalog review and 376 focused checks. These reviews and synthetic checks add no native destination or gameplay confirmation.
+
+### Descriptor header coherence, 2026-11-05
+
+Status: Candidate software correction for the four supported revisions above. At baseline `4753b44`, the reader can consume kind-one header `01 31` in its two-byte prefix read and kind-zero header `00 31` in its full descriptor read, then publish an open door if each width returns its own earlier value at final recheck. The full record's disabled kind contradicts the kind used to select its interpretation.
+
+The reader now compares the full packet's first two bytes with the consumed prefix before interpreting its payload. These are the source-bound descriptor's SCE ID and SAT bytes, one unsigned byte each with full mask `0xFF`; byte order does not apply to a single byte. Their native meaning remains the existing RE2-SCD-001 and RE2-DOOR-004 contract. No new address, opcode or native behavior is introduced.
+
+Run `python3 -m pytest -q tests/test_re2_descriptor_coherence.py tests/test_re2_tracking.py tests/test_re2_live_door_targets.py`. Synthetic cases cover ordinary and four-point item/door descriptors across all four profiles, contradicting kind, geometry and activation bytes even when individual rechecks would match. They verify unchanged prior state, no new visits and recovery from coherent reads. The contradiction is a software-read reproduction, not an observed game transition, pickup or savestate restore.
+
+Contribution, 2026-11-05: root, exact executing model `gpt-6.1-sol`, reproduced the contradictory publication, authored the guard and regression cases, and reviewed source/layout binding and atomic recovery. No external review or new gameplay validation is claimed.
+
 ## RE2-LIVE-002: gun-shop ammunition and savestate reversal
 
 Status: Confirmed for the two observed ammunition acquisition flags and the listed DuckStation restores on SLUS-00421. Other item IDs, shotgun availability, door unlocks and the route to the RPD remain Candidate or untested. This is partial validation of the approved opening-route work, not completion of that route.
