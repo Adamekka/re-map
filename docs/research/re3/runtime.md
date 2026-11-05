@@ -91,6 +91,8 @@ Observed raw values:
 
 No stage, room, camera, difficulty or loaded-room pointer address was established. No RE1/RE2 address was substituted. Live item, door and story flags remain unidentified.
 
+Later [RE3-NATIVE-001/002/003](native-contracts.md) derives candidate selectors and loaded-source witnesses from the executable and these retained captures, including explicit recorded-input and selector/source rejection evidence. It does not change this experiment's unverified Hard selection or campaign-control result.
+
 ## RE3-RUNTIME-003: Targeted input and bounded startup result
 
 Status: Candidate. This establishes targeted host hotkeys and native cardless menu input, not a completed Hard start.

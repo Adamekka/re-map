@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import struct
+from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 
@@ -23,6 +24,20 @@ def aligned_block_size(size: int) -> int:
     assert size >= 0, "block alignment requires a nonnegative size"
     # ARD objects and MAP records both pad to the same 2048-byte block boundary.
     return (size + 2047) & ~2047
+
+
+def room_section_end(offsets: Sequence[int], section: int, size: int) -> int:
+    """Bound a decoded section, excluding opaque slot 2 from pointer ordering."""
+    assert len(offsets) == 22 and 0 <= section < 22 and section != 2
+    assert 96 <= offsets[section] <= size
+    return min(
+        [
+            value
+            for index, value in enumerate(offsets)
+            if index != 2 and value > offsets[section]
+        ]
+        + [size]
+    )
 
 
 def decode_ard(data: bytes) -> dict | RoomFormatFailure:
@@ -64,13 +79,7 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
     if len({offsets[section] for section in (6, 7, 8, 16)}) != 4:
         return RoomFormatFailure("rdt", 8, "required sections alias incompatible layouts")
 
-    def section_end(section: int) -> int:
-        return min(
-            [value for index, value in enumerate(offsets) if index != 2 and value > offsets[section]]
-            + [len(data)]
-        )
-
-    camera_start, camera_end = offsets[7], section_end(7)
+    camera_start, camera_end = offsets[7], room_section_end(offsets, 7, len(data))
     if camera_start + data[1] * 32 != camera_end:
         return RoomFormatFailure("rdt", camera_start, "unsupported camera table extent")
     cameras = []
@@ -91,7 +100,7 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
             }
         )
 
-    start, end = offsets[8], section_end(8)
+    start, end = offsets[8], room_section_end(offsets, 8, len(data))
     if end - start < 4 or (end - start - 4) % 20 or data[end - 4 : end] != b"\xff" * 4:
         return RoomFormatFailure("rdt", start, "unsupported camera-zone extent or terminator")
     zones = []
@@ -108,7 +117,7 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
             }
         )
 
-    start, end = offsets[6], section_end(6)
+    start, end = offsets[6], room_section_end(offsets, 6, len(data))
     if end - start < 16:
         return RoomFormatFailure("rdt", start, "truncated collision header")
     count, *header_words = struct.unpack_from("<4I", data, start)
@@ -124,7 +133,7 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
             {"offset": offset, "coordinates_xz": list(coordinates), "attributes": list(attributes)}
         )
 
-    begin, end = offsets[16], section_end(16)
+    begin, end = offsets[16], room_section_end(offsets, 16, len(data))
     if end - begin < 2:
         return RoomFormatFailure("rdt", begin, "truncated procedure table")
     first = struct.unpack_from("<H", data, begin)[0]
@@ -156,7 +165,9 @@ def decode_room(data: bytes) -> dict | RoomFormatFailure:
             "count_including_header": count,
             "header_words": header_words,
             "records": collisions,
-            "unresolved_tail_size": section_end(6) - (offsets[6] + count * 16),
+            "unresolved_tail_size": (
+                room_section_end(offsets, 6, len(data)) - (offsets[6] + count * 16)
+            ),
         },
         "initializer": {"offset": begin, "end": end, "procedures": procedures},
         # RE3-ROOM-003: a source directory is not an execution proof. In
