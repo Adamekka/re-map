@@ -49,7 +49,9 @@ def _decompress(frame: bytes) -> bytes | None:
             ["zstd", "-d", "-c", name],
             capture_output=True,
         )
-        if not proc.stdout:
+        # A truncated frame can emit a full RAM window before zstd reports an
+        # error. Publishing those bytes would accept an incomplete savestate.
+        if proc.returncode != 0 or not proc.stdout:
             return None
         return proc.stdout
     finally:

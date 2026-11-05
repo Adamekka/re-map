@@ -45,3 +45,15 @@ Run `python3 -m pytest -q tests/test_gdb.py tests/test_event_breakpoints.py` for
 RE1-EVENT-013 records a natural gameplay check. Boot the owned disc in an isolated copy, select New Game, Training and Jill, and attach the recorder at character selection. Skip the movies with ordinary Start and let the Main Hall and Dining Room opening scripts run. The tested run captured 19 starts with 13 initializer steps each, eight stops and waits/restarts across slots 0/1/2/3/6/7. Every newly initialized slot bound to a room source and indexed entry. Slots 4/5 activation and item/puzzle interactions remain untested. Room transitions produced source-unavailable gaps, and three snapshots caught the already-running Main Hall event at its temporary parent pointer during a child start. RE1-EVENT-014 adds those source-bound positions to the shared scanner and resolves all three in a recorded-field replay. The original recording remains unchanged; complete event and availability interpretation are still unfinished.
 
 For automated native input, DuckStation's built-in controller macros can hold a normal controller binding until the next key tap when toggle is enabled and frequency is zero. The experiment used temporary settings in its private portable copy and restored them afterward. This makes ordinary game input reproducible without changing guest memory. The measured initializer captures paused approximately 0.41..0.45 seconds each, so use this setup for validation rather than continuous player-facing tracking.
+
+## Extracting RAM offline
+
+Extract an existing savestate without starting DuckStation, with `zstd` available on `PATH`:
+
+```sh
+python3 tools/extract_sav_ram.py input.sav /tmp/re-map-ram.bin
+```
+
+The extractor accepts decompressed bytes only after `zstd` succeeds. A truncated frame can yield a full RAM window before `zstd` reports an error, so partial output is rejected. If no frame yields accepted RAM, the command fails before writing the output. Retry with a complete input file.
+
+Run `python3 -m pytest -q tests/test_extract_sav_ram.py tests/test_herb_fixture.py tests/test_chemical_fixture.py`. The extraction regression removes the final byte from a copy of an existing fixture, checks that rejection preserves an existing capture or leaves a missing output absent, and retries with the complete fixture. This validates offline extraction and recovery, not new gameplay behavior.
