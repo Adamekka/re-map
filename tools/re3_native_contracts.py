@@ -1,6 +1,6 @@
 """Audit Candidate RE3 native contracts against private RAM and owned media.
 
-RE3-NATIVE-001/002/003: offline source witnesses and rejection evidence only.
+RE3-NATIVE-001/002/003/004: offline source witnesses and rejection evidence only.
 No emulator access, gameplay admission, history updates or game-byte output.
 """
 
@@ -95,6 +95,9 @@ def audit_capture(
         "saved_status_word_u32": struct.unpack_from("<I", ram, 0xD1F2C)[0],
         "new_game_option_word_u32": struct.unpack_from("<I", ram, 0xD1F30)[0],
         "new_game_option_bit_set": bool(ram[0xD1F30] & 1),
+        "native_menu_active_u8": ram[0xE01E7],
+        "native_menu_view_u8": ram[0xE01D0],
+        "native_pause_u8": ram[0xD4434],
         "source_matches": [],
         "selected_source_paths": [],
         "rejection_evidence": [],
@@ -105,6 +108,12 @@ def audit_capture(
     }
     if flags & 0x10000000:
         result["rejection_evidence"].append("native-recorded-input-path-selected")
+    # RE3-NATIVE-004: native interface loops and Start pause preserve plausible
+    # player/source fields. Source agreement cannot cancel these update gates.
+    if result["native_menu_active_u8"]:
+        result["rejection_evidence"].append("native-menu-loop-active")
+    if result["native_pause_u8"]:
+        result["rejection_evidence"].append("native-world-update-paused")
     if pointer != allocation:
         result["rejection_evidence"].append("rdt-pointer-allocation-disagree")
     if not 0x80000000 <= pointer <= 0x80000000 + RAM_SIZE - 96 or pointer % 4:

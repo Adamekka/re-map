@@ -1,4 +1,4 @@
-"""RE3-NATIVE-001/002/003: synthetic contracts never admit campaign gameplay."""
+"""RE3-NATIVE-001/002/003/004: synthetic contracts never admit gameplay."""
 
 import hashlib
 import json
@@ -192,6 +192,56 @@ def test_recorded_input_remains_rejected_with_valid_source_and_pose_independent_
     assert result["new_game_option_bit_set"]
     assert result["rejection_evidence"] == ["native-recorded-input-path-selected"]
     assert result["campaign_admission"] == result["hard_identity"] == "unresolved"
+
+
+@pytest.mark.parametrize(
+    "menu,view,pause,status,flags,reasons",
+    [
+        (1, 2, 0, 0x300, 0x29001000, ["native-menu-loop-active"]),
+        (1, 5, 0, 0x300, 0x29001000, ["native-menu-loop-active"]),
+        (0, 13, 2, 0, 0x28001000, ["native-world-update-paused"]),
+        (
+            1,
+            5,
+            2,
+            0x300,
+            0x29001000,
+            ["native-menu-loop-active", "native-world-update-paused"],
+        ),
+    ],
+)
+def test_menu_and_pause_reject_matching_rooms_and_reverse_with_restoration(
+    coherent, menu, view, pause, status, flags, reasons
+):
+    # RE3-NATIVE-004: native menus and Start pause retain these plausible
+    # player/source fields, including clear Hard and recorded-input bits.
+    struct.pack_into("<I", coherent.ram, 0xCC858, 0x28001000)
+    struct.pack_into("<3i", coherent.ram, 0xCCBF8, -4842, -1800, -11028)
+    coherent.ram[0xCCBC8:0xCCBCA] = bytes([1, 0])
+    coherent.ram[0xE01D0] = 13
+    initial = bytes(coherent.ram)
+    before = native.audit_capture(coherent.executable, initial, (coherent.source,))
+    assert before["rejection_evidence"] == []
+
+    struct.pack_into("<I", coherent.ram, 0xCC858, flags)
+    struct.pack_into("<I", coherent.ram, 0xD1F2C, status)
+    coherent.ram[0xE01E7] = menu
+    coherent.ram[0xE01D0] = view
+    coherent.ram[0xD4434] = pause
+    captured = bytes(coherent.ram)
+    during = native.audit_capture(coherent.executable, captured, (coherent.source,))
+    assert during["source_matches"] == before["source_matches"]
+    assert during["selected_source_paths"] == [coherent.source.path]
+    assert not during["recorded_input_bit_set"]
+    assert during["rejection_evidence"] == reasons
+    assert during["native_menu_active_u8"] == menu
+    assert during["native_menu_view_u8"] == view
+    assert during["native_pause_u8"] == pause
+    assert during["campaign_admission"] == during["hard_identity"] == "unresolved"
+    assert bytes(coherent.ram) == captured
+    assert (
+        native.audit_capture(coherent.executable, initial, (coherent.source,)) == before
+    )
 
 
 @pytest.mark.parametrize("change", ["lba", "size", "room", "duplicate", "invalid-rdt"])

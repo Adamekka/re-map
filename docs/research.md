@@ -372,7 +372,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 
 ## RE3 investigation
 
-The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. Claim pages distinguish Candidate findings from the confirmed native selection/control observations in RE3-INPUT-002/003. Static source coverage and debugger access do not establish campaign gameplay, room completion or usable map coverage.
+The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. Claim pages distinguish Candidate findings from the confirmed selection/control observations in RE3-INPUT-002/003 and menu/pause observations in RE3-NATIVE-004. Static source coverage and debugger access do not establish campaign gameplay, room completion or usable map coverage.
 
 | Claim | Finding |
 | --- | --- |
@@ -386,6 +386,7 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. C
 | [RE3-NATIVE-001](research/re3/native-contracts.md#re3-native-001-native-selectors-agree-with-owned-room-sources) | Native stage/room/camera and loaded-source candidates, relocated witnesses and all 169 source-table checks |
 | [RE3-NATIVE-002](research/re3/native-contracts.md#re3-native-002-recorded-input-rejects-plausible-player-states) | Recorded-input rejection and selector/source disagreement in retained captures; campaign admission unresolved |
 | [RE3-NATIVE-003](research/re3/native-contracts.md#re3-native-003-raw-mode-words-cannot-identify-hard) | Original raw mode-word leads still supply no Hard discriminator |
+| [RE3-NATIVE-004](research/re3/native-contracts.md#re3-native-004-native-menus-and-start-pause-preserve-plausible-player-states) | Native Circle/L2 interfaces and Start pause block control while preserving valid sources and player fields; explicit rejection witnesses |
 | [RE3-RUNTIME-001](research/re3/runtime.md#re3-runtime-001-disc-binding-and-isolated-debugger-access) | Private emulator setup and repeated runtime code-window equality |
 | [RE3-RUNTIME-002](research/re3/runtime.md#re3-runtime-002-pose-and-lifecycle-leads-are-insufficient-for-admission) | No-input player fields reject pose/health alone as a campaign admission rule |
 | [RE3-RUNTIME-003](research/re3/runtime.md#re3-runtime-003-targeted-input-and-bounded-startup-result) | Targeted native cardless menu input; Hard selection and campaign control unverified |
