@@ -267,6 +267,81 @@ Parent integration evidence is under `/tmp/re-map-re3-conditions-integration-202
 | `verify.py` | 3289 | `a1732a11ea83838ad544e0281142777e63a978006ff4f59bc54ce837d7b9169b` |
 | `verification.json` | 759 | `2a50b72e23914b9bdad13e38e41018281db77b8e4cd7610328436e058296d4df` |
 
+## RE3-MAP-009: bind the loaded source before evaluating group-0 shapes
+
+Status: Candidate source contract and retained-snapshot comparison for the named revision. This evaluates the native group-0 predicate, not actual row visibility, room ownership or tracker visits. No new emulator observation was made by this implementation increment.
+
+The [snapshot selector](../../../src/games/re3/map_selection.py) requires explicit MAP bytes, the actual pinned executable, exactly 2 MiB of captured RAM with the existing four code witnesses, and a selected record index 0–8. It never chooses a record from the current room or a matching fallback. Records 7/8 use native group arguments 0/1. The selected group must equal map-work AB, while current-location AA/AC can describe another group/row when browsing.
+
+| Snapshot field, PS1 virtual address | Width, byte order and mask | Interpretation in this contract |
+| --- | --- | --- |
+| `0x800E026A`, `0x800E026B`, `0x800E026C` | Each u8, `0xFF` | Current group, displayed group, current row |
+| `0x800E028C` | u32 LE, `0xFFFFFFFF` | Loaded record pointer CC |
+| `0x800E0274` | u32 LE, `0xFFFFFFFF` | Loaded section-1 pointer B4 |
+| `0x800CCBCD` | i8, raw mask `0xFF` | Opaque signed phase; thresholds 3/4/9/10 |
+| `0x800E0278` | u16 LE, `0xFFFF` | Native overlay/subview selector |
+| `0x800D2124` | u32 LE, stage mask `0x80000000 >> native_group` | Acquisition bypass of metadata only for supported groups 0–6 |
+
+CC and B4 must be aligned cached PS1 RAM pointers; unsupported address aliases are rejected without masking. B4 must equal CC plus the validated source section-1 offset. The complete contiguous source prefix from the record header through the bounded requirement table's end, given by section-1 header word 4, must match captured bytes. This checks the section-0 directory and quad bytes used by the caller as well as the requirement table. Separate header and section-1 comparisons would leave geometry unchecked. Mutable image sections are outside the witness. Unsupported pointers, mismatched source bytes, mixed/pending browse state or counts exceeding 256 rows or group-0 quads produce explicit failures without partial results. Binding failure is not evidence of invalid gameplay or an unvisited room; map buffers can be absent or retained outside the map menu.
+
+The source loader predicts `AB + 7` when `0x800CC858 & 0x80`, otherwise AB. That prediction describes a fresh load, not a stored loaded-record identity. The selector instead checks the explicitly requested source bytes. It can therefore evaluate an intact retained record even if the current variant flag would select another record on reload. No raw-stage 5/6 folding occurs here: AB is already the native selected group.
+
+All nine owned headers and bounded prefixes are distinct. Their prefix lengths, in record order, are `2432, 3272, 880, 1304, 1268, 688, 724, 2180, 2648` bytes. Both retained map snapshots from RE3-MAP-004 match record 0 at CC `0x801B1500`, B4 `0x801B1CAC`. This corroborates that source witness in those two situations, not other records, browsing transitions or general runtime admission.
+
+The [immutable predicate families](../../../src/games/re3/map_shape_predicates.py) retain 31 source conditions with their native instruction ranges. One evaluator handles equality, signed comparison, MSB-first flag tests, conjunction, disjunction and negation. Matching metadata requirements from RE3-MAP-008 are conjunctive unless the selected group's acquisition bit is set. Overlay and early shape families then apply. System mask `0x80` bypasses only the late families for groups 0/1, never metadata, overlay or early exclusions. Groups 5/6 have no extra shape families; their metadata still applies. The signed phase's purpose and physical floor meaning remain unresolved.
+
+The following masks combine the fixed predicate dependencies per u32 LE word. Individual indices, bank bases and source ranges remain in the immutable families; [RE3-MAP-008](#re3-map-008-section-1-supplies-ordered-group-0-quad-requirements) defines metadata addressing. These are opaque source conditions, not named acquisition or puzzle claims.
+
+| PS1 virtual word | Used mask |
+| --- | --- |
+| `0x800CC858` | `0x00000080` |
+| `0x800D1FA0` | `0x20040000` |
+| `0x800D1FA4` | `0x00000100` |
+| `0x800D1FB0` | `0x00040004` |
+| `0x800D1FB4` | `0x00000010` |
+| `0x800D1FB8` | `0x08800200` |
+| `0x800D1FC0` | `0x00000004` |
+| `0x800D2008` | `0x00080000` |
+| `0x800D200C` | `0x78010010` |
+| `0x800D2010` | `0x80000001` |
+| `0x800D202C` | `0x01000200` |
+| `0x800D20CC` | `0x00400000` |
+| `0x800D2594` | `0x04000000` |
+
+Source inspection of `0x80070290..0x80070348` establishes CC/header-based directory reads, and `0x800703BC..0x8007042C` establishes byte-valued group/row/quad arguments. The loader intervals `0x8006EE04..0x8006EE88` and `0x800713DC..0x800714CC` establish record prediction and CC/B4 ownership. The independent interface report under `/tmp/re-map-re3-selector-binding-20261106-Z0ebzx/` records all ten source-window hashes; its SHA256 is `ac89f16e29ccd1edd790d3924d67088ea555350d2bb8a13db2c8d4c843c4bf35`. The complete native predicate and bit-helper hashes are in RE3-MAP-008.
+
+The earlier independent copied-native proof under `/tmp/re-map-re3-selection-copy-proof-20261105-3IZjwh/` compared the unchanged analysis model in 30,419 distinct contexts, including all 427 corpus group-0 quads, both metadata banks, duplicate requirements, acquisition boundaries, overlay modes, all phase-byte encodings at the threshold families and late-bypass ordering. Original function and helper bytes executed without substitutions or memory-write hooks; each call reached a bounded return and passed a full 2 MiB store audit. All 31 families received true/false target queries. Two of 264 conditional branch taken edges are source-unreachable; their dominance arguments remain in `proof-summary.json`. These checks establish copied-source agreement, not gameplay coverage.
+
+Parent integration compared the production families structurally and their evaluator against that unchanged model in the same 30,419 saved contexts, with zero mismatches. This increment did not repeat native execution. Both retained map snapshots also produce complete per-quad predicate results matching the model. Flags and signed phase are read afresh on each call, so earlier snapshots reverse the results. The output explicitly leaves native row visibility unchecked and group-1 selection, room ownership, campaign admission and tracker visibility unresolved. Predicate-allowed indices must not become explored rooms or unconditional room unions.
+
+Private parent evidence is under `/tmp/re-map-re3-binding-integration-20261106-BzXMBW/` and `/tmp/re-map-re3-selection-integration-20261106-pR6Det/`. Copy each verifier to a fresh private directory before rerunning; their command-line inputs are explicit owned executable/MAP paths, the corresponding independent report/proof root, output path and retained capture paths. Original evidence is preserved.
+
+To evaluate another explicit capture, supply the expected source record; record 0 below is an example that must match the captured loaded bytes:
+
+```sh
+python3 - /path/to/SLUS_009.23 /path/to/MAP_U.MAP /path/to/capture.ram 0 /tmp/re3-map-selection.json <<'PY'
+import json, sys
+from pathlib import Path
+sys.path.insert(0, 'src')
+from games.re3.map_selection import decode_native_map_selection
+from games.re3.room_data import RoomFormatFailure
+executable, data, ram = [Path(p).read_bytes() for p in sys.argv[1:4]]
+result = decode_native_map_selection(data, executable, ram, int(sys.argv[4]))
+if isinstance(result, RoomFormatFailure):
+    raise SystemExit(f'{result.kind} at {result.offset:#x}: {result.detail}')
+Path(sys.argv[5]).write_text(json.dumps(result, indent=2) + '\n')
+PY
+```
+
+| Evidence | Bytes | SHA256 |
+| --- | ---: | --- |
+| Copied-native `proof-summary.json` | — | `820f8451068a8027ccdab90c7afa448b475ac89f451b17284f922b988fd4a173` |
+| Copied-native `comparison-expanded.json` | 20332 | `6c95bfafca451ed59c0301854d58056834f4a95072f8bab9401b61b9072c3eb5` |
+| Binding `verify.py` | 3569 | `6c98a391a5b5e292716f2f590a98df857ae5d4964c723b60fbddd8f621fa0c6e` |
+| Binding `verification.json` | 1416 | `e1a788909c0c2fc67aa7951df63cec9ff91b0062c19f2c3fdca46a40148bf1bf` |
+| Selection `verify.py` | 7064 | `57dc5c17e8af229fe926c03105b185c17b69a84425419c55f777c8d29c1a4b56` |
+| Selection `verification.json` | 1316 | `1764f56cd3a55dc8d5bbfa65712dbb404359d97443976d3c4c3dc8e91e8c5637` |
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
@@ -313,14 +388,14 @@ The parent used Unicorn 2.1.4 to execute the exact renderer and its header helpe
 Run with the [test environment](../../testing.md#python-test-environment):
 
 ```sh
-python3 -m pytest -q tests/test_re3_map_conditions.py tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py tests/test_player_heading.py tests/test_re2_tracking.py
+python3 -m pytest -q tests/test_re3_map_selection.py tests/test_re3_map_conditions.py tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py tests/test_player_heading.py tests/test_re2_tracking.py
 ```
 
 The 27 synthetic contour cases cover palette-plane crossing, full-word transparency, holes and components, shade detail, upload replacement, absent texture words, TIM bounds, unsupported UVs and no partial export on later failure. Binding checks cover executable/capture gating, independent table bounds, signed origins, native truncation, early returns, ordered/chained remaps, raw-stage folding, position/story thresholds, layer/previous-state overrides, alternate records and earlier-snapshot reversal. Thirteen additional RE3 heading cases cover cardinal phases, rounded-sector boundaries, unsigned high bits and reversal; RE1/RE2 heading checks retain native-displacement references and coherent publication. Synthetic RE3 fixtures contain no owned executable, RAM or artwork bytes.
 
-A useful tracker map still needs physical floor identity/labels, complete native selection contracts for both drawing groups, and room/door/stair ownership of the source contours. Candidate row/layer/projection contracts exist, with only two native positions observed. Per-quad coverage and shade detail now survive export; those masks are not automatically room outlines. General lifecycle admission, ordinary room reentry and item/door/story interpretation remain unresolved. No runtime profile, UI, persistence or user exploration changed. Visits and completion remain unresolved.
+A useful tracker map still needs physical floor identity/labels, group-1 selection, runtime validation of group-0 selection and room/door/stair ownership of the source contours. Candidate row/layer/projection contracts exist, with only two native positions observed. Per-quad coverage and shade detail now survive export; those masks are not automatically room outlines. General lifecycle admission, ordinary room reentry and item/door/story interpretation remain unresolved. No runtime profile, UI, persistence or user exploration changed. Visits and completion remain unresolved.
 
-Thirty-two synthetic requirement cases cover all nine record offsets, mandatory identity, both flag banks, noncanonical nonzero selectors, indices 0/31/32/255, duplicate targets, first-byte-only sentinels, truncated entries, missing terminators and failure in the final record. These checks establish bounded source export only.
+Thirty-two synthetic requirement cases cover all nine record offsets, mandatory identity, both flag banks, noncanonical nonzero selectors, indices 0/31/32/255, duplicate targets, first-byte-only sentinels, truncated entries, missing terminators and failure in the final record. Another 321 selector cases cover explicit records, captured-source witnesses, invalid pointers and byte-argument bounds, browsing context, native phase boundaries, bypass scope and earlier-snapshot reversal. These checks establish source interpretation only.
 
 ## Contributions and review
 
@@ -341,3 +416,7 @@ Thirty-two synthetic requirement cases cover all nine record offsets, mandatory 
 - 2026-11-05 UTC; Codex root, exact runtime model `gpt-6.1-sol`; authored the bounded requirement export, thirty-two original synthetic cases and RE3-MAP-008. Verified every owned table against the independent catalog, repeated output byte-identically and checked that earlier primitive/layout hashes remain unchanged. Local review covered identity gating, independent extents, sentinel reads, selector and index widths, duplicate preservation, source address/mask interpretation, explicit failures and separation from runtime visibility.
 - 2026-11-05 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues in the requirement decoder, synthetic tests or RE3-MAP-008. Checked the native scan/helper and group-0 caller, layout identity/extents, sentinel reads, nonzero selectors, duplicate conjunction, addresses/masks and unresolved runtime claims. Independently passed 113 focused checks and verified the owned input, three source and three integration artifact hashes. No edits, emulator operation or user-history access occurred.
 - 2026-11-05 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the final requirement decoder, synthetic fixtures, inherited layout checks and RE3-MAP-008. Review covered source semantics, bounds, identity and failure behavior, test risks, reuse and source-only claims. The final snapshot labeled each file and excerpt explicitly after the initial concatenated snapshot caused boundary ambiguity. It ran no tests or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
+- 2026-11-05 UTC; independent source investigator, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; authored the immutable families' numeric source model, the 30,419-context copied-native proof and RE3-MAP-009's independent selected-source interface report. It preserved original helper execution, full RAM store audits, missing-sentinel negatives and unreachable-edge arguments. No gameplay or repository edit was performed by that source investigation.
+- 2026-11-05 UTC; Codex root, exact runtime model `gpt-6.1-sol`; implemented the explicit loaded-source selector and shared predicate evaluator, authored 321 original synthetic cases and RE3-MAP-009, checked all ten interface source hashes and both retained source-prefix witnesses, and matched the unchanged source model in all saved contexts. All 5,293 tests passed. This implementation did not rerun copied native execution, operate an emulator or alter user exploration.
+- 2026-11-05 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues in the source-bound selector, immutable predicates, captured-code check wording, tests or RE3-MAP-009. Verified exact equality of all 31 families, all thirteen documented word masks and seven referenced evidence hashes. Review covered pointer/byte-argument bounds, contiguous source binding, current/browsed/variant distinctions, fresh state, phase and bypass order, explicit failures and unresolved runtime claims. No edits, emulator operation, duplicated test suite or native-proof rerun occurred.
+- 2026-11-05 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no actionable findings on the source-bound selector, immutable rules, inherited layout/capture/metadata contracts, synthetic tests and RE3-MAP-009. Review covered arithmetic/control flow, source/pointer bounds, explicit-record and current/browsed/variant distinctions, errors, invariants, rewind, reuse, test risks and unresolved gameplay/visibility claims. It inspected only the supplied snapshot and ran no tests, native execution or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
