@@ -95,7 +95,7 @@ The resource is 634,880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db3
 | 7 | 485376 | 73448 | 65 | 28 |
 | 8 | 559104 | 73916 | 78 | 25 |
 
-The 363 rows include 119 aliases beyond the distinct payload offsets in each record. These counts are not room, floor or map coverage. A row's two attribute words are preserved without interpreting them as item counts, room identity, polygon count or completion state. Section payloads are hashed and never exported as standalone assets.
+The 363 rows include 119 aliases beyond the distinct payload offsets in each record. These counts are not room, floor or map coverage. The directory decoder preserves a row's two attribute words without interpretation. Later [RE3-MAP-001](map-semantics.md#re3-map-001-directory-words-count-two-groups-of-textured-quads) identifies them as two native drawing-group counts; room identity and completion remain unresolved. Section payloads are hashed and never exported as standalone assets.
 
 | Field | Address space / offset | Width, endian, mask | Observed contract |
 | --- | --- | --- | --- |
@@ -144,3 +144,4 @@ Runtime integration still needs fresh room identity and loaded-RDT base/extent o
 - 2026-11-05, `gpt-6.1-sol`: added the metadata-only catalog CLI and native MAP directory experiment, preserving alias counterexamples. Added an incompatible required-section alias regression and shared ARD/MAP block alignment. No command decoder, difficulty selector or runtime profile was added.
 - Human contribution: supplied owned media, selected Hard mode and set the research/privacy constraints. Parent agent supplied the initial static executable fingerprint and file listing, independently reproduced here.
 - No external model review or gameplay endorsement is claimed. The parent owns cross-stream integration and final review.
+- 2026-11-05, `gpt-6.1-sol`, parent integration: linked the later native drawing-group interpretation while retaining this directory-only contract and its alias counterexamples.
