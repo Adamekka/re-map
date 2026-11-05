@@ -156,7 +156,8 @@ def test_bad_breakpoint_inputs_resume_without_a_guessed_capture(
 
 
 @pytest.mark.parametrize(
-    "failure", ["none", "setup", "interrupted-setup", "transport", "capture-read"]
+    "failure",
+    ["none", "setup", "interrupted-setup", "transport", "baseline-read", "capture-read"],
 )
 def test_cli_catches_short_events_and_removes_owned_watches(
     monkeypatch, configuration, tmp_path, failure
@@ -171,7 +172,7 @@ def test_cli_catches_short_events_and_removes_owned_watches(
     real_capture = capture_events.read_event_capture
 
     def read_capture(*args):
-        if failure == "capture-read" and gdb.steps:
+        if failure == "baseline-read" or (failure == "capture-read" and gdb.steps):
             gdb.close()
             # Model pinned server cleanup when the client attached while running.
             gdb.watches.clear()
@@ -205,12 +206,18 @@ def test_cli_catches_short_events_and_removes_owned_watches(
             "1",
         ],
     )
-    expected_exit = 1 if failure in ("setup", "transport", "capture-read") else 0
+    expected_exit = (
+        1 if failure in ("setup", "transport", "baseline-read", "capture-read") else 0
+    )
     assert capture_events.main() == expected_exit
     assert not gdb.watches and not gdb.connected and not gdb.paused
     inserted = [address for action, address in gdb.operations if action == "insert"]
     removed = [address for action, address in gdb.operations if action == "remove"]
-    assert removed == ([] if failure == "capture-read" else list(reversed(inserted)))
+    assert removed == (
+        []
+        if failure in ("baseline-read", "capture-read")
+        else list(reversed(inserted))
+    )
     rows = [json.loads(line) for line in path.read_text().splitlines()]
     assert rows[0]["capture_mode"] == "activity-breakpoints"
     assert "requested_hz" not in rows[0]
@@ -223,7 +230,7 @@ def test_cli_catches_short_events_and_removes_owned_watches(
         assert snapshots[-1]["changes"] == []
         assert all(row["trigger"]["slot"] == 7 for row in snapshots[1:])
         assert rows[-1]["breakpoint_hits"] == 4
-    if failure == "capture-read":
+    if failure in ("baseline-read", "capture-read"):
         assert rows[-2]["kind"] == "failure"
         assert rows[-2]["error"] == "original connection failure"
 

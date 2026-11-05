@@ -265,6 +265,8 @@ class FakeGdb:
         return ""
 
     def resume(self):
+        if not self.connected:
+            return "not connected"
         self.resumes += 1
         if self.resume_failure:
             return "connection lost"

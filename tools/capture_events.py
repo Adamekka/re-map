@@ -304,6 +304,10 @@ def main() -> int:
                     )
                 else:
                     write("gap", {"status": baseline.status, "error": baseline.error})
+                    # Resume cannot succeed after a disconnect and would mask
+                    # the baseline read's original diagnostic.
+                    if not gdb.connected:
+                        raise ConnectionError(baseline.error)
             error = gdb.resume()
             if error:
                 raise ConnectionError(error)
