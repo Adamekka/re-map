@@ -1,8 +1,8 @@
 """Join RA item flag notes with RDT placed entries, side by side.
 
 No forced associations. A flag and an RDT entry in the same room are
-listed together with association marked observed or unproven. Observed
-links live in track_offline.KNOWN_FLAGS, nowhere else.
+listed together with association marked unproven. Runtime acquisition
+rules belong to the revision profile, not this candidate comparison.
 
 Usage:
   python3 tools/join_ra_rdt.py > /tmp/join_preview.txt

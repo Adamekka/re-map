@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO / "tools"))
+sys.path[:0] = [str(REPO / "src"), str(REPO / "tools")]
 
 
 def test_item_global_id_uses_opcode_byte_22(tmp_path: Path):
@@ -42,8 +42,8 @@ def test_item_global_id_uses_opcode_byte_22(tmp_path: Path):
     assert "type=0x44 amt=1 gid=111" in output
 
 
-def test_generated_ids_and_controlled_flag_keys():
-    from track_offline import KNOWN_FLAGS
+def test_generated_ids_and_controlled_flags_match_the_revision_profile():
+    from games.re1.re1_profile import Re1Profile
 
     rooms = json.loads((REPO / "data/item_table_slus00551.json").read_text())["rooms"]
     expected = {
@@ -64,4 +64,14 @@ def test_generated_ids_and_controlled_flag_keys():
 
     art_items = json.loads((REPO / "data/room_items_slus00551.json").read_text())
     assert art_items["rooms"][0]["items"][0]["global_id"] == 39
-    assert set(KNOWN_FLAGS) == {(0, 9, "0x44", 111), (0, 0x18, "0x26", 13)}
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    for item_type, global_id, address, mask in (
+        (0x44, 111, 0x800C86EA, 0x01),
+        (0x26, 13, 0x800C86DE, 0x04),
+    ):
+        flag = profile.runtime_room_layout.acquisition.flag(item_type, global_id)
+        assert (flag.address, flag.mask, flag.acquired_when_set) == (
+            address,
+            mask,
+            False,
+        )

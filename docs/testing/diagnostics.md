@@ -27,3 +27,20 @@ Pausing DuckStation may produce a logged GDB stop notification; tracking continu
 Browser state requests run one at a time so a delayed older reply cannot overwrite a newer pickup or room state. A request that stalls for two seconds, including while reading its response body, is cancelled. The map clears live verdicts, reports a connection interruption and retries automatically. The inspected room and chosen zoom/pan survive recovery on the same floor.
 
 Run `bun tests/check_map_refresh_browser.mjs <python>` with Playwright available to check request ordering, stalled headers and bodies, late cancelled replies, automatic recovery and retained map inspection.
+
+## Offline RE1 snapshots
+
+Inspect a retained RE1 savestate without starting DuckStation:
+
+```sh
+python3 tools/extract_sav_ram.py input.sav /tmp/re1-ram.bin
+python3 tools/track_offline.py /tmp/re1-ram.bin
+```
+
+The offline tracker uses the same revision, room-source, item and door checks as live tracking, defaulting to SLUS-00551 Jill. It prints the snapshot's current room and leaves exploration history untouched. The input must be an extracted 2 MiB RAM image. Wrong revisions, non-gameplay states and incoherent room snapshots return a diagnostic and a nonzero exit code.
+
+Room and item metadata come from the profile; the old `--items` argument is no longer accepted. Use the [test environment](../testing.md#python-test-environment) for regressions:
+
+```sh
+python3 -m pytest -q tests/test_track_offline.py tests/test_live_items.py tests/test_rdt_global_id.py
+```

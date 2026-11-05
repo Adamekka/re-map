@@ -45,6 +45,7 @@ History:
 - 2026-09-26; Codex with model GPT-6 Sol; independently compared both RDT script spans against RAM, verified hashes and item rows, and authored this limited file-identity correction.
 - 2026-09-26; Codex with model GPT-6 Sol; linked the direct file-identity evidence to the executable selector in RE1-VARIANT-002 without changing these capture results.
 - 2026-09-26; Codex with model GPT-6 Sol; corrected the interpretation of loaded-variant item rows after the script-path checks in RE1-SCD-002 and RE1-AVAIL-001; file identity evidence is unchanged.
+- 2026-11-05; Codex, exact model `gpt-6.1-sol`; replaced the offline command's rejected suffix-0 reconstruction with the shared live poller and documented the command. Retained Herb and Chemical before/after snapshots test revision-bound interpretation without emulator or history access. This implementation and regression contribution adds no new gameplay or file-identity evidence and does not change the original confirmation scope.
 
 ## RE1-VARIANT-002: Stage 0 RDT loader uses a per-room selector and flag bit
 
