@@ -179,6 +179,8 @@ def test_interrupt_query_reply_does_not_shift_next_memory_read(packet_pair):
         (b"$1122#00", "checksum mismatch"),
         (b"$11#62", "short reply"),
         (b"$zzzz#e8", "non-hex reply"),
+        (_encode_packet(b"12  "), "non-hex reply"),
+        (_encode_packet(b"\t\n\r "), "non-hex reply"),
     ],
 )
 def test_invalid_reply_closes_stream_before_next_request(packet_pair, reply, reason):

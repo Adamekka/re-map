@@ -238,11 +238,11 @@ class DuckStationGdb:
             return MemRead(
                 ok=False, data=b"", error=f"short reply: {len(resp) // 2} of {length}"
             )
-        try:
-            return MemRead(ok=True, data=bytes.fromhex(resp.decode("ascii")))
-        except ValueError:
+        # bytes.fromhex accepts whitespace, which would silently shorten a read.
+        if any(byte not in b"0123456789abcdefABCDEF" for byte in resp):
             self.close()
             return MemRead(ok=False, data=b"", error="non-hex reply")
+        return MemRead(ok=True, data=bytes.fromhex(resp.decode("ascii")))
 
     def read_u8(self, address: int) -> MemRead:
         return self.read_memory(address, 1)
