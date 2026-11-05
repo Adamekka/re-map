@@ -175,7 +175,15 @@ class VisitHistory:
             raise HistoryError(f"Cannot save exploration history: {exc}") from exc
         finally:
             if temporary is not None:
-                temporary.unlink(missing_ok=True)
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError as exc:
+                    # Losing directory access can block replacement and cleanup;
+                    # keep both failures within the caller's history error handling.
+                    raise HistoryError(
+                        "Cannot save exploration history: cannot remove temporary "
+                        f"file {temporary}: {exc}"
+                    ) from exc
         self.rooms, self.regions = rooms, regions
         self.needs_write = False
 

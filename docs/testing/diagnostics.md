@@ -28,6 +28,18 @@ Browser state requests run one at a time so a delayed older reply cannot overwri
 
 Run `bun tests/check_map_refresh_browser.mjs <python>` with Playwright available to check request ordering, stalled headers and bodies, late cancelled replies, automatic recovery and retained map inspection.
 
+## Exploration history save failures
+
+If writing or replacing the history file fails, the previous saved history remains intact. Losing write access to the history directory can also prevent temporary-file cleanup. The tracker reports a history error with the leftover temporary file's path. Restore directory access before restarting the tracker. Leftover temporary files are never loaded as exploration history.
+
+Run the history regressions with the [test environment](../testing.md#python-test-environment):
+
+```sh
+python3 -m pytest -q tests/test_visit_history.py
+```
+
+These tests use temporary history files and cover invalid history, writer exclusion, failed writes and replacement, cleanup failure, retry and restored exploration.
+
 ## Offline RE1 snapshots
 
 Inspect a retained RE1 savestate without starting DuckStation:

@@ -192,32 +192,58 @@ def test_invalid_history_is_reported_and_preserved(
     fresh.close()
 
 
+@pytest.mark.parametrize("operation", ["fsync", "replace"])
+@pytest.mark.parametrize("cleanup_fails", [False, True])
 def test_failed_save_preserves_history_and_can_retry(
-    tmp_path, identity, region_rooms, monkeypatch
+    tmp_path, identity, region_rooms, monkeypatch, operation, cleanup_fails
 ):
     path = tmp_path / "visits.json"
     history = VisitHistory(path, identity, region_rooms, False)
     tracker = Tracker()
     tracker.mark_current(RoomId(0, 9))
+    tracker.region_visits["mansion1f:09"] = "00-09"
     history.save(tracker)
     original = path.read_bytes()
+    playthrough_id = history.playthrough_id
     tracker.mark_current(RoomId(0, 7))
+    tracker.region_visits["mansion1f:07"] = "00-07"
     import tracker.visit_history as module
 
-    replace = module.os.replace
-    monkeypatch.setattr(
-        module.os,
-        "replace",
-        lambda *args: (_ for _ in ()).throw(OSError("disk unavailable")),
-    )
-    with pytest.raises(HistoryError, match="Cannot save exploration history"):
-        history.save(tracker)
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            module.os,
+            operation,
+            lambda *args: (_ for _ in ()).throw(OSError("disk unavailable")),
+        )
+        if cleanup_fails:
+            patch.setattr(
+                module.Path,
+                "unlink",
+                lambda *a, **k: (_ for _ in ()).throw(
+                    PermissionError("temporary directory is not writable")
+                ),
+            )
+        with pytest.raises(HistoryError, match="Cannot save exploration history") as error:
+            history.save(tracker)
     assert path.read_bytes() == original
-    assert set(tmp_path.iterdir()) == {path, path.with_name("visits.json.lock")}
-    monkeypatch.setattr(module.os, "replace", replace)
+    assert history.rooms == ("00-09",)
+    assert history.regions == (("mansion1f:09", "00-09"),)
+    temporary_files = set(tmp_path.iterdir()) - {
+        path,
+        path.with_name("visits.json.lock"),
+    }
+    assert len(temporary_files) == int(cleanup_fails)
+    if cleanup_fails:
+        assert str(next(iter(temporary_files))) in str(error.value)
+    with pytest.raises(HistoryError, match="history is in use"):
+        VisitHistory(path, identity, region_rooms, False)
     history.save(tracker)
     history.close()
-    assert set(json.loads(path.read_text())["rooms"]) == {"00-09", "00-07"}
+    restored_history = VisitHistory(path, identity, region_rooms, False)
+    assert restored_history.playthrough_id == playthrough_id
+    assert restored_history.rooms == ("00-07", "00-09")
+    assert dict(restored_history.regions) == tracker.region_visits
+    restored_history.close()
 
 
 def test_unchanged_poll_does_not_write_and_new_playthrough_has_separate_identity(
