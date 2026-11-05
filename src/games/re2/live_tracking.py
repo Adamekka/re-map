@@ -271,14 +271,24 @@ def poll_re2(
             elif kind == 0 and definition in room["doors"]:
                 live_doors[offset] = {**definition, "inactive": True}
             elif kind == 1:
+                target = RoomId(packet[operand + 8], packet[operand + 9])
+                # Source binding does not validate mutable destination bytes.
+                # Known unsupported sources remain legitimate door targets.
+                if (
+                    str(target) not in profile.rooms
+                    and str(target) not in profile.unsupported_sources
+                ):
+                    return PollResult(
+                        PollStatus.Retry, "Room door destination is unresolved"
+                    )
                 # Mutable descriptor payload controls current targets and locks.
                 live_doors[offset] = {
                     **definition,
                     # The shared activation dispatcher skips zero SAT before
                     # door handling, even when the fresh key flag is set.
                     "inactive": not packet[1],
-                    "stage": packet[operand + 8],
-                    "room": packet[operand + 9],
+                    "stage": target.stage,
+                    "room": target.room,
                     "lock_id": packet[operand + 15],
                     "lock_type": packet[operand + 16],
                 }
