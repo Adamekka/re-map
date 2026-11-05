@@ -128,6 +128,9 @@ try {
     await first.press('Space');
     assert.equal((await inspection()).selected, ids[0]);
     assert(await first.evaluate(node => node === document.activeElement));
+    // Keyboard inspection can recenter the map away from the neighboring room.
+    // Restore both outlines before testing a pointer click on that neighbor.
+    await page.getByRole('button', { name: 'Fit explored rooms', exact: true }).click();
     const recoveredLabel = await second.locator('text').boundingBox();
     assert(recoveredLabel);
     await page.mouse.click(recoveredLabel.x + recoveredLabel.width / 2, recoveredLabel.y + recoveredLabel.height / 2);

@@ -927,7 +927,9 @@ function draw(state) {
     group.addEventListener('keydown',event=>{
       if(lastState.status!=='display') return;
       if(event.key==='Enter' || event.key===' ') {
-        event.preventDefault();rememberView();selected=id;draw(lastState);
+        // Tab can reach an outline clipped by zoom or pan. Reuse result
+        // navigation so keyboard inspection also brings that room into view.
+        event.preventDefault();inspectRoom(displayedArea,id);
       }
     });
   }

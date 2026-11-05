@@ -77,6 +77,36 @@ try {
     assert(await map.evaluate(node => node === document.activeElement), 'the map must be reachable in the normal tab order');
     assert.equal(await map.evaluate(node => getComputedStyle(node).outlineWidth), '2px', 'keyboard focus needs a visible map outline');
     assert.match(await map.ariaSnapshot(), /button/, 'assistive technology must be able to reach the room controls');
+    for (const [key, zoomPresses] of [['Enter', 0], ['Space', 12]]) {
+      for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowRight');
+      for (let i = 0; i < zoomPresses; i++) await page.keyboard.press('+');
+      const panned = await view();
+      await page.keyboard.press('Tab');
+      const target = page.locator('#map .room').first();
+      assert(await target.evaluate(node => node === document.activeElement), 'Tab must reach the room outside the panned view');
+      assert(await target.evaluate(node => node.getBoundingClientRect().right < document.getElementById('map').getBoundingClientRect().left), 'the regression must activate an off-screen room');
+      const oversized = await target.evaluate(node => {
+        const room = node.getBoundingClientRect(), frame = document.getElementById('map').getBoundingClientRect();
+        return room.width > frame.width || room.height > frame.height;
+      });
+      const id = await target.getAttribute('data-region');
+      await page.keyboard.press(key);
+      const selectedRoom = page.locator('#map .room.selected');
+      assert.equal(await selectedRoom.getAttribute('data-region'), id);
+      assert(await selectedRoom.evaluate(node => node === document.activeElement), key + ' must retain room focus');
+      assert(await selectedRoom.evaluate(node => {
+        const room = node.getBoundingClientRect(), frame = document.getElementById('map').getBoundingClientRect();
+        return room.left >= frame.left && room.right <= frame.right && room.top >= frame.top && room.bottom <= frame.bottom;
+      }), key + ' must bring the inspected outline into view');
+      if (oversized) assert((await view())[2] > panned[2], 'revealing a large room must zoom out to fit');
+      else assert.deepEqual((await view()).slice(2), panned.slice(2), 'revealing a room that fits must retain zoom');
+      assert.equal(await page.locator('#map .room').count(), scene, 'keyboard inspection must not reveal rooms');
+      await page.getByRole('button', { name: 'Back to previous room', exact: true }).click();
+      assert.deepEqual(await view(), panned, 'Back must restore the view before keyboard inspection');
+      await page.getByRole('button', { name: 'Follow player', exact: true }).click();
+      await map.focus();
+      assert.deepEqual(await view(), initial);
+    }
     for (const [key, axis, direction] of [['ArrowRight', 0, 1], ['ArrowLeft', 0, -1], ['ArrowDown', 1, 1], ['ArrowUp', 1, -1]]) {
       const before = await view();
       await page.keyboard.press(key);
