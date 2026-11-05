@@ -58,7 +58,9 @@ These are the original private filenames, including the misleading `difficulty-s
 
 ## RE3-NATIVE-003: raw mode words cannot identify Hard
 
-Status: Candidate field leads. Hard selection and scenario identity remain unresolved.
+Status: Candidate field leads. These raw words have no confirmed difficulty interpretation.
+
+This describes the original offline audit's limit. Later [RE3-INPUT-002/003](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms) verify native Hard selection/control and a separate title-written difficulty bit. The two raw words below remain uninterpreted; audit outputs still refuse campaign or Hard admission.
 
 | Candidate field label | PS1 virtual address | Width, byte order and mask | Limit |
 | --- | --- | --- | --- |
@@ -92,7 +94,7 @@ python3 -m pytest -q tests/test_re3_native_contracts.py tests/test_re3_map_data.
 
 All 220 focused tests pass, including 46 native-audit cases. They check exact executable/capture identity, every code window, signed selectors, allocation disagreement, pointer/source bounds, camera bounds, opaque slot-2 relocation, independent geometry witnesses, native table disagreement, source ambiguity, mutable scripts and exact rewind, recorded-input rejection, and no admission even with all witnesses matching. CLI tests exercise real source-sector reads and hashes while isolating the separately tested catalog boundary; missing/changed/unsupported input and a later bad capture emit no partial JSON. No owned executable, RAM or artwork enters fixtures.
 
-Next, establish natural Hard selection and player control, observe ordinary room departure/reentry, bind lifecycle states across title/demo/cutscene/UI/gameplay, and validate fresh read ordering and allocation extent. Source witnesses alone cannot substitute for those observations. Acquisition, door and story banks still require separate native before/after and restore evidence. No runtime profile, tracker history, map UI or game files changed.
+The later [Hard control experiment](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms) establishes natural selection, deliberate control, sampled room-source binding and earlier/later restoration. Ordinary room departure/reentry, lifecycle states across title/demo/cutscene/UI/gameplay, fresh read ordering and allocation extent still need contracts. Source witnesses alone cannot substitute for those observations. Acquisition, door and story banks still require separate native before/after and restore evidence. No runtime profile, tracker history, map UI or game files changed.
 
 ## Contributions and review
 
@@ -100,3 +102,4 @@ Next, establish natural Hard selection and player control, observe ordinary room
 - 2026-11-05; implementation delegate, `gpt-6.1-sol` verified by returned run metadata; traced native tables/loader/recorded-input leads, probed the six retained captures and authored the initial audit draft. Workspace credits exhausted before tests, documentation, review or commit.
 - 2026-11-05; Codex root, exact runtime model `gpt-6.1-sol`; recovered the draft, checked native instructions and all 169 table/source pairs, shared the revision fingerprint and section-bound formula, added synthetic/CLI regressions, reproduced the six-capture audit, wrote this topic record and performed final integration review. Review covered address/width/mask labels, bounds, input preservation, ambiguity, mutable-byte limits, modeled failures and refusal to claim gameplay admission. Configured external review providers remained unavailable; no external endorsement or new gameplay validation is claimed.
 - 2026-11-05; Codex root, `gpt-6.1-sol`; corrected the overlay base against the retained disassembly and two independent prefix locations before using menu code addresses. The audit implementation and capture results are unchanged.
+- 2026-11-05; Codex root, `gpt-6.1-sol`; linked later native Hard/control and difficulty-bit observations while preserving the offline audit's unresolved admission outputs. New runtime evidence and its limits belong to RE3-INPUT-002/003.

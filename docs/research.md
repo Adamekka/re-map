@@ -372,7 +372,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 
 ## RE3 investigation
 
-The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. Every finding below remains Candidate. Static source coverage and debugger access do not establish campaign gameplay, room completion or usable map coverage.
+The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. Claim pages distinguish Candidate findings from the confirmed native selection/control observations in RE3-INPUT-002/003. Static source coverage and debugger access do not establish campaign gameplay, room completion or usable map coverage.
 
 | Claim | Finding |
 | --- | --- |
@@ -385,11 +385,13 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. E
 | [RE3-MAP-002](research/re3/map-semantics.md#re3-map-002-native-edges-retain-inclusive-and-reversed-endpoints) | Signed inclusive edges, including a real negative width; copied renderer checks remain separate from gameplay |
 | [RE3-NATIVE-001](research/re3/native-contracts.md#re3-native-001-native-selectors-agree-with-owned-room-sources) | Native stage/room/camera and loaded-source candidates, relocated witnesses and all 169 source-table checks |
 | [RE3-NATIVE-002](research/re3/native-contracts.md#re3-native-002-recorded-input-rejects-plausible-player-states) | Recorded-input rejection and selector/source disagreement in retained captures; campaign admission unresolved |
-| [RE3-NATIVE-003](research/re3/native-contracts.md#re3-native-003-raw-mode-words-cannot-identify-hard) | Raw mode-word leads preserve unresolved Hard identity |
+| [RE3-NATIVE-003](research/re3/native-contracts.md#re3-native-003-raw-mode-words-cannot-identify-hard) | Original raw mode-word leads still supply no Hard discriminator |
 | [RE3-RUNTIME-001](research/re3/runtime.md#re3-runtime-001-disc-binding-and-isolated-debugger-access) | Private emulator setup and repeated runtime code-window equality |
 | [RE3-RUNTIME-002](research/re3/runtime.md#re3-runtime-002-pose-and-lifecycle-leads-are-insufficient-for-admission) | No-input player fields reject pose/health alone as a campaign admission rule |
 | [RE3-RUNTIME-003](research/re3/runtime.md#re3-runtime-003-targeted-input-and-bounded-startup-result) | Targeted native cardless menu input; Hard selection and campaign control unverified |
 | [RE3-INPUT-001](research/re3/hard-start.md#re3-input-001-targeted-paused-menu-input-remains-insufficient-to-verify-hard) | Interrupted paused-menu/macro experiment, retained private evidence and verified cleanup; Hard/control/reentry unverified |
+| [RE3-INPUT-002](research/re3/hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms) | Native Hard selection, deliberate control and source binding in two rooms, earlier/later checkpoint reversal; ordinary reentry unverified |
+| [RE3-INPUT-003](research/re3/hard-start.md#re3-input-003-the-title-difficulty-choice-writes-lifecycle-bit-0x100) | Opposite title choices and Hard restore corroborate bit `0x100`; general campaign classification remains unresolved |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.
 
