@@ -1,6 +1,7 @@
 # Project documentation
 
 - [RE2](re2.md): approved Leon A and Claire B scope and support status.
+- [RE3](re3.md): Hard-mode target and current support status.
 - [Map controls](map-controls.md): keyboard, mouse, touch, floor browsing and following.
 - [Room completion](room-completion.md): collection rules for puzzle items, loads and unresolved item checks.
 - [Research](research.md): claim index linking game-specific evidence, interpretation, maps and emulator research.
