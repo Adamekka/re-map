@@ -2,7 +2,7 @@
 
 A companion map for Resident Evil in DuckStation, showing explored rooms, remaining items and doors.
 
-![Explored Guardhouse rooms, ladder, remaining items and doors](docs/images/re1-guardhouse-map.jpg)
+![Explored Jill Mansion rooms with remaining items and door access](docs/images/re1-jill-map.png)
 
 ## Setup
 

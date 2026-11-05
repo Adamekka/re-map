@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "purpose": "Test-only README rendering from retained Training Jill captures; not a continuous gameplay route or a user playthrough history.",
+  "author": {
+    "date": "2026-11-05",
+    "model": "gpt-6.1-sol",
+    "contribution": "Capture replay, render fixture and responsive browser checks. Original capture provenance remains in manifest.json."
+  },
+  "profile": "profiles/re1_directors_cut_slus00551.json",
+  "catalog": "data/floor_plans_slus00551.json",
+  "manifest": "tests/fixtures/re1/manifest.json",
+  "captures": [
+    {
+      "path": "tests/fixtures/slus00551_green_herb_after.sav",
+      "room": "00-09",
+      "region": "mansion1f:09"
+    },
+    {
+      "path": "tests/fixtures/slus00551_chemical_after.sav",
+      "room": "00-18",
+      "region": "mansion1f:18"
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/art-map/art-map-after.sav",
+      "room": "00-07",
+      "region": "mansion1f:07"
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/mansion/g-terrace-collected.sav",
+      "room": "01-12",
+      "region": "mansion2f:12"
+    },
+    {
+      "path": "tests/fixtures/re1/savestates/art-map/art-map-positioned-before.sav",
+      "room": "00-07",
+      "region": "mansion1f:07"
+    }
+  ],
+  "visits": {
+    "rooms": ["00-07", "00-09", "00-18", "01-12"],
+    "regions": {
+      "mansion1f:07": "00-07",
+      "mansion1f:09": "00-09",
+      "mansion1f:18": "00-18",
+      "mansion2f:12": "01-12"
+    }
+  },
+  "publication_sha256": "0d55d2ed9a40441bd90cf22ca2dcdb138d4937160ee651a95f3a11567b64f3f2"
+}

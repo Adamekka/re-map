@@ -28,6 +28,7 @@ Use `.local/venv/bin/python` for the focused Python commands below and as the `<
 
 ## RE1 map validation
 
+- [README screenshot regeneration](testing/re1-map.md#readme-screenshot)
 - <a id="running-the-live-tracker"></a>[Running the live tracker](testing/re1-map.md#running-the-live-tracker)
 - <a id="art-room-map-validation"></a>[Art Room map validation](testing/re1-map.md#art-room-map-validation)
 - <a id="guardhouse-basement-map-validation"></a>[Guardhouse basement map validation](testing/re1-map.md#guardhouse-basement-map-validation)

@@ -42,3 +42,9 @@ Copy a card into the isolated emulator's writable test directory, select that co
 Savestates and memory cards contain game state. They do not contain the external tracker's explored-room history. No matching history snapshot was retained for these older checkpoints.
 
 Use `--history-file` with a separate test history. Add `--new-playthrough` when the test requires an empty explored map. For future bug reports, retain the matching history file and tracker log alongside the game checkpoint.
+
+## README render fixture
+
+[readme-map.json](readme-map.json) specifies five manifest-listed Training Jill captures, their directly observed visits and a pinned final publication digest. It combines captured visits for an isolated test scene; it does not restore the user's history or claim a continuous route. The last capture supplies every game-derived verdict. Source authorship, checksums, emulator compatibility and patch limits remain in the manifest.
+
+See [README screenshot regeneration](../../../docs/testing/re1-map.md#readme-screenshot) for the renderer, browser checks, output artifacts and validation limits. No new savestate, RAM dump or game artwork is included in this render fixture.

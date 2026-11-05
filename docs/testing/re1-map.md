@@ -56,6 +56,28 @@ Audited setup commands now continue through the shared rules instead of creating
 
 Run `python3 -m pytest -q tests/test_dynamic_quantities.py` for quantity reads/writes, zero amounts, source bounds, event dispatches, quantity-dependent conditions and acquisition reversal. Current-room observations read exact amounts from RAM. Reconstructed amounts use supported script values where available, or the explicit `unreconstructed` quantity state in the map JSON. The map can still name the item and show remaining/collected. RE1-QUANTITY-001/002 document the pinned native contracts and offline checks. Natural quantity changes and their normal-save/load behavior remain unvalidated.
 
+## README screenshot
+
+The RE1 README image comes from the test-only [render fixture](../../tests/fixtures/re1/readme-map.json). Its five retained Training Jill captures are listed in [the save manifest](../../tests/fixtures/re1/manifest.json), which records source checksums, game identity, emulator build limits and patch notes. The capture sequence is a replay setup, not a continuous gameplay route or the user's exploration history. Only the four directly observed room/region visits accumulate. All item, door, story and player results are reread from the final selected capture, including reversal of earlier collected states.
+
+With the [test dependencies](../testing.md#python-test-environment), Bun, Playwright, Chromium and `zstd` available, run from the repository root:
+
+```sh
+.local/venv/bin/python -m pytest -q tests/test_readme_map_fixture.py
+bun tests/render_readme_map.mjs .local/venv/bin/python tests/fixtures/re1/readme-map.json .local/readme-map
+cp .local/readme-map/re1-readme-desktop.png docs/images/re1-jill-map.png
+```
+
+The renderer uses the production revision-bound poller, catalog, `map_state` and `map_page`. Playwright intercepts the page and state requests. No server or DuckStation instance starts, and no user history is accessed. Extracted RAM lives only in an automatically removed temporary directory.
+
+The output directory contains `map.html`, `publication.json`, `visits.json`, `report.json` and four original tracker PNGs. Checks cover desktop 1440×1000, mobile 390×844, tablet portrait 768×1024 and tablet landscape 1024×768. They verify observed outlines, room navigation, item/door details, following, horizontal overflow, page/client errors and exact publication/visit equality before and after rendering. The report records source and screenshot hashes plus the Chromium version. These browser sizes do not establish physical-device or assistive-technology behavior.
+
+The fixture pins the SHA256 of Python's sorted, compact JSON publication. An intentional interpretation change requires reviewing the replay results before updating that digest; the failing assertion prints the new digest. UI-only changes can rerun the renderer without changing it. PNG bytes also depend on Chromium, platform and installed fonts, so exact pixel equality across machines is not required.
+
+The previous Guardhouse image's render inputs were not retained. This fixture replaces that scene with reproducible captured-state evidence. It adds render/replay coverage, not gameplay validation. On 2026-11-05, Codex `gpt-6.1-sol` authored the fixture, renderer and checks and inspected all four rendered layouts. External review models were unavailable to the parent task; no external endorsement is claimed.
+
+Integration verification on 2026-11-05: root and internal peer `/root/review_readme_replay`, both session-verified `gpt-6.1-sol`, checked the combined keyboard/rendering changes, observed-only visits, fresh final verdicts, focus and Back behavior. Root regenerated the four layouts, verified exact publication/visit equality and reran the keyboard suite and 110 Python map checks; the full integrated Python suite passed 4,566 tests. The desktop PNG remains byte-identical, SHA256 `8748d038fb6af556bb018525846cdbae0b194e8b6cb15652ee174bf26d44d56f`. The peer independently passed the replay, renderer, keyboard and interruption checks and inspected all four layouts. No physical-device, screen-reader or new gameplay validation is added.
+
 ## Art Room map validation
 
 RE1-EVENT-015 and RE1-PICKUP-004 record the tested Training Jill case on SLUS-00551. Use the isolated emulator/version above and keep Ink Ribbon untouched throughout:
