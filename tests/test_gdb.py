@@ -62,10 +62,26 @@ def test_read_memory_parses_hex():
     assert res.data == bytes.fromhex("deadbeef")
 
 
-def test_read_memory_rejects_bad_length():
-    gdb = DuckStationGdb()
-    res = gdb.read_memory(0x80000000, 0)
-    assert not res.ok
+@pytest.mark.parametrize("length", [-1, 0, 4097])
+def test_read_memory_rejects_bad_length(packet_pair, length):
+    gdb, _ = packet_pair
+    res = gdb.read_memory(0x80000000, length)
+    assert not res.ok and res.error == "length must be 1..4096"
+    assert gdb.connected
+
+
+@pytest.mark.parametrize("length", [1, 4096])
+def test_read_memory_accepts_boundary_lengths(packet_pair, length):
+    gdb, server = packet_pair
+    # A full-size reply can exceed socketpair's buffer before the client reads it.
+    responder = threading.Thread(
+        target=server.sendall, args=(_encode_packet(b"ab" * length),), daemon=True
+    )
+    responder.start()
+    res = gdb.read_memory(0x80000000, length)
+    responder.join(timeout=1)
+    assert not responder.is_alive()
+    assert res.ok and res.data == b"\xab" * length
 
 
 @pytest.mark.parametrize("operation", ["memory", "interrupt"])

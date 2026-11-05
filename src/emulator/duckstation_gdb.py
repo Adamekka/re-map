@@ -20,6 +20,9 @@ from typing import Literal
 
 logger = logging.getLogger(__name__)
 
+# Hex replies double the read size. Stay well below DuckStation's 16384-byte packet limit.
+MAX_MEMORY_READ_LENGTH = 4096
+
 
 @dataclass(frozen=True)
 class MemRead:
@@ -201,12 +204,12 @@ class DuckStationGdb:
         return ""
 
     def read_memory(self, address: int, length: int) -> MemRead:
-        # Keep reads small: DuckStation caps packets at 16384 bytes,
-        # so max read per packet is 8192 bytes. Stay well under that.
         if self._sock is None:
             return MemRead(ok=False, data=b"", error="not connected")
-        if length <= 0 or length > 4096:
-            return MemRead(ok=False, data=b"", error="length must be 1..4096")
+        if length <= 0 or length > MAX_MEMORY_READ_LENGTH:
+            return MemRead(
+                ok=False, data=b"", error=f"length must be 1..{MAX_MEMORY_READ_LENGTH}"
+            )
         if address < 0 or address > 0xFFFFFFFF:
             return MemRead(ok=False, data=b"", error="address out of range")
         payload = f"m{address:x},{length:x}".encode("ascii")

@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from emulator.duckstation_gdb import DuckStationGdb
+from emulator.duckstation_gdb import MAX_MEMORY_READ_LENGTH, DuckStationGdb
 
 
 def main() -> int:
@@ -23,10 +23,25 @@ def main() -> int:
     ap.add_argument("--address", required=True, help="hex PS1 address, e.g. 0x80000000")
     ap.add_argument("--length", type=int, required=True)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--chunk", type=int, default=2048)
+    ap.add_argument(
+        "--chunk",
+        type=int,
+        default=2048,
+        help=f"bytes per read (1..{MAX_MEMORY_READ_LENGTH})",
+    )
     args = ap.parse_args()
 
-    address = int(args.address, 16)
+    # Invalid requests must not replace an existing capture with an empty dump.
+    try:
+        address = int(args.address, 16)
+    except ValueError:
+        ap.error("--address must be hexadecimal")
+    if args.length <= 0:
+        ap.error("--length must be positive")
+    if not 0 <= address <= 0xFFFFFFFF or address + args.length > 0x100000000:
+        ap.error("address range must fit 32 bits")
+    if not 1 <= args.chunk <= MAX_MEMORY_READ_LENGTH:
+        ap.error(f"--chunk must be between 1 and {MAX_MEMORY_READ_LENGTH}")
     remaining = args.length
     out = bytearray()
     gdb = DuckStationGdb(args.host, args.port)
