@@ -150,10 +150,23 @@ def test_unwritable_log_path_reports_startup_failure(tmp_path: Path):
             "transport failed",
             "Game connection interrupted. Check DuckStation and its GDB server.",
         ),
+        (
+            "re2_leon_a_slus00748",
+            PollStatus.Retry,
+            "room snapshot changed during read; retry",
+            "Changing rooms...",
+        ),
+        (
+            "re2_leon_a_slus00748",
+            PollStatus.NonGameplay,
+            "Title, demo or game over; visits not recorded",
+            "Title or demo playback. Load or start gameplay to track.",
+        ),
     ],
 )
-def test_live_map_publishes_scenario_and_unsupported_room_messages(
-    tmp_path, monkeypatch, profile_id, status, text, expected
+@pytest.mark.parametrize("map_enabled", [True, False])
+def test_live_tracker_publishes_waiting_messages_without_repeating_them(
+    tmp_path, monkeypatch, capsys, profile_id, status, text, expected, map_enabled
 ):
     # Keep the real CLI publication path while replacing its external I/O.
     server = Mock(spec=track.MapServer)
@@ -166,13 +179,15 @@ def test_live_map_publishes_scenario_and_unsupported_room_messages(
     monkeypatch.setattr(track, "MapServer", Mock(return_value=server))
     monkeypatch.setattr(track, "DuckStationGdb", Mock(return_value=gdb))
     monkeypatch.setattr(track, "poll_once", Mock(return_value=PollResult(status, text)))
-    monkeypatch.setattr(track.time, "sleep", Mock(side_effect=KeyboardInterrupt))
+    monkeypatch.setattr(
+        track.time, "sleep", Mock(side_effect=[None, KeyboardInterrupt])
+    )
     monkeypatch.setattr(
         sys,
         "argv",
         [
             "track.py",
-            "--map",
+            *(["--map"] if map_enabled else []),
             "--profile",
             str(REPO / "profiles" / (profile_id + ".json")),
             "--history-file",
@@ -192,10 +207,13 @@ def test_live_map_publishes_scenario_and_unsupported_room_messages(
             handler.close()
         root_logger.handlers = old_handlers
         root_logger.setLevel(old_level)
-    snapshot = json.loads(server.snapshot)
-    assert snapshot["status"] == "waiting"
-    assert snapshot["current"] is None and snapshot["rooms"] == []
-    assert snapshot["error"] == expected
+    if map_enabled:
+        snapshot = json.loads(server.snapshot)
+        assert snapshot["status"] == "waiting"
+        assert snapshot["current"] is None and snapshot["rooms"] == []
+        assert snapshot["error"] == expected
+    output = capsys.readouterr()
+    assert (output.out + output.err).count(text) == 1
     gdb.read_memory.assert_not_called()
 
 
@@ -284,6 +302,8 @@ def test_unsupported_settings_map_recovers_from_fresh_game_state(
         (PollStatus.ReadFailure, 1),
         (PollStatus.WrongGame, 2),
         (PollStatus.UnsupportedSettings, 2),
+        (PollStatus.Retry, 1),
+        (PollStatus.NonGameplay, 1),
     ],
 )
 def test_once_failure_reports_diagnostic_without_persisting_visits(

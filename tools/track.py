@@ -850,13 +850,7 @@ def main() -> int:
                     last_wait_reason = result.text
                 time.sleep(period)
                 continue
-            if result.status == PollStatus.Retry:
-                if args.once:
-                    print(result.text, file=sys.stderr)
-                    return 1
-                time.sleep(period)
-                continue
-            if result.status == PollStatus.NonGameplay:
+            if result.status in (PollStatus.Retry, PollStatus.NonGameplay):
                 if args.once:
                     print(result.text, file=sys.stderr)
                     return 1
