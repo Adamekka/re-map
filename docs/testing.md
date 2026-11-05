@@ -2,6 +2,24 @@
 
 Run commands from the repository root. Choose a topic for its regression commands, capture procedures and validation limits.
 
+## Python test environment
+
+Create an isolated environment with Python 3.11 or later and install the test dependencies:
+
+```sh
+python3 -m venv .local/venv
+.local/venv/bin/python -m pip install -r requirements-dev.txt
+.local/venv/bin/python -m pytest -q
+```
+
+The requirements include pytest, Shapely for geometry tests and Unicorn for the native instruction regression. The running tracker uses only Python's standard library.
+
+Savestate regressions also need the `zstd` command on `PATH`. On macOS, install it with `brew install zstd`.
+
+Use `.local/venv/bin/python` for the focused Python commands below and as the `<python>` argument in browser checks. Browser checks also require Bun and Playwright.
+
+## Test topics
+
 - [RE1 map and floor validation](testing/re1-map.md)
 - [RE1 interpretation regressions](testing/re1-engine.md)
 - [RE1 event capture procedures](testing/re1-captures.md)
