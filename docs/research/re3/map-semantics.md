@@ -429,6 +429,60 @@ Copy `verify.py` into a fresh private directory before rerunning it. From the re
 
 The new 193 shape and 63 binding/integration cases cover all families, signed phase boundaries, raw-stage width, bypass order, acquisition truncation, duplicate admission/style behavior, exact banks, ignored selectors, forced palette zero, source bounds and fresh reversal. All 976 RE3 tests pass. Synthetic tests contain no owned executable, RAM or image bytes.
 
+## RE3-MAP-012: native row reveal precedes both quad groups
+
+Status: Candidate source interpretation for the pinned revision. The per-quad selectors deliberately leave row visibility unchecked. Applying only their predicates to the two retained map captures produces many candidates that the native outer row gate rejects. This increment supplies that separate gate, without identifying physical rooms or importing native reveal bits into tracker exploration.
+
+The native outer slice `0x80070348..0x800703BC` runs before either quad loop. It tests the full raw acquisition mask from `0x800D2124`, unlike group 1's truncated byte. With acquisition clear it rejects row indices at least 48 before consulting native visits. Acquisition set bypasses visits except native group 4 rows 11–15, which still require their native visit bit. Structural and selected-layer checks follow in every surviving case.
+
+Native visits use u32 LE words at `0x800D20DC + 4 * (2 * native_group + (row >> 5))`, mask `0x80000000 >> (row & 31)`. This is one physical RAM array, not a separate Boolean store for each semantic bank label. The implementation reuses shared MSB-first addressing with full index `64 * native_group + row`. Isolated helper tests for higher rows do not prove additional reachable visit bits, since the outer cutoff comes first.
+
+The [row predicate](../../../src/games/re3/map_row_predicates.py) preserves the structural helper's numeric group/key/raw-stage rules, then compares the selected layer when layer mode is nonzero. Story tests use PS1 virtual u32 LE word `0x800D1FA4`, mask `0x20`, bank index 58, and word `0x800D1FB8`, mask `0x08000000`, bank index 196. Current key and raw-stage widths remain as specified in RE3-MAP-011. Phase, overlay, system mask `0x80` and current-layer AF are not inputs to this gate.
+
+| Cached layer field | PS1 virtual address | Width and source |
+| --- | --- | --- |
+| AD, layer mode | `0x800E026D` | Raw u8, mask `0xFF`; source layer-header byte 4; any nonzero value enables comparison |
+| AE, browsed layer | `0x800E026E` | Signed i8, full byte; independent of AF/current location |
+| B0, layer count | `0x800E0270` | u8, mask `0xFF`; source layer-header byte 5; not read by the native row predicate |
+
+The native layer helper at `0x80073BC8` now has [one shared implementation](../../../src/games/re3/map_layer.py). Position initialization retains its separate story/previous-room override and metadata checks. Row gating calls the base helper directly; it does not inherit that position-only override or force AE to equal AF.
+
+`decode_native_map_row_visibility(data, executable, ram, selected_record_index)` in [map_selection.py](../../../src/games/re3/map_selection.py) uses the same mandatory identity, capture, explicit-record, browsed-group, CC/B4 and contiguous source binding as the quad selectors. Its source-row count must fit the native byte argument. The existing group-0 prefix already contains the whole directory and source layer header, so no image bytes or quad predicate evaluation are needed. The new API also checks cached AD/B0 against those raw source bytes. When AD is nonzero, signed AE must satisfy `0 <= AE < B0`; otherwise it returns `map-selection-binding` at the offending RAM offset. These are explicit wrapper coherence checks, not branches invented inside the native predicate. Unlayered native behavior ignores AE and the wrapper preserves that behavior.
+
+In addition to the existing four sampled capture witnesses, this API compares all five complete gate/helper windows below against the supplied verified executable. The shared capture checker accepts explicit additional address/width spans; these cannot replace its four mandatory sampled witnesses. Extra-window mismatches return `capture` with RAM offsets. All addresses in this table are PS1 virtual; interval ends are exclusive.
+
+| Native code | Interval | SHA256 |
+| --- | --- | --- |
+| Outer row gate | `0x80070348..0x800703BC` | `4b6e743201d6ccde7e2be01383a660cb75f7956e30a5c3659cecc5e59972af85` |
+| Visit helper | `0x80071668..0x800716A4` | `e603c122474c57b35236294428ecbd2d640d1fb19ffd24daf078b45b6fffb049` |
+| Structural helper | `0x800716A4..0x80071878` | `dad683c50e54920cac52a7e39f0345462f316d6f1ac89b069ca7dc508822c3fc` |
+| Layer helper | `0x80073BC8..0x80073CCC` | `b4cdd194b38765ce700309db1957aa49b1fea90878eca9388abf636bb3864ccb` |
+| Original bit helper | `0x80078930..0x80078954` | `fe32913d8f052205d92af65e011e16c0a1e58bfbfda89f9807ad09c0f5f17d8a` |
+
+The result uses schema `re3-native-map-row-visibility-v1` and reports `native_visible` for each numeric source row. Room ownership, campaign admission and tracker visibility remain unresolved. The two earlier quad APIs retain their output and unchecked-row contract. A caller combining these source results must use the same capture and explicit record. Native acquisition can reveal rows that the tracker has never observed; it must never replace the separately persisted tracker visit history.
+
+### Evidence and limits
+
+Private source evidence is `/tmp/re-map-re3-row-visibility-20261106-3hkx8ozv/`. The contract has SHA256 `215e6310dd094231c8c7d756d85be805b221bec8bf2f8bb170304314f1f684f5`; copied proof SHA256 is `65713da3ef7983b0428b9d6f4c2253314e501d5a1833c6298ca1441c8f350f16`. It records 17,896 original copied executions, including 7,298 bounded outer slices and all 130 retained source rows, with full 2 MiB decoded-store audits and no substitutions or memory-write hooks. The outer slice stops before quad rendering and is not a complete renderer call. The report explains three one-sided branch edges and preserves rejected harness assumptions and their corrections.
+
+Parent integration under `/tmp/re-map-re3-row-integration-20261106-v71P7s/` checks 11 source-window hashes and compares the 17,766 generated-plan contexts against production Python. Outer and layer cases use the production helpers directly; visit cases compare shared physical addressing; structural cases enable acquisition/visits to isolate the production structural path without changing its inputs. A further 221 coherent-source controls check 14,161 complete row results across all nine records. These generated controls are separate from the original native plan and do not add runtime observations.
+
+| Retained capture | Candidate visible rows | Group-0 candidates before/after gate | Group-1 candidates before/after gate |
+| --- | --- | --- | --- |
+| `l2-menu-settled` | 1, 13 | 54 / 3 | 42 / 1 |
+| `room-0d-map` | 13 | 55 / 1 | 45 / 1 |
+
+These reductions match the unchanged source model. They are neither new rendering observations nor tracker room counts. Both earlier selectors' retained JSON hashes remain unchanged. Source binding and full gate-code comparisons pass for both retained inputs. This integration operates no emulator and changes no captured bytes, history, UI or runtime profile.
+
+| Parent artifact | Bytes | SHA256 |
+| --- | ---: | --- |
+| `verify.py` | 8347 | `619c71046b92db0744d49e6aea38d85d6025eb2c87fe3f474896ad57aaca2579` |
+| `verification.json` | 2138 | `e0004dbcae188c5fe43a23def05d05b15aae26631a8b23f4b0b014a04636ef66` |
+| `retained-0.json` | 4667 | `2e830c6c3f9c90ab5a064dd9e4ae3bd3436add7188bdd822886eda4c26f39fa2` |
+| `retained-1.json` | 4669 | `6f6a73c483f7ad0b4232e78b68b559089109cba5b838a851cffa0124c517e6a4` |
+
+To reproduce Python integration, copy `verify.py` into a fresh private directory and run it from the repository root with explicit executable, MAP, saved row-proof directory, fresh output directory, settled RAM and room-0d RAM paths in that order. It validates the model/plan/contract/proof hashes and writes only numeric reports outside Git. The tests include 891 new pure-predicate/layer cases and 39 new wrapper/capture cases, including enforcement of the four general witnesses when extra spans are requested. Run the selected tests with `PYTHONPATH=src python3 -m pytest -q tests/test_re3_map_row_predicates.py tests/test_re3_map_row_visibility.py tests/test_re3_map_binding.py`. Synthetic fixtures contain no owned code, RAM or artwork bytes.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
@@ -518,3 +572,7 @@ Thirty-two synthetic requirement cases cover all nine record offsets, mandatory 
 - 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; authored the shared Boolean/exclusion evaluator, 63 source-binding/integration cases, RE3-MAP-011 and the private production/model comparison. All 976 RE3 tests pass. Shape, full-source and retained-capture comparisons retain the counts and limits above. The prior group-0 comparison reproduces its unchanged digest and outputs. This contribution adds no native execution, gameplay observation or user-history access.
 - 2026-11-06 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues in the shared evaluation/binding extraction, new group-1 rules, selector or synthetic tests. It matched all 33 families, ordering, exclusions and source intervals, checked raw-mask truncation, metadata and style semantics, kind-7 handling, invariant/error boundaries and group-0 preservation. It independently compared 108 old/new synthetic publications and failures. This source/evidence review did not rerun the native proof or operate an emulator.
 - 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the shared helpers, preserved group-0 families/API, new group-1 rules/selector, synthetic tests, inherited layout/capture/condition contracts, independent source model and RE3-MAP-011. Review covered native arithmetic/order, source identity and bounds, explicit record semantics, fresh state, failures, invariants, reuse, tests and unresolved gameplay/visibility claims. It inspected only the supplied snapshot and ran no tools, tests or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
+- 2026-11-06 UTC; source investigator and implementation agent, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; authored RE3-MAP-012's numeric source contract, model, 17,896-call copied proof, retained-byte comparison, pure row/layer helpers and 891 synthetic cases. It preserved failed harness assumptions and corrections. No emulator, new runtime observation or tracker-history change occurred.
+- 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; authored the source-bound row API, explicit binding scopes, additional mandatory capture spans, 39 wrapper/capture cases, RE3-MAP-012 and private Python integration. Review tightened extra-span semantics so callers cannot replace the four general capture witnesses. All 1,906 RE3 tests pass. Native-row results retain unresolved ownership, campaign and tracker contracts; no new native execution or emulator action occurs in this integration.
+- 2026-11-06 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues in the row/layer helpers, binding/capture changes, tests, RE3-MAP-012 or Python integration. It checked all 20 source-manifest artifacts, eleven code/ownership windows, four parent artifact hashes/sizes, source formulas/order, physical aliasing, generated/saved/isolated coverage distinctions, retained outputs and unchanged group-0/1 hashes. It passed 1,452 focused checks before the final additional-span regression, then reviewed that enforcement change without repeating the suite. No edits, native-proof rerun or emulator operation occurred.
+- 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the new row/layer helpers, capture/binding changes, tests and fixtures, inherited layout/condition contracts, independent source model and RE3-MAP-012. Review covered native order and widths, source/coherence/code bounds, prior API preservation, fresh state, errors/invariants, reuse, tests and source/runtime distinctions. It used no tools and performed no tests, native execution or gameplay validation. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.

@@ -13,6 +13,7 @@ import struct
 from games.player_heading import heading_degrees
 from games.re3 import EXECUTABLE_SHA256
 from games.re3.capture_data import capture_failure
+from games.re3.map_layer import native_map_layer
 from games.re3.room_data import RoomFormatFailure, decode_map
 
 # Native signed division at 0x800706DC projects 450 world units to one map unit.
@@ -238,15 +239,7 @@ def decode_native_map_position(
         )
     # The native layer selector at 0x80073BC8 uses these row ranges. Floor
     # names remain unresolved, so the result retains numeric layer indices.
-    layer = 0
-    if native_stage == 2:
-        layer = 2 if native_room == 12 else int(native_room >= 10)
-    elif native_stage == 4:
-        layer = int(native_room < 4 or 8 <= native_room < 11)
-    elif native_stage == 5:
-        layer = int(native_room >= 8)
-    elif native_stage == 6:
-        layer = 2 if 5 <= native_room < 9 else int(native_room < 5)
+    layer = native_map_layer(native_stage, native_room)
     if record["layer_metadata"]["layered"]:
         if (stage, native_room) == (4, 3):
             flag_1fbc = struct.unpack_from("<I", ram, 0xD1FBC)[0]

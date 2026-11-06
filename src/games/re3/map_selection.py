@@ -1,4 +1,4 @@
-"""Candidate snapshot-bound map predicates for SLUS-00923. RE3-MAP-009/011.
+"""Candidate snapshot-bound map predicates for SLUS-00923. RE3-MAP-009/011/012.
 
 Native row visibility, physical room ownership and tracker visits are separate.
 """
@@ -6,6 +6,7 @@ Native row visibility, physical room ownership and tracker visits are separate.
 from __future__ import annotations
 
 import struct
+from enum import Enum
 from typing import NamedTuple
 
 from games.bit_flags import msb_flag_location
@@ -18,8 +19,26 @@ from games.re3.map_detail_predicates import (
     group_one_shape_decision,
 )
 from games.re3.map_predicate import FlagReader
+from games.re3.map_row_predicates import native_row_visible
 from games.re3.map_shape_predicates import group_zero_shape_allowed
 from games.re3.room_data import RoomFormatFailure
+
+
+class _SelectionScope(Enum):
+    GroupZero = "group-zero"
+    GroupOne = "group-one"
+    Rows = "rows"
+
+
+# RE3-MAP-012 compares the complete gate/helper code too. The four general
+# capture windows alone do not witness these particular native instructions.
+_ROW_GATE_CODE_WINDOWS = (
+    (0x80070348, 0x74),
+    (0x80071668, 0x3C),
+    (0x800716A4, 0x1D4),
+    (0x80073BC8, 0x104),
+    (0x80078930, 0x24),
+)
 
 
 class _BoundMapSelection(NamedTuple):
@@ -36,11 +55,11 @@ def _bind_selected_map_source(
     executable: bytes,
     ram: bytes,
     selected_record_index: int,
-    primitive_group: int,
+    scope: _SelectionScope,
     condition_records: list[dict],
 ) -> _BoundMapSelection | RoomFormatFailure:
     """Bind decoded table info before either source selection can evaluate RAM."""
-    assert type(primitive_group) is int and primitive_group in (0, 1)
+    assert isinstance(scope, _SelectionScope)
     if type(selected_record_index) is not int or not 0 <= selected_record_index <= 8:
         return RoomFormatFailure(
             "map-selection-input", 0, "selected MAP record index must be 0 through 8"
@@ -67,7 +86,9 @@ def _bind_selected_map_source(
             "displayed group differs from the explicit MAP record",
         )
     if len(record["directory"]) > 256 or any(
-        len(row["primitive_groups"][primitive_group]) > 256
+        scope is not _SelectionScope.Rows
+        and len(row["primitive_groups"][0 if scope is _SelectionScope.GroupZero else 1])
+        > 256
         for row in record["directory"]
     ):
         return RoomFormatFailure(
@@ -86,7 +107,7 @@ def _bind_selected_map_source(
     source_start = record["offset"]
     source_end = (
         table["table_offset"] + table["bounded_size"]
-        if primitive_group == 0
+        if scope in (_SelectionScope.GroupZero, _SelectionScope.Rows)
         else source_start + table["source_prefix_size"]
     )
     prefix_size = source_end - source_start
@@ -134,7 +155,12 @@ def decode_native_map_selection(
     if isinstance(conditions, RoomFormatFailure):
         return conditions
     bound = _bind_selected_map_source(
-        data, executable, ram, selected_record_index, 0, conditions["records"]
+        data,
+        executable,
+        ram,
+        selected_record_index,
+        _SelectionScope.GroupZero,
+        conditions["records"],
     )
     if isinstance(bound, RoomFormatFailure):
         return bound
@@ -201,7 +227,12 @@ def decode_native_map_detail_selection(
     if isinstance(conditions, RoomFormatFailure):
         return conditions
     bound = _bind_selected_map_source(
-        data, executable, ram, selected_record_index, 1, conditions["records"]
+        data,
+        executable,
+        ram,
+        selected_record_index,
+        _SelectionScope.GroupOne,
+        conditions["records"],
     )
     if isinstance(bound, RoomFormatFailure):
         return bound
@@ -283,6 +314,89 @@ def decode_native_map_detail_selection(
         "loaded_source_prefix_bytes": prefix_size,
         "rows": rows,
         "native_row_visibility": "unchecked",
+        "room_ownership": "unresolved",
+        "campaign_admission": "unresolved",
+        "tracker_visibility": "unresolved",
+    }
+
+
+def decode_native_map_row_visibility(
+    data: bytes, executable: bytes, ram: bytes, selected_record_index: int
+) -> dict | RoomFormatFailure:
+    """Evaluate the native row gate, independently of tracker exploration.
+
+    This source-bound API also checks cached source-layer coherence. It leaves
+    the two per-quad selection APIs and their unchecked row visibility intact.
+    """
+    conditions = decode_map_conditions(data, executable)
+    if isinstance(conditions, RoomFormatFailure):
+        return conditions
+    # The group-zero prefix already covers the complete directory and source
+    # layer header. Row gating needs neither quad counts nor later image bytes.
+    bound = _bind_selected_map_source(
+        data,
+        executable,
+        ram,
+        selected_record_index,
+        _SelectionScope.Rows,
+        conditions["records"],
+    )
+    if isinstance(bound, RoomFormatFailure):
+        return bound
+    failure = capture_failure(executable, ram, _ROW_GATE_CODE_WINDOWS)
+    if failure is not None:
+        return failure
+    layout, record, _, group, prefix_size, flag = bound
+    layer_mode, layer_count = ram[0xE026D], ram[0xE0270]
+    source_mode, source_count = record["layer_metadata"]["raw_prefix"][4:6]
+    for offset, actual, expected in (
+        (0xE026D, layer_mode, source_mode),
+        (0xE0270, layer_count, source_count),
+    ):
+        if actual != expected:
+            return RoomFormatFailure(
+                "map-selection-binding",
+                offset,
+                "cached layer metadata differs from the explicit source",
+            )
+    selected_layer = struct.unpack_from("<b", ram, 0xE026E)[0]
+    if layer_mode and not 0 <= selected_layer < layer_count:
+        return RoomFormatFailure(
+            "map-selection-binding",
+            0xE026E,
+            "selected layer is outside the explicit source",
+        )
+    current_key = ram[0xE026A] << 8 | ram[0xE026C]
+    raw_stage = struct.unpack_from("<H", ram, 0xD1F76)[0]
+    return {
+        "schema": "re3-native-map-row-visibility-v1",
+        "status": "candidate-native-row-visibility",
+        "map_sha256": layout["sha256"],
+        "executable_sha256": layout["executable_sha256"],
+        "selected_record_index": selected_record_index,
+        "selected_native_group": group,
+        "current_native_key": current_key,
+        "raw_stage_u16": raw_stage,
+        "layer_mode_u8": layer_mode,
+        "selected_layer_i8": selected_layer,
+        "layer_count_u8": layer_count,
+        "native_map_acquired": bool(flag(0x800D2124, group)),
+        "loaded_source_prefix_bytes": prefix_size,
+        "rows": [
+            {
+                "index": row["index"],
+                "native_visible": native_row_visible(
+                    group,
+                    row["index"],
+                    current_key,
+                    raw_stage,
+                    layer_mode,
+                    selected_layer,
+                    flag,
+                ),
+            }
+            for row in record["directory"]
+        ],
         "room_ownership": "unresolved",
         "campaign_admission": "unresolved",
         "tracker_visibility": "unresolved",
