@@ -415,6 +415,7 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. C
 | [RE3-INPUT-005](research/re3/hard-start.md#re3-input-005-ordinary-input-reverses-a-floor-change-within-one-loaded-source) | Candidate ordinary floor 1→2→1 cycle and original floor-update/caller observations within one source; room reentry and positive admission remain unresolved |
 | [RE3-INPUT-006](research/re3/hard-start.md#re3-input-006-ordinary-departure-and-reentry-retain-fresh-source-agreement) | Candidate ordinary departure/reentry with fresh settled source matches and original ramp, door, caller and yield observations; general admission remains unresolved |
 | [RE3-INPUT-007](research/re3/hard-start.md#re3-input-007-original-code-clears-the-startup-input-filter) | Candidate original startup control-bit clear, exact seed restore and completed regular return; caller/source agreement still supplies no sufficient campaign/Hard gate |
+| [RE3-INPUT-008](research/re3/hard-start.md#re3-input-008-original-easy-initialization-supplies-a-difficulty-comparison) | Candidate original Easy option write, conditional capacity selection and deliberate turn compared with retained Hard controls; general campaign/Hard admission remains unresolved |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.
 
