@@ -342,6 +342,45 @@ PY
 | Selection `verify.py` | 7064 | `57dc5c17e8af229fe926c03105b185c17b69a84425419c55f777c8d29c1a4b56` |
 | Selection `verification.json` | 1316 | `1764f56cd3a55dc8d5bbfa65712dbb404359d97443976d3c4c3dc8e91e8c5637` |
 
+## RE3-MAP-010: group-1 admission and style use different condition tables
+
+Status: Candidate source contract and bounded static export for the named revision. This increment does not evaluate group-1 shapes, style or runtime visibility. Reusing group-0 metadata rules would select the wrong banks and flag polarity.
+
+The [detail-condition decoder](../../../src/games/re3/map_conditions.py) requires the actual pinned executable and existing bounded layout. It exports two ordered four-byte tables per record. Offsets are MAP-file bytes; section-1 header words are u32 LE offsets relative to that section. Header word 5 is zero in all nine owned records and is not a table bound.
+
+| Table | Start | Static bound | Native entry fields |
+| --- | --- | --- | --- |
+| Group-1 admission | Header word 4, section byte `+16` | Section-1 end | `row:u8, quad:u8, flag_index:u8, control:u8` |
+| Group-1 style | Header word 2, section byte `+8` | Header word 3 | `row:u8, quad:u8, flag_index:u8, bank_selector:u8` |
+
+Both scans terminate on the first row byte `0xFF`, ignoring the remaining sentinel bytes. The shared bounded scanner preserves duplicates, order and exact offsets; a partial non-sentinel entry or missing terminator returns `RoomFormatFailure` without partial output. Its extraction leaves the complete owned group-0 export byte-identical to RE3-MAP-008.
+
+When the native admission scan is reached, control bit `0x01` selects PS1 virtual bank `0x800D1FA0`; a clear bit selects `0x800D20CC`, even when other control bits are nonzero. Matching selected flags must be clear, unlike group 0. Control bit `0x10` rejects when the cached acquisition byte is zero. The export retains the full control byte and its `reject_if_acquisition_byte_clear` condition. Other control bits are ignored by the traced branch. Every matching entry must pass; no room ownership or unconditional visibility follows from these raw requirements.
+
+The cached byte must not be replaced with Boolean map acquisition. The original helper returns a raw MSB-first mask, and admission stores its low byte with `sb` at `0x80072DAC`. For supported native groups 0–6, acquisition masks `0x80000000` through `0x02000000` truncate to zero, even when set. Records 7/8 still use native groups 0/1. Thus `0x10` rejects for supported records whenever the scan is reached. The byte is a transient stack local, not tracker history. Generated high-group checks establish truncation behavior without establishing additional valid map groups.
+
+System word `0x800CC858`, u32 LE mask `0x80`, can return early in native map groups 0/1 after their initial shape exclusions. Such returns bypass this scan. If a matching metadata entry is reached instead, that mask rejects the entry. The static export does not implement this ordering or the remaining shape families; it leaves `shape_selection` unresolved.
+
+Style selectors `0/1/2/3` choose PS1 virtual banks `0x800D20CC`, `0x800D1FA0`, `0x800D1FC8`, `0x800D1FE8`. Each selected word is u32 LE with [MSB-first indexing](#re3-map-008-section-1-supplies-ordered-group-0-quad-requirements). Any matching recognized-bank entry whose flag is clear returns style 1; duplicates therefore act as alternatives. Unknown selector values are skipped natively and exported with explicit kind `ignored-bank-selector`, without a fallback bank. Recognized entries have kind `flag-test` and their exact word/mask. The caller supplies palette variant 0/2; the renderer's existing kind-7 forced-zero rule still applies. System-mask style exceptions remain outside this static export. Style does not establish item or door state.
+
+The owned source has sixteen admission entries with controls `0x01/0x11`, and 89 style entries with selectors 0/1. All nine records retain separate tables, including empty alternate-record tables. Exported full-section-1 prefix sizes are `2444, 3320, 884, 1308, 1284, 692, 728, 2184, 2652` bytes. A future group-1 snapshot witness must include its last table; the existing group-0 selector still checks its narrower, unchanged prefix and reports group 1 unresolved.
+
+| Owned source | PS1 virtual interval, end exclusive | SHA256 |
+| --- | --- | --- |
+| Group-1 admission | `0x80072D38..0x800738CC` | `673124ffa53b080a0fecd48981dc0f63403da2ad9ec47428ef4174c57e2e5f96` |
+| Group-1 style | `0x800738CC..0x80073BC8` | `785b40dcfc7d195294cefa0d294f2cca34fc79bf0ed4268bbc2fade29b5ff2e9` |
+| Original bit helper | `0x80078930..0x80078954` | `fe32913d8f052205d92af65e011e16c0a1e58bfbfda89f9807ad09c0f5f17d8a` |
+
+Independent source/copy evidence is under `/tmp/re-map-re3-group1-source-20261106-ellib54l/`. It preserves the rejected normalization assumption, failing context and original-code trace, followed by a 40-call raw-mask/byte witness and 203,602 passing original admission/style calls with full 2 MiB store audits. These checks used the unchanged helper and code hooks, without substituted helpers or memory-write hooks. They establish copied-source agreement, not gameplay selection or admission. The numeric contract has SHA256 `852321d4f2232fc3f4cb7b96fccdfab4a420c8403ea9f535b11db29d550e5bab`; its independent catalog has SHA256 `935745dd5c907c3a16b13cb78b6abf9cc02092c24e3d56a6c5e37cc9c4ee6aff`.
+
+Parent metadata integration is under `/tmp/re-map-re3-detail-conditions-integration-20261106-yW4kxv/`. It verified the owned input hashes and every table extent, terminator, ordered raw entry, bank, word/mask and prefix size against that catalog. Two exports were byte-identical. The previous group-0 JSON retains SHA256 `ba8a2b83420a6d8bc6be241e7ebf9a2e6de9a38a088b3a0fb3c8734325db0aa0`. Copy the verifier into a fresh private directory before rerunning, passing executable, MAP, catalog and new output paths explicitly. No new native execution or emulator operation occurred in this implementation increment.
+
+| Parent evidence | Bytes | SHA256 |
+| --- | ---: | --- |
+| `conditions.json` | 40462 | `fd285aa0ee4227de304699ef915ff58176c233bcf5741e29ced8d578495b1348` |
+| `verify.py` | 3612 | `77a8d252872265a469ee84a5cd804fd33bd17ccdec348947c91e43b2429f7f14` |
+| `verification.json` | 697 | `5c819a7ca549b48b25215317c7ee49b7c75a864b47fe3e39aafaa50b0a41e3aa` |
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
@@ -355,7 +394,7 @@ from pathlib import Path
 sys.path[:0] = ['src', 'tools']
 from build_item_table import _read_file
 from games.re3.map_data import decode_map_layout, decode_map_primitives
-from games.re3.map_conditions import decode_map_conditions
+from games.re3.map_conditions import decode_map_conditions, decode_map_detail_conditions
 from games.re3.room_data import RoomFormatFailure
 from re3_map_geometry import extract_map_contours
 with Path(sys.argv[1]).open('rb') as image:
@@ -371,6 +410,9 @@ Path('/tmp/re3-map-layout.json').write_text(json.dumps(layout, indent=2) + '\n')
 conditions = decode_map_conditions(data, executable)
 assert not isinstance(conditions, RoomFormatFailure), conditions
 Path('/tmp/re3-map-conditions.json').write_text(json.dumps(conditions, indent=2) + '\n')
+details = decode_map_detail_conditions(data, executable)
+assert not isinstance(details, RoomFormatFailure), details
+Path('/tmp/re3-map-detail-conditions.json').write_text(json.dumps(details, indent=2) + '\n')
 contours = extract_map_contours(data, executable)
 assert not isinstance(contours, RoomFormatFailure), contours
 Path('/tmp/re3-map-contours.json').write_text(json.dumps(contours, indent=2) + '\n')
@@ -388,7 +430,7 @@ The parent used Unicorn 2.1.4 to execute the exact renderer and its header helpe
 Run with the [test environment](../../testing.md#python-test-environment):
 
 ```sh
-python3 -m pytest -q tests/test_re3_map_selection.py tests/test_re3_map_conditions.py tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py tests/test_player_heading.py tests/test_re2_tracking.py
+python3 -m pytest -q tests/test_re3_map_detail_conditions.py tests/test_re3_map_selection.py tests/test_re3_map_conditions.py tests/test_re3_map_geometry.py tests/test_re3_map_binding.py tests/test_re3_map_data.py tests/test_re3_native_contracts.py tests/test_re3_room_data.py tests/test_re3_room_catalog.py tests/test_re3_disc_identity.py tests/test_floor_plan.py tests/test_re2_metadata.py tests/test_player_heading.py tests/test_re2_tracking.py
 ```
 
 The 27 synthetic contour cases cover palette-plane crossing, full-word transparency, holes and components, shade detail, upload replacement, absent texture words, TIM bounds, unsupported UVs and no partial export on later failure. Binding checks cover executable/capture gating, independent table bounds, signed origins, native truncation, early returns, ordered/chained remaps, raw-stage folding, position/story thresholds, layer/previous-state overrides, alternate records and earlier-snapshot reversal. Thirteen additional RE3 heading cases cover cardinal phases, rounded-sector boundaries, unsigned high bits and reversal; RE1/RE2 heading checks retain native-displacement references and coherent publication. Synthetic RE3 fixtures contain no owned executable, RAM or artwork bytes.
@@ -420,3 +462,7 @@ Thirty-two synthetic requirement cases cover all nine record offsets, mandatory 
 - 2026-11-05 UTC; Codex root, exact runtime model `gpt-6.1-sol`; implemented the explicit loaded-source selector and shared predicate evaluator, authored 321 original synthetic cases and RE3-MAP-009, checked all ten interface source hashes and both retained source-prefix witnesses, and matched the unchanged source model in all saved contexts. All 5,293 tests passed. This implementation did not rerun copied native execution, operate an emulator or alter user exploration.
 - 2026-11-05 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues in the source-bound selector, immutable predicates, captured-code check wording, tests or RE3-MAP-009. Verified exact equality of all 31 families, all thirteen documented word masks and seven referenced evidence hashes. Review covered pointer/byte-argument bounds, contiguous source binding, current/browsed/variant distinctions, fresh state, phase and bypass order, explicit failures and unresolved runtime claims. No edits, emulator operation, duplicated test suite or native-proof rerun occurred.
 - 2026-11-05 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no actionable findings on the source-bound selector, immutable rules, inherited layout/capture/metadata contracts, synthetic tests and RE3-MAP-009. Review covered arithmetic/control flow, source/pointer bounds, explicit-record and current/browsed/variant distinctions, errors, invariants, rewind, reuse, test risks and unresolved gameplay/visibility claims. It inspected only the supplied snapshot and ran no tests, native execution or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
+- 2026-11-06 UTC; independent source investigator, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; authored the group-1 source contract, catalog, model and copied-native evidence behind RE3-MAP-010. Original execution exposed the raw-mask-to-byte normalization error; the initial model/failure and correction witness remain preserved. No repository edit or emulator observation was performed.
+- 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; authored the shared bounded scan and group-1 table export, 51 original synthetic cases and RE3-MAP-010. Matched all owned entries and prefix sizes against the independent catalog, repeated export byte-identically and preserved the prior group-0 export. All 720 RE3 tests passed. This increment performs no predicate evaluation, native execution, gameplay admission or user-history change.
+- 2026-11-06 UTC; independent static-export reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; found no actionable issues in the shared scan, old/new decoders, 51 new cases and RE3-MAP-010. Independently passed 83 focused checks, matched all 105 owned entries/extents, checked the input/source-window/contract/catalog/parent hashes and verified both export payloads. Review covered exact selectors and control bits, bounds/sentinels, ordering, modeled failures, source-only limits and raw-mask truncation. No edits, emulator action, native-proof rerun or gameplay validation occurred.
+- 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the shared scanner, preserved group-0 API, new group-1 table export, fixtures, inherited layout and RE3-MAP-010. Review covered grammar, identity/bounds, exact selector/control semantics, explicit ignored entries, failures, ordering, reuse, tests and unresolved runtime/provenance limits. It ran no tests, native execution or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
