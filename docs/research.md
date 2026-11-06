@@ -410,6 +410,7 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. C
 | [RE3-INPUT-003](research/re3/hard-start.md#re3-input-003-the-title-difficulty-choice-writes-lifecycle-bit-0x100) | Opposite title choices and Hard restore corroborate bit `0x100`; general campaign classification remains unresolved |
 | [RE3-INPUT-004](research/re3/hard-start.md#re3-input-004-ordinary-reentry-attempt-reaches-a-disabled-collision-record) | Candidate native scan skips one disabled collision record; failed reentry route and source-event lifecycle retained, with positive admission unresolved |
 | [RE3-INPUT-005](research/re3/hard-start.md#re3-input-005-ordinary-input-reverses-a-floor-change-within-one-loaded-source) | Candidate ordinary floor 1→2→1 cycle and original floor-update/caller observations within one source; room reentry and positive admission remain unresolved |
+| [RE3-INPUT-006](research/re3/hard-start.md#re3-input-006-ordinary-departure-and-reentry-retain-fresh-source-agreement) | Candidate ordinary departure/reentry with fresh settled source matches and original ramp, door, caller and yield observations; general admission remains unresolved |
 
 2026-10-17 contribution: Codex root, `gpt-6.1-sol`, reorganized the existing entries by topic, retained their original evidence and attribution, and preserved legacy claim anchors in this index.
 

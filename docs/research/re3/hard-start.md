@@ -283,3 +283,80 @@ This observation adds an ordinary reversible floor change within one loaded sour
 - 2026-11-06 UTC; independent source/native investigator and documentation author, exact model `gpt-6.1-sol`, effort `xhigh`, reverified against matching session metadata and latest turn context; derived the new route premise, performed this isolated native-input cycle and stationary caller trace, authored the private verifier/manifest and appended this Candidate record. Original human/media, root and prior research authorship remains unchanged. No external review or new runtime validation is implied by documentation checks.
 - 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; independently checked all 96 current/prior manifest entries, four captures' pose/floor/height/health fields, retained live GPR/code consistency and the bounded scratchpad caller. A fresh offline audit reproduced the four source results against all 169 native rows, retaining unresolved admission. Root also checked unchanged private settings, process absence, port availability and the byte-identical earlier document prefix. Its first private verifier used the wrong health offset; the corrected `0x800CCC90` check passed without changing captures. Reproduction is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-ramp-integration-20261106-opec7yge/verify.py`, with `verification.json` SHA256 `8afc3c1a00e82c8111a98c095445c59f301ff7d87208eb309d1f9016ebc47361`. This integration adds no native execution, savestate restoration or sufficient admission proof.
 - 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash`, high reasoning through Antigravity; returned no findings on the new claim, source-route and verification records, selected native floor telemetry, complete caller record, pinned code bytes, failed observations and verifier. Review checked arithmetic/addresses/widths, observed versus inferred execution, chronology, input/checkpoint limits, source/lifecycle separation, provenance and cleanup. It used no tools and supplied no new runtime evidence. Claude Opus 5.5 remained disabled and supplied no review.
+
+## RE3-INPUT-006: ordinary departure and reentry retain fresh source agreement
+
+Status: Candidate for the named revision and one observed ordinary round trip. One isolated native-input session completed R101 → R100 → R101, with independently matched settled sources and released controls. This supplies the ordinary departure/reentry observation missing from RE3-INPUT-004/005. A sufficient campaign/Hard admission rule remains unresolved.
+
+The target is Resident Evil 3: Nemesis, PS1, NTSC-U, SLUS-00923, using the owned media identity in [RE3-INPUT-005](#re3-input-005-ordinary-input-reverses-a-floor-change-within-one-loaded-source). `SLUS_009.23` SHA256 is `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. DuckStation is `0.1-12083-g00e299795`, binary SHA256 `5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173`. The session loaded the retained post-event native checkpoint once, then used ordinary controller input for both room transitions. It did not restore checkpoints between the rooms.
+
+### New route and original native handlers
+
+The known ramp-6 setup reproduced floor 2/Y=-3600. The next premise used live/source collision record 10 at RDT offset 22852, virtual `0x8012004C`. Its 16 bytes have SHA256 `87cc517165a8167a87dfb483b58a98d12eb72c2a22a94ec9979573b4c2074562`: flags u16 `0xFE6A`, kind low-nibble 10, attribute u16 `0x058A`, signed floor-bound bytes [2,4] and height i16 -9000. Source bounds X[-29579,-26634]/Z[-26045,-22265] and the native mode-9 height path predicted floor 2→3→4. Native movement then observed that progression. The disabled record-24 route was not retried, and the other door's missing `0x73` guard was not tested or forced.
+
+| Actual GDB stop | Retained arguments and result |
+| --- | --- |
+| `0x8004E230` | A0=`0x8012004C`, A2=9, RA=`0x8004DA28`; original height dispatch directly selects the live second-ramp record |
+| `0x8004B7E8` then `0x80033C7C` | Player A0=`0x800CCBC4`, A2=-7200, entry floor 3/Y=-7197; original return floor 4/Y=-7200 |
+| Outbound `0x80050D28` | A0 payload=`0x80121E00`, s0 descriptor=`0x80121DF4`, RA=`0x80050B10` |
+| Return `0x80050D28` | A0 payload=`0x8011B346`, s0 descriptor=`0x8011B33A`, RA=`0x80050B10` |
+
+These are actual live GPR/PC reads with matching pinned executable bytes, not registers decoded from a checkpoint. The outbound descriptor matched procedure 18's ordinary creator at source offset 30442. SAT `0x21` uses a 620-unit forward probe, required floor 4 and zero native lock fields. The approach reached the predicted X=-18808 wall clamp with body radii 450/450. The original action handler then accepted the selected descriptor. Both actions retained raw input `0x40` and logical input `0x10C0`, including action mask `0x80`.
+
+The source proposal incorrectly named its final increasing-Z leg "north". Following that label at phase 1056 produced the preserved stop [-18633,-7200,-20831]. Record 21's southern bound plus radius 450 equals that Z, but its collision handler was not sampled. The correction checked the actual X against the static east-side lane, turned toward south/phase 3072 and first verified increasing Z with stable floor 4. Input refinements stayed within the inspected corridor. The original proposal, wrong-heading capture and corrected check remain separate artifacts; no guest state was changed to bypass the stop.
+
+### Settled source and caller observations
+
+Before return input, a new full capture independently matched R100's header, relocated cameras and camera zones against all 169 native source-table rows. Its live slot-0 descriptor `0x8011B33A` matched canonical procedure 3, source command 3120, SAT `0x21`, floor 0 and zero lock fields. Fresh transient guards qualified, then an ordinary turn/action reached the return handler above. Source-only return metadata was not used as proof of a live descriptor.
+
+| Settled capture | Selectors; XYZ; floor | RAM SHA256 |
+| --- | --- | --- |
+| Before departure | 0/1/6; [-18808,-7200,-11690]; 4 | `fed2db23b8a7048ca66c36eb36882d4ba18929fd7b257a2f3c3b8535602e9151` |
+| Before return | 0/0/0; [-20400,0,-20790]; 0 | `17508fc8652a699eef400b0c2700a70e440940de9cf51112654b33feec1b476d` |
+| After ordinary reentry | 0/1/6; [-18808,-7200,-11475]; 4 | `8c9d9bb4aacc8a684f3cb660bde1a74189373f886bad531ba15ae9f4368acf34` |
+
+Each settled capture had health 200, control 0, phase 0, lifecycle `0x28001000` and all five input words zero. R101 RDT SHA256 is `5bccb836c34e1b62121928f6dba0b34b93fa5645e4f3789659686d9d6a7921e2`; R100 is `e47f25b5a6e82d73f79bf356c111a8add6a7e24555a4deb83ed8725e3979ed50`. Both used source/allocation pointer `0x8011A708`, so pointer equality alone would miss the source change. Source-file windows of 165280/109208 bytes fit RAM; allocation extent remains unproved.
+
+Stationary regular-update traces in the settled old and new rooms both retained dispatcher `0x80038C7C`, A0=`0x800CCBC4`, outer RA=`0x80023F14`, SP=`0x1F8003FC`. Normal entry `0x80039020` retained immediate RA=`0x80038D34`, SP=`0x1F8003CC`; scratchpad `0x1F8003F8` contained LE word `0x80023F14`. Both original regular returns were observed. This adds caller evidence across the room change, without closing admission, read coherence or writer ownership for future polls.
+
+### Pending transitions and limits of the trace
+
+Initial R100 source agreement occurred while phase 1 and lifecycle `0x29401000` still indicated a pending transition. Actual stops at loader wait `0x80024A94` and door-task yield `0x80015834` retained released input. Source loader code yields while lifecycle mask `0x00400000` remains set. The door-task chain eventually waits for helper `0x8002A6BC(0)` to return zero, clears that mask and terminates. Its final clear/termination instructions were not sampled.
+
+R100 settled after callbacks were removed and the first debugger client was closed/replaced for targeted reads. Native execution may have occurred across that handoff. Its exact completion time, instruction and any effect of disconnecting were not observed. The pending and settled captures remain distinct. Door-task active/status changed 1→0 and frame threshold changed 1→2; the sampled frame counter was zero in both states and is reset by native code, so it supplies no monotonic progress proof.
+
+On return, the requested five-second callback at phase-clear instruction `0x80023470` did not hit. The failed observation retained actual PC `0x800292F0`, phase 1 and door-script cursor `0x8019D183` with bytes `0A 1E 00`. Pinned opcode `0x0A` handler `0x80053094` decrements a u16 timer without reading controller buttons. A later bounded two-second no-input interval observed phase 0 and the inactive task. The timer word and final phase-clear instruction were not directly sampled; neither wait established a confirmation prompt or justified another action press. Unused diagnostic reads with an address-calculation error are identified and excluded in `failed-observations.json`.
+
+Addresses are PS1 virtual addresses and multibyte data is little endian. RE3-INPUT-004/005 retain the shared pose/input/source field contract. Additional fields are transition phase `0x800C7960`:u8; lifecycle `0x800CC858`:u32 with pending mask `0x00400000`; door-script active `0x800DFB71`:u8 and pointer `0x800DFB8C`:u32; task-1 status `0x800DCC14`:u16 in the native `0x80`-byte task stride; frame threshold `0x800D442C`:u8 and counter `0x800D454C`:u32. Each field uses its full-width mask unless stated otherwise. Scratchpad return words and GPRs are u32, separate from the direct 2 MiB main-RAM images. Actor floor is i8; it is not a tracker map-layer label.
+
+| Pinned EXE interval, end exclusive | SHA256 |
+| --- | --- |
+| Selected type-10 mode-9 path `[0x8004E230,0x8004E268)` | `3ee7402db315c0e7a45fef5f4f6982f9284ecab8fc9204ef8ca425f8455a612c` |
+| Loader wait `[0x80024A64,0x80024AA8)` | `7b11498c65946d6982187e649092b2195df4267c068921d3fd00c94f44278ddb` |
+| Door-task termination `[0x80016150,0x80016208)` | `f414884a566e44113b0f03bad7fa03d64d1030a7fd0a02267d8d2196aae57a93` |
+| Timer handler `[0x80053094,0x800530F8)` | `0075ad5fe5540c11eccb4139a8c28a3a862f4d6cfab9fca82e85d43f756239ad` |
+
+### Reproduction, isolation and evidence
+
+Private evidence is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-native-return-20261106-idnv2yl9/`. `verify.py` checks eight bounded direct captures plus the saved RAM payload against all 169 owned source rows, original code/GPR records, both live doors, failed observations, cleanup and 100 unchanged prior manifest entries. Its manifest contains 49 files, excluding application/resources. Reproduction requires fresh private paths/PID/port and pre-load isolation checks, the retained seed, native input readbacks and the corrected signed-coordinate route in `input-timing.json`; host durations are not frame-exact. No new load is needed to verify the retained evidence offline.
+
+A native F2 save completed after reentry. Its version-87 decompressed 2 MiB RAM payload equals the final direct capture byte-for-byte, with native controller pressed mask zero. This confirms checkpoint creation/payload equality only. It was not loaded or replayed, and it supplies no restore or memory-card-persistence test.
+
+Before the only game/checkpoint load, both `Achievements` and `Cheevos` had `Enabled=false`/`UseRAIntegration=false`; account keys/overrides were absent, `ApplyGameSettings=false`, cards were `None`, and resources were private. Gameplay remained black/muted. The private checkpoint includes its embedded thumbnail; no game images were exported or shared. No patches, guest-memory/PC/pose/phase/flag/inventory/control writes or user/tracker-history access occurred. Cleanup released all input, removed callbacks, closed both clients, stopped only owned PID 97146 and verified port 2386 listener absent and bindable, wrapper exit 0. Settings remained byte-identical, SHA256 `b63e53931f2391b1d9f2822d76bddce5cb12b0a1997fbcaaad839bb397059125`; CUA completed.
+
+| Private evidence | SHA256 |
+| --- | --- |
+| `native-route-records.json` | `146e3254a63f4434513ef41401d1671d0dd8c07e1d4d08fd3eb647f8b5711e60` |
+| `verification.json` | `8f7408b1780b440758b11518a7085ce503aebc09ec4b20528f0173ca526d8792` |
+| `artifact-manifest.json` | `9e2b80884ec0b96084b0d92e12b0bc8034adfc7c77cc35be1b32026f56c70ac5` |
+| `ordinary-return-native.sav` | `4fd26335f93945de165d55a4577c0e32ec1e285af5a4c4ac466924ea5b03f8cc` |
+| `cleanup.json` | `7b1251bd88c988531c7d7a03d9c01c1596318e28e384877ceeea7741105a7e26` |
+
+This is one ordinary round trip in the named revision. No general campaign/Hard classifier, allocation extent, tracker item/door/map rule, numeric story meaning or memory-card persistence is established. Prior failed routes and the failed Unicorn probe remain unchanged. Raw assets, RAM and saves remain private; hashes do not replace lost temporary evidence.
+
+### Contribution and review
+
+- 2026-11-06 UTC; independent source/native investigator and documentation author, exact model `gpt-6.1-sol`, effort `xhigh`, reverified against matching session metadata and latest turn context; derived the route/item census, performed this isolated experiment, recorded original native floor/door/caller/yield telemetry and the wrong-heading correction, verified checkpoint creation/cleanup, authored the private verifier/manifest and appended this Candidate claim. Original human/media, root and prior review authorship remains unchanged. No external review or new runtime validation is implied by documentation checks.
+- 2026-11-06 UTC; independent retained-evidence auditor, exact verified model `gpt-6.1-sol`, effort `xhigh`; found no issues in the frozen evidence after checking 49 new and 100 prior artifacts, native windows, source/RDT/payload agreement, checkpoint creation equality, isolation and cleanup. Its 18 controller-log GPR/code checks include repeated normal-entry samples; the route record separately has 14 code-bearing GPR records and three targeted GPR reads without captured code. A fresh offline audit reproduced all nine input results across 169 native rows. The auditor ran no native session, altered no files and reviewed no draft documentation.
+- 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; independently verified all 149 manifest entries, eight captures' decoded fields, the 14 route and 18 controller code/GPR checks, both scratchpad caller words and the unique full-RAM checkpoint payload. A fresh source audit matched every saved result; root rechecked process/port/settings cleanup and the unchanged earlier document prefix. An initial integration assertion conflated the route-record and controller-log counts; the final verifier distinguishes those datasets. Root also clarified the private embedded-thumbnail wording. Reproduction is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-return-integration-20261106-at7od62q/verify.py`, report SHA256 `e59aa8ca9a477949e255e5c10688aea57bead275633680cacb350b13b1cc5acb`. This adds retained-file interpretation only, with no new native execution or restoration.
+- 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash`, high reasoning through Antigravity; returned no findings on the new claim, private verifier/results, original native windows, retained route records, failed observations, checkpoint creation and cleanup. Review checked arithmetic/field contracts, source and descriptor binding, chronology, observed versus inferred execution, handoff/callback gaps, input/checkpoint limits, attribution and isolation. Its route height trace excerpt retained the first/last samples and total count. The completed response had no pending child work or tool attempts. This advisory review adds no native evidence. Claude Opus 5.5 remained disabled and supplied no review.
