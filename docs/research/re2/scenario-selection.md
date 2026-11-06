@@ -81,3 +81,78 @@ Final review checks the scenario/source-entry split, positive prefix intersectio
 The independent native review finds no remaining production issue after these corrections. Gemini `gemini-3.8-flash`, high reasoning, returns "No findings" after reviewing both new scenario modules, the integration/producer diffs, positive-consumer excerpts, selected regressions and bounded native-evidence summary. Its prose review performs no runtime validation. Claude `claude-opus-5-5` is unavailable because the configured provider is disabled; no substitute or endorsement is recorded. Root's final review preserves the Candidate status and the seven remaining unresolved rooms.
 
 Contributions, 2026-11-01: the human supplies the unresolved-room screenshots and playthrough evidence. Root, exact model `gpt-6.1-sol`, authors integration, runtime guards, profile validation, scoped initializer production, regressions, generation, replay and this entry. The `roof_checks` agent, the same verified model, authors scoped selection/write footprints, positive-prefix support and focused regressions. The `prefix_entry_audit` agent, the same verified model, authors the ordinary-entry factory and frame/write regressions. The `corridor_checks` agent, the same verified model, authors native-domain and copied-execution evidence and independently reviews the implementation. Authorship, review and copied execution are separate from gameplay confirmation.
+
+## RE2-SCENARIO-002: side entrance exclusion needs two constructor roles
+
+Status: Candidate source investigation for the same Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748, Leon A, Original Game, Normal revision. The native entry extension remains unqualified. No item exclusion, presence rule, room verdict or production code changes. This follow-up uses owned-source inspection, real production proof factories and retained RAM replay; it adds no copied native execution or gameplay observation.
+
+### Retained baseline and source candidate
+
+The executable remains `SLUS_007.48`, 987136 bytes, SHA256 `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`. Owned `PL0/RDT/ROOM1090.RDT`, source `00-09`, is 287656 bytes, SHA256 `785c0c49c56f49a11829c1a98718a867d851893e372d0179d9ce06a63898c4d0`. Both are freshly extracted from the supplied Leon CUE using the existing ISO helpers. The actual startup-declaration factory binds all 69 required native resources and all 125 owned source hashes before the source-entry query runs. These bindings identify the inspected resources; they do not establish their native write effects.
+
+The retained `/tmp/re-map-used-keys-20261103/slot1.ram` has SHA256 `939264d8e98c07e0d7afcdef69efdf1e18ac4fa05052575d726022b5dfdd8b73`. A private reconstruction from its copied visits-only history returns Display with 58 visited sources and current source `00-17`. Side Entrance Corridor `00-09` has a complete three-item list, no collected items and an Unknown room verdict. IDs 13, 146 and 205 each remain Unknown. The complete publication exactly equals that directory's retained `slot1-corrected.json`, including every other room and door. This is saved-RAM interpretation, not an observed savestate restoration. The previously tested emulator identity remains the historical `0.1-12083-g00e299795`; this investigation tests no emulator build or producing-save compatibility.
+
+ID 146's only decoded creator is source offset 9054 in `17:3`, slot four, type 38, quantity one. The IF at 9046 checks scenario bank 1 bit 1 set at 9050. The coherent retained Leon state has that scenario bit clear. This is a candidate for the existing scoped exclusion query, not sufficient evidence to publish absence before native entry qualification succeeds. No decoded slot-four reset supplies another identity. ID 205 has an independent item reset at 13172 in `17:35`, so pruning an opposite-mode startup creator cannot exclude it. ID 13's zero-activation declaration and callback retain their separate obligations; neither item receives knowledge from this investigation.
+
+All source offsets here are RDT-file bytes. Native addresses below are PS1 virtual addresses, not host addresses or RAM-file offsets. Multibyte fields are little endian.
+
+| Retained field | Address | Width and mask | Observed value |
+| --- | --- | --- | --- |
+| Scenario bank 1 bit 1 | `0x800CFBD8` | four bytes, `0x40000000` | Clear |
+| ID 146 acquisition | `0x800D48CC` | four bytes, `0x00002000` | Clear |
+
+### Actual factory rejection and independent constructor roles
+
+The unmodified `scenario_entry_scope` factory returns `ScenarioSelectionFailure.EntryScope` at `16:0`, source offset 8472. That `Enemy_set`, opcode `44`, requests model `0x2A`, preset `0x0200`, slot zero. The current native-entry recipe admits only model `0x22` with presets `0010/4011/4402`. No fabricated receipt or bypass experiment is used. Since the factory produces no `VerifiedScenarioEntryScope`, the scoped item query is not invoked.
+
+The model is the unsigned byte at packet `+3`, mask `0xFF`; the preset is the unsigned two-byte little-endian value at `+4`, mask `0xFFFF`. The native handler reads the slot at `+2` as a signed byte. All listed source slots are nonnegative and below 32.
+
+The first rejection is not the complete required extension. The same source has two independent constructor roles:
+
+| Model | Source procedures and examples | Presets requiring qualification |
+| --- | --- | --- |
+| `0x2A` | `16:0` at 8472; `17:3` at 8784 | `0200/8800` |
+| `0x21` | `17:7` through `17:11`; `17:9` at 10018 and `17:10` at 10152 are on Leon scenario paths | `0000/0040/4000/4040/4002` |
+
+The factory checks every canonical procedure. Qualifying only model `0x2A` cannot provide the complete source-entry receipt. The earlier scenario-word census in RE2-SCENARIO-001 does not replace these constructor, task and callback ownership obligations. The independently rejected whole-context opcode `85` at 9248 is left separate; no continuation rule for it is investigated or added in this follow-up.
+
+### Native loading and callback obligations
+
+The complete `Enemy_set` handler is `0x8005714C..0x80057714`, end exclusive, SHA256 `178350b14ecebc82eace0a9a28ccfab8b2c6cac8a27a2fbf72680a5a07a57825`, including its return delay slot. It stores the current source PC in global pointer word `0x800D5BE8`. The acquired-enemy branch skips construction and reaches the final 22-byte task-PC advance. A constructed actor consumes `0x248` bytes through the four-byte free-work pointer `0x800CE32C`, plus model, part, mesh, shadow and temporary-loading allocations. This handler inspection does not bound all stores made by its callees.
+
+The model loader at `0x8001AAA8` calls cooperative yield `0x80031F94(1)` at `0x8001AB74`, before that final script-PC advance. Its inspected interval `0x8001AAA8..0x8001AD38`, end exclusive, has SHA256 `8ff483d90bc172e55e95fba1f970153e217b6ecd4226fd3a872903f58e5d5304`. The new-resource return path restores phase byte `0x800D8CC8` and main procedure-table pointer word `0x800D8CBC` at `0x800574F0/0x800574FC`. The byte and pointer masks are `0xFF` and `0xFFFFFFFF`. Those restorations do not establish task-frame or source ownership during suspension. The selected incoming models are `00/07/08`; the earlier [constructor suspension audit](startup-declarations.md#constructor-suspension-and-interpreter-ownership) for incoming `02/0A` cannot be transferred by target-room identity.
+
+The native actor resource table is `0x8009ADF4`, with eight-byte records containing unsigned four-byte sector and width fields. Sectors are 2048-byte archive blocks, not RAM addresses. Owned `PL0/PLD/CDEMD0.EMS` is 11124736 bytes, SHA256 `8724200c1ed5e8d3235ceb85640893467eb9878c2a016529aa84b49a79916fca`.
+
+| Code resource | Sector | Bytes | Load address | SHA256 |
+| --- | ---: | ---: | --- | --- |
+| Model `21`, index 68 | 1310 | 19080 | `0x8010D000` | `182339ba7995cb36537297ac8a9e3f6100546f8636afff7e62943beefae469db` |
+| Model `21`, index 69 | 1320 | 19080 | `0x80100000` | `321388df639be19753065422407d77a86eda8909615e9a8ad3e53fb253aef778` |
+| Model `2A`, index 104 | 2194 | 20240 | `0x8010D000` | `2b8bcf2ac5da9579dc7f45efa654a0429db68d0a5243f6b196fc683f9e825606` |
+| Model `2A`, index 105 | 2204 | 20240 | `0x80100000` | `710cedb28f9e778466c3ca50e9bd69911de5356d744dcecbdd7c444bc61da193` |
+
+Model `2A`'s motion resource 106 is 66592 bytes, SHA256 `d7c9e0d7032d1cecb565928c321d7ed0354f62ea90e14038cf2720e04b2937d3`. Model resource 107 is 138372 bytes, SHA256 `f9d7aeec3c551008c82444298e1c448534aef2f97ac6656fce212969ff265ad3`; its TMD declares 32 objects. These sizes and code locations do not supply a complete heap or deferred-update lifetime bound.
+
+In code pool zero, model `2A` initialization at `0x80101318` installs callback address `0x80104460` into global four-byte pointer `0x800CE3A8`, mask `0xFFFFFFFF`. That callback dispatches through table `0x80104F04` using unsigned actor byte `+5`, mask `0xFF`. Main update `0x80101194` also dispatches actor byte `+4` through table `0x80104E38` and may call the four-byte pointer at actor `+0x220`. The inspection identifies mandatory caller, selector, argument, actor/part and code-pool lifetime obligations. It does not prove that these callbacks are unsafe, or that preserving literal STATUS masks makes them safe for source-entry qualification.
+
+Both dispatch tables and actor `+0x220` contain four-byte little-endian pointers with mask `0xFFFFFFFF`; actor byte `+4` uses mask `0xFF`.
+
+A sound shared extension still needs initialized allocation bounds for skip/new/reuse/shared-resource paths, exact incoming auxiliary isolation during the yield, and bounded constructor/update/callback effects for both models and all requested presets. Protected scenario words, source packets and native call/IF/loop/task storage must remain within the existing capability contract. No harmful native counterexample is demonstrated; the required contract remains unproved. Expanding the preset whitelist alone is rejected. Resolved item outcomes are zero, and room clearance is not inferred.
+
+### Evidence and reproduction limits
+
+The initial replay and source diagnostic are private under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-side-entrance-20261106-jz0s4sm7/`. The constructor follow-up is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-side-constructor-20261106-83ttc6_o/`. Owned bytes, RAM and copied history remain outside Git.
+
+| Follow-up evidence | Bytes | SHA256 |
+| --- | ---: | --- |
+| `constructor-audit.json` | 7569 | `da8f52b812d59f0ca8692a15ed826e1e4248660e87a79d340a3fa0fdfc1cd215` |
+| `factory-recheck.py` | 3952 | `01562c2bbe1557b99f6de6aec976f0d819359a46bbae76bc27e60425ccafaf9e` |
+| `factory-result.json` | 1376 | `1d5280ad9737baa6e2a3db9be748f2e839f2cacd4927cd3e0c5f1023ccc5c6e2` |
+| `replay-result.json` | 271 | `7ac06176fb2db176473f022f568722439fbe1a6b389ac3c19a10eb88853e034c` |
+| `unchanged-publication.json` | 82214 | `3b0ab193ae6528dcc7e5b142a5ed1ff1b5b958dfe051322cae02522b538c1d1d` |
+
+Copy the factory/resource scripts into a fresh private directory before reproducing, preserving their original reports. `factory-recheck.py` binds the real resources/corpus and records the actual rejection. `resource-audit.py` extracts the code windows and model-`2A` code resources; the additional model-`21` and model-data manifests identify their archive slices. The replay reads only the pinned RAM and copied visits, then compares the full publication with the retained corrected JSON. It never opens production history for writing. The artifact manifest records the remaining evidence hashes and inspection corrections. Linear disassembly includes tables/data and is not a reachability proof; an earlier incomplete handler window is superseded by `enemy-set-complete.asm` with the return delay slot.
+
+No copied native execution, callback probe, emulator action, gameplay input, savestate load, health/ammunition patch, history modification or external-model review occurs in this investigation. Historical source and review authorship above remains unchanged.
+
+Contribution, 2026-11-06 UTC: the human's unresolved-tracking request supplies the task priority; retained playthrough RAM/history keep their original human provenance. The `review_re3_detail_tables` investigation agent, exact model `gpt-6.1-sol`, reasoning effort `xhigh`, verified from its matching `session_meta` ID and latest `turn_context`, authors the source/resource inspection, real-factory diagnostics, replay comparison and this record. This is investigation and documentation authorship, not an independent review or runtime confirmation.
