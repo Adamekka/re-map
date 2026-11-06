@@ -89,6 +89,76 @@ def test_normal_engine_guard_rejects_a_live_b_item_atomically(snapshot, sat):
     assert tracker == before
 
 
+@pytest.mark.parametrize("snapshot", ["00-01", "00-09"], indirect=True)
+def test_side_entrance_exclusion_keeps_independent_checks_and_rewinds(snapshot):
+    """RE2-SCENARIO-006: exclusion cannot clear unresolved neighboring items."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["00-09"]
+    assert source["scoped_scenario_items"] == {
+        "absent_item_ids": [146],
+        "item_variants": [],
+    }
+    assert not source["fixed_context_preserved"]
+    assert {item["global_id"] for item in source["items"]} == {13, 146, 205}
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    # The fixture registers every raw creator. Remove those registrations so
+    # this test exercises game acquisition, not the contradictory B descriptor.
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(0, 9))
+    visits = None
+    for excluded, first, second in (
+        (False, False, False),
+        (True, False, False),
+        (True, True, False),
+        (False, False, True),
+        (False, False, False),
+    ):
+        for gid, acquired in ((146, excluded), (13, first), (205, second)):
+            address, mask = bank + gid // 32 * 4, 0x80000000 >> (gid % 32)
+            value = int.from_bytes(read(address, 4).data, "little")
+            put(address, value | mask if acquired else value & ~mask, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-09"]
+        assert record.list_complete and len(record.items) == 2
+        assert [item.state for item in record.items] == [
+            "taken" if first else "unknown",
+            "taken" if second else "unknown",
+        ]
+        assert record.completion is RoomCompletion.Unknown
+        fresh = Tracker()
+        fresh.mark_current(RoomId(0, 9))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["00-09"] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize("snapshot", ["00-09"], indirect=True)
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_side_entrance_live_excluded_creator_rejects_atomically(snapshot, sat):
+    """RE2-SCENARIO-006: an absence receipt cannot hide a fresh contradiction."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["00-09"]
+    excluded = next(item for item in source["items"] if item["global_id"] == 146)
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    pointer = 0x80100000 + excluded["offset"] + 2
+    put(registry + excluded["slot"] * 4, pointer, 4)
+    put(pointer + 1, sat, 1)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Pickup disagrees with fixed scenario proof"
+    assert tracker == before
+
+
 @pytest.mark.parametrize("target,gid", [("01-00", 152)])
 def test_scoped_identity_collection_rewinds_without_cached_verdict(
     snapshot, target, gid

@@ -853,7 +853,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SCD-002",
                 "RE2-DS-003",
                 *(
-                    ["RE2-SCENARIO-001", "RE2-SCENARIO-005"]
+                    ["RE2-SCENARIO-001", "RE2-SCENARIO-005", "RE2-SCENARIO-006"]
                     if isinstance(scenario_context, VerifiedScenarioContext)
                     else []
                 ),

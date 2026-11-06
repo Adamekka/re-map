@@ -148,12 +148,23 @@ def test_supported_scenario_excludes_only_the_guarded_identity(profile):
     assert result == ScopedScenarioItems((154,), ())
 
 
-def test_normal_engine_guard_receipt_filters_without_granting_presence(profile):
-    effects = b"\x64\x01\x16\x02" + bytes(12) + b"\x65\x01"
+@pytest.mark.parametrize(
+    "effects",
+    [
+        b"\x64\x01\x16\x02" + bytes(12) + b"\x65\x01",
+        b"\x44\0\0\x21" + bytes(18),
+        b"\x34\x07\0\0\x35\x07\x10\x3d\x10\x07",
+        b"\x2a",
+        b"\x06\0\x08\0\x85\0\x02\0\0\x84\x08\0",
+    ],
+)
+def test_normal_engine_guard_receipt_filters_without_granting_presence(
+    profile, effects
+):
     data, room, context, _, _ = prepared(
         profile,
         END,
-        (guarded(1, 1, 1, item()) + item(gid=155) + effects + END, END),
+        (guarded(1, 1, 1, item()) + item(gid=155) + END, effects + END),
         (0,),
     )
     before = copy.deepcopy(room)
@@ -171,11 +182,53 @@ def test_normal_engine_guard_receipt_filters_without_granting_presence(profile):
     assert room == before
 
 
-def test_guard_receipt_cannot_authorize_positive_declared_items(profile, receipt):
-    data, room, context, _, _ = prepared(profile, END, (item() + END, END), (0,))
+@pytest.mark.parametrize("unconditional", ["creator", "reset", "fixed_write"])
+def test_trusted_constructor_retains_all_creators_resets_and_fixed_writers(
+    profile, unconditional
+):
+    later = (
+        item()
+        if unconditional == "creator"
+        else b"\x46\x07\x02\x31" + struct.pack("<3H", 20, 15, 154)
+        if unconditional == "reset"
+        else b"\x22\x01\x01\x01"
+    )
+    data, room, context, _, _ = prepared(
+        profile,
+        END,
+        (
+            guarded(1, 1, 1, item()) + END,
+            b"\x44\0\0\x21" + bytes(18) + later + END,
+        ),
+        (0,),
+    )
+    scope = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(scope, VerifiedScenarioGuardScope)
+    result = scoped_scenario_items(data, room, profile, context, scope)
+    assert result == (
+        ScenarioSelectionFailure.SourceMutation
+        if unconditional == "fixed_write"
+        else ScopedScenarioItems((), ())
+    )
+
+
+@pytest.mark.parametrize(
+    "worker",
+    [
+        END,
+        b"\x44\0\0\x21" + bytes(18) + END,
+        b"\x34\x07\0\0" + END,
+        b"\x2a" + END,
+        b"\x06\0\x08\0\x85\0\x02\0\0\x84\x08\0" + END,
+    ],
+)
+def test_guard_receipt_cannot_authorize_positive_declared_items(
+    profile, receipt, worker
+):
+    data, room, context, _, _ = prepared(profile, END, (item() + END, worker), (0,))
     strict = scenario_entry_scope(data, room, profile, context)
     guard = scenario_guard_scope(data, room, profile, context)
-    assert isinstance(strict, VerifiedScenarioEntryScope)
+    assert isinstance(strict, VerifiedScenarioEntryScope) is (worker == END)
     assert isinstance(guard, VerifiedScenarioGuardScope)
     arguments = (
         data,
@@ -185,11 +238,12 @@ def test_guard_receipt_cannot_authorize_positive_declared_items(profile, receipt
         script_item_dispatch(profile),
         context.declaration_contract,
     )
-    positive = known_declared_items(
-        *arguments, scenario_context=context, scenario_entries=strict
-    )
-    assert isinstance(positive, KnownDeclaredItems)
-    assert [row.global_id for row in positive.direct_pickups] == [154]
+    if isinstance(strict, VerifiedScenarioEntryScope):
+        positive = known_declared_items(
+            *arguments, scenario_context=context, scenario_entries=strict
+        )
+        assert isinstance(positive, KnownDeclaredItems)
+        assert [row.global_id for row in positive.direct_pickups] == [154]
     with pytest.raises(AssertionError, match="both independent native receipts"):
         known_declared_items(
             *arguments, scenario_context=context, scenario_entries=guard

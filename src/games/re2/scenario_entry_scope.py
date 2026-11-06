@@ -44,6 +44,12 @@ class _ScopePolicy(Enum):
     TrustedNormalEngine = "trusted normal engine"
 
 
+# RE2-SCENARIO-006: these additional selectors write Work+0/2 u16, +7 u8,
+# +10E u16 and +3C u32. Normal owned records permit scalar state changes;
+# this grants no pointer-field permission or stricter positive-entry right.
+_TRUSTED_SCALAR_MEMBERS = frozenset((0, 1, 5, 7, 12))
+
+
 # These handlers have inspected initialized-native-work roles: scalar state,
 # actors, camera/audio/render work and registered interactions. Their source
 # writes (Copy, model, collision and camera records) are additionally bounded
@@ -232,6 +238,7 @@ def _scenario_scope(
         replacement_sources = set()
         sealed_goto_programs = set()
         render_initializers = {}
+        dispatch_resets = {}
         slot_kinds: dict[int, set[int]] = {}
         bindings = []
         rows = [(key, row) for key, p in programs.items() for row in p["commands"]]
@@ -260,10 +267,12 @@ def _scenario_scope(
         for key, row in rows:
             packet = data[row["offset"] : row["next"]]
             opcode = row["opcode"]
+            # Camera_back 2A has no operands. Its STATUS set/clear masks
+            # 00100000/00000100 are disjoint from fixed scenario bits.
             require(
                 opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
                 or policy is _ScopePolicy.TrustedNormalEngine
-                and opcode in (0x64, 0x65)
+                and opcode in (0x2A, 0x64, 0x65, 0x85)
             )
             if row["kind"] == "call":
                 target = f"17:{packet[1]}"
@@ -358,7 +367,11 @@ def _scenario_scope(
             elif opcode == 0x34:
                 # These audited member selectors are numeric actor fields,
                 # including the animation semaphore, not pointer selectors.
-                require(packet[1] in (15, 16, 23, 29))
+                require(
+                    packet[1] in (15, 16, 23, 29)
+                    or policy is _ScopePolicy.TrustedNormalEngine
+                    and packet[1] in _TRUSTED_SCALAR_MEMBERS
+                )
             elif opcode == 0x44:
                 # The audited model's presets select states0/17/18. Their
                 # owned code and numeric actor fields have no room-PC entry;
@@ -366,9 +379,16 @@ def _scenario_scope(
                 require(
                     packet[1] == 0
                     and packet[2] < 32
-                    and packet[3] == 0x22
-                    and int.from_bytes(packet[4:6], "little")
-                    in (0x0010, 0x4011, 0x4402)
+                    and (
+                        # The trusted engine owns normal loading/AI lifetimes.
+                        # Signed actor slots and model selectors still cannot
+                        # direct construction outside the native tables.
+                        policy is _ScopePolicy.TrustedNormalEngine
+                        and 0x10 <= packet[3] < 0x50
+                        or packet[3] == 0x22
+                        and int.from_bytes(packet[4:6], "little")
+                        in (0x0010, 0x4011, 0x4402)
+                    )
                 )
             elif opcode in (0x35, 0x3D):
                 # Member_set reads counter byte2 into member byte1; Member_copy
@@ -376,8 +396,16 @@ def _scenario_scope(
                 # its counter, so both stay inside the audited positive domain.
                 selector = packet[1] if opcode == 0x35 else packet[2]
                 counter = packet[2] if opcode == 0x35 else packet[1]
-                require(selector in (11, 12, 13, 14, 15, 16, 23))
+                require(
+                    selector in (11, 12, 13, 14, 15, 16, 23)
+                    or policy is _ScopePolicy.TrustedNormalEngine
+                    and selector in _TRUSTED_SCALAR_MEMBERS
+                )
                 require(counter in counters and counter < 128)
+            elif opcode == 0x85:
+                # The position predicate indexes player/partner plus 32 enemy
+                # pointers. Its truth stays unknown, including the IF-pop edge.
+                require(packet[1] < 34 and packet[2] < 34)
             if row["kind"] in ("door", "item", "interaction", "reset"):
                 require(packet[1] < 32)
                 kind = (
@@ -398,12 +426,27 @@ def _scenario_scope(
                 require(packet[payload : payload + 3] == b"\xff\0\x18")
                 target = f"17:{packet[payload + 3]}"
                 require(target in programs)
-        for _, row in rows:
+        for key, row in rows:
             if row["opcode"] == 0x47:
-                kinds = slot_kinds.get(data[row["offset"] + 1], set())
+                at = row["offset"]
+                slot = data[at + 1]
+                kinds = slot_kinds.get(slot, set())
                 # A kind-five dispatch can replace its own final worker and
                 # then add two to the new PC. Ordinary entries are insufficient.
-                require(bool(kinds) and 5 not in kinds)
+                require(bool(kinds))
+                if 5 in kinds:
+                    require(policy is _ScopePolicy.TrustedNormalEngine)
+                    reset = commands[key].get(at - 10)
+                    # Door Reset returns one without yielding or calling SCD.
+                    # Adjacency plus the control checks below ensure no other
+                    # source can change the descriptor before this dispatch.
+                    require(
+                        reset is not None
+                        and reset["next"] == at
+                        and reset["kind"] == "reset"
+                        and data[at - 10 : at - 7] == bytes((0x46, slot, 1))
+                    )
+                    dispatch_resets.setdefault(key, {})[at] = at - 10
         require(calls_fit_native_frames(calls))
         # EventNext resets the root IF/loop cells but preserves call depth.
         # Reject the first replacement in every positive-depth chain rather
@@ -464,7 +507,13 @@ def _scenario_scope(
                     require(len(conditions) < 8 and row["target"] > following)
                     pending.append((row["target"], conditions, loops))
                     pending.append((following, conditions + (row["target"],), loops))
-                elif row["kind"] == "flag_check" or opcode in (0x23, 0x3E, 0x50, 0x5E):
+                elif row["kind"] == "flag_check" or opcode in (
+                    0x23,
+                    0x3E,
+                    0x50,
+                    0x5E,
+                    0x85,
+                ):
                     pending.append((following, conditions, loops))
                     if conditions:
                         # A failed predicate pops the IF frame, not an enclosing
@@ -547,9 +596,21 @@ def _scenario_scope(
                     next_state[0] for next_state in pending[edge_start:]
                 )
 
-            for update, initializer in render_initializers.get(key, {}).items():
+            for dispatch, reset in dispatch_resets.get(key, {}).items():
+                # An IF-failure, loop or switch edge may bypass a lexically
+                # adjacent Reset even when its own control frames are legal.
+                require(
+                    all(
+                        start == reset
+                        for start, targets in edges.items()
+                        if dispatch in targets
+                    )
+                )
+            for update, initializer in (
+                render_initializers.get(key, {}) | dispatch_resets.get(key, {})
+            ).items():
                 # Lexical adjacency alone does not exclude a branch into the
-                # recipe. Retain every admitted control edge and require 53
+                # recipe. Retain every admitted control edge and its initializer
                 # on every path, including loop repeats and failed predicates.
                 reached, pending_positions = set(), [program["entry"]]
                 while pending_positions:
