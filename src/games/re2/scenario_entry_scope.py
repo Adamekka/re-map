@@ -44,6 +44,7 @@ _ENTRY_PRESERVING_NATIVE_EFFECTS = frozenset(
         0,
         1,
         2,
+        3,
         4,
         6,
         7,
@@ -115,6 +116,7 @@ _ENTRY_PRESERVING_NATIVE_EFFECTS = frozenset(
         0x69,
         0x6D,
         0x6F,
+        0x74,
         0x8A,
         0x8B,
         0x8C,
@@ -191,9 +193,12 @@ def scenario_entry_scope(
             for key, program in programs.items()
         }
         calls = {key: set() for key in programs}
+        replacement_sources = set()
+        render_initializers = {}
         slot_kinds: dict[int, set[int]] = {}
         bindings = []
         rows = [(key, row) for key, p in programs.items() for row in p["commands"]]
+        has_render_updates = any(row["opcode"] == 0x74 for _, row in rows)
         writes = scenario_source_write_witnesses(data, room, profile)
         require(isinstance(writes, ScenarioSourceWriteWitnesses))
         # The shared footprint receipt keeps model/SCA/camera/floor writes out
@@ -223,6 +228,13 @@ def scenario_entry_scope(
                 target = f"17:{packet[1]}"
                 require(target in programs)
                 calls[key].add(target)
+            elif opcode == 3:
+                # This replacement recipe covers main-procedure entries.
+                # Auxiliary table borrowing does not grant initializer rights.
+                require(key.startswith("17:"))
+                require(packet[1:3] == b"\0\x18")
+                require(f"17:{packet[3]}" in programs)
+                replacement_sources.add(key)
             elif opcode == 4:
                 # Automatic native allocation cannot replace startup task zero.
                 # Its PC advance precedes replacement, unlike Aot_on below.
@@ -234,10 +246,35 @@ def scenario_entry_scope(
                 # queue that can reach task storage. This work contract covers
                 # only model setup without that additional queue ownership.
                 require(packet[3] & 0xC0 == 0)
-            elif opcode in (3, 5, 0x17, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
-                # Replacement preserves call depth; Goto can spill IF storage.
-                # Neither may inherit an ordinary-entry certificate.
+            elif opcode in (5, 0x17, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
+                # Goto can spill IF storage; these effects have no ordinary
+                # entry certificate even when their targets decode locally.
                 raise _UnprovedEntry
+            elif opcode == 0x53 and has_render_updates:
+                # Another procedure may initialize a record while this recipe
+                # sleeps. Every such initializer must retain the same four
+                # owned records, valid blend mode and RGB-mask domain.
+                require(packet[1] < 4 and packet[2] < 4 and packet[3] <= 7)
+            elif opcode == 0x74:
+                # Both 53 and 74 call native 8002C2B0. Only this uninterrupted
+                # initialized-record recipe reuses 53's existing renderer/OT
+                # ownership; a pointer sampled from RAM grants no such right.
+                at, record = row["offset"], packet[1]
+                # Six-byte 53, four-byte Sleep and six-byte FOR precede 74;
+                # the fixed suffix excludes other writers before loop repeat.
+                start = at - 16
+                require(all(pos in commands[key] for pos in (start, at - 10, at - 6)))
+                initializer = data[start : at - 10]
+                require(
+                    initializer[:2] == bytes((0x53, record))
+                    and record < 4
+                    and initializer[2] < 4
+                    and initializer[3] <= 7
+                    and data[at - 10 : at - 8] == b"\x09\x0a"
+                    and data[at - 6 : at - 2] == b"\x0d\0\x08\0"
+                    and data[row["next"] : at + 8] == b"\x02\0\x0e\0"
+                )
+                render_initializers.setdefault(key, {})[at] = start
             elif opcode == 0x2E:
                 category, index = packet[1:3]
                 require(category in (1, 2, 3, 4))
@@ -308,6 +345,13 @@ def scenario_entry_scope(
                 # then add two to the new PC. Ordinary entries are insufficient.
                 require(bool(kinds) and 5 not in kinds)
         require(calls_fit_native_frames(calls))
+        # EventNext resets the root IF/loop cells but preserves call depth.
+        # Reject the first replacement in every positive-depth chain rather
+        # than assuming a replacement target repairs a caller's stale frame.
+        # Every procedure's edges are present, so this union already includes
+        # callees of callees without a second traversal of the same graph.
+        callees = {target for targets in calls.values() for target in targets}
+        require(not replacement_sources & callees)
 
         def predicate_end(key, start, width):
             end, cursor = start + width, start
@@ -331,6 +375,7 @@ def scenario_entry_scope(
         for key, program in programs.items():
             pending = [(program["entry"], (), ())]
             seen = set()
+            edges = {}
             while pending:
                 position, conditions, loops = pending.pop()
                 state = position, conditions, loops
@@ -338,11 +383,17 @@ def scenario_entry_scope(
                     continue
                 require(len(seen) < 16384 and position in commands[key])
                 seen.add(state)
+                edge_start = len(pending)
                 row = commands[key][position]
                 opcode, following = row["opcode"], row["next"]
                 packet = data[position:following]
                 if row["kind"] == "end":
                     require(packet == b"\x01\0")
+                    continue
+                if opcode == 3:
+                    # The old procedure is abandoned, with no caller advance.
+                    # Its canonical target is independently audited above as
+                    # a fresh root, including its synchronous call capacity.
                     continue
                 if row["kind"] == "if":
                     require(len(conditions) < 8 and row["target"] > following)
@@ -427,6 +478,22 @@ def scenario_entry_scope(
                     raise _UnprovedEntry
                 else:
                     pending.append((following, conditions, loops))
+                edges.setdefault(position, set()).update(
+                    next_state[0] for next_state in pending[edge_start:]
+                )
+
+            for update, initializer in render_initializers.get(key, {}).items():
+                # Lexical adjacency alone does not exclude a branch into the
+                # recipe. Retain every admitted control edge and require 53
+                # on every path, including loop repeats and failed predicates.
+                reached, pending_positions = set(), [program["entry"]]
+                while pending_positions:
+                    position = pending_positions.pop()
+                    if position in reached or position == initializer:
+                        continue
+                    reached.add(position)
+                    pending_positions.extend(edges.get(position, ()))
+                require(update not in reached)
 
         # Identity/exclusion uses immutable scenario bits, so a later canonical
         # entry does not need startup exclusivity. Both native and explicit

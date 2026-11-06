@@ -11109,7 +11109,14 @@
       "startup_item_declarations": [],
       "scoped_scenario_items": {
         "absent_item_ids": [],
-        "item_variants": []
+        "item_variants": [
+          {
+            "global_id": 68,
+            "offsets": [
+              1032
+            ]
+          }
+        ]
       }
     },
     {

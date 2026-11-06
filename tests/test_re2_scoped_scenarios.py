@@ -85,6 +85,76 @@ def test_unsafe_rooftop_entry_keeps_collected_identity_unresolved(snapshot):
     ]
 
 
+def test_root_replacement_scope_resolves_identity_without_inventing_presence(snapshot):
+    """RE2-SCENARIO-004: selected identity and acquisition remain separate."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-14"]
+    assert source["scoped_scenario_items"] == {
+        "absent_item_ids": [],
+        "item_variants": [{"global_id": 68, "offsets": [1032]}],
+    }
+    assert not source["fixed_context_preserved"]
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x14))
+    # Collect the two independent ammo pickups so the controls isolate the
+    # selected identity and the separately required weapon, while departed.
+    for gid in (64, 65):
+        address, mask = bank + gid // 32 * 4, 0x80000000 >> (gid % 32)
+        value = int.from_bytes(read(address, 4).data, "little")
+        put(address, value | mask, 4)
+    for acquired, weapon, completion in (
+        (True, False, RoomCompletion.Incomplete),
+        (False, False, RoomCompletion.Incomplete),
+        (True, True, RoomCompletion.Cleared),
+        (False, True, RoomCompletion.Unknown),
+        (True, False, RoomCompletion.Incomplete),
+    ):
+        for gid, taken in ((68, acquired), (62, weapon)):
+            address, mask = bank + gid // 32 * 4, 0x80000000 >> (gid % 32)
+            value = int.from_bytes(read(address, 4).data, "little")
+            put(address, value | mask if taken else value & ~mask, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-14"]
+        assert record.list_complete and record.completion is completion
+        selected = next(
+            i for i in record.items if i.label == profile.names["items"]["21"]
+        )
+        assert selected.state == ("taken" if acquired else "unknown")
+        assert selected.quantity == 7 and selected.quantity_is_unit_count
+        remaining = next(
+            i for i in record.items if i.label == profile.names["items"]["15"]
+        )
+        assert remaining.state == ("taken" if weapon else "uncollected")
+        assert not any(i.label == "Collectible" for i in record.items)
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x14))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-14"] == record
+        assert fresh.region_visits == tracker.region_visits
+
+
+@pytest.mark.parametrize("snapshot", ["01-14"], indirect=True)
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_root_replacement_identity_rejects_a_contradictory_live_creator(snapshot, sat):
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-14"]
+    excluded = next(i for i in source["items"] if i["offset"] == 1006)
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    pointer = 0x80100000 + excluded["offset"] + 2
+    put(registry + excluded["slot"] * 4, pointer, 4)
+    put(pointer + 1, sat, 1)
+    tracker = Tracker()
+    before = copy.deepcopy(tracker)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Pickup disagrees with fixed scenario variant"
+    assert tracker == before
+
+
 def test_art_declared_pickups_remain_required_after_departure_and_rewind(snapshot):
     profile, _, put, read = snapshot
     source = profile.rooms["00-0b"]

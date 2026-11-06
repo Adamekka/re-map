@@ -40,6 +40,16 @@ def callback(procedure):
     return bytes(packet)
 
 
+def render_recipe(record):
+    return (
+        bytes((0x53, record, 2, 7, 0x80, 1))
+        + b"\x09\x0a\x1e\0"
+        + b"\x0d\0\x08\0\x05\0"
+        + bytes((0x74, record, 0xFF, 0x7F))
+        + b"\x02\0\x0e\0"
+    )
+
+
 def test_all_canonical_entries_are_retained_including_late_shared_callees(profile):
     data, room, _, result = scoped(
         profile, main=(b"\x18\x02" + END, b"\x18\x02" + END, item() + END)
@@ -107,6 +117,133 @@ def test_player_callback_without_aot_on_has_a_canonical_entry(profile):
     _, _, _, result = scoped(profile, init=callback(2) + END, main=(END, END, END))
     assert isinstance(result, VerifiedScenarioEntryScope)
     assert any(key == "17:2" for key, _ in result.entry_locations)
+
+
+def test_root_replacement_abandons_old_control_and_retains_fresh_target(profile):
+    _, room, _, result = scoped(
+        profile,
+        init=callback(2) + END,
+        main=(END, END, b"\x03\0\x18\x03\x08\0" + END, item() + END),
+    )
+    # The abandoned ENDIF must not consume a frame in the replacement target.
+    assert isinstance(result, VerifiedScenarioEntryScope)
+    assert ("17:3", room["programs"]["17:3"]["entry"]) in result.entry_locations
+
+
+@pytest.mark.parametrize(
+    "packet",
+    [b"\x03\x01\x18\x02", b"\x03\0\x17\x02", b"\x03\0\x18\xff"],
+)
+def test_replacement_requires_canonical_namespace_and_bounded_target(profile, packet):
+    _, _, _, result = scoped(profile, main=(packet + END, END, END))
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+def test_replacement_does_not_grant_initializer_table_borrowing_rights(profile):
+    _, _, _, result = scoped(
+        profile, init=b"\x03\0\x18\x02" + END, main=(END, END, END)
+    )
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+@pytest.mark.parametrize(
+    "main",
+    [
+        (b"\x18\x02" + END, END, b"\x03\0\x18\x03" + END, END),
+        (
+            b"\x18\x02" + END,
+            END,
+            b"\x18\x03" + END,
+            b"\x03\0\x18\x04" + END,
+            END,
+        ),
+        (
+            b"\x18\x02" + END,
+            END,
+            b"\x03\0\x18\x03" + END,
+            b"\x03\0\x18\x04" + END,
+            END,
+        ),
+        (
+            b"\x03\0\x18\x02" + END,
+            END,
+            b"\x18\x03" + END,
+            b"\x03\0\x18\x04" + END,
+            END,
+        ),
+    ],
+)
+def test_replacement_cannot_inherit_direct_transitive_or_replaced_call_frames(
+    profile, main
+):
+    _, _, _, result = scoped(profile, main=main)
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+def test_replacement_target_still_needs_fresh_control_frames(profile):
+    _, _, _, result = scoped(
+        profile, main=(b"\x03\0\x18\x02" + END, END, b"\x08\0" + END)
+    )
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+def test_replacement_target_calls_still_reserve_the_root_frame(profile):
+    chain = tuple(bytes((0x18, number + 1)) + END for number in range(2, 6))
+    _, _, _, result = scoped(profile, main=(b"\x03\0\x18\x02" + END, END, *chain, END))
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+@pytest.mark.parametrize("record", [0, 1, 2, 3])
+def test_render_update_reuses_the_initialized_record_in_a_bounded_loop(profile, record):
+    _, _, _, result = scoped(profile, main=(render_recipe(record) + END, END))
+    assert isinstance(result, VerifiedScenarioEntryScope)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["missing", "wrong_record", "record_bounds", "blend", "rgb", "mutator", "copy"],
+)
+def test_render_update_cannot_borrow_uninitialized_or_mutated_ownership(
+    profile, mutation
+):
+    packet = bytearray(render_recipe(2))
+    if mutation == "missing":
+        del packet[:6]
+    elif mutation == "wrong_record":
+        packet[1] = 1
+    elif mutation == "record_bounds":
+        packet[1] = packet[17] = 4
+    elif mutation == "blend":
+        packet[2] = 4
+    elif mutation == "rgb":
+        packet[3] = 8
+    elif mutation == "mutator":
+        packet[6:6] = b"\x22\x04\x07\x01"
+    else:
+        # Source Copy could otherwise rewrite 74's record selector after the
+        # recipe's immutable source bytes had been checked.
+        packet[:0] = b"\x1d\x04\x11\0"
+    _, _, _, result = scoped(profile, main=(bytes(packet) + END, END))
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+def test_render_initializer_must_dominate_even_a_structurally_valid_loop_entry(profile):
+    # A failed predicate enters the FOR after skipping 53 and its sleep. Both
+    # paths have legal loop frames, so adjacency cannot establish ownership.
+    bypass = b"\x06\0\x12\0\x21\x04\x07\0"
+    _, _, _, result = scoped(profile, main=(bypass + render_recipe(2) + END, END))
+    assert result is ScenarioSelectionFailure.EntryScope
+
+
+@pytest.mark.parametrize("record,accepted", [(1, True), (4, False), (255, False)])
+def test_other_procedures_cannot_invalidate_render_record_ownership(
+    profile, record, accepted
+):
+    # Independent canonical workers can run while the recipe sleeps. Their
+    # initializers must also stay in the same initialized native-work domain.
+    other = bytes((0x53, record, 2, 7, 0x80, 1)) + END
+    _, _, _, result = scoped(profile, main=(render_recipe(2) + END, other))
+    assert isinstance(result, VerifiedScenarioEntryScope) is accepted
 
 
 @pytest.mark.parametrize("flags,accepted", [(0, True), (0x40, False), (0x80, False)])
