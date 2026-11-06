@@ -133,3 +133,91 @@ The fresh cursor-0 thumbnail reads `HARD MODE`. Its confirmed startup and both c
 | `easy-confirmed.sav` | 1245422 | `3b52bc1dcbdea1e454d93018ec7e2a6e20cd6fa5a1797408a41aa202bbd5a29d` |
 
 The raw `0x800D1F30` lead from RE3-NATIVE-003 remained zero through both title confirmations and the controlled Hard samples. It still supplies no difficulty discriminator. A clear `0x100` bit also occurs before a campaign exists, so it cannot positively admit gameplay. The authorship, isolation, native inputs, review and cleanup are the same contribution as RE3-INPUT-002; no additional author or reviewer is implied.
+
+## RE3-INPUT-004: ordinary reentry attempt reaches a disabled collision record
+
+Status: Candidate for one observed native collision-scan rejection in the named revision. These attempts established no ordinary floor change, room departure/reentry or positive campaign/Hard admission. RE3-INPUT-002/003 retain their existing confirmed selection/control scope.
+
+The target remains Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, `SLUS_009.23` SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Both experiments used DuckStation `0.1-12083-g00e299795`, binary SHA256 `5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173`, native-state version 87, and the owned CUE. The first loaded RE3-INPUT-002's private `hard-second-room.sav`, SHA256 `1f844114b3ff244699c64dd3dcc9ca8feafa8b805593ad6d1ffda46ac83a0892`; the second loaded the first experiment's retained post-event checkpoint.
+
+### Native route attempt and event lifecycle
+
+The first baseline was stage/room/camera `0 / 1 / 10`, position `[-5404, -1800, -12401]`, facing 2688, health 200 and actor floor 1. Native turns and Up walked around source-derived collision bounds but remained in room `0 / 1`. The west approach clamped at x = -6363. A northern/western detour toward the candidate exit clamped at z = -16372. Its live registry descriptor at `0x80121DF4` matched source offset 30444 and required floor 4. Native code at `0x80050800..0x80050820` compares that descriptor's floor byte with the signed actor floor; the observed values differed. Subsequent detour and action attempts did not establish a usable path.
+
+The first Cross/Up action instead produced control word `0x01000000`. A retained task source pointer at `0x800DEFEC` became `0x80121B11`, source offset 29705 inside procedure 12, whose source interval `[29668, 29754)` has SHA256 `f6d98f7a48a41a6b99ff7310c9654a393582b1cb6bc246c849b2c847a1ee0f68`. With input released, a bounded three-second observation found primary routine 4, actor flags `0x5103` and changed pose; a further five-second observation found control 0, primary routine 1 and flags `0x0003`. This associates the sequence with procedure 12 through its directory, changed retained pointer and native behavior. That pointer is script data, not a sampled MIPS PC, and this was not an instruction-exact trace of the event.
+
+The later Cross/Up retry retained floor 1. A copied-native probe of `0x8004B374` raised `UC_ERR_EXCEPTION` before returning. The first directory's `copied-climb-error-detail.json`, SHA256 `0389252fd0c24383e3209ec20c86f734aba99666fddc3ba8ed541bd1f2d91f84`, preserves its original code/helpers and audited partial stores; it proved neither a rejection result nor a landing contract. The follow-up therefore used actual native execute callbacks.
+
+### Actual scan rejection and separate source inference
+
+The follow-up restored the post-event checkpoint at position `[-6363, -1800, -11415]`, facing 1952, floor 1 and control 0. A fresh Cross/Up action was intercepted with control `0xFFFF0000`, without a climb-entry callback. After releasing both inputs, Cross dismissed the interaction to control 0. Keeping Cross held and then adding Up separated that action edge from the subsequent collision scan. Raw held input was `0x1040`, logical held input `0x10D1`, including action mask `0x80`. The logs retain every toggle, hold, release, host-time interval and failed attempt.
+
+The scan reached the exact source record at virtual `0x8012012C`, RDT offset 23076. Its owned bytes are `53e0eecb62e534da47fe510f0101f0f1`; live bytes are `53e0eecb62e534da0700510f0101f0f1`. Only its flags word differs, `0xFE47` versus `0x0007`; the latter was already present in the earlier experiment's captures.
+
+| Actual native stop | Registers and outcome |
+| --- | --- |
+| `0x8004B00C` | `s0=0x80120136`, record plus 10; the scan reaches this record |
+| `0x8004B020` | `v0=t4=0x11`; the preceding mask comparison passes |
+| `0x8004B038` | `s2=7`, `t4=0x8000`, `v0=0`; the required flags bit is absent |
+| Two native single steps | `0x8004B038` to delay slot `0x8004B03C`, then skip target `0x8004B2A0` |
+
+These are live GDB general-register/PC reads, with unchanged target code at every stop. They are not registers decoded from a native checkpoint CPU payload. The scan stack was PS1 scratchpad `0x1F800364`; the requested mask is retained as actual GPR `t4`. The 2 MiB captures do not include scratchpad. This observed path skips the record before `0x8004B374`; that handler's entry arguments, side/landing checks and return were not observed.
+
+Separately, source bytes `4c0309006e180000` at offsets 26420 through 26427, SHA256 `e388fbdbf2a4f6d6a6ed34fb7fc81daf21ea43869bc69843d0fa1bfd601e6d88`, encode numeric condition `3:9 == 0` and opcode `0x6E` for record 24 with operand zero. The pinned dispatch table sends `0x6E` to `0x800556E0`, which writes `(flags & 0x003F) | (operand & 0xFFC0)`. This predicts `0xFE47` becoming `0x0007`. Native CK code at `0x800546CC` and the bank-table word at `0x8009E404` resolve bank 3 to `0x800D1FA0`; the observed word was `0x00100000`, with bit-9 mask `0x00400000` clear. The earlier writer was not replayed or witnessed. This is source inference consistent with the live record, with no story or progression meaning assigned to `3:9`. It supplies no justification for forcing the bit or retrying another approach to this disabled record.
+
+### Fields and source boundaries
+
+Addresses here are PS1 virtual addresses. Main-RAM capture offsets subtract `0x80000000`; register values and scratchpad addresses are separate spaces. All multibyte fields below are little endian.
+
+| Field | Address and width | Mask or interpretation |
+| --- | --- | --- |
+| Stage/room/camera | `0x800D1F76`, three i16 | Full `0xFFFF` each |
+| Position; facing; health | `0x800CCBF8`, three i32; `0x800CCC32`, u16; `0x800CCC90`, u16 | Full `0xFFFFFFFF` / `0xFFFF` / `0xFFFF` |
+| Actor floor | `0x800CCBCD`, i8 | Full `0xFF`, signed; observed 1 |
+| Lifecycle | `0x800CC858`, u32 | Recorded `0x10000000` clear, world loop `0x08000000` set; title difficulty mask `0x100` remains insufficient identity |
+| Control | `0x800CCBA0`, u32 | Full `0xFFFFFFFF`; movement-filter mask `0x01000000` from RE3-NATIVE-005 |
+| Routines; actor flags | `0x800CCBC8`, four u8; `0x800CCC0A`, u16 | Full `0xFF` each / `0xFFFF`; inspected actor mask `0x8000` clear |
+| Raw/logical held input | `0x800CC830` / `0x800CC83C`, u32 each | Full `0xFFFFFFFF`; observed raw `0x1040`, logical `0x10D1` |
+| Source/allocation pointers; task source pointer | `0x800CC86C` / `0x800CC870`; `0x800DEFEC`, u32 each | Full `0xFFFFFFFF`; the task pointer is not a CPU register |
+| Menu active/view/pause | `0x800E01E7` / `0x800E01D0` / `0x800D4434`, u8 each | Full `0xFF`; zero in the retained captures |
+| Candidate collision flags | `0x80120134`, u16 | Full `0xFFFF`; required scan mask `0x8000` absent |
+| Numeric bank 3, bit 9 | `0x800D1FA0`, u32 | Mask `0x00400000`, clear in the observed `0x00100000` word |
+
+Both source audits checked all 169 native table rows. Each experiment's four bounded direct RAM captures had one matching header/camera/zone source, `CD_DATA/STAGE1/R101.ARD`, RDT SHA256 `5bccb836c34e1b62121928f6dba0b34b93fa5645e4f3789659686d9d6a7921e2`. Source and allocation pointers were `0x8011A708`. The 165280-byte source-file window `[0x8011A708, 0x80142CA8)` fits main RAM; it is not proof of allocation extent or byte-identical mutable source contents. The follow-up scan transiently observed lifecycle `0x2C001000`, then settled to `0x28001000`; no new meaning or admission rule is assigned to the differing bit.
+
+The actor-floor byte is also the numeric `phase_i8` input in [RE3-MAP-009/011](map-semantics.md#re3-map-009-bind-the-loaded-source-before-evaluating-group-0-shapes). This observed comparison does not map its native floor tags to tracker floor labels or the separately browsed map layer.
+
+| Pinned EXE interval, end exclusive | SHA256 |
+| --- | --- |
+| Floor comparison `[0x80050800, 0x80050820)` | `a44fc60fc2dbb81ebca74b92b4d9981ff65b4cd9846aedb421190366dcad0d14` |
+| Actual scan `[0x8004B00C, 0x8004B070)` | `9572f8aa4f916b23f6a4569e944b27eea4142c46b8e0afcfe938dc9c325b2aa4` |
+| `0x6E` handler `[0x800556E0, 0x80055728)` | `2e368009599db3cfb26ae1123a4bd9d4ff8c43db474974002dfd559e2911d440` |
+| CK handler `[0x800546CC, 0x8005472C)` | `eaee5c31b20d9f51bce9efe54c627be99ca2f123d46dc507468f3159308cfe78` |
+
+### Reproduction, evidence and limits
+
+The first directory is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-reentry-20261106-1vhrhnnq/`; the follow-up is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-climb-guard-20261106-fkvqlcw7/`. Each retains preparation/launch/controller scripts, pre-load settings, owned-media identity, input logs, bounded RAM, source audit, verification and cleanup. The first `verify.py` preserves a rejected checkpoint-equality assertion; `verify-v2.py` is its corrected verifier. The follow-up `verify.py` checks the actual branch, five distinct native PCs, four captures and all 38 prior manifest file hashes. Its manifest has 26 files, excluding private application/resources. Counts describe the evidence, not gameplay coverage.
+
+| Private evidence | SHA256 |
+| --- | --- |
+| First `verification.json` | `54bc5cb2a706d57129c02a85d6e0c7c591c1b7e2c4fab3cd9a1fb2c76d77cfe8` |
+| First `artifact-manifest.json` | `47c0453150e0992169690970cba147a0807b846794aa0e55fee03c8babf40a11` |
+| Retained `post-event-native.sav` | `3e3d067475daab53a7589fff3649521e6f9331746331998de09407dcb2c38290` |
+| Follow-up `verification.json` | `4ba006e028ec44842e48035ada19e6edda48a16a83b4135f114b26de353ff975` |
+| Follow-up `native-guard-records.json` | `8b36421f57993297ca96292dfeddb916c349c66400573feae4791bf30e0c5ef0` |
+| Follow-up `artifact-manifest.json` | `af235e115a07900e10eb39e2acccafcf82dd41b3db15ab88543f8309ff227bdf` |
+
+To reproduce the guard, use a fresh private instance and the hash-verified post-event checkpoint, repeat isolation checks before every load, pause between bounded native controller inputs, and retain actual delivery before accepting a requested toggle. Follow the logged interaction dismissal, retain Cross held and add Up. The private `find-record` procedure locates source record `0x8012012C` at scan PC `0x8004B00C`; observe the two mask tests, remove callbacks and single-step the branch/delay slot. Recheck every stopped code window against the pinned executable. These temporary scripts require explicit fresh paths, process ownership and a free port; their old launch manifests do not authorize attaching to another instance. CUA timeout/reset and an earlier accessibility-snapshot failure are preserved, with no duplicate toggles accepted without native input readback.
+
+Before each experiment's only game/checkpoint load, both `Achievements` and `Cheevos` had `Enabled=false` and `UseRAIntegration=false`, account keys and per-game overrides were absent, `ApplyGameSettings=false`, cards were `None`, and resources were private. Gameplay stayed black and muted. F11/F13 toggled native Cross/Up; F15/F16 turned Left/Right. Host execute callbacks and native stepping left guest code unchanged. No guest pose/room/phase/difficulty/control writes, PC repair, patches, substituted handlers, tracker/user-history writes or repository gameplay changes occurred.
+
+Cleanup released every held input, removed every execute callback, closed each client and verified only its owned process: PID 29426/port 2383 and PID 76282/port 2384. Both waiting launch wrappers recorded exit 0; PIDs/listeners were absent, ports bindable and settings byte-identical to preboot. The first run's unchanged settings SHA256 is `aea1b87e84cd8d141a81e3672a10bc141c72687c434b144a84211e1c9e3ad795`; the second's is `f389ebc64bab94184197cd03fc25cb816657a74c7eb91cc5185d3a8557cdcd37`. Both CUA sessions completed. Raw assets, RAM and saves remain private.
+
+The retained checkpoint has released native controller buttons and matching selected fields, but differs from the preceding direct capture at 14830 RAM bytes, including tertiary routine 3 versus 1. Its later load likewise does not establish exact full-RAM restoration. There was one selected source throughout; no ordinary floor change, departure/reentry, item/door outcome, memory-card persistence or sufficient positive admission was established. Host intervals are not frame-exact. The observed skip covers one record/mask/path; an already active route needs a separate source premise. The failed Unicorn probe and unobserved earlier writer cannot fill that gap.
+
+### Contribution and review
+
+- 2026-11-06 UTC; independent native investigator and documentation author, exact model `gpt-6.1-sol`, effort `xhigh`, verified from matching session metadata and latest turn context; performed both bounded native-input experiments, captured actual GDB register/step observations, authored private verifiers/manifests and this Candidate claim, preserved failed probes, checked source inference, widths, hashes and cleanup. This contribution is separate from the original human/media and root authorship in RE3-INPUT-001/002. Documentation checks add no runtime validation.
+- 2026-11-06 UTC; independent internal reviewer, exact verified model `gpt-6.1-sol`, effort `xhigh`; found no issues in the record and evidence. Checked all 19 documented fingerprints, 64 manifest entries, GDB register/PC and delay-slot sequence, input readbacks, pinned code/condition formulas, source-audit limits, settings, callback removal, process exit and field widths. No emulator operation, proof rerun, new tests, edits or user-history access occurred.
+- 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; independently rehashed the 64 artifacts, checked all five PC/register stops and the source/live flags, linked the existing numeric map-input alias and retained Candidate/no-reentry limits. No new emulator observation or restore is implied by this integration.
+- 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash`, high reasoning through Antigravity; returned no findings on the claim, verification/cleanup reports, GDB record data, source inference and pinned native disassembly excerpts. Review covered address/bit arithmetic, actual versus inferred execution, requested versus observed inputs, failed-probe and checkpoint limits, provenance and cleanup claims. It inspected only the supplied snapshot, used no tools and supplied no new runtime validation. Claude Opus 5.5 remained disabled and supplied no review.
