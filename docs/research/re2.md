@@ -2404,6 +2404,16 @@ Contributions:
 - 2026-10-24; independent configured and returned reviewer `Gemini 3.8 Flash (High)`; checked the complete implementation, tests, generated hash diff and documentation with caller-supplied contracts, source evidence and replay limits. Returned `No findings.` Process exit zero, agent response DONE, terminal SUCCESS/nonblank response, empty stderr and absence of timeout or tool attempts are verified in `review/completion.json`. This is a snapshot review, not new runtime evidence. Opus remains unavailable, so the full configured review requirement is incomplete. The verified change was staged pending the current-feature human decision recorded below.
 - 2026-10-24; human user; explicitly approved committing this verified sound-binding fix with the unavailable Opus perspective waived for this feature. Primary and completed Gemini reviews remain recorded above; the exception does not claim an Opus review or apply to later features.
 
+### Loaded-source alignment validation, 2026-11-06
+
+Synthetic controls exposed a separate source-binding defect in all four supported RE2 profiles, SLUS-00421, SLUS-00592, SLUS-00748 and SLUS-00756. Shifting an otherwise matching RDT by one, two or three bytes, relocating its header and AOT pointers, and retaining aligned work ownership still returned Display and recorded a visit. Matching contents cannot establish a coherent source when native word loads require an aligned base. The reader now rejects an unaligned base before reading the source header, using the existing Retry result and preserving the complete tracker state.
+
+Twelve regressions in `tests/test_re2_source_binding.py` fail before the guard and pass afterward. They cover every nonzero alignment residue across all four profiles, unchanged prior history/publications, recovery at another aligned base and return to the original base. The controls use only synthetic RAM and the existing test fixtures. They establish input rejection and fresh reconstruction, not an observed native corruption, new gameplay, savestate restoration or additional item/door outcome. Earlier confirmed sound-relocation observations retain their original scope.
+
+Contribution, 2026-11-06 UTC: Codex root, exact runtime model `gpt-6.1-sol`, reproduces the defect, authors the guard/regressions and records this follow-up. No emulator or user-history operation occurs.
+
+Verification passes 415 focused reader, live-door, scoped-scenario and alignment tests, plus scoped Ruff lint, formatting and whitespace checks. `gemini-3.8-flash`, high reasoning through Antigravity, returns no findings on the full reader, new test, shared fixtures, diff and follow-up. It checks source/coherence bounds, modeled failure, atomic publication, recovery, scope and evidence limits without tools or runtime validation. Claude Opus 5.5 remains disabled and supplies no review. The 6569-test full suite passed before this guard; it is not claimed as a post-change full run. The UI and generated metadata are unchanged.
+
 
 ## RE2-COLLECT-015: counter-independent pickup presence
 

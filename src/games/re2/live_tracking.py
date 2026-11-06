@@ -127,7 +127,9 @@ def poll_re2(
         if camera >= room["cameras"]:
             return PollResult(PollStatus.Retry, "Room camera changed during loading")
         base = value(int(layout["loaded_rdt_address_ps1"], 0), 4)
-        if not 0x80000000 <= base <= 0x80200000 - room["size"]:
+        # Native RDT word loads require alignment. Matching relocated bytes
+        # at an unaligned base cannot establish a coherent loaded room.
+        if base % 4 or not 0x80000000 <= base <= 0x80200000 - room["size"]:
             return PollResult(PollStatus.Retry, "Room source is still loading")
         sections = struct.unpack("<23I", read(base + 8, 92))
         offsets = [pointer - base if pointer else 0 for pointer in sections]
