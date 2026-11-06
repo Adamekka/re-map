@@ -6,17 +6,15 @@ visibility, room ownership or tracker visits.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Literal, NamedTuple, TypeAlias
+from typing import Literal, NamedTuple
 
-Field: TypeAlias = Literal["current_key", "phase_i8", "overlay_u16"]
-Predicate: TypeAlias = (
-    tuple[Literal["eq", "signed_lt"], Field, int]
-    | tuple[Literal["bit"], int, int]
-    | tuple[Literal["not"], "Predicate"]
-    | tuple[Literal["all", "any"], tuple["Predicate", ...]]
+from games.re3.map_predicate import (
+    Exclusion,
+    FlagReader,
+    Predicate,
+    evaluate_map_predicate,
+    quad_is_excluded,
 )
-Exclusion: TypeAlias = tuple[int, tuple[int, ...] | Literal["all"]]
 
 
 class QuadPredicate(NamedTuple):
@@ -461,7 +459,7 @@ def group_zero_shape_allowed(
     current_key: int,
     phase_i8: int,
     overlay_u16: int,
-    flag: Callable[[int, int], bool],
+    flag: FlagReader,
 ) -> bool:
     """Evaluate pinned source geometry only; callers separately bind inputs."""
     assert all(
@@ -476,22 +474,6 @@ def group_zero_shape_allowed(
         "overlay_u16": overlay_u16,
     }
 
-    def evaluate(node: Predicate) -> bool:
-        match node:
-            case ("eq", field, expected):
-                return fields[field] == expected
-            case ("signed_lt", field, threshold):
-                return fields[field] < threshold
-            case ("bit", bank, index):
-                return flag(bank, index)
-            case ("not", condition):
-                return not evaluate(condition)
-            case ("all", conditions):
-                return all(evaluate(condition) for condition in conditions)
-            case ("any", conditions):
-                return any(evaluate(condition) for condition in conditions)
-        assert False, "pinned shape predicate has an unsupported operator"
-
     for family in GROUP_ZERO_PREDICATES:
         if family.group != group:
             continue
@@ -501,12 +483,9 @@ def group_zero_shape_allowed(
             continue
         exclusions = (
             family.exclude_when_true
-            if evaluate(family.condition)
+            if evaluate_map_predicate(family.condition, fields, flag)
             else family.exclude_when_false
         )
-        if any(
-            target_row == row and (quads == "all" or primitive in quads)
-            for target_row, quads in exclusions
-        ):
+        if quad_is_excluded(exclusions, row, primitive):
             return False
     return True
