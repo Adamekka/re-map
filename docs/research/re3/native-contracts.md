@@ -2,7 +2,7 @@
 
 [RE3 scope](../../re3.md) · [Disc identity](identity.md) · [Room sources](room-format.md) · [Runtime baseline](runtime.md)
 
-Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard remains the human-selected target. Claims 001 through 003 are Candidate offline contracts. Claim 004 adds confirmed observations of specific menu/pause boundaries. The audit reads the owned executable/disc and retained RAM; it does not operate an emulator. The retained captures came from DuckStation `0.1-12083-g00e299795`, as recorded in RE3-RUNTIME-001.
+Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard remains the human-selected target. Claims 001 through 003 and 005 are Candidate contracts. Claim 004 adds confirmed observations of specific menu/pause boundaries. The audit reads the owned executable/disc and retained RAM; it does not operate an emulator. The retained captures came from DuckStation `0.1-12083-g00e299795`, as recorded in RE3-RUNTIME-001.
 
 The immediate tracking failure is admission: plausible player fields already appear without controller input. A tracker needs fresh room/source agreement and an independently established campaign lifecycle before it can record visits. This audit supplies source witnesses and rejection evidence, while always reporting `campaign_admission` and `hard_identity` as `unresolved`.
 
@@ -127,6 +127,63 @@ The retained `prepare.py`, `re-map-re3-lifecycle-launch.py`, `re-map-re3-lifecyc
 
 Cleanup verified PID 84283's exact command and port ownership, closed the GDB client, stopped that process only, confirmed its launch wrapper exited successfully and verified port 2356 free. The initial failed PID was already absent. General startup/loading/cutscene admission, ordinary room reentry, allocation extent, acquisition/story/door interpretation and map projection remain unresolved. This experiment did not perform new memory-card operations or validate a runtime profile.
 
+## RE3-NATIVE-005: the normal player handler can retain filtered movement input
+
+Status: Candidate additional rejection for the named revision. A sufficient positive campaign-admission rule remains unresolved.
+
+The diagnostic gap was a startup state with a unique loaded source, world-loop set, normal primary routine 1, clear recorded-input/menu/pause fields and clear examined actor-update masks. The original audit reported no rejection reasons. A later native checkpoint retained raw Right while logical movement Right was filtered to zero, showing that these earlier candidate gates do not establish movement control.
+
+| Field | PS1 virtual address | Width, byte order and mask |
+| --- | --- | --- |
+| Native control word | `0x800CCBA0` | u32 LE, full `0xFFFFFFFF`; movement filter `0x01000000`; update gate `0x80000000` was clear |
+| Raw held input | `0x800CC830` | u32 LE, full `0xFFFFFFFF`; observed Right `0x00002000` |
+| Logical held input | `0x800CC83C` | u32 LE, full `0xFFFFFFFF`; Right `0x00000002`; filter retains `0x00003000` |
+| Primary/secondary routine | `0x800CCBC8` / `0x800CCBC9` | u8 each, full `0xFF` |
+| Actor flags | `0x800CCC0A` | u16 LE, full `0xFFFF`; inspected gate `0x8000` was clear |
+
+At `[0x80038468, 0x80038490)`, SHA256 `831b9b342424f7ac98d1c8ad45c6828f49ff3206509e827b5be86550e1fd9ad9`, native code tests the control mask and replaces logical held input with `held & 0x3000`. This removes movement Right `0x2`; it does not disable every input. Normal handler `0x80039020` reads logical held/edge at `0x80039044`/`0x8003904C` before secondary dispatch. Source inspection alone does not establish when the filter is active.
+
+### Native comparison and limits
+
+The private DuckStation instance used the verified Hard confirmation and settled-control checkpoints from [RE3-INPUT-002](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms). Before game/state loads, achievements were disabled in both settings namespaces, game overrides disabled, and private resources/cards isolated. Gameplay stayed hidden and muted. No guest-memory writes, patches, new progression or user-history access occurred.
+
+A host-side execute breakpoint caught the first observed normal-handler entry. The completed native checkpoint retains MIPS register contents `PC=0x80039020`, `A0=0x800CCBC4`, `RA=0x80038D34`: A0 identifies the player object, RA the dispatcher return. Its PC and complete RAM match the live stopped capture; A0/RA are decoded from the native CPU payload, not separately retained live-register telemetry. These are register values, not RAM offsets. Target code remained unchanged. Restoring the checkpoint reproduced all 2 MiB before matched input trials.
+
+| Observation | Control word | Raw held | Logical held | Facing u16 |
+| --- | --- | --- | --- | ---: |
+| First normal-handler entry | `0x01000000` | `0` | `0` | 1824 |
+| Startup Right, 100 ms | `0x01000000` | `0` | `0` | 1824 |
+| Startup Right, 600 ms plus about 20 ms to next handler | `0x01000000` | `0x2000` | `0` | 1824 |
+| Settled no-input, 600 ms | `0` | `0` | `0` | 2048 |
+| Settled Right, 100 ms | `0` | `0x2000` | `0x2` | 2208 |
+| Settled Right, 600 ms | `0` | `0x2000` | `0x2` | 3408 |
+
+Position stayed unchanged within each restored comparison. Settled Right selected secondary routine 4; release restored routine 0 and logical zero without changing final facing. The startup next-handler checkpoint again has the same PC/A0/RA, world-loop set, primary 1, both update masks clear, and recorded/menu/pause clear.
+
+Fresh native version-87 checkpoints show controller pressed mask `0x20` alone during Right trials and zero after release. This serialized controller mask differs from the game's raw `0x2000` and logical `0x2`. The 100 ms startup observation is inconclusive by itself because raw input had not updated. The later raw-Right/filtered-logical witness supports this rejection. A failed input method and the rejected assumption that every startup raw-held value stayed zero remain preserved in `failed-input-attempt.json` and `verification-failures.json`.
+
+CPU payload decoding follows pinned [CPU::DoState ordering](https://github.com/stenzek/duckstation/blob/00e2997958d62de79d352cd680ec0c1ad95d491c/src/core/cpu_core.cpp#L241) and the [34-register enum](https://github.com/stenzek/duckstation/blob/00e2997958d62de79d352cd680ec0c1ad95d491c/src/core/cpu_types.h#L28). The root independently decoded both key checkpoint register/controller fields and compared their RAM byte-for-byte with direct captures. An independent internal checker decoded all nine native states, checked eleven captures' critical code against the executable, verified both full-RAM restores and all 67 manifest files, and checked private settings/isolation.
+
+Intervals are host-timed, including resume/interrupt overhead, not frame-exact. Only one previously observed room was sampled across startup and settled camera/lifecycle situations. Absence of this filter does not establish readiness. Deferred-update lead `0x800CC858 & 0x200` remains unconfirmed; reentry, item/door/story outcomes, card persistence and other revisions remain untested.
+
+### Audit behavior and evidence
+
+The audit adds three raw diagnostics: `native_control_word_u32`, `raw_held_input_u32`, `logical_held_input_u32`. Control mask `0x01000000` adds `native-logical-movement-input-filtered`, independently of recorded input, menus, pause or source agreement. Raw/logical disagreement alone adds no reason, and surviving non-movement bits `0x3000` do not cancel rejection. Both admission fields stay unresolved; no runtime profile, history or UI changes.
+
+Parent integration reran the real CLI against all 169 owned sources and eleven direct captures: six startup captures gain the reason, five settled captures do not. Removing only the new diagnostics and reason reproduces every earlier audit field exactly. The normal-handler regression failed before the change with an empty reason list. Nine new synthetic cases cover exact masks, independent causes, surviving input, raw/logical mismatch, input preservation and earlier-state reversal.
+
+Experiment evidence is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-first-handler-20261106-oaof6f__/`; parent evidence is under `/tmp/re-map-re3-input-filter-integration-20261106-SLTIyv/`. Parent verifiers require explicit inputs and fresh output paths. The original experiment verifier rewrites reports: copy/adapt it before rerunning. Its wrapper-exit-zero field is an agent-recorded observation, not independently derived exit telemetry. Independent checks establish PID 64490 absent and port 2360 free; the parent also verified it bindable. Breakpoints were removed, Right released, settings stayed byte-identical and CUA ended.
+
+| Evidence | Bytes | SHA256 |
+| --- | ---: | --- |
+| Experiment `report.json` | 35393 | `b62734978a7c4e90ec1b7eb1d3572e660962d774d34c0b8a2826e60d203175c6` |
+| Experiment `artifact-manifest.json` | 9926 | `2764d2d3a2abf55ac7b40e2dcfe6aca80bba8ac5f6036d359000d8bdf4fd9a1e` |
+| Parent `verify.py` | 4952 | `38ac94de4a53e8e2e186255375f2456546e722c3072ed801ea51854cbe95ffd6` |
+| Parent `verification.json` | 2687 | `1b1d507eec81b077382432907fcde672bd1b9ead719fe8cc0b2af992470d5ae2` |
+| Parent `audit.json` | 18491 | `1bfc39981ed4f2745aea350d7cd73e7826ebfcb25c310ac14c4df0c12229160c` |
+| Parent `verify-native-checkpoints.py` | 2398 | `41749ea88be50d83279200b3095f30a6f35dd4e8884351e27157bab0898038af` |
+| Parent `native-checkpoints.json` | 666 | `34915b9f3ddef3f9489c8911d50bf4f4ac1c77039eef88ec997f7abc65193d60` |
+
 ## Reproduction and verification
 
 The [audit tool](../../../tools/re3_native_contracts.py) requires an owned BIN, an extracted executable and one or more explicit 2 MiB capture paths. It verifies the complete executable fingerprint and the four baseline runtime code windows, catalogs the supplied disc with the same required fingerprint, rereads and hashes each ARD, checks all native source-table rows, then audits the captures. It outputs numeric metadata and hashes only. An input failure returns 1 with a diagnostic and no partial JSON. Rejection evidence is a successful audit result, not a supported gameplay state.
@@ -162,3 +219,7 @@ The later [Hard control experiment](hard-start.md#re3-input-002-native-hard-sele
 - 2026-11-05; Codex root, `gpt-6.1-sol`; corrected the overlay base against the retained disassembly and two independent prefix locations before using menu code addresses. The audit implementation and capture results are unchanged.
 - 2026-11-05; Codex root, `gpt-6.1-sol`; linked later native Hard/control and difficulty-bit observations while preserving the offline audit's unresolved admission outputs. New runtime evidence and its limits belong to RE3-INPUT-002/003.
 - 2026-11-05; Codex root, exact runtime model `gpt-6.1-sol`; authored RE3-NATIVE-004 after native Circle/L2/Start experiments, controlled blocked/resumed turning, source checks and verified private cleanup. Added raw interface/pause diagnostics and rejection reasons, four synthetic regressions and the eight-capture verifier. Local review checked native byte ownership and branch semantics, stale views, independent causes, field widths, capture timing, source preservation and refusal of positive admission. Configured external reviewers remained unavailable; no external endorsement is claimed.
+- 2026-11-05 UTC; independent native investigator, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; performed the bounded normal-handler/startup and settled input comparisons for RE3-NATIVE-005, authored the private report/verifier/manifest, preserved failed attempts and verified private cleanup. The experiment supplies a Candidate rejection, not sufficient positive admission.
+- 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; authored the additional offline rejection, three diagnostics, nine synthetic cases and RE3-NATIVE-005. Reproduced the missing reason before the fix, checked filter/dispatcher source, verified all manifest files and eleven revised audits against all owned sources, decoded both key native checkpoints and rechecked process/port cleanup. This integration performed no new emulator operation or user-history change.
+- 2026-11-06 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; audited the native evidence and reviewed the new code, nine tests and RE3-NATIVE-005. Independently checked nine native states, eleven captures' critical code, both full-RAM restores, all 67 manifest files, private settings, cleanup and unchanged earlier audit fields. All 59 native-contract tests passed. Review corrected an overstated live-register attribution: A0/RA come from native payloads, while live PC and full RAM agree. Field masks, independent reasons, surviving inputs, failure provenance and unresolved positive admission were checked; no edits or emulator operation occurred.
+- 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the new diagnostics/rejection, synthetic fixtures, inherited capture/source checks and RE3-NATIVE-005. Review covered masks/widths, gated reads, independent causes, errors, rewind, input preservation, test risks, scope/reuse and evidence/admission limits. It ran no tests, native execution or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.

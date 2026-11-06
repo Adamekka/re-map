@@ -1,4 +1,4 @@
-"""RE3-NATIVE-001/002/003/004: synthetic contracts never admit gameplay."""
+"""RE3-NATIVE-001/002/003/004/005: synthetic contracts never admit gameplay."""
 
 import hashlib
 import json
@@ -242,6 +242,82 @@ def test_menu_and_pause_reject_matching_rooms_and_reverse_with_restoration(
     assert (
         native.audit_capture(coherent.executable, initial, (coherent.source,)) == before
     )
+
+
+def test_normal_handler_and_source_do_not_cancel_logical_movement_filter(coherent):
+    # RE3-NATIVE-005: the later startup witness reached this normal handler
+    # with raw Right delivered but the logical movement bit still filtered.
+    struct.pack_into("<I", coherent.ram, 0xCC858, 0x28001000)
+    coherent.ram[0xCCBC8] = 1
+    struct.pack_into("<I", coherent.ram, 0xCC830, 0x2000)
+    struct.pack_into("<I", coherent.ram, 0xCC83C, 2)
+    initial = bytes(coherent.ram)
+    before = native.audit_capture(coherent.executable, initial, (coherent.source,))
+    struct.pack_into("<I", coherent.ram, 0xCCBA0, 0x01000000)
+    struct.pack_into("<I", coherent.ram, 0xCC83C, 0)
+    captured = bytes(coherent.ram)
+    during = native.audit_capture(coherent.executable, captured, (coherent.source,))
+    assert "native-logical-movement-input-filtered" in during["rejection_evidence"]
+    assert during["rejection_evidence"] == ["native-logical-movement-input-filtered"]
+    assert during["source_matches"] == before["source_matches"]
+    assert during["native_control_word_u32"] == 0x01000000
+    assert during["raw_held_input_u32"] == 0x2000
+    assert during["logical_held_input_u32"] == 0
+    assert during["campaign_admission"] == during["hard_identity"] == "unresolved"
+    assert bytes(coherent.ram) == captured
+    assert (
+        native.audit_capture(coherent.executable, initial, (coherent.source,)) == before
+    )
+
+
+@pytest.mark.parametrize(
+    "control,expected",
+    [
+        (0, False),
+        (0x01000000, True),
+        (0x01000001, True),
+        (0x00010000, False),
+        (0x00000100, False),
+        (0xFF000000, True),
+    ],
+)
+def test_movement_filter_uses_the_exact_native_control_mask(
+    coherent, control, expected
+):
+    struct.pack_into("<I", coherent.ram, 0xCCBA0, control)
+    # Some non-movement input survives the native AND; a nonzero logical word
+    # must not cancel movement-filter rejection or imply general control.
+    struct.pack_into("<I", coherent.ram, 0xCC83C, 0x3000)
+    result = native.audit_capture(coherent.executable, coherent.ram, (coherent.source,))
+    assert (
+        "native-logical-movement-input-filtered" in result["rejection_evidence"]
+    ) is expected
+    assert result["native_control_word_u32"] == control
+    assert result["logical_held_input_u32"] == 0x3000
+    assert result["campaign_admission"] == "unresolved"
+
+
+def test_raw_logical_input_difference_alone_is_not_filter_evidence(coherent):
+    struct.pack_into("<I", coherent.ram, 0xCC830, 0x2000)
+    result = native.audit_capture(coherent.executable, coherent.ram, (coherent.source,))
+    assert result["raw_held_input_u32"] == 0x2000
+    assert result["logical_held_input_u32"] == 0
+    assert result["rejection_evidence"] == []
+    assert result["campaign_admission"] == "unresolved"
+
+
+def test_movement_filter_stays_independent_of_recording_menu_and_pause(coherent):
+    struct.pack_into("<I", coherent.ram, 0xCC858, 0x10000000)
+    struct.pack_into("<I", coherent.ram, 0xCCBA0, 0x01000000)
+    coherent.ram[0xE01E7] = 1
+    coherent.ram[0xD4434] = 2
+    result = native.audit_capture(coherent.executable, coherent.ram, (coherent.source,))
+    assert result["rejection_evidence"] == [
+        "native-recorded-input-path-selected",
+        "native-menu-loop-active",
+        "native-world-update-paused",
+        "native-logical-movement-input-filtered",
+    ]
 
 
 @pytest.mark.parametrize("change", ["lba", "size", "room", "duplicate", "invalid-rdt"])
