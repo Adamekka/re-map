@@ -95,7 +95,9 @@ def capture_breakpoint(
             if error:
                 raise ConnectionError(error)
             record = gdb.read_register(4)
-            if not record.ok or int.from_bytes(record.data, "little") != record_address:
+            if not record.ok:
+                raise ConnectionError(record.error)
+            if int.from_bytes(record.data, "little") != record_address:
                 raise ConnectionError(
                     "Initializer record register does not match the watched slot."
                 )

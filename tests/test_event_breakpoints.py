@@ -149,10 +149,43 @@ def test_bad_breakpoint_inputs_resume_without_a_guessed_capture(
         stop = WriteWatchStop(5, 0x80000000)
     if fault == "signal":
         stop = WriteWatchStop(2, stop.address)
-    with pytest.raises(ConnectionError):
+    with pytest.raises(ConnectionError) as error:
         capture_events.capture_breakpoint(gdb, profile, initializer, stop)
+    if fault == "record":
+        assert (
+            str(error.value)
+            == "Initializer record register does not match the watched slot."
+        )
     assert not gdb.paused and gdb.resumes == 1
     assert gdb.steps <= 1
+
+
+def test_failed_record_register_preserves_transport_error_after_valid_pc(
+    monkeypatch, configuration, tmp_path
+):
+    profile, initializer = configuration
+    ram = fixture_ram("slus00551_green_herb_before.sav", tmp_path)
+    gdb = BreakpointGdb(profile, initializer, ram)
+    gdb.connect()
+    stop = gdb.activity_write(0, 1)
+    original_read = gdb.read_register
+    registers = []
+
+    def read_register(index):
+        registers.append(index)
+        if index == 4:
+            # A checksum failure closes the real transport. Capture must keep
+            # that reason and leave disconnected cleanup to the server.
+            gdb.close()
+            return MemRead(False, b"", "gdb reply checksum mismatch")
+        return original_read(index)
+
+    monkeypatch.setattr(gdb, "read_register", read_register)
+    with pytest.raises(ConnectionError, match="gdb reply checksum mismatch"):
+        capture_events.capture_breakpoint(gdb, profile, initializer, stop)
+    assert registers == [37, 4]
+    assert gdb.steps == gdb.resumes == 0
+    assert not gdb.connected
 
 
 @pytest.mark.parametrize(
