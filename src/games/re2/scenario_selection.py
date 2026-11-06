@@ -29,13 +29,14 @@ from games.re2.scenario_items import scenario_flags
 from games.re2.script_control_limits import programs_digest
 from games.re2.startup_declarations import VerifiedStartupDeclarationContract
 
-
 SCENARIO_EXECUTABLE_SHA256 = (
     "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
 )
 SCENARIO_CONTEXT_AUDIT = "slus00748-resident-scenario-v1"
 SCENARIO_ENTRY_AUDIT = "slus00748-scenario-entry-v1"
 SCENARIO_NATIVE_WORK_AUDIT = "slus00748-initialized-native-work-v1"
+SCENARIO_GUARD_AUDIT = "slus00748-scenario-guard-normal-engine-v1"
+SCENARIO_TRUSTED_NATIVE_AUDIT = "slus00748-trusted-normal-native-work-v1"
 
 
 class ScenarioSelectionFailure(Enum):
@@ -95,7 +96,7 @@ class VerifiedScenarioContext:
 
 
 @dataclass(frozen=True)
-class VerifiedScenarioEntryScope:
+class _ScenarioScopeBinding:
     audit: str
     native_domain_audit: str
     executable_sha256: str
@@ -105,8 +106,6 @@ class VerifiedScenarioEntryScope:
     entry_locations: frozenset[tuple[str, int]]
 
     def __post_init__(self) -> None:
-        assert self.audit == SCENARIO_ENTRY_AUDIT
-        assert self.native_domain_audit == SCENARIO_NATIVE_WORK_AUDIT
         assert self.executable_sha256 == SCENARIO_EXECUTABLE_SHA256
         assert all(
             type(value) is str
@@ -131,6 +130,28 @@ class VerifiedScenarioEntryScope:
             hashlib.sha256(data).hexdigest() == self.source_sha256
             and programs_digest(programs) == self.programs_sha256
         )
+
+
+@dataclass(frozen=True)
+class VerifiedScenarioEntryScope(_ScenarioScopeBinding):
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        assert self.audit == SCENARIO_ENTRY_AUDIT
+        assert self.native_domain_audit == SCENARIO_NATIVE_WORK_AUDIT
+
+
+@dataclass(frozen=True)
+class VerifiedScenarioGuardScope(_ScenarioScopeBinding):
+    """Source guard isolation while trusting normal unmodified native execution.
+
+    This is a distinct type because scenario exclusion must not silently grant
+    the stricter entry capability consumed by positive-presence compilers.
+    """
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        assert self.audit == SCENARIO_GUARD_AUDIT
+        assert self.native_domain_audit == SCENARIO_TRUSTED_NATIVE_AUDIT
 
 
 @dataclass(frozen=True)
@@ -502,12 +523,14 @@ def scoped_scenario_items(
     room: dict,
     profile: dict,
     context: VerifiedScenarioContext,
-    entry_scope: VerifiedScenarioEntryScope,
+    entry_scope: VerifiedScenarioEntryScope | VerifiedScenarioGuardScope,
 ) -> ScopedScenarioItems | ScenarioSelectionFailure:
-    """Select identities only after native scenario and query isolation proofs."""
+    """Select identities after the native context and source guard checks."""
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert isinstance(context, VerifiedScenarioContext)
-    assert isinstance(entry_scope, VerifiedScenarioEntryScope)
+    assert isinstance(
+        entry_scope, (VerifiedScenarioEntryScope, VerifiedScenarioGuardScope)
+    )
 
     def require(condition: bool, failure=ScenarioSelectionFailure.SourceBinding):
         if not condition:

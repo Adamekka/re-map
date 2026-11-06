@@ -228,3 +228,53 @@ Contribution, 2026-11-06 UTC: the human supplies the unresolved-tracking priorit
 Independent review, 2026-11-06 UTC: reviewer `gpt-6.1-sol`, effort `xhigh`, verified from matching session metadata and latest turn context, checks native packet/frame/renderer semantics, source/callback/write ownership, dominance, catalog scope, replay/reversal, evidence hashes and provenance. It finds no code/runtime defect. Its P3 documentation finding, Low difficulty, corrects the initializer wording to one selected record among four; root fixes it directly. Root also removes a redundant callee-graph traversal because the union of every procedure's call targets is already closed, retains direct/transitive/chain regressions, and verifies the explicit baseline reproduction path. The reviewer runs no new native execution or emulator and makes no edits.
 
 External review, 2026-11-06 UTC: `gemini-3.8-flash`, high reasoning through Antigravity, returns no findings on the supplied final factory, source contracts, control limits, source/runtime regressions, catalog delta, parent replay evidence, bounded dispatcher report and RE2-SCENARIO-004. It checks native order/frame/domain assumptions, source/resource/callback protection, dominance, prior behavior, fresh state and atomicity, errors/invariants, reuse and evidence limits. It uses no tools and performs no tests, native execution or gameplay validation. Claude Opus 5.5 remains disabled in the provider inventory and supplies no review.
+
+## RE2-SCENARIO-005: normal engine trust removes one B-only item check
+
+Status: Candidate for the same Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748, Leon A, Original Game, Normal revision. Owned-source generation and fresh retained-RAM replay remove one opposite-scenario check. No new gameplay or native savestate restore is observed.
+
+### Human decision and separate capabilities
+
+On 2026-11-06, the human reported Claire B items appearing unresolved during Leon A and chose to trust normal execution of the unmodified game engine for scenario filtering. Every item creator/reset, fixed scenario guard, explicit source write and unsafe script path still requires checking. This replaces exhaustive native rendering/callback memory-safety proofs as a prerequisite for scenario filtering. It does not waive a concrete script-control hazard or establish positive item presence.
+
+`scenario_guard_scope` shares source binding, write-footprint and control analysis with the existing strict factory but returns a distinct `VerifiedScenarioGuardScope`. Only the scenario identity/exclusion query consumes the new type. Positive item-declaration compilation still requires `VerifiedScenarioEntryScope`; passing the guard type is an invariant violation. The generator computes both explicitly. Existing positive-presence, whole-source continuation and door proofs retain their previous inputs and rules.
+
+The first extension admits ordinary `64/65` effect operations under that trust boundary. `64` still requires its two source Work-reference selectors to be zero, selecting the static matrix. Source Copies cannot alter resource/control selectors, fixed scenario guards or creator packets. Numeric comparison operands may change; the query retains both outcomes. The exact executable and 69 native resources/125 room sources remain bound as in RE2-SCENARIO-001. This is an explicit engine assumption, not a newly completed proof of the deferred lifetimes in [RE2-EFFECT-001](effect-lifetimes.md#re2-effect-001-immediate-effect-execution-does-not-establish-a-room-lifetime).
+
+A separate source-control rule permits a sealed Goto cycle. Its encoded IF/loop depths must be `FF/FF`, its padding zero and its target the same procedure's canonical entry. The procedure must contain no IF/ELSE/ENDIF, Gosub, replacement or END/return. The control walk requires empty IF/loop frames at the jump and retains normal structured-loop capacity checks, including caller frames. Native Goto writes its own IF-pointer field; this sealed body never dereferences that poisoned pointer. Predicate failure at signed IF depth `FF` suspends before the scheduler's pointer load. This also applies at bounded positive call depth without returning to the caller. The Rooftop Goto/IF consumer and the East Office kind-five shifted-PC path remain rejected.
+
+### Source and retained outcome
+
+Executable SHA256 remains `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`. Owned `PL0/RDT/ROOM2130.RDT`, source `01-13`, is 139448 bytes, SHA256 `78227d7aac8266feccc018668ad6b25893e60fc30012fbd464977d00fc254ba1`. Both creators of acquisition ID 24, file offsets 3778/3804, require bank 1 bit 1 set at 3766. The selected profile requires it clear. The source has fourteen `64`, nine `65` packets and the sealed `17:6` cycle returning from offset 6368 to entry 6250. The strict entry factory still rejects this source; the new guard factory and actual item query produce only absence ID 24.
+
+All native addresses below are PS1 virtual, not file offsets. Multibyte values are little endian.
+
+| Field | Width and mask |
+| --- | --- |
+| Scenario word `0x800CFBD8` | u32, B-scenario mask `0x40000000`, required clear |
+| ID 24 acquisition at `0x800D48BC` | u32, mask `0x00000080` |
+| Independent ID 253 acquisition at `0x800D48D8` | u32, mask `0x00000004` |
+
+The same private RAM/history hashes from RE2-SCENARIO-002 reconstruct 58 visits and current `00-17`. ID 24's unresolved row disappears; independent ID 253 remains Taken, so `01-13` changes Unknown to Cleared. Unknown item rows decrease from 12 to 11. Every other tracker field, room, door, position and visit agrees. Clearing ID 253's acquisition in synthetic controls restores Unknown, even when ID 24 is acquired. Fresh trackers reconstruct the same results; exploration remains unchanged. Current-room contradictory ID 24 bindings reject atomically, including zero-SAT descriptors.
+
+Both complete owned-disc generations are byte-identical. Only this source's scoped absence and the research-ID list change; raw creators, positive-presence fields, other sources and floor-plan bytes remain identical. Three other source-local B-only checks, `01-0b` IDs 82/48 and `00-09` ID 146, remain unresolved in this increment. The source analysis also rejects two earlier tentative B-only classifications because their common-path creators survive. No item-name or room-name whitelist is used.
+
+### Reproduction and provenance
+
+Private integration evidence is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re2-scenario-filter-20261106-rjmfsvcq/`. Reproduce generation with the existing `tools/build_re2_metadata.py CUE ROOM_OUTPUT FLOOR_OUTPUT --profile profiles/re2_leon_a_slus00748.json`, using fresh output paths. `replay.py` reads its explicit private before/after profiles/catalogs and the pinned RAM/copied visits; it acquires no user-history lock. Its report extractor was corrected to find the target among all explored floors rather than only the current-floor publication. This affected report construction, not the passing tracker comparisons or production code.
+
+| Evidence | SHA256 |
+| --- | --- |
+| Independent real-factory `verification.json`, under `re-map-re2-normal-guard-factory-20261106-cixdbjdz` in the same temporary root | `5735935f1c6be06e6df6d51d0ee7186e8196ffa546ebe7ba5549f3d36bd8d2a0` |
+| Generated `rooms.json` | `a188885ac0d6e90b142ce322aef4ecda49531b697e9ebacece9c245fbfca3824` |
+| `replay-verification.json` | `fa06e088aaff2b6ac50af6b51b79fd8e1c7fb192894b9e2009e297cf964d9930` |
+
+Raw owned media, RAM and copied history remain private. Historical DuckStation identity remains `0.1-12083-g00e299795`; this increment operates no emulator and adds no runtime compatibility or gameplay coverage.
+
+Verification passes all 6,612 Python tests, including 31 new guard, type-isolation, binding, control-frame and runtime regressions. Scoped Ruff lint/formatting and whitespace checks pass. Repeated full generation matches the installed catalog exactly; both generated floor-plan files match the unchanged repository file. No UI implementation changes.
+
+Contribution, 2026-11-06 UTC: the human supplies the item report and explicit engine-trust decision. `investigate_gdb_recovery`, exact verified model `gpt-6.1-sol`, effort `xhigh`, authors the shared guard factory, sealed-cycle checks, focused regressions and independent real-factory report. Codex root, the same exact runtime model, authors distinct receipt types, generator integration, generated metadata, fresh replay, reversal/contradiction tests and this record. `review_re3_detail_tables`, the same verified model/effort, independently checks datatype separation and authors guard-binding/audit and positive-compiler-isolation regressions. These source/file checks are separate from gameplay confirmation.
+
+Independent review, 2026-11-06 UTC: `review_re3_detail_tables`, exact verified model `gpt-6.1-sol`, effort `xhigh`, checks production receipt isolation, creator/reset coverage, source writes, sealed-Goto frame/consumer semantics, generator/catalog scope, the other regressions, hashes, field masks and links. Fresh real-factory binding and retained replay reproduce the sole ID 24 change. It finds no production defect. Its P3 documentation finding, Low difficulty, narrows "guards" to "fixed scenario guards" because numeric comparison operands may change; root corrects the text and states the conservative two-outcome rule. The reviewer authored the selection tests, distinguished from its independent production/integration review. It performs no native execution or full-suite rerun.
+
+External review, 2026-11-06 UTC: `gemini-3.8-flash`, high reasoning through Antigravity, returns no findings on the full guard factory/query, receipt types, producer and regression diffs, positive/runtime consumer excerpts, actual sealed source packets, native Goto/IF-consumer/Break windows, catalog delta, replay and documentation. It checks the approved trust boundary, source/control safety, type isolation, freshness, reversals, atomicity, maintenance and evidence limits. The completed response has no tool attempts or pending child work and adds no execution evidence. Claude Opus 5.5 remains disabled and supplies no review.

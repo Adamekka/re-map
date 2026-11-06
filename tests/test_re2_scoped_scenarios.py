@@ -21,6 +21,74 @@ def profile():
     return Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00748.json")
 
 
+@pytest.mark.parametrize("snapshot", ["00-01", "01-13"], indirect=True)
+def test_normal_engine_guard_excludes_b_item_without_caching_completion(snapshot):
+    """RE2-SCENARIO-005: absence cannot replace another item's acquisition."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-13"]
+    assert source["scoped_scenario_items"] == {
+        "absent_item_ids": [24],
+        "item_variants": [],
+    }
+    assert not source["fixed_context_preserved"]
+    assert {item["global_id"] for item in source["items"]} == {24, 253}
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    # The generic fixture registers every raw alternative. A valid Leon A
+    # registry cannot contain the B-only item; contradictions are tested below.
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x13))
+    visits = None
+    for excluded_taken, other_taken in (
+        (False, True),
+        (True, True),
+        (True, False),
+        (False, False),
+        (False, True),
+    ):
+        for gid, acquired in ((24, excluded_taken), (253, other_taken)):
+            address, mask = bank + gid // 32 * 4, 0x80000000 >> (gid % 32)
+            value = int.from_bytes(read(address, 4).data, "little")
+            put(address, value | mask if acquired else value & ~mask, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-13"]
+        assert record.list_complete and len(record.items) == 1
+        assert record.items[0].state == ("taken" if other_taken else "unknown")
+        assert record.completion is (
+            RoomCompletion.Cleared if other_taken else RoomCompletion.Unknown
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 0x13))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-13"] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize("snapshot", ["01-13"], indirect=True)
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_normal_engine_guard_rejects_a_live_b_item_atomically(snapshot, sat):
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-13"]
+    excluded = next(item for item in source["items"] if item["global_id"] == 24)
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    pointer = 0x80100000 + excluded["offset"] + 2
+    put(registry + excluded["slot"] * 4, pointer, 4)
+    put(pointer + 1, sat, 1)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Pickup disagrees with fixed scenario proof"
+    assert tracker == before
+
+
 @pytest.mark.parametrize("target,gid", [("01-00", 152)])
 def test_scoped_identity_collection_rewinds_without_cached_verdict(
     snapshot, target, gid

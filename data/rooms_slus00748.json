@@ -29,6 +29,7 @@
     "RE2-SCD-002",
     "RE2-DS-003",
     "RE2-SCENARIO-001",
+    "RE2-SCENARIO-005",
     "RE2-DS-006",
     "RE2-LIFETIME-001",
     "RE2-DS-005",
@@ -10934,7 +10935,9 @@
       "known_direct_pickups": [],
       "startup_item_declarations": [],
       "scoped_scenario_items": {
-        "absent_item_ids": [],
+        "absent_item_ids": [
+          24
+        ],
         "item_variants": []
       }
     },

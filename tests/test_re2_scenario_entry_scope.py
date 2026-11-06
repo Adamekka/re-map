@@ -9,11 +9,13 @@ import pytest
 from test_re2_room_write_partitions import md1, object_command
 from test_re2_startup_declarations import END, contract, described, item
 
-from games.re2.scenario_entry_scope import scenario_entry_scope
+from games.re2.scenario_entry_scope import scenario_entry_scope, scenario_guard_scope
 from games.re2.scenario_selection import (
     SCENARIO_NATIVE_WORK_AUDIT,
+    SCENARIO_TRUSTED_NATIVE_AUDIT,
     ScenarioSelectionFailure,
     VerifiedScenarioEntryScope,
+    VerifiedScenarioGuardScope,
     bind_scenario_context,
 )
 
@@ -47,6 +49,99 @@ def render_recipe(record):
         + b"\x0d\0\x08\0\x05\0"
         + bytes((0x74, record, 0xFF, 0x7F))
         + b"\x02\0\x0e\0"
+    )
+
+
+def sealed_cycle(prefix):
+    return prefix + b"\x17\xff\xff\0" + struct.pack("<h", -len(prefix))
+
+
+def test_normal_effect_guard_scope_cannot_authorize_positive_declarations(profile):
+    effects = b"\x64\x01\x16\x02" + bytes(12) + b"\x65\x01"
+    data, room, context, strict = scoped(profile, main=(effects + END, END))
+    assert strict is ScenarioSelectionFailure.EntryScope
+    result = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(result, VerifiedScenarioGuardScope)
+    assert not isinstance(result, VerifiedScenarioEntryScope)
+    assert result.native_domain_audit == SCENARIO_TRUSTED_NATIVE_AUDIT
+    assert result.matches_source(data, room["programs"])
+
+
+@pytest.mark.parametrize("mutation", ["work", "copy", "source", "context"])
+def test_normal_effect_trust_preserves_explicit_source_and_work_guards(
+    profile, mutation
+):
+    packet = bytearray(b"\x64\x01\x16\x02" + bytes(12))
+    prefix = b""
+    if mutation == "work":
+        packet[4] = 1
+    elif mutation == "copy":
+        prefix = b"\x1d\x04\x04\0"
+    data, room, context, _ = scoped(profile, main=(prefix + packet + END, END))
+    if mutation == "source":
+        data = data[:-1] + b"\xff"
+    elif mutation == "context":
+        profile["runtime_layout"]["scenario_reset_mask"] = 0
+    assert isinstance(
+        scenario_guard_scope(data, room, profile, context), ScenarioSelectionFailure
+    )
+
+
+@pytest.mark.parametrize(
+    "depth,accepted", [(0, True), (1, True), (2, True), (3, True), (4, False)]
+)
+def test_sealed_goto_cycle_retains_real_caller_frames(profile, depth, accepted):
+    # DO/Sleep use the callee's bounded loop cells. After Goto, FF IF depth
+    # makes predicate failure suspend without consuming the poisoned pointer.
+    prefix = b"\x11\0\x0a\0\x09\x0a\x01\0\x12\x04\x21\x04\x07\0"
+    cycle = sealed_cycle(prefix)
+    if depth:
+        main = (b"\x18\x02" + END, END) + tuple(
+            cycle if number == depth + 1 else bytes((0x18, number + 1)) + END
+            for number in range(2, depth + 2)
+        )
+    else:
+        main = (cycle, END)
+    data, room, context, strict = scoped(profile, main=main)
+    assert strict is ScenarioSelectionFailure.EntryScope
+    result = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(result, VerifiedScenarioGuardScope) is accepted
+
+
+@pytest.mark.parametrize(
+    "mutation", ["if", "call", "replacement", "depth", "target", "loop"]
+)
+def test_goto_cannot_expose_a_foreign_if_pointer_or_abandon_a_loop(profile, mutation):
+    prefix = b""
+    if mutation == "if":
+        prefix = b"\x06\0\x06\0\x21\x04\x07\0\x08\0"
+    elif mutation == "call":
+        prefix = b"\x18\x02"
+    elif mutation == "replacement":
+        prefix = b"\x03\0\x18\x02"
+    packet = bytearray(sealed_cycle(prefix))
+    if mutation == "depth":
+        packet[1] = 0
+    elif mutation == "target":
+        packet = bytearray(sealed_cycle(b"\0"))
+        struct.pack_into("<h", packet, len(packet) - 2, 0)
+    elif mutation == "loop":
+        packet = bytearray(
+            b"\x11\0\x0c\0" + b"\x17\xff\xff\0\xfc\xff" + b"\x12\x04\x21\x04\x07\0"
+        )
+    data, room, context, _ = scoped(profile, main=(bytes(packet), END, END))
+    assert isinstance(
+        scenario_guard_scope(data, room, profile, context), ScenarioSelectionFailure
+    )
+
+
+def test_normal_engine_scope_retains_kind_five_shifted_pc_rejection(profile):
+    data, room, context, _ = scoped(
+        profile, init=callback(2) + END, main=(END, b"\x47\x07" + END, END)
+    )
+    assert (
+        scenario_guard_scope(data, room, profile, context)
+        is ScenarioSelectionFailure.EntryScope
     )
 
 

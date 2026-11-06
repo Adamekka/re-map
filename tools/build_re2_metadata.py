@@ -51,7 +51,7 @@ from games.re2.room_entry_contract import (
     room_entry_contract,
 )
 from games.re2.room_lifetime_proof import initializer_continuation_proof
-from games.re2.scenario_entry_scope import scenario_entry_scope
+from games.re2.scenario_entry_scope import scenario_entry_scope, scenario_guard_scope
 from games.re2.scenario_items import (
     scenario_effect_pool,
     scenario_flags,
@@ -66,6 +66,7 @@ from games.re2.scenario_selection import (
     ScopedScenarioItems,
     VerifiedScenarioContext,
     VerifiedScenarioEntryScope,
+    VerifiedScenarioGuardScope,
     bind_scenario_context,
     scoped_scenario_items,
 )
@@ -415,6 +416,13 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             if isinstance(scenario_context, VerifiedScenarioContext)
             else ScenarioSelectionSupport.Unaudited
         )
+        # Normal native execution is trusted only for scenario filtering. Keep
+        # its receipt separate from the stricter positive-presence compiler.
+        guard_scope = (
+            scenario_guard_scope(sources[room["id"]], room, profile, scenario_context)
+            if isinstance(scenario_context, VerifiedScenarioContext)
+            else ScenarioSelectionSupport.Unaudited
+        )
         control = InitializerControlSupport.Unaudited
         if isinstance(control_config, InitializerControlConfig):
             candidate = initializer_control_proof(
@@ -562,10 +570,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 ]
             scoped = (
                 scoped_scenario_items(
-                    sources[room["id"]], room, profile, scenario_context, scope
+                    sources[room["id"]], room, profile, scenario_context, guard_scope
                 )
-                if isinstance(scope, VerifiedScenarioEntryScope)
-                else scope
+                if isinstance(guard_scope, VerifiedScenarioGuardScope)
+                else guard_scope
             )
             # Unsupported source entry/control supplies no local facts. Keep
             # the whole-source capabilities and raw alternatives unchanged.
@@ -845,7 +853,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SCD-002",
                 "RE2-DS-003",
                 *(
-                    ["RE2-SCENARIO-001"]
+                    ["RE2-SCENARIO-001", "RE2-SCENARIO-005"]
                     if isinstance(scenario_context, VerifiedScenarioContext)
                     else []
                 ),

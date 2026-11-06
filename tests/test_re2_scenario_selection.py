@@ -8,27 +8,36 @@ from pathlib import Path
 
 import pytest
 from test_re2_known_puzzle_items import conditional as guarded
+
+# Explicit re-export registers the shared pytest fixture without F401/F811.
+from test_re2_known_puzzle_items import receipt as receipt  # noqa: PLC0414
 from test_re2_room_write_partitions import END, source
 from test_re2_startup_declarations import conditional, contract, item
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.known_puzzle_items import KnownDeclaredItems, known_declared_items
 from games.re2.room_data import decode_room
+from games.re2.scenario_entry_scope import scenario_entry_scope, scenario_guard_scope
 from games.re2.scenario_selection import (
     SCENARIO_ENTRY_AUDIT,
+    SCENARIO_GUARD_AUDIT,
     SCENARIO_NATIVE_WORK_AUDIT,
-    ScenarioItemVariant,
+    SCENARIO_TRUSTED_NATIVE_AUDIT,
     ScenarioContextLayout,
+    ScenarioItemVariant,
     ScenarioSelectionFailure,
     ScopedScenarioItems,
     VerifiedScenarioContext,
     VerifiedScenarioEntryScope,
+    VerifiedScenarioGuardScope,
     bind_scenario_context,
     camera_record_write_witnesses,
     floor_flag_write_witnesses,
-    scoped_scenario_items,
     scenario_context_layout,
+    scoped_scenario_items,
 )
 from games.re2.script_control_limits import programs_digest
+from games.re2.script_dispatch_items import script_item_dispatch
 from games.re2.startup_entry_selection import EntrySelectionSource
 
 
@@ -137,6 +146,115 @@ def test_supported_scenario_excludes_only_the_guarded_identity(profile):
     )
     result = scoped_scenario_items(data, room, profile, context, scope)
     assert result == ScopedScenarioItems((154,), ())
+
+
+def test_normal_engine_guard_receipt_filters_without_granting_presence(profile):
+    effects = b"\x64\x01\x16\x02" + bytes(12) + b"\x65\x01"
+    data, room, context, _, _ = prepared(
+        profile,
+        END,
+        (guarded(1, 1, 1, item()) + item(gid=155) + effects + END, END),
+        (0,),
+    )
+    before = copy.deepcopy(room)
+    assert (
+        scenario_entry_scope(data, room, profile, context)
+        is ScenarioSelectionFailure.EntryScope
+    )
+    scope = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(scope, VerifiedScenarioGuardScope)
+    assert not isinstance(scope, VerifiedScenarioEntryScope)
+    result = scoped_scenario_items(data, room, profile, context, scope)
+    assert result == ScopedScenarioItems((154,), ())
+    assert not hasattr(result, "presence")
+    assert not hasattr(result, "fixed_context_preserved")
+    assert room == before
+
+
+def test_guard_receipt_cannot_authorize_positive_declared_items(profile, receipt):
+    data, room, context, _, _ = prepared(profile, END, (item() + END, END), (0,))
+    strict = scenario_entry_scope(data, room, profile, context)
+    guard = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(strict, VerifiedScenarioEntryScope)
+    assert isinstance(guard, VerifiedScenarioGuardScope)
+    arguments = (
+        data,
+        room,
+        profile,
+        receipt,
+        script_item_dispatch(profile),
+        context.declaration_contract,
+    )
+    positive = known_declared_items(
+        *arguments, scenario_context=context, scenario_entries=strict
+    )
+    assert isinstance(positive, KnownDeclaredItems)
+    assert [row.global_id for row in positive.direct_pickups] == [154]
+    with pytest.raises(AssertionError, match="both independent native receipts"):
+        known_declared_items(
+            *arguments, scenario_context=context, scenario_entries=guard
+        )
+
+
+@pytest.mark.parametrize("field", ["source_sha256", "programs_sha256"])
+def test_guard_query_requires_both_receipt_binding_digests(profile, field):
+    data, room, context, _, _ = prepared(
+        profile, END, (guarded(1, 1, 1, item()) + END, END), (0,)
+    )
+    scope = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(scope, VerifiedScenarioGuardScope)
+    assert (
+        scoped_scenario_items(
+            data, room, profile, context, replace(scope, **{field: "0" * 64})
+        )
+        is ScenarioSelectionFailure.SourceBinding
+    )
+
+
+@pytest.mark.parametrize("drift", ["source", "programs"])
+def test_guard_receipt_cannot_follow_source_or_program_drift(profile, drift):
+    data, room, context, _, _ = prepared(
+        profile, END, (guarded(1, 1, 1, item()) + END, END), (0,)
+    )
+    scope = scenario_guard_scope(data, room, profile, context)
+    assert isinstance(scope, VerifiedScenarioGuardScope)
+    if drift == "source":
+        # Rebind the corpus to the changed source so the stale guard receipt,
+        # rather than an unrelated old corpus witness, must reject reuse.
+        data, room, context, _, _ = prepared(
+            profile, END, (guarded(1, 1, 1, item(amount=14)) + END, END), (0,)
+        )
+        assert programs_digest(room["programs"]) == scope.programs_sha256
+    else:
+        room = copy.deepcopy(room)
+        room["programs"]["17:0"]["entry"] += 1
+    assert not scope.matches_source(data, room["programs"])
+    assert (
+        scoped_scenario_items(data, room, profile, context, scope)
+        is ScenarioSelectionFailure.SourceBinding
+    )
+
+
+@pytest.mark.parametrize("kind", ["entry", "guard"])
+@pytest.mark.parametrize("field", ["audit", "native_domain_audit"])
+def test_scenario_scope_audit_identities_are_not_interchangeable(profile, kind, field):
+    data, room, context, _, _ = prepared(profile, END, (END, END), (0,))
+    if kind == "entry":
+        scope = scenario_entry_scope(data, room, profile, context)
+        other = {
+            "audit": SCENARIO_GUARD_AUDIT,
+            "native_domain_audit": SCENARIO_TRUSTED_NATIVE_AUDIT,
+        }
+        assert isinstance(scope, VerifiedScenarioEntryScope)
+    else:
+        scope = scenario_guard_scope(data, room, profile, context)
+        other = {
+            "audit": SCENARIO_ENTRY_AUDIT,
+            "native_domain_audit": SCENARIO_NATIVE_WORK_AUDIT,
+        }
+        assert isinstance(scope, VerifiedScenarioGuardScope)
+    with pytest.raises(AssertionError):
+        replace(scope, **{field: other[field]})
 
 
 @pytest.mark.parametrize("position", ["before", "after"])

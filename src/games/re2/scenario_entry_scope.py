@@ -1,14 +1,15 @@
-"""Source entry isolation under the pinned initialized-native-work contract.
+"""Source entries and scenario guards under separate native execution contracts.
 
-The native work contract describes legitimate initialized engine allocations,
-not arbitrary pointer or DMA safety. Source-directed control and writes retain
-their independent checks here and in the mandatory scenario-selection compiler.
+Normal-engine trust applies only to scenario filtering. Both policies retain
+source-directed control and write checks; neither claims arbitrary-pointer or
+DMA safety.
 """
 
 from __future__ import annotations
 
 import hashlib
 import struct
+from enum import Enum
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.initializer_control_proof import native_switch_labels
@@ -16,11 +17,14 @@ from games.re2.room_data import decode_room
 from games.re2.scenario_selection import (
     SCENARIO_ENTRY_AUDIT,
     SCENARIO_EXECUTABLE_SHA256,
+    SCENARIO_GUARD_AUDIT,
     SCENARIO_NATIVE_WORK_AUDIT,
+    SCENARIO_TRUSTED_NATIVE_AUDIT,
     ScenarioSelectionFailure,
     ScenarioSourceWriteWitnesses,
     VerifiedScenarioContext,
     VerifiedScenarioEntryScope,
+    VerifiedScenarioGuardScope,
     bind_scenario_context,
     scenario_source_write_witnesses,
 )
@@ -33,6 +37,11 @@ from games.re2.script_control_limits import (
 
 class _UnprovedEntry(Exception):
     pass
+
+
+class _ScopePolicy(Enum):
+    AuditedNativeWork = "audited native work"
+    TrustedNormalEngine = "trusted normal engine"
 
 
 # These handlers have inspected initialized-native-work roles: scalar state,
@@ -127,6 +136,32 @@ _ENTRY_PRESERVING_NATIVE_EFFECTS = frozenset(
 def scenario_entry_scope(
     data: bytes, room: dict, profile: dict, context: VerifiedScenarioContext
 ) -> VerifiedScenarioEntryScope | ScenarioSelectionFailure:
+    """Qualify entries under the audited initialized-native-work recipe."""
+    result = _scenario_scope(
+        data, room, profile, context, _ScopePolicy.AuditedNativeWork
+    )
+    assert isinstance(result, (VerifiedScenarioEntryScope, ScenarioSelectionFailure))
+    return result
+
+
+def scenario_guard_scope(
+    data: bytes, room: dict, profile: dict, context: VerifiedScenarioContext
+) -> VerifiedScenarioGuardScope | ScenarioSelectionFailure:
+    """Qualify scenario guards while trusting normal native engine execution."""
+    result = _scenario_scope(
+        data, room, profile, context, _ScopePolicy.TrustedNormalEngine
+    )
+    assert isinstance(result, (VerifiedScenarioGuardScope, ScenarioSelectionFailure))
+    return result
+
+
+def _scenario_scope(
+    data: bytes,
+    room: dict,
+    profile: dict,
+    context: VerifiedScenarioContext,
+    policy: _ScopePolicy,
+) -> VerifiedScenarioEntryScope | VerifiedScenarioGuardScope | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
     Source/record writers are checked against all protected packets by the
@@ -134,6 +169,7 @@ def scenario_entry_scope(
     """
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert isinstance(context, VerifiedScenarioContext)
+    assert isinstance(policy, _ScopePolicy)
 
     def require(condition: bool) -> None:
         if not condition:
@@ -194,6 +230,7 @@ def scenario_entry_scope(
         }
         calls = {key: set() for key in programs}
         replacement_sources = set()
+        sealed_goto_programs = set()
         render_initializers = {}
         slot_kinds: dict[int, set[int]] = {}
         bindings = []
@@ -223,7 +260,11 @@ def scenario_entry_scope(
         for key, row in rows:
             packet = data[row["offset"] : row["next"]]
             opcode = row["opcode"]
-            require(opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS)
+            require(
+                opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
+                or policy is _ScopePolicy.TrustedNormalEngine
+                and opcode in (0x64, 0x65)
+            )
             if row["kind"] == "call":
                 target = f"17:{packet[1]}"
                 require(target in programs)
@@ -246,10 +287,29 @@ def scenario_entry_scope(
                 # queue that can reach task storage. This work contract covers
                 # only model setup without that additional queue ownership.
                 require(packet[3] & 0xC0 == 0)
-            elif opcode in (5, 0x17, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
-                # Goto can spill IF storage; these effects have no ordinary
-                # entry certificate even when their targets decode locally.
+            elif opcode == 0x17:
+                # FF depths poison +140 without dereferencing it. A sealed
+                # cycle cannot read that IF pointer or return to its caller;
+                # native predicate failure merely suspends this worker at FF.
+                require(
+                    policy is _ScopePolicy.TrustedNormalEngine
+                    and key.startswith("17:")
+                    and packet[1:4] == b"\xff\xff\0"
+                    and row["target"] == programs[key]["entry"]
+                    and all(
+                        command["opcode"] not in (1, 3, 6, 7, 8, 0x18)
+                        for command in programs[key]["commands"]
+                    )
+                )
+                sealed_goto_programs.add(key)
+            elif opcode in (5, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
+                # These task/source effects retain their independent entry
+                # obligations even when their targets decode locally.
                 raise _UnprovedEntry
+            elif opcode == 0x64:
+                # Scenario filtering trusts the normal renderer, but a source
+                # selected Work pointer still needs its own bounded role.
+                require(packet[4:6] == b"\0\0")
             elif opcode == 0x53 and has_render_updates:
                 # Another procedure may initialize a record while this recipe
                 # sleeps. Every such initializer must retain the same four
@@ -395,7 +455,12 @@ def scenario_entry_scope(
                     # Its canonical target is independently audited above as
                     # a fresh root, including its synchronous call capacity.
                     continue
-                if row["kind"] == "if":
+                if opcode == 0x17:
+                    require(
+                        key in sealed_goto_programs and not conditions and not loops
+                    )
+                    pending.append((row["target"], (), ()))
+                elif row["kind"] == "if":
                     require(len(conditions) < 8 and row["target"] > following)
                     pending.append((row["target"], conditions, loops))
                     pending.append((following, conditions + (row["target"],), loops))
@@ -499,6 +564,18 @@ def scenario_entry_scope(
         # entry does not need startup exclusivity. Both native and explicit
         # entries still had to establish bounded fresh procedure frames above.
         protected = set(programs)
+        if policy is _ScopePolicy.TrustedNormalEngine:
+            # This receipt authorizes scenario filtering only. Positive
+            # declarations retain the independent audited native-work scope.
+            return VerifiedScenarioGuardScope(
+                SCENARIO_GUARD_AUDIT,
+                SCENARIO_TRUSTED_NATIVE_AUDIT,
+                SCENARIO_EXECUTABLE_SHA256,
+                room["sha256"],
+                programs_digest(programs),
+                frozenset(protected),
+                frozenset((key, programs[key]["entry"]) for key in protected),
+            )
         return VerifiedScenarioEntryScope(
             SCENARIO_ENTRY_AUDIT,
             SCENARIO_NATIVE_WORK_AUDIT,
