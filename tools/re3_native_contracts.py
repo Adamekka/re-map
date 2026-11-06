@@ -11,7 +11,6 @@ import hashlib
 import json
 import struct
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,29 +22,18 @@ from re3_room_catalog import build_catalog
 from games.re3 import EXECUTABLE_SHA256
 
 # Retained private capture scripts import these constants from the audit tool.
-from games.re3.capture_data import CODE_WINDOWS as CODE_WINDOWS
-from games.re3.capture_data import RAM_SIZE as RAM_SIZE
+from games.re3.capture_data import CODE_WINDOWS as CODE_WINDOWS  # noqa: PLC0414
+from games.re3.capture_data import RAM_SIZE as RAM_SIZE  # noqa: PLC0414
 from games.re3.capture_data import capture_failure
-from games.re3.room_data import RoomFormatFailure, decode_room, room_section_end
+from games.re3.room_data import RoomFormatFailure
+
+# Preserve the existing audit construction API while sharing the source type.
+from games.re3.source_witnesses import RoomSource as RoomSource  # noqa: PLC0414
+from games.re3.source_witnesses import bind_diagnostic_sources
 
 
 class ContractError(ValueError):
     """The inputs cannot support this bounded offline audit."""
-
-
-@dataclass(frozen=True)
-class RoomSource:
-    path: str
-    stage_digit: int
-    room_number: int
-    ard_lba: int
-    ard_size: int
-    rdt: bytes
-
-    def __post_init__(self) -> None:
-        assert 1 <= self.stage_digit <= 7
-        assert 0 <= self.room_number <= 255
-        assert self.ard_lba >= 0 and self.ard_size > 0
 
 
 def verify_executable(executable: bytes) -> None:
@@ -60,14 +48,6 @@ def audit_capture(
     failure = capture_failure(executable, ram)
     if failure is not None:
         raise ContractError(failure.detail)
-
-    def executable_word(address: int, width: int) -> int:
-        offset = 0x800 + address - 0x80010000
-        if address % width or not 0x800 <= offset <= len(executable) - width:
-            raise ContractError(
-                "Native room/file table points outside the executable payload"
-            )
-        return int.from_bytes(executable[offset : offset + width], "little")
 
     # RE3-NATIVE-001: these are signed selectors, not filename stage digits.
     stage, room, camera = struct.unpack_from("<3h", ram, 0xD1F76)
@@ -121,71 +101,43 @@ def audit_capture(
     else:
         base = pointer - 0x80000000
 
-    identifiers = set()
-    for source in sources:
-        identifier = source.stage_digit, source.room_number
-        if identifier in identifiers:
-            raise ContractError("Duplicate source stage/room identifier")
-        identifiers.add(identifier)
-        decoded = decode_room(source.rdt)
-        if isinstance(decoded, RoomFormatFailure):
-            raise ContractError(f"Invalid room source {source.path}: {decoded.detail}")
-        table = executable_word(0x8009DFD0 + 4 * (source.stage_digit - 1), 4)
-        file_index = executable_word(table + 2 * source.room_number, 2)
-        record = 0x800946A4 + 8 * file_index
-        size = executable_word(record, 4) & 0xFFFFFF
-        lba = executable_word(record + 4, 4) & 0xFFFFFF
-        if (size, lba) != (source.ard_size, source.ard_lba):
-            raise ContractError(
-                f"Native selector table disagrees with owned ARD {source.path}"
-            )
-        # The native selector indexes seven tables from zero; source filenames
-        # number their stages from one. All 169 file-table rows agree.
+    witnesses = bind_diagnostic_sources(executable, sources)
+    if isinstance(witnesses, RoomFormatFailure):
+        raise ContractError(witnesses.detail)
+    for witness in witnesses:
+        source = witness.source
+        # Native stages are zero-based; owned filenames number stages from one.
         if (stage, room) == (source.stage_digit - 1, source.room_number):
             result["selected_source_paths"].append(source.path)
-        if base < 0 or base + len(source.rdt) > len(ram):
+        ranges = witness.ranges(pointer)
+        if base < 0 or isinstance(ranges, RoomFormatFailure):
             continue
-        if ram[base + 1 : base + 8] != source.rdt[1:8]:
-            continue
-        live_words = struct.unpack_from("<22I", ram, base + 8)
-        words = decoded["section_words"]
-        # Native initialization relocates every nonzero word, including opaque
-        # slot 2. Slot 21 and prefix byte 0 are later runtime work fields.
         if any(
-            live_words[index] != ((word + pointer) & 0xFFFFFFFF if word else 0)
-            for index, word in enumerate(words[:21])
+            ram[base + offset : base + offset + len(expected)] != expected
+            for offset, expected in ranges
         ):
             continue
-        cameras_start = words[7]
-        cameras_end = cameras_start + len(decoded["cameras"]) * 32
-        cameras = bytearray(source.rdt[cameras_start:cameras_end])
-        for offset in range(28, len(cameras), 32):
-            # The native camera loop adds the base even to a zero mask offset.
-            value = struct.unpack_from("<I", cameras, offset)[0]
-            struct.pack_into("<I", cameras, offset, (value + pointer) & 0xFFFFFFFF)
-        zones_start = words[8]
-        zones_end = room_section_end(words, 8, len(source.rdt))
-        if ram[base + cameras_start : base + cameras_end] != cameras:
-            continue
-        zones = source.rdt[zones_start:zones_end]
-        if ram[base + zones_start : base + zones_end] != zones:
-            continue
-        start, end = decoded["initializer"]["offset"], decoded["initializer"]["end"]
+        start, end = witness.initializer_offset, witness.initializer_end
         # Script operands can change in the retained captures. Report differences
         # without masking them or treating script-byte identity as mandatory.
         differences = sum(
             a != b
             for a, b in zip(source.rdt[start:end], ram[base + start : base + end])
         )
+        cameras = ram[
+            base + witness.cameras_offset : base
+            + witness.cameras_offset
+            + len(witness.cameras)
+        ]
         result["source_matches"].append(
             {
                 "path": source.path,
-                "native_file_index": file_index,
-                "rdt_sha256": decoded["sha256"],
-                "camera_count": len(decoded["cameras"]),
-                "camera_in_range": 0 <= camera < len(decoded["cameras"]),
+                "native_file_index": witness.native_file_index,
+                "rdt_sha256": hashlib.sha256(source.rdt).hexdigest(),
+                "camera_count": witness.camera_count,
+                "camera_in_range": 0 <= camera < witness.camera_count,
                 "relocated_cameras_sha256": hashlib.sha256(cameras).hexdigest(),
-                "camera_zones_sha256": hashlib.sha256(zones).hexdigest(),
+                "camera_zones_sha256": hashlib.sha256(witness.zones).hexdigest(),
                 "initializer_different_bytes": differences,
                 "initializer_size": end - start,
             }

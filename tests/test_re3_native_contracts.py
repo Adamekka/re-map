@@ -16,6 +16,7 @@ sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tools")]
 import re3_native_contracts as native
 from test_re3_room_data import synthetic_ard, synthetic_room
 
+from games.re3 import source_witnesses
 from games.re3.room_data import RoomFormatFailure, decode_ard, decode_room
 
 
@@ -46,6 +47,9 @@ def coherent(monkeypatch):
     # any owned executable bytes or accepting a production fixture fallback.
     monkeypatch.setattr(
         native, "EXECUTABLE_SHA256", hashlib.sha256(executable).hexdigest()
+    )
+    monkeypatch.setattr(
+        source_witnesses, "EXECUTABLE_SHA256", hashlib.sha256(executable).hexdigest()
     )
     pointer = 0x80100000
     base = pointer - 0x80000000
@@ -347,6 +351,9 @@ def test_native_table_pointer_cannot_read_executable_header_or_outside_payload(
     struct.pack_into("<I", executable, 0x800 + 0x9DFD0 - 0x10000, pointer)
     monkeypatch.setattr(
         native, "EXECUTABLE_SHA256", hashlib.sha256(executable).hexdigest()
+    )
+    monkeypatch.setattr(
+        source_witnesses, "EXECUTABLE_SHA256", hashlib.sha256(executable).hexdigest()
     )
     with pytest.raises(native.ContractError, match="outside the executable payload"):
         native.audit_capture(bytes(executable), coherent.ram, (coherent.source,))
