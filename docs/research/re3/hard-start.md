@@ -221,3 +221,65 @@ The retained checkpoint has released native controller buttons and matching sele
 - 2026-11-06 UTC; independent internal reviewer, exact verified model `gpt-6.1-sol`, effort `xhigh`; found no issues in the record and evidence. Checked all 19 documented fingerprints, 64 manifest entries, GDB register/PC and delay-slot sequence, input readbacks, pinned code/condition formulas, source-audit limits, settings, callback removal, process exit and field widths. No emulator operation, proof rerun, new tests, edits or user-history access occurred.
 - 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; independently rehashed the 64 artifacts, checked all five PC/register stops and the source/live flags, linked the existing numeric map-input alias and retained Candidate/no-reentry limits. No new emulator observation or restore is implied by this integration.
 - 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash`, high reasoning through Antigravity; returned no findings on the claim, verification/cleanup reports, GDB record data, source inference and pinned native disassembly excerpts. Review covered address/bit arithmetic, actual versus inferred execution, requested versus observed inputs, failed-probe and checkpoint limits, provenance and cleanup claims. It inspected only the supplied snapshot, used no tools and supplied no new runtime validation. Claude Opus 5.5 remained disabled and supplied no review.
+
+## RE3-INPUT-005: ordinary input reverses a floor change within one loaded source
+
+Status: Candidate bounded native floor-cycle and caller observation. One isolated session observed floor 1/Y=-1800 → floor 2/Y=-3600 → floor 1/Y=-1800. No ordinary room departure/reentry or sufficient campaign/Hard admission rule was established. [RE3-INPUT-004](#re3-input-004-ordinary-reentry-attempt-reaches-a-disabled-collision-record) retains the earlier failed route and disabled-record evidence unchanged.
+
+The revision is Resident Evil 3: Nemesis, PS1, NTSC-U, SLUS-00923. The owned CUE SHA256 is `ffb65655915a792780922cbf5a925235d223017cbf317c1551e9748d37451b2f`; image SHA256 is `d6c828dc92d50b28fd58329dbe607d4d22eeaeb1d9a46be54ac81b130fc2c7a6`. `SLUS_009.23` SHA256 is `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. DuckStation is `0.1-12083-g00e299795`, binary SHA256 `5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173`.
+
+### Source premise and observed floor update
+
+The retained live registry corrected the partial door census. Native ordinary creator `0x61` at `0x80055B5C` consumes 32 bytes; four-point creator `0x62` at `0x80055BBC` consumes 40, with SAT mask `0x80` selecting its geometry/payload layout. The 32-slot u32 registry at `0x800CC890` contained two kind-1 descriptors, both canonical ordinary commands in procedure 18. Neither activated on floor 1. The second door's native unlock/item checks remained unsatisfied, so this session attempted no door. Raw `0x61/62` bytes inside canonical item packets were excluded from the census. This does not close all script/callback routes or validate four-point doors at runtime.
+
+The new premise was active collision record 6 at source offset 22788, PS1 virtual `0x8012000C`, separate from disabled record 24. Its 16 bytes have SHA256 `7faf0969724637958faafa17d3b645348fdf95b0a485e249f5778e1f642c3add`. Source inspection gives kind 10, flags `0xFE7A`, X bounds [-15094,-12584], Z bounds [-25805,-24185] and floor bytes [1,2]. The source-derived height model predicts -1800 at the southern edge and -3600 at the northern edge. `source-route.json` preserves the pre-session derivation and native code-window hashes. The selected record and type-10 dispatch were not dynamically stopped; their association with the observed route remains source inference.
+
+Native Left/Right/Up input staged the player below that rectangle. The bounded captures show the following released-input states; health remained 200.
+
+| Capture | XYZ i32 | Floor i8 | RAM SHA256 |
+| --- | --- | ---: | --- |
+| `ramp-lower-before` | [-14039,-1800,-23601] | 1 | `97e05bf48f67984d80cc509187807fc849c0217ec1b724219b22f1a7a107a3dc` |
+| `ramp-upper-after` | [-14096,-3600,-25812] | 2 | `0f6e571e598af1b74c0aff6f71c9a81f2aeeb7d474617009b7914284162021c9` |
+| `ramp-lower-returned` | [-14145,-1800,-23745] | 1 | `68b0506065ad0fd3ab1dd9aca9674395edb2d2b91739cfd8f97125591bb09f77` |
+
+During ascent, actual GDB register reads retained 59 player entries to original `0x8004B7E8`, with A0=`0x800CCBC4` and RA=`0x80033C7C`. The last entry had A2=-3600, pose [-14096,-3574,-25812] and floor 1. After executing the original function, the actual return at `0x80033C7C` had Y=-3600 and floor 2. Source instructions store height at actor+`0x122`, floor at +9, and Y at +`0x38`; these instructions were not individually stepped. The entry/return brackets and changed live fields witness that update. The descent retained intermediate Y=-3164/-2527 and the stable lower endpoint, without another traced function return. All registers here came from the live GDB `g` response, not decoded checkpoint CPU state.
+
+### Stationary caller evidence and field contract
+
+After descent, with input released, original dispatcher entry `0x80038C7C` had A0=`0x800CCBC4`, RA=`0x80023F14`, SP=`0x1F8003FC`. Normal-handler entry `0x80039020` then had RA=`0x80038D34`, SP=`0x1F8003CC`. A bounded four-byte read at scratchpad `SP+0x2C`, address `0x1F8003F8`, returned `14 3F 02 80`, saved outer return `0x80023F14`; that original return was also observed. Scratchpad lies outside the direct 2 MiB RAM images. This is additional caller evidence only. It does not prove a sufficient admission gate, read coherence or writer ownership across future polls.
+
+All addresses are PS1 virtual addresses and multibyte data is little endian. RE3-INPUT-004's selector/source/control/input field contract applies. XYZ at `0x800CCBF8` is three i32, floor at `0x800CCBCD` is i8 and height at `0x800CCCE6` is i16, each using its full-width mask. Actor flags at `0x800CCBC4` are u32; the Y-write guard reads mask `0x400`, observed clear. This differs from the actor u16 flags at `0x800CCC0A`. Facing at `0x800CCC32` is u16, with phase mask `0x0FFF`; raw values above 4095 are retained. GPRs and the scratchpad return word are u32 with full `0xFFFFFFFF` masks.
+
+All four bounded RAM captures, including the loaded baseline, independently matched `CD_DATA/STAGE1/R101.ARD` after checking all 169 native source-table rows. RDT SHA256 was `5bccb836c34e1b62121928f6dba0b34b93fa5645e4f3789659686d9d6a7921e2`; source/allocation pointers stayed `0x8011A708`. The 165280-byte source-file window fits RAM but does not establish allocation extent. Lifecycle was `0x28001000`, control/menu/pause were zero at the settled captures; these values do not supply a positive campaign/Hard classifier.
+
+| Pinned EXE interval, end exclusive | SHA256 |
+| --- | --- |
+| Floor writer `[0x8004B7E8,0x8004B874)` | `2706e1ae33bad6671c1251de186091bad57754eda60b1e1a2dbae0c7e72a0302` |
+| Regular caller `[0x80023ED0,0x80023F28)` | `ef61ed40e753707b99d7999dac37a934e3f6df4f2f3777589ae30df59be063cc` |
+| Dispatcher `[0x80038C7C,0x80038D34)` | `1c227b39126626edb098b9bb9ae6a53cf194c1d2b053159bb96b84d6e49cc7d2` |
+
+### Reproduction, isolation and evidence
+
+Private evidence is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-active-ramp-20261106-qqermggo/`. `verify.py` reproduces the source audit from owned media, verifies field changes/code bytes/caller words and checks all 64 earlier manifest entries unchanged. The new manifest lists 32 files, excluding private application/resources. Its source premise intentionally retains its original pre-session status.
+
+Load the retained `post-event-native.sav` hash from RE3-INPUT-004 into a freshly isolated, ownership-checked instance. Repeat the settings checks before every load. Follow `input-timing.json` and native readbacks to stage below the verified rectangle, walk north to the upper endpoint, release, turn and walk south to the lower endpoint. F13/F15/F16 toggle native Up/Left/Right. Each execution interval was at most five seconds. The ascent trace uses host execute callbacks at original entry/return; remove callbacks before continuing. Temporary scripts require fresh private paths, PID and port rather than reuse of the old launch manifest.
+
+Host durations were not frame-exact. The logs preserve delayed/missed toggles, an ineffective Right request before descent, and an Up-release CUA timeout/reset. Native input/pose readbacks governed recovery. A private preparation syntax error and initial wrong controller path failed before guest access. `failed-observations.json` preserves these limits; the earlier failed Unicorn probe remains a failure. The retained native checkpoint is not an exact restore of the latest direct RAM image.
+
+Before the only game/checkpoint load, both `Achievements` and `Cheevos` had `Enabled=false`/`UseRAIntegration=false`, account keys and overrides were absent, `ApplyGameSettings=false`, cards were `None`, and resources were private. Gameplay stayed black and muted. No guest writes, patches, forced flags/pose/control/room changes, screenshots or user/tracker-history writes occurred. Cleanup released every input, removed all callbacks, closed both clients, stopped only owned PID 5997 and verified port 2385 listener absent and bindable, exit 0. Settings stayed byte-identical, SHA256 `d62498ba99a91b05a074240042a1746fb6e154ef63ba56cc9f2648e9607a5775`; CUA completed.
+
+| Private evidence | SHA256 |
+| --- | --- |
+| `source-route.json` | `a9e7f1b96b2736f2bcfd0142ae666d5d9326285bb5cd014f90c8cb1ab74dbc1b` |
+| `native-floor-update.json` | `b1352e3844d475f272f8ac38c2df8c3dae51b2a13377a3929c0e7e02653e69c2` |
+| `native-dispatch-caller.json` | `9ae06376f6bd453543329819b193169a2c6afa42aa3472915afe5ee9edf5dffc` |
+| `verification.json` | `45b5fbd9c7c8c1be3091846155a3af8a41a8a3ec5277dfa7603e2a5a29e50e85` |
+| `artifact-manifest.json` | `51f29a42349a04c8b9eec6a48b127d0120eb1a9ef58452692cc0d62340cc59eb` |
+
+This observation adds an ordinary reversible floor change within one loaded source. It establishes no item/door outcome, story meaning for numeric 3:9, room departure/reentry, memory-card persistence, map-layer ownership or general admission rule. Raw assets, RAM and saves remain private; hashes cannot replace missing temporary evidence.
+
+### Contribution and review
+
+- 2026-11-06 UTC; independent source/native investigator and documentation author, exact model `gpt-6.1-sol`, effort `xhigh`, reverified against matching session metadata and latest turn context; derived the new route premise, performed this isolated native-input cycle and stationary caller trace, authored the private verifier/manifest and appended this Candidate record. Original human/media, root and prior research authorship remains unchanged. No external review or new runtime validation is implied by documentation checks.
+- 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; independently checked all 96 current/prior manifest entries, four captures' pose/floor/height/health fields, retained live GPR/code consistency and the bounded scratchpad caller. A fresh offline audit reproduced the four source results against all 169 native rows, retaining unresolved admission. Root also checked unchanged private settings, process absence, port availability and the byte-identical earlier document prefix. Its first private verifier used the wrong health offset; the corrected `0x800CCC90` check passed without changing captures. Reproduction is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-ramp-integration-20261106-opec7yge/verify.py`, with `verification.json` SHA256 `8afc3c1a00e82c8111a98c095445c59f301ff7d87208eb309d1f9016ebc47361`. This integration adds no native execution, savestate restoration or sufficient admission proof.
+- 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash`, high reasoning through Antigravity; returned no findings on the new claim, source-route and verification records, selected native floor telemetry, complete caller record, pinned code bytes, failed observations and verifier. Review checked arithmetic/addresses/widths, observed versus inferred execution, chronology, input/checkpoint limits, source/lifecycle separation, provenance and cleanup. It used no tools and supplied no new runtime evidence. Claude Opus 5.5 remained disabled and supplied no review.
