@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         VerifiedOrdinaryTaskIngress,
     )
     from games.re2.startup_entry_selection import (
+        BoundEntryResources,
         EntrySelectionConfig,
         EntrySelectionResource,
         VerifiedEntrySelection,
@@ -129,6 +130,18 @@ class VerifiedStartupDeclarationContract:
             type(self.model_uv_address) is int
             and 0x8011A000 < self.model_uv_address < 0x801A1000
         )
+
+
+def startup_flag_banks_match(
+    profile: dict, contract: VerifiedStartupDeclarationContract
+) -> bool:
+    """Bind logical script banks to the pinned native pointer table."""
+    return all(
+        type(row["bank"]) is int
+        and 0 <= row["bank"] < len(contract.flag_addresses)
+        and int(row["address_ps1"], 0) == contract.flag_addresses[row["bank"]]
+        for row in profile["flag_banks"]
+    )
 
 
 def startup_declarations(
@@ -254,11 +267,7 @@ def startup_declarations(
             for r in profile["flag_banks"]
         }
         require(
-            all(
-                bank < len(contract.flag_addresses)
-                and address == contract.flag_addresses[bank]
-                for bank, (address, _width) in banks.items()
-            ),
+            startup_flag_banks_match(profile, contract),
             StartupDeclarationFailure.NativeContract,
         )
         require(
@@ -601,6 +610,7 @@ def startup_declaration_audit(
 
 @dataclass(frozen=True)
 class BoundStartupDeclarations:
+    entry_resources: BoundEntryResources
     declarations: VerifiedStartupDeclarationContract
     ordinary_ingress: VerifiedOrdinaryTaskIngress | OrdinaryTaskIngressFailure
 
@@ -711,6 +721,8 @@ def bind_startup_declaration_resources(
             actor_resource_width=tmd + body,
             model_uv_address=0x8018FFF0 - uv_width,
         )
-        return BoundStartupDeclarations(declarations, resources.ordinary_ingress)
+        return BoundStartupDeclarations(
+            resources, declarations, resources.ordinary_ingress
+        )
     except (KeyError, TypeError, ValueError, IndexError, struct.error):
         return StartupDeclarationFailure.NativeContract

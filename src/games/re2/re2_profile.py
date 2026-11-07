@@ -23,6 +23,7 @@ from games.re2.initializer_control_proof import (
     initializer_control_config,
 )
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
+from games.re2.positive_prefix import PositivePrefixPolicy, positive_prefix_policy
 from games.re2.room_entry_contract import (
     RoomEntryContractConfig,
     RoomEntryContractFailure,
@@ -189,6 +190,7 @@ class Re2Profile:
         startup_audit = startup_effect_audit(raw)
         control_config = initializer_control_config(raw)
         declaration_config = startup_declaration_audit(raw)
+        positive_policy = positive_prefix_policy(raw)
         entry_contract = room_entry_contract(raw)
         if isinstance(entry_contract, RoomEntryContractFailure):
             raise ValueError(entry_contract.value)
@@ -735,8 +737,14 @@ class Re2Profile:
                     or type(proof["slot"]) is not int
                     or not 0 <= proof["slot"] < layout["aot_capacity"]
                     or type(room.get("stage")) is not int
-                    or room["stage"] != 0
+                    or (
+                        room["stage"] != 0
+                        and positive_policy
+                        is not PositivePrefixPolicy.TrustedNormalEngine
+                    )
                     or room["stage"] not in entry_stages
+                    or type(room.get("room")) is not int
+                    or key != f"{room['stage']:02x}-{room['room']:02x}"
                     or type(room.get("size")) is not int
                     or type(room.get("scenario_absent_item_ids")) is not list
                     or proof["global_id"] in room["scenario_absent_item_ids"]
@@ -756,8 +764,9 @@ class Re2Profile:
                     )
                 ):
                     raise ValueError("invalid RE2 known direct-pickup proof")
-                # The source/routing receipt qualifies stage zero only. Its
-                # exact corpus identity is required even for an empty context.
+                # Legacy routing qualifies stage zero. The separate explicit
+                # positive policy may use ordinary ingress on other bound
+                # stages; every record still needs its exact corpus identity.
                 if key not in declaration_sources or (
                     room.get("source"),
                     room.get("size"),

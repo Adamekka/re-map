@@ -22,11 +22,13 @@ from games.re2.initializer_control_proof import (
     InitializerControlProof,
     initializer_control_config,
     initializer_control_proof,
+    native_switch_labels,
 )
 from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
 )
+from games.re2.positive_prefix import VerifiedNormalEnginePositivePrefix
 from games.re2.room_data import reset_item_variants
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
 from games.re2.room_sound_bindings import RoomSoundBindings, room_sound_bindings
@@ -48,12 +50,20 @@ from games.re2.scenario_selection import (
     scenario_context_layout,
     scenario_source_write_witnesses,
 )
-from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
+from games.re2.script_control_limits import (
+    NATIVE_CALL_FRAME_COUNT,
+    NATIVE_IF_FRAME_COUNT,
+    NATIVE_LOOP_FRAME_COUNT,
+)
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.re2.startup_declarations import (
     StartupDeclarationSupport,
     VerifiedStartupDeclarationContract,
 )
+
+
+class _PrefixPolicy(Enum):
+    Legacy = "legacy strict prefix"
 
 
 class KnownDeclaredItemFailure(Enum):
@@ -183,6 +193,60 @@ def known_declared_items(
         and isinstance(scenario_entries, VerifiedScenarioEntryScope)
     ), "scenario prefix knowledge requires both independent native receipts"
 
+    return _known_declared_items(
+        data,
+        room,
+        profile,
+        entry_contract,
+        dispatch,
+        declaration_contract,
+        scenario_context,
+        scenario_entries,
+        _PrefixPolicy.Legacy,
+    )
+
+
+def known_declared_items_from_prefix(
+    data: bytes,
+    room: dict,
+    profile: dict,
+    entry_contract: VerifiedRoomEntryContract,
+    dispatch: ScriptItemDispatchConfig,
+    prefix: VerifiedNormalEnginePositivePrefix,
+) -> KnownDeclaredItems | KnownDeclaredItemFailure:
+    """Consume separate normal-engine authority with the shared target compiler."""
+    assert type(prefix) is VerifiedNormalEnginePositivePrefix
+    assert type(entry_contract) is VerifiedRoomEntryContract
+    assert type(dispatch) is ScriptItemDispatchConfig
+    if not prefix.matches(data, room, profile, prefix.context.declaration_contract):
+        return KnownDeclaredItemFailure.InputBinding
+    return _known_declared_items(
+        data,
+        room,
+        profile,
+        entry_contract,
+        dispatch,
+        prefix.context.declaration_contract,
+        prefix.context,
+        ScenarioSelectionSupport.Unaudited,
+        prefix,
+    )
+
+
+def _known_declared_items(
+    data,
+    room,
+    profile,
+    entry_contract,
+    dispatch,
+    declaration_contract,
+    scenario_context,
+    scenario_entries,
+    positive_prefix,
+) -> KnownDeclaredItems | KnownDeclaredItemFailure:
+    trusted = type(positive_prefix) is VerifiedNormalEnginePositivePrefix
+    entries = positive_prefix if trusted else scenario_entries
+
     def require(condition: bool, reason=KnownDeclaredItemFailure.InputBinding) -> None:
         if not condition:
             raise _InvalidTarget(reason)
@@ -219,7 +283,7 @@ def known_declared_items(
         source_witnesses = ScenarioSelectionSupport.Unaudited
         immutable = {}
         if scoped:
-            assert isinstance(scenario_entries, VerifiedScenarioEntryScope)
+            assert trusted or isinstance(scenario_entries, VerifiedScenarioEntryScope)
             assert isinstance(scenario_context, VerifiedScenarioContext)
             scenario_layout = scenario_context_layout(profile)
             require(
@@ -228,10 +292,18 @@ def known_declared_items(
                 and scenario_context.status_address == scenario_layout.status_address
                 and scenario_context.scenario_mask == scenario_layout.scenario_mask
                 and scenario_context.fixed_flags == scenario_layout.fixed_flags
-                and scenario_entries.executable_sha256
+                and (
+                    positive_prefix.resources.selection.executable_sha256
+                    if trusted
+                    else scenario_entries.executable_sha256
+                )
                 == entry_contract.executable_sha256
-                and scenario_entries.matches_source(data, programs)
-                and {"16:0", "17:0"} <= scenario_entries.protected_programs,
+                and (
+                    positive_prefix.matches(data, room, profile, declaration_contract)
+                    if trusted
+                    else scenario_entries.matches_source(data, programs)
+                )
+                and {"16:0", "17:0"} <= entries.protected_programs,
                 KnownDeclaredItemFailure.NativeContract,
             )
             source_witnesses = scenario_source_write_witnesses(data, room, profile)
@@ -259,9 +331,16 @@ def known_declared_items(
             return physical_flag_key(bank, bit)
 
         if scoped:
+            # The new policy explicitly supplies historical native mode
+            # ownership. Current RAM is only a fresh consumer guard, never the
+            # source of this historical premise. Saved story bits stay unknown.
             immutable = {
                 flag_key(bank, bit): bool(value)
-                for bank, bit, value in scenario_context.fixed_flags
+                for bank, bit, value in (
+                    positive_prefix.historical_flags
+                    if trusted
+                    else scenario_context.fixed_flags
+                )
             }
 
         save_base = int(layout["save_block_address_ps1"], 0)
@@ -445,7 +524,9 @@ def known_declared_items(
                     # omit historical entries where only one setting differed.
                     break
         required_settings = [
-            row for row in fixed_rows if flag_key(row["bank"], row["bit"]) in fixed
+            row
+            for row in fixed_rows
+            if trusted or flag_key(row["bank"], row["bit"]) in fixed
         ]
 
         def context_conditions():
@@ -483,6 +564,12 @@ def known_declared_items(
                     # initialized incoming actor domain. Source selection is
                     # still mandatory; this does not invent a room route.
                     direct_eligible = bool(incoming)
+        if trusted:
+            # All ordinary inbound DO2 models come from the complete binder;
+            # legacy selection.stages and the old positive audit stay intact.
+            direct_eligible = positive_prefix.resources.ordinary_ingress.covers(
+                data, room
+            )
         model_writes = {row.command_offset: row for row in partitions.objects}
         # Tokens describe identities rather than one branch's source offset.
         # Alternate declarations can therefore agree without selecting a variant.
@@ -534,7 +621,7 @@ def known_declared_items(
         def branch(key, row, frames, values, work, native_predicates):
             if row["opcode"] == 6:
                 require(
-                    len(frames) < 8 and row["target"] > row["next"],
+                    len(frames) < NATIVE_IF_FRAME_COUNT and row["target"] > row["next"],
                     KnownDeclaredItemFailure.Prefix,
                 )
                 following, matches = row["next"], []
@@ -958,9 +1045,9 @@ def known_declared_items(
         # leading-mode closure. They apply to every historical startup prefix.
         fixed |= immutable
 
-        def prefix(key, position, returns, frames, loaded, work, found, seen):
+        def prefix(key, position, returns, frames, loops, loaded, work, found, seen):
             nonlocal steps
-            state = key, position, returns, frames
+            state = key, position, returns, frames, loops
             require(
                 len(seen) < 256 and state not in seen and position in commands[key],
                 KnownDeclaredItemFailure.Prefix,
@@ -978,7 +1065,7 @@ def known_declared_items(
             row = commands[key][position]
             if scoped:
                 require(
-                    key in scenario_entries.protected_programs,
+                    key in entries.protected_programs,
                     KnownDeclaredItemFailure.NativeContract,
                 )
             prefix_packets.add((position, row["next"] - position))
@@ -997,19 +1084,31 @@ def known_declared_items(
                 for target, next_frames in branch(
                     key, row, frames, fixed, work, scoped
                 ):
-                    prefix(key, target, returns, next_frames, loaded, work, found, seen)
+                    prefix(
+                        key,
+                        target,
+                        returns,
+                        next_frames,
+                        loops,
+                        loaded,
+                        work,
+                        found,
+                        seen,
+                    )
                 return
             if row["kind"] == "end":
                 require(
-                    packet == b"\x01\0" and not frames, KnownDeclaredItemFailure.Prefix
+                    packet == b"\x01\0" and (trusted or not frames),
+                    KnownDeclaredItemFailure.Prefix,
                 )
                 if returns:
-                    caller, target, caller_frames = returns[-1]
+                    caller, target, caller_frames, caller_loops = returns[-1]
                     prefix(
                         caller,
                         target,
                         returns[:-1],
                         caller_frames,
+                        caller_loops,
                         loaded,
                         work,
                         found,
@@ -1019,6 +1118,7 @@ def known_declared_items(
                     prefix(
                         "17:0",
                         programs["17:0"]["entry"],
+                        (),
                         (),
                         (),
                         loaded,
@@ -1038,13 +1138,66 @@ def known_declared_items(
                 prefix(
                     callee,
                     programs[callee]["entry"],
-                    returns + ((key, row["next"], frames),),
+                    returns + ((key, row["next"], frames, loops),),
+                    (),
                     (),
                     loaded,
                     work,
                     found,
                     seen,
                 )
+                return
+            if trusted and opcode == 0x13:
+                end, labels = native_switch_labels(
+                    data, position, programs[key]["limit"]
+                )
+                require(
+                    len(loops) < NATIVE_LOOP_FRAME_COUNT
+                    and end in commands[key]
+                    and all(at in commands[key] for at in labels),
+                    KnownDeclaredItemFailure.Prefix,
+                )
+                switch = end, labels, frames
+                # Native search can take every case, a default, or the closing
+                # marker for no match. Walk bodies rather than guessing a merge.
+                for at in labels:
+                    label = commands[key][at]
+                    prefix(
+                        key,
+                        at if label["opcode"] == 0x16 else label["next"],
+                        returns,
+                        frames,
+                        loops + (switch,),
+                        loaded,
+                        work,
+                        found,
+                        seen,
+                    )
+                return
+            if trusted and opcode in (0x14, 0x15, 0x16, 0x1A):
+                require(bool(loops), KnownDeclaredItemFailure.Prefix)
+                end, labels, saved_frames = loops[-1]
+                require(
+                    opcode == 0x1A or position in labels,
+                    KnownDeclaredItemFailure.Prefix,
+                )
+                if opcode in (0x16, 0x1A):
+                    require(frames == saved_frames, KnownDeclaredItemFailure.Prefix)
+                    prefix(
+                        key, end, returns, frames, loops[:-1], loaded, work, found, seen
+                    )
+                else:
+                    prefix(
+                        key,
+                        row["next"],
+                        returns,
+                        frames,
+                        loops,
+                        loaded,
+                        work,
+                        found,
+                        seen,
+                    )
                 return
             if scoped and opcode == 0x13:
                 proof = prefix_control(key)
@@ -1071,7 +1224,7 @@ def known_declared_items(
                     for item in programs[key]["commands"]
                     if position <= item["offset"] < edge
                 )
-                prefix(key, edge, returns, frames, loaded, work, found, seen)
+                prefix(key, edge, returns, frames, loops, loaded, work, found, seen)
                 return
             if opcode == 0:
                 pass
@@ -1120,6 +1273,11 @@ def known_declared_items(
                 if position in callbacks:
                     slot, procedure = callbacks[position]
                     found = found | {("callback", slot, procedure)}
+            elif trusted and opcode in (0x37, 0x44):
+                # Neutral source/write validation checked the actual SCA and
+                # constructor operands. Native loading, suspension and record
+                # ownership use the explicitly approved initialized engine.
+                pass
             elif opcode == 0x2D:
                 model = model_writes[position].model
                 if not (
@@ -1132,22 +1290,31 @@ def known_declared_items(
                         ),
                     )
                     and isinstance(model, EmbeddedModelResource)
-                    and packet[1] not in loaded.slots
                     and (
-                        model.asset.offset not in loaded.assets
-                        or model.asset.offset == loaded.last_asset
+                        trusted
+                        or (
+                            packet[1] not in loaded.slots
+                            and (
+                                model.asset.offset not in loaded.assets
+                                or model.asset.offset == loaded.last_asset
+                            )
+                            and source_address
+                            + partitions.heap_floor
+                            + loaded.heap_width
+                            + model.primitive_heap_width
+                            <= 0x8018EF3C
+                        )
                     )
-                    and source_address
-                    + partitions.heap_floor
-                    + loaded.heap_width
-                    + model.primitive_heap_width
-                    <= 0x8018EF3C
                 ):
                     outcomes.append(found)
                     return
-                # Native CE54C skips relocation only for the last loaded asset.
-                # Every object still allocates fresh primitive packets below
-                # the revision's shared model/UV work at 0x8018EF3C.
+                # Legacy work tracks relocation and allocation below the UV
+                # arena. The new policy trusts that native lifetime while
+                # retaining these same source resources and record operands.
+                require(
+                    isinstance(model, EmbeddedModelResource),
+                    KnownDeclaredItemFailure.Prefix,
+                )
                 loaded = _ModelSetup(
                     loaded.assets | {model.asset.offset},
                     loaded.slots | {packet[1]},
@@ -1232,11 +1399,12 @@ def known_declared_items(
             else:
                 outcomes.append(found)
                 return
-            prefix(key, row["next"], returns, frames, loaded, work, found, seen)
+            prefix(key, row["next"], returns, frames, loops, loaded, work, found, seen)
 
         prefix(
             "16:0",
             programs["16:0"]["entry"],
+            (),
             (),
             (),
             # Native object initialization clears CE54C and selects the source

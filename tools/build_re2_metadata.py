@@ -39,11 +39,21 @@ from games.re2.initializer_control_proof import (
     initializer_control_config,
     initializer_control_proof,
 )
-from games.re2.known_puzzle_items import KnownDeclaredItems, known_declared_items
+from games.re2.known_puzzle_items import (
+    KnownDeclaredItems,
+    known_declared_items,
+    known_declared_items_from_prefix,
+)
 from games.re2.map_layout import Re2MapProjection
 from games.re2.ordinary_task_ingress import (
     OrdinaryTaskIngressFailure,
     VerifiedOrdinaryTaskIngress,
+)
+from games.re2.positive_prefix import (
+    PositivePrefixPolicy,
+    VerifiedNormalEnginePositivePrefix,
+    normal_engine_positive_prefix,
+    positive_prefix_policy,
 )
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
@@ -225,6 +235,7 @@ def verify_actor_part_resource(
 
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     target = re2_target(profile)
+    positive_policy = positive_prefix_policy(profile)
     effect_pool = scenario_effect_pool(profile)
     vibration_writes = scenario_vibration_writes(profile)
     actor_parts = scenario_actor_parts(profile)
@@ -424,8 +435,8 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             if isinstance(scenario_context, VerifiedScenarioContext)
             else ScenarioSelectionSupport.Unaudited
         )
-        # Normal native execution is trusted only for scenario filtering. Keep
-        # its receipt separate from the stricter positive-presence compiler.
+        # Guard authority stays separate from both positive entry points. The
+        # new prefix policy derives its own source-bound authority below.
         guard_scope = (
             scenario_guard_scope(
                 sources[room["id"]],
@@ -551,6 +562,51 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                         else ScenarioSelectionSupport.Unaudited
                     ),
                 )
+                if (
+                    isinstance(declaration_config, StartupDeclarationAuditConfig)
+                    and positive_policy is PositivePrefixPolicy.TrustedNormalEngine
+                ):
+                    prefix = normal_engine_positive_prefix(
+                        sources[room["id"]], room, profile, bound
+                    )
+                    if isinstance(prefix, VerifiedNormalEnginePositivePrefix):
+                        positives = known_declared_items_from_prefix(
+                            sources[room["id"]],
+                            room,
+                            profile,
+                            entry_contract,
+                            dispatch,
+                            prefix,
+                        )
+                        if isinstance(positives, KnownDeclaredItems):
+                            previous = (
+                                targets
+                                if isinstance(targets, KnownDeclaredItems)
+                                else KnownDeclaredItems((), ())
+                            )
+                            existing = {
+                                item.global_id
+                                for item in (
+                                    *previous.puzzle_items,
+                                    *previous.direct_pickups,
+                                )
+                            }
+                            # Preserve legacy records exactly; only additional
+                            # positive facts use the explicit new policy.
+                            targets = KnownDeclaredItems(
+                                previous.puzzle_items
+                                + tuple(
+                                    item
+                                    for item in positives.puzzle_items
+                                    if item.global_id not in existing
+                                ),
+                                previous.direct_pickups
+                                + tuple(
+                                    item
+                                    for item in positives.direct_pickups
+                                    if item.global_id not in existing
+                                ),
+                            )
                 # A declared puzzle requirement is independent of current
                 # access and cannot supply missing variants or list coverage.
                 room["known_puzzle_items"] = (

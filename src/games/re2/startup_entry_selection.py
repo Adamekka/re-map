@@ -181,6 +181,8 @@ class VerifiedEntrySelection:
 class BoundEntryResources:
     selection: VerifiedEntrySelection
     ordinary_ingress: VerifiedOrdinaryTaskIngress | OrdinaryTaskIngressFailure
+    executable: bytes
+    corpus: BoundAuxiliaryCorpus
 
 
 @dataclass(frozen=True)
@@ -603,19 +605,14 @@ def bind_entry_resources(
         from games.re2.ordinary_task_ingress import ordinary_task_ingress
 
         bound_routes = tuple(route_witnesses[row.room_id] for row in config.sources)
-        return BoundEntryResources(
+        corpus = BoundAuxiliaryCorpus(
             selection,
-            ordinary_task_ingress(
-                executable,
-                BoundAuxiliaryCorpus(
-                    selection,
-                    tuple(auxiliaries),
-                    _AuxiliaryCorpusDerivation(
-                        selection, tuple(auxiliaries), bound_routes
-                    ),
-                    bound_routes,
-                ),
-            ),
+            tuple(auxiliaries),
+            _AuxiliaryCorpusDerivation(selection, tuple(auxiliaries), bound_routes),
+            bound_routes,
+        )
+        return BoundEntryResources(
+            selection, ordinary_task_ingress(executable, corpus), executable, corpus
         )
     except (KeyError, IndexError, TypeError, ValueError, struct.error, AssertionError):
         return EntrySelectionFailure.Routing

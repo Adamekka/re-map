@@ -1,6 +1,6 @@
 """Source entries and scenario guards under separate native execution contracts.
 
-Normal-engine trust applies only to scenario filtering. Both policies retain
+Separate normal-engine policies cover guards and positive prefixes. All retain
 source-directed control and write checks; neither claims arbitrary-pointer or
 DMA safety.
 """
@@ -8,7 +8,9 @@ DMA safety.
 from __future__ import annotations
 
 import hashlib
+import json
 import struct
+from dataclasses import dataclass
 from enum import Enum
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
@@ -48,6 +50,15 @@ class _UnprovedEntry(Exception):
 class _ScopePolicy(Enum):
     AuditedNativeWork = "audited native work"
     TrustedNormalEngine = "trusted normal engine"
+    TrustedPositivePrefix = "trusted normal positive prefix"
+
+
+@dataclass(frozen=True)
+class _SourceScopeFacts:
+    source_sha256: str
+    programs_sha256: str
+    protected_programs: frozenset[str]
+    entry_locations: frozenset[tuple[str, int]]
 
 
 # RE2-SCENARIO-006: these additional selectors write Work+0/2 u16, +7 u8,
@@ -149,7 +160,7 @@ def scenario_entry_scope(
     data: bytes, room: dict, profile: dict, context: VerifiedScenarioContext
 ) -> VerifiedScenarioEntryScope | ScenarioSelectionFailure:
     """Qualify entries under the audited initialized-native-work recipe."""
-    result = _scenario_scope(
+    result = _source_scope_facts(
         data,
         room,
         profile,
@@ -157,8 +168,17 @@ def scenario_entry_scope(
         _ScopePolicy.AuditedNativeWork,
         TaskControlSupport.Unaudited,
     )
-    assert isinstance(result, (VerifiedScenarioEntryScope, ScenarioSelectionFailure))
-    return result
+    if isinstance(result, ScenarioSelectionFailure):
+        return result
+    return VerifiedScenarioEntryScope(
+        SCENARIO_ENTRY_AUDIT,
+        SCENARIO_NATIVE_WORK_AUDIT,
+        SCENARIO_EXECUTABLE_SHA256,
+        result.source_sha256,
+        result.programs_sha256,
+        result.protected_programs,
+        result.entry_locations,
+    )
 
 
 def scenario_guard_scope(
@@ -169,21 +189,30 @@ def scenario_guard_scope(
     control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
 ) -> VerifiedScenarioGuardScope | ScenarioSelectionFailure:
     """Qualify scenario guards while trusting normal native engine execution."""
-    result = _scenario_scope(
+    result = _source_scope_facts(
         data, room, profile, context, _ScopePolicy.TrustedNormalEngine, control
     )
-    assert isinstance(result, (VerifiedScenarioGuardScope, ScenarioSelectionFailure))
-    return result
+    if isinstance(result, ScenarioSelectionFailure):
+        return result
+    return VerifiedScenarioGuardScope(
+        SCENARIO_GUARD_AUDIT,
+        SCENARIO_TRUSTED_NATIVE_AUDIT,
+        SCENARIO_EXECUTABLE_SHA256,
+        result.source_sha256,
+        result.programs_sha256,
+        result.protected_programs,
+        result.entry_locations,
+    )
 
 
-def _scenario_scope(
+def _source_scope_facts(
     data: bytes,
     room: dict,
     profile: dict,
     context: VerifiedScenarioContext,
     policy: _ScopePolicy,
     control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
-) -> VerifiedScenarioEntryScope | VerifiedScenarioGuardScope | ScenarioSelectionFailure:
+) -> _SourceScopeFacts | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
     Source/record writers are checked against all protected packets by the
@@ -204,7 +233,7 @@ def _scenario_scope(
         require(bind_scenario_context(profile, context.declaration_contract) == context)
         if isinstance(control, VerifiedSourceTaskControl):
             require(
-                policy is _ScopePolicy.TrustedNormalEngine
+                policy is not _ScopePolicy.AuditedNativeWork
                 and control.matches(data, room, context)
             )
         layout = profile["runtime_layout"]
@@ -252,6 +281,22 @@ def _scenario_scope(
                 )
             )
         )
+        if policy is _ScopePolicy.TrustedPositivePrefix:
+            # Exact JSON types matter: Python equality alone equates True/1
+            # and can otherwise accept substituted decoded operands.
+            require(
+                all(
+                    json.dumps(decoded[field], sort_keys=True)
+                    == json.dumps(room[field], sort_keys=True)
+                    for field in (
+                        "items",
+                        "doors",
+                        "reset_item_variants",
+                        "programs",
+                        "candidate_list_complete",
+                    )
+                )
+            )
         programs = room["programs"]
         require(all(key in programs for key in ("16:0", "17:0", "17:1")))
         commands = {
@@ -278,6 +323,23 @@ def _scenario_scope(
             for _, row in rows
             if row["opcode"] in (0x23, 0x32, 0x6D)
         ]
+        if policy is _ScopePolicy.TrustedPositivePrefix:
+            from games.re2.event_presence import flag_write_conflicts
+            from games.re2.scenario_items import scenario_flags
+
+            banks = {
+                r["bank"]: (int(r["address_ps1"], 0), r["width"])
+                for r in profile["flag_banks"]
+            }
+            _, aliases = flag_write_conflicts(
+                banks, frozenset((r["bank"], r["bit"]) for r in scenario_flags(profile))
+            )
+            scalar_immediates.extend(
+                (r["offset"] + 2, r["offset"] + 3)
+                for _, r in rows
+                if r["kind"] == "flag_check"
+                and not any(bank == r["bank"] for bank, _ in aliases)
+            )
         require(
             all(
                 any(
@@ -295,7 +357,7 @@ def _scenario_scope(
             # 00100000/00000100 are disjoint from fixed scenario bits.
             require(
                 opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
-                or policy is _ScopePolicy.TrustedNormalEngine
+                or policy is not _ScopePolicy.AuditedNativeWork
                 and opcode in (0x2A, 0x64, 0x65, 0x85)
             )
             if row["kind"] == "call":
@@ -325,11 +387,13 @@ def _scenario_scope(
                 # task receipt additionally qualifies fresh IF stores and all
                 # receiving-field consumers without granting a general Goto.
                 require(
-                    policy is _ScopePolicy.TrustedNormalEngine
+                    policy is not _ScopePolicy.AuditedNativeWork
                     and key.startswith("17:")
                     and packet[1:4] == b"\xff\xff\0"
                     and (
-                        isinstance(control, VerifiedSourceTaskControl)
+                        policy is _ScopePolicy.TrustedPositivePrefix
+                        and row["target"] in commands[key]
+                        or isinstance(control, VerifiedSourceTaskControl)
                         and (key, row["offset"]) in control.gotos
                         or row["target"] == programs[key]["entry"]
                         and all(
@@ -397,8 +461,13 @@ def _scenario_scope(
                 # including the animation semaphore, not pointer selectors.
                 require(
                     packet[1] in (15, 16, 23, 29)
-                    or policy is _ScopePolicy.TrustedNormalEngine
+                    or policy is not _ScopePolicy.AuditedNativeWork
                     and packet[1] in _TRUSTED_SCALAR_MEMBERS
+                    # Native 80055D94 stores only Work+1D6 u16. Its normal
+                    # actor ownership belongs to the new positive premise;
+                    # guard and strict entry selector domains stay unchanged.
+                    or policy is _ScopePolicy.TrustedPositivePrefix
+                    and packet[1] == 24
                 )
             elif opcode == 0x44:
                 # The audited model's presets select states0/17/18. Their
@@ -411,7 +480,7 @@ def _scenario_scope(
                         # The trusted engine owns normal loading/AI lifetimes.
                         # Signed actor slots and model selectors still cannot
                         # direct construction outside the native tables.
-                        policy is _ScopePolicy.TrustedNormalEngine
+                        policy is not _ScopePolicy.AuditedNativeWork
                         and 0x10 <= packet[3] < 0x50
                         or packet[3] == 0x22
                         and int.from_bytes(packet[4:6], "little")
@@ -426,7 +495,7 @@ def _scenario_scope(
                 counter = packet[2] if opcode == 0x35 else packet[1]
                 require(
                     selector in (11, 12, 13, 14, 15, 16, 23)
-                    or policy is _ScopePolicy.TrustedNormalEngine
+                    or policy is not _ScopePolicy.AuditedNativeWork
                     and selector in _TRUSTED_SCALAR_MEMBERS
                 )
                 require(counter in counters and counter < 128)
@@ -454,6 +523,19 @@ def _scenario_scope(
                 require(packet[payload : payload + 3] == b"\xff\0\x18")
                 target = f"17:{packet[payload + 3]}"
                 require(target in programs)
+        if policy is _ScopePolicy.TrustedPositivePrefix:
+            require(
+                decoded["candidate_list_complete"] and calls_fit_native_frames(calls)
+            )
+            # Later FF/FF Gotos grant no prefix continuation. The positive
+            # walker stops there; normal native field ownership is the approved
+            # premise, rather than the old exhaustive task-memory theorem.
+            return _SourceScopeFacts(
+                room["sha256"],
+                programs_digest(programs),
+                frozenset(programs),
+                frozenset((key, p["entry"]) for key, p in programs.items()),
+            )
         for key, row in rows:
             if row["opcode"] == 0x47:
                 at = row["offset"]
@@ -463,7 +545,7 @@ def _scenario_scope(
                 # then add two to the new PC. Ordinary entries are insufficient.
                 require(bool(kinds))
                 if 5 in kinds:
-                    require(policy is _ScopePolicy.TrustedNormalEngine)
+                    require(policy is not _ScopePolicy.AuditedNativeWork)
                     if (
                         isinstance(control, VerifiedSourceTaskControl)
                         and (key, at) in control.dispatches
@@ -663,22 +745,7 @@ def _scenario_scope(
         # entry does not need startup exclusivity. Both native and explicit
         # entries still had to establish bounded fresh procedure frames above.
         protected = set(programs)
-        if policy is _ScopePolicy.TrustedNormalEngine:
-            # This receipt authorizes scenario filtering only. Positive
-            # declarations retain the independent audited native-work scope.
-            return VerifiedScenarioGuardScope(
-                SCENARIO_GUARD_AUDIT,
-                SCENARIO_TRUSTED_NATIVE_AUDIT,
-                SCENARIO_EXECUTABLE_SHA256,
-                room["sha256"],
-                programs_digest(programs),
-                frozenset(protected),
-                frozenset((key, programs[key]["entry"]) for key in protected),
-            )
-        return VerifiedScenarioEntryScope(
-            SCENARIO_ENTRY_AUDIT,
-            SCENARIO_NATIVE_WORK_AUDIT,
-            SCENARIO_EXECUTABLE_SHA256,
+        return _SourceScopeFacts(
             room["sha256"],
             programs_digest(programs),
             frozenset(protected),

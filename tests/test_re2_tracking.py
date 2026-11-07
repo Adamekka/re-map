@@ -741,7 +741,7 @@ def test_numeric_copy_and_music_setup_preserve_departed_ammo_after_rewind(snapsh
             89,
             ItemQuantityState.Unreconstructed,
             True,
-            RoomCompletion.Unknown,
+            RoomCompletion.Incomplete,
         ),
         ("00-12", 21, 24, 59, 1, True, RoomCompletion.Incomplete),
     ],

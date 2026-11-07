@@ -194,10 +194,12 @@ def test_side_entrance_exclusion_keeps_independent_checks_and_rewinds(snapshot):
         record = tracker.rooms["00-09"]
         assert record.list_complete and len(record.items) == 2
         assert [item.state for item in record.items] == [
-            "taken" if first else "unknown",
+            "taken" if first else "uncollected",
             "taken" if second else "unknown",
         ]
-        assert record.completion is RoomCompletion.Unknown
+        assert record.completion is (
+            RoomCompletion.Unknown if first else RoomCompletion.Incomplete
+        )
         fresh = Tracker()
         fresh.mark_current(RoomId(0, 9))
         assert poll_re2(profile, fresh, read).status is PollStatus.Display
@@ -368,7 +370,11 @@ def test_art_declared_pickups_remain_required_after_departure_and_rewind(snapsho
     source = profile.rooms["00-0b"]
     assert not source["fixed_context_preserved"]
     assert source["scenario_absent_item_ids"] == [98]
-    assert {item["global_id"] for item in source["known_direct_pickups"]} == {95, 99}
+    assert {item["global_id"] for item in source["known_direct_pickups"]} == {
+        95,
+        99,
+        220,
+    }
     registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
     for slot in range(32):
         put(registry + slot * 4, 0, 4)
