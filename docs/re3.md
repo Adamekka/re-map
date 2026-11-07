@@ -8,4 +8,6 @@ The [bounded Hard current-room reader](research/re3/live-reader.md) checks revis
 
 The [fresh map-position API](research/re3/live-reader.md#re3-live-002-fresh-native-map-position-under-current-room-guards) derives native group/row, numeric layer, projected coordinates and heading during that same guarded read. It uses the owned map resource and fresh world state because the map screen's cached row can be stale during gameplay. Numeric native layers do not establish tracker floors or room-owned outlines.
 
+A [native collectible test](research/re3/collectibles.md#re3-collect-001-one-native-pickup-survives-reentry-and-reverses-with-saves) observed one inventory pickup setting its acquisition bit, ordinary reentry preserving it, and exact earlier/later saves reversing and restoring it. A separate source-bound collectible API and complete item lists remain required.
+
 Use a separate revision profile and playthrough history. The intended tracker follows the existing [map behavior and controls](map-controls.md) and [collection-based room completion](room-completion.md). Game-derived item and door facts require fresh reads after savestate restoration.
