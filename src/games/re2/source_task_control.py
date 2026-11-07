@@ -89,7 +89,9 @@ class _Rejected(Exception):
         self.failure = failure
 
 
-@dataclass(frozen=True)
+# The finite proof retains millions of these records. Slots avoid per-instance
+# dictionaries while preserving the field-based equality and hashing.
+@dataclass(frozen=True, slots=True)
 class _Task:
     root: str
     key: str
@@ -122,7 +124,7 @@ class _ItemFlags(Enum):
     Unproved = "registered descriptor has no established item flags"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Binding:
     kind: int
     sat: int
@@ -131,7 +133,7 @@ class _Binding:
     record: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Message:
     saved7: bool
     fresh: bool
@@ -143,13 +145,13 @@ class _UIPhase(Enum):
     Fenced = "postreturn STOP7 mapper before ordinary resumption"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _ItemUI:
     saved7: bool
     phase: _UIPhase
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Frontier:
     tasks: tuple[_Task | _Empty, ...]
     bindings: tuple[_Binding | _Empty, ...]
