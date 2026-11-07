@@ -14,14 +14,14 @@ from games.re3.capture_data import capture_failure
 from games.re3.map_conditions import (
     decode_map_conditions,
     decode_map_detail_conditions,
+    detail_metadata,
     group_zero_metadata_allows,
     quad_requirements,
 )
 from games.re3.map_data import decode_map_layout, native_group_for_record
 from games.re3.map_detail_predicates import (
-    GROUP_ONE_SYSTEM_STYLE,
-    GroupOneShapeDecision,
-    group_one_shape_decision,
+    DetailSelection,
+    select_group_one_detail,
 )
 from games.re3.map_predicate import FlagReader
 from games.re3.map_row_predicates import native_row_visible
@@ -237,7 +237,7 @@ def decode_native_map_detail_selection(
     current_key = ram[0xE026A] << 8 | ram[0xE026C]
     phase = struct.unpack_from("<b", ram, 0xCCBCD)[0]
     raw_stage = struct.unpack_from("<H", ram, 0xD1F76)[0]
-    system = bool(flag(0x800CC858, 24))
+    requirements, styles = detail_metadata(table)
     # SB at 0x80072DAC preserves only the raw helper mask's low byte. Boolean
     # normalization would invent acquisition for every supported group 0-6.
     acquisition_byte = flag(0x800D2124, group) & 0xFF
@@ -245,49 +245,26 @@ def decode_native_map_detail_selection(
     for row in record["directory"]:
         allowed = []
         for index, primitive in enumerate(row["primitive_groups"][1]):
-            decision = group_one_shape_decision(
-                group, row["index"], index, current_key, phase, raw_stage, flag
+            detail = select_group_one_detail(
+                requirements,
+                styles,
+                group,
+                row["index"],
+                index,
+                primitive["style_bytes"][0],
+                current_key,
+                phase,
+                raw_stage,
+                acquisition_byte,
+                flag,
             )
-            if decision is GroupOneShapeDecision.Reject:
+            if detail is DetailSelection.Reject:
                 continue
-            # Earlier native allows bypass the table. Once the scan is reached,
-            # matching entries reject in system/acquisition/flag order, and
-            # duplicates remain conjunctive. No matching entry imposes a test.
-            if decision is GroupOneShapeDecision.CheckMetadata and any(
-                system
-                or (entry["reject_if_acquisition_byte_clear"] and not acquisition_byte)
-                or flag(entry["flag_bank_address_ps1"], entry["flag_index"])
-                for entry in table["admission"]["requirements"]
-                if (entry["row_index"], entry["primitive_index"])
-                == (row["index"], index)
-            ):
-                continue
-            if system:
-                # The native system branch bypasses style metadata and has
-                # fixed membership only for native groups 0/1.
-                styled = (
-                    group < 2 and (row["index"], index) in GROUP_ONE_SYSTEM_STYLE[group]
-                )
-            else:
-                # The first recognized matching unset flag selects this style;
-                # duplicate entries are alternatives and ignored selectors skip.
-                styled = any(
-                    not flag(entry["flag_bank_address_ps1"], entry["flag_index"])
-                    for entry in table["style"]["conditions"]
-                    if entry["kind"] == "flag-test"
-                    and (entry["row_index"], entry["primitive_index"])
-                    == (row["index"], index)
-                )
-            requested_variant = 2 * bool(styled)
-            # The renderer at 0x8007116C forces native kind 7 to variant zero.
-            effective_variant = (
-                0 if primitive["style_bytes"][0] == 7 else requested_variant
-            )
             allowed.append(
                 {
-                    "index": index,
-                    "requested_palette_variant": requested_variant,
-                    "effective_palette_variant": effective_variant,
+                    "index": detail.index,
+                    "requested_palette_variant": detail.requested_palette_variant,
+                    "effective_palette_variant": detail.effective_palette_variant,
                 }
             )
         rows.append(

@@ -9,6 +9,11 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal, NamedTuple
 
+from games.re3.map_conditions import (
+    DETAIL_STYLE_BANKS,
+    DetailRequirement,
+    DetailStyleCondition,
+)
 from games.re3.map_predicate import (
     Exclusion,
     FlagReader,
@@ -22,6 +27,20 @@ class GroupOneShapeDecision(Enum):
     Reject = "reject"
     AllowWithoutMetadata = "allow-without-metadata"
     CheckMetadata = "check-metadata"
+
+
+GROUP_ONE_SYSTEM_FLAG = (0x800CC858, 24)
+
+
+class DetailSelection(Enum):
+    Reject = "reject"
+
+
+class NativeMapDetail(NamedTuple):
+    index: int
+    native_kind: int
+    requested_palette_variant: int
+    effective_palette_variant: int
 
 
 class DetailQuadPredicate(NamedTuple):
@@ -444,7 +463,7 @@ def group_one_shape_decision(
         return GroupOneShapeDecision.Reject
     # This branch returns from the native function before later shape families
     # and metadata, but only for native groups 0/1.
-    if flag(0x800CC858, 24):
+    if flag(*GROUP_ONE_SYSTEM_FLAG):
         if group == 0:
             return GroupOneShapeDecision.AllowWithoutMetadata
         if group == 1:
@@ -454,3 +473,54 @@ def group_one_shape_decision(
     if is_excluded("after-system-return"):
         return GroupOneShapeDecision.Reject
     return GroupOneShapeDecision.CheckMetadata
+
+
+def select_group_one_detail(
+    requirements: tuple[DetailRequirement, ...],
+    styles: tuple[DetailStyleCondition, ...],
+    group: int,
+    row: int,
+    primitive: int,
+    native_kind: int,
+    current_key: int,
+    actor_floor_i8: int,
+    raw_stage_u16: int,
+    acquisition_byte: int,
+    flag: FlagReader,
+) -> NativeMapDetail | DetailSelection:
+    """Share native admission/style arithmetic between capture and fresh reads."""
+    assert type(native_kind) is int and 0 <= native_kind <= 255
+    assert type(acquisition_byte) is int and 0 <= acquisition_byte <= 255
+    decision = group_one_shape_decision(
+        group, row, primitive, current_key, actor_floor_i8, raw_stage_u16, flag
+    )
+    if decision is GroupOneShapeDecision.Reject:
+        return DetailSelection.Reject
+    system = bool(flag(*GROUP_ONE_SYSTEM_FLAG))
+    # Earlier allows bypass metadata. Matching rejects retain the native
+    # system/acquisition/flag order, and duplicates remain conjunctive.
+    if decision is GroupOneShapeDecision.CheckMetadata and any(
+        system
+        or (entry.reject_if_acquisition_byte_clear and not acquisition_byte)
+        or flag(entry.bank, entry.flag_index)
+        for entry in requirements
+        if (entry.row, entry.primitive) == (row, primitive)
+    ):
+        return DetailSelection.Reject
+    if system:
+        # This native branch bypasses style metadata for every group.
+        styled = group < 2 and (row, primitive) in GROUP_ONE_SYSTEM_STYLE[group]
+    else:
+        # Recognized matching clear flags are alternatives; ignored selectors
+        # skip without inventing a bank or imposing a flag dependency.
+        styled = any(
+            not flag(DETAIL_STYLE_BANKS[entry.selector], entry.flag_index)
+            for entry in styles
+            if entry.selector < len(DETAIL_STYLE_BANKS)
+            and (entry.row, entry.primitive) == (row, primitive)
+        )
+    requested = 2 * bool(styled)
+    # The renderer at 0x8007116C forces native kind 7 to variant zero.
+    return NativeMapDetail(
+        primitive, native_kind, requested, 0 if native_kind == 7 else requested
+    )

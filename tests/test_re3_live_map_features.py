@@ -44,6 +44,11 @@ def features(live_map, tables, monkeypatch):
         struct.pack_into("<I", block, 8, section)
         struct.pack_into("<H", block, 44, 4)
         struct.pack_into("<H", block, 52, 3)
+        # This compiler now retains group-1 tables too. Explicit empty tables
+        # keep the original group-0 fixture's intended source semantics.
+        for word in (2, 4):
+            table = struct.unpack_from("<I", block, section + 36 + word * 4)[0]
+            block[section + 36 + table] = 255
         context.data[origin : origin + 2048] = block
     start = starts[0] + 36
     # The unused row-zero requirement also reads the physical word containing
@@ -366,7 +371,8 @@ def test_active_menu_is_non_gameplay_even_with_a_nonzero_overlay(features):
     )
 
 
-def test_polling_never_recompiles_sources(features, monkeypatch):
+@pytest.mark.parametrize("scope", list(map_features.CurrentMapFeatureScope))
+def test_polling_never_recompiles_sources(features, monkeypatch, scope):
     catalog, ram, _, layout, _, _ = features
 
     def decode(*args):
@@ -376,6 +382,7 @@ def test_polling_never_recompiles_sources(features, monkeypatch):
         "compile_map_position_layout",
         "decode_map_layout",
         "decode_map_conditions",
+        "decode_map_detail_conditions",
     ):
         monkeypatch.setattr(map_features, name, decode)
     for _ in range(2):
@@ -385,6 +392,7 @@ def test_polling_never_recompiles_sources(features, monkeypatch):
             lambda a, n: MemRead(
                 True, bytes(ram[a - 0x80000000 : a - 0x80000000 + n]), ""
             ),
+            scope=scope,
         )
         assert isinstance(result, CurrentMapFeatureObservation)
 

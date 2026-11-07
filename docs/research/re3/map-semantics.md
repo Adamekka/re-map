@@ -742,6 +742,102 @@ Root identifies and corrects one coherence defect before integration. The broad 
 
 The final main-checkout retained verifier reproduces all three named pre-opening selections, eight additional observations, active-menu rejection, request bounds and reconstruction. Its report matches the implementation report in every field except the changed reader's source hash. Private evidence is `/tmp/re-map-re3-map015-root-integration-20261107/`, including the original-transaction regression plugin, `retained-run/verification.json`, full/focused checks and integration manifest. The retained report SHA256 is `9b7f66abbbb1dc62b114a6d552a8756e0d5dbfb2ef672bb7fe718ad87a1a2c82`. Prior frozen evidence remains unchanged. A new Gemini 3.8 Flash high-reasoning request fails to open its Antigravity session; Claude Opus 5.5 is disabled. Neither supplies an external endorsement. Scoped Ruff, formatting, documentation links and whitespace checks pass. No renderer or UI changes require a README image update.
 
+## RE3-MAP-016: fresh current-row group-1 detail admission and style
+
+Status: Candidate. This extends [RE3-MAP-015](#re3-map-015-fresh-ordinary-view-current-row-group-0-source-observation) with source-bound current-row group-1 selection. Target remains Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, supplied revision, Hard. Executable `SLUS_009.23` SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`; MAP_U.MAP SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. Retained runtime evidence uses DuckStation `0.1-12083-g00e299795`, native-state version 87. This increment performs only offline source/file comparisons and software tests. It starts no emulator, executes no native game code and adds no gameplay or save-restore observation.
+
+### Explicit scope and shared source interpretation
+
+The existing three-argument `read_current_map_features(catalog, layout, read_memory)` retains its `NativeCurrentRowFeatures` result and 26-word group-0 read plan. Passing the explicit keyword `scope=CurrentMapFeatureScope.GroupZeroAndOne` returns `NativeCurrentRowDetails` instead. Its `group_zero` member carries the existing group-0 facts, fresh projection, numeric layer and separate `native_row_visible`; `group_zero.flag_words` contains the combined transaction's complete observed word values. Separate fields contain `native_map_acquisition_byte`, the source `group_one_count`, and `group_one_allowed`. Each allowed detail names its current-row index, source `native_kind`, requested palette variant and effective palette variant. There is no optional field whose absence selects behavior.
+
+The same `compile_map_feature_layout` pins both owned inputs and compiles both plans once. Group-1 kinds and ordered admission/style metadata become compiler-owned nested tuples under the existing nonreplaceable authority. It retains ignored selectors, duplicates and unmatched metadata. In the owned record-zero style table, row 13 / detail 1 has no corresponding source quad. The native matching scan ignores that target; the compiler preserves it and its dependency. It does not invent geometry or silently repair the source.
+
+`select_group_one_detail` shares the complete shape/admission/style formula with `decode_native_map_detail_selection`. It calls the existing `group_one_shape_decision` and `GROUP_ONE_SYSTEM_STYLE`, with the same native current key, raw signed actor floor and raw unsigned stage. The source helper's parameter named `phase_i8` receives actor floor at this call site; it is not a lifecycle phase. Earlier allow branches bypass metadata. When metadata is reached, each matching entry rejects in system / acquisition-byte / flag order and duplicates remain conjunctive. Style entries are alternatives, selectors above 3 are ignored, and the system-style branch bypasses the style table. The shared bank tuple preserves selectors 0–3 as PS1 virtual banks `0x800D20CC`, `0x800D1FA0`, `0x800D1FC8`, `0x800D1FE8`.
+
+The acquisition byte is `raw_flag_helper_mask & 0xFF`, matching the native byte store at `0x80072DAC`. Supported groups 0–6 have masks whose low byte is zero, even when the separate full-mask acquisition test is true. It is computed from each read, never replaced with a hardcoded zero or `bool(acquired)`. Requested variants are 0 or 2; the original renderer's kind-7 rule forces effective variant 0 while retaining the requested variant. These are source/native palette arguments, not observed GPU pixels.
+
+Only the freshly remapped current source row is returned. Per-detail admission/style, native row visibility, physical room/floor ownership and tracker rights remain separate. A hidden row can still have admitted detail indices. Cached AA/AB/AC, loaded MAP pointers and prior polls supply no authority here. The older capture API still requires its explicit selected-record loaded-source binding and preserves its schema, values and failures. Position-only and collectible calls keep their prior accepted behavior.
+
+### Physical dependencies and coherent reads
+
+Both plans derive every dependency from the shared predicate trees, bounded metadata and row predicates, including branches skipped in a poll and unmatched recognized metadata. The combined plan has 28 aligned physical words, listed below as PS1 virtual addresses, not RAM offsets or host-process addresses. Every value is u32 little-endian. The masks identify source dependencies; the transaction reads and repeats each full `0xFFFFFFFF` word.
+
+| PS1 virtual word address, u32 LE | Combined dependency mask |
+| --- | --- |
+| `0x800CC858` | `0x00000080` |
+| `0x800D1F2C` | `0x04000000` |
+| `0x800D1FA0` | `0x20040010` |
+| `0x800D1FA4` | `0x00004120` |
+| `0x800D1FA8` | `0x80019203` |
+| `0x800D1FAC` | `0x80100000` |
+| `0x800D1FB0` | `0x00040005` |
+| `0x800D1FB4` | `0x00000010` |
+| `0x800D1FB8` | `0x08800202` |
+| `0x800D1FBC` | `0x80200000` |
+| `0x800D1FC0` | `0x08000024` |
+| `0x800D2008` | `0x00080000` |
+| `0x800D200C` | `0x78010010` |
+| `0x800D2010` | `0x80000001` |
+| `0x800D202C` | `0x01000200` |
+| `0x800D20CC` | `0x33E36CFF` |
+| `0x800D20D0` | `0xDA000000` |
+| `0x800D20DC` | `0xFFFFFFFF` |
+| `0x800D20E0` | `0xFFFFFFFF` |
+| `0x800D20E4` | `0xFFFFFFFF` |
+| `0x800D20E8` | `0xFFFFFFFF` |
+| `0x800D20EC` | `0xFFFC0000` |
+| `0x800D20F4` | `0xFFFFFE00` |
+| `0x800D20FC` | `0xFFFFC000` |
+| `0x800D2104` | `0xFFE00000` |
+| `0x800D210C` | `0xFFF00000` |
+| `0x800D2124` | `0xFE000000` |
+| `0x800D2594` | `0x04000000` |
+
+The extra physical addresses relative to group 0 are `0x800D1F2C` and `0x800D20D0`; several existing-word masks also grow. Group-1 MSB-indexed flag 5 at `0x800D1F2C` has mask `0x04000000`. The same word's independent pending-UI guard still requires mask `0x00000300` clear. The mode/remapping guard masks, raw actor-floor i8 at `0x800CCBCD`, XYZ i32 LE at `0x800CCBF8` and facing u16 LE at `0x800CCC32` retain MAP-015's full-width/context rules. Actual overlay u16 LE at `0x800E0278`, mask `0xFFFF`, is freshly read and must be zero. Pending byte `0x800C7961`, mask `0xFF`, must also be zero. Active/pending UI is `NonGameplay`; nonzero ordinary overlay is `UnsupportedSettings`.
+
+The shared transaction compares all explicit copies of overlapping mode/remapping/request guards with the initial broad reads before pose. Explicit guard copies are decoded independently because the new `0x800D1F2C` word has exactly the broad span's base address; a dictionary union would hide one sample. MAP-015's original overlap checks and regression cases remain enforced. One contiguous 103-byte actor/floor/pose sample is bracketed by the complete explicit word plan, repeated in reverse, followed by reverse source witnesses and final broad guards. Failed/short reads, detected flag/floor changes, source mismatches and every observed guard conflict reject atomically without partial publication. Repeated reads are not a stopped-world snapshot and cannot detect an arbitrary change that reverts between samples.
+
+Rebuilding the exact catalog from the explicit owned BIN binds all 169 sources. Every source has four required witness ranges, totaling 147–2,371 bytes. The successful combined request bound is exactly 83 requests, 8,501 requested bytes and a largest read of 1,384 bytes. R100 requests 4,237 bytes; R101 requests 8,501. The combined scope adds four four-byte requests to the group-0 plan. The old group-0 maximum remains 79 requests / 8,485 bytes. No full-RAM polling or source recompilation occurs during a poll.
+
+### Retained comparisons and limits
+
+Eleven retained ordinary RAM paths reproduce after reconstruction. The three exact pre-opening captures give the following group-1 results. Tuples are `(detail index, native kind, requested variant, effective variant)`.
+
+| Retained ordinary observation | Raw actor floor | Current native group/row | Group-1 allowed |
+| --- | ---: | --- | --- |
+| R100 exact restored | 0 | `0/0` | `[(0,4,0,0)]` |
+| R101 lower exact restored | 1 | `0/1` | `[(1,4,2,2)]` |
+| R101 upper exact restored | 4 | `0/1` | `[(0,4,0,0),(1,4,2,2)]` |
+
+Eight additional retained ordinary snapshots agree with these source alternatives. All numeric layers remain 0. Full pre-change versus post-change group-0, group-1 and row capture API results agree across fourteen retained paths with twelve distinct RAM hashes: three actual source-bound menu captures succeed and eleven ordinary captures retain their explicit binding failure. The new API's current row agrees with the old group-1 capture API in eight matching retained-context pairs, comparing only relevant dependency masks, actor floor, raw stage and current key. The three menu captures reject the prospective API as `NonGameplay`. No loaded-source bytes, pointers or cached selectors are substituted to manufacture capture binding.
+
+The separate RE3-MAP-014 callback at stop epoch 10 is tied to its actual group-1 source before comparison. Original GPRs give PC `0x8007116C`, RA `0x80070540`, S6 row 0, S4 detail counter 0, S0 style byte 0, A2 `0x801B1760`, A3 palette 0, and source base `0x801B1500`. The caller copies the S4 counter into S0 at `0x80070504`, then overwrites S0 with the style result at `0x80070530` before deriving A3. S0 therefore no longer identifies the detail at renderer entry. S4 and the unique A2 match within the current row both identify detail zero. The owned record-zero directory locates it at MAP offset 608. The retained A2 bounded read's first twelve bytes equal that owned quad, including native kind 4. Current raw selectors and cached current group/row are zero, so this call is current row zero. The pre-opening R100 prediction admits that detail with requested/effective palette 0. This is one retained callback plus bounded source bytes, not a new native run or a full RAM capture at that callback. Original callback code bytes also match the pinned executable. RA `0x8007042C` group-0 calls and the noncurrent row-one loop are excluded from this group-1 comparison. Original native/save/cleanup evidence and limits in MAP-013/014 remain unchanged.
+
+### Reproduction, checks and authorship
+
+Original implementation evidence is `/tmp/re-map-re3-map016-implementation-20261107-D4m5dF`. Its frozen verifier used S0 as the callback index; the integration correction below replaces that interpretation. For reproduction, copy the corrected `verify.py` and unchanged `baseline_map_selection.py` from `/tmp/re-map-re3-map016-root-integration-20261107/` together to a fresh private directory. The baseline module is the exact `082c3c9` capture selector. Run with mandatory `--repo`, `--disc-image`, `--exe`, `--map`, `--native-evidence`, `--map013`, `--overlay-evidence` and a nonexistent `--output` directory. The explicit source/evidence paths are those recorded in MAP-015. The script checks pinned inputs and frozen MAP-014/overlay/root-integration hashes, rebuilds the complete catalog, records retained input hashes, compares APIs, checks the separate callback and writes numeric reports outside Git. Frozen directories are read only. The following hashes identify the original implementation evidence.
+
+| Private artifact | SHA256 |
+| --- | --- |
+| `verify.py` | `272e086092fb1f8667a1c7f57660d9b2b27075ed878d4a01b177e50c52bb770d` |
+| `baseline_map_selection.py` | `eb208e21fc065c18bd56afdff663bbfef934a32c9053ef80cfd8f878fa4dd9be` |
+| `verified-reviewed/verification.json` | `fb59067a6b38eecc552e677cfb710d03097be04a4beb47011fb5666b04093d4b` |
+| `union_overlap_plugin.py` | `bae9842a18162cf15cea4313d24b7182cf874192df3aa7e236913cabb7240899` |
+| `prior-overlap-regression.txt` | `ab059e9e57454982464fc8b8d4f30c23a82cc53c17187102bc3861011cbf56a9` |
+
+Tests cover the original capture/group-0 contracts, exact style banks/kind-7 rule, ignored and duplicate entries, acquisition truncation, early/late/system branches, immutable nested authority, explicit current-row scope, reconstruction and clear/set/clear reversals, every compiled physical dependency around pose, overlapping broad guards including the shared-base request word, pending/active UI and full-width overlay rejection, and every failed/short transaction read. All 2,332 RE3 tests and 385 live-reader tests pass. The full Python suite passes all 7,244 tests with `RE_MAP_RE2_OWNED_CUE` explicitly set to the owned Leon disc, including the owned-binding cases. Scoped Ruff E4/E7/E9/F/I with the established E402 exclusion, formatting, local documentation links and whitespace checks pass. A private plugin restores the earlier dictionary-union overlap check: the two new request-word conflict cases fail as expected while the five inherited overlap cases pass. The production transaction passes all seven. No UI changes require a README screenshot update.
+
+- 2026-11-07; implementation sub-agent, exact model `gpt-6.1-sol`, effort `xhigh`, verified from matching session `01a1b78d-bf8c-7753-85df-b62a257f3341` and latest turn context; authored the implementation, tests, private offline comparisons and this claim. Local final review checks source authority and bounds, native arithmetic/order/palette semantics, complete dependency plans, coherent overlap/pose/source reads, retained callback identity, API preservation and claim limits. No subagent or external review was requested or performed; root's independent/external review and integration remain pending. No parent or external endorsement is claimed.
+- Human instructions set Hard as the target and supplied the owned inputs and bounded task. Existing source/runtime authorship, reviews and rejected/superseded interpretations remain in their original claims.
+
+Integration review, 2026-11-07: Codex root and an independent agent, both exact model `gpt-6.1-sol`, effort `xhigh`, inspect the implementation and evidence. The independent review checks all 105 metadata entries, the exact 28-word union, immutable substitutions, shared capture behavior and preservation of the group-0 plan. Its 31 focused tests pass, and its retained replay reproduces the original report byte-for-byte. The frozen review report is `/private/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-map016-review-20261107-s7j_gam5/review.json`, SHA256 `a1357fd9f2651f4d3c915747a995011173eceeddaff85edecbd097a46afe1060`.
+
+The review identifies the callback register-attribution error described above. Root checks the original caller instructions, corrects the claim and copies the private verifier before changing it. The corrected verifier binds the index through S4 and independently requires a unique A2 match within the row. A synthetic register control changes S0 to 1 and A3 to 2 while leaving S4 and A2 unchanged; it still binds detail zero. That control checks register roles and is not another native observation. The original child evidence remains unchanged. The corrected `verify.py` SHA256 is `4f0691c47a76eaeff9eb105068063b646188194b80185716644e1e737f70140b`; its `retained-final/verification.json` SHA256 is `165a8d980d3454e6e3a7cd5ea7fcc8576c0a6c6ab00c07bcd5b4c73788fae978`. Root reproduces all 169 sources, retained selections, old capture outputs/failures and request bounds. All 7,244 full-suite tests pass with explicit owned RE2 inputs. This adds no native execution or gameplay coverage.
+
+The root live-reader checks pass all 385 tests; scoped Ruff, formatting, 360 local documentation links and whitespace checks pass. A separate Gemini 3.8 Flash high-reasoning request fails to open its Antigravity provider session. Claude Opus 5.5 is disabled. Neither supplies an external endorsement. The failed request, exact changed-file hashes and check results are retained in the root integration evidence directory. No renderer or UI changes require a README image update.
+
+Physical room/floor ownership, actual hardware L2 admission/menu opening, tracker reveal/history, complete items/doors/clearance, full-campaign coverage and a runnable RE3 profile remain unresolved. Source texels, quad metadata and palette arguments do not establish game GPU pixels.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.

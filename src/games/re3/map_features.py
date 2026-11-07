@@ -1,4 +1,4 @@
-"""RE3-MAP-015: prospective current-row group-0 observations from owned sources.
+"""RE3-MAP-015/016: prospective current-row observations from owned sources.
 
 This is neither hardware L2 admission nor loaded-MAP cache binding. Native row
 visibility and per-quad predicates grant no tracker exploration or ownership.
@@ -8,13 +8,19 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import NamedTuple
 
 from games.bit_flags import msb_flag_location
 from games.re3 import EXECUTABLE_SHA256, MAP_U_SHA256
 from games.re3.map_conditions import (
+    DETAIL_STYLE_BANKS,
+    DetailRequirement,
+    DetailStyleCondition,
     QuadRequirement,
     decode_map_conditions,
+    decode_map_detail_conditions,
+    detail_metadata,
     group_zero_metadata_allows,
     quad_requirements,
 )
@@ -26,6 +32,13 @@ from games.re3.map_data import (
     decode_map_layout,
     native_group_for_record,
     resolve_native_map_position,
+)
+from games.re3.map_detail_predicates import (
+    GROUP_ONE_PREDICATES,
+    GROUP_ONE_SYSTEM_FLAG,
+    DetailSelection,
+    NativeMapDetail,
+    select_group_one_detail,
 )
 from games.re3.map_predicate import predicate_flags
 from games.re3.map_row_predicates import native_row_flags, native_row_visible
@@ -43,14 +56,29 @@ class MapFeatureRecord(NamedTuple):
     requirements: tuple[QuadRequirement, ...]
 
 
+class MapDetailRecord(NamedTuple):
+    native_kinds: tuple[tuple[int, ...], ...]
+    requirements: tuple[DetailRequirement, ...]
+    styles: tuple[DetailStyleCondition, ...]
+
+
+class CurrentMapFeatureScope(Enum):
+    GroupZero = "group-zero"
+    GroupZeroAndOne = "group-zero-and-one"
+
+
 @dataclass(frozen=True, slots=True, init=False)
 class MapFeatureLayout:
     position_layout: MapPositionLayout
     records: tuple[MapFeatureRecord, ...]
     flag_words: tuple[tuple[int, int], ...]
+    detail_records: tuple[MapDetailRecord, ...]
+    detail_flag_words: tuple[tuple[int, int], ...]
     _authority: tuple[
         MapPositionLayout,
         tuple[MapFeatureRecord, ...],
+        tuple[tuple[int, int], ...],
+        tuple[MapDetailRecord, ...],
         tuple[tuple[int, int], ...],
     ] = field(repr=False, compare=False)
 
@@ -61,11 +89,18 @@ class MapFeatureLayout:
 
     def _assert_compiled(self) -> None:
         assert type(self) is MapFeatureLayout
-        assert type(self._authority) is tuple and len(self._authority) == 3
+        assert type(self._authority) is tuple and len(self._authority) == 5
         assert all(
             actual is bound
             for actual, bound in zip(
-                (self.position_layout, self.records, self.flag_words), self._authority
+                (
+                    self.position_layout,
+                    self.records,
+                    self.flag_words,
+                    self.detail_records,
+                    self.detail_flag_words,
+                ),
+                self._authority,
             )
         ), "map feature derivations must retain their compiler authority"
 
@@ -80,6 +115,14 @@ class NativeCurrentRowFeatures:
     group_zero_count: int
     group_zero_allowed_indices: tuple[int, ...]
     flag_words: tuple[tuple[int, int], ...]
+
+
+@dataclass(frozen=True)
+class NativeCurrentRowDetails:
+    group_zero: NativeCurrentRowFeatures
+    native_map_acquisition_byte: int
+    group_one_count: int
+    group_one_allowed: tuple[NativeMapDetail, ...]
 
 
 def compile_map_feature_layout(
@@ -105,11 +148,20 @@ def compile_map_feature_layout(
     conditions = decode_map_conditions(data, executable)
     if isinstance(conditions, RoomFormatFailure):
         return conditions
+    details = decode_map_detail_conditions(data, executable)
+    if isinstance(details, RoomFormatFailure):
+        return details
     records = []
+    detail_records = []
     flag_pairs = [GROUP_ZERO_SYSTEM_FLAG]
+    detail_pairs = [GROUP_ONE_SYSTEM_FLAG]
+    for family in GROUP_ONE_PREDICATES:
+        detail_pairs.extend(predicate_flags(family.condition))
     for family in GROUP_ZERO_PREDICATES:
         flag_pairs.extend(predicate_flags(family.condition))
-    for record, table in zip(layout["records"], conditions["records"], strict=True):
+    for record, table, detail_table in zip(
+        layout["records"], conditions["records"], details["records"], strict=True
+    ):
         counts = tuple(len(row["primitive_groups"][0]) for row in record["directory"])
         if len(counts) > 256 or any(count > 256 for count in counts):
             return RoomFormatFailure(
@@ -134,26 +186,72 @@ def compile_map_feature_layout(
                 counts, record["layer_metadata"]["raw_prefix"][4], requirements
             )
         )
-    words: dict[int, int] = {}
-    for bank, index in flag_pairs:
-        address, mask = msb_flag_location(bank, index)
-        # Visit indices combine a native group 0-6 with a byte-sized row;
-        # predicate and metadata indices fit inside the same checked bound.
-        if (
-            not 0 <= index <= 64 * 6 + 255
-            or address % 4
-            or not 0x80000000 <= address <= 0x801FFFFC
-        ):
+        kinds = tuple(
+            tuple(quad["style_bytes"][0] for quad in row["primitive_groups"][1])
+            for row in record["directory"]
+        )
+        if any(len(row) > 256 for row in kinds):
             return RoomFormatFailure(
-                "map-feature-source", 0, "Flag dependency exceeds physical PS1 RAM"
+                "map-feature-source",
+                record["offset"],
+                "Source group-1 quad count exceeds native byte arguments",
             )
-        words[address] = words[address] | mask if address in words else mask
+        requirements, styles = detail_metadata(detail_table)
+        # Native scans ignore unmatched targets. The owned style table itself
+        # contains one, so retain it and its dependency rather than repairing it.
+        detail_pairs.extend((entry.bank, entry.flag_index) for entry in requirements)
+        detail_pairs.extend(
+            (DETAIL_STYLE_BANKS[entry.selector], entry.flag_index)
+            for entry in styles
+            if entry.selector < len(DETAIL_STYLE_BANKS)
+        )
+        detail_records.append(MapDetailRecord(kinds, requirements, styles))
+
+    def compile_words(
+        pairs: list[tuple[int, int]],
+    ) -> tuple[tuple[int, int], ...] | RoomFormatFailure:
+        words: dict[int, int] = {}
+        for bank, index in pairs:
+            address, mask = msb_flag_location(bank, index)
+            # Visit indices combine a native group 0-6 with a byte-sized row;
+            # predicate and metadata indices fit inside the same checked bound.
+            if (
+                not 0 <= index <= 64 * 6 + 255
+                or address % 4
+                or not 0x80000000 <= address <= 0x801FFFFC
+            ):
+                return RoomFormatFailure(
+                    "map-feature-source", 0, "Flag dependency exceeds physical PS1 RAM"
+                )
+            words[address] = words[address] | mask if address in words else mask
+        return tuple(sorted(words.items()))
+
+    group_zero_words = compile_words(flag_pairs)
+    if isinstance(group_zero_words, RoomFormatFailure):
+        return group_zero_words
+    detail_words = compile_words(flag_pairs + detail_pairs)
+    if isinstance(detail_words, RoomFormatFailure):
+        return detail_words
     result = object.__new__(MapFeatureLayout)
     # All retained values are compiler-created tuples/frozen records. The
     # authority keeps object identity, so equal mutable substitutions cannot pass.
-    values = (position, tuple(records), tuple(sorted(words.items())))
+    values = (
+        position,
+        tuple(records),
+        group_zero_words,
+        tuple(detail_records),
+        detail_words,
+    )
     for name, value in zip(
-        ("position_layout", "records", "flag_words"), values, strict=True
+        (
+            "position_layout",
+            "records",
+            "flag_words",
+            "detail_records",
+            "detail_flag_words",
+        ),
+        values,
+        strict=True,
     ):
         object.__setattr__(result, name, value)
     object.__setattr__(result, "_authority", values)
@@ -167,9 +265,17 @@ def resolve_current_row_features(
     actor_floor: int,
     overlay: int,
     words: tuple[tuple[int, int], ...],
-) -> NativeCurrentRowFeatures | RoomFormatFailure:
+    *,
+    scope: CurrentMapFeatureScope = CurrentMapFeatureScope.GroupZero,
+) -> NativeCurrentRowFeatures | NativeCurrentRowDetails | RoomFormatFailure:
     """Consume a complete, checked flag context after the fresh transaction."""
     layout._assert_compiled()
+    assert type(scope) is CurrentMapFeatureScope
+    dependencies = (
+        layout.flag_words
+        if scope is CurrentMapFeatureScope.GroupZero
+        else layout.detail_flag_words
+    )
     if (
         layout.position_layout.map_sha256 != MAP_U_SHA256
         or layout.position_layout.executable_sha256 != EXECUTABLE_SHA256
@@ -191,14 +297,14 @@ def resolve_current_row_features(
         for pair in words
     )
     assert tuple(address for address, _ in words) == tuple(
-        address for address, _ in layout.flag_words
+        address for address, _ in dependencies
     ), "every compiled dependency must have been read"
     assert all(type(value) is int and 0 <= value <= 0xFFFFFFFF for _, value in words)
     position = resolve_native_map_position(layout.position_layout, context)
     if isinstance(position, RoomFormatFailure):
         return position
     flags = dict(words)
-    required_masks = dict(layout.flag_words)
+    required_masks = dict(dependencies)
 
     def flag(bank: int, index: int) -> int:
         address, mask = msb_flag_location(bank, index)
@@ -220,7 +326,7 @@ def resolve_current_row_features(
             group, row, primitive, group << 8 | row, actor_floor, overlay, flag
         )
     )
-    return NativeCurrentRowFeatures(
+    features = NativeCurrentRowFeatures(
         position,
         overlay,
         actor_floor,
@@ -237,4 +343,29 @@ def resolve_current_row_features(
         count,
         allowed,
         words,
+    )
+    if scope is CurrentMapFeatureScope.GroupZero:
+        return features
+    detail_record = layout.detail_records[position.map_record_index]
+    # Native SB stores the raw helper mask's low byte, never bool(acquired).
+    acquisition_byte = flag(0x800D2124, group) & 0xFF
+    details = []
+    for index, kind in enumerate(detail_record.native_kinds[row]):
+        detail = select_group_one_detail(
+            detail_record.requirements,
+            detail_record.styles,
+            group,
+            row,
+            index,
+            kind,
+            group << 8 | row,
+            actor_floor,
+            context.stage,
+            acquisition_byte,
+            flag,
+        )
+        if detail is not DetailSelection.Reject:
+            details.append(detail)
+    return NativeCurrentRowDetails(
+        features, acquisition_byte, len(detail_record.native_kinds[row]), tuple(details)
     )

@@ -33,6 +33,51 @@ class QuadRequirement(NamedTuple):
     flag_index: int
 
 
+class DetailRequirement(NamedTuple):
+    row: int
+    primitive: int
+    bank: int
+    flag_index: int
+    reject_if_acquisition_byte_clear: bool
+
+
+class DetailStyleCondition(NamedTuple):
+    row: int
+    primitive: int
+    flag_index: int
+    selector: int
+
+
+DETAIL_STYLE_BANKS = (0x800D20CC, 0x800D1FA0, 0x800D1FC8, 0x800D1FE8)
+
+
+def detail_metadata(
+    table: dict,
+) -> tuple[tuple[DetailRequirement, ...], tuple[DetailStyleCondition, ...]]:
+    """Retain ordered duplicates and ignored selectors without decoder aliases."""
+    return (
+        tuple(
+            DetailRequirement(
+                entry["row_index"],
+                entry["primitive_index"],
+                entry["flag_bank_address_ps1"],
+                entry["flag_index"],
+                entry["reject_if_acquisition_byte_clear"],
+            )
+            for entry in table["admission"]["requirements"]
+        ),
+        tuple(
+            DetailStyleCondition(
+                entry["row_index"],
+                entry["primitive_index"],
+                entry["flag_index"],
+                entry["bank_selector"],
+            )
+            for entry in table["style"]["conditions"]
+        ),
+    )
+
+
 def group_zero_metadata_allows(
     requirements: tuple[QuadRequirement, ...],
     row: int,
@@ -195,7 +240,7 @@ def decode_map_detail_conditions(
                 "bank_selector": entry.control,
             }
             if entry.control <= 3:
-                bank = (0x800D20CC, 0x800D1FA0, 0x800D1FC8, 0x800D1FE8)[entry.control]
+                bank = DETAIL_STYLE_BANKS[entry.control]
                 address, mask = msb_flag_location(bank, entry.flag_index)
                 condition.update(
                     kind="flag-test",

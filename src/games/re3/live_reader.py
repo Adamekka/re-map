@@ -23,7 +23,9 @@ from games.re3.map_data import (
     resolve_native_map_position,
 )
 from games.re3.map_features import (
+    CurrentMapFeatureScope,
     MapFeatureLayout,
+    NativeCurrentRowDetails,
     NativeCurrentRowFeatures,
     resolve_current_row_features,
 )
@@ -53,7 +55,13 @@ class CurrentMapObservation:
 @dataclass(frozen=True)
 class CurrentMapFeatureObservation:
     room: CurrentRoomObservation
-    features: NativeCurrentRowFeatures
+    features: NativeCurrentRowFeatures | NativeCurrentRowDetails
+
+
+@dataclass(frozen=True)
+class _MapFeatureRequest:
+    layout: MapFeatureLayout
+    scope: CurrentMapFeatureScope
 
 
 @dataclass(frozen=True)
@@ -183,13 +191,18 @@ def read_current_map_features(
     catalog: SourceCatalog,
     layout: MapFeatureLayout,
     read_memory: Callable[[int, int], MemoryResult],
+    *,
+    scope: CurrentMapFeatureScope = CurrentMapFeatureScope.GroupZero,
 ) -> CurrentMapFeatureObservation | CurrentRoomFailure:
-    """Predict ordinary overlay-zero current-row group-0 source selection.
+    """Predict ordinary overlay-zero current-row source selection.
 
+    The explicit combined scope adds per-detail native kinds and palette styles.
+    The default retains the group-0 result and its original dependency reads.
     This does not admit a hardware L2 press, guarantee menu opening, bind a
     loaded MAP cache, reveal tracker rooms or establish physical ownership.
     """
     assert type(layout) is MapFeatureLayout
+    assert type(scope) is CurrentMapFeatureScope
     layout._assert_compiled()
     if (
         layout.position_layout.map_sha256 != MAP_U_SHA256
@@ -199,7 +212,7 @@ def read_current_map_features(
             PollStatus.UnsupportedSettings,
             "This reader requires the supported RE3 map resource and revision",
         )
-    result = _read_current_room(catalog, read_memory, layout)
+    result = _read_current_room(catalog, read_memory, _MapFeatureRequest(layout, scope))
     assert isinstance(result, (CurrentMapFeatureObservation, CurrentRoomFailure))
     return result
 
@@ -207,7 +220,7 @@ def read_current_map_features(
 def _read_current_room(
     catalog: SourceCatalog,
     read_memory: Callable[[int, int], MemoryResult],
-    request: MapPositionLayout | MapFeatureLayout | CollectibleBinding | _RoomRead,
+    request: MapPositionLayout | _MapFeatureRequest | CollectibleBinding | _RoomRead,
 ) -> (
     CurrentRoomObservation
     | CurrentMapObservation
@@ -217,11 +230,11 @@ def _read_current_room(
 ):
     assert isinstance(catalog, SourceCatalog)
     assert (
-        isinstance(request, (MapPositionLayout, MapFeatureLayout, CollectibleBinding))
+        isinstance(request, (MapPositionLayout, _MapFeatureRequest, CollectibleBinding))
         or request is _RoomRead.WithoutMap
     )
-    with_features = isinstance(request, MapFeatureLayout)
-    with_map = isinstance(request, (MapPositionLayout, MapFeatureLayout))
+    with_features = isinstance(request, _MapFeatureRequest)
+    with_map = isinstance(request, (MapPositionLayout, _MapFeatureRequest))
     spans = (
         (_INITIAL_SPANS[0], _MAP_CONTEXT_SPAN, *_INITIAL_SPANS[1:])
         if with_map
@@ -270,7 +283,9 @@ def _read_current_room(
             )
         return result.data
 
-    def guard_values(blocks: dict[int, bytes]) -> dict[int, int]:
+    def guard_values(
+        blocks: dict[int, bytes], *, require_all: bool = True
+    ) -> dict[int, int]:
         values = {}
         for address, width, mask in guard_fields:
             for base, packet in blocks.items():
@@ -281,7 +296,9 @@ def _read_current_room(
                     )
                     break
             else:
-                raise AssertionError("Guard field must belong to a required read span")
+                assert not require_all, (
+                    "Guard field must belong to a required read span"
+                )
         return values
 
     def admission(
@@ -383,7 +400,11 @@ def _read_current_room(
             # not a guessed flag region. Resample pose only after these words.
             feature_words = tuple(
                 (address, int.from_bytes(read(address, 4), "little"))
-                for address, _ in request.flag_words
+                for address, _ in (
+                    request.layout.flag_words
+                    if request.scope is CurrentMapFeatureScope.GroupZero
+                    else request.layout.detail_flag_words
+                )
             )
             # Mode/remapping words overlap the earlier broad guard blocks.
             # Compare every observed copy before using either context: two
@@ -391,7 +412,12 @@ def _read_current_room(
             feature_blocks = {
                 address: value.to_bytes(4, "little") for address, value in feature_words
             }
-            if guard_values(feature_blocks | blocks) != before:
+            # Decode explicit copies independently: group 1's request-word
+            # address equals a broad span's base, so a dict union would hide it.
+            feature_guards = guard_values(feature_blocks, require_all=False)
+            if feature_guards != {
+                address: before[address] for address in feature_guards
+            }:
                 return CurrentRoomFailure(
                     PollStatus.Retry, "Map flags disagree with room context"
                 )
@@ -503,11 +529,12 @@ def _read_current_room(
         )
         if with_features:
             features = resolve_current_row_features(
-                request,
+                request.layout,
                 context,
                 observation.actor_floor,
                 before[0x800E0278],
                 feature_words,
+                scope=request.scope,
             )
             if isinstance(features, RoomFormatFailure):
                 return CurrentRoomFailure(PollStatus.UnsupportedRoom, features.detail)
