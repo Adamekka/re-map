@@ -1,7 +1,8 @@
-"""Bounded RE3 Hard current-room observations, without tracker mutation.
+"""Bounded RE3 Hard room and registration observations, without tracker mutation.
 
 The ordinary native lifecycle and owned-source binding are mandatory. This
-reader establishes no item, door, room-clearance or physical map-layer facts.
+reader keeps singular acquisition conditions separate from complete item lists,
+door state, room clearance and physical map-layer facts.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from typing import Literal
 
 from games.game_profile import RoomId
 from games.re3 import EXECUTABLE_SHA256, MAP_U_SHA256
+from games.re3.collectibles import CollectibleBinding
 from games.re3.map_data import (
     MapPositionContext,
     MapPositionLayout,
@@ -41,6 +43,19 @@ class CurrentRoomObservation:
 class CurrentMapObservation:
     room: CurrentRoomObservation
     map_position: NativeMapPosition
+
+
+@dataclass(frozen=True)
+class CurrentCollectibleObservation:
+    room: CurrentRoomObservation
+    executable_sha256: str
+    source_rdt_sha256: str
+    packet_offset: int
+    registry_slot: int
+    raw_type: int
+    source_amount: int
+    acquisition_index: int
+    acquisition_set: bool
 
 
 class _RoomRead(Enum):
@@ -72,7 +87,7 @@ _INITIAL_SPANS = (
 
 # Compare only native ownership/mode/source fields, rather than animation or
 # input bytes that legitimately change while the same room remains current.
-# XYZ and facing come from one initial pose block and need not stay stationary.
+# XYZ and facing come from one pose block and need not stay stationary.
 _GUARD_FIELDS = (
     (0x800CC858, 4, 0x18400780),
     (0x800D1F30, 4, 1),
@@ -138,20 +153,53 @@ def read_current_map_position(
     return result
 
 
+def read_current_collectible(
+    binding: CollectibleBinding,
+    read_memory: Callable[[int, int], MemoryResult],
+) -> CurrentCollectibleObservation | CurrentRoomFailure:
+    """Read one registered packet's native acquisition condition, without caching.
+
+    A set condition does not prove this pickup caused it. This API grants no
+    departed presence, complete item list or clearance result.
+    """
+    assert isinstance(binding, CollectibleBinding)
+    result = _read_current_room(binding.catalog, read_memory, binding)
+    assert isinstance(result, (CurrentCollectibleObservation, CurrentRoomFailure))
+    return result
+
+
 def _read_current_room(
     catalog: SourceCatalog,
     read_memory: Callable[[int, int], MemoryResult],
-    layout: MapPositionLayout | _RoomRead,
-) -> CurrentRoomObservation | CurrentMapObservation | CurrentRoomFailure:
+    request: MapPositionLayout | CollectibleBinding | _RoomRead,
+) -> (
+    CurrentRoomObservation
+    | CurrentMapObservation
+    | CurrentCollectibleObservation
+    | CurrentRoomFailure
+):
     assert isinstance(catalog, SourceCatalog)
-    assert isinstance(layout, MapPositionLayout) or layout is _RoomRead.WithoutMap
-    with_map = isinstance(layout, MapPositionLayout)
+    assert (
+        isinstance(request, (MapPositionLayout, CollectibleBinding))
+        or request is _RoomRead.WithoutMap
+    )
+    with_map = isinstance(request, MapPositionLayout)
     spans = (
         (_INITIAL_SPANS[0], _MAP_CONTEXT_SPAN, *_INITIAL_SPANS[1:])
         if with_map
         else _INITIAL_SPANS
     )
     guard_fields = (*_GUARD_FIELDS, *_MAP_GUARD_FIELDS) if with_map else _GUARD_FIELDS
+    if isinstance(request, CollectibleBinding):
+        # These words already belong to the initial/repeated spans. Pin only
+        # the selected registry slot, plus pending and active UI admission.
+        registry_address = 0x800CC890 + 4 * request.packet[1]
+        guard_fields = (
+            *guard_fields,
+            (registry_address, 4, 0xFFFFFFFF),
+            (0x800C7961, 1, 0xFF),
+            (0x800D1F2C, 4, 0x200),
+        )
     identity = catalog.runtime_signature.verify(read_memory)
     if not identity.ok:
         return CurrentRoomFailure(PollStatus.ReadFailure, identity.error)
@@ -208,6 +256,12 @@ def _read_current_room(
             )
         if lifecycle & 0x00400000 or values[0x800C7960]:
             return CurrentRoomFailure(PollStatus.Retry, "Room loading is in progress")
+        if isinstance(request, CollectibleBinding) and (
+            values[0x800C7961] or values[0x800D1F2C]
+        ):
+            return CurrentRoomFailure(
+                PollStatus.NonGameplay, "An interface request is active"
+            )
         if values[0x800E01E7] or values[0x800D4434] or values[0x800CCBA0]:
             return CurrentRoomFailure(
                 PollStatus.NonGameplay, "Player control is paused or filtered"
@@ -224,6 +278,7 @@ def _read_current_room(
 
     try:
         blocks = {address: read(address, width) for address, width in spans}
+        pose = blocks[0x800CC830][0x3C8:0x404]
         before = guard_values(blocks)
         failure = admission(before)
         if isinstance(failure, CurrentRoomFailure):
@@ -236,6 +291,10 @@ def _read_current_room(
             return CurrentRoomFailure(PollStatus.UnsupportedRoom, source.detail)
         if camera >= source.camera_count:
             return CurrentRoomFailure(PollStatus.Retry, "Room camera is not ready")
+        if isinstance(request, CollectibleBinding) and source is not request.source:
+            return CurrentRoomFailure(
+                PollStatus.UnsupportedRoom, "A different collectible source is current"
+            )
         base = before[0x800CC86C]
         if base != before[0x800CC870]:
             return CurrentRoomFailure(
@@ -244,6 +303,12 @@ def _read_current_room(
         ranges = source.ranges(base)
         if isinstance(ranges, RoomFormatFailure):
             return CurrentRoomFailure(PollStatus.Retry, ranges.detail)
+        if isinstance(request, CollectibleBinding) and (
+            before[registry_address] != base + request.packet_offset + 2
+        ):
+            return CurrentRoomFailure(
+                PollStatus.Retry, "Collectible registration is not ready"
+            )
         observed = []
         for offset, expected in ranges:
             packet = read(base + offset, len(expected))
@@ -252,6 +317,41 @@ def _read_current_room(
                     PollStatus.Retry, "Loaded room does not match its source"
                 )
             observed.append((offset, packet))
+        if isinstance(request, CollectibleBinding):
+            address = base + request.packet_offset
+            packet = read(address, len(request.packet))
+            # Native acceptance/reentry may clear only kind2 to kind0. Keep
+            # every other byte exact, rather than normalizing mutable scripts.
+            if (
+                packet[2] not in (0, 2)
+                or packet[:2] != request.packet[:2]
+                or packet[3:] != request.packet[3:]
+            ):
+                return CurrentRoomFailure(
+                    PollStatus.Retry, "Collectible packet differs from its source"
+                )
+            acquisition_set = bool(
+                int.from_bytes(read(request.acquisition_address, 4), "little")
+                & request.acquisition_mask
+            )
+            if (packet[2] == 0) != acquisition_set:
+                return CurrentRoomFailure(
+                    PollStatus.Retry, "Collectible acquisition is not settled"
+                )
+            # Bracket this pose with the item condition. A same-room restore
+            # can change pose and acquisition while every room guard agrees.
+            pose = read(0x800CCBF8, 60)
+            if (
+                bool(
+                    int.from_bytes(read(request.acquisition_address, 4), "little")
+                    & request.acquisition_mask
+                )
+                != acquisition_set
+                or read(address, len(packet)) != packet
+            ):
+                return CurrentRoomFailure(
+                    PollStatus.Retry, "Collectible changed during read"
+                )
         for offset, packet in reversed(observed):
             if read(base + offset, len(packet)) != packet:
                 return CurrentRoomFailure(
@@ -277,11 +377,23 @@ def _read_current_room(
         camera,
         source.source.path,
         base,
-        struct.unpack_from("<3i", core, 0x3C8),
-        struct.unpack_from("<H", core, 0x402)[0],
+        struct.unpack_from("<3i", pose),
+        struct.unpack_from("<H", pose, 0x3A)[0],
         struct.unpack_from("<b", core, 0x39D)[0],
     )
-    if isinstance(layout, MapPositionLayout):
+    if isinstance(request, CollectibleBinding):
+        return CurrentCollectibleObservation(
+            observation,
+            EXECUTABLE_SHA256,
+            request.source_sha256,
+            request.packet_offset,
+            request.packet[1],
+            request.raw_type,
+            request.source_amount,
+            request.acquisition_index,
+            acquisition_set,
+        )
+    if isinstance(request, MapPositionLayout):
         # All additional fields were read before pose and checked in reverse
         # under the same source/lifecycle guards. No later memory read is used.
         context = MapPositionContext(
@@ -296,7 +408,7 @@ def _read_current_room(
             before[0x800D1FC0],
             before[0x800D1F7C],
         )
-        position = resolve_native_map_position(layout, context)
+        position = resolve_native_map_position(request, context)
         if isinstance(position, RoomFormatFailure):
             return CurrentRoomFailure(PollStatus.UnsupportedRoom, position.detail)
         return CurrentMapObservation(observation, position)
