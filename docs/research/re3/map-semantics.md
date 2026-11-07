@@ -618,6 +618,110 @@ The sole client closed; verified owned PID 99922 received SIGTERM and its wrappe
 
 - 2026-11-07; a fresh `gemini-3.8-flash` high-reasoning snapshot review of this record, native report/controller/verifier, command-result fields and root audit fails to open an Antigravity session. Claude Opus 5.5 remains disabled. No external review completes or supplies an endorsement. Local final review checks original caller/register roles, source bounds, projection/palette numbers, restore and input chronology, portability, cleanup and claim limits. Scoped documentation links and whitespace checks pass; this evidence-only change adds no production code or full-suite run.
 
+## RE3-MAP-015: fresh ordinary-view current-row group-0 source observation
+
+Status: Candidate. This is a prospective ordinary overlay-zero source observation under the [existing Hard current-room admission](live-reader.md#re3-live-001-bounded-hard-current-room-and-pose-observations), not actual hardware L2 admission or a guarantee the map menu would open. Target is Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, supplied disc/revision, Hard; executable `SLUS_009.23` SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`, MAP_U.MAP SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. Retained runtime inputs come from RE3-MAP-013/014's DuckStation `0.1-12083-g00e299795`, native-state version 87. This increment starts no emulator and adds no native execution, gameplay observation or restore.
+
+### Source contract and API
+
+`compile_map_feature_layout` takes explicit immutable owned MAP/executable bytes, checks both exact hashes and compiles a typed, deeply immutable layout once before polling. It reuses `compile_map_position_layout`, bounded metadata decoding and shared record/group mapping. The authority retains compiler-created tuple identities and permits no public construction or `dataclasses.replace`, including simultaneous substitution of a derived value and a matching receipt. No decoded list/dictionary or mutable source buffer survives inside it. Row/quad byte-argument counts, metadata targets and aligned physical flag-word extents fail with modeled source errors.
+
+`read_current_map_features(catalog, layout, read_memory)` adds an explicit alternative to the shared live transaction. It reads fresh remapping/world state and resolves the current native group, source record, row, projected pose and numeric layer through `resolve_native_map_position` and the shared layer code. It then uses the existing group-0 shape predicates, shared conjunctive metadata requirements and `native_row_visible`. Acquisition bypasses metadata only. The separate `native_row_visible` boolean can be false while `group_zero_allowed_indices` remains nonempty. Native visit/acquisition words are game facts and grant no tracker exploration. Only the current row's group-0 quad indices are returned; group-1 detail calls and palette semantics remain separate.
+
+The loaded MAP cache can be absent or stale in ordinary gameplay. This API predicts from pinned owned sources and fresh world state; it neither reads nor claims a current loaded-source pointer. The older capture selection API still requires its explicit loaded-MAP prefix binding. Cached AA/AB/AC and AE/AF are not inputs to this prospective API. No room whitelist, room/floor label, room ownership, complete item list, clearance, exploration persistence or registered RE3 production profile is added.
+
+### Pending context and overlay are fresh inputs
+
+The supplied source-only followup at `/tmp/re-map-re3-l2-overlay-source-20261107-39mh2sl7/` checks fourteen pinned original windows across eleven retained captures. All eleven observed overlays are zero. This does not establish zero as an ordinary L2 invariant. Original `0x80023CB4..0x80023CD8` sets work mode 4 and request bit `0x0200` without clearing overlay. The common request tail sets pending byte `0x800C7961` and request bit `0x0100`. Entry `0x8006D948` invokes fresh selectors at `0x8006ED28`; `0x8006DB8C` reads overlay and nonzero cases can override browsed group. Bootstrap `0x8006D928` and completed-menu cleanup `0x8006E1A8`, before task-zero resume `0x8006E248`, contain explicit zero stores. Closed-menu state alone precedes that completed cleanup and cannot prove zero overlay.
+
+The source-map handler `0x80058C70/0x80058CB4` sets pending state and stores a zero-extended source-u8 operand into the overlay u16 before menu-active becomes true. This is inspected source control flow, not an observed execution of that source opcode. Ordinary L2's `0x80023C24` reads the full u16 at `0x800C7960`, including its pending high byte. The earlier `0x80031F50` selector-4 call is OPTION.BIN, not the L2 map route; that rejected interpretation is not used here.
+
+The new request therefore requires the following fresh PS1 virtual fields, in addition to the existing room/position gates. No address below is a host-process address.
+
+| Field | Width / byte order | Mask / accepted value |
+| --- | --- | --- |
+| `0x800E0278`, actual overlay | u16 LE | `0xFFFF`, zero only; nonzero gives `UnsupportedSettings` |
+| `0x800C7961`, pending map/UI byte | u8 | `0xFF`, zero; pending gives `NonGameplay` |
+| `0x800D1F2C`, request word | u32 LE | `0x0300`, both bits clear; pending gives `NonGameplay` |
+| `0x800CCBCD`, raw signed actor floor | i8 | all eight bits, used as the shared shape predicate's signed argument |
+| `0x800CCBF8`, XYZ, and `0x800CCC32`, facing | 3 × i32 LE and u16 LE | full widths, one contiguous actor/pose sample |
+
+Active menu/pause stays `NonGameplay`, including a nonzero overlay. Existing position-only and collectible observations keep their previously accepted behavior; their `Display` is not a prospective menu-entry receipt.
+
+### Complete dependencies and coherence
+
+The compiler enumerates shared predicate trees, source metadata and native row dependencies across the nine records. Its exact supplied-source plan has 26 u32 LE flag words. These union masks name predicate dependencies; the live transaction explicitly reads and compares each complete `0xFFFFFFFF` word. Existing remapping masks remain additional requirements, including `0x00800000` at `0x800D1FB8`, `0x4000` at `0x800D1FBC` and `1` at `0x800D1FC0`, as recorded in [RE3-LIVE-002](live-reader.md#re3-live-002-fresh-native-map-position-under-current-room-guards). Visit indices retain the native two-word-per-group stride and physical aliasing. The dependency plan is source-derived, including branches skipped this poll, rather than an estimated contiguous flag region.
+
+| PS1 virtual word address, u32 LE | Dependency mask |
+| --- | --- |
+| `0x800CC858` | `0x00000080` |
+| `0x800D1FA0` | `0x20040010` |
+| `0x800D1FA4` | `0x00000120` |
+| `0x800D1FA8` | `0x80000003` |
+| `0x800D1FAC` | `0x80000000` |
+| `0x800D1FB0` | `0x00040005` |
+| `0x800D1FB4` | `0x00000010` |
+| `0x800D1FB8` | `0x08800200` |
+| `0x800D1FBC` | `0x00200000` |
+| `0x800D1FC0` | `0x00000004` |
+| `0x800D2008` | `0x00080000` |
+| `0x800D200C` | `0x78010010` |
+| `0x800D2010` | `0x80000001` |
+| `0x800D202C` | `0x01000200` |
+| `0x800D20CC` | `0x00400000` |
+| `0x800D20DC` | `0xFFFFFFFF` |
+| `0x800D20E0` | `0xFFFFFFFF` |
+| `0x800D20E4` | `0xFFFFFFFF` |
+| `0x800D20E8` | `0xFFFFFFFF` |
+| `0x800D20EC` | `0xFFFC0000` |
+| `0x800D20F4` | `0xFFFFFE00` |
+| `0x800D20FC` | `0xFFFFC000` |
+| `0x800D2104` | `0xFFE00000` |
+| `0x800D210C` | `0xFFF00000` |
+| `0x800D2124` | `0xFE000000` |
+| `0x800D2594` | `0x04000000` |
+
+The transaction brackets one 103-byte actor/pose sample at `0x800CCBCD` with these explicit words, repeated in reverse. XYZ/facing come only from this sample, not the earlier/later broad core blocks. Overlay, pending flags, raw actor floor, selectors, source identity and remapping guards also agree before/after. A same-room savestate replacement changing flags or floor cannot combine old XYZ with a detected new selection context. Changed words/guards and failed or short reads return atomic `Retry` with no partial observation. Wrong revision and unsupported source/context retain explicit modeled failures. Repeated reads detect the covered changes; they are not a stopped-world snapshot or a theorem about arbitrary changes that revert between samples.
+
+For the pinned 169-source catalog, successful reads have at most 79 requests, 8,485 requested bytes and a largest request of 1,384 bytes, including runtime signature and repeated source witnesses. R100 uses 4,221 bytes; R101 uses 8,485. The new flags contribute 52 four-byte requests, or 208 bytes, plus one actor/pose read and two overlay reads. There is no full-RAM polling or source recompilation during a poll.
+
+### Retained-file comparison and reproduction
+
+Offline replay rebuilds and binds all 169 RDT sources and MAP from the explicit owned BIN, then runs the new current API on unchanged full retained RAM images. The observations below reproduce RE3-MAP-013/014's current-row native admission/renderer indices and the capture API's separate loaded-source results. Each pre-opening observation also reproduces after layout reconstruction. The three associated menu captures return `NonGameplay`.
+
+| Retained pre-opening observation | Raw actor floor | Native group/row | Numeric layer | Group-0 indices | Native row visible |
+| --- | ---: | --- | ---: | --- | --- |
+| R100 exact restore | 0 | `0/0` | 0 | `[0,2,3]` | true |
+| R101 lower exact restore | 1 | `0/1` | 0 | `[0]` | true |
+| R101 upper exact restore | 4 | `0/1` | 0 | `[1,2]` | true |
+
+Eight additional retained ordinary snapshots reproduce the same R100/floor-zero and R101/floor-one/two/four alternatives. Signed floor 3 selects `[1,2]` in the shared source/synthetic checks; it is not claimed as another retained pre-opening runtime observation here. R101 raw actor floors 1/2 select one feature and 3/4 another. These are signed actor floors, not lifecycle phases or physical floor IDs. The separate R100 noncurrent row-one `[1,2]` loop and group-1 callback remain evidence of different calls; the new API returns neither of them as current group-0 ownership.
+
+Private implementation evidence is `/tmp/re-map-re3-map015-implementation-20261107-zR9itYfK/`. Run its `verify.py` with `--repo`, `--disc-image`, `--exe`, `--map`, `--native-evidence`, `--map013`, `--overlay-evidence` and a mandatory nonexistent `--output` directory. The native evidence root is `/tmp/re-map-re3-r100-map-native-20261107-nUiK0jpY/`; MAP-013 is `/tmp/re-map-re3-map013-amended-20261107/`. Inputs remain private. The verifier checks the frozen prior hashes below, records each retained RAM/menu hash and checks request counts/bytes against the exact source catalog. It does not rerun the prior native/save/cleanup experiments.
+
+| Private artifact | SHA256 |
+| --- | --- |
+| MAP-014 `verify.py` | `5739397c352b9e8bcae84411e6ce39aa329a6780805c7208e96d75ab2d504f8b` |
+| MAP-014 `verified-final/verification.json` | `210cd47a506e6fa3ce4ca6d855c1ce7230af04233d590d5f531ea1533a137011` |
+| Overlay followup `verify.py` | `f92f2f3a12c5ee23a468cc8e44672526341cab9c0b1e0db715faafb967c02ee4` |
+| Overlay followup `verified/verification.json` | `80c1aa78ba53eaf915dded9b8d891f9d5f2e33a6003c77ca282c6cf6ff42fa02` |
+| Overlay followup `artifact-manifest.json` | `8d8374d8022a3d7bc5a3d1b8956c8f6d5a94c659eb9363d6933d1482e38805c7` |
+| Implementation `verify.py` | `6b303757fe39606718187a3d3cfd73bb98e2ad7bc9488da245bee2ef468d864d` |
+| Implementation `verified-final-reviewed/verification.json` | `6e864feaa32c0b2c20b53f7ed3b42758d27956dc13dcf6f9178af94ed90992f0` |
+
+Twenty-nine added regression cases cover immutable nested authority, matching receipt substitution, wrong/changed inputs, required fields and spans, metadata duplicates, predicate/metadata/acquisition changes, separate row visibility, fresh reconstruction and restores, all dependency/guard changes around pose, every failed/short transaction read, pending bits, full-width overlay rejection and active menu rejection. All 2,277 RE3 checks and the full Python suite pass, with 7,139 passed and 50 skipped. Scoped Ruff, formatting, documentation links and whitespace checks pass. These are software/source checks, not runtime campaign coverage.
+
+- 2026-11-07; implementation sub-agent, verified exact model `gpt-6.1-sol`, effort `xhigh`, session `01a1b76e-f538-79e3-95b5-e0e92ab493a3`; authored the source compiler, shared metadata/dependency changes, fresh request, tests, private offline replay and this claim. Local review checked source identity/derivation authority, physical bounds, complete dependency reads, source/pose coherence, original API preservation and the separation of row, quad, native evidence and tracker rights. No subagent or external review was started; parent and independent review remain pending.
+- The supplied source-only overlay followup is authored by its recorded `gpt-6.1-sol` investigator and retained with its own date/model fields. RE3-MAP-013/014's original runtime authorship, independent reviews, save creation/restore distinctions and limits are unchanged. This implementation adds no new native evidence or parent/external endorsement.
+
+Physical room ownership, physical-floor identity, tracker reveal rules, full-campaign admission and playthrough readiness remain unresolved. This API alone supplies no complete item/door/story model, clearance, user exploration update or runnable RE3 profile. Group-1 selection, palette interpretation and nonzero prospective overlays are outside this increment.
+
+Integration review, 2026-11-07: Codex root and two independent agents, exact model `gpt-6.1-sol`, effort `xhigh`, review the actual implementation. Review A checks immutable authority, exact dependencies and shared capture semantics. It independently enumerates 245 logical flag dependencies across the 26 physical words, checks 39,572 row/shape flag reads against those masks and reproduces byte-identical condition/group-0/group-1/row exports across eleven retained captures. Its 1,426 focused tests pass. Review B checks shared live reads, admission, failure statuses, contiguous pose and source coherence, including 22 additional bounded probes and the complete owned-catalog retained replay. Neither review adds native observations or hardware-admission evidence.
+
+Root identifies and corrects one coherence defect before integration. The broad initial/final guard blocks could agree while the two intervening feature-word samples agreed with each other at a different value. The returned mode/remapping context could then disagree with a physical word that had actually been read. Before sampling pose, the reader now checks the feature blocks against the original guards through the existing guard decoder. This adds no memory requests. Five regressions covering mode and remapping overlaps fail with the exact original transaction and pass with the corrected reader. Review B independently reproduces both results and rechecks the fix. The live-focused suite passes 335 tests, and the combined full suite passes 7,194 with explicit owned RE2 inputs, including the 50 cases skipped in the child run above.
+
+The final main-checkout retained verifier reproduces all three named pre-opening selections, eight additional observations, active-menu rejection, request bounds and reconstruction. Its report matches the implementation report in every field except the changed reader's source hash. Private evidence is `/tmp/re-map-re3-map015-root-integration-20261107/`, including the original-transaction regression plugin, `retained-run/verification.json`, full/focused checks and integration manifest. The retained report SHA256 is `9b7f66abbbb1dc62b114a6d552a8756e0d5dbfb2ef672bb7fe718ad87a1a2c82`. Prior frozen evidence remains unchanged. A new Gemini 3.8 Flash high-reasoning request fails to open its Antigravity session; Claude Opus 5.5 is disabled. Neither supplies an external endorsement. Scoped Ruff, formatting, documentation links and whitespace checks pass. No renderer or UI changes require a README image update.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.

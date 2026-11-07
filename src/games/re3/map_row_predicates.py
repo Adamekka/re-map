@@ -7,6 +7,18 @@ Source/capture coherence belongs to the caller's mandatory binding path.
 from games.re3.map_layer import native_map_layer
 from games.re3.map_predicate import FlagReader
 
+_ROW_STORY_FLAGS = ((0x800D1FA0, 58), (0x800D1FA0, 196))
+
+
+def native_row_flags(group: int, row: int) -> tuple[tuple[int, int], ...]:
+    """Complete source dependencies, including branches not reached this poll."""
+    return (
+        (0x800D2124, group),
+        (0x800D20DC, 64 * group + row),
+        *(_ROW_STORY_FLAGS[:1] if group == 1 else ()),
+        *(_ROW_STORY_FLAGS[1:] if group == 3 else ()),
+    )
+
 
 def native_row_visible(
     group: int,
@@ -27,21 +39,20 @@ def native_row_visible(
 
     # This caller tests the full acquisition mask, independently of group 1's
     # low-byte admission cache. Supported acquisition masks have a zero low byte.
-    acquired = flag(0x800D2124, group)
+    acquired_flag, visit_flag, *_ = native_row_flags(group, row)
+    acquired = flag(*acquired_flag)
     if not acquired and row >= 48:
         return False
     # The original visit helper strides two words per group. Retain the full
     # index: semantic bank labels can alias the same physical word. The caller
     # still requires visits for acquired native group 4, rows 11-15.
-    if (not acquired or group == 4 and 11 <= row <= 15) and not flag(
-        0x800D20DC, 64 * group + row
-    ):
+    if (not acquired or group == 4 and 11 <= row <= 15) and not flag(*visit_flag):
         return False
 
     if group == 0 and 17 <= row <= 26:
         return False
     if group == 1:
-        if current_key in (0x10C, 0x115) and flag(0x800D1FA0, 58) and row != 12:
+        if current_key in (0x10C, 0x115) and flag(*_ROW_STORY_FLAGS[0]) and row != 12:
             return False
         if raw_stage_u16 in (2, 3, 4) and row == 12:
             return False
@@ -50,7 +61,7 @@ def native_row_visible(
         if row == (17 if current_key == 0x112 else 18):
             return False
     if group == 3:
-        if row == (17 if flag(0x800D1FA0, 196) else 21):
+        if row == (17 if flag(*_ROW_STORY_FLAGS[1]) else 21):
             return False
         if current_key == 0x310:
             if row in (17, 21, 13):

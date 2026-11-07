@@ -22,6 +22,11 @@ from games.re3.map_data import (
     NativeMapPosition,
     resolve_native_map_position,
 )
+from games.re3.map_features import (
+    MapFeatureLayout,
+    NativeCurrentRowFeatures,
+    resolve_current_row_features,
+)
 from games.re3.room_data import RoomFormatFailure
 from games.re3.source_witnesses import SourceCatalog
 from games.runtime_identity import MemoryResult
@@ -43,6 +48,12 @@ class CurrentRoomObservation:
 class CurrentMapObservation:
     room: CurrentRoomObservation
     map_position: NativeMapPosition
+
+
+@dataclass(frozen=True)
+class CurrentMapFeatureObservation:
+    room: CurrentRoomObservation
+    features: NativeCurrentRowFeatures
 
 
 @dataclass(frozen=True)
@@ -168,28 +179,65 @@ def read_current_collectible(
     return result
 
 
+def read_current_map_features(
+    catalog: SourceCatalog,
+    layout: MapFeatureLayout,
+    read_memory: Callable[[int, int], MemoryResult],
+) -> CurrentMapFeatureObservation | CurrentRoomFailure:
+    """Predict ordinary overlay-zero current-row group-0 source selection.
+
+    This does not admit a hardware L2 press, guarantee menu opening, bind a
+    loaded MAP cache, reveal tracker rooms or establish physical ownership.
+    """
+    assert type(layout) is MapFeatureLayout
+    layout._assert_compiled()
+    if (
+        layout.position_layout.map_sha256 != MAP_U_SHA256
+        or layout.position_layout.executable_sha256 != EXECUTABLE_SHA256
+    ):
+        return CurrentRoomFailure(
+            PollStatus.UnsupportedSettings,
+            "This reader requires the supported RE3 map resource and revision",
+        )
+    result = _read_current_room(catalog, read_memory, layout)
+    assert isinstance(result, (CurrentMapFeatureObservation, CurrentRoomFailure))
+    return result
+
+
 def _read_current_room(
     catalog: SourceCatalog,
     read_memory: Callable[[int, int], MemoryResult],
-    request: MapPositionLayout | CollectibleBinding | _RoomRead,
+    request: MapPositionLayout | MapFeatureLayout | CollectibleBinding | _RoomRead,
 ) -> (
     CurrentRoomObservation
     | CurrentMapObservation
+    | CurrentMapFeatureObservation
     | CurrentCollectibleObservation
     | CurrentRoomFailure
 ):
     assert isinstance(catalog, SourceCatalog)
     assert (
-        isinstance(request, (MapPositionLayout, CollectibleBinding))
+        isinstance(request, (MapPositionLayout, MapFeatureLayout, CollectibleBinding))
         or request is _RoomRead.WithoutMap
     )
-    with_map = isinstance(request, MapPositionLayout)
+    with_features = isinstance(request, MapFeatureLayout)
+    with_map = isinstance(request, (MapPositionLayout, MapFeatureLayout))
     spans = (
         (_INITIAL_SPANS[0], _MAP_CONTEXT_SPAN, *_INITIAL_SPANS[1:])
         if with_map
         else _INITIAL_SPANS
     )
     guard_fields = (*_GUARD_FIELDS, *_MAP_GUARD_FIELDS) if with_map else _GUARD_FIELDS
+    if with_features:
+        # L2 does not clear overlay. Pending source-map requests can also precede
+        # menu-active, so neither value can be inferred from a closed menu.
+        spans = ((0x800E0278, 2), *spans)
+        guard_fields = (
+            *guard_fields,
+            (0x800E0278, 2, 0xFFFF),
+            (0x800C7961, 1, 0xFF),
+            (0x800D1F2C, 4, 0x300),
+        )
     if isinstance(request, CollectibleBinding):
         # These words already belong to the initial/repeated spans. Pin only
         # the selected registry slot, plus pending and active UI admission.
@@ -202,7 +250,10 @@ def _read_current_room(
         )
     identity = catalog.runtime_signature.verify(read_memory)
     if not identity.ok:
-        return CurrentRoomFailure(PollStatus.ReadFailure, identity.error)
+        return CurrentRoomFailure(
+            PollStatus.Retry if with_features else PollStatus.ReadFailure,
+            identity.error,
+        )
     if not identity.value:
         return CurrentRoomFailure(
             PollStatus.WrongGame, "This reader requires the supported RE3 revision"
@@ -262,9 +313,19 @@ def _read_current_room(
             return CurrentRoomFailure(
                 PollStatus.NonGameplay, "An interface request is active"
             )
+        if with_features:
+            if values[0x800C7961] or values[0x800D1F2C]:
+                return CurrentRoomFailure(
+                    PollStatus.NonGameplay, "A map or interface request is pending"
+                )
         if values[0x800E01E7] or values[0x800D4434] or values[0x800CCBA0]:
             return CurrentRoomFailure(
                 PollStatus.NonGameplay, "Player control is paused or filtered"
+            )
+        if with_features and values[0x800E0278]:
+            return CurrentRoomFailure(
+                PollStatus.UnsupportedSettings,
+                "This map observation requires ordinary overlay zero",
             )
         if lifecycle & 0x600 or values[0x800CCBA4]:
             return CurrentRoomFailure(PollStatus.Retry, "Player update is suspended")
@@ -317,6 +378,36 @@ def _read_current_room(
                     PollStatus.Retry, "Loaded room does not match its source"
                 )
             observed.append((offset, packet))
+        if with_features:
+            # The complete dependency set comes from source predicates/metadata,
+            # not a guessed flag region. Resample pose only after these words.
+            feature_words = tuple(
+                (address, int.from_bytes(read(address, 4), "little"))
+                for address, _ in request.flag_words
+            )
+            # Mode/remapping words overlap the earlier broad guard blocks.
+            # Compare every observed copy before using either context: two
+            # matching feature samples cannot hide a conflicting guard sample.
+            feature_blocks = {
+                address: value.to_bytes(4, "little") for address, value in feature_words
+            }
+            if guard_values(feature_blocks | blocks) != before:
+                return CurrentRoomFailure(
+                    PollStatus.Retry, "Map flags disagree with room context"
+                )
+            # Keep floor, XYZ (+43) and facing (+101) in one actor span so a
+            # restore cannot splice a separately sampled floor into this pose.
+            actor_pose = read(0x800CCBCD, 103)
+            pose = actor_pose[43:]
+            if actor_pose[0] != before[0x800CCBCD]:
+                return CurrentRoomFailure(
+                    PollStatus.Retry, "Actor floor changed during read"
+                )
+            for address, value in reversed(feature_words):
+                if int.from_bytes(read(address, 4), "little") != value:
+                    return CurrentRoomFailure(
+                        PollStatus.Retry, "Map selection flags changed during read"
+                    )
         if isinstance(request, CollectibleBinding):
             address = base + request.packet_offset
             packet = read(address, len(request.packet))
@@ -369,7 +460,9 @@ def _read_current_room(
         if isinstance(failure, CurrentRoomFailure):
             return failure
     except ReadFailure as error:
-        return CurrentRoomFailure(PollStatus.ReadFailure, str(error))
+        return CurrentRoomFailure(
+            PollStatus.Retry if with_features else PollStatus.ReadFailure, str(error)
+        )
 
     core = blocks[0x800CC830]
     observation = CurrentRoomObservation(
@@ -393,7 +486,7 @@ def _read_current_room(
             request.acquisition_index,
             acquisition_set,
         )
-    if isinstance(request, MapPositionLayout):
+    if with_map:
         # All additional fields were read before pose and checked in reverse
         # under the same source/lifecycle guards. No later memory read is used.
         context = MapPositionContext(
@@ -408,6 +501,17 @@ def _read_current_room(
             before[0x800D1FC0],
             before[0x800D1F7C],
         )
+        if with_features:
+            features = resolve_current_row_features(
+                request,
+                context,
+                observation.actor_floor,
+                before[0x800E0278],
+                feature_words,
+            )
+            if isinstance(features, RoomFormatFailure):
+                return CurrentRoomFailure(PollStatus.UnsupportedRoom, features.detail)
+            return CurrentMapFeatureObservation(observation, features)
         position = resolve_native_map_position(request, context)
         if isinstance(position, RoomFormatFailure):
             return CurrentRoomFailure(PollStatus.UnsupportedRoom, position.detail)

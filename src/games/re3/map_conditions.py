@@ -9,6 +9,7 @@ from typing import NamedTuple
 
 from games.bit_flags import msb_flag_location
 from games.re3.map_data import decode_map_layout
+from games.re3.map_predicate import FlagReader
 from games.re3.room_data import RoomFormatFailure
 
 
@@ -23,6 +24,42 @@ class _QuadConditionEntry(NamedTuple):
 class _QuadConditionTable(NamedTuple):
     entries: tuple[_QuadConditionEntry, ...]
     terminator_offset: int
+
+
+class QuadRequirement(NamedTuple):
+    row: int
+    primitive: int
+    bank: int
+    flag_index: int
+
+
+def group_zero_metadata_allows(
+    requirements: tuple[QuadRequirement, ...],
+    row: int,
+    primitive: int,
+    acquired: bool,
+    flag: FlagReader,
+) -> bool:
+    # Acquisition bypasses only metadata, never the separate shape/row gates.
+    # Duplicate targets remain conjunctive; no matching entry imposes a test.
+    return acquired or all(
+        flag(entry.bank, entry.flag_index)
+        for entry in requirements
+        if (entry.row, entry.primitive) == (row, primitive)
+    )
+
+
+def quad_requirements(entries: list[dict]) -> tuple[QuadRequirement, ...]:
+    """Share the decoded metadata's immutable representation with live reads."""
+    return tuple(
+        QuadRequirement(
+            entry["row_index"],
+            entry["primitive_index"],
+            entry["flag_bank_address_ps1"],
+            entry["flag_index"],
+        )
+        for entry in entries
+    )
 
 
 def _decode_condition_table(

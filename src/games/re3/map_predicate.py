@@ -17,6 +17,22 @@ Exclusion: TypeAlias = tuple[int, tuple[int, ...] | Literal["all"]]
 FlagReader: TypeAlias = Callable[[int, int], int]
 
 
+def predicate_flags(node: Predicate) -> tuple[tuple[int, int], ...]:
+    """Enumerate dependencies even when evaluation would short-circuit."""
+    match node:
+        case ("bit", bank, index):
+            return ((bank, index),)
+        case ("not", condition):
+            return predicate_flags(condition)
+        case ("all" | "any", conditions):
+            return tuple(
+                pair for child in conditions for pair in predicate_flags(child)
+            )
+        case ("eq" | "signed_lt", _, _):
+            return ()
+    assert False, "pinned map predicate has an unsupported operator"
+
+
 def evaluate_map_predicate(
     node: Predicate, fields: Mapping[Field, int], flag: FlagReader
 ) -> bool:

@@ -119,6 +119,12 @@ class NativeMapPosition:
     executable_sha256: str
 
 
+def native_group_for_record(record_index: int) -> int:
+    """Alternate MAP records 7/8 still use predicate groups 0/1."""
+    assert type(record_index) is int and 0 <= record_index <= 8
+    return record_index if record_index < 7 else record_index - 7
+
+
 def decode_map_primitives(data: bytes, executable: bytes) -> dict | RoomFormatFailure:
     """Export numeric quad geometry after checking the actual executable bytes.
 

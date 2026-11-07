@@ -26,6 +26,9 @@ class QuadPredicate(NamedTuple):
     source_virtual: str
 
 
+GROUP_ZERO_SYSTEM_FLAG = (0x800CC858, 24)
+
+
 # This early branch also decides whether either flag-dependent alternative
 # is reached, so all three families share the same condition.
 GROUP1_ROW10_EARLY: Predicate = (
@@ -479,7 +482,7 @@ def group_zero_shape_allowed(
             continue
         # The native override skips only late families for map groups 0/1.
         # Overlay and early families still reject before that branch.
-        if family.phase == "late" and flag(0x800CC858, 24):
+        if family.phase == "late" and flag(*GROUP_ZERO_SYSTEM_FLAG):
             continue
         exclusions = (
             family.exclude_when_true

@@ -11,8 +11,13 @@ from typing import NamedTuple
 
 from games.bit_flags import msb_flag_location
 from games.re3.capture_data import capture_failure
-from games.re3.map_conditions import decode_map_conditions, decode_map_detail_conditions
-from games.re3.map_data import decode_map_layout
+from games.re3.map_conditions import (
+    decode_map_conditions,
+    decode_map_detail_conditions,
+    group_zero_metadata_allows,
+    quad_requirements,
+)
+from games.re3.map_data import decode_map_layout, native_group_for_record
 from games.re3.map_detail_predicates import (
     GROUP_ONE_SYSTEM_STYLE,
     GroupOneShapeDecision,
@@ -74,11 +79,7 @@ def _bind_selected_map_source(
     table = condition_records[selected_record_index]
     # Alternate source records 7/8 still invoke the native predicate with
     # groups 0/1. Current-location AA is independent of browsed-group AB.
-    group = (
-        selected_record_index
-        if selected_record_index < 7
-        else selected_record_index - 7
-    )
+    group = native_group_for_record(selected_record_index)
     if ram[0xE026B] != group:
         return RoomFormatFailure(
             "map-selection-binding",
@@ -170,17 +171,13 @@ def decode_native_map_selection(
     phase = struct.unpack_from("<b", ram, 0xCCBCD)[0]
     overlay = struct.unpack_from("<H", ram, 0xE0278)[0]
     acquired = bool(flag(0x800D2124, group))
+    requirements = quad_requirements(table["requirements"])
     rows = []
     for row in record["directory"]:
         allowed = []
         for primitive in range(len(row["primitive_groups"][0])):
-            # No matching entry imposes no prefix requirement. Duplicate
-            # targets remain conjunctive; acquisition bypasses only this test.
-            metadata_allows = acquired or all(
-                flag(entry["flag_bank_address_ps1"], entry["flag_index"])
-                for entry in table["requirements"]
-                if (entry["row_index"], entry["primitive_index"])
-                == (row["index"], primitive)
+            metadata_allows = group_zero_metadata_allows(
+                requirements, row["index"], primitive, acquired, flag
             )
             if metadata_allows and group_zero_shape_allowed(
                 group, row["index"], primitive, current_key, phase, overlay, flag
