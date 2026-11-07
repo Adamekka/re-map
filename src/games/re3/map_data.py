@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import struct
+from dataclasses import dataclass, field
 
 from games.player_heading import heading_degrees
 from games.re3 import EXECUTABLE_SHA256
@@ -18,6 +19,104 @@ from games.re3.room_data import RoomFormatFailure, decode_map
 
 # Native signed division at 0x800706DC projects 450 world units to one map unit.
 WORLD_UNITS_PER_MAP_UNIT = 450
+
+
+@dataclass(frozen=True)
+class MapPositionContext:
+    stage: int
+    room: int
+    world_x: int
+    world_z: int
+    facing: int
+    system: int
+    flag_1fb8: int
+    flag_1fbc: int
+    flag_1fc0: int
+    previous_room: int
+
+    def __post_init__(self) -> None:
+        assert all(type(value) is int for value in vars(self).values())
+        assert -0x8000 <= self.stage < 0x8000 and -0x8000 <= self.room < 0x8000
+        assert -0x80000000 <= self.world_x < 0x80000000
+        assert -0x80000000 <= self.world_z < 0x80000000
+        assert 0 <= self.facing <= 0xFFFF and 0 <= self.previous_room <= 0xFFFF
+        assert all(
+            0 <= value <= 0xFFFFFFFF
+            for value in (self.system, self.flag_1fb8, self.flag_1fbc, self.flag_1fc0)
+        )
+
+
+@dataclass(frozen=True)
+class ProjectionAnchor:
+    index: int
+    offset: int
+    map_origin_xy: tuple[int, int]
+    world_origin_xz: tuple[int, int]
+
+
+@dataclass(frozen=True)
+class _ProjectionRecord:
+    row_count: int
+    anchors: tuple[ProjectionAnchor, ...]
+    layered: bool
+    layer_count: int
+
+
+_LAYOUT_BINDING = object()
+
+
+@dataclass(frozen=True)
+class _LayoutBinding:
+    records: tuple[_ProjectionRecord, ...]
+    remaps: tuple[tuple[int, int, int, int], ...]
+    map_sha256: str
+    executable_sha256: str
+    seal: object = field(repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        assert self.seal is _LAYOUT_BINDING
+
+
+@dataclass(frozen=True)
+class MapPositionLayout:
+    records: tuple[_ProjectionRecord, ...]
+    remaps: tuple[tuple[int, int, int, int], ...]
+    map_sha256: str
+    executable_sha256: str
+    _binding: _LayoutBinding = field(repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        # Keep a copied layout tied to all validated projection data, rather
+        # than allowing dataclasses.replace to retain only its old hash.
+        assert isinstance(self._binding, _LayoutBinding)
+        assert self._binding.seal is _LAYOUT_BINDING
+        assert (
+            self.records,
+            self.remaps,
+            self.map_sha256,
+            self.executable_sha256,
+        ) == (
+            self._binding.records,
+            self._binding.remaps,
+            self._binding.map_sha256,
+            self._binding.executable_sha256,
+        )
+
+
+@dataclass(frozen=True)
+class NativeMapPosition:
+    source_stage_room: tuple[int, int]
+    world_position_xz: tuple[int, int]
+    raw_facing_u16: int
+    player_heading_degrees: float
+    native_arrow_sector: int
+    native_stage_room: tuple[int, int]
+    map_record_index: int
+    native_layer_index: int
+    native_map_xy: tuple[int, int]
+    projection_anchor: ProjectionAnchor
+    map_sha256: str
+    executable_sha256: str
 
 
 def decode_map_primitives(data: bytes, executable: bytes) -> dict | RoomFormatFailure:
@@ -176,32 +275,58 @@ def decode_map_layout(data: bytes, executable: bytes) -> dict | RoomFormatFailur
     }
 
 
-def decode_native_map_position(
-    data: bytes, executable: bytes, ram: bytes
-) -> dict | RoomFormatFailure:
-    """Resolve Candidate native row/layer/coordinates from an explicit snapshot.
-
-    This does not check the loaded RDT, admit gameplay, record visits or identify
-    room contours. Capture failures use RAM offsets; layout failures use the
-    MAP or executable byte space indicated by their kind.
-    """
+def compile_map_position_layout(
+    data: bytes, executable: bytes
+) -> MapPositionLayout | RoomFormatFailure:
+    """Validate owned source once; retain immutable projection data for polling."""
     layout = decode_map_layout(data, executable)
     if isinstance(layout, RoomFormatFailure):
         return layout
-    failure = capture_failure(executable, ram)
-    if failure is not None:
-        return failure
-    stage, room = struct.unpack_from("<2h", ram, 0xD1F76)
+    records = tuple(
+        _ProjectionRecord(
+            len(record["directory"]),
+            tuple(
+                ProjectionAnchor(
+                    anchor["index"],
+                    anchor["offset"],
+                    tuple(anchor["map_origin_xy"]),
+                    tuple(anchor["world_origin_xz"]),
+                )
+                for anchor in record["projection_anchors"]
+            ),
+            record["layer_metadata"]["layered"],
+            record["layer_metadata"]["layer_count"],
+        )
+        for record in layout["records"]
+    )
+    remaps = tuple((*row["source"], *row["target"]) for row in layout["room_remaps"])
+    binding = _LayoutBinding(
+        records, remaps, layout["sha256"], layout["executable_sha256"], _LAYOUT_BINDING
+    )
+    return MapPositionLayout(
+        records, remaps, binding.map_sha256, binding.executable_sha256, binding
+    )
+
+
+def resolve_native_map_position(
+    layout: MapPositionLayout, context: MapPositionContext
+) -> NativeMapPosition | RoomFormatFailure:
+    """Evaluate one explicit context, without reading memory or admitting gameplay."""
+    assert isinstance(layout, MapPositionLayout)
+    assert isinstance(context, MapPositionContext)
+    stage, room = context.stage, context.room
     if not 0 <= stage <= 6 or not 0 <= room <= 255:
         return RoomFormatFailure(
             "map-context", 0xD1F76, "unsupported source stage or room"
         )
-    world_x = struct.unpack_from("<i", ram, 0xCCBF8)[0]
-    world_z = struct.unpack_from("<i", ram, 0xCCC00)[0]
-    facing = struct.unpack_from("<H", ram, 0xCCC32)[0]
-    system = struct.unpack_from("<I", ram, 0xCC858)[0]
-    flag_1fb8 = struct.unpack_from("<I", ram, 0xD1FB8)[0]
-    flag_1fc0 = struct.unpack_from("<I", ram, 0xD1FC0)[0]
+    world_x, world_z, facing = context.world_x, context.world_z, context.facing
+    system = context.system
+    flag_1fb8, flag_1fbc, flag_1fc0 = (
+        context.flag_1fb8,
+        context.flag_1fbc,
+        context.flag_1fc0,
+    )
+    previous = context.previous_room
     # RE3-MAP-004: 0x80073CCC returns early for three cases before its table
     # loop. Preserve that order rather than applying every alias unconditionally.
     split_stage1_room0f = (stage, room) == (1, 0x0F) and world_x >= -0x2276
@@ -224,28 +349,26 @@ def decode_native_map_position(
             # Raw stages 5/6 share maps 0/1. Later table destinations 5/6 are
             # native map groups and must not undergo this folding again.
             native_stage -= 5
-        for remap in layout["room_remaps"]:
-            if [native_stage, native_room] == remap["source"]:
-                native_stage, native_room = remap["target"]
+        for remap in layout.remaps:
+            if (native_stage, native_room) == remap[:2]:
+                native_stage, native_room = remap[2:]
     record_index = native_stage + 7 if system & 0x80 else native_stage
-    if record_index >= len(layout["records"]):
+    if record_index >= len(layout.records):
         return RoomFormatFailure(
             "map-context", 0xCC858, "native map record is unavailable"
         )
-    record = layout["records"][record_index]
-    if native_room >= min(len(record["directory"]), len(record["projection_anchors"])):
+    record = layout.records[record_index]
+    if native_room >= min(record.row_count, len(record.anchors)):
         return RoomFormatFailure(
             "map-context", 0xD1F78, "native map row is outside its source tables"
         )
     # The native layer selector at 0x80073BC8 uses these row ranges. Floor
     # names remain unresolved, so the result retains numeric layer indices.
     layer = native_map_layer(native_stage, native_room)
-    if record["layer_metadata"]["layered"]:
+    if record.layered:
         if (stage, native_room) == (4, 3):
-            flag_1fbc = struct.unpack_from("<I", ram, 0xD1FBC)[0]
-            previous = struct.unpack_from("<H", ram, 0xD1F7C)[0]
             layer = 0 if flag_1fbc & 0x4000 and previous != 0x503 else 1
-        if layer >= record["layer_metadata"]["layer_count"]:
+        if layer >= record.layer_count:
             return RoomFormatFailure(
                 "map-context", 0xD1F78, "native layer is outside the map metadata"
             )
@@ -258,12 +381,12 @@ def decode_native_map_position(
         adjusted_x += 0x251D
     elif split_stage3_room15:
         adjusted_x -= 0x2328
-    anchor = record["projection_anchors"][native_room]
+    anchor = record.anchors[native_room]
     # SUBU wraps to signed 32 bits; the native divide truncates toward zero,
     # whereas Python's negative // rounds down. Keep both semantics explicit.
     deltas = [
         (value - origin + 0x80000000) % 0x100000000 - 0x80000000
-        for value, origin in zip([adjusted_x, world_z], anchor["world_origin_xz"])
+        for value, origin in zip([adjusted_x, world_z], anchor.world_origin_xz)
     ]
     dx, dz = [
         value // WORLD_UNITS_PER_MAP_UNIT
@@ -271,25 +394,80 @@ def decode_native_map_position(
         else -(-value // WORLD_UNITS_PER_MAP_UNIT)
         for value in deltas
     ]
-    map_x, map_y = anchor["map_origin_xy"]
+    map_x, map_y = anchor.map_origin_xy
+    return NativeMapPosition(
+        (stage, room),
+        (world_x, world_z),
+        facing,
+        # RE3-MAP-007: movement and arrow selection use the low twelve bits;
+        # this Candidate conversion does not independently admit gameplay.
+        heading_degrees(facing, 90, 1),
+        # Predict fresh marker initialization; cached native packets can lag.
+        ((facing + 0x100) >> 9) & 7,
+        (native_stage, native_room),
+        record_index,
+        layer,
+        (map_x + dx, map_y - dz),
+        anchor,
+        layout.map_sha256,
+        layout.executable_sha256,
+    )
+
+
+def decode_native_map_position(
+    data: bytes, executable: bytes, ram: bytes
+) -> dict | RoomFormatFailure:
+    """Resolve Candidate native row/layer/coordinates from an explicit snapshot.
+
+    This does not check the loaded RDT, admit gameplay, record visits or identify
+    room contours. Capture failures use RAM offsets; layout failures use the
+    MAP or executable byte space indicated by their kind.
+    """
+    layout = compile_map_position_layout(data, executable)
+    if isinstance(layout, RoomFormatFailure):
+        return layout
+    failure = capture_failure(executable, ram)
+    if failure is not None:
+        return failure
+    stage, room = struct.unpack_from("<2h", ram, 0xD1F76)
+    result = resolve_native_map_position(
+        layout,
+        MapPositionContext(
+            stage,
+            room,
+            struct.unpack_from("<i", ram, 0xCCBF8)[0],
+            struct.unpack_from("<i", ram, 0xCCC00)[0],
+            struct.unpack_from("<H", ram, 0xCCC32)[0],
+            struct.unpack_from("<I", ram, 0xCC858)[0],
+            struct.unpack_from("<I", ram, 0xD1FB8)[0],
+            struct.unpack_from("<I", ram, 0xD1FBC)[0],
+            struct.unpack_from("<I", ram, 0xD1FC0)[0],
+            struct.unpack_from("<H", ram, 0xD1F7C)[0],
+        ),
+    )
+    if isinstance(result, RoomFormatFailure):
+        return result
+    anchor = result.projection_anchor
     return {
         "schema": "re3-native-map-position-v1",
         "status": "candidate-native-map-binding",
-        "source_stage_room": [stage, room],
-        "world_position_xz": [world_x, world_z],
-        # RE3-MAP-007: both movement and native arrow selection use the low
-        # twelve bits; this Candidate conversion does not admit gameplay.
-        "raw_facing_u16": facing,
-        "player_heading_degrees": heading_degrees(facing, 90, 1),
-        # Predict fresh marker initialization; cached native packets can lag.
-        "native_arrow_sector": ((facing + 0x100) >> 9) & 7,
-        "native_stage_room": [native_stage, native_room],
-        "map_record_index": record_index,
-        "native_layer_index": layer,
-        "native_map_xy": [map_x + dx, map_y - dz],
-        "projection_anchor": anchor,
-        "map_sha256": layout["sha256"],
-        "executable_sha256": layout["executable_sha256"],
+        "source_stage_room": list(result.source_stage_room),
+        "world_position_xz": list(result.world_position_xz),
+        "raw_facing_u16": result.raw_facing_u16,
+        "player_heading_degrees": result.player_heading_degrees,
+        "native_arrow_sector": result.native_arrow_sector,
+        "native_stage_room": list(result.native_stage_room),
+        "map_record_index": result.map_record_index,
+        "native_layer_index": result.native_layer_index,
+        "native_map_xy": list(result.native_map_xy),
+        "projection_anchor": {
+            "index": anchor.index,
+            "offset": anchor.offset,
+            "map_origin_xy": list(anchor.map_origin_xy),
+            "world_origin_xz": list(anchor.world_origin_xz),
+        },
+        "map_sha256": result.map_sha256,
+        "executable_sha256": result.executable_sha256,
         "loaded_room_binding": "unchecked",
         "campaign_admission": "unresolved",
         "floor_labels": "unresolved",

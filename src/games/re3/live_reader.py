@@ -9,9 +9,17 @@ from __future__ import annotations
 import struct
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import Enum
 from typing import Literal
 
 from games.game_profile import RoomId
+from games.re3 import EXECUTABLE_SHA256, MAP_U_SHA256
+from games.re3.map_data import (
+    MapPositionContext,
+    MapPositionLayout,
+    NativeMapPosition,
+    resolve_native_map_position,
+)
 from games.re3.room_data import RoomFormatFailure
 from games.re3.source_witnesses import SourceCatalog
 from games.runtime_identity import MemoryResult
@@ -27,6 +35,16 @@ class CurrentRoomObservation:
     position: tuple[int, int, int]
     facing: int
     actor_floor: int
+
+
+@dataclass(frozen=True)
+class CurrentMapObservation:
+    room: CurrentRoomObservation
+    map_position: NativeMapPosition
+
+
+class _RoomRead(Enum):
+    WithoutMap = "without-map"
 
 
 @dataclass(frozen=True)
@@ -75,13 +93,65 @@ _GUARD_FIELDS = (
     (0x800CCBCD, 1, 0xFF),
 )
 
+# These fresh fields affect native remapping/layers. The UI's cached current
+# row can remain stale while gameplay runs, so it cannot supply this context.
+_MAP_CONTEXT_SPAN = (0x800D1F7C, 0x48)
+_MAP_GUARD_FIELDS = (
+    (0x800D1F7C, 2, 0xFFFF),
+    (0x800D1FB8, 4, 0x00800000),
+    (0x800D1FBC, 4, 0x4000),
+    (0x800D1FC0, 4, 1),
+)
+
 
 def read_current_room(
     catalog: SourceCatalog,
     read_memory: Callable[[int, int], MemoryResult],
 ) -> CurrentRoomObservation | CurrentRoomFailure:
     """Read fresh mode, source and pose; retain no state across polls or loads."""
+    result = _read_current_room(catalog, read_memory, _RoomRead.WithoutMap)
+    assert isinstance(result, (CurrentRoomObservation, CurrentRoomFailure))
+    return result
+
+
+def read_current_map_position(
+    catalog: SourceCatalog,
+    layout: MapPositionLayout,
+    read_memory: Callable[[int, int], MemoryResult],
+) -> CurrentMapObservation | CurrentRoomFailure:
+    """Bind a fresh native map position to the same admitted source/pose epoch.
+
+    Numeric native layers do not establish physical floors or room ownership.
+    This observation does not reveal rooms or mutate tracker history.
+    """
+    assert isinstance(layout, MapPositionLayout)
+    if (
+        layout.map_sha256 != MAP_U_SHA256
+        or layout.executable_sha256 != EXECUTABLE_SHA256
+    ):
+        return CurrentRoomFailure(
+            PollStatus.UnsupportedSettings,
+            "This reader requires the supported RE3 map resource and revision",
+        )
+    result = _read_current_room(catalog, read_memory, layout)
+    assert isinstance(result, (CurrentMapObservation, CurrentRoomFailure))
+    return result
+
+
+def _read_current_room(
+    catalog: SourceCatalog,
+    read_memory: Callable[[int, int], MemoryResult],
+    layout: MapPositionLayout | _RoomRead,
+) -> CurrentRoomObservation | CurrentMapObservation | CurrentRoomFailure:
     assert isinstance(catalog, SourceCatalog)
+    assert isinstance(layout, MapPositionLayout) or layout is _RoomRead.WithoutMap
+    with_map = isinstance(layout, MapPositionLayout)
+    spans = (
+        (_INITIAL_SPANS[0], _MAP_CONTEXT_SPAN, *_INITIAL_SPANS[1:])
+        if with_map
+        else _INITIAL_SPANS
+    )
+    guard_fields = (*_GUARD_FIELDS, *_MAP_GUARD_FIELDS) if with_map else _GUARD_FIELDS
     identity = catalog.runtime_signature.verify(read_memory)
     if not identity.ok:
         return CurrentRoomFailure(PollStatus.ReadFailure, identity.error)
@@ -103,7 +173,7 @@ def read_current_room(
 
     def guard_values(blocks: dict[int, bytes]) -> dict[int, int]:
         values = {}
-        for address, width, mask in _GUARD_FIELDS:
+        for address, width, mask in guard_fields:
             for base, packet in blocks.items():
                 offset = address - base
                 if 0 <= offset <= len(packet) - width:
@@ -153,7 +223,7 @@ def read_current_room(
         return PollStatus.Display
 
     try:
-        blocks = {address: read(address, width) for address, width in _INITIAL_SPANS}
+        blocks = {address: read(address, width) for address, width in spans}
         before = guard_values(blocks)
         failure = admission(before)
         if isinstance(failure, CurrentRoomFailure):
@@ -188,7 +258,7 @@ def read_current_room(
                     PollStatus.Retry, "Room source changed during read"
                 )
         after_blocks = {
-            address: read(address, width) for address, width in reversed(_INITIAL_SPANS)
+            address: read(address, width) for address, width in reversed(spans)
         }
         after = guard_values(after_blocks)
         if before != after:
@@ -202,7 +272,7 @@ def read_current_room(
         return CurrentRoomFailure(PollStatus.ReadFailure, str(error))
 
     core = blocks[0x800CC830]
-    return CurrentRoomObservation(
+    observation = CurrentRoomObservation(
         RoomId(stage, room),
         camera,
         source.source.path,
@@ -211,3 +281,23 @@ def read_current_room(
         struct.unpack_from("<H", core, 0x402)[0],
         struct.unpack_from("<b", core, 0x39D)[0],
     )
+    if isinstance(layout, MapPositionLayout):
+        # All additional fields were read before pose and checked in reverse
+        # under the same source/lifecycle guards. No later memory read is used.
+        context = MapPositionContext(
+            stage,
+            room,
+            observation.position[0],
+            observation.position[2],
+            observation.facing,
+            before[0x800CC858],
+            before[0x800D1FB8],
+            before[0x800D1FBC],
+            before[0x800D1FC0],
+            before[0x800D1F7C],
+        )
+        position = resolve_native_map_position(layout, context)
+        if isinstance(position, RoomFormatFailure):
+            return CurrentRoomFailure(PollStatus.UnsupportedRoom, position.detail)
+        return CurrentMapObservation(observation, position)
+    return observation
