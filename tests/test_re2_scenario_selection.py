@@ -38,6 +38,7 @@ from games.re2.scenario_selection import (
 )
 from games.re2.script_control_limits import programs_digest
 from games.re2.script_dispatch_items import script_item_dispatch
+from games.re2.source_task_control import TaskControlSupport
 from games.re2.startup_entry_selection import EntrySelectionSource
 
 
@@ -172,7 +173,9 @@ def test_normal_engine_guard_receipt_filters_without_granting_presence(
         scenario_entry_scope(data, room, profile, context)
         is ScenarioSelectionFailure.EntryScope
     )
-    scope = scenario_guard_scope(data, room, profile, context)
+    scope = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(scope, VerifiedScenarioGuardScope)
     assert not isinstance(scope, VerifiedScenarioEntryScope)
     result = scoped_scenario_items(data, room, profile, context, scope)
@@ -202,7 +205,9 @@ def test_trusted_constructor_retains_all_creators_resets_and_fixed_writers(
         ),
         (0,),
     )
-    scope = scenario_guard_scope(data, room, profile, context)
+    scope = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(scope, VerifiedScenarioGuardScope)
     result = scoped_scenario_items(data, room, profile, context, scope)
     assert result == (
@@ -227,7 +232,9 @@ def test_guard_receipt_cannot_authorize_positive_declared_items(
 ):
     data, room, context, _, _ = prepared(profile, END, (item() + END, worker), (0,))
     strict = scenario_entry_scope(data, room, profile, context)
-    guard = scenario_guard_scope(data, room, profile, context)
+    guard = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(strict, VerifiedScenarioEntryScope) is (worker == END)
     assert isinstance(guard, VerifiedScenarioGuardScope)
     arguments = (
@@ -255,7 +262,9 @@ def test_guard_query_requires_both_receipt_binding_digests(profile, field):
     data, room, context, _, _ = prepared(
         profile, END, (guarded(1, 1, 1, item()) + END, END), (0,)
     )
-    scope = scenario_guard_scope(data, room, profile, context)
+    scope = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(scope, VerifiedScenarioGuardScope)
     assert (
         scoped_scenario_items(
@@ -270,7 +279,9 @@ def test_guard_receipt_cannot_follow_source_or_program_drift(profile, drift):
     data, room, context, _, _ = prepared(
         profile, END, (guarded(1, 1, 1, item()) + END, END), (0,)
     )
-    scope = scenario_guard_scope(data, room, profile, context)
+    scope = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(scope, VerifiedScenarioGuardScope)
     if drift == "source":
         # Rebind the corpus to the changed source so the stale guard receipt,
@@ -301,7 +312,9 @@ def test_scenario_scope_audit_identities_are_not_interchangeable(profile, kind, 
         }
         assert isinstance(scope, VerifiedScenarioEntryScope)
     else:
-        scope = scenario_guard_scope(data, room, profile, context)
+        scope = scenario_guard_scope(
+            data, room, profile, context, TaskControlSupport.Unaudited
+        )
         other = {
             "audit": SCENARIO_ENTRY_AUDIT,
             "native_domain_audit": SCENARIO_NATIVE_WORK_AUDIT,

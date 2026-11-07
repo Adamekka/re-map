@@ -18,6 +18,7 @@ from games.re2.scenario_selection import (
     VerifiedScenarioGuardScope,
     bind_scenario_context,
 )
+from games.re2.source_task_control import TaskControlSupport
 
 
 @pytest.fixture
@@ -60,7 +61,9 @@ def test_normal_effect_guard_scope_cannot_authorize_positive_declarations(profil
     effects = b"\x64\x01\x16\x02" + bytes(12) + b"\x65\x01"
     data, room, context, strict = scoped(profile, main=(effects + END, END))
     assert strict is ScenarioSelectionFailure.EntryScope
-    result = scenario_guard_scope(data, room, profile, context)
+    result = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(result, VerifiedScenarioGuardScope)
     assert not isinstance(result, VerifiedScenarioEntryScope)
     assert result.native_domain_audit == SCENARIO_TRUSTED_NATIVE_AUDIT
@@ -83,7 +86,10 @@ def test_normal_effect_trust_preserves_explicit_source_and_work_guards(
     elif mutation == "context":
         profile["runtime_layout"]["scenario_reset_mask"] = 0
     assert isinstance(
-        scenario_guard_scope(data, room, profile, context), ScenarioSelectionFailure
+        scenario_guard_scope(
+            data, room, profile, context, TaskControlSupport.Unaudited
+        ),
+        ScenarioSelectionFailure,
     )
 
 
@@ -104,7 +110,9 @@ def test_sealed_goto_cycle_retains_real_caller_frames(profile, depth, accepted):
         main = (cycle, END)
     data, room, context, strict = scoped(profile, main=main)
     assert strict is ScenarioSelectionFailure.EntryScope
-    result = scenario_guard_scope(data, room, profile, context)
+    result = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(result, VerifiedScenarioGuardScope) is accepted
 
 
@@ -131,7 +139,10 @@ def test_goto_cannot_expose_a_foreign_if_pointer_or_abandon_a_loop(profile, muta
         )
     data, room, context, _ = scoped(profile, main=(bytes(packet), END, END))
     assert isinstance(
-        scenario_guard_scope(data, room, profile, context), ScenarioSelectionFailure
+        scenario_guard_scope(
+            data, room, profile, context, TaskControlSupport.Unaudited
+        ),
+        ScenarioSelectionFailure,
     )
 
 
@@ -140,7 +151,7 @@ def test_normal_engine_scope_retains_kind_five_shifted_pc_rejection(profile):
         profile, init=callback(2) + END, main=(END, b"\x47\x07" + END, END)
     )
     assert (
-        scenario_guard_scope(data, room, profile, context)
+        scenario_guard_scope(data, room, profile, context, TaskControlSupport.Unaudited)
         is ScenarioSelectionFailure.EntryScope
     )
 

@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING
 from games.bit_flags import msb_flag_location
 
 if TYPE_CHECKING:
+    from games.re2.ordinary_task_ingress import (
+        OrdinaryTaskIngressFailure,
+        VerifiedOrdinaryTaskIngress,
+    )
     from games.re2.startup_entry_selection import (
         EntrySelectionConfig,
         EntrySelectionResource,
@@ -595,12 +599,34 @@ def startup_declaration_audit(
         raise ValueError("invalid RE2 startup declaration audit") from error
 
 
+@dataclass(frozen=True)
+class BoundStartupDeclarations:
+    declarations: VerifiedStartupDeclarationContract
+    ordinary_ingress: VerifiedOrdinaryTaskIngress | OrdinaryTaskIngressFailure
+
+
 def bind_startup_declaration_audit(
     config: StartupDeclarationAuditConfig,
     executable: bytes,
     native_resources: dict[str, bytes],
     sources: dict[str, bytes],
 ) -> VerifiedStartupDeclarationContract | StartupDeclarationFailure:
+    # Existing positive declarations consume this exact legacy contract.
+    # Keep ordinary task/input permissions outside it and its scenario context.
+    result = bind_startup_declaration_resources(
+        config, executable, native_resources, sources
+    )
+    return (
+        result.declarations if isinstance(result, BoundStartupDeclarations) else result
+    )
+
+
+def bind_startup_declaration_resources(
+    config: StartupDeclarationAuditConfig,
+    executable: bytes,
+    native_resources: dict[str, bytes],
+    sources: dict[str, bytes],
+) -> BoundStartupDeclarations | StartupDeclarationFailure:
     """Bind audited native entry, resource lookup and allocation dimensions."""
     assert isinstance(config, StartupDeclarationAuditConfig)
     assert (
@@ -611,14 +637,14 @@ def bind_startup_declaration_audit(
     import struct
 
     from games.re2.startup_entry_selection import (
-        VerifiedEntrySelection,
-        bind_entry_selection,
+        BoundEntryResources,
+        bind_entry_resources,
     )
 
-    selection = bind_entry_selection(
+    resources = bind_entry_resources(
         config.selection, executable, native_resources, sources
     )
-    if not isinstance(selection, VerifiedEntrySelection):
+    if not isinstance(resources, BoundEntryResources):
         return StartupDeclarationFailure.NativeContract
     try:
 
@@ -671,11 +697,11 @@ def bind_startup_declaration_audit(
         shadow = parts * 0xAC + objects[0][0] + body - (objects[0][4] + 12) + mesh
         if not 0 <= objects[0][4] + 12 <= body or tmd + body + uv_width > len(model):
             return StartupDeclarationFailure.NativeContract
-        return VerifiedStartupDeclarationContract(
+        declarations = VerifiedStartupDeclarationContract(
             executable_sha256=config.executable_sha256,
             source_address=source_address,
             source_stage=0,
-            selection=selection,
+            selection=resources.selection,
             flag_addresses=struct.unpack("<40I", native(0x800A78C8, 40 * 4)),
             actor_model=0x1F,
             constructor_flags=frozenset((0x46, 0x8046, 0x8040)),
@@ -685,5 +711,6 @@ def bind_startup_declaration_audit(
             actor_resource_width=tmd + body,
             model_uv_address=0x8018FFF0 - uv_width,
         )
+        return BoundStartupDeclarations(declarations, resources.ordinary_ingress)
     except (KeyError, TypeError, ValueError, IndexError, struct.error):
         return StartupDeclarationFailure.NativeContract

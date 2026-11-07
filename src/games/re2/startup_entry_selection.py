@@ -13,6 +13,13 @@ import re
 import struct
 from dataclasses import asdict, dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from games.re2.ordinary_task_ingress import (
+        OrdinaryTaskIngressFailure,
+        VerifiedOrdinaryTaskIngress,
+    )
 
 from games.re2.script_control_limits import calls_fit_native_frames
 
@@ -170,6 +177,95 @@ class VerifiedEntrySelection:
         return dict(self.incoming_models).get(room_id, ())
 
 
+@dataclass(frozen=True)
+class BoundEntryResources:
+    selection: VerifiedEntrySelection
+    ordinary_ingress: VerifiedOrdinaryTaskIngress | OrdinaryTaskIngressFailure
+
+
+@dataclass(frozen=True)
+class _AuxiliaryDerivation:
+    resource: EntrySelectionResource
+    descriptor: bytes
+    data: bytes
+    programs_json: str
+
+    def __post_init__(self) -> None:
+        # Equal bytearray/memoryview data could otherwise change after binding
+        # while the retained decoded programs still describe the original bytes.
+        assert isinstance(self.resource, EntrySelectionResource)
+        assert type(self.descriptor) is bytes and type(self.data) is bytes
+        assert type(self.programs_json) is str
+
+
+@dataclass(frozen=True)
+class BoundAuxiliaryScript:
+    model: int
+    resource: EntrySelectionResource
+    descriptor: bytes
+    data: bytes
+    programs_json: str
+    _derivation: _AuxiliaryDerivation
+
+    def __post_init__(self) -> None:
+        assert type(self.model) is int
+        assert isinstance(self._derivation, _AuxiliaryDerivation)
+        assert self.resource.path == f"COMMON/DOOR/DOOR{self.model:02X}.DO2"
+        assert self._derivation == _AuxiliaryDerivation(
+            self.resource, self.descriptor, self.data, self.programs_json
+        )
+
+
+@dataclass(frozen=True)
+class _AuxiliaryCorpusDerivation:
+    selection: VerifiedEntrySelection
+    scripts: tuple[BoundAuxiliaryScript, ...]
+    route_witnesses: tuple[
+        tuple[str, tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]], ...
+    ]
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.selection, VerifiedEntrySelection)
+        assert type(self.scripts) is tuple and all(
+            isinstance(script, BoundAuxiliaryScript) for script in self.scripts
+        )
+        assert type(self.route_witnesses) is tuple
+        for row in self.route_witnesses:
+            assert type(row) is tuple and len(row) == 3 and type(row[0]) is str
+            for ranges in row[1:]:
+                assert type(ranges) is tuple
+                assert all(
+                    type(pair) is tuple
+                    and len(pair) == 2
+                    and all(type(value) is int for value in pair)
+                    for pair in ranges
+                )
+
+
+@dataclass(frozen=True)
+class BoundAuxiliaryCorpus:
+    selection: VerifiedEntrySelection
+    scripts: tuple[BoundAuxiliaryScript, ...]
+    _derivation: _AuxiliaryCorpusDerivation
+    route_witnesses: tuple[
+        tuple[str, tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]], ...
+    ]
+
+    def __post_init__(self) -> None:
+        assert type(self.scripts) is tuple
+        assert isinstance(self._derivation, _AuxiliaryCorpusDerivation)
+        assert self._derivation == _AuxiliaryCorpusDerivation(
+            self.selection, self.scripts, self.route_witnesses
+        )
+        assert tuple(key for key, _, _ in self.route_witnesses) == tuple(
+            row.room_id for row in self.selection.sources
+        )
+        assert {row.resource for row in self.scripts} == {
+            row for row in self.selection.resources if "/DOOR/" in row.path
+        }
+        assert len({row.model for row in self.scripts}) == len(self.scripts)
+
+
 def entry_selection_config(
     raw: dict, resources: tuple[EntrySelectionResource, ...], executable_sha256: str
 ) -> EntrySelectionConfig:
@@ -209,6 +305,19 @@ def bind_entry_selection(
     native_resources: dict[str, bytes],
     sources: dict[str, bytes],
 ) -> VerifiedEntrySelection | EntrySelectionFailure:
+    # Positive/door consumers retain the legacy stage-zero type. The shared
+    # resource pass's separate ordinary-ingress result grants them no rights.
+    bound = bind_entry_resources(config, executable, native_resources, sources)
+    return bound.selection if isinstance(bound, BoundEntryResources) else bound
+
+
+def bind_entry_resources(
+    config: EntrySelectionConfig,
+    executable: bytes,
+    native_resources: dict[str, bytes],
+    sources: dict[str, bytes],
+) -> BoundEntryResources | EntrySelectionFailure:
+    """Bind once; derive separate route and ordinary-ingress capabilities."""
     assert isinstance(config, EntrySelectionConfig)
     assert (
         type(executable) is bytes
@@ -272,6 +381,7 @@ def bind_entry_selection(
 
         incoming: dict[str, set[int]] = {}
         models = set()
+        route_witnesses = {}
         for key, data in sources.items():
             room = decode_room(
                 data, specs[key].path, frozenset(), frozenset(), frozenset()
@@ -288,11 +398,27 @@ def bind_entry_selection(
                 for row in commands
                 if row["kind"] == "reset" and row["interaction"] == 1
             }
+            # Reset writes through registered creator records, including a
+            # creator that is executed again later. Keep that writer separate
+            # from Copy and from the legacy stage-zero routing permission.
+            any_reset_slots = {
+                row["slot"] for row in commands if row["kind"] == "reset"
+            }
+            reset_writes = []
             routes = []
             for row in commands:
                 if row["kind"] not in ("door", "item", "interaction"):
                     continue
                 at = row["offset"]
+                if data[at + 1] in any_reset_slots:
+                    payload = (
+                        22
+                        if row["opcode"] in (0x67, 0x68, 0x69) or data[at + 3] & 0x80
+                        else 14
+                    )
+                    reset_writes.extend(
+                        ((at + 2, at + 4), (at + payload, at + payload + 6))
+                    )
                 if row["kind"] != "door" and data[at + 1] not in reset_slots:
                     continue
                 # Four-point creators install the geometry bit natively; the
@@ -314,6 +440,7 @@ def bind_entry_selection(
                     # the audited stage-zero namespace, not to a covered entry.
                     if target_stage % 9 == 0:
                         return EntrySelectionFailure.Routing
+            route_witnesses[key] = (key, tuple(routes), tuple(reset_writes))
             for program in room["programs"].values():
                 ordered = sorted(program["commands"], key=lambda row: row["offset"])
                 if any(
@@ -368,6 +495,7 @@ def bind_entry_selection(
             path = f"COMMON/BIN/STAGE{stage + 1}.BIN"
             if integer(0x800A20B8 + (stage + 8) * 12, 4) != resource_indices[path]:
                 return EntrySelectionFailure.Resource
+        auxiliaries = []
         for model in sorted(models):
             path = f"COMMON/DOOR/DOOR{model:02X}.DO2"
             if integer(0x8009A4B0 + model * 2, 2) != resource_indices[path]:
@@ -395,6 +523,24 @@ def bind_entry_selection(
             fake.extend(payload[8:script_end])
             auxiliary = decode_room(
                 bytes(fake), path, frozenset(), frozenset(), frozenset()
+            )
+            programs_json = json.dumps(
+                auxiliary["programs"], sort_keys=True, separators=(",", ":")
+            )
+            # This exact compiled tuple is minted only after the mandatory
+            # native descriptor, owned resource hash and shared decode checks.
+            # A retained receipt cannot replace its bytes or decoded programs.
+            auxiliaries.append(
+                BoundAuxiliaryScript(
+                    model,
+                    resource_specs[path],
+                    descriptor,
+                    bytes(fake),
+                    programs_json,
+                    _AuxiliaryDerivation(
+                        resource_specs[path], descriptor, bytes(fake), programs_json
+                    ),
+                )
             )
             edges = {key: set() for key in auxiliary["programs"]}
             for key, program in auxiliary["programs"].items():
@@ -445,13 +591,30 @@ def bind_entry_selection(
         # TITLE's direct loader uses fixed normal starts; variable destinations
         # require demo2000 or excluded memory-card startup. Demo exit clears
         # gameplay before returning, and a new load precedes its next setting.
-        return VerifiedEntrySelection(
+        selection = VerifiedEntrySelection(
             config.executable_sha256,
             config.resources,
             config.sources,
             frozenset({0}),
             tuple(
                 (key, tuple(sorted(value))) for key, value in sorted(incoming.items())
+            ),
+        )
+        from games.re2.ordinary_task_ingress import ordinary_task_ingress
+
+        bound_routes = tuple(route_witnesses[row.room_id] for row in config.sources)
+        return BoundEntryResources(
+            selection,
+            ordinary_task_ingress(
+                executable,
+                BoundAuxiliaryCorpus(
+                    selection,
+                    tuple(auxiliaries),
+                    _AuxiliaryCorpusDerivation(
+                        selection, tuple(auxiliaries), bound_routes
+                    ),
+                    bound_routes,
+                ),
             ),
         )
     except (KeyError, IndexError, TypeError, ValueError, struct.error, AssertionError):

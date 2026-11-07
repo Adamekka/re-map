@@ -29,9 +29,15 @@ from games.re2.scenario_selection import (
     scenario_source_write_witnesses,
 )
 from games.re2.script_control_limits import (
+    NATIVE_IF_FRAME_COUNT,
     NATIVE_LOOP_FRAME_COUNT,
     calls_fit_native_frames,
     programs_digest,
+)
+from games.re2.source_task_control import (
+    TaskControlFailure,
+    TaskControlSupport,
+    VerifiedSourceTaskControl,
 )
 
 
@@ -144,18 +150,27 @@ def scenario_entry_scope(
 ) -> VerifiedScenarioEntryScope | ScenarioSelectionFailure:
     """Qualify entries under the audited initialized-native-work recipe."""
     result = _scenario_scope(
-        data, room, profile, context, _ScopePolicy.AuditedNativeWork
+        data,
+        room,
+        profile,
+        context,
+        _ScopePolicy.AuditedNativeWork,
+        TaskControlSupport.Unaudited,
     )
     assert isinstance(result, (VerifiedScenarioEntryScope, ScenarioSelectionFailure))
     return result
 
 
 def scenario_guard_scope(
-    data: bytes, room: dict, profile: dict, context: VerifiedScenarioContext
+    data: bytes,
+    room: dict,
+    profile: dict,
+    context: VerifiedScenarioContext,
+    control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
 ) -> VerifiedScenarioGuardScope | ScenarioSelectionFailure:
     """Qualify scenario guards while trusting normal native engine execution."""
     result = _scenario_scope(
-        data, room, profile, context, _ScopePolicy.TrustedNormalEngine
+        data, room, profile, context, _ScopePolicy.TrustedNormalEngine, control
     )
     assert isinstance(result, (VerifiedScenarioGuardScope, ScenarioSelectionFailure))
     return result
@@ -167,6 +182,7 @@ def _scenario_scope(
     profile: dict,
     context: VerifiedScenarioContext,
     policy: _ScopePolicy,
+    control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
 ) -> VerifiedScenarioEntryScope | VerifiedScenarioGuardScope | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
@@ -176,6 +192,9 @@ def _scenario_scope(
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert isinstance(context, VerifiedScenarioContext)
     assert isinstance(policy, _ScopePolicy)
+    assert isinstance(
+        control, (VerifiedSourceTaskControl, TaskControlFailure, TaskControlSupport)
+    )
 
     def require(condition: bool) -> None:
         if not condition:
@@ -183,6 +202,11 @@ def _scenario_scope(
 
     try:
         require(bind_scenario_context(profile, context.declaration_contract) == context)
+        if isinstance(control, VerifiedSourceTaskControl):
+            require(
+                policy is _ScopePolicy.TrustedNormalEngine
+                and control.matches(data, room, context)
+            )
         layout = profile["runtime_layout"]
         require(
             layout["scenario_work_address_ps1"] == "0x800CE32C"
@@ -236,7 +260,7 @@ def _scenario_scope(
         }
         calls = {key: set() for key in programs}
         replacement_sources = set()
-        sealed_goto_programs = set()
+        qualified_goto_programs = set()
         render_initializers = {}
         dispatch_resets = {}
         slot_kinds: dict[int, set[int]] = {}
@@ -297,20 +321,24 @@ def _scenario_scope(
                 # only model setup without that additional queue ownership.
                 require(packet[3] & 0xC0 == 0)
             elif opcode == 0x17:
-                # FF depths poison +140 without dereferencing it. A sealed
-                # cycle cannot read that IF pointer or return to its caller;
-                # native predicate failure merely suspends this worker at FF.
+                # Legacy cycles never read the escaped IF pointer. A joint
+                # task receipt additionally qualifies fresh IF stores and all
+                # receiving-field consumers without granting a general Goto.
                 require(
                     policy is _ScopePolicy.TrustedNormalEngine
                     and key.startswith("17:")
                     and packet[1:4] == b"\xff\xff\0"
-                    and row["target"] == programs[key]["entry"]
-                    and all(
-                        command["opcode"] not in (1, 3, 6, 7, 8, 0x18)
-                        for command in programs[key]["commands"]
+                    and (
+                        isinstance(control, VerifiedSourceTaskControl)
+                        and (key, row["offset"]) in control.gotos
+                        or row["target"] == programs[key]["entry"]
+                        and all(
+                            command["opcode"] not in (1, 3, 6, 7, 8, 0x18)
+                            for command in programs[key]["commands"]
+                        )
                     )
                 )
-                sealed_goto_programs.add(key)
+                qualified_goto_programs.add(key)
             elif opcode in (5, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
                 # These task/source effects retain their independent entry
                 # obligations even when their targets decode locally.
@@ -436,6 +464,13 @@ def _scenario_scope(
                 require(bool(kinds))
                 if 5 in kinds:
                     require(policy is _ScopePolicy.TrustedNormalEngine)
+                    if (
+                        isinstance(control, VerifiedSourceTaskControl)
+                        and (key, at) in control.dispatches
+                    ):
+                        # The joint source/input frontier proves allocation
+                        # cannot replace this caller. It grants no shifted PC.
+                        continue
                     reset = commands[key].get(at - 10)
                     # Door Reset returns one without yielding or calling SCD.
                     # Adjacency plus the control checks below ensure no other
@@ -500,11 +535,14 @@ def _scenario_scope(
                     continue
                 if opcode == 0x17:
                     require(
-                        key in sealed_goto_programs and not conditions and not loops
+                        key in qualified_goto_programs and not conditions and not loops
                     )
                     pending.append((row["target"], (), ()))
                 elif row["kind"] == "if":
-                    require(len(conditions) < 8 and row["target"] > following)
+                    require(
+                        len(conditions) < NATIVE_IF_FRAME_COUNT
+                        and row["target"] > following
+                    )
                     pending.append((row["target"], conditions, loops))
                     pending.append((following, conditions + (row["target"],), loops))
                 elif row["kind"] == "flag_check" or opcode in (

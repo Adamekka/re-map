@@ -41,6 +41,10 @@ from games.re2.initializer_control_proof import (
 )
 from games.re2.known_puzzle_items import KnownDeclaredItems, known_declared_items
 from games.re2.map_layout import Re2MapProjection
+from games.re2.ordinary_task_ingress import (
+    OrdinaryTaskIngressFailure,
+    VerifiedOrdinaryTaskIngress,
+)
 from games.re2.re2_profile import re2_target
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
 from games.re2.room_entry_contract import (
@@ -76,11 +80,12 @@ from games.re2.script_dispatch_items import (
     script_dispatch_relations,
     script_item_dispatch,
 )
+from games.re2.source_task_control import TaskControlSupport, source_task_control_scope
 from games.re2.startup_declarations import (
+    BoundStartupDeclarations,
     StartupDeclarationAuditConfig,
-    StartupDeclarationFailure,
     VerifiedStartupDeclarationContract,
-    bind_startup_declaration_audit,
+    bind_startup_declaration_resources,
     startup_declaration_audit,
     startup_declarations,
 )
@@ -383,12 +388,15 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         )
     layout = profile["runtime_layout"]
     scenario_context = ScenarioSelectionFailure.NativeContract
+    ordinary_ingress = OrdinaryTaskIngressFailure.Binding
     if isinstance(declaration_config, StartupDeclarationAuditConfig):
-        declaration_contract = bind_startup_declaration_audit(
+        bound = bind_startup_declaration_resources(
             declaration_config, executable, declaration_resources, sources
         )
-        if isinstance(declaration_contract, StartupDeclarationFailure):
-            raise ValueError(declaration_contract.value)
+        if not isinstance(bound, BoundStartupDeclarations):
+            raise ValueError(bound.value)
+        declaration_contract = bound.declarations
+        ordinary_ingress = bound.ordinary_ingress
         scenario_context = bind_scenario_context(profile, declaration_contract)
         if isinstance(scenario_context, ScenarioSelectionFailure):
             raise ValueError(scenario_context.value)
@@ -419,7 +427,21 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         # Normal native execution is trusted only for scenario filtering. Keep
         # its receipt separate from the stricter positive-presence compiler.
         guard_scope = (
-            scenario_guard_scope(sources[room["id"]], room, profile, scenario_context)
+            scenario_guard_scope(
+                sources[room["id"]],
+                room,
+                profile,
+                scenario_context,
+                source_task_control_scope(
+                    sources[room["id"]],
+                    room,
+                    profile,
+                    scenario_context,
+                    ordinary_ingress,
+                )
+                if isinstance(ordinary_ingress, VerifiedOrdinaryTaskIngress)
+                else TaskControlSupport.Unaudited,
+            )
             if isinstance(scenario_context, VerifiedScenarioContext)
             else ScenarioSelectionSupport.Unaudited
         )
@@ -853,7 +875,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "RE2-SCD-002",
                 "RE2-DS-003",
                 *(
-                    ["RE2-SCENARIO-001", "RE2-SCENARIO-005", "RE2-SCENARIO-006"]
+                    [
+                        "RE2-SCENARIO-001",
+                        "RE2-SCENARIO-005",
+                        "RE2-SCENARIO-006",
+                        "RE2-SCENARIO-007",
+                    ]
                     if isinstance(scenario_context, VerifiedScenarioContext)
                     else []
                 ),

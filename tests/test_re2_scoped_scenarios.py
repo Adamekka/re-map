@@ -21,6 +21,76 @@ def profile():
     return Re2Profile.load(ROOT / "profiles/re2_leon_a_slus00748.json")
 
 
+@pytest.mark.parametrize("snapshot", ["00-01", "01-0b"], indirect=True)
+def test_office_absences_preserve_full_independent_list_and_flag_rewind(snapshot):
+    """RE2-SCENARIO-007: task isolation grants absence, never presence."""
+    profile, _, put, read = snapshot
+    source = profile.rooms["01-0b"]
+    assert source["scoped_scenario_items"] == {
+        "absent_item_ids": [48, 82],
+        "item_variants": [],
+    }
+    assert not source["fixed_context_preserved"]
+    assert {i["global_id"] for i in source["items"]} == {48, 74, 78, 81, 82, 84, 217}
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    # A valid A scenario cannot register the fixture's raw B alternatives.
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 11))
+    visits = None
+    required = {74, 78, 81, 84}
+    for taken in (set(), {48, 82}, required, required | {217}, {48, 74, 82}, set()):
+        for gid in (48, 74, 78, 81, 82, 84, 217):
+            address, mask = bank + gid // 32 * 4, 0x80000000 >> (gid % 32)
+            value = int.from_bytes(read(address, 4).data, "little")
+            put(address, value | mask if gid in taken else value & ~mask, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-0b"]
+        assert record.list_complete and len(record.items) == 5
+        assert sum(i.state == "taken" for i in record.items) == len(taken - {48, 82})
+        assert sum(i.state == "uncollected" for i in record.items) == len(
+            required - taken
+        )
+        assert sum(i.state == "unknown" for i in record.items) == (217 not in taken)
+        assert record.completion is (
+            RoomCompletion.Incomplete
+            if required - taken
+            else RoomCompletion.Unknown
+            if 217 not in taken
+            else RoomCompletion.Cleared
+        )
+        fresh = Tracker()
+        fresh.mark_current(RoomId(1, 11))
+        assert poll_re2(profile, fresh, read).status is PollStatus.Display
+        assert fresh.rooms["01-0b"] == record
+        if visits is None:
+            visits = tracker.region_visits.copy()
+        assert tracker.region_visits == visits
+
+
+@pytest.mark.parametrize("snapshot", ["01-0b"], indirect=True)
+@pytest.mark.parametrize("gid", [48, 82])
+@pytest.mark.parametrize("sat", [0, 0x31])
+def test_office_live_excluded_creator_rejects_atomically(snapshot, gid, sat):
+    profile, _, put, read = snapshot
+    item = next(i for i in profile.rooms["01-0b"]["items"] if i["global_id"] == gid)
+    registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    for slot in range(32):
+        put(registry + slot * 4, 0, 4)
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    before = copy.deepcopy(tracker)
+    pointer = 0x80100000 + item["offset"] + 2
+    put(registry + item["slot"] * 4, pointer, 4)
+    put(pointer + 1, sat, 1)
+    result = poll_re2(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Pickup disagrees with fixed scenario proof"
+    assert tracker == before
+
+
 @pytest.mark.parametrize("snapshot", ["00-01", "01-13"], indirect=True)
 def test_normal_engine_guard_excludes_b_item_without_caching_completion(snapshot):
     """RE2-SCENARIO-005: absence cannot replace another item's acquisition."""

@@ -13,6 +13,7 @@ from games.re2.scenario_selection import (
     VerifiedScenarioEntryScope,
     VerifiedScenarioGuardScope,
 )
+from games.re2.source_task_control import TaskControlSupport
 
 
 @pytest.mark.parametrize("opcode", [0x34, 0x35, 0x3D])
@@ -29,7 +30,9 @@ def test_trusted_members_grant_only_explicit_scalar_selectors(
     )
     data, room, context, strict = scoped(profile, main=(packet + END, END))
     accepted = selector in (0, 1, 5, 7, 12)
-    result = scenario_guard_scope(data, room, profile, context)
+    result = scenario_guard_scope(
+        data, room, profile, context, TaskControlSupport.Unaudited
+    )
     assert isinstance(result, VerifiedScenarioGuardScope) is accepted
     # Selector 12 was already admitted for counter copies by the strict recipe.
     assert isinstance(strict, VerifiedScenarioEntryScope) is (
@@ -47,7 +50,7 @@ def test_trusted_scalar_copy_retains_counter_destination_bounds(
         profile, main=(bytes((opcode, *operands)) + END, END)
     )
     assert (
-        scenario_guard_scope(data, room, profile, context)
+        scenario_guard_scope(data, room, profile, context, TaskControlSupport.Unaudited)
         is ScenarioSelectionFailure.EntryScope
     )
 
@@ -72,7 +75,9 @@ def test_trusted_members_still_require_bounded_work_selection(
     )
     assert (
         isinstance(
-            scenario_guard_scope(data, room, profile, context),
+            scenario_guard_scope(
+                data, room, profile, context, TaskControlSupport.Unaudited
+            ),
             VerifiedScenarioGuardScope,
         )
         is accepted
@@ -101,7 +106,9 @@ def test_normal_constructor_does_not_grant_out_of_record_source_writes(
     assert strict is ScenarioSelectionFailure.EntryScope
     assert (
         isinstance(
-            scenario_guard_scope(data, room, profile, context),
+            scenario_guard_scope(
+                data, room, profile, context, TaskControlSupport.Unaudited
+            ),
             VerifiedScenarioGuardScope,
         )
         is accepted
@@ -121,7 +128,9 @@ def test_position_predicate_keeps_both_actor_selectors_in_the_pointer_table(
     assert strict is ScenarioSelectionFailure.EntryScope
     assert (
         isinstance(
-            scenario_guard_scope(data, room, profile, context),
+            scenario_guard_scope(
+                data, room, profile, context, TaskControlSupport.Unaudited
+            ),
             VerifiedScenarioGuardScope,
         )
         is accepted
@@ -139,7 +148,7 @@ def test_position_predicate_failure_pops_if_but_keeps_occupied_loop(profile):
     # fallthrough would miss the fifth occupied native loop cell in the suffix.
     data, room, context, _ = scoped(profile, main=(outer + suffix + END, END))
     assert (
-        scenario_guard_scope(data, room, profile, context)
+        scenario_guard_scope(data, room, profile, context, TaskControlSupport.Unaudited)
         is ScenarioSelectionFailure.EntryScope
     )
 
@@ -148,7 +157,10 @@ def test_camera_back_is_only_a_guard_role(profile):
     data, room, context, strict = scoped(profile, main=(b"\x2a" + END, END))
     assert strict is ScenarioSelectionFailure.EntryScope
     assert isinstance(
-        scenario_guard_scope(data, room, profile, context), VerifiedScenarioGuardScope
+        scenario_guard_scope(
+            data, room, profile, context, TaskControlSupport.Unaudited
+        ),
+        VerifiedScenarioGuardScope,
     )
 
 
@@ -194,7 +206,10 @@ def test_latest_door_reset_requires_uninterrupted_dominating_control(profile, mu
     data, room, context, strict = scoped(profile, init=callback(2) + END, main=main)
     assert strict is ScenarioSelectionFailure.EntryScope
     assert isinstance(
-        scenario_guard_scope(data, room, profile, context), VerifiedScenarioGuardScope
+        scenario_guard_scope(
+            data, room, profile, context, TaskControlSupport.Unaudited
+        ),
+        VerifiedScenarioGuardScope,
     ) is (mutation == "none")
 
 
@@ -213,6 +228,6 @@ def test_copy_cannot_retarget_new_native_roles(profile, packet, displacement):
         profile, main=(bytes((0x1D, 4, displacement, 0)) + packet + END, END)
     )
     assert (
-        scenario_guard_scope(data, room, profile, context)
+        scenario_guard_scope(data, room, profile, context, TaskControlSupport.Unaudited)
         is ScenarioSelectionFailure.EntryScope
     )

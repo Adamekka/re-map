@@ -11,6 +11,9 @@ NATIVE_CALL_FRAME_COUNT = 4
 # levels. A fifth loop aliases the next frame even without a native guard.
 NATIVE_LOOP_FRAME_COUNT = 4
 
+# The byte IF level indexes eight end pointers in each native call frame.
+NATIVE_IF_FRAME_COUNT = 8
+
 # Keep the established scalar work cap so summaries cannot certify a leaf
 # that the write interpreter would stop before completion.
 SCALAR_PROGRAM_STEP_LIMIT = 8192
