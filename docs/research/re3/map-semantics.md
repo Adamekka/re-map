@@ -559,6 +559,65 @@ Root reproduced the original verification report byte-for-byte in `/tmp/re-map-r
 - 2026-11-07; independent reviewer, exact verified model `gpt-6.1-sol`, effort `xhigh`, reproduced the original report byte-for-byte and checked all 184 hashes and 104 frozen source files against preparation commit `e4f9b32`. It checked native register roles, delay slots, admission/completion, source-prefix limits, restores versus creation-only saves, input release, bootstrap/disconnect gaps, changed links and preserved earlier documentation. It returned no findings. This was source/file review, not a new runtime observation.
 - 2026-11-07; external snapshot reviewer `gemini-3.8-flash`, high reasoning through Antigravity, reviewed the documentation diff, native report/verifier/controller, unchanged debugger interface, numeric results and root audit. It identified the unbundled contour dependency, ambiguous actor-floor wording and a redundant loop. Root fixed these in the portable replay amendment while preserving original evidence, then verified unchanged native results and relocated reproduction. The returned review is bound in that amendment as `external-review.json`, SHA256 `402d2cfad8169979b098d5b7aa8934025e523410857309e8717599b67c2de8ac`. No further external endorsement is inferred. Claude Opus 5.5 remained disabled and supplied no review.
 
+## RE3-MAP-014: an ordinary R100 map opening selects a separate current feature
+
+Status: Candidate for general room/floor binding. One retained R100 state supplies an additional original-engine current-feature observation, independent of RE3-MAP-013's two R101 states. Target is Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, Hard, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. One isolated session used DuckStation `0.1-12083-g00e299795`, binary SHA256 `5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173`, native-state version 87.
+
+The experiment restored `r100-earlier-native.sav`, SHA256 `5a6784037097f1f1d4397fb03355bc8f51a43f1c4dadc9e151de75b458830668`, with native F1. Before input, an acknowledged pause established exact agreement of all 2 MiB RAM, GPR0..31, HI/LO, PC and 1024 scratchpad bytes with the native payload. Native Pad pressed mask was zero. This is a tested restore; the two new F2 saves below were only created and payload-compared, not restored.
+
+### Original calls and source binding
+
+Before the single ordinary L2 opening, `read_current_map_position` returned R100, selectors `0/0/0`, XYZ `[-20400,0,-20790]`, facing 2048, raw actor floor 0, native group/row `0/0`, numeric layer 0 and projected point `[480,330]`. The menu returned `NonGameplay`. These are raw/native numbers, not a physical floor label. RE3-MAP-013's lower/upper states are R101 at raw actor floors 1/4, both native layer 0.
+
+Original callbacks stopped at admission return `0x80070400`, renderer entry `0x8007116C` and group-0 completion `0x800704DC`. Exact caller instructions establish S6 as row, S0 as quad index, A2 as source quad pointer and A3 as palette. GPR observations are full unsigned 32-bit values; code addresses below are PS1 virtual addresses.
+
+| Native row and role | Admission V0 by quad | Group-0 renderer calls, RA `0x8007042C` | A3 | Completion S4 |
+| --- | --- | --- | ---: | ---: |
+| Current row 0 | Quads 0/1/2/3: `1/0/1/1` | Quads 0/2/3, A2 `0x801B1730/0x801B1748/0x801B1754`, MAP offsets 560/584/596 | 2 | 4 |
+| Noncurrent row 1 | Quads 0/1/2: `0/1/1` | Quads 1/2, A2 `0x801B1778/0x801B1784`, offsets 632/644 | 0 | 3 |
+
+A separate renderer stop had RA `0x80070540`, A2 `0x801B1760`, palette 0 and source group-1 row-zero quad zero at offset 608. The original second-count loop calls `0x80072D38/0x800738CC` then the renderer at `0x80070538`; this receipt is kept separate from the group-0 calls. At the saved current renderer stop, GDB PC was `0x8007116C` but native `current_instruction_pc` was caller delay slot `0x80070428`, instruction `0x304700FF`, with renderer prologue `0x27BDFFC0` queued next. The prologue had not yet executed.
+
+Four full captures match the established partial relocated header/camera/zone witnesses uniquely among all 169 owned sources. R100 RDT SHA256 is `e47f25b5a6e82d73f79bf356c111a8add6a7e24555a4deb83ed8725e3979ed50`, size 109208, native file index 376; source and allocation stay `0x8011A708`. Mutable initializer differences remain explicit. At menu captures, record-zero header and complete drawing/projection sections match MAP_U SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`, and nine complete selected native code windows match the executable.
+
+The actual loaded MAP pointer field is PS1 virtual `0x800E028C`, u32 LE/mask `0xFFFFFFFF`, value `0x801B1500`; section-one field `0x800E0274`, u32 LE/mask `0xFFFFFFFF`, is `0x801B1CAC`. Overlay `0x800E0278`, u16 LE/mask `0xFFFF`, is zero at these observations. The frozen preliminary plan incorrectly named map-work field `0x800E01C8` as the loaded pointer. Its original bytes remain preserved; `plan-erratum.md` records the correction made before launch. The controller and shared binder use `0x800E028C`.
+
+Native visit word `0x800D20DC`, u32 LE, remains `0xC0040000`; row-zero/one masks are `0x80000000/0x40000000`. Acquisition word `0x800D2124`, u32 LE, remains zero. Both rows reach their original per-quad loops, agreeing with the bound row gate. The earlier lower-R101 seed instead has visit word `0x40040000` and acquisition zero, so its absent row zero is rejected before the group-0 predicate. That absence cannot validate early per-quad suppression. Native visits/acquisition remain separate from tracker exploration.
+
+### Coverage meaning, reproduction and limits
+
+Reinterpreting the retained contour export gives R100 quads `[0,2,3]` 527 palette-2 nontransparent source cells, of which 403 are absent from palette 5. Upper R101's quads `[1,2]` have 2416/1932 cells respectively; their class-2 contribution has zero overlap with R100's 403 cells. Lower R101 quad zero has 2961/2514 cells and still overlaps both alternatives. These are source texel-class masks, not observed GPU pixels, navigable area or complete room-owned floor. This closes one independent current-feature selection gap; physical-floor identity, room ownership, tracker reveal and a runnable Hard profile remain unresolved.
+
+Private evidence is `/tmp/re-map-re3-r100-map-native-20261107-nUiK0jpY/`. Its verifier reads copied support and frozen runtime/helper modules through relative paths, rebuilding/binding the complete corpus and MAP from the mandatory explicit owned BIN. The full prior contour export, eight retained captures and prior R101 native receipts are included. Historical absolute paths are provenance only. A new relocated child-process replay reproduced the final report byte-for-byte; this was retained-file reproduction by the experiment author, not independent review or another native observation.
+
+```sh
+python /tmp/re-map-re3-r100-map-native-20261107-nUiK0jpY/verify.py /absolute/new/output --disc-image /absolute/owned/RE3.bin
+```
+
+| Private artifact | SHA256 |
+| --- | --- |
+| `r100-exact-restored.ram` | `49f23b281794036fcb027c2966ac0138748d7eef500499900e57aac3bcf13f2a` |
+| `r100-current-renderer-quad0.ram` | `4267a36f9fae231efddbec487e545553cd57d25538a8f30f3fa2b24ea0fc9dac` |
+| `r100-noncurrent-row1-quad1.ram` | `9e8bd72c955e233662b5671da45ceff75b0059120302fb55b9dfe58c3dbdbec9` |
+| `r100-final-released-menu.ram` | `d46afdeaf477cd82df7fdcb907d40dcc16a6fb86d033dad875008be6f476e867` |
+| `r100-current-renderer-native.sav`, creation only | `155679f7838eca5f44873e6ce222cf07161d64b98abbbb616512fa1df8ef4a0c` |
+| `r100-final-released-native.sav`, creation only | `e8a2b7b854a3a5b551bb4aede60ea8e46690166ac483a49f349f189aa85070f8` |
+| `verify.py` | `5739397c352b9e8bcae84411e6ce39aa329a6780805c7208e96d75ab2d504f8b` |
+| `verified-final/verification.json` | `210cd47a506e6fa3ce4ca6d855c1ce7230af04233d590d5f531ea1533a137011` |
+| `artifact-manifest.json`, 190 files | `dfaf1ab56caf1cc6610f0f7046ddf31ea0c046c3f2a54ad36481c10dd0ba9b27` |
+| `support-manifest.json`, 23 copied files | `4e9379aa8ec9657e495da8b4bd361ed1355a08b40d3ca84edd7db18e666c5aa7` |
+
+Before game/seed loading and native F1, both RetroAchievements namespaces and integration were disabled, ApplyGameSettings was false, accounts/overrides/cheats/patches absent, cards None and private gameplay black/muted. CUA used only F1, F15-to-L2 on/off and two F2 saves. No movement, action or pickup input, agent-issued guest-memory/PC/pose/flag edits or game-file modification occurred. Host release preceded native input mapping, so intermediate raw L2 remained set despite native Pad zero. After removing all three callbacks, a bounded no-input run reached acknowledged epoch 17 with all five RAM input words zero; the final save also has native Pad zero.
+
+The sole client closed; verified owned PID 99922 received SIGTERM and its wrapper exited zero. Port 2396 was absent/bindable. Private settings remain byte-identical, SHA256 `fae67cde21842dabfb818c2df25cc4c542705636aa3f4ef801d3f9037e335160`; two prior user settings/history file-stat records are unchanged, without reading their contents. CUA completion was recorded once. Claims end at acknowledged epoch 17; last-client disconnect to SIGTERM may resume execution and is unobserved. No native probe failed. Three verifier-development errors and the first portability copy's missing error-record dependency are preserved; their corrections changed no native input/evidence. Only the 26 relevant RE3/runtime/helper hashes were compared with preparation/frozen files; concurrent RE2/docs changes are outside that comparison. No tracker state, user exploration, application profile or UI was modified, and raw assets/RAM/states remain private.
+
+- 2026-11-07; native experiment, source/capture interpretation, retained-file verifier, private report and this claim by exact verified model `gpt-6.1-sol`, effort `xhigh`, session metadata id `01a1b0bc-6b73-7101-ab2f-8aa8669a7247`. Earlier claims and authorship remain unchanged. Independent verification/review is recorded separately when completed; none is inferred here.
+
+- 2026-11-07; independent reviewer `investigate_gdb_recovery`, verified `gpt-6.1-sol`, effort `xhigh`, checks all 190 artifact entries, performs a relocated byte-identical offline replay, independently reproduces selected TIM/CLUT cell sets and checks caller/row completion, source/MAP binding, restore versus creation-only saves, inputs and cleanup. It finds no supported issues within that scope. `/tmp/re-map-re3-r100-independent-review-20261107-65dmh_15/review.json` has SHA256 `344b492b488b58bb8c4a4734509b942631f7d4708f9ab105f2012333970f343a`. This is independent evidence review, not another native session.
+- 2026-11-07; Codex root, the same exact verified model/effort, separately checks all 190 entries, 108 frozen Python hashes and 26 current critical source files. Independent zstd CLI decompression finds each complete 2 MiB captured RAM image exactly once in the seed and both new payloads. Root also observes PID 99922 absent and port 2396 bindable without connecting to an emulator. `/tmp/re-map-re3-r100-root-audit-20261107/audit.json` has SHA256 `47b3f8437ab8b54d3d350f4f2b99980a080500949ffeebd72fc552e040c56e30`. Its separate offline verifier run reproduces report SHA256 `210cd47a506e6fa3ce4ca6d855c1ce7230af04233d590d5f531ea1533a137011`. The payload/manifest audit adds no independent CPU-state or gameplay claim beyond the retained comparisons.
+
+- 2026-11-07; a fresh `gemini-3.8-flash` high-reasoning snapshot review of this record, native report/controller/verifier, command-result fields and root audit fails to open an Antigravity session. Claude Opus 5.5 remains disabled. No external review completes or supplies an endorsement. Local final review checks original caller/register roles, source bounds, projection/palette numbers, restore and input chronology, portability, cleanup and claim limits. Scoped documentation links and whitespace checks pass; this evidence-only change adds no production code or full-suite run.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
