@@ -483,6 +483,82 @@ These reductions match the unchanged source model. They are neither new renderin
 
 To reproduce Python integration, copy `verify.py` into a fresh private directory and run it from the repository root with explicit executable, MAP, saved row-proof directory, fresh output directory, settled RAM and room-0d RAM paths in that order. It validates the model/plan/contract/proof hashes and writes only numeric reports outside Git. The tests include 891 new pure-predicate/layer cases and 39 new wrapper/capture cases, including enforcement of the four general witnesses when extra spans are requested. Run the selected tests with `PYTHONPATH=src python3 -m pytest -q tests/test_re3_map_row_predicates.py tests/test_re3_map_row_visibility.py tests/test_re3_map_binding.py`. Synthetic fixtures contain no owned code, RAM or artwork bytes.
 
+## RE3-MAP-013: native current-row draws distinguish two R101 features
+
+Status: Confirmed for the original draw calls and exact restores in the two listed checkpoint states. Generalization to other states remains Candidate. Target is Resident Evil 3: Nemesis, USA PS1, SLUS-00923, Hard, executable SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`, with the MAP_U fingerprint below. One isolated session used DuckStation `0.1-12083-g00e299795`, binary SHA256 `5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173`, native-state version 87.
+
+This comparison addresses the geometry-selection gap left by RE3-MAP-006/009 and [RE3-LIVE-002](live-reader.md#re3-live-002-fresh-native-map-position-under-current-room-guards). One RDT can select different current-row quads while retaining the same native numeric layer. The result does not establish physical floor names, navigable area, room-owned contours or tracker reveal policy.
+
+### Exact states and original calls
+
+The lower and upper original checkpoints were restored with native F1 under an acknowledged debugger pause. Before input, each restored full 2 MiB RAM, GPR0..31, HI/LO, PC and all 1024 scratchpad bytes matched its native payload. Native Pad pressed masks were zero. The upper checkpoint previously had creation/payload agreement only; this session supplies its first exact restore observation. No memory-card persistence is inferred.
+
+| State | Original checkpoint SHA256 | Exact restored RAM SHA256 |
+| --- | --- | --- |
+| Lower, raw actor floor 1 | `3e3d067475daab53a7589fff3649521e6f9331746331998de09407dcb2c38290` | `41d7dbb07cd026b8cb0427e197dc9a48f6aed6299077b0c44c4078544f7a0c63` |
+| Upper, raw actor floor 4 | `4fd26335f93945de165d55a4577c0e32ec1e285af5a4c4ac466924ea5b03f8cc` | `8c9d9bb4aacc8a684f3cb660bde1a74189373f886bad531ba15ae9f4368acf34` |
+
+CUA sent only native F1/F2 and the previously validated F15-to-L2 map toggle. No movement, action, item input, forced pose, flag write or guest-code patch was used. Original execute callbacks observed admission return `0x80070400`, renderer entry `0x8007116C` and group-0 row completion `0x800704DC`. The pinned caller establishes S6 as row and S0 as quad index. At the renderer, RA is `0x8007042C`, A0 is map work `0x800E01C0`, A2 is the source quad pointer and A3 is the palette argument. Register values are unsigned 32-bit native observations; instruction addresses are PS1 virtual addresses.
+
+| State | Admission V0 for quads 0 / 1 / 2 | Original renderer calls and A2 | A3 palette | Native layer AF |
+| --- | --- | --- | ---: | ---: |
+| Lower | 1 / 0 / 0 | Quad 0 at `0x801B176C`, MAP offset 620 | 2 | 0 |
+| Upper | 0 / 1 / 1 | Quad 1 at `0x801B1778`, offset 632; quad 2 at `0x801B1784`, offset 644 | 2 for both | 0 |
+
+Both sequences reached row-one group-0 completion with S4 equal to three. Thus all three current-row admission results, the accepted calls and completion were observed. Nine noncurrent upper stops, all row zero, were retained separately. These observations corroborate the signed raw actor-floor comparison at `0x800CCBCD` in the original group-0 rule for current key `0x0001`. This field is distinct from lifecycle byte `0x800C7960`. The observations do not runtime-confirm every input to the shared predicate tables.
+
+### Source, projection and interface binding
+
+Seven full captures uniquely match `CD_DATA/STAGE1/R101.ARD` among all 169 owned sources using the established relocated header/camera/zone witnesses. Source and allocation pointers remain `0x8011A708`. Mutable initializer differences remain explicit; this is not whole-RDT byte identity.
+
+At map stops, MAP base `0x801B1500` and section-1 pointer `0x801B1CAC` match record zero. Its complete header and drawing/projection sections match owned MAP_U bytes. Image-section differences are retained and do not become a whole-record identity claim. Native code windows for caller, admission, renderer, row gate, palette, layer and remapping also match the pinned executable in every full capture.
+
+Before opening the menu, `read_current_map_position` returns the admitted R101 source and native group/row `0/1`, layer zero. Lower world XYZ is `[-6363,-1800,-11415]`, facing 1952, projected point `[512,332]`; upper XYZ is `[-18808,-7200,-11475]`, facing zero, projected `[484,332]`. Position/facing widths and guards remain those of RE3-LIVE-001/002. Cached AA/AB/AC are zero before opening and are not live-reader inputs. In the menu they become `0/0/1`, pan equals the negative projected point, scale is 100 and the reader returns `NonGameplay`.
+
+The existing source selector and row gate agree with the native calls. Requested-palette-2 coverage has 2961 source cells for lower quad zero and 2416 for upper quads one/two; each projected point lies inside its selected coverage. This is interpretation of previously exported source texels, not newly observed GPU pixels, walkable floor or room ownership. Native visit/acquisition bits do not seed tracker exploration.
+
+### Stop, save and isolation limits
+
+Lower quad zero and upper quad one have new native F2 saves matching the same acknowledged stop's full RAM, GPR/HI/LO/PC and scratchpad. GDB PC is renderer entry `0x8007116C`, while native `current_instruction_pc` is caller delay slot `0x80070428`, instruction `0x304700FF`; the buffered next instruction is renderer prologue `0x27BDFFC0`. This is renderer entry, not evidence that the prologue already executed. Upper quad two has GDB registers/code and full RAM without a separate native CPU-current-instruction save. Later row completion confirms continued original execution.
+
+Three new checkpoints, `lower-renderer-native`, `upper-renderer-native` and `upper-map-final-native`, were created and payload-compared, not restored. Their hashes and raw branch-state bytes are in the verification report. Critical draw captures retain a raw map-opening input word after host release, with native Pad zero. Settled captures and the final native save verify all five RAM input words zero and native Pad zero.
+
+Both RetroAchievements namespaces and integration were disabled before all loads, with cards None, no cheats/patches, private paths and hidden/muted gameplay. The first controller attempt stopped on a missing layout argument before test input; possible bootstrap disconnect execution is unqualified. The exact lower F1 restore precedes all accepted experimental claims. No emulator restart was inferred from that failed attempt.
+
+Callbacks and the sole client were closed, owned PID 5856 exited with wrapper status zero, and port 2394 was absent and bindable. Private settings remain byte-identical, SHA256 `dfd2a30a65daa90142864f51c397dbe90b159d69ab6a217eb6ffc14522b3143b`; two user settings/history file-stat records are unchanged. No user history content, tracker state, application profile or UI was modified. CUA completion was recorded once. Final guest claims end at acknowledged stop 23. Execution between client closure at `12:22:00.899150 UTC` and SIGTERM at `12:22:35.483262 UTC` was not observed.
+
+### Reproduction and review
+
+The portable replay amendment is `/tmp/re-map-re3-map013-amended-20261107/`. Run its top-level `verify.py` with the existing Python environment, one mandatory nonexistent output directory and the owned BIN explicitly:
+
+```sh
+python /tmp/re-map-re3-map013-amended-20261107/verify.py /absolute/new/output --disc-image /absolute/owned/RE3.bin
+```
+
+It checks frozen source/media, both restores, original calls, loaded MAP, seven captures, three new save payloads and cleanup without starting an emulator or CPU model. Executable, source contours and all 184 original manifest-bound evidence files are included with relative paths. The owned BIN and development dependencies remain required external inputs. Replay creates no new bytecode and preserves the original bound caches. All original files remain unchanged under `native/`, including the original report, verifier and manifest below. Their original directory is `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/re-map-re3-map-draw-native-20261107-u1t2k4p0/`.
+
+| Original native artifact | SHA256 |
+| --- | --- |
+| `native/report.md` | `2f7e48670c516685818f09dd5ae6d9c705dfa15eaeba8a00a608f73ee82a2c2a` |
+| `native/verify.py` | `a5587a0f0a41b858128ac6c2c911c777deb1854761718b24c6c6d18c442a4425` |
+| `native/verified-3/verification.json` | `add1ed516acd31173610f61628711d60ac24c5fc6a92e075dc6fdcc421da72f5` |
+| `native/artifact-manifest.json`, 184 files | `adf769601be0bb0cbb44e767dbac28a8a5068384fff741daa9f18d31b5e6f1e4` |
+
+| Replay amendment artifact | SHA256 |
+| --- | --- |
+| `verify.py` | `b226b7d277d435532c8b3a67ea78bea7ed1e40f5b425d5ca17d37026f0e88537` |
+| `verified-final/verification.json` | `64e91e503367f2c2824ae60ab3c952b683d18cb47a7711d8e5e9fd9dfe9e54e6` |
+| `artifact-manifest.json`, 198 files | `6a40cbf599485eaa61146834891aba92edd73f827cd815e01471cf472a8c6341` |
+| `amendment-checks.json` | `244e67871821ff93fcf3f41cbcb7cc668d2148c5d688128ba6dee0dcc3a20483` |
+
+The amended report differs only in verifier hash and actor-floor wording; all native observation fields remain identical. A separate relocated bundle reproduced the amended report byte-for-byte with the owned BIN supplied explicitly. The included contour file retains SHA256 `db2dda034593c17f809245e829e184cf7551d4b96d4f36c3895a7344311039cd`. This closes the original verifier's dependency on an older transient contour-export directory without changing the experiment.
+
+Root reproduced the original verification report byte-for-byte in `/tmp/re-map-re3-map-draw-root-verify-20261107/`. A separate audit checked all 184 artifact entries and all 104 frozen Python files against preparation commit `e4f9b32`. Independent zstd CLI decompression found each complete captured 2 MiB RAM image exactly once in all five relevant native payloads, without relying on the verifier's fixed extraction offset. That audit also rechecked prior PID/port cleanup without connecting to the separate later acquisition experiment. `/tmp/re-map-re3-map-draw-root-audit-20261107/audit.json` has SHA256 `99151ce1adeeb67a7aeb3a36bb7db0680d6c85a5f34812fc9ff9a0736ebc5975`. This audit adds no new gameplay.
+
+- 2026-11-07; native experiment, source/capture interpretation, frozen verifier and private report by exact verified model `gpt-6.1-sol`, effort `xhigh`. Root, the same verified model/effort, independently audited the files, decompression, source equality and bounded conclusions, and authored this claim. Earlier source and human contributions remain unchanged.
+- 2026-11-07; independent reviewer, exact verified model `gpt-6.1-sol`, effort `xhigh`, reproduced the original report byte-for-byte and checked all 184 hashes and 104 frozen source files against preparation commit `e4f9b32`. It checked native register roles, delay slots, admission/completion, source-prefix limits, restores versus creation-only saves, input release, bootstrap/disconnect gaps, changed links and preserved earlier documentation. It returned no findings. This was source/file review, not a new runtime observation.
+- 2026-11-07; external snapshot reviewer `gemini-3.8-flash`, high reasoning through Antigravity, reviewed the documentation diff, native report/verifier/controller, unchanged debugger interface, numeric results and root audit. It identified the unbundled contour dependency, ambiguous actor-floor wording and a redundant loop. Root fixed these in the portable replay amendment while preserving original evidence, then verified unchanged native results and relocated reproduction. The returned review is bound in that amendment as `external-review.json`, SHA256 `402d2cfad8169979b098d5b7aa8934025e523410857309e8717599b67c2de8ac`. No further external endorsement is inferred. Claude Opus 5.5 remained disabled and supplied no review.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
