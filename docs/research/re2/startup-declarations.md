@@ -223,3 +223,60 @@ Contribution, 2026-11-06: `investigate_gdb_recovery`, exact model `gpt-6.1-sol`,
 Independent review, 2026-11-06: exact verified model `gpt-6.1-sol`, effort `xhigh`, finds no issues after checking all 29 native/code windows, 70 manifest entries, asset/object/part bounds, pool intervals, callback tables, corpus declarations, door metadata, three-complete/five-bounded control distinction, authorship and links. It makes no edits and performs no tests, native reruns, emulator or user-history operations. Root, exact model `gpt-6.1-sol`, separately checks report hashes and interval arithmetic and clarifies that the 180-byte margins end at nominal pool-slot boundaries, not a generic source-base guarantee.
 
 External snapshot review, 2026-11-06: `gemini-3.8-flash`, high reasoning through Antigravity, checks the proposed claim, earlier bounded-prefix context, report, window metadata, selected disassembly and control script. It identifies that the preset-zero routine value was a supplied precondition rather than a write in the tested slice. Root checks the earlier store and tested branches and corrects that distinction above, also clarifying the wording for rejected hypotheses. The reviewer uses no tools and supplies no new execution or gameplay evidence. Claude Opus 5.5 remains disabled and supplies no review.
+
+
+## RE2-STARTUP-006: a positive prefix retains an auxiliary-source lease gap
+
+2026-11-07. Status: Candidate source/native investigation for Resident Evil 2 Dual Shock Ver., USA Disc 1, SLUS-00748, Leon A Original/Normal. The executable is 987136 bytes, SHA256 `e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`. No production receipt, metadata or item outcome changes. No emulator version is newly tested. Earlier native observations retain their original scope and attribution.
+
+### Remaining outcomes and selected prefix
+
+After [RE2-SCENARIO-007](scenario-selection.md#re2-scenario-007-joint-source-task-control-removes-two-office-b-only-checks), the retained replay has eight Unknown item rows across six sources. Rebinding the six real sources under the existing scenario-filter policy finds no further absence or identity correction. The returned ID 146 exclusion and ID 207 variant are already applied. A failed entry factory grants no query authority.
+
+| Source | Remaining acquisition IDs | Separate missing fact |
+| --- | --- | --- |
+| `00-03` | 211 | Historical system-mode condition and positive prefix ownership, as in RE2-STARTUP-003 |
+| `00-09` | 13, 205 | Positive declaration/callback for 13; independent common Reset for 205 |
+| `01-04` | 0, 3 | Entry reachability for the unreferenced canonical Knife procedure; positive presence for the common creator 3 |
+| `01-0c` | 207 | Positive presence, after the already selected scenario identity |
+| `01-0d` | 208 | Common creator/Reset paths remain compatible with Leon A |
+| `01-11` | 221 | Positive presence or separately established original-mode authority |
+
+The candidate selected here is source `00-09`, owned `PL0/RDT/ROOM1090.RDT`, 287656 bytes, SHA256 `785c0c49c56f49a11829c1a98718a867d851893e372d0179d9ce06a63898c4d0`. Its ID 13 creator at file offset 9024 has an independent callback registered at 9004, leading through procedure `17:22` to dispatch 11530. All 22 retained normal-mode/story/SWITCH prefix walks reach the same declaration and callback, with at most four native call frames. Native callee END discards the callee IF frame; rejecting every nonempty callee IF stack was unnecessary for this bounded prefix. These walks are static source interpretation, not gameplay observations.
+
+A qualified shared positive-prefix result could reduce eight Unknown rows to seven and make this source Incomplete. ID 205 would remain independently Unknown. That benefit is conditional; it has not been published. The human's normal-engine trust decision applies to scenario filtering and is not converted into positive-presence authority.
+
+### Bounded native components
+
+The normal prefix contains five or six model `0x21` constructors, slots 0 through 5, presets `0x0000/0x4002`. Its code, TIM and MD1 records 68 through 71 already belong to the mandatory 69-resource binding. Immediate setup does not enter model-specific AI before the target. Loading yields resume the same native task-zero room initialization. The component does not claim safety of the actor's future AI or render lifetime.
+
+Conservative actor/shadow allocation ends at PS1 virtual `0x80165EB0`. The UV copy starts at `0x8018F64C`; native `0x80010778` rounds 2468 logical bytes to 2480, ending at `0x8018FFFC` exclusive. The extra 12 bytes are within the owned model's trailing directory. Both are below the auxiliary payload at `0x801A1000`. Acquisition skip and allocation paths are both retained; no current acquisition sample determines historical allocations.
+
+Historical mode also needs its own derivation. The existing scenario context seals STATUS bits 0 and 1, not mode bit 6. STATUS is u32 little endian at PS1 virtual `0x800CFBD8`; its bit 6 mask is `0x02000000`. Fresh clear mode cannot establish the branch taken at an earlier initialization. The opposite-mode component binds the source, model `0x2A` work, empty-to-initialized AOT registry and relevant native writers. It identifies an actual Ending clear rather than assuming global STATUS immutability. The Ending loader replaces `[0x8011A000,0x8012585A)` before its clear at `0x8011CF08`; this overwrites the loaded RDT header at `0x8011A6A8`, which the existing reader rejects before publishing item facts. This is a bounded source-lifetime component, not a new global mode contract or implemented positive receipt.
+
+### Exact remaining auxiliary-source influence
+
+The selected source's actual incoming door models are `00/07/08`. Their bound scripts occupy `[0x801A1008,0x801A1224)`, `[0x801A1008,0x801A1248)` and `[0x801A1008,0x801A125C)`. Native auxiliary setup uses separate Work, model and texture storage. Older queued background copies are drained before script initialization. Other inspected fixed readbacks do not overlap these scripts, selected assets, mesh or fixed Work.
+
+One fixed StoreImage destination, `[0x80198000,0x801BD800)`, does overlap the auxiliary bytecode. A possible inherited dynamic owner can restore background mode 0 before the same render's mode check, permitting that copy. Its relevant fields are SYSTEM u32 at `0x800CFB74`, mask `0x200`; phase u8 at `0x800D7680`; counter u8 at `0x800D7687`; flags u16 at `0x800D7632`, mask `0x8`; and layout u16 at `0x800D7634`, all little endian. A constructed owner with phase 2, counter 0, flags mask `0x8` set and nonzero layout exposes the missing preservation premise. No harmful reachable native history was demonstrated.
+
+SYSTEM mask `0x10000` does not close the lease: the outer countdown may clear it before synchronous source initialization returns, allowing auxiliary work during constructor yields. Repeated loader yields do not prove a normal dynamic cleanup pass. The old claim that source `00-08` has an unguarded restoring producer is also rejected. Its Reset 8294 is inside IF 8286/check 8290, bank 1, bit 1, expected 1; Reset 6686 and task birth 6662 are B guarded too. The conflicting original report remains preserved.
+
+After those fixed-scenario exclusions, conservative predecessor routing still includes source `03-09`, whose config 11 at 10264 can restore the relevant mode. Its own yield at 10266 precedes STOP7 clear 10668, but other workers, Message/yield door callbacks and FF/FF Gotos prevent that local sequence from proving the joint publication order. The remaining requirement is a separately derived positive auxiliary executable-source lease through the target declaration. It must establish inherited-owner inactivity or completed mode-restoring cleanup before door publication. Existing guard receipts, raw incoming tuples and sampled zero state cannot substitute.
+
+### Reproduction and contribution
+
+The frozen private components are listed below. Copy verifiers to fresh output directories; do not overwrite these reports. Their instructions require the pinned owned media/resources. None boots an emulator, reads live exploration history or grants a production capability.
+
+| Component | Private directory under `/tmp/` | Artifact and SHA256 |
+| --- | --- | --- |
+| Prefix walks | `re-map-re2-id13-positive-prefix-20261107-Dc81iyBv/` | `verification.json`: `c2c253a38c828cf293518e7d59ed84ca394eb7bc3a35e4259282706827ab0bfb` |
+| Historical mode | `re-map-re2-id13-mode-native-20261107-4fPZjE29/` | `report.md`: `3af1efb47690b5d76c447ed7013061f7699d132237fe8624e325ce0da2477054` |
+| Native constructor/lease | `re-map-re2-id13-positive-native-20261107-9OmVia2N/` | `report.md`: `0ee1c13a847f4e8c626b7be2d13b110a90a48836e24107b8fcfd2caef2bb207b` |
+| Remaining eight rows | `re-map-re2-remaining-scenario-20261107-f17ac348/` | `verification.json`: `658e249aa5517b05da8e22d6ee52df9ed0882d8dc2fdfb2761c7fdff096a0a22` |
+
+The constructor bundle's `verify.py --output <new-private-directory>` reproduces seven bounded scripts and 18 outputs apart from a timestamp. Its reproduction report SHA256 is `0961eb69388d33e1bf4b62669420e95d876eb4f9c8792336570e3f802f60c449`. Root independently checks all 63 manifest-bound files across the four frozen components; `/tmp/re-map-re2-positive-prefix-root-audit-20261107/audit.json` has SHA256 `13d84b62c56828d7de72193cb548a3003467850e2943a82f91972fe76703b845`. These are integrity and source checks, not independent execution or gameplay confirmation.
+
+Contribution, 2026-11-07 UTC: `review_re3_detail_tables`, verified `gpt-6.1-sol`, effort `xhigh`, investigates the source/native constructor, incoming history and remaining-ID boundaries and authors the private reports. Codex root, the same exact verified model/effort, integrates the prior prefix/mode components, checks artifact integrity and authors this bounded record. Earlier authorship, rejected hypotheses and human trust limits remain unchanged. Further control/publication investigation is separate; no new item outcome or readiness gain is claimed here.
+
+Review, 2026-11-07 UTC: Codex root checks this record against the four frozen reports, complete conditional-path packets, actual model/preset bytes, interval arithmetic and the 63-file integrity audit. The review distinguishes conditional source walks, private static reproduction, native observations retained elsewhere and unimplemented positive authority. A fresh `gemini-3.8-flash` high-reasoning documentation request fails to open an Antigravity session; Claude Opus 5.5 remains disabled. No external review completes or supplies an endorsement. Scoped documentation links and whitespace checks pass. No production code changes or new full-suite run occur for this record.
