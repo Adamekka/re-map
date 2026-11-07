@@ -279,6 +279,14 @@ Independent review, 2026-11-06 UTC: `review_re3_detail_tables`, exact verified m
 
 External review, 2026-11-06 UTC: `gemini-3.8-flash`, high reasoning through Antigravity, returns no findings on the full guard factory/query, receipt types, producer and regression diffs, positive/runtime consumer excerpts, actual sealed source packets, native Goto/IF-consumer/Break windows, catalog delta, replay and documentation. It checks the approved trust boundary, source/control safety, type isolation, freshness, reversals, atomicity, maintenance and evidence limits. The completed response has no tool attempts or pending child work and adds no execution evidence. Claude Opus 5.5 remains disabled and supplies no review.
 
+### Positive-presence policy extension, 2026-11-07
+
+The human explicitly approves using the same normal-engine trust premise for RE2 item-presence checks as for scenario filtering. Creator/reset checks, scenario guards, explicit source-write checks and fresh acquisition reads remain required. This is a changed policy premise for subsequent positive proofs, not evidence that every remaining Unknown item exists or that an older unproved native-safety component has been confirmed.
+
+Positive authority must be derived separately from source-bound positive conditions. A `VerifiedScenarioGuardScope` remains insufficient as a positive argument, and existing strict entry, whole-source and door contracts keep their distinct meanings. The new policy allows normal execution of the owned unmodified initialized engine to supply its native execution premise; it does not authorize guessed script outcomes, skipped explicit writes, ignored target aliases, fabricated state or cached acquisition after restore.
+
+Contribution, 2026-11-07 UTC: the human selects "Use normal-engine trust for presence too" after the remaining eight checks are separated from the completed B-only filtering corrections. Codex root, verified `gpt-6.1-sol`, effort `xhigh`, records that decision. Implementation and measured item outcomes require their own subsequent evidence. The earlier source/native investigations and their original authorship and limits remain unchanged.
+
 ## RE2-SCENARIO-006: bounded source roles remove the side entrance B-only check
 
 Status: Candidate for Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748, Leon A, Original Game, Normal, on the same pinned revision as RE2-SCENARIO-005. Actual owned-source factories, repeated generation and retained-RAM replay resolve one further Unknown item row. This is offline validation. No emulator, game input or savestate restore occurs in this increment. Generation runs its existing bounded copied-native map selectors; the new guard roles receive no native execution experiment.
