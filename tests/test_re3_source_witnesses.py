@@ -82,6 +82,58 @@ def test_catalog_and_source_payloads_are_immutable(catalog):
         shared.SourceCatalog((), catalog.runtime_signature, object())
 
 
+@pytest.mark.parametrize("field", ["cameras", "zones"])
+@pytest.mark.parametrize("buffer", [bytearray, memoryview])
+def test_equal_mutable_witness_buffers_cannot_reuse_a_catalog_receipt(
+    catalog, field, buffer
+):
+    witness = catalog.sources[0]
+    changed = buffer(bytearray(getattr(witness, field)))
+    assert changed == getattr(witness, field)
+    # Reject before an equal buffer reaches the catalog. Otherwise changing
+    # its backing bytes later could rewrite the supposedly owned witness.
+    with pytest.raises(AssertionError):
+        replace(catalog, sources=(replace(witness, **{field: changed}),))
+
+
+@pytest.mark.parametrize("field", ["cameras", "zones"])
+def test_unbound_source_compilation_also_requires_immutable_buffers(coherent, field):
+    witness = shared.compile_source_witness(coherent.source)
+    assert isinstance(witness, shared.SourceWitness)
+    with pytest.raises(AssertionError):
+        replace(witness, **{field: bytearray(getattr(witness, field))})
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "rdt_size",
+        "camera_count",
+        "cameras_offset",
+        "zones_offset",
+        "initializer_offset",
+        "initializer_end",
+        "native_file_index",
+    ],
+)
+def test_numeric_aliases_cannot_change_compiled_witness_field_types(catalog, field):
+    witness = catalog.sources[0]
+    with pytest.raises(AssertionError):
+        replace(witness, **{field: float(getattr(witness, field))})
+
+
+def test_section_words_are_an_immutable_tuple_of_native_integers(catalog):
+    witness = catalog.sources[0]
+    with pytest.raises(AssertionError):
+        replace(witness, section_words=list(witness.section_words))
+    words = tuple(float(word) for word in witness.section_words)
+    assert words == witness.section_words
+    with pytest.raises(AssertionError):
+        replace(witness, section_words=words)
+    with pytest.raises(AssertionError):
+        replace(witness, camera_count=True)
+
+
 @pytest.mark.parametrize("change", ["sources", "signature"])
 def test_replacing_a_catalog_cannot_remove_source_or_revision_binding(catalog, change):
     changed = (

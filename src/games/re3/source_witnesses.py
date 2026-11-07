@@ -58,6 +58,26 @@ class SourceWitness:
     initializer_end: int
     normalized_fingerprint: str
 
+    def __post_init__(self) -> None:
+        # Value equality also accepts mutable bytes-like buffers and numeric
+        # aliases. Neither may survive an immutable compilation/catalog seal.
+        assert isinstance(self.source, RoomSource)
+        assert all(
+            type(value) is int
+            for value in (
+                self.rdt_size,
+                self.camera_count,
+                self.cameras_offset,
+                self.zones_offset,
+                self.initializer_offset,
+                self.initializer_end,
+            )
+        )
+        assert type(self.section_words) is tuple
+        assert all(type(word) is int for word in self.section_words)
+        assert type(self.cameras) is bytes and type(self.zones) is bytes
+        assert type(self.normalized_fingerprint) is str
+
     def ranges(self, base: int) -> tuple[tuple[int, bytes], ...] | RoomFormatFailure:
         """Return relative offsets/expected bytes, each within the read limit."""
         assert type(base) is int
@@ -93,6 +113,10 @@ class BoundSource(SourceWitness):
     """A compiled source whose ARD metadata agrees with the pinned EXE."""
 
     native_file_index: int
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        assert type(self.native_file_index) is int
 
 
 @dataclass(frozen=True)
