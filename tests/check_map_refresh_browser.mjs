@@ -58,11 +58,13 @@ try {
   await page.waitForFunction(() => document.getElementById('completion').textContent === 'Items remain');
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   const map = page.locator('#map');
-  const chosenView = await map.getAttribute('viewBox');
   const neighbor = page.locator('.room:not(.current)');
   const selectedName = await neighbor.getAttribute('aria-label');
   await neighbor.press('Enter');
   await page.waitForFunction(() => document.getElementById('room-name').textContent !== "Kendo's Gun Shop");
+  // Keyboard inspection can pan to reveal the room; interruption must retain
+  // the view chosen by that navigation, including its zoom and pan.
+  const chosenView = await map.getAttribute('viewBox');
   // Wait across several normal polling periods while the second request is held.
   await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 350)));
   assert.equal(requests, 2, 'only one state request may remain in flight');
