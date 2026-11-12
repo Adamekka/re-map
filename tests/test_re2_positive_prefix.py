@@ -491,7 +491,7 @@ def test_generated_positive_rows_rewind_independently_with_fresh_acquisition(sna
 
 
 @pytest.fixture
-def source_prefix(owned):
+def prefix_inputs(owned):
     from games.re2.positive_prefix import _PositivePrefixDerivation
     from games.re2.startup_entry_selection import EntrySelectionSource
 
@@ -573,11 +573,16 @@ def source_prefix(owned):
             ),
             PositivePrefixFailure,
         )
-        return known_declared_items_from_prefix(
-            data, room, p, entry, script_item_dispatch(p), prefix
-        )
+        return data, room, p, entry, script_item_dispatch(p), prefix
 
     return compile_source
+
+
+@pytest.fixture
+def source_prefix(prefix_inputs):
+    return lambda init, main: known_declared_items_from_prefix(
+        *prefix_inputs(init, main)
+    )
 
 
 def test_native_callee_end_discards_only_its_if_frame(source_prefix):

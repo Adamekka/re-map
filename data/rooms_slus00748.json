@@ -3737,7 +3737,8 @@
       "startup_item_declarations": [],
       "scoped_scenario_items": {
         "absent_item_ids": [
-          146
+          146,
+          205
         ],
         "item_variants": []
       }

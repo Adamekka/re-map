@@ -135,6 +135,12 @@ class KnownDeclaredItems:
 
 
 @dataclass(frozen=True)
+class _DeclaredPrefixFacts:
+    items: KnownDeclaredItems
+    registered_slots: frozenset[int]
+
+
+@dataclass(frozen=True)
 class _ModelSetup:
     assets: frozenset[int]
     slots: frozenset[int]
@@ -193,7 +199,7 @@ def known_declared_items(
         and isinstance(scenario_entries, VerifiedScenarioEntryScope)
     ), "scenario prefix knowledge requires both independent native receipts"
 
-    return _known_declared_items(
+    result = _known_declared_items(
         data,
         room,
         profile,
@@ -204,6 +210,7 @@ def known_declared_items(
         scenario_entries,
         _PrefixPolicy.Legacy,
     )
+    return result.items if isinstance(result, _DeclaredPrefixFacts) else result
 
 
 def known_declared_items_from_prefix(
@@ -220,7 +227,7 @@ def known_declared_items_from_prefix(
     assert type(dispatch) is ScriptItemDispatchConfig
     if not prefix.matches(data, room, profile, prefix.context.declaration_contract):
         return KnownDeclaredItemFailure.InputBinding
-    return _known_declared_items(
+    result = _known_declared_items(
         data,
         room,
         profile,
@@ -231,6 +238,7 @@ def known_declared_items_from_prefix(
         ScenarioSelectionSupport.Unaudited,
         prefix,
     )
+    return result.items if isinstance(result, _DeclaredPrefixFacts) else result
 
 
 def _known_declared_items(
@@ -243,7 +251,7 @@ def _known_declared_items(
     scenario_context,
     scenario_entries,
     positive_prefix,
-) -> KnownDeclaredItems | KnownDeclaredItemFailure:
+) -> _DeclaredPrefixFacts | KnownDeclaredItemFailure:
     trusted = type(positive_prefix) is VerifiedNormalEnginePositivePrefix
     entries = positive_prefix if trusted else scenario_entries
 
@@ -1255,6 +1263,11 @@ def _known_declared_items(
                     KnownDeclaredItemFailure.Prefix,
                 )
             elif row["kind"] in ("item", "door", "interaction"):
+                if trusted:
+                    # All ordinary/four-point creators publish before any
+                    # acquired-kind clear. Registration is independent of
+                    # identity, activity, acquisition and later UI acceptance.
+                    found = found | {("registered", packet[1])}
                 if position in identities and opcode == 0x4E and packet[2] == 2:
                     require(
                         packet[20] < config.object_capacity or packet[20] == 0xFF,
@@ -1719,7 +1732,10 @@ def _known_declared_items(
                     )
         ids = [item.global_id for item in (*result, *direct_result)]
         require(len(ids) == len(set(ids)), KnownDeclaredItemFailure.SourceMutation)
-        return KnownDeclaredItems(tuple(result), tuple(direct_result))
+        return _DeclaredPrefixFacts(
+            KnownDeclaredItems(tuple(result), tuple(direct_result)),
+            frozenset(token[1] for token in guaranteed if token[0] == "registered"),
+        )
     except _InvalidTarget as error:
         return error.reason
     except (KeyError, IndexError, TypeError, ValueError, struct.error):

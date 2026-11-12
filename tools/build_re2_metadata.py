@@ -49,6 +49,10 @@ from games.re2.ordinary_task_ingress import (
     OrdinaryTaskIngressFailure,
     VerifiedOrdinaryTaskIngress,
 )
+from games.re2.persistent_registration import (
+    VerifiedPersistentRegistration,
+    persistent_registration,
+)
 from games.re2.positive_prefix import (
     PositivePrefixPolicy,
     VerifiedNormalEnginePositivePrefix,
@@ -646,9 +650,40 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     for item in room["known_direct_pickups"]
                     if item["global_id"] not in existing
                 ]
+            registration = ScenarioSelectionSupport.Unaudited
+            if (
+                positive_policy is PositivePrefixPolicy.TrustedNormalEngine
+                and isinstance(entry_contract, VerifiedRoomEntryContract)
+                and isinstance(dispatch, ScriptItemDispatchConfig)
+            ):
+                # Derived room fields changed since the positive-item query.
+                # Rebind against this exact JSON at mandatory consumption;
+                # never carry a prior source lease or cached registration flag.
+                # asdict retains tuples, while the prefix binds JSON arrays.
+                # Normalize the current metadata before minting that binding.
+                room.update(json.loads(json.dumps(room)))
+                prefix = normal_engine_positive_prefix(
+                    sources[room["id"]], room, profile, bound
+                )
+                if isinstance(prefix, VerifiedNormalEnginePositivePrefix):
+                    candidate = persistent_registration(
+                        sources[room["id"]],
+                        room,
+                        profile,
+                        entry_contract,
+                        dispatch,
+                        prefix,
+                    )
+                    if isinstance(candidate, VerifiedPersistentRegistration):
+                        registration = candidate
             scoped = (
                 scoped_scenario_items(
-                    sources[room["id"]], room, profile, scenario_context, guard_scope
+                    sources[room["id"]],
+                    room,
+                    profile,
+                    scenario_context,
+                    guard_scope,
+                    registration=registration,
                 )
                 if isinstance(guard_scope, VerifiedScenarioGuardScope)
                 else guard_scope

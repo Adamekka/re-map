@@ -10,6 +10,7 @@ import hashlib
 import struct
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from games.re2.actor_part_proofs import SourceCopyWrite
 from games.re2.event_presence import (
@@ -28,6 +29,9 @@ from games.re2.room_write_partitions import (
 from games.re2.scenario_items import scenario_flags
 from games.re2.script_control_limits import programs_digest
 from games.re2.startup_declarations import VerifiedStartupDeclarationContract
+
+if TYPE_CHECKING:
+    from games.re2.persistent_registration import VerifiedPersistentRegistration
 
 SCENARIO_EXECUTABLE_SHA256 = (
     "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
@@ -524,6 +528,9 @@ def scoped_scenario_items(
     profile: dict,
     context: VerifiedScenarioContext,
     entry_scope: VerifiedScenarioEntryScope | VerifiedScenarioGuardScope,
+    *,
+    registration: VerifiedPersistentRegistration
+    | ScenarioSelectionSupport = ScenarioSelectionSupport.Unaudited,
 ) -> ScopedScenarioItems | ScenarioSelectionFailure:
     """Select identities after the native context and source guard checks."""
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
@@ -537,6 +544,24 @@ def scoped_scenario_items(
             raise _InvalidSelection(failure)
 
     try:
+        # Import locally because registration consumes the shared positive
+        # compiler, which itself uses this module's source-write witnesses.
+        from games.re2.persistent_registration import VerifiedPersistentRegistration
+
+        assert (
+            registration is ScenarioSelectionSupport.Unaudited
+            or type(registration) is VerifiedPersistentRegistration
+        )
+        refined = type(registration) is VerifiedPersistentRegistration
+        if refined:
+            require(
+                registration.matches(data, room, profile, context.declaration_contract)
+            )
+            require(
+                entry_scope.protected_programs == registration.prefix.protected_programs
+                and entry_scope.entry_locations == registration.prefix.entry_locations,
+                ScenarioSelectionFailure.EntryScope,
+            )
         require(
             bind_scenario_context(profile, context.declaration_contract) == context,
             ScenarioSelectionFailure.NativeContract,
@@ -625,6 +650,11 @@ def scoped_scenario_items(
                 SourceRange(table, int.from_bytes(data[table : table + 2], "little"))
             )
         targets = {}
+        ordinary_origins = {
+            (key, row["offset"]): data[row["offset"] + 1]
+            for key, row in all_rows
+            if row["kind"] in ("item", "door", "interaction")
+        }
         for key, row in all_rows:
             at, op = row["offset"], row["opcode"]
             packet = data[at : row["next"]]
@@ -691,6 +721,20 @@ def scoped_scenario_items(
         absent, variants = [], []
         for gid, creators in sorted(targets.items()):
             scopes = {key for key, _ in creators}
+            if refined:
+                reset_slots = {
+                    data[at + 1]
+                    for (_, at), (kind, _) in creators.items()
+                    if kind == "reset"
+                }
+                # Every ordinary/four-point origin for each Reset slot must
+                # join the same all-canonical-entry walk, regardless of kind,
+                # item identity, acquisition or whether startup registered it.
+                scopes |= {
+                    key
+                    for (key, _), slot in ordinary_origins.items()
+                    if slot in reset_slots
+                }
             if not scopes <= entry_scope.protected_programs:
                 continue
             if any(
@@ -806,7 +850,19 @@ def scoped_scenario_items(
                     pending.append((key, row["next"], frames))
             if not supported:
                 continue
-            possible = {loc: value for loc, value in creators.items() if loc in reached}
+            possible = {
+                loc: value
+                for loc, value in creators.items()
+                if loc in reached
+                and (
+                    not refined
+                    or value[0] == "creator"
+                    or any(
+                        origin in reached and slot == data[loc[1] + 1]
+                        for origin, slot in ordinary_origins.items()
+                    )
+                )
+            }
             if not possible:
                 absent.append(gid)
                 continue

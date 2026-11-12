@@ -161,11 +161,11 @@ def test_normal_engine_guard_rejects_a_live_b_item_atomically(snapshot, sat):
 
 @pytest.mark.parametrize("snapshot", ["00-01", "00-09"], indirect=True)
 def test_side_entrance_exclusion_keeps_independent_checks_and_rewinds(snapshot):
-    """RE2-SCENARIO-006: exclusion cannot clear unresolved neighboring items."""
+    """RE2-SCENARIO-006/008: absence never collects the remaining puzzle item."""
     profile, _, put, read = snapshot
     source = profile.rooms["00-09"]
     assert source["scoped_scenario_items"] == {
-        "absent_item_ids": [146],
+        "absent_item_ids": [146, 205],
         "item_variants": [],
     }
     assert not source["fixed_context_preserved"]
@@ -192,13 +192,10 @@ def test_side_entrance_exclusion_keeps_independent_checks_and_rewinds(snapshot):
             put(address, value | mask if acquired else value & ~mask, 4)
         assert poll_re2(profile, tracker, read).status is PollStatus.Display
         record = tracker.rooms["00-09"]
-        assert record.list_complete and len(record.items) == 2
-        assert [item.state for item in record.items] == [
-            "taken" if first else "uncollected",
-            "taken" if second else "unknown",
-        ]
+        assert record.list_complete and len(record.items) == 1
+        assert record.items[0].state == ("taken" if first else "uncollected")
         assert record.completion is (
-            RoomCompletion.Unknown if first else RoomCompletion.Incomplete
+            RoomCompletion.Cleared if first else RoomCompletion.Incomplete
         )
         fresh = Tracker()
         fresh.mark_current(RoomId(0, 9))
@@ -211,11 +208,12 @@ def test_side_entrance_exclusion_keeps_independent_checks_and_rewinds(snapshot):
 
 @pytest.mark.parametrize("snapshot", ["00-09"], indirect=True)
 @pytest.mark.parametrize("sat", [0, 0x31])
-def test_side_entrance_live_excluded_creator_rejects_atomically(snapshot, sat):
-    """RE2-SCENARIO-006: an absence receipt cannot hide a fresh contradiction."""
+@pytest.mark.parametrize("gid", [146, 205])
+def test_side_entrance_live_excluded_creator_rejects_atomically(snapshot, sat, gid):
+    """RE2-SCENARIO-006/008: absence cannot hide a fresh contradiction."""
     profile, _, put, read = snapshot
     source = profile.rooms["00-09"]
-    excluded = next(item for item in source["items"] if item["global_id"] == 146)
+    excluded = next(item for item in source["items"] if item["global_id"] == gid)
     registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
     for slot in range(32):
         put(registry + slot * 4, 0, 4)
