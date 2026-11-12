@@ -479,11 +479,14 @@ def test_profile_and_catalog_bind_the_same_clipping_contract(
     document = json.loads((path.parent / raw["room_metadata_path"]).read_text())
     if case == "absent-both":
         # This case opts out of the strict clipping contract. Its independent
-        # exact-profile door authority must be explicitly opted out as well.
+        # exact-profile door and identity authorities must opt out as well.
+        del raw["identity_filtering_policy"]
+        del document["identity_filtering_policy"]
         del raw["trusted_door_policy"]
         del document["trusted_door_policy"]
         for room in document["rooms"]:
             del room["door_access_catalog"]
+            del room["identity_filtering_items"]
     raw.pop("scenario_clipping", None)
     document.pop("scenario_clipping", None)
     if case != "absent-both":

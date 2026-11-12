@@ -45,8 +45,8 @@
     "current_detail": {
       "id": "06",
       "room": "03-08",
-      "state": "UNKNOWN",
-      "items_complete": false,
+      "state": "CLEARED",
+      "items_complete": true,
       "items": [
         {
           "label": "Green Herb",
@@ -61,10 +61,10 @@
           "quantity_is_unit_count": false
         },
         {
-          "label": "Collectible",
+          "label": "Shotgun shells",
           "state": "taken",
-          "quantity": "unreconstructed",
-          "quantity_is_unit_count": false
+          "quantity": 7,
+          "quantity_is_unit_count": true
         },
         {
           "label": "Ink Ribbon",
@@ -73,7 +73,7 @@
           "quantity_is_unit_count": true
         }
       ],
-      "reason": "Item conditions are unresolved.",
+      "reason": "",
       "doors_complete": true,
       "door_reason": ""
     },
@@ -81,8 +81,8 @@
       {
         "id": "06",
         "room": "03-08",
-        "state": "UNKNOWN",
-        "items_complete": false,
+        "state": "CLEARED",
+        "items_complete": true,
         "items": [
           {
             "label": "Green Herb",
@@ -97,10 +97,10 @@
             "quantity_is_unit_count": false
           },
           {
-            "label": "Collectible",
+            "label": "Shotgun shells",
             "state": "taken",
-            "quantity": "unreconstructed",
-            "quantity_is_unit_count": false
+            "quantity": 7,
+            "quantity_is_unit_count": true
           },
           {
             "label": "Ink Ribbon",
@@ -109,7 +109,7 @@
             "quantity_is_unit_count": true
           }
         ],
-        "reason": "Item conditions are unresolved.",
+        "reason": "",
         "doors_complete": true,
         "door_reason": ""
       },
@@ -129,8 +129,8 @@
         {
           "id": "06",
           "room": "03-08",
-          "state": "UNKNOWN",
-          "items_complete": false,
+          "state": "CLEARED",
+          "items_complete": true,
           "items": [
             {
               "label": "Green Herb",
@@ -145,10 +145,10 @@
               "quantity_is_unit_count": false
             },
             {
-              "label": "Collectible",
+              "label": "Shotgun shells",
               "state": "taken",
-              "quantity": "unreconstructed",
-              "quantity_is_unit_count": false
+              "quantity": 7,
+              "quantity_is_unit_count": true
             },
             {
               "label": "Ink Ribbon",
@@ -157,7 +157,7 @@
               "quantity_is_unit_count": true
             }
           ],
-          "reason": "Item conditions are unresolved.",
+          "reason": "",
           "doors_complete": true,
           "door_reason": ""
         },
@@ -220,5 +220,5 @@
       }
     ]
   },
-  "publication_sha256": "26f05c602be04f837384ab16e2eeab680545490adecc69af7fd1cc7933f4d6af"
+  "publication_sha256": "fdd0741bcc60ca0b34f3772dfb7fb552c6a4a0a07dcfea5f283acd068148742a"
 }

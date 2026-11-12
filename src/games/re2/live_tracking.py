@@ -431,6 +431,10 @@ def poll_re2(
                 presence_matches(condition, flag)
                 for condition in source.get("scenario_context_conditions", [])
             )
+            filtering_valid = context_valid and all(
+                presence_matches(condition, flag)
+                for condition in source["identity_filtering_conditions"]
+            )
             known_item_ids = {
                 proof["global_id"]
                 for field in ("known_puzzle_items", "known_direct_pickups")
@@ -451,13 +455,13 @@ def poll_re2(
                 tracking_item_candidates(
                     source, profile.reset_candidate_policy, selected=True
                 )
-                if context_valid
+                if filtering_valid
                 else tracking_item_candidates(
                     source, profile.reset_candidate_policy, selected=False
                 )
             )
             if (
-                context_valid
+                filtering_valid
                 and visited == key
                 and any(
                     item["origin"] in live_items
@@ -510,7 +514,7 @@ def poll_re2(
                     and live_items[item["origin"]].matches(item)
                     and item["type"] < layout["file_type_min"]
                 ]
-                if context_valid and gid in source["scenario_absent_item_ids"]:
+                if filtering_valid and gid in source["scenario_absent_item_ids"]:
                     if visited == key and any(
                         item["origin"] in live_items
                         and live_items[item["origin"]].matches(item)

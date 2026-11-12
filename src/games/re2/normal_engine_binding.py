@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import fields, is_dataclass
+from enum import Enum
 
 # This derived audit identity comes from the complete owned 69-resource,
 # 125-source binder, not from a caller-supplied selection or receipt mirror.
@@ -26,6 +27,16 @@ def typed_binding_digest(value: object) -> str:
             return ["tuple", [encode(part) for part in value]]
         if kind is frozenset:
             return ["frozenset", sorted(encode(part) for part in value)]
+        if isinstance(value, Enum):
+            # Source partitions use enums for deliberately unaccessed resources.
+            # Preserve the class and typed value rather than equating its label
+            # with a caller-supplied string or integer.
+            return [
+                "enum",
+                f"{kind.__module__}.{kind.__qualname__}",
+                value.name,
+                encode(value.value),
+            ]
         if is_dataclass(value) and not isinstance(value, type):
             return [
                 f"{kind.__module__}.{kind.__qualname__}",
@@ -38,4 +49,20 @@ def typed_binding_digest(value: object) -> str:
 
     return hashlib.sha256(
         json.dumps(encode(value), separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def semantic_profile_digest(profile: dict) -> str:
+    # File locations may change during packaging; they grant no native rights.
+    return hashlib.sha256(
+        json.dumps(
+            {
+                k: v
+                for k, v in profile.items()
+                if k not in ("room_metadata_path", "floor_plans_path", "names_path")
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
     ).hexdigest()

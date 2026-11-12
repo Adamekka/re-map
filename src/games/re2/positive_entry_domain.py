@@ -1,4 +1,4 @@
-"""RE2-STARTUP-008: internal positive-only entry and operand capabilities.
+"""RE2-STARTUP-008: positive authority and shared unsealed source-entry facts.
 
 The exact owned binder supplies the normal native producer/namespace contract.
 This compiler closes source entries and escaped control fields, not VM safety.
@@ -40,6 +40,11 @@ from games.re2.structured_control import (
     StructuredControl,
     structured_control,
 )
+
+
+class SourceEntryPolicy(Enum):
+    Existing = "existing positive source roles"
+    IdentityFiltering = "normal-engine identity filtering source roles"
 
 
 class PositiveEntryFailure(Enum):
@@ -88,7 +93,9 @@ class _PositiveEntryDomain:
         )
 
 
-def _numeric_copy_ranges(data: bytes, programs: dict) -> tuple[tuple[int, int], ...]:
+def _numeric_copy_ranges(
+    data: bytes, programs: dict, policy: SourceEntryPolicy
+) -> tuple[tuple[int, int], ...]:
     ranges = []
     for program in programs.values():
         for row in program["commands"]:
@@ -99,6 +106,18 @@ def _numeric_copy_ranges(data: bytes, programs: dict) -> tuple[tuple[int, int], 
                 ranges.append((at + 6, at + 12))
             elif opcode == 0x54:
                 ranges.extend(((at + 8, at + 14), (at + 14, at + 20)))
+            elif policy is SourceEntryPolicy.IdentityFiltering and opcode in (
+                0x6A,
+                0x6B,
+            ):
+                # Native lighting stores consume only these scalar halfwords.
+                # Camera/light selectors and complete retained assets stay protected.
+                ranges.append(
+                    (
+                        at + (4 if opcode == 0x6A else 2),
+                        at + (6 if opcode == 0x6A else 4),
+                    )
+                )
     return tuple(sorted(ranges))
 
 
@@ -116,6 +135,7 @@ def _call_depths(programs: dict, roots: set[str], calls: dict[str, set[str]]):
 
 @dataclass(frozen=True)
 class _SourceEntryRoles:
+    edges: tuple[tuple[str, int, tuple[int, ...]], ...]
     entry_locations: frozenset[tuple[str, int]]
     gotos: frozenset[tuple[str, int]]
     if_stores: tuple[tuple[str, int, int, int], ...]
@@ -125,9 +145,14 @@ class _SourceEntryRoles:
 
 
 def _source_entry_roles(
-    data: bytes, programs: dict, writes: ScenarioSourceWriteWitnesses
+    data: bytes,
+    programs: dict,
+    writes: ScenarioSourceWriteWitnesses,
+    *,
+    policy: SourceEntryPolicy = SourceEntryPolicy.Existing,
 ) -> _SourceEntryRoles | PositiveEntryFailure:
-    """Unsealed source analysis, never sufficient positive/native authority."""
+    """Unsealed source analysis, never sufficient filtering/presence authority."""
+    assert type(policy) is SourceEntryPolicy
 
     def require(condition, reason=PositiveEntryFailure.Control):
         if not condition:
@@ -142,7 +167,7 @@ def _source_entry_roles(
             type(writes) is ScenarioSourceWriteWitnesses,
             PositiveEntryFailure.SourceWrite,
         )
-        numeric = _numeric_copy_ranges(data, programs)
+        numeric = _numeric_copy_ranges(data, programs, policy)
         for key, program in programs.items():
             for row in program["commands"]:
                 at, opcode = row["offset"], row["opcode"]
@@ -261,7 +286,11 @@ def _source_entry_roles(
         for key in programs:
             if depths[key]:
                 result = structured_control(
-                    data, programs[key], ControlFrames.FreshPositive
+                    data,
+                    programs[key],
+                    ControlFrames.IdentityFiltering
+                    if policy is SourceEntryPolicy.IdentityFiltering
+                    else ControlFrames.FreshPositive,
                 )
                 require(type(result) is StructuredControl)
                 frames[key] = result
@@ -292,6 +321,11 @@ def _source_entry_roles(
             PositiveEntryFailure.ForeignConsumer,
         )
         return _SourceEntryRoles(
+            tuple(
+                (key, at, targets)
+                for key, result in sorted(frames.items())
+                for at, targets in result.edges
+            ),
             frozenset((key, programs[key]["entry"]) for key in frames),
             frozenset(gotos),
             tuple(sorted(if_stores)),
@@ -325,6 +359,77 @@ def _foreign_fields_disjoint(foreign: frozenset[int], reads: tuple[int, ...]) ->
     ) and not any(
         cell <= read + 3 and read <= cell + 3 for cell in foreign for read in reads
     )
+
+
+def _auxiliary_break_reads(resources, foreign: frozenset[int]):
+    """Neutral full-corpus consumer facts, without authority conversion."""
+
+    def require(condition, reason=PositiveEntryFailure.Control):
+        if not condition:
+            raise _Unsupported(reason)
+
+    try:
+        auxiliary_reads = []
+        for script in resources.corpus.scripts:
+            auxiliary = json.loads(script.programs_json)
+            aux_calls = {key: set() for key in auxiliary}
+            aux_roots = {"17:0"}
+            for key, program in auxiliary.items():
+                for row in program["commands"]:
+                    packet = script.data[row["offset"] : row["next"]]
+                    require(
+                        row["opcode"]
+                        not in (
+                            3,
+                            0x19,
+                            0x1B,
+                            0x1C,
+                            0x2C,
+                            0x3B,
+                            0x46,
+                            0x47,
+                            0x4E,
+                            0x67,
+                            0x68,
+                            0x69,
+                            0x6C,
+                            0x6E,
+                            0x8D,
+                        )
+                    )
+                    if row["kind"] == "call":
+                        aux_calls[key].add(f"17:{packet[1]}")
+                    elif row["opcode"] == 4:
+                        require(packet[1] >= 10 and packet[2] == 0x18)
+                        aux_roots.add(f"17:{packet[3]}")
+            require(calls_fit_native_frames(aux_calls))
+            aux_depths = _call_depths(auxiliary, aux_roots, aux_calls)
+            for key, program in auxiliary.items():
+                if not aux_depths[key]:
+                    continue
+                result = structured_control(
+                    script.data, program, ControlFrames.FreshPositive
+                )
+                require(type(result) is StructuredControl)
+                # The actual ingress binder retains its separate auxiliary
+                # poll roles. Here every reachable Break contributes its read
+                # cell, regardless of which ordinary slot might write it.
+                auxiliary_reads.extend(
+                    (script.model, key, at, loop_end_cell(depth, loop))
+                    for at, loop in result.break_reads
+                    for depth in aux_depths[key]
+                )
+        require(
+            _foreign_fields_disjoint(
+                foreign, tuple(read for *_, read in auxiliary_reads)
+            ),
+            PositiveEntryFailure.ForeignConsumer,
+        )
+        return tuple(sorted(auxiliary_reads))
+    except _Unsupported as error:
+        return error.reason
+    except (KeyError, IndexError, TypeError, ValueError):
+        return PositiveEntryFailure.Control
 
 
 def _derive_entry_domain(
@@ -483,62 +588,9 @@ def _derive_entry_domain(
         if type(source) is not _SourceEntryRoles:
             return source
         foreign = source.foreign_fields
-        auxiliary_reads = []
-        for script in resources.corpus.scripts:
-            auxiliary = json.loads(script.programs_json)
-            aux_calls = {key: set() for key in auxiliary}
-            aux_roots = {"17:0"}
-            for key, program in auxiliary.items():
-                for row in program["commands"]:
-                    packet = script.data[row["offset"] : row["next"]]
-                    require(
-                        row["opcode"]
-                        not in (
-                            3,
-                            0x19,
-                            0x1B,
-                            0x1C,
-                            0x2C,
-                            0x3B,
-                            0x46,
-                            0x47,
-                            0x4E,
-                            0x67,
-                            0x68,
-                            0x69,
-                            0x6C,
-                            0x6E,
-                            0x8D,
-                        )
-                    )
-                    if row["kind"] == "call":
-                        aux_calls[key].add(f"17:{packet[1]}")
-                    elif row["opcode"] == 4:
-                        require(packet[1] >= 10 and packet[2] == 0x18)
-                        aux_roots.add(f"17:{packet[3]}")
-            require(calls_fit_native_frames(aux_calls))
-            aux_depths = _call_depths(auxiliary, aux_roots, aux_calls)
-            for key, program in auxiliary.items():
-                if not aux_depths[key]:
-                    continue
-                result = structured_control(
-                    script.data, program, ControlFrames.FreshPositive
-                )
-                require(type(result) is StructuredControl)
-                # The actual ingress binder retains its separate auxiliary
-                # poll roles. Here every reachable Break contributes its read
-                # cell, regardless of which ordinary slot might write it.
-                auxiliary_reads.extend(
-                    (script.model, key, at, loop_end_cell(depth, loop))
-                    for at, loop in result.break_reads
-                    for depth in aux_depths[key]
-                )
-        require(
-            _foreign_fields_disjoint(
-                foreign, tuple(read for *_, read in auxiliary_reads)
-            ),
-            PositiveEntryFailure.ForeignConsumer,
-        )
+        auxiliary_reads = _auxiliary_break_reads(resources, foreign)
+        if type(auxiliary_reads) is not tuple:
+            return auxiliary_reads
         return _EntryFacts(
             source.entry_locations,
             source.gotos,

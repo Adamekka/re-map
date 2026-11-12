@@ -20,7 +20,7 @@ from games.re2.event_presence import (
     presence_counter_indices,
     presence_flag_write_proof,
 )
-from games.re2.positive_entry_domain import _PositiveEntryDomain
+from games.re2.positive_entry_domain import _PositiveEntryDomain, _SourceEntryRoles
 from games.re2.room_data import decode_room
 from games.re2.scenario_items import scenario_flags
 from games.re2.scenario_selection import (
@@ -80,6 +80,7 @@ class _ScopePolicy(Enum):
     TrustedNormalEngine = "trusted normal engine"
     TrustedPositivePrefix = "trusted normal positive prefix"
     TrustedDoors = "trusted normal door access"
+    IdentityFiltering = "trusted normal identity filtering"
 
 
 @dataclass(frozen=True)
@@ -381,7 +382,9 @@ def _source_scope_facts(
     context: VerifiedScenarioContext,
     policy: _ScopePolicy,
     control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
-    entry_domain: _PositiveEntryDomain | _SourceEffects = _SourceEffects.Existing,
+    entry_domain: _PositiveEntryDomain
+    | _SourceEntryRoles
+    | _SourceEffects = _SourceEffects.Existing,
 ) -> _SourceScopeFacts | DoorSourceFacts | DoorSourceFailure | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
@@ -396,6 +399,7 @@ def _source_scope_facts(
     )
 
     door_policy = policy is _ScopePolicy.TrustedDoors
+    identity_policy = policy is _ScopePolicy.IdentityFiltering
 
     def require(condition: bool, reason: str = "source_control_or_write") -> None:
         if not condition:
@@ -417,8 +421,11 @@ def _source_scope_facts(
                 and json.loads(entry_domain.profile_json) == profile
                 and entry_domain.bound.declarations == context.declaration_contract
             )
+        elif identity_policy:
+            require(type(entry_domain) is _SourceEntryRoles)
         else:
             require(entry_domain is _SourceEffects.Existing)
+        source_entries = entry_domain.facts if closed_entries else entry_domain
         layout = profile["runtime_layout"]
         require(
             layout["scenario_work_address_ps1"] == "0x800CE32C"
@@ -464,7 +471,11 @@ def _source_scope_facts(
                 )
             )
         )
-        if policy in (_ScopePolicy.TrustedPositivePrefix, _ScopePolicy.TrustedDoors):
+        if policy in (
+            _ScopePolicy.TrustedPositivePrefix,
+            _ScopePolicy.TrustedDoors,
+            _ScopePolicy.IdentityFiltering,
+        ):
             # Exact JSON types matter: Python equality alone equates True/1
             # and can otherwise accept substituted decoded operands.
             require(
@@ -503,6 +514,8 @@ def _source_scope_facts(
             profile,
             policy=SourceWritePolicy.NormalDoors
             if door_policy
+            else SourceWritePolicy.IdentityFiltering
+            if identity_policy
             else SourceWritePolicy.Existing,
         )
         require(
@@ -531,8 +544,8 @@ def _source_scope_facts(
                 if r["kind"] == "flag_check"
                 and not any(bank == r["bank"] for bank, _ in aliases)
             )
-        if closed_entries:
-            scalar_immediates.extend(entry_domain.facts.numeric_ranges)
+        if closed_entries or identity_policy:
+            scalar_immediates.extend(source_entries.numeric_ranges)
         if door_policy:
             # Copy may change values, never source selectors, PC/frame targets,
             # access identity or fixed scenario bits. Each extra domain belongs
@@ -593,12 +606,14 @@ def _source_scope_facts(
                     opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
                     or policy is not _ScopePolicy.AuditedNativeWork
                     and opcode in (0x2A, 0x64, 0x65, 0x85)
-                    or closed_entries
+                    or (closed_entries or identity_policy)
                     and opcode in (5, 0x15, 0x28)
+                    or identity_policy
+                    and opcode in (0x4C, 0x6A, 0x6B, 0x86, 0x87)
                 ),
                 "unmodeled_native_opcode",
             )
-            if door_policy:
+            if door_policy or identity_policy:
                 if row["kind"] == "flag_write":
                     require(
                         row["bank"] in banks
@@ -664,7 +679,7 @@ def _source_scope_facts(
                         packet[1] == 0xFF
                         or door_policy
                         and packet[1] < 14
-                        or closed_entries
+                        or (closed_entries or identity_policy)
                         and 2 <= packet[1] < 10
                     ),
                     "explicit_task_slot",
@@ -675,8 +690,15 @@ def _source_scope_facts(
                 # Attachment registration appends to an unbounded native
                 # queue that can reach task storage. This work contract covers
                 # only model setup without that additional queue ownership.
+                if identity_policy:
+                    # The fixed reference matrix avoids native parent-pointer
+                    # selectors. Attachment queue ownership is the explicit
+                    # normal-engine premise, not an unbounded safety theorem.
+                    require(packet[7] == 0)
                 require(
                     door_policy
+                    or identity_policy
+                    and packet[3] == 0x82
                     or packet[3] & 0xC0 == 0
                     or closed_entries
                     and (key, programs[key]["entry"])
@@ -689,7 +711,11 @@ def _source_scope_facts(
                     and packet[1:4] == b"\xff\xff\0"
                     and (
                         door_policy
-                        or policy is _ScopePolicy.TrustedPositivePrefix
+                        or policy
+                        in (
+                            _ScopePolicy.TrustedPositivePrefix,
+                            _ScopePolicy.IdentityFiltering,
+                        )
                         and row["target"] in commands[key]
                         or isinstance(control, VerifiedSourceTaskControl)
                         and (key, row["offset"]) in control.gotos
@@ -701,7 +727,7 @@ def _source_scope_facts(
                     ),
                     "goto_depth_escape",
                 )
-            elif opcode == 5 and closed_entries:
+            elif opcode == 5 and (closed_entries or identity_policy):
                 require(2 <= packet[1] < 10)
             elif (
                 opcode in (0x1B, 0x1C, 0x6C)
@@ -744,7 +770,7 @@ def _source_scope_facts(
                 render_initializers.setdefault(key, {})[at] = start
             elif opcode == 0x1D and door_policy:
                 require(packet[1] in counters, "copy_counter_bounds")
-            elif opcode == 0x29 and door_policy:
+            elif opcode == 0x29 and (door_policy or identity_policy):
                 # Cut_chg masks its high mode bit before selecting camera work.
                 require(packet[1] & 0x7F < room["cameras"], "camera_selector_bounds")
             elif opcode == 0x2E:
@@ -782,13 +808,20 @@ def _source_scope_facts(
                     # Native 80055D94 stores only Work+1D6 u16. Its normal
                     # actor ownership belongs to the new positive premise;
                     # guard and strict entry selector domains stay unchanged.
-                    or policy is _ScopePolicy.TrustedPositivePrefix
+                    or policy
+                    in (
+                        _ScopePolicy.TrustedPositivePrefix,
+                        _ScopePolicy.IdentityFiltering,
+                    )
                     and packet[1] == 24
                     # Native members11/13 store the owned Work's numeric X/Z
                     # coordinates. The new bound entry role grants no pointer
                     # selector or guard/strict-entry permission.
-                    or closed_entries
+                    or (closed_entries or identity_policy)
                     and packet[1] in (11, 13)
+                    # Member14 stores only the owned Work rotation halfword.
+                    or identity_policy
+                    and packet[1] == 14
                 )
             elif opcode == 0x44:
                 # The audited model's presets select states0/17/18. Their
@@ -796,7 +829,13 @@ def _source_scope_facts(
                 # other presets cannot inherit this initialized-work role.
                 require(
                     packet[1] == 0
-                    and (packet[2] < 32 or door_policy and packet[2] in (254, 255))
+                    and (
+                        packet[2] < 32
+                        or door_policy
+                        and packet[2] in (254, 255)
+                        or identity_policy
+                        and packet[2] == 255
+                    )
                     and (
                         door_policy
                         and (
@@ -831,6 +870,10 @@ def _source_scope_facts(
                 # Both part index and field selector are signed native bytes.
                 # Ownership is ordinary engine work; negative indices are not.
                 require(packet[2] < 128 and packet[3] < 7, "part_selector_bounds")
+            elif opcode == 0x4C and identity_policy:
+                # Category0 selects a fixed native position. Effect bytes are
+                # comparison filters over 96 owned records, never array indices.
+                require(packet[3:5] == b"\0\0")
             elif opcode == 0x85:
                 # The position predicate indexes player/partner plus 32 enemy
                 # pointers. Its truth stays unknown, including the IF-pop edge.
@@ -855,7 +898,10 @@ def _source_scope_facts(
                 require(packet[payload : payload + 3] == b"\xff\0\x18")
                 target = f"17:{packet[payload + 3]}"
                 require(target in programs)
-        if policy is _ScopePolicy.TrustedPositivePrefix:
+        if policy in (
+            _ScopePolicy.TrustedPositivePrefix,
+            _ScopePolicy.IdentityFiltering,
+        ):
             require(
                 decoded["candidate_list_complete"] and calls_fit_native_frames(calls)
             )
@@ -866,8 +912,8 @@ def _source_scope_facts(
                 room["sha256"],
                 programs_digest(programs),
                 frozenset(programs),
-                entry_domain.facts.entry_locations
-                if closed_entries
+                source_entries.entry_locations
+                if closed_entries or identity_policy
                 else frozenset((key, p["entry"]) for key, p in programs.items()),
             )
         for key, row in rows:

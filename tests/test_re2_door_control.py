@@ -2,6 +2,7 @@
 
 import json
 import struct
+from enum import Enum, IntEnum
 
 import pytest
 from test_re2_immutable_open_doors import door
@@ -127,3 +128,31 @@ def test_neutral_binding_digest_keeps_exact_types_and_rejects_mutable_receipts()
     for mutable in ([], bytearray(b"a"), {"value": 1}):
         with pytest.raises(ValueError, match="binding field"):
             typed_binding_digest((mutable, ()))
+
+
+def test_neutral_binding_digest_preserves_enum_class_and_value_types():
+    class First(Enum):
+        Entry = "entry"
+
+    class Second(Enum):
+        Entry = "entry"
+
+    class Numeric(IntEnum):
+        Entry = 1
+
+    assert (
+        len(
+            {
+                typed_binding_digest(value)
+                for value in (
+                    First.Entry,
+                    Second.Entry,
+                    Numeric.Entry,
+                    "entry",
+                    1,
+                    True,
+                )
+            }
+        )
+        == 6
+    )

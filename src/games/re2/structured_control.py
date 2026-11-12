@@ -15,6 +15,7 @@ class ControlFrames(Enum):
     Strict = "existing entry frames"
     FreshPositive = "fresh positive-entry frames"
     Doors = "trusted normal door frames"
+    IdentityFiltering = "normal-engine identity filtering frames"
 
 
 class PredicateOutcome(Enum):
@@ -94,7 +95,10 @@ def structured_control(
                 conditions,
                 loops,
                 pointer,
-                previous if role is ControlFrames.FreshPositive else -1,
+                previous
+                if role
+                in (ControlFrames.FreshPositive, ControlFrames.IdentityFiltering)
+                else -1,
             )
             if state in seen:
                 continue
@@ -128,7 +132,11 @@ def structured_control(
                     and row["target"] > following
                 )
                 stores.add((position, pointer, row["target"]))
-                if role is ControlFrames.FreshPositive and pointer >= GOTO_FF_IF_BASE:
+                if (
+                    role
+                    in (ControlFrames.FreshPositive, ControlFrames.IdentityFiltering)
+                    and pointer >= GOTO_FF_IF_BASE
+                ):
                     # Escaped IF failures must consume their fresh store in the
                     # immediately following atomic CMP, before any task yield.
                     test = rows[following]
@@ -145,15 +153,21 @@ def structured_control(
                 pending.append(
                     (following, conditions + (row["target"],), loops, pointer + 4)
                 )
-            elif row["kind"] == "flag_check" or opcode in (
-                0x23,
-                0x3E,
-                0x50,
-                0x5E,
-                0x85,
+            elif (
+                row["kind"] == "flag_check"
+                or (role is ControlFrames.IdentityFiltering and opcode == 0x86)
+                or opcode
+                in (
+                    0x23,
+                    0x3E,
+                    0x50,
+                    0x5E,
+                    0x85,
+                )
             ):
                 if (
-                    role is ControlFrames.FreshPositive
+                    role
+                    in (ControlFrames.FreshPositive, ControlFrames.IdentityFiltering)
                     and pointer > GOTO_FF_IF_BASE
                     and conditions
                 ):
@@ -229,7 +243,11 @@ def structured_control(
                         in (
                             (0x14, 0x15)
                             if role
-                            in (ControlFrames.FreshPositive, ControlFrames.Doors)
+                            in (
+                                ControlFrames.FreshPositive,
+                                ControlFrames.IdentityFiltering,
+                                ControlFrames.Doors,
+                            )
                             else (0x14,)
                         )
                         for at in labels[:-1]
@@ -245,7 +263,12 @@ def structured_control(
             elif (
                 opcode == 0x14
                 or opcode == 0x15
-                and role in (ControlFrames.FreshPositive, ControlFrames.Doors)
+                and role
+                in (
+                    ControlFrames.FreshPositive,
+                    ControlFrames.IdentityFiltering,
+                    ControlFrames.Doors,
+                )
             ):
                 require(
                     bool(loops) and loops[-1][0] == 0x13,

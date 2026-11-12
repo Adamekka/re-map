@@ -30,6 +30,12 @@ from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
 from games.re2.door_authority import DoorPolicy, door_access_catalog, door_policy
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.re2.identity_filtering import (
+    IdentityFilteringPolicy,
+    NormalEngineIdentityFiltering,
+    identity_filtering_policy,
+    normal_engine_identity_filtering,
+)
 from games.re2.immutable_open_doors import immutable_open_doors
 from games.re2.initializer_control_proof import (
     InitializerContinuationProof,
@@ -343,6 +349,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     target = re2_target(profile)
     positive_policy = positive_prefix_policy(profile)
     access_policy = door_policy(profile)
+    identity_policy = identity_filtering_policy(profile)
     effect_pool = scenario_effect_pool(profile)
     vibration_writes = scenario_vibration_writes(profile)
     actor_parts = scenario_actor_parts(profile)
@@ -811,6 +818,45 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 if isinstance(scoped, ScopedScenarioItems)
                 else {"absent_item_ids": [], "item_variants": []}
             )
+        if identity_policy is IdentityFilteringPolicy.TrustedNormalEngine:
+            # Bind the exact current metadata before the separate filtering
+            # query. Neither a positive prefix nor a door receipt grants this right.
+            room.update(json.loads(json.dumps(room)))
+            filtering = normal_engine_identity_filtering(
+                sources[room["id"]], room, profile, bound
+            )
+            selected = (
+                scoped_scenario_items(
+                    sources[room["id"]], room, profile, filtering.context, filtering
+                )
+                if type(filtering) is NormalEngineIdentityFiltering
+                else filtering
+            )
+            existing_ids = (
+                set(room["scenario_absent_item_ids"])
+                | {r["global_id"] for r in room["scenario_item_variants"]}
+                | set(room["scoped_scenario_items"]["absent_item_ids"])
+                | {
+                    r["global_id"]
+                    for r in room["scoped_scenario_items"]["item_variants"]
+                }
+            )
+            room["identity_filtering_items"] = (
+                {
+                    "absent_item_ids": [
+                        gid
+                        for gid in selected.absent_item_ids
+                        if gid not in existing_ids
+                    ],
+                    "item_variants": [
+                        asdict(r)
+                        for r in selected.item_variants
+                        if r.global_id not in existing_ids
+                    ],
+                }
+                if type(selected) is ScopedScenarioItems
+                else {"absent_item_ids": [], "item_variants": []}
+            )
         if not (
             isinstance(entry_contract, VerifiedRoomEntryContract)
             and isinstance(dispatch, ScriptItemDispatchConfig)
@@ -1040,6 +1086,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     if access_policy is DoorPolicy.TrustedNormalEngine
                     else []
                 ),
+                *(
+                    ["RE2-SCENARIO-009"]
+                    if identity_policy is IdentityFilteringPolicy.TrustedNormalEngine
+                    else []
+                ),
                 "RE2-COLLECT-001",
                 "RE2-COLLECT-002",
                 "RE2-COLLECT-003",
@@ -1137,6 +1188,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             **(
                 {"trusted_door_policy": profile["trusted_door_policy"]}
                 if access_policy is DoorPolicy.TrustedNormalEngine
+                else {}
+            ),
+            **(
+                {"identity_filtering_policy": profile["identity_filtering_policy"]}
+                if identity_policy is IdentityFilteringPolicy.TrustedNormalEngine
                 else {}
             ),
             "fixed_scenario_flags": fixed_flags,

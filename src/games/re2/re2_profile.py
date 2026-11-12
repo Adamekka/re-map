@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,6 +19,12 @@ from games.re2.event_presence import (
     presence_counter_indices,
     presence_flag_write_proof,
     valid_presence,
+)
+from games.re2.identity_filtering import (
+    IDENTITY_FILTERING_CATALOG_SHA256,
+    IdentityFilteringPolicy,
+    identity_filtering_catalog_digest,
+    identity_filtering_policy,
 )
 from games.re2.initializer_control_proof import (
     InitializerControlConfig,
@@ -201,6 +208,7 @@ class Re2Profile:
         control_config = initializer_control_config(raw)
         declaration_config = startup_declaration_audit(raw)
         positive_policy = positive_prefix_policy(raw)
+        identity_configured = "identity_filtering_policy" in raw
         entry_contract = room_entry_contract(raw)
         if isinstance(entry_contract, RoomEntryContractFailure):
             raise ValueError(entry_contract.value)
@@ -377,6 +385,10 @@ class Re2Profile:
             raise ValueError("RE2 exclusion proof disagrees with fixed scenario flags")
         fixed_values = {(test["bank"], test["bit"]): test["expected"] for test in fixed}
         rooms = {row["id"]: row for row in document["rooms"]}
+        # Normalization below merges scoped variants and Reset candidates. The
+        # compiler pin must authenticate the original external descriptors.
+        if identity_configured:
+            identity_catalog_rooms = deepcopy(document["rooms"])
         unsupported = document.get("unsupported_sources")
         if type(unsupported) is not list or any(
             type(row) is not dict
@@ -447,6 +459,30 @@ class Re2Profile:
                     room.get("sha256"),
                 ) != (source.path, source.width, source.sha256):
                     raise ValueError("unbound RE2 scoped-scenario item source")
+            if ("identity_filtering_items" in room) != (identity_configured):
+                raise ValueError("RE2 identity filtering items require explicit opt-in")
+            filtering = (
+                room["identity_filtering_items"]
+                if identity_configured
+                else {"absent_item_ids": [], "item_variants": []}
+            )
+            if (
+                type(filtering) is not dict
+                or filtering.keys() != {"absent_item_ids", "item_variants"}
+                or any(
+                    type(filtering[k]) is not list or len(filtering[k]) > 256
+                    for k in filtering
+                )
+            ):
+                raise ValueError("invalid RE2 identity filtering items")
+            if filtering["absent_item_ids"] or filtering["item_variants"]:
+                source = declaration_sources.get(key)
+                if source is None or (room["source"], room["size"], room["sha256"]) != (
+                    source.path,
+                    source.width,
+                    source.sha256,
+                ):
+                    raise ValueError("unbound RE2 identity filtering source")
             context_conditions = room.get("scenario_context_conditions", [])
             if (
                 actor_parts is not ActorPartSupport.Unaudited
@@ -1108,7 +1144,9 @@ class Re2Profile:
             diagnostic = f"RE2 scenario item variants in {key}"
             if type(global_variants) is not list:
                 raise ValueError(f"{diagnostic}: expected a list")
-            variants = global_variants + scoped["item_variants"]
+            variants = (
+                global_variants + scoped["item_variants"] + filtering["item_variants"]
+            )
             if variants and not room["candidate_list_complete"]:
                 raise ValueError(f"{diagnostic}: source list is incomplete")
             variant_ids = set()
@@ -1227,7 +1265,9 @@ class Re2Profile:
                 )
             if type(global_absent) is not list:
                 raise ValueError("invalid RE2 global scenario pickup exclusions")
-            absent = global_absent + scoped["absent_item_ids"]
+            absent = (
+                global_absent + scoped["absent_item_ids"] + filtering["absent_item_ids"]
+            )
             if (
                 type(absent) is not list
                 or bool(absent)
@@ -1289,6 +1329,13 @@ class Re2Profile:
             # Scoped identity/exclusion facts use the reader's existing fresh
             # contradiction checks. They grant no whole-source presence or
             # continuation capability, so fixed_context_preserved stays intact.
+            # Filtering uses all four fresh historical flags. This condition
+            # gates only identity/exclusion; it never establishes item presence.
+            room["identity_filtering_conditions"] = (
+                [{"kind": "conditions", "any_of": [fixed]}]
+                if filtering["absent_item_ids"] or filtering["item_variants"]
+                else []
+            )
             room["scenario_item_variants"] = variants
             room["scenario_absent_item_ids"] = absent
             candidates = tracking_item_candidates(room, reset_config, selected=False)
@@ -1301,6 +1348,27 @@ class Re2Profile:
             pickup_flags.update((bank, item["global_id"]) for item in candidates)
         if award_flags & pickup_flags:
             raise ValueError("aliased RE2 event award and pickup collection rules")
+        # Parse existing contracts first so their actionable diagnostics remain
+        # stable. No profile or filtering facts escape before the policy pin.
+        identity_policy = identity_filtering_policy(raw)
+        if ("identity_filtering_policy" in document) != (
+            identity_policy is IdentityFilteringPolicy.TrustedNormalEngine
+        ) or (
+            identity_policy is IdentityFilteringPolicy.TrustedNormalEngine
+            and document["identity_filtering_policy"]
+            != raw["identity_filtering_policy"]
+        ):
+            raise ValueError(
+                "RE2 identity filtering policy disagrees with its revision"
+            )
+        if identity_policy is IdentityFilteringPolicy.TrustedNormalEngine:
+            if (
+                identity_filtering_catalog_digest(identity_catalog_rooms)
+                != IDENTITY_FILTERING_CATALOG_SHA256
+            ):
+                raise ValueError(
+                    "RE2 identity filtering catalog differs from the audited compiler output"
+                )
         door_catalogs = load_door_catalogs(raw, rooms, document)
         return Re2Profile(
             raw["profile_id"],

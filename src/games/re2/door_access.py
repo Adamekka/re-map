@@ -11,8 +11,8 @@ from games.re2.door_authority import (
     DoorPolicy,
     _json,
     door_policy,
-    door_profile_digest,
 )
+from games.re2.normal_engine_binding import semantic_profile_digest
 from games.re2.scenario_items import scenario_flags
 from games.re2.startup_declarations import (
     StartupDeclarationAuditConfig,
@@ -21,7 +21,7 @@ from games.re2.startup_declarations import (
 
 # Pinned outputs of the owned-source compiler under this audit. This prevents
 # edited numeric metadata from manufacturing rights without the compiler inputs.
-DOOR_CATALOG_SHA256 = "d56467299a229dd733508b8dc85c3fbbd398195305e7fdf5e90e6e25a1f31cde"
+DOOR_CATALOG_SHA256 = "d8b589016b1c2da8eb6f463c7732a4050131581074aee85efd245e97d978cc09"
 _SEAL = object()
 
 
@@ -113,7 +113,7 @@ def load_door_catalogs(
         ) or (
             raw["audit"] != DOOR_AUDIT
             or raw["source_sha256"] != spec.sha256
-            or raw["profile_sha256"] != door_profile_digest(profile)
+            or raw["profile_sha256"] != semantic_profile_digest(profile)
         ):
             raise ValueError("RE2 door facts are not bound to their source/profile")
         facts = tuple(

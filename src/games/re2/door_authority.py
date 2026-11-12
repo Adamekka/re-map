@@ -13,6 +13,7 @@ from enum import Enum
 
 from games.re2.normal_engine_binding import (
     NORMAL_ENGINE_BINDING_SHA256,
+    semantic_profile_digest,
     typed_binding_digest,
 )
 from games.re2.scenario_entry_scope import (
@@ -28,6 +29,7 @@ from games.re2.scenario_selection import (
     bind_scenario_context,
 )
 from games.re2.script_control_limits import programs_digest
+from games.re2.source_registration import RegistrationFailure, guaranteed_registration
 from games.re2.source_task_control import TaskControlSupport
 from games.re2.startup_declarations import (
     BoundStartupDeclarations,
@@ -38,7 +40,7 @@ from games.re2.startup_declarations import (
 
 DOOR_AUDIT = "slus00748-trusted-normal-door-access-v1"
 # Policy rights belong to this exact semantic profile, independent of packaging paths.
-DOOR_PROFILE_SHA256 = "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564"
+DOOR_PROFILE_SHA256 = "561e1a35af80fabb58887271476861ab9322f2e5c1525c3b52806bc2520b699c"
 _HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
 
@@ -60,7 +62,7 @@ def door_policy(profile: dict) -> DoorPolicy:
         or profile["profile_id"] != "re2_leon_a_slus00748"
         or profile["executable_identity"].rpartition(" SHA256 ")[2]
         != SCENARIO_EXECUTABLE_SHA256
-        or door_profile_digest(profile) != DOOR_PROFILE_SHA256
+        or semantic_profile_digest(profile) != DOOR_PROFILE_SHA256
         or tuple((r["bank"], r["bit"], r["expected"]) for r in scenario_flags(profile))
         != _HISTORICAL_FLAGS
     ):
@@ -70,19 +72,6 @@ def door_policy(profile: dict) -> DoorPolicy:
 
 def _json(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-
-def door_profile_digest(profile: dict) -> str:
-    # File locations may change during packaging; they grant no native rights.
-    return hashlib.sha256(
-        _json(
-            {
-                k: v
-                for k, v in profile.items()
-                if k not in ("room_metadata_path", "floor_plans_path", "names_path")
-            }
-        ).encode()
-    ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -157,70 +146,6 @@ def _owned(cls, *values):
     return result
 
 
-def _guaranteed_registration(
-    data: bytes, room: dict, graph: DoorSourceFacts
-) -> frozenset[int] | DoorFailure:
-    """Intersect registrations on every finite synchronous startup outcome."""
-    programs = room["programs"]
-    rows = {k: {r["offset"]: r for r in p["commands"]} for k, p in programs.items()}
-    edges = {(k, at): targets for k, at, targets in graph.edges}
-    outcomes = []
-    pending = [("16:0", programs["16:0"]["entry"], (), frozenset(), frozenset())]
-    seen = set()
-    while pending:
-        key, at, stack, registered, path = pending.pop()
-        state = key, at, stack, registered
-        if state in seen:
-            continue
-        if len(seen) >= 20000 or at not in rows[key]:
-            return DoorFailure("startup_bounds")
-        seen.add(state)
-        if (key, at) in path:
-            outcomes.append(registered)
-            continue
-        path = path | {(key, at)}
-        row = rows[key][at]
-        opcode, following = row["opcode"], row["next"]
-        if row["kind"] in ("door", "item", "interaction"):
-            registered = registered | {data[at + 1]}
-        if row["kind"] == "end":
-            if stack:
-                key, at, stack = stack[-1][0], stack[-1][1], stack[:-1]
-            elif key == "16:0":
-                key, at = "17:0", programs["17:0"]["entry"]
-            else:
-                outcomes.append(registered)
-                continue
-            pending.append((key, at, stack, registered, path))
-        elif row["kind"] == "call":
-            target = f"17:{row['procedure']}"
-            pending.append(
-                (
-                    target,
-                    programs[target]["entry"],
-                    stack + ((key, following),),
-                    registered,
-                    path,
-                )
-            )
-        elif (
-            opcode in (2, 3, 5, 9, 0x0A, 0x0D, 0x0F, 0x11, 0x17, 0x19, 0x47)
-            or opcode == 4
-            and data[at + 1] in (0, 1)
-        ):
-            # Waiting, cycles, replacement or dispatch cannot prove progress.
-            outcomes.append(registered)
-        elif not edges.get((key, at)):
-            outcomes.append(registered)
-        else:
-            pending.extend(
-                (key, target, stack, registered, path) for target in edges[key, at]
-            )
-    if not outcomes:
-        return DoorFailure("startup_no_outcome")
-    return frozenset.intersection(*outcomes)
-
-
 def compile_door_authority(
     data: bytes, room: dict, profile: dict, bound: BoundStartupDeclarations
 ) -> DoorAuthority | DoorFailure:
@@ -265,9 +190,9 @@ def compile_door_authority(
             return DoorFailure(graph.reason)
         if type(graph) is not DoorSourceFacts:
             return DoorFailure("source_binding")
-        must = _guaranteed_registration(data, room, graph)
-        if type(must) is DoorFailure:
-            return must
+        must = guaranteed_registration(data, room, graph.edges)
+        if type(must) is RegistrationFailure:
+            return DoorFailure(must.reason)
         # Aot_on dereferences even a NULL slot. A kind-five callback can replace
         # its caller and advance the new PC; only the adjacent non-callback
         # Reset recipe closes this source-controlled path.
@@ -306,7 +231,7 @@ def compile_door_authority(
             DoorAuthority,
             room["sha256"],
             programs_digest(room["programs"]),
-            door_profile_digest(profile),
+            semantic_profile_digest(profile),
             _json(room),
             _json(profile),
             graph.reached,
@@ -417,7 +342,7 @@ def door_access_catalog(
         "audit": DOOR_AUDIT,
         "source_sha256": room["sha256"],
         "programs_sha256": programs_digest(room["programs"]),
-        "profile_sha256": door_profile_digest(profile),
+        "profile_sha256": semantic_profile_digest(profile),
         "facts": [],
         "scenario_excluded_offsets": [],
         "unsupported": [],

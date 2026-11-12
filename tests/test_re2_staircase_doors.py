@@ -66,9 +66,15 @@ def test_exact_ten_omissions_and_every_legacy_shared_record_are_preserved():
         hashlib.sha256(json.dumps(floors, sort_keys=True).encode()).hexdigest()
         == FIXTURE["non_door_floor_sha256"]
     )
+    # Item policies evolve independently. Pin every raw door descriptor without
+    # coupling geometry preservation to unrelated item/compiler metadata.
+    rooms = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
+    raw_doors = {room["id"]: room["doors"] for room in rooms["rooms"]}
     assert (
-        hashlib.sha256((ROOT / "data/rooms_slus00748.json").read_bytes()).hexdigest()
-        == "62b79d3a7feb6d9810fd4c7a6d55e3655037b7a87c640345cd23fd3aa168421d"
+        hashlib.sha256(
+            json.dumps(raw_doors, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        == "5bfb94e407a3c1efb197910b292a6646a3492888cd1db0875b59d6c1087c616b"
     )
 
 

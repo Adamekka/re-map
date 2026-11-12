@@ -31,6 +31,7 @@ from games.re2.script_control_limits import programs_digest
 from games.re2.startup_declarations import VerifiedStartupDeclarationContract
 
 if TYPE_CHECKING:
+    from games.re2.identity_filtering import NormalEngineIdentityFiltering
     from games.re2.persistent_registration import VerifiedPersistentRegistration
 
 SCENARIO_EXECUTABLE_SHA256 = (
@@ -422,6 +423,7 @@ class ScenarioSourceWriteWitnesses:
 class SourceWritePolicy(Enum):
     Existing = "existing source write classes"
     NormalDoors = "normal-engine door source writes"
+    IdentityFiltering = "normal-engine identity filtering source writes"
 
 
 def camera_light_write_witnesses(
@@ -521,7 +523,8 @@ def scenario_source_write_witnesses(
             return floor
         light = (
             camera_light_write_witnesses(data, room)
-            if policy is SourceWritePolicy.NormalDoors
+            if policy
+            in (SourceWritePolicy.NormalDoors, SourceWritePolicy.IdentityFiltering)
             else SourceRecordWriteWitnesses((), ())
         )
         if isinstance(light, ScenarioSelectionFailure):
@@ -612,7 +615,9 @@ def scoped_scenario_items(
     room: dict,
     profile: dict,
     context: VerifiedScenarioContext,
-    entry_scope: VerifiedScenarioEntryScope | VerifiedScenarioGuardScope,
+    entry_scope: VerifiedScenarioEntryScope
+    | VerifiedScenarioGuardScope
+    | NormalEngineIdentityFiltering,
     *,
     registration: VerifiedPersistentRegistration
     | ScenarioSelectionSupport = ScenarioSelectionSupport.Unaudited,
@@ -620,9 +625,16 @@ def scoped_scenario_items(
     """Select identities after the native context and source guard checks."""
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert isinstance(context, VerifiedScenarioContext)
-    assert isinstance(
-        entry_scope, (VerifiedScenarioEntryScope, VerifiedScenarioGuardScope)
+    from games.re2.identity_filtering import NormalEngineIdentityFiltering
+    from games.re2.normal_engine_binding import typed_binding_digest
+
+    assert (
+        isinstance(
+            entry_scope, (VerifiedScenarioEntryScope, VerifiedScenarioGuardScope)
+        )
+        or type(entry_scope) is NormalEngineIdentityFiltering
     )
+    filtering = type(entry_scope) is NormalEngineIdentityFiltering
 
     def require(condition: bool, failure=ScenarioSelectionFailure.SourceBinding):
         if not condition:
@@ -638,6 +650,12 @@ def scoped_scenario_items(
             or type(registration) is VerifiedPersistentRegistration
         )
         refined = type(registration) is VerifiedPersistentRegistration
+        assert not filtering or not refined
+        if filtering:
+            require(
+                entry_scope.matches(data, room, profile, context),
+                ScenarioSelectionFailure.EntryScope,
+            )
         if refined:
             require(
                 registration.matches(data, room, profile, context.declaration_contract)
@@ -669,7 +687,8 @@ def scoped_scenario_items(
             )
         )
         programs = room["programs"]
-        require(entry_scope.matches_source(data, programs))
+        if not filtering:
+            require(entry_scope.matches_source(data, programs))
         decoded = decode_room(
             data,
             room["source"],
@@ -722,7 +741,11 @@ def scoped_scenario_items(
             ScenarioSelectionFailure.NativeContract,
         )
         fixed = {}
-        for bank, bit, expected in context.fixed_flags:
+        for bank, bit, expected in (
+            tuple((r["bank"], r["bit"], r["expected"]) for r in scenario_flags(profile))
+            if filtering
+            else context.fixed_flags
+        ):
             _, aliases = flag_write_conflicts(banks, frozenset(((bank, bit),)))
             for alias in aliases:
                 require(alias not in fixed or fixed[alias] == bool(expected))
@@ -790,7 +813,20 @@ def scoped_scenario_items(
                     ScenarioSelectionFailure.SourceMutation,
                 )
                 targets.setdefault(gid, {})[key, at] = ("reset", item_type)
-        source_writes = scenario_source_write_witnesses(data, room, profile)
+        source_writes = scenario_source_write_witnesses(
+            data,
+            room,
+            profile,
+            policy=SourceWritePolicy.IdentityFiltering
+            if filtering
+            else SourceWritePolicy.Existing,
+        )
+        if filtering:
+            require(
+                typed_binding_digest(source_writes)
+                == typed_binding_digest(entry_scope.source_writes),
+                ScenarioSelectionFailure.SourceMutation,
+            )
         if isinstance(source_writes, ScenarioSelectionFailure):
             return source_writes
         copy_protected = (*protected, *source_writes.record_reads)
@@ -806,7 +842,7 @@ def scoped_scenario_items(
         absent, variants = [], []
         for gid, creators in sorted(targets.items()):
             scopes = {key for key, _ in creators}
-            if refined:
+            if refined or filtering:
                 reset_slots = {
                     data[at + 1]
                     for (_, at), (kind, _) in creators.items()
@@ -879,7 +915,13 @@ def scoped_scenario_items(
                                 else None
                             )
                         elif (
-                            test["opcode"] == 0x23 and packet[1] == 0 and packet[3] < 7
+                            (
+                                test["opcode"] == 0x23
+                                and packet[1] == 0
+                                and packet[3] < 7
+                            )
+                            or filtering
+                            and test["opcode"] == 0x86
                         ):
                             # This read-only numeric test can take either path;
                             # the query needs no invented runtime counter value.
@@ -905,12 +947,17 @@ def scoped_scenario_items(
                             frames[:-1],
                         )
                     )
-                elif row["kind"] == "flag_check" or row["opcode"] in (
-                    0x23,
-                    0x3E,
-                    0x50,
-                    0x5E,
-                    0x85,
+                elif (
+                    row["kind"] == "flag_check"
+                    or (filtering and row["opcode"] == 0x86)
+                    or row["opcode"]
+                    in (
+                        0x23,
+                        0x3E,
+                        0x50,
+                        0x5E,
+                        0x85,
+                    )
                 ):
                     # Native predicate failure consumes an owned IF target.
                     # Treating a standalone predicate as fallthrough could
@@ -940,7 +987,7 @@ def scoped_scenario_items(
                 for loc, value in creators.items()
                 if loc in reached
                 and (
-                    not refined
+                    not (refined or filtering)
                     or value[0] == "creator"
                     or any(
                         origin in reached and slot == data[loc[1] + 1]

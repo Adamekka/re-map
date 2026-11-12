@@ -17,6 +17,7 @@ from games.re2.known_puzzle_items import (
 )
 from games.re2.positive_entry_domain import (
     PositiveEntryFailure,
+    SourceEntryPolicy,
     _numeric_copy_ranges,
     _PositiveEntryDomain,
     _source_entry_roles,
@@ -231,7 +232,9 @@ def test_each_numeric_copy_boundary_and_role(source_roles, at, offset):
     assert type(baseline) is _SourceEntryRoles
     ranges = [
         span
-        for span in _numeric_copy_ranges(data, room["programs"])
+        for span in _numeric_copy_ranges(
+            data, room["programs"], SourceEntryPolicy.Existing
+        )
         if offset <= span[0] < offset + 22
     ]
     for start, end in ranges:
