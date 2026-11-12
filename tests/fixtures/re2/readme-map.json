@@ -1,0 +1,224 @@
+{
+  "schema": 1,
+  "claim": "RE2-MAP-008",
+  "basis": "Production reader publication from three hash-verified read-only copied version94 RAM inputs. Only their two observed sources accumulate visits. No emulator, native restoration or user history. Original README scene inputs are unavailable; this is a new reproducible observed-source scene.",
+  "profile": "profiles/re2_leon_a_slus00748.json",
+  "source_manifest_sha256": "5826375e3ab55e87f2a541882d4aaba9f5f83ac3dea7281df789596ac21090b1",
+  "inputs": [
+    {
+      "ram": "SLUS-00748_1.sav.ram",
+      "sha256": "f2c903ab4f86d83daa047b1738af78e93d44fb72cdc61fa1ef4b43324c920cd6",
+      "observed_current": "03-08"
+    },
+    {
+      "ram": "SLUS-00748_1.bak.ram",
+      "sha256": "16f31cee38e94df269d84b3de9ab9a0c3c18db020bfe209306d69fc5f5f0a29f",
+      "observed_current": "03-0a"
+    },
+    {
+      "ram": "SLUS-00748_resume.sav.ram",
+      "sha256": "3861ededd5d6369a6b17d1d005cccfb258518753a71e1362effa3af87a9c3462",
+      "observed_current": "03-08"
+    }
+  ],
+  "visits": {
+    "rooms": [
+      "03-08",
+      "03-0a"
+    ],
+    "regions": {
+      "re2-08:06": "03-08",
+      "re2-08:07": "03-0a"
+    }
+  },
+  "state": {
+    "status": "display",
+    "current": "03-08",
+    "player_heading": 119.53125,
+    "player_position": {
+      "kind": "room",
+      "reason": "The position falls outside this room's mapped floor."
+    },
+    "map_region": "06",
+    "area": "re2-08",
+    "map_error": "",
+    "current_detail": {
+      "id": "06",
+      "room": "03-08",
+      "state": "UNKNOWN",
+      "items_complete": false,
+      "items": [
+        {
+          "label": "Green Herb",
+          "state": "taken",
+          "quantity": 1,
+          "quantity_is_unit_count": false
+        },
+        {
+          "label": "Green Herb",
+          "state": "taken",
+          "quantity": 1,
+          "quantity_is_unit_count": false
+        },
+        {
+          "label": "Collectible",
+          "state": "taken",
+          "quantity": "unreconstructed",
+          "quantity_is_unit_count": false
+        },
+        {
+          "label": "Ink Ribbon",
+          "state": "taken",
+          "quantity": 2,
+          "quantity_is_unit_count": true
+        }
+      ],
+      "reason": "Item conditions are unresolved.",
+      "doors_complete": true,
+      "door_reason": ""
+    },
+    "rooms": [
+      {
+        "id": "06",
+        "room": "03-08",
+        "state": "UNKNOWN",
+        "items_complete": false,
+        "items": [
+          {
+            "label": "Green Herb",
+            "state": "taken",
+            "quantity": 1,
+            "quantity_is_unit_count": false
+          },
+          {
+            "label": "Green Herb",
+            "state": "taken",
+            "quantity": 1,
+            "quantity_is_unit_count": false
+          },
+          {
+            "label": "Collectible",
+            "state": "taken",
+            "quantity": "unreconstructed",
+            "quantity_is_unit_count": false
+          },
+          {
+            "label": "Ink Ribbon",
+            "state": "taken",
+            "quantity": 2,
+            "quantity_is_unit_count": true
+          }
+        ],
+        "reason": "Item conditions are unresolved.",
+        "doors_complete": true,
+        "door_reason": ""
+      },
+      {
+        "id": "07",
+        "room": "03-0a",
+        "state": "CLEARED",
+        "items_complete": true,
+        "items": [],
+        "reason": "",
+        "doors_complete": false,
+        "door_reason": "Door conditions are unresolved."
+      }
+    ],
+    "explored_areas": {
+      "re2-08": [
+        {
+          "id": "06",
+          "room": "03-08",
+          "state": "UNKNOWN",
+          "items_complete": false,
+          "items": [
+            {
+              "label": "Green Herb",
+              "state": "taken",
+              "quantity": 1,
+              "quantity_is_unit_count": false
+            },
+            {
+              "label": "Green Herb",
+              "state": "taken",
+              "quantity": 1,
+              "quantity_is_unit_count": false
+            },
+            {
+              "label": "Collectible",
+              "state": "taken",
+              "quantity": "unreconstructed",
+              "quantity_is_unit_count": false
+            },
+            {
+              "label": "Ink Ribbon",
+              "state": "taken",
+              "quantity": 2,
+              "quantity_is_unit_count": true
+            }
+          ],
+          "reason": "Item conditions are unresolved.",
+          "doors_complete": true,
+          "door_reason": ""
+        },
+        {
+          "id": "07",
+          "room": "03-0a",
+          "state": "CLEARED",
+          "items_complete": true,
+          "items": [],
+          "reason": "",
+          "doors_complete": false,
+          "door_reason": "Door conditions are unresolved."
+        }
+      ]
+    },
+    "doors": [
+      {
+        "source": "03-08",
+        "target": "03-07",
+        "target_visited": false,
+        "state": "OPEN",
+        "label": "Open",
+        "key_label": "",
+        "observation_id": "03-08:10174",
+        "unlock_state": "UNKNOWN",
+        "interaction_id": "03-08:0"
+      },
+      {
+        "source": "03-08",
+        "target": "03-0a",
+        "target_visited": true,
+        "state": "OPEN",
+        "label": "Open",
+        "key_label": "",
+        "observation_id": "03-08:10206",
+        "unlock_state": "UNKNOWN",
+        "interaction_id": "03-08:1"
+      },
+      {
+        "source": "03-0a",
+        "target": "03-10",
+        "target_visited": false,
+        "state": "UNCHECKED",
+        "label": "Door conditions unresolved",
+        "key_label": "",
+        "observation_id": "03-0a:9474",
+        "unlock_state": "UNKNOWN",
+        "interaction_id": "03-0a:0"
+      },
+      {
+        "source": "03-0a",
+        "target": "03-08",
+        "target_visited": true,
+        "state": "UNCHECKED",
+        "label": "Door conditions unresolved",
+        "key_label": "",
+        "observation_id": "03-0a:9506",
+        "unlock_state": "UNKNOWN",
+        "interaction_id": "03-0a:1"
+      }
+    ]
+  },
+  "publication_sha256": "26f05c602be04f837384ab16e2eeab680545490adecc69af7fd1cc7933f4d6af"
+}

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from tracker.map_geometry import door_path
 from tracker.player_position import ApproximatePosition, RoomOnlyPosition
 
 
@@ -52,8 +53,11 @@ def shared_door_markers(
         for key, room in rooms.items()
         for door in room["doors"]
     }
-    consumed, result = set(), []
+    consumed, result, contours = set(), [], []
     for marker in area["doors"]:
+        # A paired reverse record is still external input. Validate its shape
+        # before normalization can consume it and discard contradictory fields.
+        path = door_path(marker)
         if marker["id"] in consumed:
             continue
         if marker["observation_id"] not in definitions or len(marker["rooms"]) != 1:
@@ -79,6 +83,22 @@ def shared_door_markers(
         owner = regions[marker["rooms"][0]]
         if source not in owner["room_ids"]:
             raise ValueError("RE2 door marker disagrees with its owning room")
+        if "polyline" in marker:
+            if placement != "native-doorway" or not path.on_boundary(owner["rings"]):
+                raise ValueError(
+                    "RE2 door polyline must follow its native owning contour"
+                )
+            # These source intervals establish one owning wall, not a reciprocal
+            # passage. Keep the legacy pairing pass and all its choices unchanged.
+            contours.append(
+                {
+                    "id": marker["id"],
+                    "observation_ids": [marker["observation_id"]],
+                    "rooms": marker["rooms"],
+                    "polyline": marker["polyline"],
+                }
+            )
+            continue
         choices = []
         # Bit 7 accepts the trigger on every floor. Otherwise each destination
         # must land on the floor accepted by the opposite-side trigger.
@@ -189,6 +209,7 @@ def shared_door_markers(
                 for other in area["doors"]
                 if other["observation_id"] == reverse_id
                 and other["rooms"] == [neighbor_id]
+                and "segment" in other
             )
         result.append(
             {
@@ -198,7 +219,7 @@ def shared_door_markers(
                 "segment": segment,
             }
         )
-    return result
+    return result + contours
 
 
 @dataclass(frozen=True)

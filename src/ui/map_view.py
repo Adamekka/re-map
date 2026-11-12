@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from uuid import UUID, uuid4
 
 from tracker.exploration_state import Tracker
+from tracker.map_geometry import door_path
 from tracker.player_position import ApproximatePosition
 
 MAP_PROFILE_ID = "re1_directors_cut_slus00551"
@@ -93,6 +94,24 @@ def map_state(tracker: Tracker) -> dict:
 
 
 def map_page(graph: dict, instance_id: UUID) -> bytes:
+    # Geometry is checked again at the publication boundary, including callers
+    # that construct a graph directly. Contour symbols use the same arclength
+    # formula as extraction; old two-point records retain their representation.
+    areas = []
+    for area in graph["areas"]:
+        markers = []
+        regions = {room["id"]: room for room in area["rooms"]}
+        for marker in area["doors"]:
+            path = door_path(marker)
+            if "polyline" in marker:
+                if len(marker["rooms"]) != 1 or marker["rooms"][0] not in regions:
+                    raise ValueError("map door polyline requires one owning region")
+                if not path.on_boundary(regions[marker["rooms"][0]]["rings"]):
+                    raise ValueError("map door polyline leaves its owning contour")
+                marker = {**marker, "center": path.center}
+            markers.append(marker)
+        areas.append({**area, "doors": markers})
+    graph = {**graph, "areas": areas}
     graph_json = json.dumps(graph).replace("<", "\\u003c")
     title = (
         "Resident Evil 2" if graph["profile_id"].startswith("re2_") else "Resident Evil"
@@ -232,15 +251,15 @@ cannot merge them with a decided state. */
 .player { pointer-events:none; }
 .player path { fill:#a5efff; stroke:#10202b; stroke-width:.6; stroke-linejoin:round; }
 .key.player-key { background:#a5efff; clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%); }
-.door line { stroke-width:1.4; stroke-linecap:square; }
-.door.OPEN line { stroke:#71b6cf; }
-.door.LOCKED line,.door.BLOCKED line { stroke:#ed6965; }
-.door.UNLOCKABLE line { stroke:#e9b85e; }
-.door.UNCHECKED line { stroke:#d0d9de; }
-.door.UNCHECKED.unlocked line:not(.door-border) { stroke:#a5d5ac; stroke-dasharray:1.5 1; }
+.door :is(line,polyline) { stroke-width:1.4; stroke-linecap:square; }
+.door.OPEN :is(line,polyline) { stroke:#71b6cf; }
+.door.LOCKED :is(line,polyline),.door.BLOCKED :is(line,polyline) { stroke:#ed6965; }
+.door.UNLOCKABLE :is(line,polyline) { stroke:#e9b85e; }
+.door.UNCHECKED :is(line,polyline) { stroke:#d0d9de; }
+.door.UNCHECKED.unlocked :is(line,polyline):not(.door-border) { stroke:#a5d5ac; stroke-dasharray:1.5 1; }
 /* RE2 doors sit directly on walls, so a dark border keeps access colors
 distinct from room outlines and fills. */
-.door line.door-border { stroke:#10151b; stroke-width:2.6; }
+.door :is(line,polyline).door-border { stroke:#10151b; stroke-width:2.6; }
 .door title { pointer-events:none; }
 .key-symbol { pointer-events:all; }
 .key-symbol rect { fill:#14202a; stroke-width:.4; }
@@ -960,17 +979,22 @@ function draw(state) {
     // agree on key identity before either direction can display a symbol.
     const keyLabels=[...new Set((isRe2 ? chosen : observations).map(door=>door.key_label).filter(Boolean))];
     const group=element('g',{class:'door '+access+(unlocked?' unlocked':''),'data-door':marker.id,'data-observations':isRe2 ? marker.observation_ids.join(' ') : ''});
-    const [a,b]=marker.segment;
-    group.append(element('line',{class:'door-border',x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
-    group.append(element('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1]}));
+    const contour=Object.hasOwn(marker,'polyline');
+    const points=contour ? marker.polyline : marker.segment;
+    const [a,b]=points;
+    const center=contour ? marker.center : [(a[0]+b[0])/2,(a[1]+b[1])/2];
+    const shape=contour ? 'polyline' : 'line';
+    const attributes=contour ? {points:points.map(p=>p.join(',')).join(' '),fill:'none'} : {x1:a[0],y1:a[1],x2:b[0],y2:b[1]};
+    group.append(element(shape,{class:'door-border',...attributes}));
+    group.append(element(shape,attributes));
     if(unlocked) {
-      const symbol=element('g',{class:'unlock-symbol',role:'img','aria-label':'Unlocked',transform:'translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')'});
+      const symbol=element('g',{class:'unlock-symbol',role:'img','aria-label':'Unlocked',transform:'translate('+center.join(' ')+')'});
       symbol.append(element('rect',{x:-2,y:-2,width:4,height:4,rx:.5}));
       symbol.append(element('path',{d:symbolPaths.get('unlocked'),transform:'scale(.2) translate(-8 -8)'}));
       group.append(symbol);
     } else if(observed && access!=='OPEN' && keyLabels.length===1) {
       const symbol=keySymbol(keyLabels[0]);
-      symbol.setAttribute('transform','translate('+[(a[0]+b[0])/2,(a[1]+b[1])/2].join(' ')+')');
+      symbol.setAttribute('transform','translate('+center.join(' ')+')');
       group.append(symbol);
     }
     const title=element('title',{});title.textContent=observed ? [...new Set(chosen.map(door=>door.label))].join(' / ') : 'Door';group.append(title);doorGroups.push(group);

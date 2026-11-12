@@ -110,6 +110,7 @@ from games.re2.startup_declarations import (
     startup_declarations,
 )
 from games.re2.startup_effects import StartupEffectAuditConfig, startup_effect_audit
+from tracker.map_geometry import MapPath
 
 AREA_NAMES = (
     "City streets west",
@@ -208,6 +209,101 @@ def map_door_segments(cells: dict[tuple[int, int], int], rings: list) -> list:
                     segment if axis == 0 else [point[::-1] for point in segment]
                 )
     return segments
+
+
+def map_door_staircases(
+    cells: dict[tuple[int, int], int], rings: list
+) -> list[MapPath]:
+    """RE2-MAP-008: only monotone alternating unit-step boundary openings."""
+    paths = set()
+    for ring in rings:
+        edges = []
+        for a, b in zip(ring, ring[1:] + ring[:1]):
+            if a == b or (a[0] != b[0] and a[1] != b[1]):
+                raise ValueError("native doorway contour requires axis-aligned edges")
+            axis = 0 if a[1] == b[1] else 1
+            step = 1 if b[axis] > a[axis] else -1
+            for along in range(a[axis], b[axis], step):
+                first, last = list(a), list(a)
+                first[axis], last[axis] = along, along + step
+                low, fixed = min(along, along + step), a[1 - axis]
+                neighbors = ((low, fixed - 1), (low, fixed))
+                if axis == 1:
+                    neighbors = tuple(p[::-1] for p in neighbors)
+                # A colored interior pixel does not establish a boundary edge.
+                boundary = sum(p in cells for p in neighbors) == 1
+                edges.append(
+                    (
+                        tuple(first),
+                        tuple(last),
+                        boundary and any(cells.get(p) == 3 for p in neighbors),
+                    )
+                )
+        if not edges or all(edge[2] for edge in edges):
+            continue
+        # Start in a gap so ring rotation cannot split a doorway into two runs.
+        pivot = next(i for i, edge in enumerate(edges) if not edge[2])
+        run = []
+        for a, b, marked in edges[pivot + 1 :] + edges[: pivot + 1]:
+            if marked:
+                if not run:
+                    run.append(a)
+                assert run[-1] == a, "native boundary edges must be ordered"
+                run.append(b)
+            elif run:
+                directions = [(b[0] - a[0], b[1] - a[1]) for a, b in zip(run, run[1:])]
+                if (
+                    len(directions) >= 4
+                    and len(set(directions)) == 2
+                    and all(abs(x) + abs(y) == 1 for x, y in directions)
+                    and all(
+                        (a[0] == 0) != (b[0] == 0)
+                        for a, b in zip(directions, directions[1:])
+                    )
+                    and len({x for x, _ in directions if x})
+                    == len({y for _, y in directions if y})
+                    == 1
+                ):
+                    # Contour identity ignores traversal and ring start. Duplicate
+                    # aliases within this owner must not invent tied candidates.
+                    paths.add(min(tuple(run), tuple(reversed(run))))
+                run = []
+    return [MapPath(path) for path in sorted(paths)]
+
+
+def native_door_geometry(
+    point: tuple[float, float], segments: list, staircases: list[MapPath]
+) -> dict | None:
+    candidates = []
+    for points in segments:
+        path = MapPath(tuple(tuple(p) for p in points))
+        if path.length >= 2:
+            candidates.append((path.distance_squared(point), path))
+
+    def selected() -> MapPath | None:
+        candidates.sort(key=lambda entry: entry[0])
+        if not candidates or candidates[0][0] > 64:
+            return None
+        if (
+            len(candidates) > 1
+            and abs(candidates[0][0] - candidates[1][0]) < 1e-8
+            and candidates[0][1] != candidates[1][1]
+        ):
+            return None
+        return candidates[0][1]
+
+    legacy = selected()
+    if legacy is not None:
+        path = legacy.section(legacy.length / 2 - 1, legacy.length / 2 + 1)
+        return {"segment": [list(p) for p in path.points]}
+    # Preserve every successful straight placement and its reciprocal pairing.
+    # Only omissions may use the combined candidate set under the same gate.
+    candidates.extend((path.distance_squared(point), path) for path in staircases)
+    opening = selected()
+    if opening is None or opening not in staircases:
+        return None
+    path = opening.section(opening.length / 2 - 1, opening.length / 2 + 1)
+    return {"polyline": [list(p) for p in path.points]}
 
 
 def verify_actor_part_resource(
@@ -814,7 +910,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                 "world_origin": [bx, by],
             }
             plan["rooms"].append(entry)
-            doorways[plan["id"], entry["id"]] = map_door_segments(cells, entry["rings"])
+            doorways[plan["id"], entry["id"]] = (
+                map_door_segments(cells, entry["rings"]),
+                map_door_staircases(cells, entry["rings"]),
+            )
         plans.append(plan)
     locations = []
     area_selector = int(layout["area_selector_ps1"], 0)
@@ -910,42 +1009,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     # room proportions, so snapping to arbitrary walls invents
                     # doors and shifts real ones toward corners. RE2-MAP-005.
                     x, y = projection.project(tuple(entry["world_origin"]), wx, wz)
-                    candidates = []
-                    for first, last in doorways[plan["id"], entry["id"]]:
-                        dx, dy = last[0] - first[0], last[1] - first[1]
-                        length = (dx * dx + dy * dy) ** 0.5
-                        if length < 2:
-                            continue
-                        along = max(
-                            0,
-                            min(
-                                length,
-                                ((x - first[0]) * dx + (y - first[1]) * dy) / length,
-                            ),
-                        )
-                        px, py = (
-                            first[0] + along * dx / length,
-                            first[1] + along * dy / length,
-                        )
-                        distance = (px - x) ** 2 + (py - y) ** 2
-                        midpoint = length / 2
-                        segment = [
-                            [
-                                round(first[0] + (midpoint + shift) * dx / length, 3),
-                                round(first[1] + (midpoint + shift) * dy / length, 3),
-                            ]
-                            for shift in (-1, 1)
-                        ]
-                        candidates.append((distance, segment))
-                    candidates.sort(key=lambda candidate: candidate[0])
-                    if not candidates or candidates[0][0] > 64:
-                        continue
-                    if (
-                        len(candidates) > 1
-                        and abs(candidates[0][0] - candidates[1][0]) < 1e-8
-                        and candidates[0][1] != candidates[1][1]
-                    ):
-                        # Equally near openings cannot establish door identity.
+                    geometry = native_door_geometry(
+                        (x, y), *doorways[plan["id"], entry["id"]]
+                    )
+                    if geometry is None:
                         continue
                     observation_id = f"{room['id']}:{door['offset']}"
                     plan["doors"].append(
@@ -953,7 +1020,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                             "id": observation_id + ":" + entry["id"],
                             "observation_id": observation_id,
                             "rooms": [entry["id"]],
-                            "segment": candidates[0][1],
+                            **geometry,
                         }
                     )
     header = {
@@ -1122,7 +1189,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         },
         {
             **header,
-            "research_ids": [*header["research_ids"], "RE2-MAP-003", "RE2-MAP-005"],
+            "research_ids": [
+                *header["research_ids"],
+                "RE2-MAP-003",
+                "RE2-MAP-005",
+                "RE2-MAP-008",
+            ],
             "door_placement": "native-doorway",
             "stage_modulus": 256,
             "areas": plans,
