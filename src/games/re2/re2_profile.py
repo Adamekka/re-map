@@ -24,6 +24,12 @@ from games.re2.initializer_control_proof import (
 )
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re2.positive_prefix import PositivePrefixPolicy, positive_prefix_policy
+from games.re2.reset_candidates import (
+    ResetCandidateConfig,
+    ResetCandidateSupport,
+    reset_candidate_config,
+    tracking_item_candidates,
+)
 from games.re2.room_entry_contract import (
     RoomEntryContractConfig,
     RoomEntryContractFailure,
@@ -127,12 +133,14 @@ class Re2Profile:
     map_layout: Re2MapLayout
     script_item_dispatch: ScriptItemDispatchConfig | ScriptItemDispatchSupport
     unit_count_item_types: frozenset[int]
+    reset_candidate_policy: ResetCandidateConfig | ResetCandidateSupport
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
         raw = json.loads(path.read_text())
         unit_counts = parse_unit_count_item_types(raw.get("unit_count_item_types"))
         target = re2_target(raw)
+        reset_config = reset_candidate_config(raw)
         if (
             raw["address_space"] != "PS1 virtual address, little-endian"
             or raw["room_value_width_bytes"] != 2
@@ -273,6 +281,8 @@ class Re2Profile:
             or document["executable_identity"] != raw["executable_identity"]
         ):
             raise ValueError("RE2 room metadata disagrees with the pinned revision")
+        if reset_candidate_config(document) != reset_config:
+            raise ValueError("RE2 reset candidate catalog disagrees with its revision")
         if document.get("presence_counter_writes") != raw["presence_counter_writes"]:
             raise ValueError("RE2 counter proof disagrees with its revision layout")
         if document.get("scenario_effect_pool") != raw["scenario_effect_pool"]:
@@ -1088,12 +1098,6 @@ class Re2Profile:
                     or room["section_offsets"][1] - room["section_offsets"][0] != 192
                 ):
                     raise ValueError("invalid or missing RE2 sound source proofs")
-            if any(
-                not 0 <= item["global_id"] < banks[bank][1] * 8
-                for item in room["items"]
-            ):
-                raise ValueError("RE2 pickup flag outside its bank")
-            pickup_flags.update((bank, item["global_id"]) for item in room["items"])
             if "collection_item_ids" not in room:
                 raise ValueError(
                     "RE2 source requires explicit collection identity proofs"
@@ -1285,6 +1289,14 @@ class Re2Profile:
             # continuation capability, so fixed_context_preserved stays intact.
             room["scenario_item_variants"] = variants
             room["scenario_absent_item_ids"] = absent
+            candidates = tracking_item_candidates(room, reset_config, selected=False)
+            # Reset-only acquisitions use the same bank and award namespace
+            # as ordinary pickups. Validate the complete candidate view here.
+            if any(
+                not 0 <= item["global_id"] < banks[bank][1] * 8 for item in candidates
+            ):
+                raise ValueError("RE2 pickup flag outside its bank")
+            pickup_flags.update((bank, item["global_id"]) for item in candidates)
         if award_flags & pickup_flags:
             raise ValueError("aliased RE2 event award and pickup collection rules")
         return Re2Profile(
@@ -1308,6 +1320,7 @@ class Re2Profile:
             ),
             dispatch,
             unit_counts,
+            reset_config,
         )
 
     def verify_runtime(

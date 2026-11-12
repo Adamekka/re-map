@@ -32,6 +32,8 @@ Items stay in one list, with symbols alongside their names and status text. Veri
 
 A known remaining item can appear as **Collectible** while its exact identity is unresolved. It keeps its room incomplete; collecting it cannot clear an incomplete item list. The [reset identity follow-up](research/re2/known-puzzle-items.md#re2-puzzle-003-stable-acquisition-survives-reset-only-item-alternatives) records the source and native-validation limits.
 
+The [reset candidate catalog](research/re2/reset-candidates.md#re2-reset-001-enumerate-reset-possibilities-without-granting-presence) adds two previously hidden possible checks in the opted-in Leon DualShock profile. Possibility alone stays Unknown. Fresh acquisition or a matching current descriptor can resolve a check; enumeration adds no presence, scenario absence or room-clearance proof. Other profiles retain their existing catalogs.
+
 [RE2-DS-003](research/re2/dualshock.md#re2-ds-003-vibration-writes-preserve-item-context) restores source-proven item presence and one selected identity in the explored Media Room Corridor. The identity's presence remains Unknown. This offline correction adds no DualShock gameplay confirmation.
 
 [RE2-DS-006](research/re2/dualshock.md#re2-ds-006-vibration-ramps-preserve-scenario-exclusions) resolves the false item check in 2F Main Hall by proving its catalog alternative belongs to the other scenario. It now clears in the retained playthrough snapshots. Rooftop, side entrance corridor and the remaining 1F checks retain their independent limits. This correction uses owned-source inspection, copied native instructions and saved-RAM replay, with no new gameplay confirmation.

@@ -60,6 +60,11 @@ from games.re2.positive_prefix import (
     positive_prefix_policy,
 )
 from games.re2.re2_profile import re2_target
+from games.re2.reset_candidates import (
+    ResetCandidateConfig,
+    compile_reset_candidates,
+    reset_candidate_config,
+)
 from games.re2.room_data import bind_event_awards, collection_presence, decode_room
 from games.re2.room_entry_contract import (
     RoomEntryContractConfig,
@@ -247,6 +252,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     dispatch = script_item_dispatch(profile)
     startup_audit = startup_effect_audit(profile)
     control_config = initializer_control_config(profile)
+    reset_config = reset_candidate_config(profile)
     entry_config = room_entry_contract(profile)
     if isinstance(entry_config, RoomEntryContractFailure):
         raise ValueError(entry_config.value)
@@ -714,6 +720,17 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             # Reset-derived identities require the same revision capability as
             # positive puzzle targets; other profiles keep their raw catalog.
             del room["reset_item_variants"]
+        if isinstance(reset_config, ResetCandidateConfig):
+            room.update(
+                compile_reset_candidates(
+                    sources[room["id"]],
+                    room,
+                    reset_config,
+                    profile,
+                )
+            )
+        else:
+            del room["reset_item_candidates"]
         del room["programs"]
     machine = Uc(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN)
     machine.mem_map(0, 0x200000)
@@ -1032,6 +1049,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     else []
                 ),
             ],
+            **(
+                {"reset_candidate_catalog": profile["reset_candidate_catalog"]}
+                if isinstance(reset_config, ResetCandidateConfig)
+                else {}
+            ),
             "fixed_scenario_flags": fixed_flags,
             "scenario_effect_pool": profile["scenario_effect_pool"],
             "scenario_vibration_writes": profile.get("scenario_vibration_writes", []),

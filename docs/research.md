@@ -272,6 +272,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 
 | Claim | Finding |
 | --- | --- |
+| [RE2-RESET-001](research/re2/reset-candidates.md#re2-reset-001-enumerate-reset-possibilities-without-granting-presence) | revision-gated reset possibilities add two Unknown checks; fresh descriptor type/GID matching prevents double availability; presence and list authority stay separate |
 | [RE2-SCD-002](research/re2/script-coverage.md#re2-scd-002-switch-branches-establish-candidate-list-coverage) | bounded switch branch catalogs resolve the opening-room incomplete item check; coverage remains separate from item presence |
 
 ## RE2 DualShock revision research

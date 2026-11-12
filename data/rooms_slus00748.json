@@ -48,6 +48,10 @@
     "RE2-STARTUP-004"
   ],
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
+  "reset_candidate_catalog": {
+    "schema": 1,
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
+  },
   "fixed_scenario_flags": [
     {
       "bank": 1,
@@ -2297,6 +2301,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4246,
@@ -2333,7 +2338,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1010.RDT",
@@ -2431,6 +2438,26 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 9740,
+          "slot": 11,
+          "type": 7,
+          "amount": 4,
+          "global_id": 15,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 6188,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 6050,
@@ -2486,7 +2513,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 6188,
+          "slot": 11,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1020.RDT",
@@ -2572,6 +2608,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6146,
@@ -2633,7 +2670,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM1030.RDT",
@@ -2719,6 +2758,26 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 17446,
+          "slot": 31,
+          "type": 83,
+          "amount": 1,
+          "global_id": 156,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 16566,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 13962,
@@ -2793,7 +2852,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 16566,
+          "slot": 31,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1040.RDT",
@@ -2856,6 +2924,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2994,
@@ -2892,7 +2961,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1050.RDT",
@@ -2967,6 +3038,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4538,
@@ -3018,7 +3090,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1060.RDT",
@@ -3126,6 +3200,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3006,
@@ -3196,7 +3271,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1070.RDT",
@@ -3259,6 +3336,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2750,
@@ -3310,7 +3388,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1080.RDT",
@@ -3407,6 +3487,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6446,
@@ -3458,7 +3539,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1090.RDT",
@@ -3566,6 +3649,31 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 13172,
+          "slot": 5,
+          "type": 20,
+          "amount": 30,
+          "global_id": 205,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 8826,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8936,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 8326,
@@ -3741,7 +3849,22 @@
           205
         ],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 8826,
+          "slot": 5,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 8936,
+          "slot": 5,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM10A0.RDT",
@@ -3804,6 +3927,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6602,
@@ -3885,7 +4009,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM10B0.RDT",
@@ -4015,6 +4141,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5518,
@@ -4110,7 +4237,9 @@
           98
         ],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM10C0.RDT",
@@ -4196,6 +4325,44 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 6994,
+          "slot": 5,
+          "type": 51,
+          "amount": 1,
+          "global_id": 32,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 6746,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 7100,
+          "slot": 5,
+          "type": 51,
+          "amount": 1,
+          "global_id": 32,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 6746,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 6302,
@@ -4278,7 +4445,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 6746,
+          "slot": 5,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM10D0.RDT",
@@ -4364,6 +4540,31 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 2346,
+          "slot": 10,
+          "type": 22,
+          "amount": 8,
+          "global_id": 206,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 2134,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 2242,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 1974,
@@ -4422,7 +4623,22 @@
             ]
           }
         ]
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 2134,
+          "slot": 10,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 2242,
+          "slot": 10,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM10E0.RDT",
@@ -4508,6 +4724,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7346,
@@ -4547,7 +4764,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM10F0.RDT",
@@ -4655,6 +4874,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1470,
@@ -4795,7 +5015,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1100.RDT",
@@ -4870,6 +5092,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 10056,
@@ -4968,7 +5191,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1110.RDT",
@@ -5055,6 +5280,44 @@
           "sat": 49
         }
       ],
+      "reset_item_candidates": [
+        {
+          "offset": 11172,
+          "slot": 2,
+          "type": 61,
+          "amount": 1,
+          "global_id": 55,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 8270,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 11206,
+          "slot": 2,
+          "type": 57,
+          "amount": 1,
+          "global_id": 55,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 8270,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 8158,
@@ -5124,7 +5387,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 8270,
+          "slot": 2,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1120.RDT",
@@ -5210,6 +5482,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 10418,
@@ -5329,7 +5602,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1130.RDT",
@@ -5459,6 +5734,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3344,
@@ -5562,7 +5838,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1140.RDT",
@@ -5625,6 +5903,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2466,
@@ -5736,7 +6015,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1150.RDT",
@@ -5899,6 +6180,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4888,
@@ -5964,7 +6246,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1160.RDT",
@@ -6061,6 +6345,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2522,
@@ -6116,7 +6401,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM1170.RDT",
@@ -6179,6 +6466,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3268,
@@ -6230,7 +6518,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1180.RDT",
@@ -6305,6 +6595,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7690,
@@ -6401,7 +6692,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM1190.RDT",
@@ -6464,6 +6757,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3082,
@@ -6515,7 +6809,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection camera write is unbounded"
     },
     {
       "source": "PL0/RDT/ROOM11A0.RDT",
@@ -6590,6 +6886,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1186,
@@ -6681,7 +6978,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM11B0.RDT",
@@ -6744,6 +7043,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2282,
@@ -6795,7 +7095,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM11C0.RDT",
@@ -6858,6 +7160,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2282,
@@ -6909,7 +7212,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM11D0.RDT",
@@ -6972,6 +7277,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6654,
@@ -7023,7 +7329,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2000.RDT",
@@ -7144,6 +7452,54 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 10944,
+          "slot": 9,
+          "type": 89,
+          "amount": 2,
+          "global_id": 93,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 9826,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 9852,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 10958,
+          "slot": 9,
+          "type": 89,
+          "amount": 1,
+          "global_id": 93,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 9826,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 9852,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 9528,
@@ -7376,7 +7732,22 @@
             ]
           }
         ]
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 9826,
+          "slot": 9,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 9852,
+          "slot": 9,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2010.RDT",
@@ -7473,6 +7844,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3018,
@@ -7648,7 +8020,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2020.RDT",
@@ -7789,6 +8163,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7066,
@@ -7914,7 +8289,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2030.RDT",
@@ -8044,6 +8421,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1726,
@@ -8136,7 +8514,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2040.RDT",
@@ -8233,6 +8613,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6366,
@@ -8428,7 +8809,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2050.RDT",
@@ -8491,6 +8874,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5918,
@@ -8557,7 +8941,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2060.RDT",
@@ -8687,6 +9073,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5334,
@@ -8740,7 +9127,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2070.RDT",
@@ -8826,6 +9215,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3862,
@@ -9025,7 +9415,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2080.RDT",
@@ -9188,6 +9580,26 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 5788,
+          "slot": 4,
+          "type": 113,
+          "amount": 1,
+          "global_id": 25,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 5260,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 4806,
@@ -9256,7 +9668,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 5260,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM2090.RDT",
@@ -9375,6 +9796,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3258,
@@ -9437,7 +9859,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM20A0.RDT",
@@ -9512,6 +9936,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2090,
@@ -9653,7 +10078,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM20B0.RDT",
@@ -9794,6 +10221,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 12050,
@@ -9979,7 +10407,9 @@
           82
         ],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM20C0.RDT",
@@ -10098,6 +10528,74 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 7870,
+          "slot": 10,
+          "type": 21,
+          "amount": 7,
+          "global_id": 207,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 7414,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 7440,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 7534,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 7598,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 7884,
+          "slot": 10,
+          "type": 29,
+          "amount": 36,
+          "global_id": 207,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 7414,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 7440,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 7534,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 7598,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 7082,
@@ -10231,7 +10729,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 7414,
+          "slot": 10,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 7440,
+          "slot": 10,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 7534,
+          "slot": 10,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 7598,
+          "slot": 10,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM20D0.RDT",
@@ -10350,6 +10875,49 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 5258,
+          "slot": 20,
+          "type": 20,
+          "amount": 30,
+          "global_id": 208,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4770,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 4982,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 6188,
+          "slot": 1,
+          "type": 74,
+          "amount": 1,
+          "global_id": 108,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4440,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 4250,
@@ -10386,7 +10954,28 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 4440,
+          "slot": 1,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 4770,
+          "slot": 20,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 4982,
+          "slot": 20,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM20E0.RDT",
@@ -10582,6 +11171,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5910,
@@ -10669,7 +11259,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM20F0.RDT",
@@ -10777,6 +11369,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5938,
@@ -10843,7 +11436,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2100.RDT",
@@ -10962,6 +11557,26 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 4992,
+          "slot": 3,
+          "type": 21,
+          "amount": 7,
+          "global_id": 87,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4912,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 4730,
@@ -11021,7 +11636,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 4912,
+          "slot": 3,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2110.RDT",
@@ -11096,6 +11720,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5830,
@@ -11275,7 +11900,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2120.RDT",
@@ -11350,6 +11977,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1986,
@@ -11401,7 +12029,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2130.RDT",
@@ -11498,6 +12128,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3714,
@@ -11536,7 +12167,9 @@
           24
         ],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2140.RDT",
@@ -11655,6 +12288,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 874,
@@ -11792,7 +12426,9 @@
             ]
           }
         ]
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2150.RDT",
@@ -11867,6 +12503,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4744,
@@ -11905,7 +12542,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2160.RDT",
@@ -11980,6 +12619,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3770,
@@ -12031,7 +12671,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM2190.RDT",
@@ -12117,6 +12759,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2394,
@@ -12183,7 +12826,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM21A0.RDT",
@@ -12269,6 +12914,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6902,
@@ -12350,7 +12996,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM21B0.RDT",
@@ -12436,6 +13084,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 9334,
@@ -12570,7 +13219,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3000.RDT",
@@ -12633,6 +13284,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5186,
@@ -12684,7 +13336,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3010.RDT",
@@ -12803,6 +13457,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6678,
@@ -12839,7 +13494,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3020.RDT",
@@ -12902,6 +13559,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2538,
@@ -12953,7 +13611,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3030.RDT",
@@ -13016,6 +13676,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5560,
@@ -13097,7 +13758,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3040.RDT",
@@ -13160,6 +13823,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4100,
@@ -13226,7 +13890,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3050.RDT",
@@ -13289,6 +13955,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5862,
@@ -13355,7 +14022,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM3060.RDT",
@@ -13430,6 +14099,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7654,
@@ -13466,7 +14136,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3070.RDT",
@@ -13541,6 +14213,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4178,
@@ -13607,7 +14280,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3080.RDT",
@@ -13670,6 +14345,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2450,
@@ -13721,7 +14397,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM3090.RDT",
@@ -13784,6 +14462,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4696,
@@ -13835,7 +14514,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM30A0.RDT",
@@ -13898,6 +14579,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5780,
@@ -13949,7 +14631,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM30B0.RDT",
@@ -14046,6 +14730,72 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 6416,
+          "slot": 4,
+          "type": 92,
+          "amount": 3,
+          "global_id": 124,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 3358,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 3422,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 6430,
+          "slot": 4,
+          "type": 92,
+          "amount": 3,
+          "global_id": 124,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 3358,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 3422,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 6612,
+          "slot": 5,
+          "type": 21,
+          "amount": 7,
+          "global_id": 193,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 3530,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 2902,
@@ -14127,7 +14877,28 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 3358,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 3422,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 3530,
+          "slot": 5,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM30C0.RDT",
@@ -14213,6 +14984,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1026,
@@ -14252,7 +15024,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM30D0.RDT",
@@ -14310,6 +15084,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 566,
@@ -14346,7 +15121,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM4000.RDT",
@@ -14432,6 +15209,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5414,
@@ -14498,7 +15276,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4010.RDT",
@@ -14639,6 +15419,34 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 9770,
+          "slot": 11,
+          "type": 27,
+          "amount": 100,
+          "global_id": 129,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 9784,
+          "slot": 11,
+          "type": 20,
+          "amount": 30,
+          "global_id": 129,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 8682,
@@ -14750,7 +15558,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4020.RDT",
@@ -14836,6 +15646,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2134,
@@ -14887,7 +15698,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4030.RDT",
@@ -15017,6 +15830,44 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 11052,
+          "slot": 20,
+          "type": 22,
+          "amount": 8,
+          "global_id": 176,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 11750,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 11174,
+          "slot": 19,
+          "type": 21,
+          "amount": 7,
+          "global_id": 175,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 11728,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 8634,
@@ -15113,7 +15964,22 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 11728,
+          "slot": 19,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 11750,
+          "slot": 20,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4040.RDT",
@@ -15176,6 +16042,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3350,
@@ -15272,7 +16139,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4050.RDT",
@@ -15369,6 +16238,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3630,
@@ -15435,7 +16305,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4070.RDT",
@@ -15498,6 +16370,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1686,
@@ -15564,7 +16437,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4080.RDT",
@@ -15683,6 +16558,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 10174,
@@ -15734,7 +16610,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4090.RDT",
@@ -15842,6 +16720,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 8598,
@@ -15893,7 +16772,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM40A0.RDT",
@@ -15956,6 +16837,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 9474,
@@ -16007,7 +16889,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM40B0.RDT",
@@ -16070,6 +16954,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 790,
@@ -16121,7 +17006,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM40C0.RDT",
@@ -16184,6 +17071,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [],
       "candidate_list_complete": true,
       "collection_item_ids": [],
@@ -16204,7 +17092,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM40D0.RDT",
@@ -16267,6 +17157,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3802,
@@ -16318,7 +17209,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM40E0.RDT",
@@ -16404,6 +17297,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 13902,
@@ -16470,7 +17364,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM40F0.RDT",
@@ -16533,6 +17429,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [],
       "candidate_list_complete": true,
       "collection_item_ids": [],
@@ -16553,7 +17450,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM4100.RDT",
@@ -16661,6 +17560,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4526,
@@ -16757,7 +17657,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5000.RDT",
@@ -16820,6 +17722,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5470,
@@ -16856,7 +17759,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5010.RDT",
@@ -16931,6 +17836,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4866,
@@ -16982,7 +17888,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5020.RDT",
@@ -17068,6 +17976,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5286,
@@ -17126,7 +18035,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
     {
       "source": "PL0/RDT/ROOM5030.RDT",
@@ -17234,6 +18145,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1950,
@@ -17315,7 +18227,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5040.RDT",
@@ -17401,6 +18315,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7166,
@@ -17452,7 +18367,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5050.RDT",
@@ -17571,6 +18488,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2862,
@@ -17667,7 +18585,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5060.RDT",
@@ -17753,6 +18673,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3378,
@@ -17804,7 +18725,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5070.RDT",
@@ -17923,6 +18846,74 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 10210,
+          "slot": 4,
+          "type": 21,
+          "amount": 7,
+          "global_id": 76,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 8570,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8596,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8894,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8920,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 10224,
+          "slot": 4,
+          "type": 26,
+          "amount": 6,
+          "global_id": 76,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 8570,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8596,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8894,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 8920,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 8466,
@@ -17959,7 +18950,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 8570,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 8596,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 8894,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 8920,
+          "slot": 4,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5080.RDT",
@@ -18056,6 +19074,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5074,
@@ -18157,7 +19176,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM5090.RDT",
@@ -18220,6 +19241,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6526,
@@ -18256,7 +19278,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6000.RDT",
@@ -18319,6 +19343,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5498,
@@ -18370,7 +19395,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6010.RDT",
@@ -18433,6 +19460,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1218,
@@ -18499,7 +19527,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6020.RDT",
@@ -18585,6 +19615,31 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 2862,
+          "slot": 0,
+          "type": 22,
+          "amount": 8,
+          "global_id": 73,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 2556,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 2652,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 2162,
@@ -18636,7 +19691,22 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 2556,
+          "slot": 0,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 2652,
+          "slot": 0,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6030.RDT",
@@ -18755,6 +19825,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 10698,
@@ -18821,7 +19892,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6040.RDT",
@@ -18896,6 +19969,26 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 8918,
+          "slot": 3,
+          "type": 98,
+          "amount": 2,
+          "global_id": 20,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 8296,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 8112,
@@ -18932,7 +20025,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 8296,
+          "slot": 3,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6050.RDT",
@@ -18995,6 +20097,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 6578,
@@ -19031,7 +20134,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6060.RDT",
@@ -19094,6 +20199,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3594,
@@ -19205,7 +20311,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6070.RDT",
@@ -19313,6 +20421,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2870,
@@ -19364,7 +20473,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6080.RDT",
@@ -19427,6 +20538,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 10034,
@@ -19493,7 +20605,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6090.RDT",
@@ -19590,6 +20704,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1036,
@@ -19633,7 +20748,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM60A0.RDT",
@@ -19752,6 +20869,54 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 5420,
+          "slot": 13,
+          "type": 16,
+          "amount": 100,
+          "global_id": 51,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 5332,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 5358,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 5434,
+          "slot": 13,
+          "type": 29,
+          "amount": 36,
+          "global_id": 51,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 5332,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 5358,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 1522,
@@ -19803,7 +20968,22 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 5332,
+          "slot": 13,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 5358,
+          "slot": 13,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM60B0.RDT",
@@ -19866,6 +21046,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4398,
@@ -19962,7 +21143,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM60C0.RDT",
@@ -20037,6 +21220,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3850,
@@ -20133,7 +21317,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM60D0.RDT",
@@ -20230,6 +21416,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2210,
@@ -20266,7 +21453,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM60E0.RDT",
@@ -20347,6 +21536,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 910,
@@ -20441,7 +21631,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM60F0.RDT",
@@ -20527,6 +21719,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 1814,
@@ -20563,7 +21756,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6100.RDT",
@@ -20671,6 +21866,100 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 4068,
+          "slot": 6,
+          "type": 96,
+          "amount": 1,
+          "global_id": 14,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4790,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 4974,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 4082,
+          "slot": 6,
+          "type": 22,
+          "amount": 16,
+          "global_id": 45,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4790,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 4974,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 4106,
+          "slot": 6,
+          "type": 96,
+          "amount": 1,
+          "global_id": 14,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4790,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 4974,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        },
+        {
+          "offset": 4120,
+          "slot": 6,
+          "type": 24,
+          "amount": 6,
+          "global_id": 46,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4790,
+              "four_point": false
+            },
+            {
+              "kind": "descriptor",
+              "offset": 4974,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 3838,
@@ -20722,7 +22011,22 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 4790,
+          "slot": 6,
+          "opcode": 78,
+          "four_point": false
+        },
+        {
+          "offset": 4974,
+          "slot": 6,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6110.RDT",
@@ -20785,6 +22089,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 12654,
@@ -20851,7 +22156,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6120.RDT",
@@ -20914,6 +22221,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4698,
@@ -20965,7 +22273,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6130.RDT",
@@ -21028,6 +22338,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 3652,
@@ -21064,7 +22375,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6140.RDT",
@@ -21139,6 +22452,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 2994,
@@ -21205,7 +22519,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6150.RDT",
@@ -21335,6 +22651,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 11158,
@@ -21371,7 +22688,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6160.RDT",
@@ -21468,6 +22787,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7402,
@@ -21534,7 +22854,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM6170.RDT",
@@ -21597,6 +22919,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 13698,
@@ -21648,7 +22971,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM7000.RDT",
@@ -21711,6 +23036,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 5178,
@@ -21762,7 +23088,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM7010.RDT",
@@ -21848,6 +23176,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7762,
@@ -21899,7 +23228,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM7020.RDT",
@@ -21974,6 +23305,26 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [
+        {
+          "offset": 6474,
+          "slot": 5,
+          "type": 17,
+          "amount": 2,
+          "global_id": 40,
+          "sat": 49,
+          "origins": [
+            {
+              "kind": "descriptor",
+              "offset": 4610,
+              "four_point": false
+            },
+            {
+              "kind": "unregistered_null_alias"
+            }
+          ]
+        }
+      ],
       "doors": [
         {
           "offset": 4358,
@@ -22010,7 +23361,16 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [
+        {
+          "offset": 4610,
+          "slot": 5,
+          "opcode": 78,
+          "four_point": false
+        }
+      ],
+      "reset_candidate_source_failure": "none"
     },
     {
       "source": "PL0/RDT/ROOM7030.RDT",
@@ -22073,6 +23433,7 @@
       ],
       "items": [],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 7256,
@@ -22139,7 +23500,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "scenario-selection camera write is unbounded"
     },
     {
       "source": "PL0/RDT/ROOM7040.RDT",
@@ -22225,6 +23588,7 @@
         }
       ],
       "reset_item_variants": [],
+      "reset_item_candidates": [],
       "doors": [
         {
           "offset": 4350,
@@ -22261,7 +23625,9 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
-      }
+      },
+      "reset_candidate_descriptors": [],
+      "reset_candidate_source_failure": "none"
     }
   ]
 }

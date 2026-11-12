@@ -18,6 +18,7 @@ from games.re2.initializer_control_proof import (
     InitializerControlSupport,
     native_switch_labels,
 )
+from games.re2.reset_candidates import decode_item_resets
 from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
 from games.re2.startup_effects import StartupEffectAuditSupport, StartupEffectReceipt
 
@@ -249,56 +250,49 @@ OPCODE_WIDTHS = (
 
 def reset_item_variants(data: bytes, items: list[dict], programs: dict) -> list[dict]:
     """Bind reset-only types to their original ordinary descriptor creators."""
+    return _reset_item_variants(data, items, decode_item_resets(data, programs))
+
+
+def _reset_item_variants(
+    data: bytes, items: list[dict], resets: list[dict]
+) -> list[dict]:
     result = {}
-    for program in programs.values():
-        for row in program["commands"]:
-            if row["opcode"] != 0x46:
-                continue
-            packet = data[row["offset"] : row["next"]]
+    for reset in resets:
+        if reset["slot"] >= 32 or reset["sat"] & 0x80:
+            continue
+        item_type, amount, gid = reset["type"], reset["amount"], reset["global_id"]
+        creators = [
+            item
+            for item in items
+            if item["slot"] == reset["slot"]
+            and item["global_id"] == gid
+            and not item["four_point"]
+            and data[item["offset"] : item["offset"] + 3]
+            == bytes((0x4E, item["slot"], 2))
+            and not data[item["offset"] + 3] & 0x80
+        ]
+        if not creators or item_type in {item["type"] for item in creators}:
+            continue
+        for item in creators:
+            offset = item["offset"]
             if (
-                len(packet) != 10
-                or packet[0] != 0x46
-                or row["kind"] != "reset"
-                or row["slot"] != packet[1]
-                or row["interaction"] != packet[2]
-                or row["data"] != list(packet[4:])
+                not 0 <= offset <= len(data) - 22
+                or data[offset] != 0x4E
+                or data[offset + 1] != item["slot"]
+                or struct.unpack_from("<3H", data, offset + 14)[::2]
+                != (item["type"], gid)
             ):
-                raise ValueError("RE2 reset command does not match its source")
-            if packet[2] != 2 or packet[1] >= 32 or packet[3] & 0x80:
-                continue
-            item_type, amount, gid = struct.unpack_from("<3H", packet, 4)
-            creators = [
-                item
-                for item in items
-                if item["slot"] == packet[1]
-                and item["global_id"] == gid
-                and not item["four_point"]
-                and data[item["offset"] : item["offset"] + 3]
-                == bytes((0x4E, item["slot"], 2))
-                and not data[item["offset"] + 3] & 0x80
-            ]
-            if not creators or item_type in {item["type"] for item in creators}:
-                continue
-            for item in creators:
-                offset = item["offset"]
-                if (
-                    not 0 <= offset <= len(data) - 22
-                    or data[offset] != 0x4E
-                    or data[offset + 1] != item["slot"]
-                    or struct.unpack_from("<3H", data, offset + 14)[::2]
-                    != (item["type"], gid)
-                ):
-                    raise ValueError("RE2 reset creator does not match its source")
-            # Aliased script tables can decode the same physical reset twice.
-            result[row["offset"]] = {
-                "offset": row["offset"],
-                "creator_offsets": sorted(item["offset"] for item in creators),
-                "slot": packet[1],
-                "type": item_type,
-                "amount": amount,
-                "global_id": gid,
-                "sat": packet[3],
-            }
+                raise ValueError("RE2 reset creator does not match its source")
+        # Aliased script tables can decode the same physical reset twice.
+        result[reset["offset"]] = {
+            "offset": reset["offset"],
+            "creator_offsets": sorted(item["offset"] for item in creators),
+            "slot": reset["slot"],
+            "type": item_type,
+            "amount": amount,
+            "global_id": gid,
+            "sat": reset["sat"],
+        }
     return [result[offset] for offset in sorted(result)]
 
 
@@ -522,36 +516,28 @@ def decode_room(
                 "commands": ordered,
             }
 
-    resets = [
-        command
-        for program in programs.values()
-        for command in program["commands"]
-        if command["kind"] == "reset"
-    ]
+    resets = decode_item_resets(data, programs)
     for item in items.values():
         item["amounts"] = sorted(
             {item["amount"]}
             | {
-                struct.unpack("<3H", bytes(command["data"]))[1]
-                for command in resets
-                if command["interaction"] == 2
-                and command["slot"] == item["slot"]
-                and struct.unpack("<3H", bytes(command["data"]))[::2]
+                reset["amount"]
+                for reset in resets
+                if reset["slot"] == item["slot"]
+                and (reset["type"], reset["global_id"])
                 == (item["type"], item["global_id"])
             }
         )
     if any(
-        command["interaction"] == 2
-        and not any(
-            item["slot"] == command["slot"]
-            and (item["type"], item["global_id"])
-            == struct.unpack("<3H", bytes(command["data"]))[::2]
+        not any(
+            item["slot"] == reset["slot"]
+            and (item["type"], item["global_id"]) == (reset["type"], reset["global_id"])
             for item in items.values()
         )
-        for command in resets
+        for reset in resets
     ):
         # A reset can introduce an item absent from the creator catalog.
-        # Withhold full-list knowledge until that identity is reconstructed.
+        # Enumeration alone cannot supply full-list or presence authority.
         complete = False
 
     room = {
@@ -563,9 +549,8 @@ def decode_room(
         "proofs": proofs,
         "sound_proofs": sound_proofs,
         "items": list(items.values()),
-        "reset_item_variants": reset_item_variants(
-            data, list(items.values()), programs
-        ),
+        "reset_item_variants": _reset_item_variants(data, list(items.values()), resets),
+        "reset_item_candidates": resets,
         "doors": list(doors.values()),
         "programs": programs,
         "candidate_list_complete": complete,

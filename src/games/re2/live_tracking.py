@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import struct
 from collections.abc import Callable
+from dataclasses import dataclass, replace
 
 from games.bit_flags import msb_flag_location
 from games.game_profile import RoomId
@@ -16,12 +17,29 @@ from games.item_quantity import ItemQuantityState
 from games.player_heading import heading_degrees
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
-from games.re2.scenario_items import item_identity_candidates, scenario_item_candidates
+from games.re2.reset_candidates import DescriptorOrigin, tracking_item_candidates
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.runtime_identity import MemoryResult
 from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
 from ui.debug_view import render
+
+
+@dataclass(frozen=True)
+class LiveItemObservation:
+    origin: DescriptorOrigin
+    state: str
+    amount: int
+    item_type: int
+    global_id: int
+
+    def matches(self, candidate: dict) -> bool:
+        # Reset can change GID without changing type. Every consumer must bind
+        # the entire fresh identity before transferring availability or proof.
+        return self.origin == candidate["origin"] and (
+            self.item_type,
+            self.global_id,
+        ) == (candidate["type"], candidate["global_id"])
 
 
 def poll_re2(
@@ -205,7 +223,24 @@ def poll_re2(
             int(layout["aot_table_address_ps1"], 0), layout["aot_capacity"] * 4
         )
         live_items, live_doors = {}, {}
-        current_item_candidates = item_identity_candidates(room)
+        current_item_candidates = tracking_item_candidates(
+            room, profile.reset_candidate_policy, selected=False
+        )
+        item_definitions = {
+            DescriptorOrigin(row["offset"], row["four_point"]): row
+            for row in room["items"]
+        }
+        for item in current_item_candidates:
+            if item["observable"] and isinstance(item["origin"], DescriptorOrigin):
+                origin = item["origin"]
+                item_definitions.setdefault(
+                    origin,
+                    {
+                        "offset": origin.offset,
+                        "four_point": origin.four_point,
+                        "slot": item["slot"],
+                    },
+                )
         unresolved_registry = False
         for slot in range(layout["aot_capacity"]):
             pointer = int.from_bytes(registry[slot * 4 : slot * 4 + 4], "little")
@@ -221,7 +256,7 @@ def poll_re2(
             if kind not in (0, 1, 2):
                 continue
             definitions = (
-                room["items"]
+                list(item_definitions.values())
                 if kind == 2
                 else room["doors"]
                 if kind == 1
@@ -245,6 +280,7 @@ def poll_re2(
                 # than proving a disabled creator or scenario absence.
                 unresolved_registry = True
                 continue
+            origin = DescriptorOrigin(offset, definition["four_point"])
             operand = 20 if definition["four_point"] else 12
             if pointer + operand + (18 if kind == 1 else 6) > base + room["size"]:
                 return PollResult(
@@ -262,10 +298,17 @@ def poll_re2(
                     int.from_bytes(packet[index : index + 2], "little")
                     for index in range(operand, operand + 6, 2)
                 )
+                observation = LiveItemObservation(
+                    origin,
+                    "available" if packet[1] else "inactive",
+                    amount,
+                    item_type,
+                    gid,
+                )
                 if not any(
-                    item["offset"] == offset
+                    item["observable"]
                     and item["slot"] == slot
-                    and (item["type"], item["global_id"]) == (item_type, gid)
+                    and observation.matches(item)
                     for item in current_item_candidates
                 ):
                     unresolved_registry = True
@@ -273,11 +316,7 @@ def poll_re2(
                 # A zero SAT byte skips native activation before geometry or
                 # dispatch. Keep the creator for scenario checks, but do not
                 # infer presence from it. RE2-COLLECT-022, RE2-CLAIRE-009.
-                live_items[offset] = (
-                    "available" if packet[1] else "inactive",
-                    amount,
-                    item_type,
-                )
+                live_items[origin] = observation
             elif kind == 0 and definition in room["doors"]:
                 live_doors[offset] = {**definition, "inactive": True}
             elif kind == 1:
@@ -312,7 +351,20 @@ def poll_re2(
             ):
                 for relation in relations:
                     item_offset = relation["item_offset"]
-                    if item_offset not in live_items:
+                    item_definition = next(
+                        item for item in room["items"] if item["offset"] == item_offset
+                    )
+                    item_origin = DescriptorOrigin(
+                        item_offset, item_definition["four_point"]
+                    )
+                    # The fresh type/GID pair was source-bound above. A reset
+                    # may select a legacy type alternative, but this callback's
+                    # acquisition receipt cannot transfer to a different GID.
+                    if item_origin not in live_items or not any(
+                        live_items[item_origin].matches(item)
+                        and item["global_id"] == item_definition["global_id"]
+                        for item in current_item_candidates
+                    ):
                         continue
                     target = relation["target_slot"] * 4
                     if (
@@ -359,9 +411,11 @@ def poll_re2(
                     # Native Aot_on dispatches directly, bypassing SAT zero and
                     # the parked item's rectangle. The fresh callback, table,
                     # code and item binding prove a player can still collect it.
-                    state, amount, item_type = live_items[item_offset]
-                    if state == "inactive":
-                        live_items[item_offset] = ("uncollected", amount, item_type)
+                    observation = live_items[item_origin]
+                    if observation.state == "inactive":
+                        live_items[item_origin] = replace(
+                            observation, state="uncollected"
+                        )
 
         evaluations, doors = [], []
         for visited in sorted(set(tracker.rooms) | {key}):
@@ -393,16 +447,20 @@ def poll_re2(
             # A mismatching load keeps the raw catalog and fresh observations,
             # but cannot retain exclusions, selected variants or clearance.
             candidates = (
-                scenario_item_candidates(source)
+                tracking_item_candidates(
+                    source, profile.reset_candidate_policy, selected=True
+                )
                 if context_valid
-                else item_identity_candidates(source)
+                else tracking_item_candidates(
+                    source, profile.reset_candidate_policy, selected=False
+                )
             )
             if (
                 context_valid
                 and visited == key
                 and any(
-                    item["offset"] in live_items
-                    and live_items[item["offset"]][2] == item["type"]
+                    item["origin"] in live_items
+                    and live_items[item["origin"]].matches(item)
                     and item not in candidates
                     for item in current_item_candidates
                 )
@@ -437,23 +495,25 @@ def poll_re2(
                     item
                     for item in variants
                     if visited == key
-                    and item["offset"] in live_items
-                    and live_items[item["offset"]][0] == "available"
-                    and live_items[item["offset"]][2] == item["type"]
+                    and item["origin"] in live_items
+                    and live_items[item["origin"]].state == "available"
+                    and live_items[item["origin"]].matches(item)
                     and item["type"] < layout["file_type_min"]
                 ]
                 dispatched = [
                     item
                     for item in variants
                     if visited == key
-                    and item["offset"] in live_items
-                    and live_items[item["offset"]][0] == "uncollected"
-                    and live_items[item["offset"]][2] == item["type"]
+                    and item["origin"] in live_items
+                    and live_items[item["origin"]].state == "uncollected"
+                    and live_items[item["origin"]].matches(item)
                     and item["type"] < layout["file_type_min"]
                 ]
                 if context_valid and gid in source["scenario_absent_item_ids"]:
                     if visited == key and any(
-                        item["offset"] in live_items for item in variants
+                        item["origin"] in live_items
+                        and live_items[item["origin"]].matches(item)
+                        for item in variants
                     ):
                         # Disabling activation does not undo a creator that
                         # contradicts the fixed-scenario absence proof.
@@ -505,7 +565,7 @@ def poll_re2(
                 else:
                     state = "unknown"
                 amounts = (
-                    {live_items[item["offset"]][1] for item in observed_items}
+                    {live_items[item["origin"]].amount for item in observed_items}
                     if observed_items
                     else {amount for item in variants for amount in item["amounts"]}
                 )
