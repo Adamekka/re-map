@@ -18,6 +18,8 @@ Default histories are `.local/re2-leon-a-slus00748.json` and `.local/re2-claire-
 
 Match the existing tracker behavior: spatial floor plans revealed by entering rooms, room names, actual facing, floor browsing, zoom and pan, persistent exploration isolated by game/revision/scenario/playthrough, remaining items, separate unresolved checks, game-derived door access, and fresh item/door/story state after savestate changes. Exploration survives earlier savestates; acquired items and unlocked doors must rewind with the game.
 
+Leon A coverage remains incomplete. The [full source audit](research/re2/coverage.md) records remaining item, door and map gaps separately from observed gameplay and saved-state replay. A small explored-state replay does not establish campaign-wide support.
+
 The shared [map controls](map-controls.md) support keyboard panning, zoom and fit, alongside mouse controls and floor browsing. [Back](map-controls.md#return-to-previous-inspections) retraces manual inspections with the chosen zoom/pan and fresh game state.
 
 Open map tabs refresh after a tracker restart, including a change of game profile or playthrough. They remove the previous map while loading the matching page. Temporary connection failures within one tracker run retain the chosen view and search.
