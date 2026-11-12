@@ -124,3 +124,51 @@ Startup procedure `17:0` conditionally schedules `17:20` at 7256 and `17:21` at 
 Reproduction uses only the owned executable, source copies and decoded command offsets under `/tmp/re-map-unresolved-20261028/`. Rebinding the existing audited entry resources succeeds, while `immutable_open_doors` returns `FixedContext` for both sources. Unsupported effects must not be admitted merely to produce Open labels; the native write, entry and descriptor-lifetime obligations remain necessary. No production history or emulator was accessed, no new gameplay test was performed, and no absence or clearance claim follows.
 
 Contribution, 2026-10-28: Codex `door_diagnosis`, exact model `gpt-6.1-sol`, authored this source/native inspection follow-up. It preserves the authorship and runtime confirmation limits of RE2-DOOR-007 above. No external review endorsement is claimed.
+
+### Four-point source geometry correction, 2026-11-12
+
+Status: Candidate source and copied-handler evidence on the pinned SLUS-00748
+executable above. No new emulator observation or departed-door result follows.
+
+The shared write-partition validator incorrectly required raw four-point door
+`68` and camera-volume `67` packets to carry SAT bit `0x80`. Their native
+constructors add that bit themselves. SAT is an unsigned byte at source packet
+offset `+3`; the little-endian MIPS source stores are at PS1 virtual addresses
+`0x80054CB8` and `0x80054BC8`, respectively. Source `05-10`, door offsets 3838 and
+3882, contains valid `68` packets with raw SAT `0x31`.
+
+The validator now accepts either raw bit value for those four-point constructors
+and retains their full 40-byte door and 28-byte camera packets. Ordinary `3B` and
+`2C` packets still reject bit `0x80`; their native constructors preserve the raw
+byte, so accepting it would mismatch their shorter payloads. Reset `46` retains
+its existing geometry restriction. Slot, camera, model, source-overlap and Copy
+bounds remain required.
+
+Four new raw-SAT regression cases fail before the fix. All 354 focused partition,
+scenario-entry, scenario-selection and immutable-door tests pass afterward.
+Independent original-handler execution covers 96 synthetic cases across all six
+ordinary/four-point AOT constructors, four SAT values, early/late acquisition
+banks and acquired/unacquired states. It uses unchanged executable bytes with no
+stubs, patched instructions, PC repair or memory-write hooks.
+
+A fresh comparison of all 125 owned sources changes only neutral partition and
+source-write receipts for `05-08`, `05-0b`, `05-0c`, `05-10` and `05-11`. Strict
+entry, scenario guards, positive item results, lifetime/immutable-door results
+and candidate-list completeness remain equal. This corrects a shared validation
+barrier; it does not turn a receipt into presence, Open access or clearance.
+
+Private reproduction scripts, original code-window hashes, full comparison and
+focused-test output are retained under
+`/Users/adamekka/.cache/re-map/evidence/2026-11-12-fourpoint-integration/`.
+The accompanying research inputs are in
+`/Users/adamekka/.cache/re-map/evidence/2026-11-12-reset-completeness-research/`.
+No user history, savestate or emulator was used.
+
+Contribution, 2026-11-12: Codex `review_partial_positive_entry` identifies the
+defect and authors the private source/native controls. Root implements the
+correction and regressions, independently reruns those controls, compares all
+sources and writes this contribution. Both executing sessions verify exact model
+`gpt-6.1-sol`, effort `xhigh`. Earlier authorship and confirmation limits remain
+unchanged. Root reviews the changed predicates, native controls, failure bounds
+and affected callers. Configured Claude Opus 5.5 is disabled; Gemini 3.8 Flash's
+review fails to open its provider session. Neither provides an endorsement.

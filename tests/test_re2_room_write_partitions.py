@@ -27,7 +27,6 @@ from games.re2.room_write_partitions import (
     sca_write_partition,
 )
 
-
 CONFIG = RoomWritePartitionConfig(0x800CE558, 32, 0x800D0324, 32, 256, 64)
 END = b"\x01\0"
 
@@ -438,15 +437,20 @@ def test_shared_sca_bounds_reject_corrupt_source_and_packet_bindings(fault):
     assert isinstance(result, RoomWritePartitionFailure)
 
 
-@pytest.mark.parametrize("four_point", [False, True])
+@pytest.mark.parametrize(
+    "four_point,sat",
+    [(False, 0), (False, 0x31), *[(True, sat) for sat in (0, 0x31, 0x80, 0xB1)]],
+)
 def test_kind13_camera_volume_uses_first_native_byte_search_not_camera_index(
     four_point,
+    sat,
 ):
     target = bytearray(item_command(20, 15, 92, slot=9))
     target[20] = 1
-    trigger = camera_trigger(1, 9, 6, four_point)
+    trigger = bytearray(camera_trigger(1, 9, 6, four_point))
+    trigger[3] = sat
     data, room, layout = source(
-        trigger + END,
+        bytes(trigger) + END,
         (bytes(target) + END,),
         (ModelResourceState.Absent,) * 2,
         (1, 6, 0, 6),
@@ -530,7 +534,11 @@ def test_kind13_requires_payload_target_model_and_bounded_camera_resource(fault)
     )
 
 
-@pytest.mark.parametrize("opcode,sat,width", [(0x3B, 0x31, 32), (0x68, 0xB1, 40)])
+@pytest.mark.parametrize(
+    "opcode,sat,width",
+    [(0x3B, sat, 32) for sat in (0, 0x31)]
+    + [(0x68, sat, 40) for sat in (0, 0x31, 0x80, 0xB1)],
+)
 def test_door_creator_packets_are_protected_with_their_native_width(opcode, sat, width):
     door = bytes([opcode, 0, 1, sat]) + bytes(width - 4)
     data, room, _ = source(door + END, (END,), (ModelResourceState.Absent,), (0,))
@@ -539,6 +547,28 @@ def test_door_creator_packets_are_protected_with_their_native_width(opcode, sat,
     expected = SourceRange(room["programs"]["16:0"]["entry"], width)
     assert result.door_creators == (expected,)
     assert expected in result.protected_source
+
+
+@pytest.mark.parametrize("sat", [0x80, 0xB1])
+@pytest.mark.parametrize("opcode", [0x3B, 0x2C])
+def test_ordinary_creators_cannot_claim_four_point_payload_geometry(opcode, sat):
+    if opcode == 0x3B:
+        packet = bytes([opcode, 0, 1, sat]) + bytes(28)
+        expected = RoomWritePartitionFailure.ScriptLayout
+    else:
+        packet = bytearray(camera_trigger(1, 9, 6))
+        packet[3] = sat
+        packet = bytes(packet)
+        expected = RoomWritePartitionFailure.CameraTrigger
+    target = bytearray(item_command(20, 15, 92, slot=9))
+    target[20] = 1
+    data, room, _ = source(
+        packet + END,
+        (bytes(target) + END,),
+        (ModelResourceState.Absent,) * 2,
+        (1, 6),
+    )
+    assert room_write_partitions(data, room, CONFIG) is expected
 
 
 def test_bounded_alternate_item_models_and_reset_keep_all_possible_record_domains():

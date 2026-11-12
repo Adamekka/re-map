@@ -443,10 +443,12 @@ def room_write_partitions(
                     RoomWritePartitionFailure.ScriptLayout,
                 )
             if row["kind"] == "door":
+                # Native 68 installs bit 80 itself; only ordinary 3B requires
+                # raw SAT without that bit to keep its shorter payload valid.
                 require(
                     row["opcode"] in (0x3B, 0x68)
                     and packet[2] == 1
-                    and bool(packet[3] & 0x80) == (row["opcode"] == 0x68),
+                    and (row["opcode"] == 0x68 or not packet[3] & 0x80),
                     RoomWritePartitionFailure.ScriptLayout,
                 )
                 doors.append(SourceRange(row["offset"], len(packet)))
@@ -528,10 +530,11 @@ def room_write_partitions(
                 )
             if row["kind"] not in ("interaction", "reset") or row["interaction"] != 13:
                 continue
+            # Native 67 installs bit 80 before the kind-13 callback reads its
+            # fixed four-point payload; ordinary 2C and Reset cannot do that.
             require(
                 opcode in (0x2C, 0x67, 0x46)
-                and not (opcode == 0x46 and packet[3] & 0x80)
-                and bool(packet[3] & 0x80) == (opcode == 0x67),
+                and (opcode == 0x67 or not packet[3] & 0x80),
                 RoomWritePartitionFailure.CameraTrigger,
             )
             payload = (
