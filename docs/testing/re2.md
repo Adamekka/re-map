@@ -847,3 +847,56 @@ rights, all 125 consequences, coherent reversal and publication preservation.
 Exact executing model is `gpt-6.1-sol`, effort `xhigh`, verified from matching
 session/turn metadata. Independent/external review and integration remain with
 the parent. No external endorsement or new gameplay confirmation is supplied.
+
+## Actual persisted exploration audit, 2026-11-12
+
+At integrated base `2c69c06e6f3a580fcc1012046675ba20bd07788d`, a stable read of
+`~/Games/DuckStation/re2-map.json` supplies the user's existing Leon A exploration.
+Its profile, scenario and runtime signature match the pinned SLUS-00748 profile.
+The production history loader accepts a private byte-identical copy with 68
+source visits and 71 map-region visits. The original file and its lock are never
+opened for writing; its inode, size, modification time and bytes remain equal.
+History SHA256 is
+`956fcfa522f0af958b92b3308f1926d6082afa497d5f749f35f47c3e49c6ee05`.
+
+This extends the earlier saved-RAM-only visit baseline. Those reports establish
+two current source identities from the three saved states; they do not contain
+this persisted exploration. Their simulated 125-source results remain separate,
+and the older historical 58-visit subset is not reconstructed by this audit.
+
+Restore the private history using `VisitHistory.restore()`, then poll the
+production reader against the same three copied version-94 RAM images in forward
+and reverse order. All six publications retain exactly 68 explored sources and
+report 46 Cleared, 15 Incomplete and 7 Unknown rooms. Item rows are 92 Taken,
+18 Uncollected and 4 Unknown. The unresolved item rows are `01-04/0`, `01-0c/207`,
+`01-0d/208` and `03-09/184`. Four acquired items still have unresolved identities:
+`00-08/213`, `00-11/55`, `01-19/117` and `03-05/191`. Source `01-04` remains
+Incomplete because another established item is still required; the other seven
+sources account for the Unknown room verdicts.
+
+There are 181 door observations from these explored sources. The two retained
+saved-state contexts report either 74 Open/107 Unchecked or 72 Open/109 Unchecked;
+44 sources have incomplete door access. These are source-offset observations,
+not deduplicated physical doors, and Unchecked is not a locked-state claim.
+Fresh reconstruction from the copied history equals accumulated forward/reverse
+polling for all game-derived fields. Every room and door result also equals the
+corresponding subset of the explicitly simulated full-corpus replay. No synthetic
+visit is added to the actual history scope.
+
+Private evidence is
+`~/.cache/re-map/evidence/2026-11-12-leon-a-actual-history-audit/`, containing
+`history.json`, `verify.py`, `report.json` and the hashed input/artifact manifest.
+The verifier requires explicit checkout, history, RAM manifest, baseline replay,
+item inventory and inventory-baseline replay paths. Reproduction can use the
+retained private history copy, without reopening the original. Input hashes bind
+the existing saved-RAM and inventory evidence; the directory is not a standalone
+distribution of those private inputs. Earlier feature checks must retain their
+original visit-scope labels. Subsequent coverage work can additionally compare
+this actual explored subset.
+
+Root, verified executing model `gpt-6.1-sol` with effort `xhigh`, authors this
+audit and record. The RE3 runtime investigator identified the file without
+reading it; root performs the authorized read-only copy and reconstruction.
+This adds offline validation of existing persisted visits, with no emulator,
+new gameplay, native savestate restoration, changed tracker rule or production
+history write.
