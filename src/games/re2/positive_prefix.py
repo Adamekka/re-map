@@ -8,13 +8,15 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, fields, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
 
 from games.re2.ordinary_task_ingress import VerifiedOrdinaryTaskIngress
+from games.re2.positive_entry_domain import _positive_entry_domain, _PositiveEntryDomain
 from games.re2.scenario_entry_scope import (
     _ScopePolicy,
     _source_scope_facts,
+    _SourceEffects,
     _SourceScopeFacts,
 )
 from games.re2.scenario_items import scenario_flags
@@ -44,9 +46,7 @@ _POSITIVE_BINDING_SHA256 = (
 _HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 
 
-def _positive_binding_digest(
-    resources: BoundEntryResources, declarations: VerifiedStartupDeclarationContract
-) -> str:
+def _positive_binding_digest(resources: object, declarations: object) -> str:
     def encode(value):
         # Preserve exact types: JSON alone equates tuple/list, and ordinary
         # Python equality equates bool/int in consistently replaced receipts.
@@ -121,6 +121,9 @@ class _PositivePrefixDerivation:
     roots: tuple[tuple[str, int], ...]
     historical_flags: tuple[tuple[int, int, int], ...]
     call_frames: int
+    entry_domain: _PositiveEntryDomain | _SourceEffects = field(
+        default=_SourceEffects.Existing, kw_only=True
+    )
 
 
 @dataclass(frozen=True)
@@ -142,6 +145,7 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
             self.roots,
             self.historical_flags,
             self.call_frames,
+            entry_domain=self.entry_domain,
         )
         assert type(self.resources) is BoundEntryResources
         assert type(self.resources.executable) is bytes
@@ -204,6 +208,13 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
             bind_scenario_context(profile, self.context.declaration_contract)
             == self.context
         )
+        if type(self.entry_domain) is _PositiveEntryDomain:
+            assert self.entry_domain == _positive_entry_domain(
+                self.source_data, room, profile, self.entry_domain.bound
+            )
+            assert self.entry_domain.bound.entry_resources == self.resources
+        else:
+            assert self.entry_domain is _SourceEffects.Existing
         facts = _source_scope_facts(
             self.source_data,
             room,
@@ -211,6 +222,7 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
             self.context,
             _ScopePolicy.TrustedPositivePrefix,
             TaskControlSupport.Unaudited,
+            self.entry_domain,
         )
         assert type(facts) is _SourceScopeFacts
         assert (
@@ -227,8 +239,10 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
         assert self.source_sha256 == room["sha256"]
         assert self.programs_sha256 == programs_digest(room["programs"])
         assert self.protected_programs == frozenset(room["programs"])
-        assert self.entry_locations == frozenset(
-            (k, p["entry"]) for k, p in room["programs"].items()
+        assert self.entry_locations == (
+            self.entry_domain.facts.entry_locations
+            if type(self.entry_domain) is _PositiveEntryDomain
+            else frozenset((k, p["entry"]) for k, p in room["programs"].items())
         )
         assert self.roots == tuple(
             (k, room["programs"][k]["entry"]) for k in ("16:0", "17:0")
@@ -309,8 +323,25 @@ def normal_engine_positive_prefix(
             _ScopePolicy.TrustedPositivePrefix,
             TaskControlSupport.Unaudited,
         )
+        entry_domain = _SourceEffects.Existing
         if isinstance(facts, ScenarioSelectionFailure):
-            return PositivePrefixFailure.Source
+            # Existing effects retain their original contract. The additional
+            # roles require a separate complete entry compiler; its failure
+            # grants no partial rights or absence authority.
+            entry_domain = _positive_entry_domain(data, room, profile, bound)
+            if type(entry_domain) is not _PositiveEntryDomain:
+                return PositivePrefixFailure.Source
+            facts = _source_scope_facts(
+                data,
+                room,
+                profile,
+                context,
+                _ScopePolicy.TrustedPositivePrefix,
+                TaskControlSupport.Unaudited,
+                entry_domain,
+            )
+            if isinstance(facts, ScenarioSelectionFailure):
+                return PositivePrefixFailure.Source
         assert type(facts) is _SourceScopeFacts
         derivation = _PositivePrefixDerivation(
             resources,
@@ -327,6 +358,7 @@ def normal_engine_positive_prefix(
                 (r["bank"], r["bit"], r["expected"]) for r in scenario_flags(profile)
             ),
             NATIVE_CALL_FRAME_COUNT,
+            entry_domain=entry_domain,
         )
         return VerifiedNormalEnginePositivePrefix(
             derivation.resources,
@@ -342,6 +374,7 @@ def normal_engine_positive_prefix(
             derivation.historical_flags,
             derivation.call_frames,
             derivation,
+            entry_domain=derivation.entry_domain,
         )
     except (KeyError, IndexError, TypeError, ValueError):
         return PositivePrefixFailure.Binding

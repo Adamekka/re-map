@@ -8339,8 +8339,91 @@
         }
       ],
       "immutable_open_doors": [],
-      "known_puzzle_items": [],
-      "known_direct_pickups": [],
+      "known_puzzle_items": [
+        {
+          "global_id": 3,
+          "item_types": [
+            20
+          ],
+          "creator_offsets": [
+            6732
+          ],
+          "callback_offsets": [
+            6776
+          ],
+          "delivery_offsets": [
+            7956
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 1,
+                    "bit": 0,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 1,
+                    "bit": 1,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 1,
+                    "bit": 6,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 0,
+                    "bit": 25,
+                    "expected": 1
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "known_direct_pickups": [
+        {
+          "global_id": 46,
+          "item_type": 38,
+          "slot": 5,
+          "creator_offsets": [
+            6754
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 1,
+                    "bit": 0,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 1,
+                    "bit": 1,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 1,
+                    "bit": 6,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 0,
+                    "bit": 25,
+                    "expected": 1
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ],
       "startup_item_declarations": [],
       "scoped_scenario_items": {
         "absent_item_ids": [],
@@ -12444,7 +12527,45 @@
       "script_item_dispatch_relations": [],
       "immutable_open_doors": [],
       "known_puzzle_items": [],
-      "known_direct_pickups": [],
+      "known_direct_pickups": [
+        {
+          "global_id": 2,
+          "item_type": 20,
+          "slot": 5,
+          "creator_offsets": [
+            9510
+          ],
+          "context_conditions": [
+            {
+              "kind": "conditions",
+              "any_of": [
+                [
+                  {
+                    "bank": 1,
+                    "bit": 0,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 1,
+                    "bit": 1,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 1,
+                    "bit": 6,
+                    "expected": 0
+                  },
+                  {
+                    "bank": 0,
+                    "bit": 25,
+                    "expected": 1
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ],
       "startup_item_declarations": [],
       "scoped_scenario_items": {
         "absent_item_ids": [],

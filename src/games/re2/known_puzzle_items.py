@@ -28,6 +28,7 @@ from games.re2.nonchoice_messages import (
     NonchoiceMessageFailure,
     nonchoice_message_proofs,
 )
+from games.re2.positive_entry_domain import _PositiveEntryDomain
 from games.re2.positive_prefix import VerifiedNormalEnginePositivePrefix
 from games.re2.room_data import reset_item_variants
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
@@ -1235,6 +1236,19 @@ def _known_declared_items(
                 prefix(key, edge, returns, frames, loops, loaded, work, found, seen)
                 return
             if opcode == 0:
+                pass
+            elif (
+                trusted
+                and type(positive_prefix.entry_domain) is _PositiveEntryDomain
+                and opcode == 4
+            ):
+                require(
+                    packet[2] == 0x18 and (packet[1] == 0xFF or 2 <= packet[1] < 10),
+                    KnownDeclaredItemFailure.NativeContract,
+                )
+                # 538A4 publishes caller PC+4 before installing an ordinary
+                # worker and returns one without dispatching it. Startup0/1
+                # keep running; capacity and child completion are irrelevant.
                 pass
             elif scoped and opcode in (0x38, 0x4B, 0x61):
                 assert isinstance(source_witnesses, ScenarioSourceWriteWitnesses)

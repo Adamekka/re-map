@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
-from games.re2.initializer_control_proof import native_switch_labels
+from games.re2.positive_entry_domain import _PositiveEntryDomain
 from games.re2.room_data import decode_room
 from games.re2.scenario_selection import (
     SCENARIO_ENTRY_AUDIT,
@@ -31,8 +31,6 @@ from games.re2.scenario_selection import (
     scenario_source_write_witnesses,
 )
 from games.re2.script_control_limits import (
-    NATIVE_IF_FRAME_COUNT,
-    NATIVE_LOOP_FRAME_COUNT,
     calls_fit_native_frames,
     programs_digest,
 )
@@ -41,10 +39,19 @@ from games.re2.source_task_control import (
     TaskControlSupport,
     VerifiedSourceTaskControl,
 )
+from games.re2.structured_control import (
+    ControlFrames,
+    StructuredControl,
+    structured_control,
+)
 
 
 class _UnprovedEntry(Exception):
     pass
+
+
+class _SourceEffects(Enum):
+    Existing = "all existing source effects checked"
 
 
 class _ScopePolicy(Enum):
@@ -212,6 +219,7 @@ def _source_scope_facts(
     context: VerifiedScenarioContext,
     policy: _ScopePolicy,
     control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
+    entry_domain: _PositiveEntryDomain | _SourceEffects = _SourceEffects.Existing,
 ) -> _SourceScopeFacts | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
@@ -236,6 +244,17 @@ def _source_scope_facts(
                 policy is not _ScopePolicy.AuditedNativeWork
                 and control.matches(data, room, context)
             )
+        closed_entries = type(entry_domain) is _PositiveEntryDomain
+        if closed_entries:
+            require(policy is _ScopePolicy.TrustedPositivePrefix)
+            require(
+                entry_domain.source_data == data
+                and json.loads(entry_domain.room_json) == room
+                and json.loads(entry_domain.profile_json) == profile
+                and entry_domain.bound.declarations == context.declaration_contract
+            )
+        else:
+            require(entry_domain is _SourceEffects.Existing)
         layout = profile["runtime_layout"]
         require(
             layout["scenario_work_address_ps1"] == "0x800CE32C"
@@ -305,7 +324,6 @@ def _source_scope_facts(
         }
         calls = {key: set() for key in programs}
         replacement_sources = set()
-        qualified_goto_programs = set()
         render_initializers = {}
         dispatch_resets = {}
         slot_kinds: dict[int, set[int]] = {}
@@ -340,6 +358,8 @@ def _source_scope_facts(
                 if r["kind"] == "flag_check"
                 and not any(bank == r["bank"] for bank, _ in aliases)
             )
+        if closed_entries:
+            scalar_immediates.extend(entry_domain.facts.numeric_ranges)
         require(
             all(
                 any(
@@ -359,6 +379,8 @@ def _source_scope_facts(
                 opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
                 or policy is not _ScopePolicy.AuditedNativeWork
                 and opcode in (0x2A, 0x64, 0x65, 0x85)
+                or closed_entries
+                and opcode in (5, 0x15, 0x28)
             )
             if row["kind"] == "call":
                 target = f"17:{packet[1]}"
@@ -374,14 +396,22 @@ def _source_scope_facts(
             elif opcode == 4:
                 # Automatic native allocation cannot replace startup task zero.
                 # Its PC advance precedes replacement, unlike Aot_on below.
-                require(packet[1:3] == b"\xff\x18")
+                require(
+                    packet[2] == 0x18
+                    and (packet[1] == 0xFF or closed_entries and 2 <= packet[1] < 10)
+                )
                 target = f"17:{packet[3]}"
                 require(target in programs)
             elif opcode == 0x2D:
                 # Attachment registration appends to an unbounded native
                 # queue that can reach task storage. This work contract covers
                 # only model setup without that additional queue ownership.
-                require(packet[3] & 0xC0 == 0)
+                require(
+                    packet[3] & 0xC0 == 0
+                    or closed_entries
+                    and (key, programs[key]["entry"])
+                    not in entry_domain.facts.entry_locations
+                )
             elif opcode == 0x17:
                 # Legacy cycles never read the escaped IF pointer. A joint
                 # task receipt additionally qualifies fresh IF stores and all
@@ -402,7 +432,8 @@ def _source_scope_facts(
                         )
                     )
                 )
-                qualified_goto_programs.add(key)
+            elif opcode == 5 and closed_entries:
+                require(2 <= packet[1] < 10)
             elif opcode in (5, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
                 # These task/source effects retain their independent entry
                 # obligations even when their targets decode locally.
@@ -468,6 +499,11 @@ def _source_scope_facts(
                     # guard and strict entry selector domains stay unchanged.
                     or policy is _ScopePolicy.TrustedPositivePrefix
                     and packet[1] == 24
+                    # Native members11/13 store the owned Work's numeric X/Z
+                    # coordinates. The new bound entry role grants no pointer
+                    # selector or guard/strict-entry permission.
+                    or closed_entries
+                    and packet[1] in (11, 13)
                 )
             elif opcode == 0x44:
                 # The audited model's presets select states0/17/18. Their
@@ -534,7 +570,9 @@ def _source_scope_facts(
                 room["sha256"],
                 programs_digest(programs),
                 frozenset(programs),
-                frozenset((key, p["entry"]) for key, p in programs.items()),
+                entry_domain.facts.entry_locations
+                if closed_entries
+                else frozenset((key, p["entry"]) for key, p in programs.items()),
             )
         for key, row in rows:
             if row["opcode"] == 0x47:
@@ -573,148 +611,11 @@ def _source_scope_facts(
         callees = {target for targets in calls.values() for target in targets}
         require(not replacement_sources & callees)
 
-        def predicate_end(key, start, width):
-            end, cursor = start + width, start
-            require(width > 0)
-            while cursor < end:
-                require(cursor in commands[key])
-                condition = commands[key][cursor]
-                packet = data[cursor : condition["next"]]
-                require(
-                    condition["kind"] == "flag_check"
-                    or condition["opcode"] == 0x23
-                    and packet[1] == 0
-                    and packet[3] < 7
-                )
-                cursor = condition["next"]
-            require(cursor == end)
-            return end
-
-        # Each procedure starts with a native call frame. Unknown predicates
-        # retain both continuations; loops can repeat without proving progress.
+        # Guard and positive entry analysis share the structured control walk.
         for key, program in programs.items():
-            pending = [(program["entry"], (), ())]
-            seen = set()
-            edges = {}
-            while pending:
-                position, conditions, loops = pending.pop()
-                state = position, conditions, loops
-                if state in seen:
-                    continue
-                require(len(seen) < 16384 and position in commands[key])
-                seen.add(state)
-                edge_start = len(pending)
-                row = commands[key][position]
-                opcode, following = row["opcode"], row["next"]
-                packet = data[position:following]
-                if row["kind"] == "end":
-                    require(packet == b"\x01\0")
-                    continue
-                if opcode == 3:
-                    # The old procedure is abandoned, with no caller advance.
-                    # Its canonical target is independently audited above as
-                    # a fresh root, including its synchronous call capacity.
-                    continue
-                if opcode == 0x17:
-                    require(
-                        key in qualified_goto_programs and not conditions and not loops
-                    )
-                    pending.append((row["target"], (), ()))
-                elif row["kind"] == "if":
-                    require(
-                        len(conditions) < NATIVE_IF_FRAME_COUNT
-                        and row["target"] > following
-                    )
-                    pending.append((row["target"], conditions, loops))
-                    pending.append((following, conditions + (row["target"],), loops))
-                elif row["kind"] == "flag_check" or opcode in (
-                    0x23,
-                    0x3E,
-                    0x50,
-                    0x5E,
-                    0x85,
-                ):
-                    pending.append((following, conditions, loops))
-                    if conditions:
-                        # A failed predicate pops the IF frame, not an enclosing
-                        # loop. Testing inside a loop can therefore abandon its
-                        # body with the native loop slot still occupied.
-                        pending.append((conditions[-1], conditions[:-1], loops))
-                elif opcode in (7, 8):
-                    require(bool(conditions) and following == conditions[-1])
-                    target = row["target"] if opcode == 7 else following
-                    require(target >= following)
-                    pending.append((target, conditions[:-1], loops))
-                elif opcode == 9:
-                    require(packet[1] == 0x0A and len(loops) < NATIVE_LOOP_FRAME_COUNT)
-                    pending.append((following, conditions, loops))
-                elif opcode in (0x0D, 0x0F, 0x11):
-                    require(len(loops) < NATIVE_LOOP_FRAME_COUNT)
-                    limit = following + struct.unpack_from("<h", packet, 2)[0]
-                    require(following < limit and limit in commands[key])
-                    body = following
-                    if opcode == 0x0F:
-                        body = predicate_end(key, following, packet[1])
-                        require(body in commands[key] and body <= limit)
-                    loop = opcode, position, body, limit, conditions
-                    if opcode != 0x11:
-                        pending.append((limit, conditions, loops))
-                    pending.append((body, conditions, loops + (loop,)))
-                elif opcode in (0x0E, 0x10, 0x12):
-                    require(bool(loops))
-                    kind, header, body, limit, saved_conditions = loops[-1]
-                    require(
-                        (kind, opcode) in ((0x0D, 0x0E), (0x0F, 0x10), (0x11, 0x12))
-                        and conditions == saved_conditions
-                    )
-                    if opcode == 0x12:
-                        after = predicate_end(key, following, packet[1])
-                        require(after == limit)
-                        pending.append((after, conditions, loops[:-1]))
-                        pending.append((body, conditions, loops))
-                    elif opcode == 0x10:
-                        require(following == limit)
-                        pending.append((header, conditions, loops[:-1]))
-                    else:
-                        require(following == limit)
-                        pending.append((following, conditions, loops[:-1]))
-                        pending.append((body, conditions, loops))
-                elif opcode == 0x13:
-                    require(len(loops) < NATIVE_LOOP_FRAME_COUNT)
-                    end, labels = native_switch_labels(data, position, program["limit"])
-                    require(end in commands[key])
-                    require(all(at in commands[key] for at in labels))
-                    require(
-                        all(commands[key][at]["opcode"] == 0x14 for at in labels[:-1])
-                    )
-                    require(commands[key][labels[-1]]["opcode"] == 0x16)
-                    loop = opcode, position, labels, end, conditions
-                    # No-match and each case are possible. Retaining them all
-                    # grants no case-based item exclusion or counter knowledge.
-                    pending.append((labels[-1], conditions, loops + (loop,)))
-                    for at in labels[:-1]:
-                        pending.append(
-                            (commands[key][at]["next"], conditions, loops + (loop,))
-                        )
-                elif opcode == 0x14:
-                    require(bool(loops) and loops[-1][0] == 0x13)
-                    require(position in loops[-1][2])
-                    pending.append((following, conditions, loops))
-                elif opcode in (0x16, 0x1A):
-                    require(bool(loops) and loops[-1][0] == 0x13)
-                    _, _, labels, end, saved_conditions = loops[-1]
-                    require(conditions == saved_conditions)
-                    require(opcode != 0x16 or position == labels[-1])
-                    pending.append((end, conditions, loops[:-1]))
-                elif opcode in (0x0A, 0x15):
-                    # A standalone sleep tail or unsupported default cannot
-                    # inherit another instruction's native control frame.
-                    raise _UnprovedEntry
-                else:
-                    pending.append((following, conditions, loops))
-                edges.setdefault(position, set()).update(
-                    next_state[0] for next_state in pending[edge_start:]
-                )
+            frames = structured_control(data, program, ControlFrames.Strict)
+            require(isinstance(frames, StructuredControl))
+            edges = dict(frames.edges)
 
             for dispatch, reset in dispatch_resets.get(key, {}).items():
                 # An IF-failure, loop or switch edge may bypass a lexically

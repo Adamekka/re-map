@@ -4,18 +4,32 @@ from __future__ import annotations
 
 import struct
 
-from games.re2.script_control_limits import NATIVE_CALL_FRAME_COUNT
+from games.re2.script_control_limits import (
+    NATIVE_CALL_FRAME_COUNT,
+    NATIVE_LOOP_FRAME_COUNT,
+)
 
 # Native task/frame arithmetic is shared by ordinary and auxiliary Goto checks.
 TASK_BASE = 0x800D7860
 TASK_WIDTH = 0x174
+IF_FRAME_BASE = 0xC0
+IF_FRAME_WIDTH = 0x20
+# Goto increments the encoded FF level without byte-wrapping that arithmetic;
+# fresh task initialization instead installs the canonical IF_FRAME_BASE.
+GOTO_FF_IF_BASE = IF_FRAME_BASE + 0x400
 
 
 def goto_if_cell(task: int, depth: int) -> tuple[int, int]:
     """Return the receiving task/offset of FF IF-pointer's next target store."""
     assert 0 <= task < 14 and 0 <= depth < NATIVE_CALL_FRAME_COUNT
-    displacement = task * TASK_WIDTH + 0xC0 + depth * 0x20 + 0x400
+    displacement = task * TASK_WIDTH + GOTO_FF_IF_BASE + depth * IF_FRAME_WIDTH
     return divmod(displacement, TASK_WIDTH)
+
+
+def loop_end_cell(depth: int, loop: int) -> int:
+    """Native Break reads this u32LE end pointer in the shared loop frame."""
+    assert 0 <= depth < NATIVE_CALL_FRAME_COUNT and 0 <= loop < NATIVE_LOOP_FRAME_COUNT
+    return 0x60 + depth * 16 + loop * 4
 
 
 def native_bytes(executable: bytes, address: int, width: int) -> bytes:
