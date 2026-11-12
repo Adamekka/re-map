@@ -48,8 +48,9 @@
     ]
   },
   "trusted_door_policy": {
-    "audit": "slus00748-trusted-normal-door-access-v1",
-    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
+    "audit": "slus00748-trusted-normal-door-access-v2",
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
+    "entry_audit": "slus00748-existing-neutral-door-entry-v1"
   },
   "startup_effect_audit": {
     "audit": "slus00748-sca-clipping-v1",

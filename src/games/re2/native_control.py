@@ -21,8 +21,14 @@ GOTO_FF_IF_BASE = IF_FRAME_BASE + 0x400
 
 def goto_if_cell(task: int, depth: int) -> tuple[int, int]:
     """Return the receiving task/offset of FF IF-pointer's next target store."""
+    return if_store_cell(task, depth, GOTO_FF_IF_BASE)
+
+
+def if_store_cell(task: int, depth: int, pointer: int) -> tuple[int, int]:
+    """Resolve a shared-walker IF pointer at its actual native task/depth."""
     assert 0 <= task < 14 and 0 <= depth < NATIVE_CALL_FRAME_COUNT
-    displacement = task * TASK_WIDTH + GOTO_FF_IF_BASE + depth * IF_FRAME_WIDTH
+    assert type(pointer) is int and pointer >= 0
+    displacement = task * TASK_WIDTH + pointer + depth * IF_FRAME_WIDTH
     return divmod(displacement, TASK_WIDTH)
 
 

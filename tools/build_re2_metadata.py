@@ -544,6 +544,13 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
         condition_flags,
     )
     for room in rooms:
+        if access_policy is DoorPolicy.TrustedNormalEngine:
+            # Seal fresh decoder fields before item-presence annotations replace
+            # them. Neither those annotations nor Reset-origin enrichment can
+            # supply door-entry authority.
+            access_catalog = door_access_catalog(
+                sources[room["id"]], room, profile, bound
+            )
         room["event_awards"] = awards[room["id"]]
         scope = (
             scenario_entry_scope(sources[room["id"]], room, profile, scenario_context)
@@ -864,12 +871,10 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             # Reset-derived identities require the same revision capability as
             # positive puzzle targets; other profiles keep their raw catalog.
             del room["reset_item_variants"]
-        # Door authority consumes raw decoded Reset records before the
-        # candidate-only companion adds origin metadata to those records.
         if access_policy is DoorPolicy.TrustedNormalEngine:
-            room["door_access_catalog"] = door_access_catalog(
-                sources[room["id"]], room, profile, bound
-            )
+            # Publish at the existing location so item compiler inputs and the
+            # serialized room field order remain independent of door authority.
+            room["door_access_catalog"] = access_catalog
         if isinstance(reset_config, ResetCandidateConfig):
             room.update(
                 compile_reset_candidates(

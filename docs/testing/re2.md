@@ -763,3 +763,87 @@ replay commands above; no purged temporary file is required. Independent reader
 interaction evidence is in `2026-11-12-trusted-door-reader-review/combined/`.
 Configured Claude Opus 5.5 is disabled and the fresh Gemini 3.8 Flash request
 fails to open its provider session. Neither provides an endorsement.
+
+## Six-row door-entry validation
+
+[RE2-DOOR-010](../research/re2/immutable-doors.md#re2-door-010-unchanged-neutral-entries-admit-six-additional-doors)
+adds a separate compiler-owned door-entry binding over the exact clean base
+`67614582e65d1c71a05f94eeb004e22bc0daeea0`. Set
+`RE_MAP_RE2_OWNED_CUE='/Users/adamekka/Games/DuckStation/Resident Evil 2 - Dual Shock Ver. (Disc 1) (Leon).cue'`
+and use `/Users/adamekka/.cache/re-map/verification-venv/bin/python`.
+
+The three initial owned-source factory tests fail before implementation at
+`goto_receiving_frame_consumer`. The final 43 entry tests check all six exact
+rows, the competing slot, every 125-source supported/excluded/unsupported result,
+all unchanged neutral results and all 7,844 existing control-role walks.
+Independent expected baseline hashes come from the clean base. Exact-type,
+receipt mirror, policy/profile/JSON, native/corpus/auxiliary/ingress and source
+mutations fail atomically. Unentered producer/callback/Gosub tests retain actual
+tasks and depths; the complete 54-auxiliary pass retains both task 13 writer
+roles and all 126 Break reads. Existing source/Copy, call-return, foreign-cell,
+yield, Break, Guard/default-positive/registration and fresh-reader tests remain
+in the focused selection. The explicit owned-CUE selection passes 1,392 tests. The full Python suite passes
+7,858 tests in 208.71 seconds with that CUE set; no earlier separate feature runs
+are presented as a combined result.
+
+Run the focused entry/domain checks with:
+
+```sh
+python -m pytest -q tests/test_re2_door_entry.py tests/test_re2_trusted_doors.py tests/test_re2_door_control.py tests/test_re2_positive_entry_domain.py tests/test_re2_identity_filtering.py tests/test_re2_ordinary_task_ingress.py
+```
+
+The complete focused command and logs are retained privately with the full
+Python, lint, formatting, link and whitespace results. The four shared browser
+suites cover map behavior, door alternatives, fresh unlock cues and staircase
+geometry. Synthetic visits remain separate from README input and real history.
+
+Generate the complete owned metadata twice using
+`tools/build_re2_metadata.py <owned-cue> <private-rooms> <private-floors> --profile profiles/re2_leon_a_slus00748.json`.
+The generator must compile the door binding before item-presence annotations
+replace decoder fields, then publish at the existing JSON location. Its first
+attempt exposed and rejected loss of 27 old facts in the enriched-input path.
+Moving compilation earlier preserves the strict fresh-decode check, every item
+compiler input and serialized field order. No partial or corrected-by-hand
+catalog qualifies the required complete-generation check. The final comparison
+checks the entire JSON delta, every catalog against the fresh public compiler
+census, both complete output pairs, unchanged floor bytes and equality to the
+exact metadata used by the test suites. Both final complete outputs are byte-identical.
+Rooms SHA256 is `3cedb8cfd583617b3437406df5111326c04a19242aba58cc0eca25a176f4225e`;
+floors retain `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+All 258 JSON leaf/list changes are confined to door policy and access catalogs.
+
+Use the authorized copied-RAM script
+`~/.cache/re-map/evidence/2026-11-12-leon-a-save-replay/replay.py --checkout <checkout> --output <new-private-report>`.
+Compare to the supplied identity/staircase integrated replay. Nine current-only
+or actually observed-source publications remain entirely equal. Each of six
+simulated 125-source publications changes exactly the six added door observations
+from Unchecked to Open, with no added/removed observations. Only the two newly
+complete door summaries change in sources `00-1b`/`02-08`. Every item, completion,
+pose, visit, other Tracker field and memory-read request/byte count agrees.
+The simulated diagnostic remains 70 Cleared/21 Incomplete/34 Unknown rooms and 67
+Unknown item rows. Reverse order and fresh reconstruction agree. This is offline
+reader evidence, without a new native restore, gameplay or memory-card claim.
+
+Rebuild README input with the existing private
+`freeze_combined_publication.py --checkout <checkout> --output <new-private-fixture>`
+from the identity/staircase integration evidence. It hashes all three copied
+RAMs. The reproduced fixture is byte-identical, SHA256
+`696eaa68dcf5e31f10a3a28ec44d9ea018a2758193a07af1b74c7c101834b9b9`.
+Render it using
+`bun tests/render_re2_readme_map.mjs <verification-python> <explicit-fixture> <private-output-directory>`
+with the supplied `NODE_PATH`. Desktop, mobile and both tablet layouts pass.
+The rendered desktop PNG equals the existing README image byte for byte,
+SHA256 `cdeecce390de12c0304e2ce1d877b170c0091443188aa90ccbe96ba241a24f16`.
+The fixture and image remain unchanged. No synthetic-visit render becomes a
+README fixture or production fallback.
+
+Private durable evidence is under
+`~/.cache/re-map/evidence/2026-11-12-door-entry-six-implementation/`.
+It retains the rejected generation/replay, corrected task/test assumptions,
+missing catalog-pin failure, all final commands, exact model metadata, manifests,
+full JSON/catalog deltas and copied-RAM/publication reports. Local implementation
+review checks factory ownership, native/source/auxiliary binding, unchanged
+rights, all 125 consequences, coherent reversal and publication preservation.
+Exact executing model is `gpt-6.1-sol`, effort `xhigh`, verified from matching
+session/turn metadata. Independent/external review and integration remain with
+the parent. No external endorsement or new gameplay confirmation is supplied.

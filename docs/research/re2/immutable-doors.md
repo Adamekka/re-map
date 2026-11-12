@@ -391,3 +391,109 @@ complete generations agree byte for byte and preserve every pre-existing item
 field and every floor byte. Final private artifacts are under
 `2026-11-12-trusted-door-integration/`; the independent shared-code review is in
 `2026-11-12-trusted-door-integration-final-review/`.
+
+## RE2-DOOR-010: unchanged neutral entries admit six additional doors
+
+Status: Candidate for Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748,
+Leon A, Original/Normal. This is owned-source/native inspection and offline
+reader validation, without new gameplay or native savestate restoration.
+The executable remains SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+No DuckStation version is newly tested. The three read-only copied version94
+RAM inputs retain the extraction provenance recorded in RE2-DOOR-009.
+
+The exact clean implementation base is
+`67614582e65d1c71a05f94eeb004e22bc0daeea0`. The unsealed November12
+`door-goto-entry-research` proposal identified seven formerly Goto-blocked slots
+already admitted by the unchanged `SourceEntryPolicy.Existing` analysis. This
+increment seals that analysis separately for doors. It adds no broader stage-A
+traversal, Member_cmp, atomic-token, retained-IF Goto, source/effect/Copy opcode
+permission or geometry change.
+
+| Source | Slot | Creator byte offset | Target stage/room/floor |
+| --- | --- | --- | --- |
+| `00-1b` | 0 | 2282 | `00-1a`, 0 |
+| `00-1b` | 1 | 2314 | `00-03`, 3 |
+| `01-04` | 0 | 6366 | `01-01`, 0 |
+| `01-04` | 1 | 6398 | `01-05`, 0 |
+| `02-08` | 0 | 2450 | `01-1b`, 0 |
+| `02-08` | 1 | 2482 | `02-00`, 0 |
+
+All six have enabled SAT low mask `0x31`, activation floor zero and no key lock.
+The seventh slot, `01-04/2`, creator 6430, retains a competing non-door origin.
+Across all 125 sources, facts increase 114→120, covered creators 124→130 and
+unsupported slots 165→159. Eleven excluded creators remain excluded. The other
+122 source results, every previous fact and every exclusion are unchanged.
+The seventh slot's diagnostic becomes `competing_non_door_origin`; no unsupported
+slot gains partial authority. Items and room clearance gain no authority.
+Marker coverage stays 242/321, with 79 raw creators missing markers. Five added
+facts already have markers; `02-08:2450` does not. Accepted-access creators
+without markers increase 31→32. No marker or geometry is invented.
+
+The mandatory public door factory derives a separate compiler-owned exact-type
+binding from the complete 69-resource/125-source/54-auxiliary tuple, executable,
+semantic profile and fresh raw source decode. The shared typed binding digest
+remains `727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+Positive domains, Guard/filtering/registration receipts, raw JSON and matching
+receipt mirrors cannot construct or replace the binding. The existing neutral
+source and full auxiliary consumer analyses keep their inputs, outputs and
+permissions. Failed neutral analysis remains explicit and retains the existing
+door receiving-frame restriction. There is no retry through broader semantics.
+
+All ordinary producers contribute their actual task/depth roots, including
+unentered EventExec and every kind 5 creator/Reset alternative. Phase zero stays
+within tasks 0..9; selectors 10 and above mean ordinary AUTO 2..9. Gosub preserves
+task and adds depth. Both domains use the existing native-control arithmetic
+and structured walker. Existing call/return, foreign-cell, yield, Break and
+four-frame restrictions remain unchanged. The full auxiliary Copy/writer proof
+is rerun, retaining 126 Break consumers at offset `0x60` and 51 escaped writers:
+47 numeric task 13+`0xA4` cases and four task 13+`0x84` cases with no task 13 entry.
+No sampled inactive flag replaces those obligations.
+
+The whole-executable direct JAL census reproduces the eight installer callers
+at PS1 virtual addresses `0x80013E28`, `0x800519A8`, `0x8005322C`, `0x800535E0`,
+`0x80053600`, `0x800536A4`, `0x8005388C`, `0x800538C4`. Pinned native windows
+bind installer/initialization, kind 5 dispatch, IF/ELSE/ENDIF, CMP,
+Goto/Gosub/Return/Break and ordinary dispatch. The actual IF/CMP native graphs
+close without a cooperative yield. These are normal-engine source contracts,
+not a claim excluding arbitrary computed calls or corrupted execution.
+Native task fields use u32LE IF targets and Break reads, full mask `0xFFFFFFFF`,
+within task records of width `0x174`; the shared canonical/escaped IF bases remain
+`0xC0`/`0x4C0` with depth stride `0x20`. Source creator/Copy locations are byte
+offsets, never host or PS1 virtual addresses.
+
+The explicit door policy moves to `slus00748-trusted-normal-door-access-v2` with
+entry audit `slus00748-existing-neutral-door-entry-v1`. Including that field in
+the complete semantic profile changes its pin from
+`561e1a35af80fabb58887271476861ab9322f2e5c1525c3b52806bc2520b699c` to
+`907c37e906f12eee11a67cbd2da25679d7b753dc23d90fff872a832f855cbf23`.
+Both door and independent identity-filtering profile pins are refreshed. No
+semantic field is omitted and no legacy pin is accepted. The corrected raw
+source/item/competing-door/Reset identity catalog binding is unchanged.
+The complete door catalog pin becomes
+`a16d04fadbde5ea55d1e8be0b81d5f6fab53dcf4ff47526d04b957ae532423af`;
+the mandatory reader continues to reject changed facts, gaps or exclusions.
+
+Reproduction, checked artifact hashes, failed test-harness assumptions and
+reader/publication consequences are recorded in
+[door-entry validation](../../testing/re2.md#six-row-door-entry-validation).
+Private durable evidence is under
+`~/.cache/re-map/evidence/2026-11-12-door-entry-six-implementation/`.
+The original unsealed research and its authorship remain untouched. Its
+broader 34-row proposal remains separate and unimplemented.
+
+Contribution, 2026-11-12: the implementation agent authors the bounded binding,
+regressions, measurements, local review and this record. Matching executing
+session/turn metadata verifies exact model `gpt-6.1-sol`, effort `xhigh`.
+The human supplied the normal-engine trust decision; earlier research and the
+parent's copied-RAM evidence are separate inputs. Local review checks exact
+factory ownership, full source/native/auxiliary binding, unchanged grant domains,
+all catalog consequences, fresh reader reversal and publication preservation.
+Independent/external review and integration remain with the parent; this
+contribution supplies no external endorsement or gameplay confirmation.
+
+Parent review and verification, 2026-11-12: root and two independent reviewers, all separately verified executing model `gpt-6.1-sol`, effort `xhigh`, inspect the bounded feature. `review_door_entry_core` checks the actual owned69/125/54 binding, native installer phases, eight callers, task/frame arithmetic, all54 auxiliary writer/consumer obligations and unchanged Existing source/control roles. Its43 focused tests pass, including all125 catalogs and7,844 prior walks. `review_door_entry_consumers` checks generator/loader/profile pins, fourteen metadata rejection probes, six focused tests and a fresh fifteen-publication replay. Nine actual/current publications stay equal; six simulated publications change six door observations and two derived door summaries only. Raw descriptors, item/clearance state, pose, visits, read metrics and README bytes remain unchanged. Neither reviewer returns a verified actionable finding. Their durable reports are under `2026-11-12-door-entry-core-independent-review/` and `2026-11-12-door-entry-consumer-review/`.
+
+Root adds a why comment for the delayed policy import that avoids a module-initialization cycle; the complete Python AST is unchanged. The final owned-CUE43-test run passes in14.87seconds, with scoped Ruff/formatting on all9 changed Python files, local documentation links and whitespace checks. The retained7,858 full-suite and1,392 focused implementation results, two identical complete generations and browser/README checks apply to the same executable semantics. Configured Claude Opus5.5 is disabled; the fresh Gemini3.8Flash high review fails to open its provider session. Neither supplies an external endorsement. Exact reviewed file hashes, AST check, external failure and integration evidence are retained in `2026-11-12-door-entry-six-integration/`. These checks add no native gameplay or restoration observation.
+
+Main-checkout integration, 2026-11-12: all385 selected door-entry, trusted-door and profile tests pass in30.53seconds. Root compares every non-door field in all125 sources, preserves every prior fact and exclusion, and reproduces exactly the six new facts. Both complete generated room/floor pairs match main byte-for-byte. All fifteen fresh main publications and read plans equal the reviewed implementation result. Rebuilding the README fixture from the same three verified copied RAM inputs is byte-identical, as are the existing PNG and floor catalog. The private `root-main-comparison.json` and `root-main-focused.txt` record these final checks. Items, clearance, pose and visits remain outside this new authority.

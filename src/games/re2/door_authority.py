@@ -11,6 +11,12 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
+from games.re2.door_entry import (
+    DOOR_ENTRY_AUDIT,
+    DoorEntryFailure,
+    _DoorEntryBinding,
+    compile_door_entry_binding,
+)
 from games.re2.normal_engine_binding import (
     NORMAL_ENGINE_BINDING_SHA256,
     semantic_profile_digest,
@@ -38,9 +44,9 @@ from games.re2.startup_declarations import (
     startup_flag_banks_match,
 )
 
-DOOR_AUDIT = "slus00748-trusted-normal-door-access-v1"
+DOOR_AUDIT = "slus00748-trusted-normal-door-access-v2"
 # Policy rights belong to this exact semantic profile, independent of packaging paths.
-DOOR_PROFILE_SHA256 = "561e1a35af80fabb58887271476861ab9322f2e5c1525c3b52806bc2520b699c"
+DOOR_PROFILE_SHA256 = "907c37e906f12eee11a67cbd2da25679d7b753dc23d90fff872a832f855cbf23"
 _HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
 
@@ -58,6 +64,7 @@ def door_policy(profile: dict) -> DoorPolicy:
         != {
             "audit": DOOR_AUDIT,
             "executable_sha256": SCENARIO_EXECUTABLE_SHA256,
+            "entry_audit": DOOR_ENTRY_AUDIT,
         }
         or profile["profile_id"] != "re2_leon_a_slus00748"
         or profile["executable_identity"].rpartition(" SHA256 ")[2]
@@ -89,6 +96,7 @@ class DoorAuthority:
     reached: frozenset[tuple[str, int]]
     must_registered: frozenset[int]
     fixed_flags: tuple[tuple[int, int, int], ...]
+    entry_binding: _DoorEntryBinding
     _binding: tuple
 
     def __init__(self, *args, **kwargs):
@@ -178,6 +186,9 @@ def compile_door_authority(
             return DoorFailure("native_resource_binding")
         if not bound.ordinary_ingress.covers(data, room):
             return DoorFailure("native_ingress_binding")
+        entry_binding = compile_door_entry_binding(data, room, profile, bound)
+        if type(entry_binding) is DoorEntryFailure:
+            return DoorFailure(entry_binding.value)
         graph = _source_scope_facts(
             data,
             room,
@@ -185,6 +196,7 @@ def compile_door_authority(
             context,
             _ScopePolicy.TrustedDoors,
             TaskControlSupport.Unaudited,
+            entry_binding,
         )
         if type(graph) is DoorSourceFailure:
             return DoorFailure(graph.reason)
@@ -237,6 +249,7 @@ def compile_door_authority(
             graph.reached,
             must,
             _HISTORICAL_FLAGS,
+            entry_binding,
         )
     except (KeyError, IndexError, ValueError, TypeError):
         return DoorFailure("input_binding")

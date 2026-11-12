@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from games.bit_flags import msb_flag_location
+from games.re2.door_entry import _DoorEntryBinding
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
     flag_write_conflicts,
@@ -383,6 +384,7 @@ def _source_scope_facts(
     policy: _ScopePolicy,
     control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
     entry_domain: _PositiveEntryDomain
+    | _DoorEntryBinding
     | _SourceEntryRoles
     | _SourceEffects = _SourceEffects.Existing,
 ) -> _SourceScopeFacts | DoorSourceFacts | DoorSourceFailure | ScenarioSelectionFailure:
@@ -413,7 +415,15 @@ def _source_scope_facts(
                 and control.matches(data, room, context)
             )
         closed_entries = type(entry_domain) is _PositiveEntryDomain
-        if closed_entries:
+        door_entries = type(entry_domain) is _DoorEntryBinding
+        if door_entries:
+            require(
+                door_policy
+                and entry_domain.matches(
+                    data, room, profile, context.declaration_contract
+                )
+            )
+        elif closed_entries:
             require(policy is _ScopePolicy.TrustedPositivePrefix)
             require(
                 entry_domain.source_data == data
@@ -985,6 +995,16 @@ def _source_scope_facts(
             if door_policy:
                 for at in frames.reached:
                     if commands[key][at]["opcode"] != 0x17:
+                        continue
+                    if (
+                        door_entries
+                        and type(entry_domain.source) is _SourceEntryRoles
+                        and (key, program["entry"])
+                        in entry_domain.source.entry_locations
+                    ):
+                        # Only the separately sealed unchanged neutral roles
+                        # close these receivers. Door traversal, source effects,
+                        # creators, Reset and registration retain their checks.
                         continue
                     # FF Goto computes an escaped IF pointer. This door recipe
                     # permits no subsequent consumer of that pointer, unlike
