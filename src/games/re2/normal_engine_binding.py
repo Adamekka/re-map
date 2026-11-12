@@ -13,6 +13,20 @@ NORMAL_ENGINE_BINDING_SHA256 = (
     "727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8"
 )
 
+# These are the raw decoded inputs to source-effect ownership. Later compilers
+# replace derived presence/quantity fields; those are not decoder witnesses.
+OWNED_SOURCE_FIELDS = (
+    "sha256",
+    "size",
+    "cameras",
+    "section_offsets",
+    "items",
+    "doors",
+    "reset_item_variants",
+    "candidate_list_complete",
+    "programs",
+)
+
 
 def typed_binding_digest(value: object) -> str:
     def encode(value):

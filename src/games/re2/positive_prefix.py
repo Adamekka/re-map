@@ -17,6 +17,12 @@ from games.re2.normal_engine_binding import (
 )
 from games.re2.ordinary_task_ingress import VerifiedOrdinaryTaskIngress
 from games.re2.positive_entry_domain import _positive_entry_domain, _PositiveEntryDomain
+from games.re2.positive_pickup_roles import (
+    PickupRolesFailure,
+    PickupRolesSupport,
+    _PositivePickupRoles,
+    positive_pickup_roles,
+)
 from games.re2.scenario_entry_scope import (
     _ScopePolicy,
     _source_scope_facts,
@@ -41,7 +47,7 @@ from games.re2.startup_declarations import (
 )
 from games.re2.startup_entry_selection import BoundEntryResources
 
-POSITIVE_PREFIX_AUDIT = "slus00748-trusted-normal-positive-prefix-v1"
+POSITIVE_PREFIX_AUDIT = "slus00748-trusted-normal-positive-prefix-v2"
 _HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 
 
@@ -95,6 +101,9 @@ class _PositivePrefixDerivation:
     entry_domain: _PositiveEntryDomain | _SourceEffects = field(
         default=_SourceEffects.Existing, kw_only=True
     )
+    pickup_roles: _PositivePickupRoles | PickupRolesSupport = field(
+        default=PickupRolesSupport.Existing, kw_only=True
+    )
 
 
 @dataclass(frozen=True)
@@ -117,6 +126,7 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
             self.historical_flags,
             self.call_frames,
             entry_domain=self.entry_domain,
+            pickup_roles=self.pickup_roles,
         )
         assert type(self.resources) is BoundEntryResources
         assert type(self.resources.executable) is bytes
@@ -170,6 +180,12 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
             positive_prefix_policy(profile) is PositivePrefixPolicy.TrustedNormalEngine
         )
         assert startup_flag_banks_match(profile, self.context.declaration_contract)
+        assert type(self.pickup_roles) is _PositivePickupRoles
+        assert self.pickup_roles == positive_pickup_roles(
+            self.source_data, room, profile, self.pickup_roles.bound
+        )
+        assert self.pickup_roles.bound.entry_resources == self.resources
+        assert self.pickup_roles.bound.declarations == self.context.declaration_contract
         assert profile["runtime_layout"]["system_mode_mask"] == 0x40
         assert profile["runtime_layout"]["system_mode_value"] == 0x40
         assert type(self.source_data) is bytes
@@ -194,6 +210,7 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
             _ScopePolicy.TrustedPositivePrefix,
             TaskControlSupport.Unaudited,
             self.entry_domain,
+            pickup_roles=self.pickup_roles,
         )
         assert type(facts) is _SourceScopeFacts
         assert (
@@ -286,6 +303,13 @@ def normal_engine_positive_prefix(
             and profile["runtime_layout"]["system_mode_value"] == 0x40
         ):
             return PositivePrefixFailure.Binding
+        pickup_roles = positive_pickup_roles(data, room, profile, bound)
+        if isinstance(pickup_roles, PickupRolesFailure):
+            return (
+                PositivePrefixFailure.Binding
+                if pickup_roles is PickupRolesFailure.Binding
+                else PositivePrefixFailure.Source
+            )
         facts = _source_scope_facts(
             data,
             room,
@@ -293,6 +317,7 @@ def normal_engine_positive_prefix(
             context,
             _ScopePolicy.TrustedPositivePrefix,
             TaskControlSupport.Unaudited,
+            pickup_roles=pickup_roles,
         )
         entry_domain = _SourceEffects.Existing
         if isinstance(facts, ScenarioSelectionFailure):
@@ -310,6 +335,7 @@ def normal_engine_positive_prefix(
                 _ScopePolicy.TrustedPositivePrefix,
                 TaskControlSupport.Unaudited,
                 entry_domain,
+                pickup_roles=pickup_roles,
             )
             if isinstance(facts, ScenarioSelectionFailure):
                 return PositivePrefixFailure.Source
@@ -330,6 +356,7 @@ def normal_engine_positive_prefix(
             ),
             NATIVE_CALL_FRAME_COUNT,
             entry_domain=entry_domain,
+            pickup_roles=pickup_roles,
         )
         return VerifiedNormalEnginePositivePrefix(
             derivation.resources,
@@ -346,6 +373,7 @@ def normal_engine_positive_prefix(
             derivation.call_frames,
             derivation,
             entry_domain=derivation.entry_domain,
+            pickup_roles=derivation.pickup_roles,
         )
     except (KeyError, IndexError, TypeError, ValueError):
         return PositivePrefixFailure.Binding

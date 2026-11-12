@@ -171,7 +171,7 @@ def direct_pickup_packet(
     """Recognize a direct ordinary declaration, without reachability proof."""
     assert type(packet) is bytes
     assert type(pickup_flags) is frozenset and all(
-        type(value) is int and value in (0, 1) for value in pickup_flags
+        type(value) is int and value in (0, 1, 0xA0) for value in pickup_flags
     )
     return (
         len(packet) == 22

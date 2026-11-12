@@ -7,7 +7,7 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
-from games.re2.native_control import native_bytes
+from games.re2.native_control import EFFECT_CLEANUP_NATIVE, native_bytes
 from games.re2.normal_engine_binding import (
     NORMAL_ENGINE_BINDING_SHA256,
     semantic_profile_digest,
@@ -44,7 +44,7 @@ from games.re2.startup_declarations import (
 
 IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v1"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "907c37e906f12eee11a67cbd2da25679d7b753dc23d90fff872a832f855cbf23"
+    "75d8d14834c74a0769de808a689293f8fe262dd3f2fc972af27a2c4b7fee8aa7"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
     "11fd9074594ed0e455417a05d93d610bb6c59ef49a81208be3fa9f764b4b4a9f"
@@ -231,11 +231,7 @@ _NATIVE_WINDOWS = (
         0x1A0,
         "41b5ef3b54bb7541d8fb6880233c0dd550bf8782166e9b8a48a6a3d69a1b51cc",
     ),
-    (
-        0x8001CEFC,
-        192,
-        "4bf9ba0e9b571f695041a93ca1726c8e89781d62797956b69570da95d43cc437",
-    ),
+    EFFECT_CLEANUP_NATIVE,
     (
         0x800592F8,
         0x20,

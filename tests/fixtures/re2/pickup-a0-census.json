@@ -1,0 +1,19 @@
+{
+  "claim": "RE2-STARTUP-009",
+  "prepared_base": "67614582e65d1c71a05f94eeb004e22bc0daeea0",
+  "native_binding_sha256": "727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8",
+  "sources": 125,
+  "accepted_factories": 35,
+  "factory_query_sha256": "a315cee5d4afd4f70ef23b08be1805d8320dd3a24537cab14bb86adb8658ce64",
+  "new_byte_role_sources": [
+    "00-05"
+  ],
+  "new_public_direct_items": {
+    "00-05": [
+      4
+    ],
+    "00-0f": [
+      38
+    ]
+  }
+}

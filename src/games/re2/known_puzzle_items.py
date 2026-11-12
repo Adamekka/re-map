@@ -29,6 +29,7 @@ from games.re2.nonchoice_messages import (
     nonchoice_message_proofs,
 )
 from games.re2.positive_entry_domain import _PositiveEntryDomain
+from games.re2.positive_pickup_roles import _PositivePickupRoles
 from games.re2.positive_prefix import VerifiedNormalEnginePositivePrefix
 from games.re2.room_data import reset_item_variants
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
@@ -555,6 +556,10 @@ def _known_declared_items(
         # audited alternate pickup controller. Older native contracts retain
         # their original flag-zero declaration domain.
         pickup_flags = frozenset((0, 1)) if scoped else frozenset((0,))
+        if trusted and type(positive_prefix.pickup_roles) is _PositivePickupRoles:
+            # A0 retains the ordinary controller and adds bounded effect
+            # cleanup only after acceptance. Cancellation grants no collection.
+            pickup_flags = pickup_flags | {0xA0}
         if isinstance(declaration_contract, VerifiedStartupDeclarationContract):
             selection = declaration_contract.selection
             require(

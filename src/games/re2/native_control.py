@@ -18,6 +18,15 @@ IF_FRAME_WIDTH = 0x20
 # fresh task initialization instead installs the canonical IF_FRAME_BASE.
 GOTO_FF_IF_BASE = IF_FRAME_BASE + 0x400
 
+# Neutral initialized-effect cleanup semantics, shared by distinct policies.
+# This window compares kind/filter/reference across 96 owned stride-7C records;
+# it never uses those arguments as array indices or source/task destinations.
+EFFECT_CLEANUP_NATIVE = (
+    0x8001CEFC,
+    192,
+    "4bf9ba0e9b571f695041a93ca1726c8e89781d62797956b69570da95d43cc437",
+)
+
 
 def goto_if_cell(task: int, depth: int) -> tuple[int, int]:
     """Return the receiving task/offset of FF IF-pointer's next target store."""

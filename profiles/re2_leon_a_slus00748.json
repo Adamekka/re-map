@@ -2330,7 +2330,7 @@
     }
   },
   "positive_prefix_policy": {
-    "audit": "slus00748-trusted-normal-positive-prefix-v1",
+    "audit": "slus00748-trusted-normal-positive-prefix-v2",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
   },
   "identity_filtering_policy": {

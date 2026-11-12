@@ -161,3 +161,284 @@ the independent review is in `2026-11-12-positive-entry-final-review/` alongside
 it. Root and the independent reviewer verify exact executing model
 `gpt-6.1-sol`, effort `xhigh`. These checks add no native gameplay or save-restore
 confirmation and leave the full source-coverage gaps open.
+
+## RE2-STARTUP-009: ordinary A0 pickup presence and owned actor reinitialization
+
+Status: Candidate for Resident Evil 2 Dual Shock Ver., USA Disc 1,
+SLUS-00748, Leon A, Original Game, Normal. This is owned-source/native
+inspection, bounded copied CPU execution and reader verification. It adds no
+native gameplay, actual room visit, pickup, savestate restoration or memory-card
+persistence confirmation. Historical DuckStation `0.1-12083-g00e299795`, commit
+`00e2997958d62de79d352cd680ec0c1ad95f491c`, is not launched or retested.
+
+The prepared base is `67614582e65d1c71a05f94eeb004e22bc0daeea0`.
+The owned `SLUS_007.48` executable SHA256 remains
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+The complete binder still consumes 69 resources, 125 sources and 54 auxiliary
+scripts, with typed native binding
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+The human separately approved normal initialized unmodified native execution
+for presence. That premise supplies ordinary native ownership, without an
+arbitrary renderer/heap/DMA theorem. Source-selected state, entries, creators,
+Resets, callbacks, source writes and fresh acquisition remain separate checks.
+
+### Native pickup and cleanup boundary
+
+The shared ordinary packet predicate retains flag-zero defaults and explicit
+low-flag `{0,1}` behavior. Only the new bound positive-prefix role admits exact
+flag `A0`. Flags `A1`, `80` and `02` gain no right. Nonempty geometry, SAT31,
+kind2, amount, slot bounds and the shared prefix/identity checks still apply.
+
+Addresses below are PS1 virtual addresses. Words and halfwords are little
+endian; byte fields have mask `FF` and no byte-order conversion.
+
+| Native role | Inspected behavior |
+| --- | --- |
+| Kind2 `0x80051884..0x80051940` | Reads payload byte7 at `0x800518CC`; mask01 selects UI versus animation. A0 takes ordinary UI. The type-specific amount store leaves type/GID intact and supplies no new quantity proof. |
+| Selected owner `0x800CE5D8` | u32LE source-descriptor pointer, distinct from task Work and the current-interaction pointer. Rectangular SAT31 selects descriptor payload+12; its GID is u16LE payload+4. |
+| UI `0x80071EB4..0x800724EC` | Ordinary cancellation returns before descriptor removal/acquisition/cleanup. Acceptance rereads the owned payload and writes its actual GID through `0x8007730C`. Disabled interaction or cancellation does not establish collection or absence. |
+| Acceptance `0x80072388..0x800723D0` and `0x80072BB4..0x80072BF0` | Each rereads exact byte7, masks80/60 and maps A0 to kind5/filter15. The third argument is `0x800D0348 + objectIndex * 0x1F8`, a comparison reference. It is not dereferenced by cleanup. |
+| Cleanup `0x8001CEFC..0x8001CFBC` | Scans exactly96 owned records at stride7C in `[0x800D8CF0,0x800DBB70)`. It compares u8 kind+1C/filter+1E and u32LE reference+6C. Matches clear u8+0/+1 and u16LE+18 only. |
+
+Cleanup SHA256 is
+`4bf9ba0e9b571f695041a93ca1726c8e89781d62797956b69570da95d43cc437`.
+The implementation extracts only this neutral native fact for reuse by
+identity filtering and presence. Neither capability converts into the other.
+The complete executable identity and owned archive binding select the
+inspected semantics; a matching prose report or hand-made receipt does not.
+
+For source `00-05`, creator4616 registers slot2/type88/amount1/GID4 with
+packet `4e020231000096c98ec22003140558000100040000a0`. It precedes all
+later effects and Gosub4762. There is no item Reset, competing slot2 creator,
+Copy, kind5 callback or scripted47. The door Reset5072 belongs to slot0 and
+retains its existing obligation. Source SHA256 is
+`540d9620e05dcf0a73a3771d51ac47a0812f2d11ca0be768acdfb1b8258b0114`.
+Fresh acquisition for ID4 is bank8, u32LE `0x800D489C`, mask `08000000`.
+The four historical context conditions stay `1:0=0`, `1:1=0`, `1:6=0`,
+`0:25=1`; current RAM cannot replace their entry-history meaning.
+
+### Owned byte-state boundary
+
+Member table `0x80011228`, u32LE entries2/3/4/31, selects native setters
+`0x80055CE4`, `0x80055CEC`, `0x80055CF4`, `0x80055DCC`. Each writes
+one owned Work byte, at +4/+5/+6/+14E respectively, through the common
+`0x80055CB0` handler. A bounded destination alone does not establish valid
+future routine dispatch.
+
+The added source role therefore admits only a complete, uninterrupted frame
+reinitialization recipe. An immediately enclosing bank6 acquisition-clear test
+must match a unique leading unconditional startup model10 constructor.
+`Work_set 3/slot` must select that constructor's signed-positive enemy slot
+below32. Its literal sequence sets member7=0, member2=1, member3=13,
+member4=0, member5=0, absolute position/direction, then member31=0.
+All new operands are explicit u16LE literals with high byte zero. Counter-fed
+Member_set and Member_copy gain no additional selector right.
+
+In the actual source, constructors4680/4702 own slots1/2, guarded by
+bank6 bits26/27. Native Work selection `0x80055904..0x800559D0` reads the
+owned u32LE pointer table at `0x800CFE1C + slot*4`; constructor
+`0x8005714C..0x80057714` establishes that slot's per-room actor record.
+An acquisition-set constructor skip cannot be borrowed as an allocated owner.
+Physical flag aliases are checked. Counter/member and kind6 writers are
+outside this bounded role and reject in every program.
+All source Copies retain the existing operand rules, with the relied-upon
+flag-test bytes additionally protected. No counter, Work pointer or actor
+state is silently initialized by the tracker.
+
+Both model10 code images come from the fully pinned owned
+`PL0/PLD/CDEMD0.EMS` archive. Native resource entries0/1, at
+`0x8009ADF4 + index*8`, bind sectors0/26, width53068 each, and physical
+load bases `0x8010D000`/`0x80100000`. Their SHA256 values are
+`bd2c05f70cbf1088404cf583ff970f5f0d5d8b7ee05d32d027cd1c3def88bbdb`
+and `7115c0ad492f63c53ce1e3a0db99081c62b0a0ab3e7f7d51a71ffc99c5e2959c`.
+Native loader `0x8001B710..0x8001B934` selects resource
+`(model-0x10)*4+1-pool` and destination `0x80100000+pool*0xD000`
+for pool0/1; the fresh loader disassembly is retained separately.
+Relative to either base, primary1 dispatches to +114C, cleared preset0 to
++118C, and secondary13 to +4920/+4928. The first is a native no-op preparer;
+the second writes literal1 to Work+4 and reinitializes the ordinary actor
+controller. It also overwrites the motion word at Work+14C, containing byte
++14E. Presets0/6 are separately inspected legitimate initial states; preset6
+initialization sets state0101. Other constructor presets and arbitrary byte
+states receive no new right. These are valid owned actor-code entries, not
+new SCD roots or source callbacks.
+
+The existing structured-frame compiler supplies all edges. Each recipe must
+have no incoming edge or entry bypassing its guard/Work selection. Every
+new byte-member use, including in otherwise unentered programs, must be
+accounted for. New actor roles reject task births/replacements, Goto,
+scripted47, kind5 callbacks and other unaccounted Work/member writers.
+The original source/control/write compiler still checks every program and
+creator/Reset alternative. No source name, item name, actor slot number or
+room-specific dispatch exception grants permission.
+
+### Authority and verification scope
+
+Positive-prefix audit v2 explicitly opts this revision into the new roles.
+The owned factory and immutable constructor recompute the raw source roles,
+native witnesses and full semantic-profile binding. They grant no partial
+capability after a failed proof. Default, strict-entry, Guard, door, identity
+and registration APIs keep their separate domains. The shared prefix walker
+and ordinary packet predicate derive positive items; no new item walker was
+introduced.
+
+Raw source fields have one shared binding definition, including complete
+selected/competing item, door and Reset semantics and executable programs.
+The entire supplied room/profile JSON is still retained for consumption
+matching. Generated presence/quantity fields are derived compiler outputs,
+not initial decoder witnesses. The first complete generation exposed an
+overly broad comparison against those derived fields, dropping seven existing direct-item records in six rooms. That result was rejected, the obsolete second run stopped, and
+the check corrected to the existing shared raw-source boundary. Regression
+cases retain all seven records and reject raw-item mutations. The original
+identity catalog pin remains bound before loader normalization.
+
+The raw 125-source census adds one factory, `00-05`, deriving exactly direct
+ID4 and canonical registration slots0/1/2/3. The existing `00-0f` public
+positive query also gains A0 ID38; its prior ID139 remains. ID38 has no independent
+startup declaration; its existing conditional required rule already supplies
+presence. The additional direct-item record leaves its retained-RAM state Taken.
+All prior scope/default-query/registration results compare equal. The complete
+A0 creator census and final generated/replay consequences are recorded in the
+verification contribution below.
+
+Private evidence is
+`/Users/adamekka/.cache/re-map/evidence/2026-11-12-leon-a-a0-implementation/`.
+`input-manifest.json` preserves the unsealed preparatory research hashes;
+`owned.pkl` is a fresh private extraction from the explicit authorized CUE,
+not imported research authority. `native-prerequisites.json` records native
+windows and both actor tables. `native-controls.json` records 69 bounded
+original CPU controls: six acceptance-argument cases, six cleanup cases,
+one cancellation case and 56 full Member-handler cases across all 14 tasks.
+The synthetic owners and cleanup records are explicit component inputs.
+These checks do not execute a complete pickup or prove a gameplay history.
+Original research and rejected generation outputs remain intact.
+
+Contributions, 2026-11-12: implementation sub-agent `gpt-6.1-sol`, effort
+`xhigh`, verified from the matching native session and latest turn metadata
+in `execution-metadata.json`, performed the owned/native recheck, source and
+shared compiler implementation, copied CPU controls, adversarial tests and
+local review, and authored this contribution. The human supplied the scope
+and normal-engine approvals. Preparatory unsealed research and the parent's
+saved-RAM extraction remain separately attributed inputs. Parent independent
+and external review and integration remain outstanding; no endorsement is
+claimed here.
+
+### Verified generation and copied-RAM replay, 2026-11-12
+
+The complete production census covers all 125 sources, all 15 ordinary A0
+creators across 11 sources, all 17 sources containing the new byte-member
+selectors, and all 4 A1 creators. Exactly one byte-member source gains a
+factory, `00-05`; the total becomes 35 accepted, 88 Source failures and 2
+Binding failures. All prior strict/Guard/default queries, bound source-task
+control and registration outputs retain their results. The only additional
+public query fact outside the target is `00-0f/38` described above.
+`corpus-consequences.json` records every A0 creator and every byte-member
+source, including the unchanged source and late-entry blockers. A1/206 and
+the independent conditional-presence obligations for 207/208 remain unchanged.
+
+Two complete generations are byte-identical; a third generation after final
+review also matches both. The resulting room catalog
+SHA256 is `1dee6a3bc249a106e0628cc885410e8dde104bf36e65ad7422209b9b11f535e4`.
+The complete positive-fact delta is direct ID4 in `00-05` and direct ID38
+in `00-0f`. All raw item/door/Reset descriptors, quantities, list completeness,
+source geometry, floor plans and other room fields are equal. Floor SHA256
+remains `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+
+Policy/pin changes are separate from those two facts. The full semantic
+profile digest becomes
+`14fb3413dc13321de6e81390604a9403ff6bb186cec8c8c75443e1ebfdebd592` after
+explicit positive audit v2 opt-in. Door and identity profile pins refresh
+without omitting any semantic field. All125 door-catalog records carry that
+new profile digest, so their complete catalog pin refreshes to
+`407e2cb11c2dcbadee675a275ac4e1b549c890b8e37beaa22376f632e0d924d8`.
+There is no old-pin alias. Door facts/creators/exclusions/unsupported slots
+remain 114/124/11/165. The raw-semantics identity catalog pin and native tuple
+digest are unchanged; no filtering, door or late-stage entry permission was
+added by this feature.
+
+Fresh production-reader replay reads only the three authorized, hash-verified
+copied version94 RAM images. All15 publications are compared leaf by leaf
+with the identity/staircase integration baseline. The nine current-only and
+actually observed-source publications are exactly equal. Both observed sources,
+`03-08` and `03-0a`, remain Cleared. No original history or new visit is read
+or inferred.
+
+Each of the six explicitly SIMULATED 125-source publications changes exactly
+three tracker fields: ID4 Unknown to Uncollected, `00-05` Unknown to
+Incomplete, and that room's resolved reason. Its four aggregate count changes
+match the projection: 70 Cleared/22 Incomplete/33 Unknown and 27 Uncollected/
+92 Taken/66 Unknown. ID38 remains Taken. Every other tracker field is equal,
+including quantities, access/unlocks, pose, visits, ambiguous identities and
+unexplored-room behavior. This does not turn the simulated visits into actual
+playthrough history.
+
+The 114 focused feature cases include the owned public factory/query, complete raw
+source census, exact native consumer bytes, source/native/profile/corpus and
+receipt substitution, guarded Work ownership, unsafe actor states, source
+Copy/control/callback boundaries and narrow packet defaults. Synthetic reader
+checks cover enabled/disabled current state, departure/reentry, acquisition
+clear/set/clear, complete earlier-memory replacement, visits-only close/reopen,
+all four historical-context contradictions, short/failed/incoherent reads and
+atomic publication. The full Python suite passes 7,929 tests with the explicit
+owned CUE. No required failure is suppressed.
+
+The observed-source README publication is rebuilt from the real copied RAM,
+then rendered in four layouts with keyboard inspection. Fixture SHA256
+`696eaa68dcf5e31f10a3a28ec44d9ea018a2758193a07af1b74c7c101834b9b9` and
+image SHA256 `cdeecce390de12c0304e2ce1d877b170c0091443188aa90ccbe96ba241a24f16`
+are byte-identical to the checked-in artifacts. No UI source or image changes.
+
+Reproduce with the explicit owned CUE using
+`tools/build_re2_metadata.py <cue> <room-output> <floor-output> --profile profiles/re2_leon_a_slus00748.json`,
+and run the Python suite with `RE_MAP_RE2_OWNED_CUE` set. The retained
+`replay.py --checkout <checkout> --output <new-private-file>` lives in the
+parent's `2026-11-12-leon-a-save-replay` evidence directory. The new evidence
+directory contains exact commands and hashes in `handoff.md` and
+`final-manifest.json`, plus complete generation/census/replay deltas and the
+rejected generation report. These are source/copied-code/synthetic checks,
+separate from gameplay. Parent independent/external review remains outstanding.
+
+### Combined integration and independent review, 2026-11-12
+
+Root, verified model `gpt-6.1-sol` with effort `xhigh`, integrates this increment
+with the six-door entry contract from `2c69c06`. The complete semantic profile
+hash becomes `75d8d14834c74a0769de808a689293f8fe262dd3f2fc972af27a2c4b7fee8aa7`;
+the complete door catalog pin becomes
+`4d711f478a3292196fc1ba74c3d2193d94a209411b02c6a3b28ba138736ce370`.
+Both include the combined policies without omitting fields or accepting old
+pins. The 120 door facts, 130 creators, 11 exclusions and 159 unsupported slots
+remain unchanged by A0. The raw identity catalog pin also remains unchanged.
+
+Two complete combined generations are byte-identical. Rooms SHA256 is
+`b688f0cc954ff95d219c953ef824a5aa96f2a7b1ce166af6e9588fddceb0fd15`;
+floor bytes retain `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+Beyond full-profile stamps, the only room changes are the two disclosed direct
+records. All 7,972 combined Python tests pass with the explicit owned CUE.
+Scoped Ruff, formatting, documentation links and whitespace checks pass.
+
+Root reproduces all 15 copied-RAM publications. Only simulated ID4 changes
+Unknown to Uncollected, with its derived room verdict and counts. All six
+publications using the newly retained actual 68-source history are entirely
+equal to their pre-A0 baseline, including doors and read plans. The README
+fixture reproduces byte for byte; UI and image bytes are unchanged. Earlier
+implementation render checks remain separate from this root reconstruction.
+
+Independent core review by `gpt-6.1-sol`, effort `xhigh`, checks native actor
+ownership, both physical images, atomic recipe and UI/cleanup boundaries,
+mandatory binding and substitutions. It passes 114 feature tests, 17 further
+binding controls and 69 copied-native component controls without a finding.
+Independent consumer review by the same verified model checks catalog deltas,
+fresh state, quantities and failure atomicity. It passes 131 focused tests,
+15 replay publications, 12 ID38 acquisition reversals and six failed/short-read
+controls. Its documentation finding is corrected above: ID38 already has
+conditional required presence and lacks a startup declaration specifically.
+Root also explains the deferred policy import's module-cycle constraint;
+component AST checks establish no behavioral change beyond the explicit pins.
+
+Private combined evidence is
+`~/.cache/re-map/evidence/2026-11-12-a0-six-door-integration/`; independent review
+evidence is in `2026-11-12-a0-core-independent-review/` and
+`2026-11-12-re2-a0-consumer-review/` under the same evidence root. Claude Opus 5.5
+is disabled, and Gemini 3.8 Flash fails to open its provider session. Neither
+supplies an external endorsement. These checks remain offline source/native
+component evidence, with no new gameplay or native savestate-restoration claim.

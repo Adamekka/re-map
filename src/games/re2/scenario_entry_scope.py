@@ -21,7 +21,9 @@ from games.re2.event_presence import (
     presence_counter_indices,
     presence_flag_write_proof,
 )
+from games.re2.normal_engine_binding import OWNED_SOURCE_FIELDS
 from games.re2.positive_entry_domain import _PositiveEntryDomain, _SourceEntryRoles
+from games.re2.positive_pickup_roles import PickupRolesSupport, _PositivePickupRoles
 from games.re2.room_data import decode_room
 from games.re2.scenario_items import scenario_flags
 from games.re2.scenario_selection import (
@@ -387,6 +389,9 @@ def _source_scope_facts(
     | _DoorEntryBinding
     | _SourceEntryRoles
     | _SourceEffects = _SourceEffects.Existing,
+    *,
+    pickup_roles: _PositivePickupRoles
+    | PickupRolesSupport = PickupRolesSupport.Existing,
 ) -> _SourceScopeFacts | DoorSourceFacts | DoorSourceFailure | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
@@ -408,6 +413,20 @@ def _source_scope_facts(
             raise _UnprovedEntry(reason)
 
     try:
+        actor_byte_writes = frozenset()
+        if type(pickup_roles) is _PositivePickupRoles:
+            require(policy is _ScopePolicy.TrustedPositivePrefix)
+            require(
+                pickup_roles.source_data == data
+                and json.loads(pickup_roles.room_json) == room
+                and json.loads(pickup_roles.profile_json) == profile
+                and pickup_roles.bound.declarations == context.declaration_contract
+            )
+            actor_byte_writes = frozenset(
+                (key, at) for key, at, *_ in pickup_roles.facts.actor_writes
+            )
+        else:
+            require(pickup_roles is PickupRolesSupport.Existing)
         require(bind_scenario_context(profile, context.declaration_contract) == context)
         if isinstance(control, VerifiedSourceTaskControl):
             require(
@@ -465,22 +484,7 @@ def _source_scope_facts(
             counters,
             presence_flag_write_proof(profile)[0],
         )
-        require(
-            all(
-                decoded[field] == room[field]
-                for field in (
-                    "sha256",
-                    "size",
-                    "cameras",
-                    "section_offsets",
-                    "items",
-                    "doors",
-                    "reset_item_variants",
-                    "candidate_list_complete",
-                    "programs",
-                )
-            )
-        )
+        require(all(decoded[field] == room[field] for field in OWNED_SOURCE_FIELDS))
         if policy in (
             _ScopePolicy.TrustedPositivePrefix,
             _ScopePolicy.TrustedDoors,
@@ -812,6 +816,9 @@ def _source_scope_facts(
                 require(
                     door_policy
                     and packet[1] < 44
+                    # Byte state is control data. Only the separately bound
+                    # owned atomic actor recipe grants these exact locations.
+                    or (key, row["offset"]) in actor_byte_writes
                     or packet[1] in (15, 16, 23, 29)
                     or policy is not _ScopePolicy.AuditedNativeWork
                     and packet[1] in _TRUSTED_SCALAR_MEMBERS
