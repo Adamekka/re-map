@@ -15,6 +15,7 @@ from games.bit_flags import msb_flag_location
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.player_heading import heading_degrees
+from games.re2.door_access import BoundDoorCatalog
 from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
 from games.re2.reset_candidates import DescriptorOrigin, tracking_item_candidates
@@ -626,6 +627,33 @@ def poll_re2(
                 and not (visited == key and unresolved_registry)
             )
             evaluations.append((source_id, tuple(details), complete))
+            catalog = profile.door_catalogs.get(visited)
+            if catalog is not None:
+                assert type(catalog) is BoundDoorCatalog
+                if (
+                    visited != key or catalog.scenario_excluded_offsets
+                ) and not catalog.matches(source):
+                    return PollResult(PollStatus.Retry, "Door source binding changed")
+            door_applicable = catalog is not None and all(
+                flag(bank, bit) == bool(expected)
+                for bank, bit, expected in catalog.applicability
+            )
+            access_facts = {
+                offset: fact
+                for fact in (
+                    catalog.facts if door_applicable and visited != key else ()
+                )
+                for offset in fact.creator_offsets
+            }
+            excluded_doors = (
+                catalog.scenario_excluded_offsets if door_applicable else frozenset()
+            )
+            if visited == key and any(
+                offset in excluded_doors for offset in live_doors
+            ):
+                return PollResult(
+                    PollStatus.Retry, "Room door contradicts its scenario"
+                )
             departed_open_offsets = {
                 offset
                 for proof in source.get("immutable_open_doors", [])
@@ -638,6 +666,9 @@ def poll_re2(
                 for offset in proof["creator_offsets"]
             }
             for definition in source["doors"]:
+                if visited != key and definition["offset"] in excluded_doors:
+                    continue
+                access_fact = access_facts.get(definition["offset"])
                 observed = (
                     live_doors.get(definition["offset"]) if visited == key else None
                 )
@@ -664,8 +695,8 @@ def poll_re2(
                     key_unlocked = flag(layout["key_bank"], lock["lock_id"] & 0x3F)
                     # Current payloads can change targets and locks, so source
                     # operands cannot replace a missing live binding.
-                    bound = observed is not None
-                    if visited != key:
+                    bound = observed is not None or access_fact is not None
+                    if visited != key and access_fact is None:
                         creators = [
                             creator
                             for creator in source["doors"] + source["items"]
@@ -709,7 +740,25 @@ def poll_re2(
                 unlocked = unlock_state is DoorUnlockState.Unlocked
                 if unlocked:
                     key_label = ""
-                if observed is None and definition["offset"] in departed_open_offsets:
+                if observed is None and access_fact is not None:
+                    # Only departed, source-bound facts establish activation.
+                    # Fresh key flags still determine access and can reverse it.
+                    if not access_fact.enabled:
+                        state = "BLOCKED"
+                        label = (
+                            "Unlocked; door inactive"
+                            if unlocked
+                            else "Door is inactive"
+                        )
+                    elif unlocked:
+                        state, label = "OPEN", "Unlocked"
+                    elif not lock["lock_id"] & 0x80:
+                        state, label = "OPEN", "Open"
+                    elif key_type == 0xFE:
+                        state, label = "UNLOCKABLE", "Unlock from this side"
+                    else:
+                        state, label = "LOCKED", key_label or "Locked"
+                elif observed is None and definition["offset"] in departed_open_offsets:
                     # Source/native write proofs establish this binding for
                     # the room lifetime. Fresh conditions revoke it on rewind.
                     state, label = "OPEN", "Open"

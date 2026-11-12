@@ -14,10 +14,20 @@ from games.re2.script_control_limits import (
 class ControlFrames(Enum):
     Strict = "existing entry frames"
     FreshPositive = "fresh positive-entry frames"
+    Doors = "trusted normal door frames"
+
+
+class PredicateOutcome(Enum):
+    Both = "both predicate outcomes"
+    Matches = "predicate matches"
+    DoesNotMatch = "predicate does not match"
 
 
 class ControlFrameFailure(Enum):
     Unsupported = "source control frame or escaped pointer is unsupported"
+    DoorControl = "source_control_or_write"
+    DoorGotoDepth = "goto_depth_escape"
+    DoorSwitchFrame = "switch_frame_missing"
 
 
 @dataclass(frozen=True)
@@ -28,19 +38,34 @@ class StructuredControl:
     # depth using the same native formulas below, never a sampled task slot.
     break_reads: tuple[tuple[int, int], ...]
     states: int
+    reached: frozenset[int]
 
 
 def structured_control(
-    data: bytes, program: dict, role: ControlFrames
+    data: bytes,
+    program: dict,
+    role: ControlFrames,
+    *,
+    predicates: tuple[tuple[int, PredicateOutcome], ...] = (),
 ) -> StructuredControl | ControlFrameFailure:
     assert type(role) is ControlFrames
+    assert type(predicates) is tuple and all(
+        type(row) is tuple
+        and len(row) == 2
+        and type(row[0]) is int
+        and type(row[1]) is PredicateOutcome
+        for row in predicates
+    )
+    assert not predicates or role is ControlFrames.Doors
+    outcomes = dict(predicates)
+    assert len(outcomes) == len(predicates)
     rows = {row["offset"]: row for row in program["commands"]}
     pending, seen = [(program["entry"], (), (), IF_FRAME_BASE, -1)], set()
     edges, stores, breaks = {}, set(), set()
 
-    def require(condition):
+    def require(condition, failure=ControlFrameFailure.Unsupported):
         if not condition:
-            raise ValueError("unsupported control frame")
+            raise ValueError(failure)
 
     def predicate_end(start, width):
         cursor, end = start, start + width
@@ -50,7 +75,9 @@ def structured_control(
             row = rows[cursor]
             packet = data[cursor : row["next"]]
             require(
-                row["kind"] == "flag_check"
+                role is ControlFrames.Doors
+                and row["opcode"] in (0x21, 0x23, 0x3E, 0x50, 0x5E, 0x85)
+                or row["kind"] == "flag_check"
                 or row["opcode"] == 0x23
                 and packet[1] == 0
                 and packet[3] < 7
@@ -81,12 +108,12 @@ def structured_control(
                 require(packet == b"\x01\0")
                 continue
             if opcode == 3:
-                require(role is ControlFrames.Strict)
+                require(role in (ControlFrames.Strict, ControlFrames.Doors))
                 continue
             if opcode == 0x17:
-                require(not loops)
-                if role is ControlFrames.Strict:
-                    require(not conditions)
+                require(not loops, ControlFrameFailure.DoorGotoDepth)
+                if role in (ControlFrames.Strict, ControlFrames.Doors):
+                    require(not conditions, ControlFrameFailure.DoorGotoDepth)
                 else:
                     require(
                         packet[1:4] == b"\xff\xff\0"
@@ -111,11 +138,12 @@ def structured_control(
                         and test_packet[1] == 0
                         and test_packet[3] < 7
                     )
-                pending.extend(
-                    (
-                        (row["target"], conditions, loops, pointer),
-                        (following, conditions + (row["target"],), loops, pointer + 4),
-                    )
+                if role is not ControlFrames.Doors:
+                    pending.append((row["target"], conditions, loops, pointer))
+                # Door exclusion follows the predicate's actual continuations.
+                # The older roles retain their conservative synthetic skip.
+                pending.append(
+                    (following, conditions + (row["target"],), loops, pointer + 4)
                 )
             elif row["kind"] == "flag_check" or opcode in (
                 0x23,
@@ -132,8 +160,12 @@ def structured_control(
                     # The failed predicate reads foreign scratch only on the
                     # same uninterrupted edge as its own preceding IF store.
                     require(previous == position - 4 and rows[previous]["opcode"] == 6)
-                pending.append((following, conditions, loops, pointer))
-                if conditions:
+                # Missing knowledge retains both paths; only the source-bound
+                # door caller may provide an immutable fixed-scenario result.
+                outcome = outcomes.get(position, PredicateOutcome.Both)
+                if outcome is not PredicateOutcome.DoesNotMatch:
+                    pending.append((following, conditions, loops, pointer))
+                if conditions and outcome is not PredicateOutcome.Matches:
                     pending.append(
                         (conditions[-1], conditions[:-1], loops, pointer - 4)
                     )
@@ -196,7 +228,8 @@ def structured_control(
                         rows[at]["opcode"]
                         in (
                             (0x14, 0x15)
-                            if role is ControlFrames.FreshPositive
+                            if role
+                            in (ControlFrames.FreshPositive, ControlFrames.Doors)
                             else (0x14,)
                         )
                         for at in labels[:-1]
@@ -210,14 +243,21 @@ def structured_control(
                     for at in labels[:-1]
                 )
             elif (
-                opcode == 0x14 or opcode == 0x15 and role is ControlFrames.FreshPositive
+                opcode == 0x14
+                or opcode == 0x15
+                and role in (ControlFrames.FreshPositive, ControlFrames.Doors)
             ):
                 require(
-                    bool(loops) and loops[-1][0] == 0x13 and position in loops[-1][2]
+                    bool(loops) and loops[-1][0] == 0x13,
+                    ControlFrameFailure.DoorSwitchFrame,
                 )
+                require(position in loops[-1][2])
                 pending.append((following, conditions, loops, pointer))
             elif opcode in (0x16, 0x1A):
-                require(bool(loops) and loops[-1][0] == 0x13)
+                require(
+                    bool(loops) and loops[-1][0] == 0x13,
+                    ControlFrameFailure.DoorSwitchFrame,
+                )
                 _, _, labels, end, saved_conditions, saved_pointer = loops[-1]
                 require(conditions == saved_conditions and pointer == saved_pointer)
                 require(opcode != 0x16 or position == labels[-1])
@@ -238,6 +278,18 @@ def structured_control(
             tuple(sorted(stores)),
             tuple(sorted(breaks)),
             len(seen),
+            frozenset(state[0] for state in seen),
         )
-    except (KeyError, IndexError, TypeError, ValueError):
+    except ValueError as error:
+        if role is ControlFrames.Doors:
+            if error.args and error.args[0] in (
+                ControlFrameFailure.DoorGotoDepth,
+                ControlFrameFailure.DoorSwitchFrame,
+            ):
+                return error.args[0]
+            return ControlFrameFailure.DoorControl
+        return ControlFrameFailure.Unsupported
+    except (KeyError, IndexError, TypeError):
+        if role is ControlFrames.Doors:
+            return ControlFrameFailure.DoorControl
         return ControlFrameFailure.Unsupported

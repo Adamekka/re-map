@@ -662,3 +662,104 @@ Generate twice with `tools/build_re2_metadata.py <owned-cue> <rooms-output> <flo
 [RE2-RESET-001](../research/re2/reset-candidates.md#re2-reset-001-enumerate-reset-possibilities-without-granting-presence) separates source possibilities from presence, absence and completeness. Set `RE_MAP_RE2_OWNED_CUE` explicitly to the owned SLUS-00748 Leon Disc 1 CUE. Run `python -m pytest -q tests/test_re2_reset_candidates.py tests/test_re2_reset_item_variants.py tests/test_re2_script_dispatch_items.py tests/test_re2_tracking.py`. The actual corpus test binds all 125 source packets through the owned 69-resource/54-auxiliary factory. Synthetic controls cover the exact same-type/different-GID double-Available regression, descriptor and NULL origins, current geometry/activation, source mutation, scalar/span validation, all profile opt-ins, 16 explicit corners, fresh acquisition reversal, reconstruction and unvisited hiding. Existing reward/event controls remain in the narrow reset suite.
 
 Generate the full catalog twice using `tools/build_re2_metadata.py <owned-cue> <private-rooms> <private-floors> --profile profiles/re2_leon_a_slus00748.json`; compare both room outputs and floor bytes, and compare every pre-existing field against the required local base. The expected result is exactly two additional room/acquisition rows and zero clearance gain. Run the full suite with the explicit CUE. Apply scoped Ruff `E4,E7,E9,F,I`, excluding established `E402`, formatting, local-link and whitespace checks. Copied-save replay must compare current-only, actually observed two-source and simulated all-source scopes separately, including reverse order and fresh Tracker reconstruction. Simulated visits are not history or gameplay confirmation. The research entry records the README input/screenshot limitation.
+
+## Trusted normal-engine door validation, 2026-11-12
+
+[RE2-DOOR-009](../research/re2/immutable-doors.md#re2-door-009-opted-in-normal-engine-door-access)
+adds separate compiler-owned door authority, an explicit pinned-profile opt-in,
+a validated generated catalog and fresh departed access. This is source,
+synthetic and retained-RAM validation. It adds no gameplay or native restore.
+
+Use Python `/Users/adamekka/.cache/re-map/verification-venv/bin/python`, verified
+3.12.14, and explicitly set `RE_MAP_RE2_OWNED_CUE` to the owned Leon disc CUE.
+The new `tests/test_re2_trusted_doors.py` binds all 69 resources, 125 sources and
+54 auxiliary inputs. It checks every one of 279 slots/321 creators against
+production compilation, all 124 accepted creator records and all keyed
+variants, all residual creators, separate scenario exclusions, guard/item
+receipt rejection, public constructor/replace rejection, profile/source/resource
+mutations, Reset history and geometry, full lighting-record bounds, Copy
+values/selectors, signed actor slots, explicit source effects and native frames.
+Ninety unchanged native Reset leaf executions compare complete two-MiB
+synthetic RAM. Fresh flags reverse clear/set/clear; departure/reentry and a
+complete earlier synthetic RAM restore retain visits while rebuilding access.
+Current Missing/Inactive/Contradictory and hidden-room controls remain explicit.
+
+Run the full suite with the owned CUE environment set, and scoped Ruff
+`E4,E7,E9,F,I --ignore E402`, formatting and `git diff --check`. Two complete
+`tools/build_re2_metadata.py` generations produce equal room/floor artifacts.
+The final all-source factory regression also compares the catalog after the
+additional counter, geometry and retained-light-record checks. In the isolated implementation, every preexisting
+room-document field and every floor-plan byte equals base
+`83bd4c70fea4ea7064069ef9f61c29b576233116` after removing only the new door policy,
+claim ID and catalog fields. The isolated output SHA256 values are:
+
+- Rooms: `d85bca16818e79cf39b7330ad5dfdbbca6fd81cb63ea5b07577a8d697c309c43`.
+- Floors: `641c6362a66333d97d2bfcf6c72d7edb0dcfbfd390a145f7248cc0b06cee2e8b`.
+- Profile: `8accfd54dde9ed8af83ddee8d6bbb8b57ca8f1a1517726e792f526fb6fb0b553`.
+
+The parent's supplied version-94 RAM copies are read-only inputs under
+`~/.cache/re-map/evidence/2026-11-12-leon-a-save-replay/`. Their manifest hashes
+are checked before comparison. The production replay separates current-only,
+two actually observed sources and simulated 125-source visits, then reverses
+input order and reconstructs fresh trackers. Current-only and observed-source
+trackers are identical to baseline. Simulated full-profile visits change 124
+door observations, remove 11 excluded observations and preserve all item,
+clearance, pose, history and other tracker fields. Its isolated baseline of 67 Unknown
+item rows/37 Unknown rooms cannot be compared as if they were the earlier
+smaller explored snapshot. All source/residual details and exact comparison
+reports are retained in
+`~/.cache/re-map/evidence/2026-11-12-trusted-door-implementation/`.
+
+Access and marker coverage are separate. The unchanged marker census still has
+89 raw creators without a shared marker, including 33 covered by access facts.
+No eight-unit projection bound or floor geometry is loosened. No UI template or
+layout changes. The README capture's original RE2 publication is absent from
+the committed fixtures, and its old temporary inputs were lost. The three
+supplied RAM identities do not reproduce that capture. The UI template and layout are unchanged; the retained image is unchanged and
+no rerender is claimed.
+
+Local review is by the executing implementation agent, verified exact model
+`gpt-6.1-sol`, effort `xhigh`. It checks compiler ownership, explicit unsafe
+paths, independent policies, complete creator consequences, coherent fresh
+reads, reversal, visited-only reveal, metadata repeatability and retained
+comparisons. Independent/external review remains with root; none completes or
+supplies an endorsement here. No DuckStation instance, user history or source save is
+modified.
+
+### Combined integration verification
+
+The door feature is integrated over `721b619`, which already includes the
+positive-entry and Reset-candidate corrections. Both full generations reproduce
+all 125 sources and agree byte for byte. Removing only `trusted_door_policy`,
+the new claim and each `door_access_catalog` preserves every pre-existing
+room-document field. All floor bytes agree with the base. The final outputs are:
+
+- Rooms: `62b79d3a7feb6d9810fd4c7a6d55e3655037b7a87c640345cd23fd3aa168421d`.
+- Floors: `641c6362a66333d97d2bfcf6c72d7edb0dcfbfd390a145f7248cc0b06cee2e8b`.
+- Profile file: `cef347794385f72d7b29d1590bdf2a69a8ee77b52b9060a94646eaeb41bc7662`.
+
+The full suite passes 7,492 tests with the explicit owned CUE. Add
+`tests/test_re2_door_control.py` to the focused selection above for the combined
+predicate/frame/startup-slot and native flag-operation controls. The final
+metadata's only change from the full-suite snapshot is its generated
+`RE2-DOOR-009` header claim and canonical key order; all 125 room records agree.
+The focused selection and copied-RAM comparisons are rerun against that exact
+generated output.
+
+The final 15-publication comparison against `721b619` preserves all item,
+clearance, pose and visit fields. Current-only and actually observed two-source
+tracker results are entirely equal. Each simulated 125-source publication
+changes 124 covered door observations and removes eleven excluded observations,
+with only derived door summaries also changing. Its 67 Unknown items and 35
+Unknown rooms include the separate positive-entry and Reset changes and remain
+diagnostic simulated visits. Native restore/gameplay remains untested.
+
+Private evidence is under
+`~/.cache/re-map/evidence/2026-11-12-trusted-door-integration/`:
+`generation-comparison.json`, `combined-replay-comparison.json`, both generated
+room/floor outputs, the full/focused logs, frozen reviewed sources, exact model
+metadata and external-review failure record. Reuse the explicit generation and
+replay commands above; no purged temporary file is required. Independent reader
+interaction evidence is in `2026-11-12-trusted-door-reader-review/combined/`.
+Configured Claude Opus 5.5 is disabled and the fresh Gemini 3.8 Flash request
+fails to open its provider session. Neither provides an endorsement.

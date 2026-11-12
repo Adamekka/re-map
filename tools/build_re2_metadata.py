@@ -28,6 +28,7 @@ from re2_map_interiors import add_collision_interiors, add_control_room_connecti
 
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
+from games.re2.door_authority import DoorPolicy, door_access_catalog, door_policy
 from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
 from games.re2.immutable_open_doors import immutable_open_doors
 from games.re2.initializer_control_proof import (
@@ -245,6 +246,7 @@ def verify_actor_part_resource(
 def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
     target = re2_target(profile)
     positive_policy = positive_prefix_policy(profile)
+    access_policy = door_policy(profile)
     effect_pool = scenario_effect_pool(profile)
     vibration_writes = scenario_vibration_writes(profile)
     actor_parts = scenario_actor_parts(profile)
@@ -720,6 +722,12 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             # Reset-derived identities require the same revision capability as
             # positive puzzle targets; other profiles keep their raw catalog.
             del room["reset_item_variants"]
+        # Door authority consumes raw decoded Reset records before the
+        # candidate-only companion adds origin metadata to those records.
+        if access_policy is DoorPolicy.TrustedNormalEngine:
+            room["door_access_catalog"] = door_access_catalog(
+                sources[room["id"]], room, profile, bound
+            )
         if isinstance(reset_config, ResetCandidateConfig):
             room.update(
                 compile_reset_candidates(
@@ -960,6 +968,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             **header,
             "research_ids": [
                 *header["research_ids"],
+                *(
+                    ["RE2-DOOR-009"]
+                    if access_policy is DoorPolicy.TrustedNormalEngine
+                    else []
+                ),
                 "RE2-COLLECT-001",
                 "RE2-COLLECT-002",
                 "RE2-COLLECT-003",
@@ -1052,6 +1065,11 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             **(
                 {"reset_candidate_catalog": profile["reset_candidate_catalog"]}
                 if isinstance(reset_config, ResetCandidateConfig)
+                else {}
+            ),
+            **(
+                {"trusted_door_policy": profile["trusted_door_policy"]}
+                if access_policy is DoorPolicy.TrustedNormalEngine
                 else {}
             ),
             "fixed_scenario_flags": fixed_flags,

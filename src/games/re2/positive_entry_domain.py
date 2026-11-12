@@ -19,6 +19,10 @@ from games.re2.native_control import (
     loop_end_cell,
     native_bytes,
 )
+from games.re2.normal_engine_binding import (
+    NORMAL_ENGINE_BINDING_SHA256,
+    typed_binding_digest,
+)
 from games.re2.scenario_selection import (
     ScenarioSourceWriteWitnesses,
     scenario_source_write_witnesses,
@@ -79,10 +83,8 @@ class _PositiveEntryDomain:
             self.bound,
         )
         assert type(result) is _EntryFacts
-        from games.re2.positive_prefix import _positive_binding_digest
-
-        assert _positive_binding_digest(self.facts, ()) == _positive_binding_digest(
-            result, ()
+        assert typed_binding_digest((self.facts, ())) == typed_binding_digest(
+            (result, ())
         )
 
 
@@ -333,9 +335,7 @@ def _derive_entry_domain(
         presence_flag_write_proof,
     )
     from games.re2.positive_prefix import (
-        _POSITIVE_BINDING_SHA256,
         PositivePrefixPolicy,
-        _positive_binding_digest,
         positive_prefix_policy,
     )
     from games.re2.room_data import decode_room
@@ -363,13 +363,13 @@ def _derive_entry_domain(
         resources = bound.entry_resources
         require(
             type(bound.ordinary_ingress) is type(resources.ordinary_ingress)
-            and _positive_binding_digest(bound.ordinary_ingress, ())
-            == _positive_binding_digest(resources.ordinary_ingress, ()),
+            and typed_binding_digest((bound.ordinary_ingress, ()))
+            == typed_binding_digest((resources.ordinary_ingress, ())),
             PositiveEntryFailure.Binding,
         )
         require(
-            _positive_binding_digest(resources, bound.declarations)
-            == _POSITIVE_BINDING_SHA256,
+            typed_binding_digest((resources, bound.declarations))
+            == NORMAL_ENGINE_BINDING_SHA256,
             PositiveEntryFailure.Binding,
         )
         executable = resources.executable

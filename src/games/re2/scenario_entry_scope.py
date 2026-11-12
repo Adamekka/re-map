@@ -13,9 +13,16 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 
-from games.re2.event_presence import presence_counter_indices, presence_flag_write_proof
+from games.bit_flags import msb_flag_location
+from games.re2.event_presence import (
+    FLAG_WRITE_OPERATIONS,
+    flag_write_conflicts,
+    presence_counter_indices,
+    presence_flag_write_proof,
+)
 from games.re2.positive_entry_domain import _PositiveEntryDomain
 from games.re2.room_data import decode_room
+from games.re2.scenario_items import scenario_flags
 from games.re2.scenario_selection import (
     SCENARIO_ENTRY_AUDIT,
     SCENARIO_EXECUTABLE_SHA256,
@@ -24,6 +31,7 @@ from games.re2.scenario_selection import (
     SCENARIO_TRUSTED_NATIVE_AUDIT,
     ScenarioSelectionFailure,
     ScenarioSourceWriteWitnesses,
+    SourceWritePolicy,
     VerifiedScenarioContext,
     VerifiedScenarioEntryScope,
     VerifiedScenarioGuardScope,
@@ -41,13 +49,26 @@ from games.re2.source_task_control import (
 )
 from games.re2.structured_control import (
     ControlFrames,
+    PredicateOutcome,
     StructuredControl,
     structured_control,
 )
 
 
 class _UnprovedEntry(Exception):
-    pass
+    def __init__(self, reason: str):
+        self.reason = reason
+
+
+@dataclass(frozen=True)
+class DoorSourceFailure:
+    reason: str
+
+
+@dataclass(frozen=True)
+class DoorSourceFacts:
+    reached: frozenset[tuple[str, int]]
+    edges: tuple[tuple[str, int, tuple[int, ...]], ...]
 
 
 class _SourceEffects(Enum):
@@ -58,6 +79,7 @@ class _ScopePolicy(Enum):
     AuditedNativeWork = "audited native work"
     TrustedNormalEngine = "trusted normal engine"
     TrustedPositivePrefix = "trusted normal positive prefix"
+    TrustedDoors = "trusted normal door access"
 
 
 @dataclass(frozen=True)
@@ -163,6 +185,146 @@ _ENTRY_PRESERVING_NATIVE_EFFECTS = frozenset(
 )
 
 
+# Closed opcode set for this exact native executable, not every future decoded
+# effect. These ordinary actor/audio/inventory/render effects use the approved
+# engine premise. Source writers still pass the shared partitions, Copy domains
+# and frame checks below. 1B/1C/6C are listed only to report their explicit gap.
+_DOOR_NATIVE_EFFECTS = frozenset(
+    (
+        0x0,
+        0x1,
+        0x2,
+        0x3,
+        0x4,
+        0x5,
+        0x6,
+        0x7,
+        0x8,
+        0x9,
+        0xA,
+        0xB,
+        0xC,
+        0xD,
+        0xE,
+        0xF,
+        0x10,
+        0x11,
+        0x12,
+        0x13,
+        0x14,
+        0x15,
+        0x16,
+        0x17,
+        0x18,
+        0x19,
+        0x1A,
+        0x1B,
+        0x1C,
+        0x1D,
+        0x21,
+        0x22,
+        0x23,
+        0x24,
+        0x25,
+        0x26,
+        0x27,
+        0x28,
+        0x29,
+        0x2A,
+        0x2B,
+        0x2C,
+        0x2D,
+        0x2E,
+        0x2F,
+        0x30,
+        0x31,
+        0x32,
+        0x33,
+        0x34,
+        0x35,
+        0x36,
+        0x37,
+        0x38,
+        0x39,
+        0x3A,
+        0x3B,
+        0x3C,
+        0x3D,
+        0x3E,
+        0x3F,
+        0x40,
+        0x41,
+        0x42,
+        0x43,
+        0x44,
+        0x46,
+        0x47,
+        0x48,
+        0x49,
+        0x4B,
+        0x4C,
+        0x4E,
+        0x4F,
+        0x50,
+        0x51,
+        0x53,
+        0x54,
+        0x57,
+        0x58,
+        0x59,
+        0x5A,
+        0x5B,
+        0x5C,
+        0x5D,
+        0x5E,
+        0x5F,
+        0x60,
+        0x61,
+        0x62,
+        0x64,
+        0x65,
+        0x66,
+        0x67,
+        0x68,
+        0x69,
+        0x6A,
+        0x6B,
+        0x6C,
+        0x6D,
+        0x6E,
+        0x6F,
+        0x70,
+        0x71,
+        0x72,
+        0x73,
+        0x74,
+        0x75,
+        0x76,
+        0x77,
+        0x78,
+        0x79,
+        0x7A,
+        0x7B,
+        0x7D,
+        0x7E,
+        0x7F,
+        0x80,
+        0x81,
+        0x82,
+        0x83,
+        0x84,
+        0x85,
+        0x86,
+        0x87,
+        0x88,
+        0x89,
+        0x8A,
+        0x8B,
+        0x8C,
+    )
+)
+
+
 def scenario_entry_scope(
     data: bytes, room: dict, profile: dict, context: VerifiedScenarioContext
 ) -> VerifiedScenarioEntryScope | ScenarioSelectionFailure:
@@ -220,7 +382,7 @@ def _source_scope_facts(
     policy: _ScopePolicy,
     control: VerifiedSourceTaskControl | TaskControlFailure | TaskControlSupport,
     entry_domain: _PositiveEntryDomain | _SourceEffects = _SourceEffects.Existing,
-) -> _SourceScopeFacts | ScenarioSelectionFailure:
+) -> _SourceScopeFacts | DoorSourceFacts | DoorSourceFailure | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
     Source/record writers are checked against all protected packets by the
@@ -233,9 +395,11 @@ def _source_scope_facts(
         control, (VerifiedSourceTaskControl, TaskControlFailure, TaskControlSupport)
     )
 
-    def require(condition: bool) -> None:
+    door_policy = policy is _ScopePolicy.TrustedDoors
+
+    def require(condition: bool, reason: str = "source_control_or_write") -> None:
         if not condition:
-            raise _UnprovedEntry
+            raise _UnprovedEntry(reason)
 
     try:
         require(bind_scenario_context(profile, context.declaration_contract) == context)
@@ -300,7 +464,7 @@ def _source_scope_facts(
                 )
             )
         )
-        if policy is _ScopePolicy.TrustedPositivePrefix:
+        if policy in (_ScopePolicy.TrustedPositivePrefix, _ScopePolicy.TrustedDoors):
             # Exact JSON types matter: Python equality alone equates True/1
             # and can otherwise accept substituted decoded operands.
             require(
@@ -316,6 +480,9 @@ def _source_scope_facts(
                     )
                 )
             )
+        # Door reachability closes its own fixed-scenario frames below. The
+        # independent collectible completeness flag can include unreachable
+        # orphan markers and grants no door right in either direction.
         programs = room["programs"]
         require(all(key in programs for key in ("16:0", "17:0", "17:1")))
         commands = {
@@ -330,8 +497,24 @@ def _source_scope_facts(
         bindings = []
         rows = [(key, row) for key, p in programs.items() for row in p["commands"]]
         has_render_updates = any(row["opcode"] == 0x74 for _, row in rows)
-        writes = scenario_source_write_witnesses(data, room, profile)
-        require(isinstance(writes, ScenarioSourceWriteWitnesses))
+        writes = scenario_source_write_witnesses(
+            data,
+            room,
+            profile,
+            policy=SourceWritePolicy.NormalDoors
+            if door_policy
+            else SourceWritePolicy.Existing,
+        )
+        require(
+            isinstance(writes, ScenarioSourceWriteWitnesses),
+            "explicit_source_write_footprint",
+        )
+        fixed = {(r["bank"], r["bit"]): r["expected"] for r in scenario_flags(profile)}
+        banks = {
+            r["bank"]: (int(r["address_ps1"], 0), r["width"])
+            for r in profile["flag_banks"]
+        }
+        fixed_words, aliases = flag_write_conflicts(banks, frozenset(fixed))
         # The shared footprint receipt keeps model/SCA/camera/floor writes out
         # of scripts and their source dependencies. Copy has a narrower right:
         # only these numeric values can change without invalidating an inspected
@@ -342,16 +525,6 @@ def _source_scope_facts(
             if row["opcode"] in (0x23, 0x32, 0x6D)
         ]
         if policy is _ScopePolicy.TrustedPositivePrefix:
-            from games.re2.event_presence import flag_write_conflicts
-            from games.re2.scenario_items import scenario_flags
-
-            banks = {
-                r["bank"]: (int(r["address_ps1"], 0), r["width"])
-                for r in profile["flag_banks"]
-            }
-            _, aliases = flag_write_conflicts(
-                banks, frozenset((r["bank"], r["bit"]) for r in scenario_flags(profile))
-            )
             scalar_immediates.extend(
                 (r["offset"] + 2, r["offset"] + 3)
                 for _, r in rows
@@ -360,6 +533,43 @@ def _source_scope_facts(
             )
         if closed_entries:
             scalar_immediates.extend(entry_domain.facts.numeric_ranges)
+        if door_policy:
+            # Copy may change values, never source selectors, PC/frame targets,
+            # access identity or fixed scenario bits. Each extra domain belongs
+            # only to the explicitly opted-in door policy.
+            for _, row in rows:
+                at, op = row["offset"], row["opcode"]
+                if op == 0x0D:
+                    scalar_immediates.append((at + 4, row["next"]))
+                if row["kind"] in ("flag_check", "flag_write") and not any(
+                    bank == row["bank"] for bank, _ in aliases
+                ):
+                    scalar_immediates.append((at + 2, at + 3))
+                for opcode, begin, end in (
+                    (0x40, 4, row["next"] - at),
+                    (0x6A, 4, 6),
+                    (0x6B, 2, 4),
+                    (0x60, 6, 14),
+                    (0x33, 2, row["next"] - at),
+                    (0x39, 2, row["next"] - at),
+                    (0x36, 6, row["next"] - at),
+                    (0x3A, 6, 14),
+                    (0x54, 8, 20),
+                ):
+                    if op == opcode:
+                        scalar_immediates.append((at + begin, at + end))
+                if op == 0x6E and data[at + 2] < 128 and data[at + 3] < 7:
+                    scalar_immediates.append((at + 4, at + 6))
+        mutated_checks = {
+            row["offset"]
+            for _, row in rows
+            if row["kind"] == "flag_check"
+            and any(
+                copy.target_offset < row["next"]
+                and row["offset"] < copy.target_offset + copy.width
+                for copy in writes.copies
+            )
+        }
         require(
             all(
                 any(
@@ -368,7 +578,8 @@ def _source_scope_facts(
                     for begin, end in scalar_immediates
                 )
                 for copy in writes.copies
-            )
+            ),
+            "copy_changes_unclosed_operand",
         )
         for key, row in rows:
             packet = data[row["offset"] : row["next"]]
@@ -376,12 +587,63 @@ def _source_scope_facts(
             # Camera_back 2A has no operands. Its STATUS set/clear masks
             # 00100000/00000100 are disjoint from fixed scenario bits.
             require(
-                opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
-                or policy is not _ScopePolicy.AuditedNativeWork
-                and opcode in (0x2A, 0x64, 0x65, 0x85)
-                or closed_entries
-                and opcode in (5, 0x15, 0x28)
+                opcode in _DOOR_NATIVE_EFFECTS
+                if door_policy
+                else (
+                    opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
+                    or policy is not _ScopePolicy.AuditedNativeWork
+                    and opcode in (0x2A, 0x64, 0x65, 0x85)
+                    or closed_entries
+                    and opcode in (5, 0x15, 0x28)
+                ),
+                "unmodeled_native_opcode",
             )
+            if door_policy:
+                if row["kind"] == "flag_write":
+                    require(
+                        row["bank"] in banks
+                        and 0 <= row["bit"] < 256
+                        and row["operation"] in FLAG_WRITE_OPERATIONS
+                        and (row["bank"], row["bit"]) not in aliases,
+                        "scenario_flag_write",
+                    )
+                if row["kind"] == "reset" and packet[3] & 0x80:
+                    origins = [
+                        r
+                        for _, r in rows
+                        if r["kind"] in ("door", "item", "interaction")
+                        and data[r["offset"] + 1] == packet[1]
+                    ]
+                    # Reset preserves old80 and stores six bytes using the old
+                    # geometry. Promoting an ordinary origin would redirect a
+                    # subsequent Reset/dispatch beyond its original payload.
+                    require(
+                        bool(origins)
+                        and all(r["opcode"] in (0x67, 0x68, 0x69) for r in origins),
+                        "reset_changes_geometry_selector",
+                    )
+                if (
+                    row["kind"] == "item"
+                    or row["kind"] == "reset"
+                    and row["interaction"] == 2
+                ):
+                    payload = (
+                        4 if row["kind"] == "reset" else 22 if opcode == 0x69 else 14
+                    )
+                    require(
+                        struct.unpack_from("<H", packet, payload + 4)[0] < 256,
+                        "acquisition_flag_bounds",
+                    )
+                if row["kind"] in ("interaction", "reset") and row["interaction"] == 6:
+                    payload = (
+                        4 if row["kind"] == "reset" else 22 if opcode == 0x67 else 14
+                    )
+                    bank, bit, _ = struct.unpack_from("<3H", packet, payload)
+                    require(bank in banks, "scenario_kind6_write")
+                    address, mask = msb_flag_location(banks[bank][0], bit & 255)
+                    require(
+                        not fixed_words.get(address, 0) & mask, "scenario_kind6_write"
+                    )
             if row["kind"] == "call":
                 target = f"17:{packet[1]}"
                 require(target in programs)
@@ -389,7 +651,7 @@ def _source_scope_facts(
             elif opcode == 3:
                 # This replacement recipe covers main-procedure entries.
                 # Auxiliary table borrowing does not grant initializer rights.
-                require(key.startswith("17:"))
+                require(door_policy or key.startswith("17:"))
                 require(packet[1:3] == b"\0\x18")
                 require(f"17:{packet[3]}" in programs)
                 replacement_sources.add(key)
@@ -398,7 +660,14 @@ def _source_scope_facts(
                 # Its PC advance precedes replacement, unlike Aot_on below.
                 require(
                     packet[2] == 0x18
-                    and (packet[1] == 0xFF or closed_entries and 2 <= packet[1] < 10)
+                    and (
+                        packet[1] == 0xFF
+                        or door_policy
+                        and packet[1] < 14
+                        or closed_entries
+                        and 2 <= packet[1] < 10
+                    ),
+                    "explicit_task_slot",
                 )
                 target = f"17:{packet[3]}"
                 require(target in programs)
@@ -407,47 +676,53 @@ def _source_scope_facts(
                 # queue that can reach task storage. This work contract covers
                 # only model setup without that additional queue ownership.
                 require(
-                    packet[3] & 0xC0 == 0
+                    door_policy
+                    or packet[3] & 0xC0 == 0
                     or closed_entries
                     and (key, programs[key]["entry"])
                     not in entry_domain.facts.entry_locations
                 )
             elif opcode == 0x17:
-                # Legacy cycles never read the escaped IF pointer. A joint
-                # task receipt additionally qualifies fresh IF stores and all
-                # receiving-field consumers without granting a general Goto.
                 require(
                     policy is not _ScopePolicy.AuditedNativeWork
-                    and key.startswith("17:")
+                    and (door_policy or key.startswith("17:"))
                     and packet[1:4] == b"\xff\xff\0"
                     and (
-                        policy is _ScopePolicy.TrustedPositivePrefix
+                        door_policy
+                        or policy is _ScopePolicy.TrustedPositivePrefix
                         and row["target"] in commands[key]
                         or isinstance(control, VerifiedSourceTaskControl)
                         and (key, row["offset"]) in control.gotos
                         or row["target"] == programs[key]["entry"]
                         and all(
-                            command["opcode"] not in (1, 3, 6, 7, 8, 0x18)
-                            for command in programs[key]["commands"]
+                            c["opcode"] not in (1, 3, 6, 7, 8, 0x18)
+                            for c in programs[key]["commands"]
                         )
-                    )
+                    ),
+                    "goto_depth_escape",
                 )
             elif opcode == 5 and closed_entries:
                 require(2 <= packet[1] < 10)
-            elif opcode in (5, 0x19, 0x1B, 0x1C, 0x6C, 0x6E):
-                # These task/source effects retain their independent entry
-                # obligations even when their targets decode locally.
-                raise _UnprovedEntry
+            elif (
+                opcode in (0x1B, 0x1C, 0x6C)
+                or not door_policy
+                and opcode in (5, 0x19, 0x6E)
+            ):
+                raise _UnprovedEntry(
+                    "sound_compaction_write_domain"
+                    if opcode == 0x6C
+                    else "unmodeled_source_or_control_rewrite"
+                )
             elif opcode == 0x64:
                 # Scenario filtering trusts the normal renderer, but a source
                 # selected Work pointer still needs its own bounded role.
-                require(packet[4:6] == b"\0\0")
-            elif opcode == 0x53 and has_render_updates:
+                require(door_policy or packet[4:6] == b"\0\0")
+            elif opcode == 0x53 and has_render_updates and not door_policy:
                 # Another procedure may initialize a record while this recipe
                 # sleeps. Every such initializer must retain the same four
                 # owned records, valid blend mode and RGB-mask domain.
                 require(packet[1] < 4 and packet[2] < 4 and packet[3] <= 7)
-            elif opcode == 0x74:
+            elif opcode == 0x74 and not door_policy:
                 # Both 53 and 74 call native 8002C2B0. Only this uninterrupted
                 # initialized-record recipe reuses 53's existing renderer/OT
                 # ownership; a pointer sampled from RAM grants no such right.
@@ -467,10 +742,18 @@ def _source_scope_facts(
                     and data[row["next"] : at + 8] == b"\x02\0\x0e\0"
                 )
                 render_initializers.setdefault(key, {})[at] = start
+            elif opcode == 0x1D and door_policy:
+                require(packet[1] in counters, "copy_counter_bounds")
+            elif opcode == 0x29 and door_policy:
+                # Cut_chg masks its high mode bit before selecting camera work.
+                require(packet[1] & 0x7F < room["cameras"], "camera_selector_bounds")
             elif opcode == 0x2E:
                 category, index = packet[1:3]
                 require(category in (1, 2, 3, 4))
-                require(category != 3 or index < 32)
+                require(
+                    category != 3 or index < 32 or door_policy and index in (254, 255),
+                    "work_selector_bounds",
+                )
                 require(category != 4 or index < 32)
             elif opcode == 0x2F:
                 # The six native reset words at task+158..170 contain these
@@ -491,7 +774,9 @@ def _source_scope_facts(
                 # These audited member selectors are numeric actor fields,
                 # including the animation semaphore, not pointer selectors.
                 require(
-                    packet[1] in (15, 16, 23, 29)
+                    door_policy
+                    and packet[1] < 44
+                    or packet[1] in (15, 16, 23, 29)
                     or policy is not _ScopePolicy.AuditedNativeWork
                     and packet[1] in _TRUSTED_SCALAR_MEMBERS
                     # Native 80055D94 stores only Work+1D6 u16. Its normal
@@ -511,8 +796,13 @@ def _source_scope_facts(
                 # other presets cannot inherit this initialized-work role.
                 require(
                     packet[1] == 0
-                    and packet[2] < 32
+                    and (packet[2] < 32 or door_policy and packet[2] in (254, 255))
                     and (
+                        door_policy
+                        and (
+                            0x10 <= packet[3] < 0x50 or packet[3] in (0x50, 0x51, 0x55)
+                        )
+                        or
                         # The trusted engine owns normal loading/AI lifetimes.
                         # Signed actor slots and model selectors still cannot
                         # direct construction outside the native tables.
@@ -530,11 +820,17 @@ def _source_scope_facts(
                 selector = packet[1] if opcode == 0x35 else packet[2]
                 counter = packet[2] if opcode == 0x35 else packet[1]
                 require(
-                    selector in (11, 12, 13, 14, 15, 16, 23)
+                    door_policy
+                    and selector < 44
+                    or selector in (11, 12, 13, 14, 15, 16, 23)
                     or policy is not _ScopePolicy.AuditedNativeWork
                     and selector in _TRUSTED_SCALAR_MEMBERS
                 )
                 require(counter in counters and counter < 128)
+            elif opcode == 0x6E and door_policy:
+                # Both part index and field selector are signed native bytes.
+                # Ownership is ordinary engine work; negative indices are not.
+                require(packet[2] < 128 and packet[3] < 7, "part_selector_bounds")
             elif opcode == 0x85:
                 # The position predicate indexes player/partner plus 32 enemy
                 # pointers. Its truth stays unknown, including the IF-pop edge.
@@ -575,7 +871,7 @@ def _source_scope_facts(
                 else frozenset((key, p["entry"]) for key, p in programs.items()),
             )
         for key, row in rows:
-            if row["opcode"] == 0x47:
+            if row["opcode"] == 0x47 and not door_policy:
                 at = row["offset"]
                 slot = data[at + 1]
                 kinds = slot_kinds.get(slot, set())
@@ -611,12 +907,85 @@ def _source_scope_facts(
         callees = {target for targets in calls.values() for target in targets}
         require(not replacement_sources & callees)
 
-        # Guard and positive entry analysis share the structured control walk.
+        # Each policy keeps its own frame contract within the shared walk.
+        reached_locations, all_edges = set(), []
         for key, program in programs.items():
-            frames = structured_control(data, program, ControlFrames.Strict)
-            require(isinstance(frames, StructuredControl))
+            predicates = (
+                tuple(
+                    (
+                        row["offset"],
+                        PredicateOutcome.Matches
+                        if fixed[row["bank"], row["bit"]] == row["expected"]
+                        else PredicateOutcome.DoesNotMatch,
+                    )
+                    for row in program["commands"]
+                    if row["kind"] == "flag_check"
+                    and (row["bank"], row["bit"]) in fixed
+                    and row["offset"] not in mutated_checks
+                )
+                if door_policy
+                else ()
+            )
+            frames = structured_control(
+                data,
+                program,
+                ControlFrames.Doors if door_policy else ControlFrames.Strict,
+                predicates=predicates,
+            )
+            if not isinstance(frames, StructuredControl):
+                raise _UnprovedEntry(frames.value)
+            reached_locations.update((key, at) for at in frames.reached)
             edges = dict(frames.edges)
-
+            if door_policy:
+                for at in frames.reached:
+                    if commands[key][at]["opcode"] != 0x17:
+                        continue
+                    # FF Goto computes an escaped IF pointer. This door recipe
+                    # permits no subsequent consumer of that pointer, unlike
+                    # the separate fresh-positive foreign-field capability.
+                    scan, visited = [commands[key][at]["target"]], set()
+                    while scan:
+                        cursor = scan.pop()
+                        if cursor in visited:
+                            continue
+                        require(cursor in commands[key], "goto_target")
+                        visited.add(cursor)
+                        target_row = commands[key][cursor]
+                        if target_row["opcode"] in (1, 3):
+                            continue
+                        require(
+                            target_row["opcode"]
+                            not in (
+                                6,
+                                7,
+                                8,
+                                9,
+                                0x0A,
+                                0x0D,
+                                0x0E,
+                                0x0F,
+                                0x10,
+                                0x11,
+                                0x12,
+                                0x13,
+                                0x14,
+                                0x15,
+                                0x16,
+                                0x18,
+                                0x19,
+                                0x1A,
+                            ),
+                            "goto_receiving_frame_consumer",
+                        )
+                        scan.append(
+                            target_row["target"]
+                            if target_row["opcode"] == 0x17
+                            else target_row["next"]
+                        )
+            all_edges.extend(
+                (key, start, tuple(sorted(targets)))
+                for start, targets in sorted(edges.items())
+            )
             for dispatch, reset in dispatch_resets.get(key, {}).items():
                 # An IF-failure, loop or switch edge may bypass a lexically
                 # adjacent Reset even when its own control frames are legal.
@@ -642,6 +1011,8 @@ def _source_scope_facts(
                     pending_positions.extend(edges.get(position, ()))
                 require(update not in reached)
 
+        if door_policy:
+            return DoorSourceFacts(frozenset(reached_locations), tuple(all_edges))
         # Identity/exclusion uses immutable scenario bits, so a later canonical
         # entry does not need startup exclusivity. Both native and explicit
         # entries still had to establish bounded fresh procedure frames above.
@@ -652,7 +1023,11 @@ def _source_scope_facts(
             frozenset(protected),
             frozenset((key, programs[key]["entry"]) for key in protected),
         )
-    except _UnprovedEntry:
-        return ScenarioSelectionFailure.EntryScope
+    except _UnprovedEntry as error:
+        return (
+            DoorSourceFailure(error.reason)
+            if door_policy
+            else ScenarioSelectionFailure.EntryScope
+        )
     except (KeyError, IndexError, TypeError, ValueError, struct.error):
         return ScenarioSelectionFailure.SourceBinding

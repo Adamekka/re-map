@@ -24,8 +24,8 @@ from games.re2.clip_effect_proof import (
     ClipEffectSupport,
     clipping_effect_proof,
 )
-from games.re2.room_data import decode_room
 from games.re2.re2_profile import Re2Profile
+from games.re2.room_data import decode_room
 from games.re2.scenario_items import (
     scenario_effect_pool,
     scenario_flags,
@@ -477,6 +477,13 @@ def test_profile_and_catalog_bind_the_same_clipping_contract(
     path = ROOT / "profiles/re2_leon_a_slus00748.json"
     raw = json.loads(path.read_text())
     document = json.loads((path.parent / raw["room_metadata_path"]).read_text())
+    if case == "absent-both":
+        # This case opts out of the strict clipping contract. Its independent
+        # exact-profile door authority must be explicitly opted out as well.
+        del raw["trusted_door_policy"]
+        del document["trusted_door_policy"]
+        for room in document["rooms"]:
+            del room["door_access_catalog"]
     raw.pop("scenario_clipping", None)
     document.pop("scenario_clipping", None)
     if case != "absent-both":

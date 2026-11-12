@@ -419,8 +419,69 @@ class ScenarioSourceWriteWitnesses:
         )
 
 
+class SourceWritePolicy(Enum):
+    Existing = "existing source write classes"
+    NormalDoors = "normal-engine door source writes"
+
+
+def camera_light_write_witnesses(
+    data: bytes, room: dict
+) -> SourceRecordWriteWitnesses | ScenarioSelectionFailure:
+    """RE2-DOOR-009: bound every camera's complete 40-byte light record.
+
+    6A selects a six-byte vector at +16+6*light; 6B selects a halfword at
+    +34+2*light. Native current-camera ownership is the normal-engine premise.
+    Neither instruction can change camera/field selectors through Copy.
+    """
+    try:
+        rows = [
+            r
+            for p in room["programs"].values()
+            for r in p["commands"]
+            if r["opcode"] in (0x6A, 0x6B)
+        ]
+        if not rows:
+            return SourceRecordWriteWitnesses((), ())
+        sections = room["section_offsets"]
+        start = sections[9]
+        end = min((v for v in sections if v > start), default=len(data))
+        count = room["cameras"]
+        if not (
+            type(count) is int
+            and count > 0
+            and start % 2 == 0
+            and 100 <= start < start + count * 40 <= end <= len(data)
+        ):
+            return ScenarioSelectionFailure.CameraWrite
+        writes = []
+        for row in rows:
+            packet = data[row["offset"] : row["next"]]
+            if row["opcode"] == 0x6A:
+                if len(packet) != 6 or packet[2] >= 3 or packet[3] not in (11, 12, 13):
+                    return ScenarioSelectionFailure.CameraWrite
+                field = 16 + 6 * packet[2] + 2 * (packet[3] - 11)
+            else:
+                if len(packet) != 4 or packet[1] >= 3:
+                    return ScenarioSelectionFailure.CameraWrite
+                field = 34 + 2 * packet[1]
+            writes.extend(
+                SourceRange(start + 40 * camera + field, 2) for camera in range(count)
+            )
+        # Protect the whole asset, including fields read by normal lighting,
+        # against other source writers, rather than only these store bytes.
+        return SourceRecordWriteWitnesses(
+            (SourceRange(start, count * 40),), tuple(writes)
+        )
+    except (KeyError, TypeError, ValueError, IndexError, struct.error):
+        return ScenarioSelectionFailure.SourceBinding
+
+
 def scenario_source_write_witnesses(
-    data: bytes, room: dict, profile: dict
+    data: bytes,
+    room: dict,
+    profile: dict,
+    *,
+    policy: SourceWritePolicy = SourceWritePolicy.Existing,
 ) -> ScenarioSourceWriteWitnesses | ScenarioSelectionFailure:
     """Share explicit source-directed bounds; grant no native entry authority."""
     from games.re2.room_entry_contract import (
@@ -432,6 +493,7 @@ def scenario_source_write_witnesses(
         room_write_partitions,
     )
 
+    assert type(policy) is SourceWritePolicy
     try:
         recipe = room_entry_contract(profile)
         if not isinstance(recipe, RoomEntryContractConfig):
@@ -457,7 +519,26 @@ def scenario_source_write_witnesses(
         floor = floor_flag_write_witnesses(data, room)
         if isinstance(floor, ScenarioSelectionFailure):
             return floor
-        reads, writes = (*camera.reads, *floor.reads), (*camera.writes, *floor.writes)
+        light = (
+            camera_light_write_witnesses(data, room)
+            if policy is SourceWritePolicy.NormalDoors
+            else SourceRecordWriteWitnesses((), ())
+        )
+        if isinstance(light, ScenarioSelectionFailure):
+            return light
+        reads = (*camera.reads, *floor.reads, *light.reads)
+        writes = (*camera.writes, *floor.writes, *light.writes)
+        # Native work can reclaim bytes at section2. All 40-byte records must
+        # remain in retained source, not merely inside the original disc file.
+        if any(
+            region.offset + region.width > partitions.heap_floor
+            for region in light.reads
+        ) or any(
+            a.offset < b.offset + b.width and b.offset < a.offset + a.width
+            for a in light.reads
+            for b in partitions.protected_source
+        ):
+            return ScenarioSelectionFailure.SourceMutation
         rows = [
             (key, row)
             for key, program in room["programs"].items()
@@ -510,6 +591,10 @@ def scenario_source_write_witnesses(
             for writers, readers in (
                 (camera.writes, floor.reads),
                 (floor.writes, camera.reads),
+                (camera.writes, light.reads),
+                (floor.writes, light.reads),
+                (light.writes, camera.reads),
+                (light.writes, floor.reads),
             )
             for write in writers
             for read in readers

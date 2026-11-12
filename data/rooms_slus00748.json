@@ -6,6 +6,7 @@
     "RE2-SCD-001",
     "RE2-MAP-001",
     "RE2-MAP-002",
+    "RE2-DOOR-009",
     "RE2-COLLECT-001",
     "RE2-COLLECT-002",
     "RE2-COLLECT-003",
@@ -50,6 +51,10 @@
   "validation": "Candidate; runtime coverage is listed in docs/research.md",
   "reset_candidate_catalog": {
     "schema": 1,
+    "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
+  },
+  "trusted_door_policy": {
+    "audit": "slus00748-trusted-normal-door-access-v1",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
   },
   "fixed_scenario_flags": [
@@ -2339,6 +2344,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "650619fde17039e3080483693059fcdb5391309cdfc2cb548944791e64d55d5c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "19e4144c44d7c706250f393115a23b92256fff80b5a775d612e6d58afa86c817",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4246
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -2514,6 +2538,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "30feae69fb38da6cd1ac0cc115f71b981c0b2f3fd7378a396d39eed4ed28f3bd",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "ece1ea515b65c4ef54222054eb8b140c19692248d71e958060fb098755636bf5",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6050
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              6082
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 6188,
@@ -2670,6 +2722,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "f16243bcd88dcbd651850c407d83298ae0b852a7e3f4e46fa185deb2bea6b034",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "30fc267de1ad566dcb61403822731ec5eae099d934f244538d34c33ebe64dddf",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6146
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              6178
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
@@ -2853,6 +2933,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "cdf8c75f6a46eb987378bc35c2b65398cd9bc491b6df31451e5a86bd2f181004",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "21c3fe0b01fabfefe0159c340ff478c6d11c8750b39d4269c42344d1efab9d12",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              13962
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 16566,
@@ -2961,6 +3060,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "0e84c1b77e7b3257addc57b12c98e0e9992a7fdaddebd791845377dc23ab1a85",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "f2a8f5c87a4b2e71dedb6d8a6efd641c3082ce27025bb5da5bacbc2d4e8da49e",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2994
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -3090,6 +3208,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4538
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 138,
+            "lock_type": 88,
+            "room": 6,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4570
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 4,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9463bc7b2be1e83dd7560ff9006c5461983786c219295ac057ea1863b42626f2",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "540d9620e05dcf0a73a3771d51ac47a0812f2d11ca0be768acdfb1b8258b0114",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -3272,6 +3428,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6b9c5536c178f7d8ea392e3a2aff887769a255bed0fc525239c1741828df8352",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "8aa795529970f7d37fd15b5b30ece73fccda40c3d85f23a04aaeba2e6ef28299",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3006
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3038
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -3388,6 +3572,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2750
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 6,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2782
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 8,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "4777a46dff5a3686d447ddbb3acdfae6ce30dc968ff33360853dd9c6c0d4645c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "8e439b37a8956812a81583e51b67fbb8f13e12ad42a4c522bddf351eaf079e9e",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -3539,6 +3761,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "bc8f552f2e7949b76c74846780d4d131c25fb88b07ebc3d74f460aa2df9f9d14",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0f2975b8ae167c2b5ab6f4a605496d2a8ffeab0f5170c407e2d61a75da876fe6",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6446
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              6478
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -3850,6 +4100,51 @@
         ],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              8400
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "a3dcd36e3f0dd586f6f5aae9a7016efe4657c825f9f919753fe334f3bdd4ec2c",
+        "scenario_excluded_offsets": [
+          8366
+        ],
+        "source_sha256": "785c0c49c56f49a11829c1a98718a867d851893e372d0179d9ce06a63898c4d0",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8326
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              8432
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 8826,
@@ -4009,6 +4304,52 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "daa4e05ad46668e416c0494f68fb3aeaf1610e21d8095387dab7261b8d34e8ac",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "27c879bf77d1c64d0a3bfdfb7baedcd964b0f5df73db1187dfefaf08116f276c",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6602
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              6634
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              6666
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              6698
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 3
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -4238,6 +4579,30 @@
         ],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5518
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "ae04aea3096d2031527484156f4138966877cc5125ecaa1d0265bf53c8ad5e7b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7e628f4ac91a051f6c1974e95c5f400e7ecaf7a023989846537b3b15fe5b69dc",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -4446,6 +4811,54 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              6302
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 7,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 2,
+            "activation_mask": 49,
+            "creator_offsets": [
+              6366
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 20,
+            "slot": 2,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8fb0af3e8831e2a3121b1769a24caa5100f81d98f7a983c4e56c497c9f29c36f",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0a8f0303762d87b297a1871d82c6d11da2185999b8058fec091ace8a9654f333",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6334
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 6746,
@@ -4624,6 +5037,44 @@
           }
         ]
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1974
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2006
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 27,
+            "slot": 1,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "b0d8098a219f2c8286ab7bf8eb5095f167b1b18cd852cbe81244a48fda75e74d",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "fd3f061362f4adf48d51b9ef198600ee8d63ab76fff5c81563d48ac967159b85",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 2134,
@@ -4764,6 +5215,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7346
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 13,
+            "slot": 0,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9fb0ada884d400d596f3f26a7a3b476e339e772b769609723b54665dda2a5703",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7b944b3bf5ea1670385bf0bbc224afd2480fbdb14a8d24e78b5de265285c7137",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -5016,6 +5491,46 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1470,
+              1922
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1502,
+              1954
+            ],
+            "enabled": true,
+            "floor": 4,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 16,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "7653c65740eb840085cd0e9812ff672c5717c54e70e817900f696c5c12933c22",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "36c6981d7ed1bc4453cc4a3f09d77111567ca4f1ca44b639651912ec937d161a",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -5191,6 +5706,56 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 4,
+            "activation_mask": 49,
+            "creator_offsets": [
+              10088,
+              12392
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 15,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 4,
+            "activation_mask": 49,
+            "creator_offsets": [
+              10056
+            ],
+            "enabled": true,
+            "floor": 1,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 0,
+            "slot": 2,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c3ecb27b7f859a2109c91294e1d6e26c248534e24e382030eff9447fcc985c19",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c17e972ca6d3272c2b3cbd4130815b41a846f578a0c4e5ba7a27c996f4e271f2",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              10120,
+              12424
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 4
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -5387,6 +5952,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "abda6b74be583e748d0f75c74c1c4cd6e09f4029592e94d0b6aa52fb88c56d76",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c1e920f4f747d2fa4a74055f5705cb81150b1761190a656b56b76f18794abbf2",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8158
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              8190
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [
         {
@@ -5602,6 +6195,43 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "17aff19b0bf74f616dfffb74c3b178c648b2bcd83760fe70c7f22f1deae1fff7",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "832014cd87b9a81442ca91ddfe036e5846bb43b5135de3aae0378148df2ec5bf",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              10418
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              10450
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              10482
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -5839,6 +6469,46 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3344,
+              8498
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 20,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3376,
+              8530
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 18,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "2645d7b604d2482a68662fd440fbdad47e97f47489808f2fb4bfa00043c389a4",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "1ab441e3691232aba6409bf3394229b524fc4f762d84eb76216aec799b7fc247",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -6015,6 +6685,62 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2562
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 137,
+            "lock_type": 89,
+            "room": 19,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2632
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 21,
+            "slot": 1,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2664
+            ],
+            "enabled": true,
+            "floor": 2,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 2,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "17702dc6ff9962e303400b29760940d5b178f70fe07adaf422be2167d6eee533",
+        "scenario_excluded_offsets": [
+          2466,
+          2518,
+          2598
+        ],
+        "source_sha256": "30d297fdabee48cf34f3e647a07774ba797ca8a3fd32ef311e9ef668c03b11da",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -6247,6 +6973,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "92337f2122056340d3e2adc904d628768a5a6c53d8e8531fc5faadf7b8632c4a",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "31497f44bcebd06a799d730ffdf80d89f7dbb56a54d422e35641f16024e19db1",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4888
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -6402,6 +7147,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "bbc931bc1f44e374cfdd8a1f2f758858cc5395e7d68ef13daf545ce52f3676ba",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "d2d7b559870858710a17d34a99b449bf93792ad51a3f1c3b156a1d58a6725d7c",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2522
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              2554
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
@@ -6518,6 +7291,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 8,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3268
+            ],
+            "enabled": true,
+            "floor": 3,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 18,
+            "slot": 1,
+            "stage": 0
+          },
+          {
+            "activation_floor": 8,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3300
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 17,
+            "slot": 2,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "d9c6775f1d67f2deb71b5e56381cfd614021ce8f265940ee34498caa93106ac1",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "4e7c39e6001c7675f77eacc26c58de1af76730e0cecf134977b86ad9d0d39d6f",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -6693,6 +7504,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7690
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 2,
+            "slot": 2,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7722
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 25,
+            "slot": 3,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "f983ea4c9b341ecda67ef4908e89598be7e5f29eaa22c57c8f50c342ad11e5d0",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "2804230a1df06d81d2f11361d9b9459f2643622ccf72a9401b2df6a4ad933f10",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -6809,6 +7658,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8d640c61113745933593dc7d8ced3144d222d3b8583622adfb2986523548cc3d",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "692fe94d6963229a18204c1ba25cb05eddd81e6897148ddfed3c79d55b01bb8c",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3082
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3114
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection camera write is unbounded"
@@ -6979,6 +7856,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1186
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 25,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1218
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 27,
+            "slot": 1,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "979dfec9da3884b718c44ddf1697b48d206c4c634fa3fdf2c6755c5ad598f4e8",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "527b8714df047837926567ffc8f19fbf0a40a0ddcf98c392a258c959e2c2dcdf",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -7095,6 +8010,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "ecc9ea42b3861385588a5806117150a4c0bdec9deb3fb2e91bf0fdb4b4444181",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "a7faacce79a1f878561b897697b76dca4960d2d65d187c25904614b2be1dfcf2",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2282
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              2314
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -7213,6 +8156,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "14b1e9c99a344b08ec667eb0b2e0d38fbd24f88dee56db2f66cdb563f853eed4",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "232770ed74b908ef963a2e0182441174383c706bb3a4b1c19da494a533beaa98",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2282
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              2314
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
@@ -7329,6 +8300,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "a2b9e7ad19c2d659c10ecd31e714fb3970a3e1aca877856df49c9a26ea2be559",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "9dea8d4af8bd8478105cc24c4864028ae735f7040895045a06f943fe5ee1ef55",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6654
+            ],
+            "reasons": [
+              "source:native_ingress_binding"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              6686
+            ],
+            "reasons": [
+              "source:native_ingress_binding"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -7733,6 +8732,65 @@
           }
         ]
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "5a172481f5c9ff7d30041d7dfeb2dc27acf365e6c6d3d602a35fb607d262a25c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7586728196fd83ec3992964746efd8d7f793fee383963e11c70951ff307fe000",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              9528
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              9560,
+              11704
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              9608,
+              9644,
+              9682
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              9716,
+              11756
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 3
+          },
+          {
+            "creator_offsets": [
+              10058
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 17
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 9826,
@@ -8021,6 +9079,36 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "414e41efec1e107caa7b3d02a0008b3905a62e9715790b92e4510fa76a43a7ab",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "48360046aa7758cb7a0df5a1306b8ecd2902374218fe330c57ccd786f4f26f37",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3018,
+              4232
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3050,
+              4264
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -8290,6 +9378,58 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7066
+            ],
+            "enabled": true,
+            "floor": 1,
+            "lock_id": 143,
+            "lock_type": 254,
+            "room": 0,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7098
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 131,
+            "lock_type": 255,
+            "room": 9,
+            "slot": 1,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7130
+            ],
+            "enabled": true,
+            "floor": 1,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 0,
+            "slot": 20,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "462fe902d6e828a6753cc694ab54a2ea9d6731a48ed569663255bba741043724",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "31a5b1206bfa71d28ae92a15bebb86f90d046e62474a5c7be1cc64d74cadc323",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -8514,6 +9654,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1726
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 4,
+            "slot": 0,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "bf668d52fd3fbdd20aac35b296a7a12b419eae1fd666d34ebde5831913f6fafd",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "4a6311f34cb1288ddf25b46123bbc2cbf938e746e358dbeb6d29da6385b189bc",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -8810,6 +9974,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "32a1d967ea925720d4f3b2345dea1ce7546588e22741620c0a174ef36c30cc0a",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "4816336f9147fc6179d7f39dca7e5a33ee302555091312ced2e1c1bca40afd46",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6366
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              6398
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              6430
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -8941,6 +10142,58 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5918
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 4,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5982
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 6,
+            "slot": 1,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              6016
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 7,
+            "slot": 2,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "e61cd8fe51f65f0c3ca3b5a6678e474144d6a8ff0c57c7743fc729a94bf08a4e",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "d3d9d84a8529768bf37c2a43548327820471046e6f710818f628645841a1000e",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -9127,6 +10380,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "962354706d2ecfe4cc83df2d1e8f6fb20fb5d852ebedb48479bfa91f8f8ae56c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "1060b03c416fa992246e9762d1bfe100d1ffe142eeb3ecbbecddb5cbf086ea27",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5334
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -9416,6 +10688,65 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3862,
+              4614
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 5,
+            "slot": 1,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3926,
+              4666
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 3,
+            "stage": 0
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6c8afa75bfde8d3545ac26f9cade3115c2e9ca73cac696405f756cb0f73e8c43",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "07708bbe7b2c26b57dfb41a12324d90e0ada78ab0bac54df8ab88dd0d2355bbf",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3894
+            ],
+            "reasons": [
+              "competing_non_door_origin"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              3958
+            ],
+            "reasons": [
+              "competing_non_door_origin"
+            ],
+            "slot": 4
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -9669,6 +11000,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "7f8ff392a7fe4430397d0a416017afe50f8c0d6412ebf0fa5a557e150c787892",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7e341f8b33db336f41a61a859683c7dea6680735a3b9bc5d37673517202c4120",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4806
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              4954
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 30
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 5260,
@@ -9859,6 +11218,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3258
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 7,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3290
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 131,
+            "lock_type": 254,
+            "room": 2,
+            "slot": 7,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "f0055dff39e9bfb7c9bf5b92d1726cdc0172c7e7eac8c99d94daa50cf6690203",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "852fcf2c2f26551d5903f2e74190190b9a91a6d3b2793a1cd5aa1d7f376cb982",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -10078,6 +11475,61 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2178
+            ],
+            "enabled": true,
+            "floor": 1,
+            "lock_id": 145,
+            "lock_type": 254,
+            "room": 0,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2210
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 11,
+            "slot": 1,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2242
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 2,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "ae73140d8a52c422bb10ad983ef40b9b07c469a6cf0327f036461a8ea9491f8c",
+        "scenario_excluded_offsets": [
+          2090,
+          2122
+        ],
+        "source_sha256": "409068af4d7aeaaec6ce4450d50894cdbdeec492388e5e3431ad0ab5092521fe",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -10408,6 +11860,44 @@
         ],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "a01e52b1cb534baa7fadc57256f5f372554ea71a63c7bc5fdb9dfd7e0f7dc1c1",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c6b1fe6135f346ffb71500328ffef35a62c6f3d755138ce2a8513411274fc7f6",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              12050
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              12090,
+              12126
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              12160
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -10730,6 +12220,72 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7082
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7114
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 140,
+            "lock_type": 92,
+            "room": 13,
+            "slot": 1,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7146
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 141,
+            "lock_type": 90,
+            "room": 14,
+            "slot": 2,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7178
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 3,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "818d0b3ec96199146fd12cb4a4a263985e20b935b7f1f7666d3a94b80dcbb3a6",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "1e018a6940a199e91eb18e1c06a7073395dffe22bee4d22c1e4848aba1397332",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 7414,
@@ -10954,6 +12510,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4250
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 0,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "cb6cf2bce9b8f6878997e9da63b36bf8441b9eed01882bbcbf5b9755bbf1e500",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "2f13b04271e283d60d795d5d1b15cae0943b8aa250dbc726afb899de75d3e214",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [
         {
@@ -11260,6 +12840,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5910
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5942
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 1,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "360aad6611fcb3fdd228818edc5fbe2f5f0d849f37c076ac0c274d74b86899fb",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "94f38aa44a170d207c7625a41e24c595da82af57ad46f9fad7383600a0e92a0e",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -11436,6 +13054,43 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8399e5b696b30cedf2b2811dc1a14624e447cd11b1174de9649343e9f64fab35",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0ea9c0218c3b260a58e98061d5c9522ae081da5c3e48ea0a7c9691a9330218b6",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5938
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              5970
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              6002
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -11636,6 +13291,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "3838b9203aa1b06eb47515def4ea24f26755ddd1f3c4eacefea8dd7a9904660b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "ba14d87ec3a680baf2fad6f1503242006e91637e553943112e1f642dd46cc121",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4730
+            ],
+            "reasons": [
+              "source:callback_self_replacement_risk"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [
         {
@@ -11901,6 +13575,84 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5926,
+              7262
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 22,
+            "slot": 6,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5958,
+              7294
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 15,
+            "slot": 7,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "cbc722859d8af0e5d00038be1ef53abae7c8f00b79780b7ed93131996ccad5d4",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "9a5ccd1bffbaec58fd5a9edd9371dbdd8d19fe6dd35e76499c01b04e9eb8c258",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6338
+            ],
+            "reasons": [
+              "competing_non_door_origin"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              5830
+            ],
+            "reasons": [
+              "competing_non_door_origin"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              5862
+            ],
+            "reasons": [
+              "competing_non_door_origin"
+            ],
+            "slot": 3
+          },
+          {
+            "creator_offsets": [
+              5894
+            ],
+            "reasons": [
+              "competing_non_door_origin",
+              "history_dependent_kind_reset"
+            ],
+            "slot": 8
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -12029,6 +13781,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9284e529d239837cb18259116c58f7c2b671a2beeda23186fccb4a30c1afcabb",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "08bc8d7d3eedb2224b27855e7ca8dadd9975b88c926fb50d1c26c2ecf8186014",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              1986
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              2018
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -12167,6 +13947,25 @@
           24
         ],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "7e34c5d531f28fa8bfaabbfcf824303b65d89182d477e99940cbb1d0c52e53c0",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "78227d7aac8266feccc018668ad6b25893e60fc30012fbd464977d00fc254ba1",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3714
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -12427,6 +14226,44 @@
           }
         ]
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              874
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 17,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 4,
+            "activation_mask": 49,
+            "creator_offsets": [
+              906
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 20,
+            "slot": 13,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6e5ad899b2d5f64acd74c67fee49124c62eb7d12965eb5dd20373755415e1f31",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "f1b4592412c007fc3531f00bf25510dc04dd6e53eead536b3f2e6c987836b9f0",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -12542,6 +14379,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4744
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 17,
+            "slot": 0,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "3cac6584de5f76d131fa749d65bb5faeb51d6a98c0c36272356862ba20b593af",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "f48df5e0e6e0ab597721fa8d429a7f8da95cc65d1b243594e43969ec4a9c7398",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -12671,6 +14532,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "4994c17e14607408cc3b707a8013ac0eafd8d1f36e097872cd618e1336afa5f5",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "b01c81de8a86e6b878a08be868a6e7385f6ab87fd7e7535365ef86212e0c9af6",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3770
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3802
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -12826,6 +14715,54 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2394
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 22,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2490
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 1,
+            "slot": 3,
+            "stage": 2
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "d84735fc7e77ccc1d66da8d8136a79b61ee78e97992173d49484b67de89d6431",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "8a43ce177e8f0bcc7b48bd55ee7f70d3c7010405958d614fc94c8845c5f5e3ba",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2426
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -12996,6 +14933,36 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "52bdd97c41a8a6c95463d1b72ba35deffb4213ba140abeea39180efa6af319bb",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "9272302a6237d7c4115222b10f152eba09b3bba964d15f9c00675735d7e7065f",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6902,
+              10046
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              6934,
+              10078
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -13220,6 +15187,86 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              9334
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 0,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              9366
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 13,
+            "slot": 1,
+            "stage": 0
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 0,
+            "creator_offsets": [
+              9398
+            ],
+            "enabled": false,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 8,
+            "slot": 2,
+            "stage": 2
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              9430
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 27,
+            "slot": 3,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 0,
+            "creator_offsets": [
+              9462
+            ],
+            "enabled": false,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 27,
+            "slot": 4,
+            "stage": 1
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "198849c8945efc897b607720cc3632d055d25fd5833635e03371d1beec277238",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "b572e90225560df83d0c433246ef20a243614a5bf3dabe110964dc812cd0f9ee",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -13336,6 +15383,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5186
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 8,
+            "slot": 0,
+            "stage": 2
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 0,
+            "creator_offsets": [
+              5218
+            ],
+            "enabled": false,
+            "floor": 3,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 9,
+            "slot": 1,
+            "stage": 2
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "ff1de9f6013dc9ab7fdee8be15020bf559fa8120d29d9dfeb0decee21cb4562b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "ce226145d149cfa27b0db625b7d92d35c0975139ce4479a0fe41a56c95910d27",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -13495,6 +15580,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "268a37dac63f88f6671aa759f87d194885f53c29c86259fe5f7da0009e15cfc9",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0a313918f24dac823fd7eeaaeedc9022364da27d62a8c3757e0bc830cd397221",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6678
+            ],
+            "reasons": [
+              "source:scripted_null_dispatch"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -13611,6 +15715,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2538
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 26,
+            "slot": 0,
+            "stage": 1
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2570
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 11,
+            "slot": 1,
+            "stage": 2
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8891adb22ed0d7bac32e3e15eb93cbcf1d09d182886dcaf010b9ad4aa25b9cc6",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "f9004d61d5d3858a3df94040f0c92a569300c0bb36bee96d4afc40a93b5b8abe",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -13759,6 +15901,36 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8a761c9a98a6505bc9cc0d9763521f281de1e03eb8f8153484e41206f33ec919",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "1a39cb649b7e98c5b56cbff9759a3536ec2a0c85c965fb38338b336ee3a0a886",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5560,
+              8300
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              5592,
+              8332
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -13890,6 +16062,35 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "b9cf9dbae2c7876c10d727af8d78b1f0275cd935b736275cb0e9f14608f063cb",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "ccfb13c4f5616d02d540f449749a14f0b289283164689c21cbf5aff3a8c174cf",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4100,
+              6428
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 3
+          },
+          {
+            "creator_offsets": [
+              4132
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 4
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -14023,6 +16224,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6bf3cac8f01b0def7a07c79390de86be3c2e5f398254ab522fb6e7bf600f91de",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "977f60c29db4a6eac38f4da4c78971d39b3fa04d71787ca586f465e357392944",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5862
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 4
+          },
+          {
+            "creator_offsets": [
+              5894
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 5
+          },
+          {
+            "creator_offsets": [
+              5926
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 6
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
@@ -14136,6 +16374,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "88ea4d50f33737fd93859383ceba12758e53b45632ad3733c3ba4e7f88d6d8fd",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c9517dc6925c82523c7b9c9a450acdc0c394b227bb74b5bbed5d8ab6b21edabb",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              7654
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -14281,6 +16538,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "542ac246123703fef9ff7d490fa5244cf5287bc0a88abe1bc838da6755591a3e",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "39ea55d00c4647080e30e4564e10ca5f282812f951991c5b605b8065dc5f961b",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4178
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              4210
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              4242
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -14397,6 +16691,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "69240fdfbf38bfd1bf717fd392ca7ef30e5b0b3c65d6bdd58ff14ed6654658c5",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7ec87f9c33ab656a6b1342188ee661818c7dfb0e2310f1a93e10706bea7f868b",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2450
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              2482
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -14515,6 +16837,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 3,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4696
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 0,
+            "slot": 2,
+            "stage": 2
+          },
+          {
+            "activation_floor": 3,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4728
+            ],
+            "enabled": true,
+            "floor": 1,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 3,
+            "stage": 2
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c21aa5b83a4dac5c51d60153605e8736b3d1c4e892aa9f543b15ba4d84e51b7f",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "59bca28ed976129234e9040ad62727bab3a2b9d22536908c7a6da648aeacbdf4",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -14631,6 +16991,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5780
+            ],
+            "enabled": true,
+            "floor": 3,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 9,
+            "slot": 5,
+            "stage": 2
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5812
+            ],
+            "enabled": true,
+            "floor": 4,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 0,
+            "slot": 6,
+            "stage": 3
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "ca60145123e5d8664095d3d302a059e10481ecbedf406e0ab75e46ca3150ef65",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c123fbb09706682070472a3bf50d06f72b581c651efacaa1db628c582acf2322",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -14878,6 +17276,52 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "05c9ba403a56561f0cc9cb1c028955bf665713639a6a8fce35dd7422f3dbf80f",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "ec2bf02ac87da445657b410cabf701bec4eb90ee1076a2915269988ef67820b6",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2902
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              2934
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              2966
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              3030
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 3
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 3358,
@@ -15025,6 +17469,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "1c3a2514d402f68304d7bd5e0fda1c127fc2b414372edf157e2de12ff5844ed5",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c478ef242d3f0b2dda90a1f7e9082ea11e32a6731b9ac3927dd653e2b9861490",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              1026
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
     },
@@ -15121,6 +17584,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "125a51fead2dfbd1b7b1917f48baec20e303f6f66d95c1a2bb21212bf4928670",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "4eb816e1d01ec6a3ba11ab7c1dc5aaabd4e0eccbb63c39fe606a9ba30f2b8451",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              566
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
@@ -15276,6 +17758,43 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "57cdd6f4eba7f37cfbb6e6ae962c0d42c4c269c1c83eea595dc25da06cfb052a",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "088eb4713607600feac1951b7bdddd79468e6a95f012668c296b9bf872f1b3a3",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5414
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              5446
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              5478
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -15559,6 +18078,70 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "99ebc543bed10413978d787be43ea8317ee7c982b0359578f4b8420c395701da",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "608df588fd09af995b88167774c27348055be4051c05a387ba403b9091388cc1",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8682
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              8714
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              8746
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              8778
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 3
+          },
+          {
+            "creator_offsets": [
+              8810
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 20
+          },
+          {
+            "creator_offsets": [
+              8842
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 21
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -15698,6 +18281,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2134
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 4,
+            "slot": 1,
+            "stage": 2
+          },
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2166
+            ],
+            "enabled": true,
+            "floor": 4,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 3,
+            "slot": 2,
+            "stage": 3
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "ead63555a6966165ace2161e94050bbc834c26293e5c9bda51704704d71ebafb",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7c2e1eac85375f91e31fa77187c71fd7d0f83c6358c212d2de3cc7e0cfab64b4",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -15965,6 +18586,61 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "135c9907a2ad19b9c4db19c89f569e3ae3d8906f948e3b8c491d8dddf7e21252",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "38b5df2ebd621b0af00437ba4372a0ecc6ff078cfce8c0ac499259c1c29789c5",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8634
+            ],
+            "reasons": [
+              "source:unmodeled_source_or_control_rewrite"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              8762
+            ],
+            "reasons": [
+              "source:unmodeled_source_or_control_rewrite"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              8666
+            ],
+            "reasons": [
+              "source:unmodeled_source_or_control_rewrite"
+            ],
+            "slot": 4
+          },
+          {
+            "creator_offsets": [
+              8698
+            ],
+            "reasons": [
+              "source:unmodeled_source_or_control_rewrite"
+            ],
+            "slot": 5
+          },
+          {
+            "creator_offsets": [
+              8730
+            ],
+            "reasons": [
+              "source:unmodeled_source_or_control_rewrite"
+            ],
+            "slot": 6
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 11728,
@@ -16140,6 +18816,45 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9293c4a2f4f251ec0154cc0a03e5aef5ec0e06a2270b7aaad053b7b2fe578ca5",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "4c6245aa118fc62922bb470008e94989e8a36a76aa1295649d0fbf8b53a6062f",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3350,
+              3394
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3438,
+              3482
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              3518
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -16306,6 +19021,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "0ce0b1f7d614adf37bc2ceba749939151154b8c9c6044fc7e6fe251eb42da296",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "3b461c8d9efc211a7e4b81585012a34dbe0f50371c8fa294e6296a9f0394ca08",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3630
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3662
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              3694
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -16437,6 +19189,43 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9f524a46ba948f5428350544adf76df1bcc6c7bd355fb10b2a1006905874c2ff",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "98bd9ff76ab6c3633819244d2b7970f915212b9358b3d666685d37b9e04b6e73",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              1686
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              1718
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              1750
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -16611,6 +19400,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "2c69d34ce1d69506e91b5a1f808c2e5a4b95c61e33200ce2a44ab1ddaef1ce9b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "d557b3c7c47c7a9c6a707e3b72c110835aac414da2892c00799f259cac7052cd",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              10174
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              10206
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -16773,6 +19590,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "d1aa803332a93f6838962c8d04edeefaa61241c562bfcda98d93e5598fb77b75",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "2d1ffabb3a6a44313883fbb0f2c4d44caf53559732637a60ce390a611c9635cc",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8598
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              8630
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -16889,6 +19734,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "0ab7f93f8be08c8b4fb7d7de2b49cfee0117c73b270dde95c1ee4d9451287ee3",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "9cc28adec7ae350cdeb90b18e682890437efd1cebeee05172327a451695f6a64",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              9474
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              9506
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -17007,6 +19880,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              790
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 5,
+            "slot": 0,
+            "stage": 3
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              822
+            ],
+            "enabled": true,
+            "floor": 4,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 9,
+            "slot": 1,
+            "stage": 3
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "87ce0aa8baf39398cd7e1758db04ff4dce427d919d35d96d66490da1435a9dea",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7c69818f15bda27723637cad1f60a10e8688161c4ad9d00a503be71352f6093e",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -17092,6 +20003,15 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8a1fe284780f583bd65664467a4c8ffeef3d86b93aae724f7da1d2491e5114b0",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "8ec385660328e5b77b37fdb7d1182ebdcced7041b698843af660b498bbeabcda",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -17209,6 +20129,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3802
+            ],
+            "enabled": true,
+            "floor": 1,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 7,
+            "slot": 0,
+            "stage": 3
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3834
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 1,
+            "stage": 3
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c3b929c17954b316dbb1fa3558ab44f9bbc39c31c0ef7f53ade80246a999657d",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "b09494784852e16b9f8fb7bdd70187794e104c4d902855586aa492196737d124",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -17365,6 +20323,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6a4ea1c24c0e141eb0460388387afd233b22ea4d860864d4dc5b4ff34091ec20",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "3f74e90d449bb624360304d9c62078923e7efe919b24f222c80388886ec30f81",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              13902
+            ],
+            "reasons": [
+              "source:switch_frame_missing"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              13972
+            ],
+            "reasons": [
+              "source:switch_frame_missing"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              13938
+            ],
+            "reasons": [
+              "source:switch_frame_missing"
+            ],
+            "slot": 5
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -17450,6 +20445,15 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6e3e07c3353a44d4f35235790b17f1a8ce97d2b0d728f4f6766c91a93e1ca20d",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "6383a9d38dfac04a7c295b61b83a9d693e40b244435b8d35d20ef5f7424d56c1",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -17658,6 +20662,45 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "6643a7afbfd70c77343104dae08d84522db1e5fb75c970ad0a4934f359e52ddd",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "811b0174684695054cea3aba5a7998b0c8133b28d0a4577fd97c447a8ec54975",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4526
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              4558
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              4666,
+              4716,
+              4768
+            ],
+            "reasons": [
+              "source:sound_compaction_write_domain"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -17759,6 +20802,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "431fce211e81c99c6ad11a4f14438285aa8ba06ca949a788ac3133594619ef68",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "43514e3c10357346487ea3761daec0be32a3cf972fbf6ef5842cbd50720eb974",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5470
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -17888,6 +20950,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4866
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 0,
+            "stage": 3
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4898
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 2,
+            "slot": 1,
+            "stage": 4
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "469dd7dcca49b73e0ff0cc3cf2fa09a5be93505c8adb602b9a593acbc9ae0975",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "f04f220b6b5becc333c2e36906e4f2fdaae442f87810332bf227abcf88ad43b3",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -18035,6 +21135,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c2675fc9b63c82d4707df7838653bd53847c0c8f9663b0a42965ec9fe5f6930b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "499a4ae12acd9ea6162ee8c0bc11ab2783ed8e027742ec17523d7c061c0f6bd6",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              5286
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              5318
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection source can change protected data"
@@ -18228,6 +21356,52 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1950
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 8,
+            "slot": 0,
+            "stage": 4
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "d0a62d50b542606d17ab4c23efb756a73a88690de22204af23e7f102933ba631",
+        "scenario_excluded_offsets": [
+          2026,
+          2058
+        ],
+        "source_sha256": "2642be5aa137a9c17d13be601686b341259e271a3304f05aeb7265e683deb67b",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              1990
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [],
+            "reasons": [
+              "different_access_target_or_lock",
+              "no_guaranteed_startup_registration",
+              "no_reached_creator"
+            ],
+            "slot": 7
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -18367,6 +21541,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7166
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 3,
+            "slot": 0,
+            "stage": 4
+          },
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7198
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 5,
+            "slot": 1,
+            "stage": 4
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "2435f406c570485d4d334698d347d58c5bc26763038217598096771644548508",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c726d2c9cdd552ec8411cb7446870a2afaea7c337f48e158f99a5e6bd11ffcab",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -18586,6 +21798,29 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "d4ab956b11622d017e98d5e4ac7a29a74a7c50e4d341d03b7287169c189a4e77",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "2ceeb9dd9088785aae51cfc058da27285a2d8c8294967b1869eead9b8410b0ca",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2862,
+              2906,
+              2960,
+              2996,
+              3034
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -18725,6 +21960,34 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "302657d143282306f570f61f968605a5d5c44ae8a99e02dd85b8e85f58708c3c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7a1877673b9aee140aca2e27c8d2be86c29617b6b0c74540e614031aa63a1770",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3378
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3410
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -18950,6 +22213,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "bb2af9b14d6aec2317a15a3cd331b18b0885083069590258a683d45f7a0422f0",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "86cad4c8719e0cadd582734664ba030bbec597450cee474658bdc7843dda85eb",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8466
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [
         {
@@ -19177,6 +22459,47 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5148
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 2,
+            "slot": 0,
+            "stage": 4
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5182
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 3,
+            "slot": 1,
+            "stage": 4
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "1b59a4bea8a61e2dd006b6174dc4fbb138709a6cf5481ee775389733f40b7611",
+        "scenario_excluded_offsets": [
+          5074,
+          5110
+        ],
+        "source_sha256": "efbcb217a0c97ac1004a6a1753193d1da3828afd4d1f74d9a285bebfb7f794c1",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -19278,6 +22601,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "bcbc707e22f9587a34b8f256ee6edd035b996490e42bb374680c6095b653e563",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "b743140e95cdd5acd04d089fecdfa312b773e8977132407c0629da85bdb9a0a1",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6526
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -19395,6 +22737,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5498
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 5,
+            "slot": 0,
+            "stage": 4
+          },
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5530
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 2,
+            "slot": 1,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "1222dec462ccbf2c650e1e5611c3b6f58aa399f471b588d27bcbfef43cffba30",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "9dbc4c8c397068ec225df67b6407d9e0c1e7763504be60cd22463026f0bd1747",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -19527,6 +22907,43 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "02284760fc87c118b4780547ef05e98ca8a85634bfc442b0451b045946a9528e",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "cf6556e000abfb010d6beb247c93dce7690b4abc9d10df71a0d35c347609319b",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              1218
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              1250
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              1282
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -19691,6 +23108,41 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2220
+            ],
+            "enabled": true,
+            "floor": 3,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 3,
+            "slot": 4,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9d88b7675ef6cfb67be3d3c3f9d5504e9561b6d73695404327f5fea4d28bfad8",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "05f7d6b19d1c831351ec01d49c4e525d8f9a3c132b71ccbbee50d4bfd3d44c1c",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              2162
+            ],
+            "reasons": [
+              "competing_non_door_origin",
+              "history_dependent_kind_reset"
+            ],
+            "slot": 3
+          }
+        ]
       },
       "reset_candidate_descriptors": [
         {
@@ -19893,6 +23345,58 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 3,
+            "activation_mask": 49,
+            "creator_offsets": [
+              10698
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 2,
+            "slot": 0,
+            "stage": 5
+          },
+          {
+            "activation_floor": 3,
+            "activation_mask": 49,
+            "creator_offsets": [
+              10730
+            ],
+            "enabled": true,
+            "floor": 10,
+            "lock_id": 150,
+            "lock_type": 95,
+            "room": 4,
+            "slot": 1,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 81,
+            "creator_offsets": [
+              10762
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 5,
+            "slot": 2,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "811c4da250617eadc8c65cd2bb24c4e1eaa403178fd1fd07d5f81550aa1feec0",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "b5328ddce75ffb02dd3c4a4f2d75157f1c8fab7e4b432b9be08fb195d8579a41",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -20026,6 +23530,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "5747cbae4010c3e535e6898f1b29b31cd874ceea6c26e74b44d9b1bf9cd965da",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "a38eb9bc1a24ff1472a222575745710f5f87cbc296d04ada641ebc8e9b38ccff",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              8112
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 8296,
@@ -20134,6 +23657,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "eed144bdd854fd05db31b813defca16405c0968f22651f0adc1386aa319f2586",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "952567fcd81409e97c8ee08a26a37feecd91070b5d2481e2918d5ac0ee5d5f83",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              6578
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -20312,6 +23854,67 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 1,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3594
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 5,
+            "slot": 0,
+            "stage": 4
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3674
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 7,
+            "slot": 1,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "2d079e70bbbfe1d1cf56ac809a63edafcfcb0f0da5ee263d4e894c83384c5242",
+        "scenario_excluded_offsets": [
+          3638
+        ],
+        "source_sha256": "b35589fe21392bacaa54ec533337a4da49efe970ce2f3511dfd5dc7b2f616627",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3708
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              3752,
+              3788
+            ],
+            "reasons": [
+              "different_access_target_or_lock",
+              "history_dependent_kind_reset"
+            ],
+            "slot": 3
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -20474,6 +24077,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2870
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 6,
+            "slot": 0,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2910
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 1,
+            "slot": 1,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "8a2b67a3a67a715591dfba3011d21fc1d60ec490c75a9bcdefc6ef01861d01dc",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "8decff7c05a984ac3dbadb649163f76e3df320dedaa91b3329f4e457c6160b97",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -20605,6 +24246,43 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "cc6bc3c9395289780bb392d2b442453f2530d4b6be3e7a9996e35c3db6e29247",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "24e5a2742d0b5ee598bc47d30560bf89f69395fefb916e738dce383b405ceca2",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              10034
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              10066
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              10106
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 2
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -20748,6 +24426,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1036
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 148,
+            "lock_type": 254,
+            "room": 11,
+            "slot": 0,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "dd3f72c17ecf53993998fe77b2cf8e172d4198c802f8db68918368c9c3201cd2",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "a71f4f6e5067c45b7c3212050654502aaee386c76dff549370a24b34636fe494",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -20969,6 +24671,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "3a26fcf255c64668d1d1d2411486c8fa092e91c61552667d6267eb94e39b4f11",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0dfe0bfde368b029d9aa92547ad84961a1d50f70d152c660f8841fc1f88b96b5",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              1522
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              1554
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 5332,
@@ -21144,6 +24874,77 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4438
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 148,
+            "lock_type": 255,
+            "room": 9,
+            "slot": 1,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4470
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 10,
+            "slot": 2,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4502
+            ],
+            "enabled": true,
+            "floor": 10,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 3,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c61780ac550dbebce967fc6fabfa00cd8b80c1d7e5366665ea6155ba33c68994",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "c1dd151210696b4e12477681e81cae9b81eb55e2b158e36ec9a32ac323c98fa0",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4398
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              4534
+            ],
+            "reasons": [
+              "history_dependent_kind_reset"
+            ],
+            "slot": 4
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -21318,6 +25119,61 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "40bae3980ff0036982ace0d3c7dc880b4faac9cd369302e3185994bfe615c377",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "209e6fda530670a48f1507fbb0e3f54e7c8019d43b2c6445ecd7e183719685ce",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              3850
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              3882
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              3922
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              3962
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 3
+          },
+          {
+            "creator_offsets": [
+              3994
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 4
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -21453,6 +25309,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 0,
+            "creator_offsets": [
+              2210
+            ],
+            "enabled": false,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 0,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c117fae6117694bf103a258311249554897701a92ff507bcb913b7fa10037eeb",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "7f2cca7a9539f08a66da113597f9f182f885e07ff902152a3cd687640a6b9ee6",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -21632,6 +25512,72 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 10,
+            "activation_mask": 49,
+            "creator_offsets": [
+              910
+            ],
+            "enabled": true,
+            "floor": 10,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 0,
+            "stage": 5
+          },
+          {
+            "activation_floor": 10,
+            "activation_mask": 49,
+            "creator_offsets": [
+              942
+            ],
+            "enabled": true,
+            "floor": 10,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 1,
+            "stage": 5
+          },
+          {
+            "activation_floor": 10,
+            "activation_mask": 49,
+            "creator_offsets": [
+              974
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 11,
+            "slot": 2,
+            "stage": 5
+          },
+          {
+            "activation_floor": 10,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1006
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 22,
+            "slot": 3,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "a22e70d66d44b9870cf1f1920e30264fdab65168a87bcd38d7f45e79bbf8f2f7",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "e7de7b050f3cb12b6533c20aaab03c1c4a3bae6ac7ad8e8e4bd9434925f422bc",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -21756,6 +25702,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              1814
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 0,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "0fd016dbbf6df8e109de3b934b6c0162071932342dbdf7839d9b8a6bd7b7f5b8",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "26f76f9ce3bd1f11652b277eea4134eb293915c3634fa5722a34c94ffe9c2b76",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -22012,6 +25982,31 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3838,
+              3882
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 12,
+            "slot": 0,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "61ee3eb61c1c98813a0c255a021957709eca9e7f6a06df32c3bd4dd53d3871ce",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "d3ad1e3ea470a510b61a5e48fe6b2b410395ac99a8f93b2d4f1396097c9d30df",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [
         {
           "offset": 4790,
@@ -22157,6 +26152,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "3220c951d850f8359aa1af55d290a16241d2355bb84c92db4ebae97487347c0c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "75f13fda0e68eb2394de01bcebe3649bd3d27dc31e6e3ad8c334658ea6967179",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              12654
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              12686
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 1
+          },
+          {
+            "creator_offsets": [
+              12726
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 2
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -22274,6 +26306,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4698
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 20,
+            "slot": 0,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              4730
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 22,
+            "slot": 1,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "94094d4c282122255d82f97381174b118a1ced7b9716b0eadc330149947c257b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "d490f8f5ff832ff9b056210a97acb9a708a1c7f2b39f3b72d6b07a07b79811a8",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -22375,6 +26445,30 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3652
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 20,
+            "slot": 0,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "59d62aff851b6bb4ff355b287eda20085deb17a85f05ad7b1406736015131580",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "106980d8d9f4e160241a4623d4764c0676d132ba5435da2afdf8c9d32b6916b5",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -22519,6 +26613,58 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              2994
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 151,
+            "lock_type": 97,
+            "room": 19,
+            "slot": 0,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3026
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 21,
+            "slot": 1,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              3058
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 18,
+            "slot": 2,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9c6fa80bf6d6b0296aa30559af4da159edc1cf371c446d1761ec4b18f2bffa3f",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "2e1e0d4495ecda15ee40caeddc63fb120af1cbadf7df91671004c2ffda9a500b",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -22689,6 +26835,25 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "5ebfc581190156afefc45c4b469fc1976872183479e7854d80af47212bb926e5",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "dbb5b0d230d419b33c38647ec5feef67667dece668ad644700df3c6a4081742e",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              11158
+            ],
+            "reasons": [
+              "source:goto_receiving_frame_consumer"
+            ],
+            "slot": 0
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -22855,6 +27020,58 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7402
+            ],
+            "enabled": true,
+            "floor": 10,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 14,
+            "slot": 0,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7434
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 18,
+            "slot": 1,
+            "stage": 5
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7466
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 23,
+            "slot": 2,
+            "stage": 5
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "e7b8989e1a767f76fdb2cbd6c1b712af522607e32dbe6af6b2552b2abb715a9b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "e7b1b01fcd1be513eee17c1fef08b5b968bfe09f8f54e2c4064266db3493dba9",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -22972,6 +27189,34 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "37ea16d7438659c3ba09fd1eea9234298a02de82c445b62a2c954c0e986e159b",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "615bef42fdd7aa235cea247119f6c4880dd3dc8a9d23c9335a9188b5fba8a7f0",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              13698
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              13730
+            ],
+            "reasons": [
+              "source:goto_depth_escape"
+            ],
+            "slot": 1
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -23088,6 +27333,44 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5178
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 154,
+            "lock_type": 99,
+            "room": 1,
+            "slot": 0,
+            "stage": 6
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              5210
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 3,
+            "slot": 1,
+            "stage": 6
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "9bfb2e672a130859977276a0d8e69104ba3bd784359a6e696b74ede045dafa14",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "745129191b1ddb5166e34fcccdd60a56b5ed51dd61595e6c424988944114e020",
+        "unsupported": []
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
@@ -23229,6 +27512,44 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7762
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 0,
+            "slot": 0,
+            "stage": 6
+          },
+          {
+            "activation_floor": 0,
+            "activation_mask": 49,
+            "creator_offsets": [
+              7794
+            ],
+            "enabled": true,
+            "floor": 0,
+            "lock_id": 0,
+            "lock_type": 0,
+            "room": 2,
+            "slot": 1,
+            "stage": 6
+          }
+        ],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "c2dbe8df3e64c048c0638fc626268f7139cbadb972067626cadc518642c1d84c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "2dc79b24eecb55cf817b152e696916fd5085fb9068c6fdf2794fc8b01a064887",
+        "unsupported": []
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"
     },
@@ -23361,6 +27682,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "854d3e1268611f2d739ca3330fec3d4d8805f505c549a8aae06791e1ac1a0c70",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0d9b9cacc034d4b525c46560da3888d7fd197d4692a649f6ec5b28d7db5cdebd",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4358
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [
         {
@@ -23501,6 +27841,43 @@
         "absent_item_ids": [],
         "item_variants": []
       },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "e1426f780ff9ed568ab1813acaf3eed9063e891331f526e33756fabcc082ac7c",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "0e8a10a0648f2aadfcad802ca7468c92e92f607dc91f2a99e65f6fffe39a1e25",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              7256
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 0
+          },
+          {
+            "creator_offsets": [
+              7288
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 2
+          },
+          {
+            "creator_offsets": [
+              9328
+            ],
+            "reasons": [
+              "source:explicit_source_write_footprint"
+            ],
+            "slot": 9
+          }
+        ]
+      },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "scenario-selection camera write is unbounded"
     },
@@ -23625,6 +28002,25 @@
       "scoped_scenario_items": {
         "absent_item_ids": [],
         "item_variants": []
+      },
+      "door_access_catalog": {
+        "audit": "slus00748-trusted-normal-door-access-v1",
+        "facts": [],
+        "profile_sha256": "56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564",
+        "programs_sha256": "785ff28b137cdaf6dde9aa7c34daab30f02bf6f54b44d1d8749aa0d69ec29e27",
+        "scenario_excluded_offsets": [],
+        "source_sha256": "95675a27e56a2a852e593e3357dd5ac38ce48810cdb2812e645123c8f935250d",
+        "unsupported": [
+          {
+            "creator_offsets": [
+              4350
+            ],
+            "reasons": [
+              "source:copy_changes_unclosed_operand"
+            ],
+            "slot": 0
+          }
+        ]
       },
       "reset_candidate_descriptors": [],
       "reset_candidate_source_failure": "none"

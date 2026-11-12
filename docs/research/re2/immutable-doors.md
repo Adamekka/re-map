@@ -172,3 +172,222 @@ sources and writes this contribution. Both executing sessions verify exact model
 unchanged. Root reviews the changed predicates, native controls, failure bounds
 and affected callers. Configured Claude Opus 5.5 is disabled; Gemini 3.8 Flash's
 review fails to open its provider session. Neither provides an endorsement.
+
+## RE2-DOOR-009: opted-in normal-engine door access
+
+Status: Candidate for Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748,
+Leon A, Original/Normal. This extends the policy recorded above. It adds source
+analysis, synthetic reader controls and copied native component execution. It
+adds no gameplay confirmation, native room entry or native savestate restore.
+The executable remains `SLUS_007.48`, SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+No DuckStation instance runs for this contribution. The previously tested
+DuckStation version and the narrower confirmation status of RE2-DOOR-007 remain
+unchanged.
+
+The defect is departed access remaining unresolved despite stable source-owned
+door alternatives. The explicit `trusted_door_policy` in the
+[pinned profile](../../../profiles/re2_leon_a_slus00748.json) now authorizes a
+separate [door compiler](../../../src/games/re2/door_authority.py). Its
+`DoorAuthority` and `DoorAccessFact` cannot be constructed or replaced through
+the public dataclass API. Item and Guard receipts grant no door rights. The
+compiler consumes the actual owned binder result for all 69 resources, 125 room
+sources and 54 auxiliary scripts, checks native ingress, and binds the exact
+executable, semantic profile, source and decoded programs. A separately pinned
+[loader](../../../src/games/re2/door_access.py) validates the complete generated
+catalog before giving the reader typed access facts. Unsupported sources retain
+their independent legacy rules.
+
+The shared source/frame/write traversal has a distinct door policy. New native
+opcodes cannot inherit door permission when another policy's effect set grows.
+Ordinary actor/resource/render ownership uses the approved engine premise.
+Signed FE/FF actor slots are bounded reserved pointers; object slots stay below
+32. Actor model selectors remain in the native domain, including `0x50`/`0x51`/`0x55`.
+Explicit counter/member/part selectors, task targets, call/IF/loop/switch
+frames, callback replacement, Copy domains and physical aliases of all four
+historical scenario/mode flags still require checks. Unknown historical flags
+are never replaced by their current values.
+
+Every reached origin competes for its slot, including non-door origins. Every
+Reset kind participates in the history check. Kind-changing histories stay
+unresolved. Same-kind Reset preserves route/floor/lock only when geometry and
+SAT semantics remain valid. Setting geometry80 on an ordinary origin is
+unsupported because a later Reset or dispatch could use the longer layout.
+Semantic alternatives may differ in proven-disjoint geometry or destination
+pose, as in source `05-10`, without changing access identity. Scenario-excluded
+creator offsets are kept separate from accepted offsets and never receive Open
+through another creator's fact.
+
+Native source inspection uses PS1 virtual addresses, little endian. The complete
+Reset leaf at `0x80055154..0x800551C8` has SHA256
+`3ac89bd618207ddc7c84953e22b53de29436d99cf95566b48ba2ad5cac9b3b05`.
+It writes kind/SAT bytes and three pose halfwords at descriptor+12 for ordinary
+geometry or +20 for four-point geometry. Target stage/room/floor and lock bytes
+at payload+8/+9/+11/+15/+16 do not overlap those first six pose bytes. Ninety
+unchanged-leaf executions compare the complete two-MiB synthetic RAM against
+expected stores, including kind changes and high-SAT controls. This extends the
+frozen research's 54 copied-component controls; neither is gameplay evidence.
+
+Lighting `6A`, `0x800589D4..0x80058A8C`, writes a little-endian halfword at
+camera-record+16+6*light+2*component. Lighting `6B`,
+`0x80058A8C..0x80058AD8`, writes at +34+2*light. Light indices are 0..2 and
+6A selectors 11..13 choose components 0..2. The compiler requires every full
+40-byte camera-light record to fit retained source below the section-2 work
+boundary and remain disjoint from scripts and other source dependencies. Copy
+can change scalar values, never these selectors. Cut_chg at `0x8005478C` masks
+its high mode bit before selecting a bounded camera. Sound compaction `6C`
+remains unsupported.
+
+The complete [generated catalog](../../../data/rooms_slus00748.json) accounts
+for 279 slots and 321 raw ordinary/four-point creators. It contains 114 access
+facts across 56 sources, covering 124 creators. Thirteen facts are keyed, 55 are
+in later stages, 110 are enabled and four are inactive. Eleven other creators
+are separately scenario-excluded. The remaining 165 slots and 186 creators
+retain explicit unsupported outcomes. Two conditional legacy `01-01` slots
+remain independently available. These are source counts, not campaign or map
+coverage percentages. No coverage cap is applied.
+
+All residual reason classes are retained below. Counts overlap when one slot
+has multiple history defects. A source's first blocker does not endorse later
+commands in that source.
+
+| Residual reason | Slots |
+| --- | ---: |
+| Goto receiving-frame consumer | 45 |
+| Copy changes an unclosed operand domain | 32 |
+| Explicit source-write footprint unclosed | 20 |
+| History-dependent kind Reset | 14 |
+| Sound compaction write domain | 14 |
+| Goto depth escape | 14 |
+| Scripted NULL dispatch | 9 |
+| Competing non-door origin | 7 |
+| Source/control rewrite | 5 |
+| Missing switch frame | 3 |
+| Native ingress binding | 2 |
+| Different access target or lock | 2 |
+| Callback self-replacement | 1 |
+| No guaranteed startup registration | 1 |
+| No reached creator | 1 |
+
+The fresh reader uses facts only after departure and correct applicability.
+Current Missing stays unresolved, Inactive stays blocked, and contradictory
+live data still retries. Key bank 31 is PS1 virtual `0x800D4A34`, eight bytes;
+lock bit `lock_id & 0x3F` selects a little-endian u32 at base+4*(bit//32), mask
+`0x80000000 >> (bit%32)`. Every consumed applicability/key word joins the read
+transaction. Clear/set/clear flags and complete earlier synthetic RAM restores
+reverse access without erasing visits. Passage and inventory key possession
+supply no unlock or activation knowledge. Items, clearance, pose and unvisited
+reveal retain their existing rules.
+
+Fresh read-only replay uses the parent's three copied version-94 RAM inputs,
+extracted with DuckStation serializer commit
+`1bc5405c417d8f8f61cc5eac624aac9f4b0677eb`. The current-only and two actually
+observed source scopes have identical complete tracker results. In the separate
+simulated 125-source visit scope, 124 door observations change and 11 excluded
+observations disappear. Every item, clearance, pose, history and other tracker
+field remains equal; only door observations and derived door summaries change.
+Reverse-order replay and fresh reconstruction agree. Against the isolated implementation base `83bd4c7`, the simulated scope has
+67 Unknown item rows and 37 Unknown rooms. The combined integration below
+includes the separately verified positive-entry changes. Neither scope is real
+exploration or a completed campaign; the `03-08` identity gap is unchanged.
+
+Access and marker coverage remain separate. The parent's unchanged marker
+census accounts for all 321 creators; 89 lack a shared marker, including 33 with
+an access fact. Overlapping reasons are 66 projections beyond eight map units,
+19 without a native opening, nine floor mismatches and four unmapped outlines.
+The sole missing keyed creator, `05-0c` offset 3922, remains unsupported here.
+No projection bound, outline, marker or floor-plan geometry changes.
+
+Reproduction and precise output hashes are recorded in
+[door validation](../../testing/re2.md#trusted-normal-engine-door-validation-2026-11-12).
+Fresh private evidence is under
+`/Users/adamekka/.cache/re-map/evidence/2026-11-12-trusted-door-implementation/`.
+Frozen research hashes are verified against
+`2026-11-12-trusted-door-research/sha256-manifest.json`. Original interrupted
+`/tmp` evidence is not claimed as freshly verified. No DuckStation instance, user history,
+save mutation or screenshot is used. Native, synthetic, retained-RAM and source
+analysis remain distinct evidence categories.
+
+Contribution, 2026-11-12: the implementation sub-agent authors this compiler,
+profile/generation/reader increment, regressions, local review and record.
+Authoritative executing-session turn metadata verifies exact model
+`gpt-6.1-sol`, effort `xhigh`. Frozen research retains its own authorship; the
+human's normal-engine decision and root's supplied RAM extraction/marker census
+are separate inputs. Local review checks authority boundaries, explicit unsafe
+paths, all creator/Reset alternatives, fresh reversal/coherence, scope isolation,
+metadata generation and retained replay. Independent/external review is handled
+centrally by root and is not completed or endorsed by this contribution.
+
+### Combined item/door integration, 2026-11-12
+
+Root integrates this feature over `721b619`, preserving the separately committed
+positive-entry domain and Reset-candidate fixes. One exact-type binding encoder
+now serves the separate authorities; its actual 69-resource/125-source native
+digest remains `727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+The shared structured walker has an explicit door role and immutable fixed-check
+outcomes. Existing Strict/FreshPositive behavior and the positive domain's
+startup-slot restrictions remain unchanged. Door-only effects and source-write
+permissions grant no item, Guard or strict-entry right. Door catalogs compile
+against raw Reset records before candidate-origin enrichment.
+
+The source operation list now reuses `FLAG_WRITE_OPERATIONS`: clear `0`, set `1`
+and toggle `7`. The isolated feature's duplicate list incorrectly admitted the
+native no-op `2` and rejected toggle `7`. All owned writes use `0` or `1`, so the
+correction changes no catalog fact. New controls admit non-fixed toggles and
+reject physical aliases of fixed bits. Eleven integration regressions also
+cover fixed-predicate pruning, policy isolation, embedded versus standalone
+Sleep helpers, explicit startup slots and exact-type binding.
+
+The actual combined compiler retains every accepted fact, creator and exclusion
+from the isolated feature. Three residual records in `04-09` and `05-17` now
+report `goto_depth_escape`: the shared walker encounters an active frame before
+the wrapper's post-Goto receiver scan. All three remain unsupported. The table
+above records the resulting 45 receiving-frame and 14 depth-escape slots;
+the isolated output recorded 48 and 11 respectively. These diagnostic changes
+grant no additional authority.
+
+The full semantic profile, including both Reset and door opt-ins, hashes to
+`56e298cb85f90912b2de29b130113465c6215a4c5346ddf11ee532e2121c9564`.
+Actual compilation of all 125 sources produces catalog digest
+`d56467299a229dd733508b8dc85c3fbbd398195305e7fdf5e90e6e25a1f31cde`.
+The mandatory loader accepts this exact union rather than treating either old
+profile or catalog as a compatibility fallback.
+
+Root's fresh copied-RAM comparison checks 15 publications against `721b619`.
+Every item, completion, pose and visit field agrees. Current-only and the two
+actually observed sources have entirely equal tracker results. Each of six
+simulated 125-source publications changes exactly 124 door observations and
+removes exactly 11 excluded observations; only derived door summaries also
+change. The combined simulated scope has 67 Unknown item rows and 35 Unknown
+rooms. Forward/reverse order and fresh reconstruction agree. This is offline
+reader evidence, not gameplay or native restoration.
+
+Independent combined reader review checks Reset/door interactions, current
+kind-two repurposing with changed GID, departure/reentry, complete synthetic RAM
+reversal, fresh reconstruction, hidden targets, malformed catalogs and atomic
+payload/acquisition failures. It passes 507 keyed-observation controls, all
+eleven exclusions and 23 focused regressions. Synthetic all-source polling uses
+60 memory requests with either policy; processing medians are 2.87 ms without
+catalogs and 3.75 ms combined, excluding emulator/GDB latency. Evidence is under
+`2026-11-12-trusted-door-reader-review/combined/` in the private evidence cache.
+
+Contribution: root resolves the shared-policy/binding integration, fixes the
+flag-operation defect, authors the integration regressions and writes this
+record. `review_trusted_door_reader` independently reviews the combined reader.
+Both executing sessions verify exact model `gpt-6.1-sol`, effort `xhigh`.
+Claude Opus 5.5 remains disabled. A fresh Gemini 3.8 Flash review fails to open
+its provider session; neither supplies an endorsement.
+
+`review_partial_positive_entry` independently checks the final shared migration:
+3,922 Strict/FreshPositive program walks, 375 existing source-policy queries
+and all 125 default source-write results agree with `721b619`. Its 26 focused
+regressions, 13 fixture controls, clean import orders and exact pins pass.
+It independently verifies both Goto failure-order changes. The reviewer reports
+no supported findings and verifies executing model `gpt-6.1-sol`, effort `xhigh`.
+Its scope excludes full generations and saved-RAM replay, which root performs.
+Root's full suite passes 7,492 tests; the final 1,351-test focused run, 558 local
+documentation links, scoped lint/formatting and whitespace checks pass. Two
+complete generations agree byte for byte and preserve every pre-existing item
+field and every floor byte. Final private artifacts are under
+`2026-11-12-trusted-door-integration/`; the independent shared-code review is in
+`2026-11-12-trusted-door-integration-final-review/`.

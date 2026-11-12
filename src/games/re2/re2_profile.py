@@ -13,6 +13,7 @@ from games.game_profile import ItemQuery, RoomId, RoomQuery
 from games.item_quantity import parse_unit_count_item_types
 from games.re2.actor_part_proofs import ActorPartSupport, scenario_actor_parts
 from games.re2.clip_effect_proof import ClipEffectSupport, clipping_effect_proof
+from games.re2.door_access import BoundDoorCatalog, load_door_catalogs
 from games.re2.event_presence import (
     presence_counter_indices,
     presence_flag_write_proof,
@@ -134,6 +135,7 @@ class Re2Profile:
     script_item_dispatch: ScriptItemDispatchConfig | ScriptItemDispatchSupport
     unit_count_item_types: frozenset[int]
     reset_candidate_policy: ResetCandidateConfig | ResetCandidateSupport
+    door_catalogs: dict[str, BoundDoorCatalog]
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
@@ -1299,6 +1301,7 @@ class Re2Profile:
             pickup_flags.update((bank, item["global_id"]) for item in candidates)
         if award_flags & pickup_flags:
             raise ValueError("aliased RE2 event award and pickup collection rules")
+        door_catalogs = load_door_catalogs(raw, rooms, document)
         return Re2Profile(
             raw["profile_id"],
             target,
@@ -1321,6 +1324,7 @@ class Re2Profile:
             dispatch,
             unit_counts,
             reset_config,
+            door_catalogs,
         )
 
     def verify_runtime(

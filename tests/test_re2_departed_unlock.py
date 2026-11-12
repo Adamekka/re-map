@@ -145,9 +145,18 @@ def test_reported_key_doors_rebuild_from_fresh_flags(
             for door in tracker.doors
             if door.observation_id == f"{source}:{offset}"
         )
-        assert door.state == "UNCHECKED"
+        # RE2-DOOR-009 closes this source's access alternatives. The other
+        # two reported sources retain the independent historical unlock rule.
+        known_access = source == "00-14"
+        assert door.state == (
+            ("OPEN" if unlocked else "LOCKED") if known_access else "UNCHECKED"
+        )
         assert door.unlock_state is (
-            DoorUnlockState.Unlocked if unlocked else DoorUnlockState.Unknown
+            DoorUnlockState.Unlocked
+            if unlocked
+            else DoorUnlockState.Locked
+            if known_access
+            else DoorUnlockState.Unknown
         )
         assert door.key_label == ("" if unlocked else key_name)
 

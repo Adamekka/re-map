@@ -146,3 +146,40 @@ reader/reconstruction checks and writes this record. All three executing
 sessions verify exact model `gpt-6.1-sol`, effort `xhigh`. Source inspection,
 copied native execution, synthetic controls, saved-RAM replay and gameplay
 confirmation remain distinct. No external review endorsement is claimed.
+
+### Combined coverage follow-up, 2026-11-12
+
+The [positive-entry domain](startup-presence.md#re2-startup-008-a-bound-entry-domain-admits-the-positive-item-prefix),
+[Reset-candidate enumeration](reset-candidates.md#re2-reset-001-enumerate-reset-possibilities-without-granting-presence)
+and [normal-engine door authority](immutable-doors.md#re2-door-009-opted-in-normal-engine-door-access)
+are now integrated together. The baseline above remains a historical comparison.
+The combined catalog SHA256 is
+`62b79d3a7feb6d9810fd4c7a6d55e3655037b7a87c640345cd23fd3aa168421d`;
+every floor-plan byte remains identical.
+
+The positive-entry change resolves two Unknown acquisition rows and two room
+verdicts in the simulated 125-source scope. Candidate-only Reset enumeration
+then adds the two previously missing possibilities as Unknown. The resulting
+67 Unknown item rows and 35 Unknown rooms are fully enumerated diagnostic
+outcomes, not completed coverage. The current `03-08` identity gap remains.
+Current-only and the two actually observed source scopes are unchanged.
+
+The new door authority covers 114 slots and 124 creators, with eleven other
+creators separately scenario-excluded. Its 165 unsupported slots and 186
+unsupported creators remain explicit; two legacy conditional slots retain their
+independent rules. Access does not establish item completeness, room clearance
+or marker placement. All 89 missing raw markers remain, including 33 creators
+whose access is now covered. No distance bound or map geometry changes.
+
+Root compares all 15 copied-RAM publications against the pre-door item/Reset
+commit `721b619`. Only the 124 covered door observations, eleven excluded
+observations and derived door summaries change in simulated full-profile scope.
+Every item, completion, pose and visit field agrees. Two complete generations
+are byte-identical and preserve every pre-existing item/catalog field after
+removing the new door-only fields and claim. Combined evidence and exact
+reproduction artifacts are in
+`2026-11-12-trusted-door-integration/` under the private evidence cache.
+
+Contribution: root writes this follow-up and performs the generation and replay
+comparisons as verified model `gpt-6.1-sol`, effort `xhigh`. This adds source,
+synthetic and offline reader evidence; it adds no gameplay confirmation.

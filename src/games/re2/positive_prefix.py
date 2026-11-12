@@ -8,9 +8,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field, fields, is_dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
+from games.re2.normal_engine_binding import (
+    NORMAL_ENGINE_BINDING_SHA256,
+    typed_binding_digest,
+)
 from games.re2.ordinary_task_ingress import VerifiedOrdinaryTaskIngress
 from games.re2.positive_entry_domain import _positive_entry_domain, _PositiveEntryDomain
 from games.re2.scenario_entry_scope import (
@@ -38,40 +42,7 @@ from games.re2.startup_declarations import (
 from games.re2.startup_entry_selection import BoundEntryResources
 
 POSITIVE_PREFIX_AUDIT = "slus00748-trusted-normal-positive-prefix-v1"
-# This derived audit identity comes from the complete owned 69-resource,
-# 125-source binder, not from a caller-supplied selection or receipt mirror.
-_POSITIVE_BINDING_SHA256 = (
-    "727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8"
-)
 _HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
-
-
-def _positive_binding_digest(resources: object, declarations: object) -> str:
-    def encode(value):
-        # Preserve exact types: JSON alone equates tuple/list, and ordinary
-        # Python equality equates bool/int in consistently replaced receipts.
-        kind = type(value)
-        if kind in (str, int, bool):
-            return [kind.__name__, value]
-        if kind is bytes:
-            return ["bytes", len(value), hashlib.sha256(value).hexdigest()]
-        if kind is tuple:
-            return ["tuple", [encode(part) for part in value]]
-        if kind is frozenset:
-            return ["frozenset", sorted(encode(part) for part in value)]
-        if is_dataclass(value) and not isinstance(value, type):
-            return [
-                f"{kind.__module__}.{kind.__qualname__}",
-                [
-                    [field.name, encode(getattr(value, field.name))]
-                    for field in fields(value)
-                ],
-            ]
-        raise ValueError("unsupported positive-prefix binding field")
-
-    return hashlib.sha256(
-        json.dumps(encode((resources, declarations)), separators=(",", ":")).encode()
-    ).hexdigest()
 
 
 class PositivePrefixFailure(Enum):
@@ -162,8 +133,8 @@ class VerifiedNormalEnginePositivePrefix(_PositivePrefixDerivation):
         assert type(self.context) is VerifiedScenarioContext
         assert self.context.declaration_contract.selection == self.resources.selection
         assert (
-            _positive_binding_digest(self.resources, self.context.declaration_contract)
-            == _POSITIVE_BINDING_SHA256
+            typed_binding_digest((self.resources, self.context.declaration_contract))
+            == NORMAL_ENGINE_BINDING_SHA256
         )
         assert all(type(value) is str for value in (self.profile_json, self.room_json))
         assert type(self.roots) is tuple and tuple(k for k, _ in self.roots) == (
@@ -307,8 +278,8 @@ def normal_engine_positive_prefix(
             and resources.ordinary_ingress == bound.ordinary_ingress
             and resources.ordinary_ingress.selection == resources.selection
             and resources.ordinary_ingress.covers(data, room)
-            and _positive_binding_digest(resources, bound.declarations)
-            == _POSITIVE_BINDING_SHA256
+            and typed_binding_digest((resources, bound.declarations))
+            == NORMAL_ENGINE_BINDING_SHA256
             and type(context) is VerifiedScenarioContext
             and startup_flag_banks_match(profile, bound.declarations)
             and profile["runtime_layout"]["system_mode_mask"] == 0x40
