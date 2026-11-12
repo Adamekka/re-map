@@ -864,6 +864,258 @@ Integration review, 2026-11-07 UTC: a second independent agent, verified `gpt-6.
 
 This rejects camera-clipped exploration as an ownership rule. The next bounded source check is height producer `0x8004D720`, reached by the original caller at `0x80033C64` before passing its result to the raw-floor publisher. It must establish a bounded support-region role before another ordinary native observation can address that association. Existing ramp-record/height observations alone do not supply it. Physical floors, room-owned contours and tracker reveal remain unresolved.
 
+## RE3-MAP-018: the support index is bounded, but height also consumes runtime work
+
+Status: Candidate source and copied-component contracts for the supplied USA
+SLUS-00923 revision, targeting Hard. This follows MAP-017's height-producer lead.
+It adds no physical floor/room association, campaign admission, live reader,
+exploration or gameplay observation. The executable remains `SLUS_009.23`,
+SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`.
+No DuckStation instance or save is loaded. Historical DuckStation version and
+confirmation limits remain unchanged.
+
+### Original inputs and the source index
+
+All addresses below are PS1 cached virtual addresses; multibyte fields are
+little endian. The original caller at `0x80033C64` passes a prepared XYZ vector,
+u16 work field `+0x1A`, one of three query masks selected by work-category u8
+`+2`, and mode `9`. The mask table at `0x8009CBC8` contains u32 values
+`0x8000`, `0x0800`, `0x0200`. Before this call, the caller can subtract the
+actor's signed i16 `+0x1B8` adjustment from the prepared Y. These are inspected
+caller roles, not a new general player/lifecycle admission rule.
+
+Height producer `[0x8004D720,0x8004DB10)` reads the loaded RDT pointer at
+`0x800CC86C`, then its relocated collision pointer at RDT `+0x20`. Its candidate
+leaf `[0x8004DDC4,0x8004DE40)` uses a 16 by 16 grid after the 16-byte collision
+header and records. The header count includes the header. A 512-byte table of
+u16 offsets follows `16 * count` bytes; nonempty offsets are relative to the
+byte list after that table. `0xFFFF` means no bucket. Each nonempty bucket is
+a nonempty list of u8 record indices terminated by `0xFF`; index zero names
+the first record after the header. Empty non-`0xFFFF` buckets are not admitted
+by this source contract, because the native copy reads the first byte before
+testing the following byte for termination.
+
+The producer first bounds X and Z to the signed 16-bit coordinate domain. For
+those inputs, the leaf selects
+`((Z + 32768) >> 12) * 16 + ((X + 32768) >> 12)`. The coordinates remain i32
+vector members; this domain comes from the producer's explicit guard. A
+coordinate outside that domain can return the collision header's signed i16
+height at `+0x0E` without proving support or room membership. A returned height
+alone therefore does not establish a source footprint.
+
+Fresh owned-disc inspection reconstructs all 169 sources and every bucket:
+
+| Source property | Count or bound |
+| --- | ---: |
+| Collision records, excluding headers | 5,289 |
+| Grid cells | 43,264 |
+| Nonempty cells | 15,593 |
+| Maximum records in one source | 75 |
+| Maximum candidate indices in one bucket | 24 |
+| Buckets with duplicate indices | 0 |
+
+The existing complete native source binder independently accepts these exact
+sources and their native file indices. Its corpus digest remains
+`2e044734044d39327bdfabcb40c81a6f51e4f97f9859f0609e36217ce5fadaba`.
+This is source compilation; no live code-signature read is performed here.
+
+Every bucket offset and terminator fits its collision-section extent, and every
+index names an actual record. R100 has 14 records and maximum bucket length 5;
+R101 has 75 records and maximum length 18. These are source extents, not a
+runtime guarantee that loaded collision flags or index storage are unchanged.
+
+The original leaf matches the independent parser in 43,940 copied-code calls:
+all 256 cell centers plus the four signed-domain corners for every source.
+Each call checks the return value, every data-read/store range, exact output
+bytes and complete two-MiB synthetic RAM against expected changes. The 66,963
+byte stores stay in the declared result interval; empty cells leave it intact.
+Original leaf SHA256 is
+`e6cca3e1ed1a2ab7aa4679a2d7baf25624b70ec4a26eb8c1a8d24f21e339245a`.
+This validates the bounded component and source parser, not runtime loading,
+physical ownership or a native game observation.
+
+### Selection and the separate runtime pass
+
+The producer tests each selected record's u16 flags at `+8` against the caller's
+mask, a signed floor-threshold byte at `+0x0C`, and geometric bounds. Attribute
+u16 `+0x0A` mask `0x1000` selects its rotated-coordinate path. Low nibble
+`flags & 0xF` chooses a handler from the two 13-entry tables at `0x8009E020`;
+mode bit `8` chooses the second table. For caller mode `9`, its non-pass-through
+entries are kinds `1`, `9`, `10`, `12`. This identifies query roles, without
+equating every collision polygon with a walkable floor. Loaded flags require
+their own fresh binding; the historical record mutation in
+[RE3-INPUT-004](hard-start.md#re3-input-004-ordinary-reentry-attempt-reaches-a-disabled-collision-record)
+remains separate runtime evidence.
+
+Before returning, the producer calls `[0x8004DB10,0x8004DDC4)`, which also reads
+runtime records beginning at `0x800DCED8`. Their stride is `0x18`, with sentinel
+u32 `0xFFFFFFFF` at `+0x0C`. This pass uses additional masks and can consume an
+owner pointer or construct temporary geometry. It is not supplied solely by
+the owned RDT. Its writes to scratch fields at `0x800DEB58 +0x28/+0x2C` also
+distinguish selected runtime owners.
+
+Three direct copied-tail controls use the same owned R100 collision header,
+synthetic XYZ `[0,-1900,0]`, radius argument `450`, category-zero mask, mode `9`
+and incoming static height `0`. An empty runtime list returns `0`. One matching
+synthetic kind-one rectangle with height `-1800` returns `-1800`. Clearing its
+query-mask bit restores `0`. The source and input pose remain byte-identical,
+the original stack is restored, and all stores fit declared scratch/stack
+ranges, including the native argument homes. These are explicitly synthetic
+component controls; they do not claim that this runtime object exists in R100
+or establish a full-height gameplay result.
+
+The attempted full-producer probe is not accepted. It escapes to PC zero after
+the trace reports two entries to `0x8004DB10` with different stack pointers;
+the original return frame is not preserved. Its CPU exception and bounded
+early-stop diagnostics remain in the private evidence. No game instruction is
+patched and no simulator-bug diagnosis is claimed. The accepted direct-tail
+controls enter that component separately. Neither the failed probe nor the
+direct-tail controls supplies a complete producer proof.
+
+### Reproduction, limits and contribution
+
+Private durable evidence is under
+`/Users/adamekka/.cache/re-map/evidence/2026-11-12-re3-height-producer/`.
+Run from the repository root with Python 3.12, the repository's
+[development requirements](../../../requirements-dev.txt), and Capstone
+`5.0.7`. The verification environment below has those dependencies and Unicorn
+`2.1.4`; a new environment also needs `pip install capstone==5.0.7`.
+Every output path must be new. The complete accepted reproduction is:
+
+```sh
+set -e
+re3_python=/Users/adamekka/.cache/re-map/verification-venv/bin/python
+re3_evidence=/Users/adamekka/.cache/re-map/evidence/2026-11-12-re3-height-producer
+re3_cue='/Users/adamekka/Games/DuckStation/Resident Evil 3 - Nemesis.cue'
+re3_image='/Users/adamekka/Games/DuckStation/Resident Evil 3 - Nemesis.bin'
+re3_output=/absolute/path/to/new-evidence-directory
+PYTHONPATH=src:tools "$re3_python" "$re3_evidence/inspect_height.py" --cue "$re3_cue" --out "$re3_output"
+PYTHONPATH=src:tools "$re3_python" "$re3_evidence/census_support_index.py" --image "$re3_image" --out "$re3_output/index-census.json"
+PYTHONPATH=src:tools "$re3_python" "$re3_evidence/bind_inputs.py" --image "$re3_image" --catalog "$re3_output/catalog.json" --census "$re3_output/index-census.json" --out "$re3_output/source-binding.json"
+PYTHONPATH=src:tools "$re3_python" "$re3_evidence/verify_native_index.py" --image "$re3_image" --catalog "$re3_output/catalog.json" --census "$re3_output/index-census.json" --out "$re3_output/native-index.json"
+PYTHONPATH=src:tools "$re3_python" "$re3_evidence/probe_height_dependency.py" --image "$re3_image" --catalog "$re3_output/catalog.json" --component dynamic-tail --incoming-height 0 --point 0 -1900 0 --radius 450 --category 0 --out "$re3_output/dynamic-tail.json"
+```
+
+`inspect_height.py` requires `--cue` and a nonexistent `--out`; it verifies the
+disc/executable before rebuilding the complete catalog and decoding bounded
+native windows. `census_support_index.py` requires the owned `--image` and a new
+`--out`. `bind_inputs.py` requires `--image`, `--catalog`, `--census`, `--out`
+and checks those sources through the existing complete native binder.
+`verify_native_index.py` takes explicit `--image`, `--catalog`,
+`--census`, `--out` and reproduces every source/cell comparison. The direct-tail
+probe additionally requires explicit component, incoming height, XYZ, radius
+and category arguments. No earlier transient evidence or RAM capture is needed
+for these source/component results. The manifest binds scripts, outputs,
+original native windows and failed diagnostics.
+
+A future support observation needs fresh loaded collision/index binding,
+mutable flags and runtime-work handling alongside the caller's mode and mask.
+It must preserve the distinction between a default height, a source-selected
+support and a runtime-selected support. None establishes architectural floor
+labels, room-owned MAP masks or reveal rights by itself. MAP-017's rejected
+camera-only association remains rejected. No production code, UI, persisted
+history or README image changes in this increment.
+
+Contribution, 2026-11-12: root, exact executing model `gpt-6.1-sol`, effort
+`xhigh`, authors the fresh source census, copied-index comparison, direct-tail
+controls, preserved failed probes and this record. Source inspection, copied
+native execution and gameplay confirmation remain distinct.
+
+Independent review, 2026-11-12: `review_trusted_door_core`, verified executing
+model `gpt-6.1-sol`, effort `xhigh`, checks all 44 evidence hashes, the owned BIN,
+fresh source reconstruction and binding, all 43,940 copied index calls, a
+separate raw bucket parser and a separate direct-tail register-preservation
+control. The review identifies missing import-path/dependency instructions.
+Root adds the explicit recipe above; its independent fresh rerun matches all
+seven semantic outputs, with only elapsed time differing. Review and recipe
+evidence are retained in the private `2026-11-12-re3-height-producer-core-review/`
+and `verification-existing-venv-core/` directories. Configured Claude Opus 5.5
+is disabled; Gemini 3.8 Flash high fails to open its provider session. Neither
+supplies an external review or gameplay endorsement.
+
+
+### Follow-up: corrected full-function controls
+
+A later bounded investigation on 2026-11-12 identifies the original probe's
+`UC_HOOK_MEM_WRITE` instrumentation as the cause of its duplicated callee
+prologue. The existing [MIPS-AUDIT-001](../native-mips-audits.md#mips-audit-001-observe-stores-without-a-memory-write-hook)
+records the same delay-slot limitation. The eight-variant matrix uses identical
+original instructions, synthetic RAM and o32 inputs. No hooks, code hooks, and
+code plus read hooks return correctly. Adding the write hook to the same
+code/register hook reproduces two `0x8004DB10` entries, a stack one `0x38`-byte
+frame too low and PC zero. The matrix's read-hook control also has the code
+hook; a standalone read-hook-only run is not claimed. This diagnoses the
+instrumentation in the named Unicorn environment, not a game defect or a
+universal simulator fault. The original failed probes remain frozen and
+rejected.
+
+The original native call setup needs no repair. The outer frame moves SP from
+`0x801E0000` to `0x801DFF98`. JAL at `0x8004DAD8` returns to `0x8004DAE0`;
+its delay-slot SW at `0x8004DADC` places the fifth argument at `0x801DFFA8`.
+One tail prologue moves SP to `0x801DFF60`, whose `+0x48` reads that same
+argument. Executing that prologue twice accounts for the rejected frame loss.
+
+A new private probe enters the original complete function at `0x8004D720`,
+with the unchanged real callees and no memory-write hook, instruction patch,
+stub or PC repair. It reuses the existing shared store auditor. Three audited
+runs return heights `0`, `-1800`, `0` for the empty, matching and masked runtime
+lists, in 160, 224 and 178 instructions. Each reaches the tail once, returns to
+`0x80008000`, restores SP, RA and seeded S0-S7/FP/GP, and predicts 30 stores
+within the declared stack/scratch bounds. Predicted loads equal the safe
+memory-read observations. Store predictions are accepted only after completed
+return and exact two-MiB RAM comparison; each complete RAM image and all 32
+GPRs also equal its unhooked counterpart. A pre-instruction callback alone is
+not reported as an observed completed write.
+
+All three calls select empty static grid cell 136 in the same owned R100 RDT.
+They therefore cover the header's default static height plus the runtime
+support pass. They do not exercise static shape handlers or prove every
+producer branch. The earlier direct-tail controls remain independently bounded
+evidence. Neither these full-function controls nor the earlier index census
+grants live binding, Hard admission, physical floor ownership or reveal rights.
+
+The new evidence is
+`/Users/adamekka/.cache/re-map/evidence/2026-11-12-re3-full-height-harness-diagnosis/`.
+Its original report, scripts and hashes remain unchanged. Root adds explicit
+input/output wrappers that pin the catalog and shared auditor and require new
+output directories. From the repository root, with the same verified Python
+3.12 dependencies:
+
+```sh
+set -e
+re3_python=/Users/adamekka/.cache/re-map/verification-venv/bin/python
+re3_followup=/Users/adamekka/.cache/re-map/evidence/2026-11-12-re3-full-height-harness-diagnosis
+re3_catalog=/Users/adamekka/.cache/re-map/evidence/2026-11-12-re3-height-producer/source-inspection-extended/catalog.json
+re3_image='/Users/adamekka/Games/DuckStation/Resident Evil 3 - Nemesis.bin'
+re3_full_output=/absolute/path/to/new-full-height-evidence
+re3_matrix_output=/absolute/path/to/new-hook-matrix-evidence
+"$re3_python" "$re3_followup/root_verify_full_height.py" --image "$re3_image" --catalog "$re3_catalog" --snapshot "$re3_followup/snapshot" --out "$re3_full_output"
+"$re3_python" "$re3_followup/root_diagnose_matrix.py" --image "$re3_image" --catalog "$re3_catalog" --snapshot "$re3_followup/snapshot" --out "$re3_matrix_output"
+```
+
+Contribution, 2026-11-12: `review_trusted_door_core`, verified executing model
+`gpt-6.1-sol`, effort `xhigh`, authors the isolated instrumentation matrix and
+corrected private full-function controls on immutable `3af7197`. Root, the same
+separately verified model and effort, inspects the native call and audit bounds,
+adds explicit reproduction arguments, verifies all original artifact hashes,
+and independently reproduces identical complete control JSON and all eight
+matrix results after excluding elapsed time. Root records the matrix's exact
+hook combination and writes this follow-up. No emulator, save, history, input,
+production code or profile changes occur.
+
+
+Independent follow-up review, 2026-11-12: `review_re3_full_height`, verified
+`gpt-6.1-sol`, effort `xhigh`, checks eleven artifact hashes, seven preserved
+source/rejection hashes, five native windows, frame arithmetic, empty cell136,
+the unchanged shared auditor and reproduction instructions. Fresh wrapper runs
+match the complete control output and all eight matrix results, with elapsed
+time excluded, and all32 local document links pass. The report returns no
+findings within that scope and is retained under
+`2026-11-12-re3-full-height-independent-review/`. Configured Claude Opus 5.5
+remains disabled; the fresh Gemini 3.8 Flash high review fails to open its
+provider session. It supplies no external endorsement. Root retains those
+results beside the new reproduction wrappers and their hashes.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
