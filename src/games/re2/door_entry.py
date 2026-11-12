@@ -1,4 +1,4 @@
-"""RE2-DOOR-010: separately sealed use of unchanged neutral entry facts.
+"""RE2-DOOR-011: sealed bounded native FF/FF door frame and receiver facts.
 
 No positive, Guard, identity-filtering or registration receipt is an input.
 The complete owned corpus is mandatory even when its source roles are unsupported.
@@ -13,7 +13,11 @@ from dataclasses import dataclass, fields
 from enum import Enum
 
 from games.re2.native_control import (
+    TASK_BASE,
     TASK_WIDTH,
+    ControlField,
+    canonical_if_pointer,
+    control_field,
     if_store_cell,
     loop_end_cell,
     native_bytes,
@@ -29,10 +33,17 @@ from games.re2.positive_entry_domain import (
     PositiveEntryFailure,
     SourceEntryPolicy,
     _auxiliary_break_reads,
+    _foreign_fields_disjoint,
     _source_entry_roles,
     _SourceEntryRoles,
 )
-from games.re2.scenario_selection import scenario_source_write_witnesses
+from games.re2.scenario_items import scenario_flags
+from games.re2.scenario_selection import (
+    ScenarioSelectionFailure,
+    ScenarioSourceWriteWitnesses,
+    SourceWritePolicy,
+    scenario_source_write_witnesses,
+)
 from games.re2.script_control_limits import (
     NATIVE_CALL_FRAME_COUNT,
     calls_fit_native_frames,
@@ -40,11 +51,12 @@ from games.re2.script_control_limits import (
 from games.re2.startup_declarations import BoundStartupDeclarations
 from games.re2.structured_control import (
     ControlFrames,
-    StructuredControl,
+    NativeStructuredControl,
+    PredicateOutcome,
     structured_control,
 )
 
-DOOR_ENTRY_AUDIT = "slus00748-existing-neutral-door-entry-v1"
+DOOR_ENTRY_AUDIT = "slus00748-bounded-ff-native-door-entry-v2"
 _SEAL = object()
 
 
@@ -59,9 +71,21 @@ class _TaskFields:
     entries: tuple[tuple[str, int, int], ...]
     stores: tuple[tuple[str, int, int, int, int, int, int], ...]
     reads: tuple[tuple[str, int, int, int, int], ...]
+    control: tuple[tuple[str, int, int, int, ControlField, int, int, bool], ...]
+    frames: tuple[tuple[str, NativeStructuredControl], ...]
+    replacements: tuple[tuple[str, int, str], ...]
+    calls: tuple[tuple[str, str], ...]
+    initializations: tuple[tuple[str, int, int, ControlField, int, int, int], ...]
+    loop_reads: tuple[tuple[str, int, int, int, int, bool], ...]
 
 
-def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
+def _task_fields(
+    data: bytes,
+    programs: dict,
+    *,
+    auxiliary: bool,
+    predicates: tuple[tuple[str, tuple[tuple[int, PredicateOutcome], ...]], ...] = (),
+):
     """Attach actual native task/depth roots to the existing shared frame walk."""
     # Native roots have no source offset. Their distinct owner marks the zero
     # placeholders; the actual native call sites are bound separately below.
@@ -75,12 +99,17 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
         ]
     )
     calls = {key: set() for key in programs}
+    replacements = []
     for key, program in programs.items():
         for row in program["commands"]:
             at, op = row["offset"], row["opcode"]
             packet = data[at : row["next"]]
             if row["kind"] == "call":
                 calls[key].add(f"17:{packet[1]}")
+            elif op == 3:
+                if auxiliary or packet[1:3] != b"\0\x18":
+                    return PositiveEntryFailure.Control
+                replacements.append((key, at, f"17:{packet[3]}"))
             elif op == 4:
                 # The phase-zero installer maps every selector>=10 to AUTO2..9.
                 # Auxiliary phase has its separate explicit10..13/AUTO contract.
@@ -100,7 +129,9 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
                 producers.append(
                     (key, at, f"17:{packet[payload + 3]}", tuple(range(2, 10)))
                 )
-    if not calls_fit_native_frames(calls):
+    if any(
+        not targets <= programs.keys() for targets in calls.values()
+    ) or not calls_fit_native_frames(calls):
         return PositiveEntryFailure.Control
     # Include every producer, including an unentered procedure's writers and
     # every Reset alternative. No sampled inactive task can remove a root.
@@ -119,6 +150,11 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
             return PositiveEntryFailure.Control
         entries.add((key, task, depth))
         pending.extend((target, task, depth + 1) for target in calls[key])
+        for owner, at, target in replacements:
+            if owner == key:
+                if depth != 0:
+                    return PositiveEntryFailure.Control
+                pending.append((target, task, depth))
         if auxiliary:
             pending.extend(
                 (target, slot, 0)
@@ -126,15 +162,95 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
                 if owner == key
                 for slot in tasks
             )
-    stores, reads = [], []
+    stores, reads, control, frames, loop_reads, initializations = [], [], [], [], [], []
+    outcomes = dict(predicates)
     for key, program in programs.items():
         roles = [(task, depth) for owner, task, depth in entries if owner == key]
-        if not roles:
-            continue
-        frame = structured_control(data, program, ControlFrames.FreshPositive)
-        if type(frame) is not StructuredControl:
+        # Walk every program for control/source protection, but attach a native
+        # receiving field only when an actual producer supplies task and depth.
+        frame = structured_control(
+            data, program, ControlFrames.NativeDoors, predicates=outcomes.get(key, ())
+        )
+        if type(frame) is not NativeStructuredControl:
             return PositiveEntryFailure.Control
+        frames.append((key, frame))
         for task, depth in roles:
+            # Installers and Gosub initialize levels/pointer, not IF target
+            # cells. No unknown target or count is initialized by this proof.
+            for field, value in (
+                (ControlField.IfLevel, 255),
+                (ControlField.LoopLevel, 255),
+                (
+                    ControlField.IfPointer,
+                    TASK_BASE
+                    + task * TASK_WIDTH
+                    + control_field(
+                        depth, ControlField.IfTarget, canonical_if_pointer(-1)
+                    )[0],
+                ),
+            ):
+                cell, width = control_field(depth, field, 0)
+                initializations.append((key, task, depth, field, cell, width, value))
+            for row in program["commands"]:
+                if row["kind"] != "end" or row["offset"] not in frame.reached:
+                    continue
+                at = row["offset"]
+                if depth == 0:
+                    cell, width = control_field(depth, ControlField.Active, 0)
+                    control.append(
+                        (
+                            key,
+                            at,
+                            task,
+                            depth,
+                            ControlField.Active,
+                            task * TASK_WIDTH + cell,
+                            width,
+                            True,
+                        )
+                    )
+                else:
+                    for field, field_depth, write in (
+                        (ControlField.CallDepth, depth, True),
+                        (ControlField.CallReturn, depth - 1, False),
+                        (ControlField.ProgramCounter, depth, True),
+                        (ControlField.IfLevel, depth - 1, False),
+                        (ControlField.IfPointer, depth - 1, True),
+                    ):
+                        cell, width = control_field(field_depth, field, 0)
+                        control.append(
+                            (
+                                key,
+                                at,
+                                task,
+                                depth,
+                                field,
+                                task * TASK_WIDTH + cell,
+                                width,
+                                write,
+                            )
+                        )
+            loop_reads.extend(
+                (key, at, task, depth, loop_end_cell(depth, loop), atomic)
+                for at, loop, atomic in frame.loop_reads
+            )
+            for at, field, index, write in frame.accesses:
+                cell, width = control_field(depth, field, index)
+                receiver, offset = divmod(task * TASK_WIDTH + cell, TASK_WIDTH)
+                if receiver >= 14 or offset + width > TASK_WIDTH:
+                    return PositiveEntryFailure.ForeignConsumer
+                control.append(
+                    (
+                        key,
+                        at,
+                        task,
+                        depth,
+                        field,
+                        receiver * TASK_WIDTH + offset,
+                        width,
+                        write,
+                    )
+                )
             for at, pointer, target in frame.if_stores:
                 receiver, offset = if_store_cell(task, depth, pointer)
                 if receiver >= 14 or offset + 4 > TASK_WIDTH:
@@ -144,6 +260,13 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
                 (key, at, task, depth, loop_end_cell(depth, loop))
                 for at, loop in frame.break_reads
             )
+    foreign = frozenset(
+        offset for _, _, task, _, receiver, offset, _ in stores if receiver != task
+    )
+    if not auxiliary and not _foreign_fields_disjoint(
+        foreign, tuple(cell for *_, cell in reads)
+    ):
+        return PositiveEntryFailure.ForeignConsumer
     for _, _, task, depth, receiver, offset, _ in stores:
         if auxiliary and receiver != task:
             # These are the existing full auxiliary writer obligations. A4 is
@@ -158,6 +281,14 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
             ):
                 return PositiveEntryFailure.ForeignConsumer
         if receiver != task and any(
+            other == receiver
+            and offset <= cell + 3
+            and cell <= offset + 3
+            and not atomic
+            for _, _, other, _, cell, atomic in loop_reads
+        ):
+            return PositiveEntryFailure.ForeignConsumer
+        if receiver != task and any(
             other == receiver and offset <= cell + 3 and cell <= offset + 3
             for _, _, other, _, cell in reads
         ):
@@ -167,6 +298,21 @@ def _task_fields(data: bytes, programs: dict, *, auxiliary: bool):
         tuple(sorted(entries)),
         tuple(sorted(stores)),
         tuple(sorted(reads)),
+        tuple(
+            sorted(
+                control,
+                key=lambda r: (r[0], r[1], r[2], r[3], r[4].value, r[5], r[6], r[7]),
+            )
+        ),
+        tuple(sorted(frames)),
+        tuple(sorted(replacements)),
+        tuple(
+            sorted(
+                (key, target) for key, targets in calls.items() for target in targets
+            )
+        ),
+        tuple(sorted(initializations, key=lambda r: (r[0], r[1], r[2], r[3].value))),
+        tuple(sorted(loop_reads)),
     )
 
 
@@ -178,6 +324,7 @@ class _DoorEntryBinding:
     profile_json: str
     source: _SourceEntryRoles | PositiveEntryFailure
     source_fields: _TaskFields | PositiveEntryFailure
+    source_writes: ScenarioSourceWriteWitnesses | ScenarioSelectionFailure
     auxiliary_fields: tuple[tuple[int, _TaskFields], ...]
     auxiliary_reads: tuple[tuple[int, str, int, int], ...]
     native_entries: tuple[tuple[int, int], ...]
@@ -274,6 +421,26 @@ def compile_door_entry_binding(
                 "0242027b221cd5f14c187b3bb3254fcd67f52304e4ba0ea3bbb9c601bd159aed",
             ),
             (
+                0x80054354,
+                96,
+                "cc4ed0df629c94415d3769f3891487433ad205cef0136f31c17e4ee4123c17ed",
+            ),
+            (
+                0x80053B1C,
+                1600,
+                "875fe6f1854934b2e83227930ccc5aa644317af097b5a34cb4658376b8188e07",
+            ),
+            (
+                0x800537FC,
+                296,
+                "c13c9ed8e4bcee5afa3e84efa7a7a0104d0648dd9d63c6d5526b05b09e983ce4",
+            ),
+            (
+                0x800111A0,
+                28,
+                "2ebc07d8ba0694afc8290590d9a63ac0338ebdc126a51229ec3d7b5af5e2e543",
+            ),
+            (
                 0x80054474,
                 192,
                 "e3827d2183df46362af3744f448ce65afa61299af8a07fba12c35c4f6eb70cef",
@@ -315,15 +482,15 @@ def compile_door_entry_binding(
         )
         if native_entries != expected_entries:
             return DoorEntryFailure.Binding
-        # Existing source roles consume a foreign IF store only through their
-        # immediate CMP. Bind its actual switch and both native nonyielding
-        # graphs; this adds no predicate or source-opcode permission.
+        # The bounded role consumes a foreign IF store only through its own
+        # immediate CK/CMP. Bind the exact native switch and nonyielding
+        # graphs. This grants no general atomic-token or actor-predicate right.
         switches = {
             0x800544C4: struct.unpack("<7I", native_bytes(executable, 0x800111A0, 28))
         }
         if not all(
             native_nonyielding(executable, entry, switches)
-            for entry in (0x80053924, 0x80054474)
+            for entry in (0x80053924, 0x80054354, 0x80054474)
         ):
             return DoorEntryFailure.Binding
         auxiliaries = {
@@ -347,20 +514,52 @@ def compile_door_entry_binding(
         source = _source_entry_roles(
             data, room["programs"], writes, policy=SourceEntryPolicy.Existing
         )
-        source_fields = (
-            _task_fields(data, room["programs"], auxiliary=False)
-            if type(source) is _SourceEntryRoles
-            else source
+        native_writes = scenario_source_write_witnesses(
+            data, room, profile, policy=SourceWritePolicy.NormalDoors
         )
-        if type(source) is _SourceEntryRoles and type(source_fields) is not _TaskFields:
-            return DoorEntryFailure.Binding
+        source_fields = PositiveEntryFailure.SourceWrite
+        if type(native_writes) is ScenarioSourceWriteWitnesses:
+            fixed = {
+                (r["bank"], r["bit"]): r["expected"] for r in scenario_flags(profile)
+            }
+            predicates = tuple(
+                (
+                    key,
+                    tuple(
+                        (
+                            r["offset"],
+                            PredicateOutcome.Matches
+                            if fixed[r["bank"], r["bit"]] == r["expected"]
+                            else PredicateOutcome.DoesNotMatch,
+                        )
+                        for r in p["commands"]
+                        if r["kind"] == "flag_check"
+                        and (r["bank"], r["bit"]) in fixed
+                        and not any(
+                            c.target_offset < r["next"]
+                            and r["offset"] < c.target_offset + c.width
+                            for c in native_writes.copies
+                        )
+                    ),
+                )
+                for key, p in room["programs"].items()
+            )
+            source_fields = _task_fields(
+                data, room["programs"], auxiliary=False, predicates=predicates
+            )
         foreign = (
-            source.foreign_fields if type(source) is _SourceEntryRoles else frozenset()
+            frozenset(
+                offset
+                for _, _, task, _, receiver, offset, _ in source_fields.stores
+                if task != receiver
+            )
+            if type(source_fields) is _TaskFields
+            else frozenset()
         )
         auxiliary_reads = _auxiliary_break_reads(resources, foreign)
         if type(auxiliary_reads) is not tuple:
             return DoorEntryFailure.Auxiliary
-        # Unsupported neutral analysis is explicit and grants no receiving-frame
+        # Unsupported native field analysis is explicit and grants no receiving-frame
         # right. The existing door path still enforces its original ban.
         values = (
             bound,
@@ -369,6 +568,7 @@ def compile_door_entry_binding(
             json.dumps(profile, sort_keys=True, separators=(",", ":")),
             source,
             source_fields,
+            native_writes,
             tuple(auxiliary_fields),
             auxiliary_reads,
             native_entries,

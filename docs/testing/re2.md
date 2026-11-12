@@ -900,3 +900,97 @@ reading it; root performs the authorized read-only copy and reconstruction.
 This adds offline validation of existing persisted visits, with no emulator,
 new gameplay, native savestate restoration, changed tracker rule or production
 history write.
+
+## Bounded native door-frame validation
+
+[RE2-DOOR-011](../research/re2/immutable-doors.md#re2-door-011-bounded-native-ffff-door-frames)
+implements only the remeasured stage-A frame/receiving contract over clean base
+`2c69c06e6f3a580fcc1012046675ba20bd07788d`. No game emulator or game input is used.
+The exact interpreter is `/Users/adamekka/.cache/re-map/verification-venv/bin/python`;
+set the explicit owned input before running factory tests:
+
+```sh
+export RE_MAP_RE2_OWNED_CUE='/Users/adamekka/Games/DuckStation/Resident Evil 2 - Dual Shock Ver. (Disc 1) (Leon).cue'
+python -m pytest -q tests/test_re2_door_native_frames.py tests/test_re2_native_frame_execution.py tests/test_re2_door_entry.py tests/test_re2_door_control.py tests/test_re2_trusted_doors.py tests/test_re2_positive_entry_domain.py
+python -m pytest -q
+```
+
+The 15 new public factory/catalog cases fail on the supplied base, then pass
+through the real owned binder/compiler. Synthetic controls distinguish immediate
+foreign CK/CMP, SET-before-check, yield, Sleep, stale canonical return cells,
+frame abandonment, non-boundary/retained-level Goto, actual producer alternatives,
+positive-depth EventNext, unentered programs, overlapping Break/WHILE consumers,
+other frame fields, count boundaries and current contradictory descriptors.
+The existing frozen hashes still check all 7,844 original four-role walks and
+125 Existing neutral outputs. An immutable read-only archive of the supplied
+base also supplies 750 original query results; only explicit profile bindings
+change. The old hashes are not refreshed and the new role is not counted as
+legacy evidence.
+
+The 335 copied-native cases execute unchanged complete handlers with explicit
+synthetic RAM, bounded returns, ABI preservation and load/store bounds. They
+use the shared `tools/mips_store_audit.py` code-hook decoder and full 2 MiB RAM
+equality. No memory-write hook, instruction patch, PC repair or return stub is
+used. Native cases cover real task/depth combinations, foreign/canonical IF,
+signed END/Return reconstruction, Gosub, Break, FOR/NEXT at all five count
+boundaries, WHILE/DO, EndWhile/EndSwitch, CK, CMP's seven outcomes and Switch.
+The rejected Break-pointer hypothesis and the corrected synthetic fixture/read
+bounds are retained. The full explicit-owned-CUE Python suite passes 8,280 tests.
+Scoped Ruff, formatting, local documentation links and whitespace are checked
+separately. Independent/external review is the parent's responsibility.
+
+Two complete owned metadata generations are compared byte-for-byte to each
+other and to the exact tested repository files. Rooms SHA256 becomes
+`a47fac16b95ed4924d428c52aac0c5d04036b2fb2661638b22ddfaab04da9677`;
+floors retain `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+All 293 JSON changes are confined to door policy/catalog fields. Every non-door
+field, the raw identity catalog binding and all floor/geometry bytes agree.
+The full 125-source comparison preserves all previous facts/exclusions, lists
+each of the 28 added facts and the additional exclusion, records all diagnostic
+changes and retains every residual. Marker accounting uses production shared-wall
+observation IDs rather than counting raw marker rows.
+
+Replay only the three authorized copied RAMs with the existing
+`2026-11-12-leon-a-save-replay/replay.py --checkout <checkout> --output <new-private-path>`.
+Compare all 15 publications to
+`2026-11-12-door-entry-six-integration/root-main-replay.json`.
+Current-only publications agree exactly. The two `03-08` observations improve
+when departed in the observed-two-source scope. Simulated all125 publications
+change 26 or 28 observations, remove `04-05:2996` and update only derived door
+summaries. Items, clearance, pose, visits, read counts and requested bytes agree;
+forward/reverse ordering and fresh reconstruction agree. This is offline replay,
+not native restoration or evidence that the simulated rooms were visited.
+
+Rebuild the README publication with the existing observed-source
+`freeze_combined_publication.py`. The fixture retains SHA256
+`696eaa68dcf5e31f10a3a28ec44d9ea018a2758193a07af1b74c7c101834b9b9` and
+the desktop PNG retains
+`cdeecce390de12c0304e2ce1d877b170c0091443188aa90ccbe96ba241a24f16`.
+The four-layout renderer and map/door-variant/unlock/staircase browser suites
+pass. No synthetic-visit publication replaces the README input.
+
+Private evidence, exact commands, full comparisons, native witnesses, executing
+model/thread metadata, artifact hashes, failures and local review are retained in
+`~/.cache/re-map/evidence/2026-11-12-door-ff-frame-implementation/`.
+Exact executing model is `gpt-6.1-sol`, effort `xhigh`. Research status remains
+Candidate, with no new gameplay confirmation or external endorsement.
+
+The final parent integration on the A0 pickup base additionally passes 8,394
+tests in 307.03 seconds with the explicit owned CUE. Its two complete room
+generations retain SHA256
+`48f44b754a46027b5487d9f94c1379ce72945bae164e529191c21a4a230afd22`;
+the floor SHA256 remains unchanged. `generation-comparison.json` checks every
+non-door field against `7f42f9fb4ad00972939ba464fbe004c7261475b0`,
+all prior facts/exclusions, exactly 28 additions and exclusion `04-05:2996`.
+`publication-comparison.json` checks 15 fresh copied-RAM publications and six
+publications restored from the private 68-source history copy. Only the new
+door observations and derived door summaries change. Item/clearance state,
+pose, visits, regions and memory requests remain equal; forward/reverse loads
+and fresh reconstruction agree. No production history is written.
+
+Combined semantic/catalog pins and independent review scopes are recorded in
+[the parent contribution](../research/re2/immutable-doors.md#re2-door-011-bounded-native-ffff-door-frames).
+Root's reproducible private scripts, full test log, original/combined comparison
+inputs and artifact hashes are under
+`~/.cache/re-map/evidence/2026-11-12-ff-a0-integration/`.
+The rebuilt observed-source README fixture and existing PNG remain byte-identical.

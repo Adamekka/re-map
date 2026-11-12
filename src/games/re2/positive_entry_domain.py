@@ -16,6 +16,8 @@ from games.re2.native_control import (
     IF_FRAME_BASE,
     IF_FRAME_WIDTH,
     TASK_WIDTH,
+    ControlField,
+    control_field,
     loop_end_cell,
     native_bytes,
 )
@@ -29,6 +31,7 @@ from games.re2.scenario_selection import (
 )
 from games.re2.script_control_limits import (
     NATIVE_CALL_FRAME_COUNT,
+    NATIVE_LOOP_FRAME_COUNT,
     calls_fit_native_frames,
 )
 from games.re2.startup_declarations import (
@@ -299,7 +302,7 @@ def _source_entry_roles(
         for key, result in frames.items():
             for at, pointer, target in result.if_stores:
                 for depth in depths[key]:
-                    cell = pointer + depth * IF_FRAME_WIDTH
+                    cell = control_field(depth, ControlField.IfTarget, pointer)[0]
                     if_stores.append((key, at, cell, target))
                     if pointer >= GOTO_FF_IF_BASE:
                         require(depth == 0, PositiveEntryFailure.ForeignConsumer)
@@ -343,17 +346,23 @@ def _foreign_fields_disjoint(foreign: frozenset[int], reads: tuple[int, ...]) ->
     # WHILE writes its own end before atomic predicate consumption. Break
     # retains the end pointer across arbitrary source effects and must be
     # checked separately against every possible ordinary/auxiliary consumer.
-    other_fields = set(range(0x140, 0x154))
+    other_fields = set()
     for depth in range(NATIVE_CALL_FRAME_COUNT):
-        other_fields.update(range(0x20 + 16 * depth, 0x30 + 16 * depth))
-        other_fields.update(range(0xA0 + 8 * depth, 0xA8 + 8 * depth))
-        other_fields.update(
-            range(
-                IF_FRAME_BASE + IF_FRAME_WIDTH * depth,
-                IF_FRAME_BASE + IF_FRAME_WIDTH * (depth + 1),
-            )
+        fields = (
+            (ControlField.IfPointer, (0,)),
+            (ControlField.CallReturn, (0,)),
+            (ControlField.LoopStart, range(NATIVE_LOOP_FRAME_COUNT)),
+            (ControlField.LoopCount, range(NATIVE_LOOP_FRAME_COUNT)),
+            (
+                ControlField.IfTarget,
+                range(IF_FRAME_BASE, IF_FRAME_BASE + IF_FRAME_WIDTH, 4),
+            ),
+            (ControlField.SavedIf, range(NATIVE_LOOP_FRAME_COUNT)),
         )
-        other_fields.update(range(0x0C + 4 * depth, 0x10 + 4 * depth))
+        for field, indices in fields:
+            for index in indices:
+                cell, width = control_field(depth, field, index)
+                other_fields.update(range(cell, cell + width))
     return not any(
         any(cell <= byte < cell + 4 for byte in other_fields) for cell in foreign
     ) and not any(

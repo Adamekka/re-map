@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import struct
+from enum import Enum
 
 from games.re2.script_control_limits import (
     NATIVE_CALL_FRAME_COUNT,
+    NATIVE_IF_FRAME_COUNT,
     NATIVE_LOOP_FRAME_COUNT,
 )
 
@@ -28,6 +30,56 @@ EFFECT_CLEANUP_NATIVE = (
 )
 
 
+class ControlField(Enum):
+    Active = "task active byte"
+    IfLevel = "IF level byte"
+    LoopLevel = "loop level byte"
+    SavedIf = "loop saved IF byte"
+    LoopStart = "loop start pointer"
+    LoopEnd = "loop end pointer"
+    LoopCount = "unsigned FOR count"
+    IfTarget = "IF exit pointer"
+    IfPointer = "current IF pointer"
+    CallReturn = "call return pointer"
+    CallDepth = "call depth byte"
+    ProgramCounter = "script PC"
+
+
+def canonical_if_pointer(saved_if: int) -> int:
+    """Return reconstructs from a signed byte, never the saved foreign pointer."""
+    assert -1 <= saved_if < NATIVE_IF_FRAME_COUNT
+    return IF_FRAME_BASE + 4 * (saved_if + 1)
+
+
+def control_field(depth: int, field: ControlField, index: int) -> tuple[int, int]:
+    """Native task-relative receiving byte offset and width, little endian."""
+    assert 0 <= depth < NATIVE_CALL_FRAME_COUNT and type(field) is ControlField
+    if field is ControlField.IfTarget:
+        assert index >= 0
+        return index + depth * IF_FRAME_WIDTH, 4
+    if field in (ControlField.LoopStart, ControlField.LoopEnd):
+        assert 0 <= index < NATIVE_LOOP_FRAME_COUNT
+        return (
+            0x20 if field is ControlField.LoopStart else 0x60
+        ) + depth * 16 + index * 4, 4
+    if field is ControlField.SavedIf:
+        assert 0 <= index < NATIVE_LOOP_FRAME_COUNT
+        return 0x0C + depth * 4 + index, 1
+    if field is ControlField.LoopCount:
+        assert 0 <= index < NATIVE_LOOP_FRAME_COUNT
+        return 0xA0 + depth * 8 + index * 2, 2
+    assert index == 0
+    return {
+        ControlField.Active: (1, 1),
+        ControlField.IfLevel: (4 + depth, 1),
+        ControlField.LoopLevel: (8 + depth, 1),
+        ControlField.IfPointer: (0x140, 4),
+        ControlField.CallReturn: (0x144 + depth * 4, 4),
+        ControlField.CallDepth: (2, 1),
+        ControlField.ProgramCounter: (0x1C, 4),
+    }[field]
+
+
 def goto_if_cell(task: int, depth: int) -> tuple[int, int]:
     """Return the receiving task/offset of FF IF-pointer's next target store."""
     return if_store_cell(task, depth, GOTO_FF_IF_BASE)
@@ -37,14 +89,16 @@ def if_store_cell(task: int, depth: int, pointer: int) -> tuple[int, int]:
     """Resolve a shared-walker IF pointer at its actual native task/depth."""
     assert 0 <= task < 14 and 0 <= depth < NATIVE_CALL_FRAME_COUNT
     assert type(pointer) is int and pointer >= 0
-    displacement = task * TASK_WIDTH + pointer + depth * IF_FRAME_WIDTH
+    displacement = (
+        task * TASK_WIDTH + control_field(depth, ControlField.IfTarget, pointer)[0]
+    )
     return divmod(displacement, TASK_WIDTH)
 
 
 def loop_end_cell(depth: int, loop: int) -> int:
     """Native Break reads this u32LE end pointer in the shared loop frame."""
     assert 0 <= depth < NATIVE_CALL_FRAME_COUNT and 0 <= loop < NATIVE_LOOP_FRAME_COUNT
-    return 0x60 + depth * 16 + loop * 4
+    return control_field(depth, ControlField.LoopEnd, loop)[0]
 
 
 def native_bytes(executable: bytes, address: int, width: int) -> bytes:

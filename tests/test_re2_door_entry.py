@@ -1,4 +1,4 @@
-"""RE2-DOOR-010: the unchanged neutral entry analysis grants only six doors."""
+"""RE2-DOOR-010: retain the six-row neutral-entry baseline and original domains."""
 
 import copy
 import dataclasses
@@ -94,12 +94,22 @@ def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
             return [encode(part) for part in v]
         return v
 
+    stage_a = json.loads(
+        (
+            Path(__file__).parent / "fixtures/re2/door-native-frame-catalogs.json"
+        ).read_text()
+    )
     neutral, walks = {}, {}
     totals = [0, 0, 0, 0]
     for key, room in rooms.items():
         data = sources[key]
         catalog = door_access_catalog(data, room, p, bound)
-        if key in ("00-1b", "01-04", "02-08"):
+        if key in stage_a:
+            assert {
+                field: catalog[field]
+                for field in ("facts", "scenario_excluded_offsets", "unsupported")
+            } == stage_a[key]
+        elif key in ("00-1b", "01-04", "02-08"):
             old = baseline["targets"][key]
             assert old["facts"] == []
             assert (
@@ -141,11 +151,16 @@ def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
             )
         )
         for pk, program in room["programs"].items():
-            for role in ControlFrames:
+            for role in (
+                ControlFrames.Strict,
+                ControlFrames.FreshPositive,
+                ControlFrames.Doors,
+                ControlFrames.IdentityFiltering,
+            ):
                 walks[key + "/" + pk + "/" + role.name] = encode(
                     structured_control(data, program, role)
                 )
-    assert len(rooms) == 125 and totals == [120, 130, 11, 159]
+    assert len(rooms) == 125 and totals == [148, 158, 12, 131]
     assert len(walks) == baseline["walks"] == 7844
     for name, value in (("neutral", neutral), ("walks", walks)):
         assert (

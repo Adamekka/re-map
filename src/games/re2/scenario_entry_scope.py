@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from games.bit_flags import msb_flag_location
-from games.re2.door_entry import _DoorEntryBinding
+from games.re2.door_entry import _DoorEntryBinding, _TaskFields
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
     flag_write_conflicts,
@@ -989,11 +989,18 @@ def _source_scope_facts(
                 if door_policy
                 else ()
             )
-            frames = structured_control(
-                data,
-                program,
-                ControlFrames.Doors if door_policy else ControlFrames.Strict,
-                predicates=predicates,
+            native_frames = (
+                door_entries and type(entry_domain.source_fields) is _TaskFields
+            )
+            frames = (
+                dict(entry_domain.source_fields.frames)[key]
+                if native_frames
+                else structured_control(
+                    data,
+                    program,
+                    ControlFrames.Doors if door_policy else ControlFrames.Strict,
+                    predicates=predicates,
+                )
             )
             if not isinstance(frames, StructuredControl):
                 raise _UnprovedEntry(frames.value)
@@ -1003,14 +1010,9 @@ def _source_scope_facts(
                 for at in frames.reached:
                     if commands[key][at]["opcode"] != 0x17:
                         continue
-                    if (
-                        door_entries
-                        and type(entry_domain.source) is _SourceEntryRoles
-                        and (key, program["entry"])
-                        in entry_domain.source.entry_locations
-                    ):
-                        # Only the separately sealed unchanged neutral roles
-                        # close these receivers. Door traversal, source effects,
+                    if native_frames:
+                        # Only the separately sealed native producer/field closure
+                        # closes these receivers. Door source effects,
                         # creators, Reset and registration retain their checks.
                         continue
                     # FF Goto computes an escaped IF pointer. This door recipe

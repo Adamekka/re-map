@@ -44,7 +44,7 @@ from games.re2.startup_declarations import (
 
 IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v1"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "75d8d14834c74a0769de808a689293f8fe262dd3f2fc972af27a2c4b7fee8aa7"
+    "b99e92bdcae309071943317038fab9ef4d39088020c424bfac16736688a15e7f"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
     "11fd9074594ed0e455417a05d93d610bb6c59ef49a81208be3fa9f764b4b4a9f"

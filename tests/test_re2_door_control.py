@@ -51,7 +51,12 @@ def test_only_door_frames_prune_an_immutable_fixed_scenario_branch(expected):
     assert type(pruned) is StructuredControl
     assert (creator in pruned.reached) == (expected == 0)
     assert program["commands"][-1]["offset"] in pruned.reached
-    for role in ControlFrames:
+    for role in (
+        ControlFrames.Strict,
+        ControlFrames.FreshPositive,
+        ControlFrames.Doors,
+        ControlFrames.IdentityFiltering,
+    ):
         opaque = structured_control(data, program, role)
         assert type(opaque) is StructuredControl
         assert creator in opaque.reached
@@ -111,7 +116,12 @@ def test_door_explicit_startup_task_permission_does_not_reach_positive_policy(sl
 def test_embedded_sleep_helper_has_no_standalone_frame_right(body, accepted):
     data, room, _ = described(END, (body + END, END))
     program = room["programs"]["17:0"]
-    for role in ControlFrames:
+    for role in (
+        ControlFrames.Strict,
+        ControlFrames.FreshPositive,
+        ControlFrames.Doors,
+        ControlFrames.IdentityFiltering,
+    ):
         result = structured_control(data, program, role)
         assert isinstance(result, StructuredControl) == accepted
         if not accepted:

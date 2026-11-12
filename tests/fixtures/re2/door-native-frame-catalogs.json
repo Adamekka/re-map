@@ -1,0 +1,608 @@
+{
+  "00-04": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          2994
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 5,
+        "slot": 0,
+        "stage": 0
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "00-08": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6446
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 7,
+        "slot": 0,
+        "stage": 0
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6478
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 9,
+        "slot": 1,
+        "stage": 0
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "00-0a": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6602
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 9,
+        "slot": 0,
+        "stage": 0
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6634
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 15,
+        "slot": 1,
+        "stage": 0
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6666
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 11,
+        "slot": 2,
+        "stage": 0
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6698
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 27,
+        "slot": 3,
+        "stage": 1
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "00-11": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          8158
+        ],
+        "enabled": true,
+        "floor": 8,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 23,
+        "slot": 0,
+        "stage": 0
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 0,
+        "creator_offsets": [
+          8190
+        ],
+        "enabled": false,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 25,
+        "slot": 1,
+        "stage": 1
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "01-06": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          5334
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 5,
+        "slot": 0,
+        "stage": 1
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "01-0b": {
+    "facts": [],
+    "scenario_excluded_offsets": [],
+    "unsupported": [
+      {
+        "creator_offsets": [
+          12050
+        ],
+        "reasons": [
+          "source:callback_self_replacement_risk"
+        ],
+        "slot": 0
+      },
+      {
+        "creator_offsets": [
+          12090,
+          12126
+        ],
+        "reasons": [
+          "source:callback_self_replacement_risk"
+        ],
+        "slot": 1
+      },
+      {
+        "creator_offsets": [
+          12160
+        ],
+        "reasons": [
+          "source:callback_self_replacement_risk"
+        ],
+        "slot": 2
+      }
+    ]
+  },
+  "01-0f": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          5938
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 11,
+        "slot": 0,
+        "stage": 1
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          5970
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 17,
+        "slot": 1,
+        "stage": 1
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          6002
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 147,
+        "lock_type": 92,
+        "room": 16,
+        "slot": 2,
+        "stage": 1
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "01-12": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          1986
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 17,
+        "slot": 0,
+        "stage": 1
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          2018
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 7,
+        "slot": 1,
+        "stage": 2
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "01-13": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          3714
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 17,
+        "slot": 0,
+        "stage": 1
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "02-07": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          4178
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 13,
+        "slot": 0,
+        "stage": 2
+      },
+      {
+        "activation_floor": 7,
+        "activation_mask": 49,
+        "creator_offsets": [
+          4210
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 18,
+        "slot": 1,
+        "stage": 1
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 81,
+        "creator_offsets": [
+          4242
+        ],
+        "enabled": true,
+        "floor": 3,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 5,
+        "slot": 2,
+        "stage": 2
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "02-0b": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          2902
+        ],
+        "enabled": true,
+        "floor": 3,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 3,
+        "slot": 0,
+        "stage": 2
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          2934
+        ],
+        "enabled": true,
+        "floor": 3,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 5,
+        "slot": 1,
+        "stage": 2
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          2966
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 2,
+        "slot": 2,
+        "stage": 2
+      },
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          3030
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 12,
+        "slot": 3,
+        "stage": 2
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "03-08": {
+    "facts": [
+      {
+        "activation_floor": 1,
+        "activation_mask": 49,
+        "creator_offsets": [
+          10174
+        ],
+        "enabled": true,
+        "floor": 1,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 7,
+        "slot": 0,
+        "stage": 3
+      },
+      {
+        "activation_floor": 1,
+        "activation_mask": 49,
+        "creator_offsets": [
+          10206
+        ],
+        "enabled": true,
+        "floor": 1,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 10,
+        "slot": 1,
+        "stage": 3
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "03-0a": {
+    "facts": [],
+    "scenario_excluded_offsets": [],
+    "unsupported": [
+      {
+        "creator_offsets": [
+          9474
+        ],
+        "reasons": [
+          "source:callback_self_replacement_risk"
+        ],
+        "slot": 0
+      },
+      {
+        "creator_offsets": [
+          9506
+        ],
+        "reasons": [
+          "source:callback_self_replacement_risk"
+        ],
+        "slot": 1
+      }
+    ]
+  },
+  "04-05": {
+    "facts": [],
+    "scenario_excluded_offsets": [
+      2996
+    ],
+    "unsupported": [
+      {
+        "creator_offsets": [
+          2862,
+          2906,
+          2960,
+          3034
+        ],
+        "reasons": [
+          "different_access_target_or_lock",
+          "history_dependent_kind_reset"
+        ],
+        "slot": 0
+      }
+    ]
+  },
+  "05-04": {
+    "facts": [
+      {
+        "activation_floor": 10,
+        "activation_mask": 49,
+        "creator_offsets": [
+          8112
+        ],
+        "enabled": true,
+        "floor": 3,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 3,
+        "slot": 1,
+        "stage": 5
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "05-05": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 81,
+        "creator_offsets": [
+          6578
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 3,
+        "slot": 0,
+        "stage": 5
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  },
+  "05-0c": {
+    "facts": [],
+    "scenario_excluded_offsets": [],
+    "unsupported": [
+      {
+        "creator_offsets": [
+          3850
+        ],
+        "reasons": [
+          "source:scripted_null_dispatch"
+        ],
+        "slot": 0
+      },
+      {
+        "creator_offsets": [
+          3882
+        ],
+        "reasons": [
+          "source:scripted_null_dispatch"
+        ],
+        "slot": 1
+      },
+      {
+        "creator_offsets": [
+          3922
+        ],
+        "reasons": [
+          "source:scripted_null_dispatch"
+        ],
+        "slot": 2
+      },
+      {
+        "creator_offsets": [
+          3962
+        ],
+        "reasons": [
+          "source:scripted_null_dispatch"
+        ],
+        "slot": 3
+      },
+      {
+        "creator_offsets": [
+          3994
+        ],
+        "reasons": [
+          "source:scripted_null_dispatch"
+        ],
+        "slot": 4
+      }
+    ]
+  },
+  "05-15": {
+    "facts": [
+      {
+        "activation_floor": 0,
+        "activation_mask": 49,
+        "creator_offsets": [
+          11158
+        ],
+        "enabled": true,
+        "floor": 0,
+        "lock_id": 0,
+        "lock_type": 0,
+        "room": 20,
+        "slot": 0,
+        "stage": 5
+      }
+    ],
+    "scenario_excluded_offsets": [],
+    "unsupported": []
+  }
+}

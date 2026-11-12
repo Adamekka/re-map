@@ -497,3 +497,189 @@ Parent review and verification, 2026-11-12: root and two independent reviewers, 
 Root adds a why comment for the delayed policy import that avoids a module-initialization cycle; the complete Python AST is unchanged. The final owned-CUE43-test run passes in14.87seconds, with scoped Ruff/formatting on all9 changed Python files, local documentation links and whitespace checks. The retained7,858 full-suite and1,392 focused implementation results, two identical complete generations and browser/README checks apply to the same executable semantics. Configured Claude Opus5.5 is disabled; the fresh Gemini3.8Flash high review fails to open its provider session. Neither supplies an external endorsement. Exact reviewed file hashes, AST check, external failure and integration evidence are retained in `2026-11-12-door-entry-six-integration/`. These checks add no native gameplay or restoration observation.
 
 Main-checkout integration, 2026-11-12: all385 selected door-entry, trusted-door and profile tests pass in30.53seconds. Root compares every non-door field in all125 sources, preserves every prior fact and exclusion, and reproduces exactly the six new facts. Both complete generated room/floor pairs match main byte-for-byte. All fifteen fresh main publications and read plans equal the reviewed implementation result. Rebuilding the README fixture from the same three verified copied RAM inputs is byte-identical, as are the existing PNG and floor catalog. The private `root-main-comparison.json` and `root-main-focused.txt` record these final checks. Items, clearance, pose and visits remain outside this new authority.
+
+## RE2-DOOR-011: bounded native FF/FF door frames
+
+Status: Candidate for Resident Evil 2 Dual Shock Ver., USA Disc 1, SLUS-00748,
+Leon A, Original/Normal. This contribution uses owned-source inspection,
+unchanged copied native handlers and offline reader replay. No game emulator,
+game input, native room entry, native savestate restoration or memory-card test
+is performed. The earlier DuckStation observations retain their named limits.
+The exact clean implementation base is `2c69c06e6f3a580fcc1012046675ba20bd07788d`.
+Executable `SLUS_007.48` retains SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`;
+the complete 69-resource/125-source/54-auxiliary binding retains
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+
+The unsealed stage-A proposal on `55d0c8e` is remeasured against this base before
+use. Fifteen public factory/catalog regressions fail on the base. The new
+explicit `NativeDoors` role in the one shared structured-control walk admits
+28 further facts and one scenario exclusion. All prior facts and exclusions
+survive. The total becomes 148 facts covering 158 creators, 12 excluded creators
+and 131 unsupported slots. No item, clearance, effect, opcode, Copy, geometry or
+registration permission is added.
+
+| Source | Additional creator byte offsets |
+| --- | --- |
+| `00-04` | 2994 |
+| `00-08` | 6446, 6478 |
+| `00-0a` | 6602, 6634, 6666, 6698 |
+| `00-11` | 8158, 8190 |
+| `01-06` | 5334 |
+| `01-0f` | 5938, 5970, 6002 |
+| `01-12` | 1986, 2018 |
+| `01-13` | 3714 |
+| `02-07` | 4178, 4210, 4242 |
+| `02-0b` | 2902, 2934, 2966, 3030 |
+| `03-08` | 10174, 10206 |
+| `05-04` | 8112 |
+| `05-05` | 6578 |
+| `05-15` | 11158 |
+
+Source `04-05` additionally excludes creator 2996. Its remaining slot retains
+both target ambiguity and a history-dependent kind Reset. The other diagnostic
+changes expose callback self-replacement in `01-0b`/`03-0a` and unregistered
+scripted dispatch in `05-0c`. They grant no facts. `02-04` retains its non-FF
+IF-level Goto gap. Foreign Member_cmp, SET-before-check tokens, retained-level
+Goto and switch/call reconvergence beyond this bounded contract remain outside
+this increment. The full 131-slot residual and every old/new diagnostic are
+retained with the validation evidence.
+
+### Native cells and source ownership
+
+The compiler seals the actual full owned tuple, semantic profile, fresh raw
+decode, every program, NormalDoors source-write witness, producer, call/replacement
+edge, task/depth, initialization, receiving field and auxiliary proof. An
+unsupported field analysis grants no new receiving right; the previous narrow
+door path retains its own checks. Positive, identity, Guard and registration
+capabilities cannot construct or substitute this binding.
+
+Ordinary roots remain `16:0/task0`, `17:0/task1` and refresh `17:1/task0`.
+Every EventExec and kind-5 creator/Reset alternative contributes, including
+unentered producers. Ordinary selectors >=10 mean AUTO tasks 2..9. Gosub adds
+its actual depth; admitted EventNext preserves task/depth and still fails in a
+positive-depth chain. Programs without a producer gain no native entry or store,
+while all their source and Copy operands remain protected.
+
+FF/FF Goto may abandon logical IF/loop frames and target any decoded command
+boundary in its program. It computes the foreign IF pointer. Each foreign IF
+failure consumes its own immediately preceding nonyielding CK/CMP store.
+SET, a yield, a call, an actor predicate or an older store grants no such right.
+The logical IF frame carries the actual store-cell provenance. END/Return
+reconstruct the canonical pointer from the signed saved IF byte; they cannot
+make a foreign target into a canonical value. The stale IF/call/return/predicate
+counterexample remains rejected. Break restores the saved IF byte and leaves
+the IF pointer unchanged. Copied native execution rejects the implementation's
+initial contrary Break hypothesis; the failed run is retained.
+
+All native locations below are PS1 virtual addresses. Fields are task-relative,
+little endian; RDT targets are source byte offsets, never host addresses.
+The single [native arithmetic implementation](../../../src/games/re2/native_control.py)
+serves both the new receiving facts and the unchanged neutral disjointness test.
+
+| Field | Task-relative byte offset | Width/mask |
+| --- | --- | --- |
+| Task records | base `0x800D7860`, stride `0x174` | 14 normal/auxiliary records |
+| IF/loop level | `4+depth` / `8+depth` | u8, `0xFF`; signed when natively consumed |
+| Saved loop IF | `0x0C+4*depth+loop` | u8, `0xFF` |
+| Loop start/end | `0x20+16*depth+4*loop` / `0x60+16*depth+4*loop` | u32, `0xFFFFFFFF` |
+| FOR count | `0xA0+8*depth+2*loop` | u16, `0xFFFF` |
+| Canonical IF store | `0xC0+32*depth+4*level` | u32, `0xFFFFFFFF` |
+| FF Goto next IF store | `0x4C0+32*depth` | u32, `0xFFFFFFFF` |
+| Current IF pointer / return PC | `0x140` / `0x144+4*depth` | u32, `0xFFFFFFFF` |
+
+Native pins cover the eight installer callers, phase/root installers, ordinary
+failed-predicate dispatcher, IF/ELSE/ENDIF, CK, CMP and its seven-target switch,
+FOR/WHILE/DO/NEXT/SWITCH, Goto/Gosub/END/Return and Break. The full auxiliary
+Copy/writer/phase closure stays mandatory: 126 Break reads at `0x60`, 51 escaped
+IF writes, 47 numeric task13+`0xA4` cases and four task13+`0x84` cases with no
+task13 entry. Neither inactive flags nor zero counters are assumed. WHILE reads
+that overlap an escaped writer require an uninterrupted bound predicate; retained
+Break reads cannot overlap. FOR counts 0, 1, `7FFF`, `8000`, `FFFF` retain both
+conservative continuations and establish no loop progress.
+
+The policy is `slus00748-trusted-normal-door-access-v3`, with entry audit
+`slus00748-bounded-ff-native-door-entry-v2`. The full semantic profile pin is
+`c7d775403b9790c2e0f0704e214fdeea58a6024a968f1cdf65df7ea0ce1668f1`;
+the exact catalog pin is
+`41d4e5d42ff4bff81d17ec6ca8d7c57063bd66bd4d2d7bb3160f8ff80de435ea`.
+The independent identity authority changes its complete-profile pin only. Its
+raw source/item/competing-door/Reset catalog pin remains intact. Original four-role
+walks, Existing neutral analyses and 750 Strict/Guard/default-positive/positive/
+identity queries preserve their semantic outputs. No old pin alias is accepted.
+
+### Reader and map consequences
+
+All 15 fresh publications use only the three authorized read-only copied RAMs.
+Current-only results agree exactly. In the observed-two-source scope, the two
+`03-08` door observations improve only when that source is departed. In the
+simulated 125-source scope, 26 observations improve with `03-08` current and
+28 with `03-0a` current; creator `04-05:2996` disappears separately. Only derived
+door summaries also change. Items, completion, pose, visits and read request/byte
+counts remain equal through forward/reverse replay and fresh reconstruction.
+That implementation replay uses only the two current-source observations,
+`03-08`/`03-0a`. The parent integration below separately restores the existing
+persisted exploration. Simulated visits and compiler counts establish no native
+gameplay or campaign readiness.
+
+Marker coverage stays 242/321 creators in the production shared-door layout,
+with 79 missing. Twenty new access facts have markers and eight do not; accepted
+creators without markers increase 32 to 40. The raw floor/geometry bytes remain
+unchanged. The observed-source README fixture and rendered PNG also remain
+byte-identical after rebuilding from the real copied-RAM reader.
+
+[Reproduction and checks](../../testing/re2.md#bounded-native-door-frame-validation)
+record complete generation, catalog, query, native and publication artifacts.
+Durable private evidence is under
+`~/.cache/re-map/evidence/2026-11-12-door-ff-frame-implementation/`.
+The original unsealed research, authorship, rejected broader probes and initial
+implementation/test failures remain preserved separately.
+
+Contribution, 2026-11-12: the implementation agent, verified exact model
+`gpt-6.1-sol`, effort `xhigh`, authors this increment, experiments, regressions,
+local review and record. T3 executing-thread metadata is retained with the
+artifacts. The human supplies the engine-trust decision; the earlier research
+and copied-RAM captures retain their original authorship. Local review checks
+factory sealing, shared frame/cell arithmetic, producer/auxiliary/Copy closure,
+all catalog and legacy-domain consequences, fresh reader reversal and map
+preservation. Independent/external review and integration remain with the parent.
+No external endorsement or new runtime confirmation is claimed.
+
+Parent integration and review, 2026-11-12: root combines this increment with
+the already verified A0 pickup feature on `7f42f9fb4ad00972939ba464fbe004c7261475b0`.
+The combined semantic profile is
+`b99e92bdcae309071943317038fab9ef4d39088020c424bfac16736688a15e7f`,
+and the complete door catalog is
+`803d1a124481d117321dcb357eaa71ccc07c0c74d373b4d167fc9e03f4083b96`.
+Two complete generations agree byte-for-byte. Every non-door metadata field,
+including both pickup additions, and all floor bytes match that parent.
+The frame, entry and neutral-domain ASTs equal the independently reviewed
+implementation; the native helper additionally retains the separate A0 constant.
+
+Root restores only the private copy of the existing 68-source, 71-region
+exploration, then rereads the three copied RAM images in both orders. Across
+six publications, 22 or 24 door observations change, depending on the current
+source. Door observations become 95 Open, one Blocked and 85 Unchecked; rooms
+with incomplete door coverage decrease from 44 or 45 to 35. All item, clearance,
+pose, visit, region and read-plan fields remain equal. The four Unknown item
+rows and seven Unknown rooms remain unresolved. No visit is added. These are
+offline results for persisted exploration, not new gameplay observations.
+
+Two independent reviewers, each verified as `gpt-6.1-sol`, effort `xhigh`,
+report no findings in the bounded core and consumer scopes. The core reviewer
+checks native frame arithmetic, producer/auxiliary closure, sealing and legacy
+roles, and reruns 609 focused tests including 335 copied-native component cases.
+The consumer reviewer checks all catalog consequences, five metadata mutations,
+two contradictory exclusion controls, 43 focused tests and fresh replay,
+including the private persisted exploration. Root reviews the final combined
+diff and corrects the original two-source replay wording above. Configured
+Claude Opus 5.5 is disabled; Gemini 3.8 Flash high fails to open its provider
+session. Neither supplies an external endorsement.
+
+The final combined checkout passes 8,394 Python tests with explicit owned CUE,
+Ruff and formatting for all 14 changed Python files, documentation links and
+whitespace checks. All 15 copied-RAM publications preserve non-door results;
+the real README fixture reproduces byte-identically and its image is unchanged.
+Root authors this integration contribution as verified `gpt-6.1-sol`, effort
+`xhigh`. Exact comparisons, commands, review limits and hashes are retained in
+`~/.cache/re-map/evidence/2026-11-12-ff-a0-integration/`.
