@@ -2,6 +2,18 @@
 
 [Claim index](../../research.md) · [RE2 testing](../../testing/re2.md)
 
+## Normal-engine policy extension for door tracking
+
+2026-11-12. The human explicitly selects "Use normal-engine trust for doors" after requesting coverage of all unresolved Leon A rooms, doors and items. This extends the ordinary initialized, unmodified engine premise already approved for [item filtering and presence](scenario-selection.md#positive-presence-policy-extension-2026-11-07) to door interpretation on the pinned SLUS-00748 Leon A Original/Normal profile.
+
+Door rules must still check every relevant creator, Reset, retargeting path, scenario guard and explicit source write. Concrete unsafe script/control paths remain unsupported. Native initialization, resource ownership and ordinary engine execution use the approved premise; a general renderer, heap, DMA or whole-VM safety theorem is not required for each source. New door authority must bind the actual revision and source inputs explicitly. Existing item/guard capabilities alone grant no door rights.
+
+Lock/unlock and applicability flags must be read afresh and checked coherently after departure, reentry, reconnect and earlier/later savestate changes. Passage remains separate from unlock knowledge. Key possession alone does not establish that a door was unlocked. Exploration still reveals only entered rooms, and door state remains separate from room clearance.
+
+This is a policy decision, not a new door proof, runtime observation or confirmation of campaign coverage. The existing bounded claims below retain their original assumptions, authorship and limits. Subsequent implementation must record its own supported outcomes and remaining source gaps.
+
+Contribution, 2026-11-12: the human supplies this explicit extension. Codex root, verified exact model `gpt-6.1-sol`, effort `xhigh`, records it. The current audit and future implementation are separate from the approval.
+
 ## RE2-DOOR-007: bounded native writes preserve departed open doors
 
 Status: Confirmed open bindings in the two native Waiting Room entry situations below for Resident Evil 2 Dual Shock Ver. USA Disc 1, SLUS-00748, Leon A, Original/Normal. The shared lifetime interpretation remains Candidate outside those observations. Other revisions and general departed-door inference are untested.
