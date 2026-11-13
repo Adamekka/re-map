@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
+from games.re2.native_control import native_bytes
 from games.re2.native_entry_fields import (
     NativeTaskPhase,
     _native_entry_witnesses,
@@ -44,7 +45,7 @@ from games.re2.structured_control import (
     PredicateOutcome,
 )
 
-DOOR_ENTRY_AUDIT = "slus00748-bounded-ff-native-door-entry-v2"
+DOOR_ENTRY_AUDIT = "slus00748-bounded-ff-native-door-entry-v3"
 _SEAL = object()
 
 
@@ -139,7 +140,39 @@ def compile_door_entry_binding(
         native = _native_entry_witnesses(executable)
         if type(native) is not _NativeEntryWitnesses:
             return DoorEntryFailure.Binding
-        native_entries, windows = native.entries, native.windows
+        # RE2-DOOR-012: bind the complete numeric leaf, Copy and Reset,
+        # including return delay slots. Ordinary actor ownership is the
+        # approved premise; these bytes prove only the explicit u16 effect.
+        kind7_windows = (
+            (
+                0x80051A2C,
+                28,
+                "e5f95f108128ea15453b11c6490859804ae5aa248c04d1f14c396e4e31b8b7f7",
+            ),
+            (
+                0x800542B4,
+                92,
+                "239bd5e4d665be73ab33d1eac202e55faad6906e97fa0ff839c7b6beda15d513",
+            ),
+            (
+                0x80055154,
+                116,
+                "3ac89bd618207ddc7c84953e22b53de29436d99cf95566b48ba2ad5cac9b3b05",
+            ),
+        )
+        if any(
+            hashlib.sha256(native_bytes(executable, at, width)).hexdigest() != digest
+            for at, width, digest in kind7_windows
+        ) or any(
+            int.from_bytes(native_bytes(executable, at, 4), "little") != target
+            for at, target in (
+                (0x800A73E0, 0x80051A2C),
+                (0x800A753C, 0x800542B4),
+                (0x800A75E0, 0x80055154),
+            )
+        ):
+            return DoorEntryFailure.Binding
+        native_entries, windows = native.entries, (*kind7_windows, *native.windows)
         auxiliaries = {
             script.model: (script.data, {"programs": json.loads(script.programs_json)})
             for script in resources.corpus.scripts

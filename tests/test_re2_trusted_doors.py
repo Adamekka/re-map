@@ -98,8 +98,8 @@ def test_complete_owned_corpus_reproduces_every_slot_and_creator(owned):
         later,
         excluded,
         accepted_creators,
-    ) == (279, 321, 148, 143, 14, 69, 12, 158)
-    assert creators - excluded - accepted_creators == 151
+    ) == (279, 321, 151, 146, 14, 72, 12, 161)
+    assert creators - excluded - accepted_creators == 148
 
 
 def test_door_authority_is_separate_and_compiler_owned(owned):
@@ -186,7 +186,7 @@ def test_catalog_loader_rejects_changed_facts_and_policy():
     profile = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
     document = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
     rooms = {r["id"]: r for r in document["rooms"]}
-    assert len(load_door_catalogs(profile, rooms, document)) == 74
+    assert len(load_door_catalogs(profile, rooms, document)) == 75
     original = copy.deepcopy(document)
     for mutation in ("target", "enabled", "excluded", "missing", "profile", "program"):
         document = copy.deepcopy(original)
@@ -349,7 +349,7 @@ def test_every_departed_creator_and_keyed_variant_rebuilds_with_fresh_flags(snap
             # Only derived door summaries may change on each room record.
             assert tracker.rooms[key].items == legacy.rooms[key].items
             assert tracker.rooms[key].completion == legacy.rooms[key].completion
-        assert len(covered) == 158
+        assert len(covered) == 161
         assert len(excluded) == 12
         assert not excluded & observed.keys()
         for identity, actual in observed.items():

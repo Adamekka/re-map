@@ -602,6 +602,16 @@ def _source_scope_facts(
                         scalar_immediates.append((at + begin, at + end))
                 if op == 0x6E and data[at + 2] < 128 and data[at + 3] < 7:
                     scalar_immediates.append((at + 4, at + 6))
+                if row["kind"] in ("interaction", "reset") and row["interaction"] == 7:
+                    # RE2-DOOR-012: the bound native leaf stores any u16 only
+                    # into the ordinary actor's numeric +10C field. This grants
+                    # no selector, callback, SAT or later-payload Copy domain.
+                    payload = 4 if row["kind"] == "reset" else 22 if op == 0x67 else 14
+                    # The mandatory fresh reader requires a word-aligned RDT
+                    # base. An aligned two-byte interval also forces word Copy
+                    # to start at its beginning; either byte remains writable.
+                    if (at + payload) % 2 == 0:
+                        scalar_immediates.append((at + payload, at + payload + 2))
         mutated_checks = {
             row["offset"]
             for _, row in rows

@@ -1042,3 +1042,97 @@ publications. The configured Gemini 3.8 Flash high snapshot review reports no
 findings; configured Claude Opus 5.5 is disabled. Exact results and source hashes
 are retained in the feature's `root-final-manifest.json`. No review supplies
 new native gameplay or restoration evidence.
+
+## Bounded kind7 numeric door Copy validation
+
+[RE2-DOOR-012](../research/re2/immutable-doors.md#re2-door-012-bounded-kind7-numeric-copy-preserves-door-access)
+records its original failing regression on exact base
+`2801dc8b3d0d9c8dac04c2fa93fce08ea82ed89a`. The current combined integration
+also retains the separate native identity increment; its results follow below.
+Use `/Users/adamekka/.cache/re-map/verification-venv/bin/python` and explicit
+`RE_MAP_RE2_OWNED_CUE` pointing to the owned SLUS-00748 Leon CUE. The regression
+`tests/test_re2_door_kind7.py` first fails at the real public factory with
+`copy_changes_unclosed_operand`; it never promotes the research projection into
+a receipt.
+
+```sh
+python -m pytest -q tests/test_re2_door_kind7.py tests/test_re2_door_entry.py tests/test_re2_door_control.py tests/test_re2_door_native_frames.py tests/test_re2_native_frame_execution.py tests/test_re2_trusted_doors.py tests/test_re2_source_binding.py tests/test_re2_pickup_a0.py
+python tools/build_re2_metadata.py "$RE_MAP_RE2_OWNED_CUE" <private-rooms-1> <private-floors-1> --profile profiles/re2_leon_a_slus00748.json
+python tools/build_re2_metadata.py "$RE_MAP_RE2_OWNED_CUE" <private-rooms-2> <private-floors-2> --profile profiles/re2_leon_a_slus00748.json
+python -m pytest -q
+```
+
+The new tests cover low/high byte and aligned word writes for ordinary,
+four-point and Reset layouts; SAT/header/geometry overlap, crossing, later and
+whole-payload writes; odd payload alignment; bad counters; every other kind,
+especially kind5 callbacks and kind6 flag selectors; changed source, native tables/windows, corpus,
+profile and sealed receipts. Existing neutral/frame fixtures retain their old
+hashes, including competing `01-04`/slot2. Only the explicitly tested three
+kind7-enabled facts are removed when comparing against historical catalog hashes.
+
+Thirty copied-native cases reuse `tools/mips_store_audit.py` through the existing
+native test runner. Complete kind7, Copy and Reset handlers execute against
+explicit synthetic inputs, including unsigned/signed halfword boundaries.
+Allowed stores, read bounds, full 2 MiB RAM equality, native return and ABI
+preservation are checked. These component executions do not run the game engine
+or establish general Actor/AI safety.
+
+Fresh-reader checks retain current missing/inactive/contradictory descriptors,
+atomic retry, departure/reentry, fresh reconstruction, opt-out and existing
+flag reversals. The complete 15-publication replay must keep its current-only,
+observed-two-source and simulated 125-source scopes separate. The independent
+six-publication actual-history audit reads only the authorized private JSON,
+restores a private copy, and preserves its 68 source visits and 71 regions.
+The comparison rejects any non-door result, acquisition or clearance gain.
+
+Reproduction scripts, original failing output, native/source inspection, both
+complete generations, all 125 catalog consequences, rejected probes, copied-RAM
+and actual-history comparisons, check commands/results and exact changed-file
+hashes are retained under
+`~/.cache/re-map/evidence/2026-11-13-door-kind7-implementation-41719e34/`.
+Run its `compare_generation.py` and `compare_replays.py` with the verification
+Python after generating the named private outputs. The supplied replay script
+is `~/.cache/re-map/evidence/2026-11-12-leon-a-save-replay/replay.py`; pass
+`--checkout` and `--output` explicitly. Read `audit_actual_re2_history.py --help`
+before supplying its explicit history, copied-RAM manifest, new full 15 replay,
+inventory and inventory-baseline replay arguments. Original saves and history
+locks are outside this validation.
+
+The final complete Python suite passes 8,491 tests with explicit owned CUE; the
+final door/native/reader selection passes 760, including all 97 new kind7 cases.
+Scoped Ruff lint and formatting cover all 9 changed Python files. Documentation
+links and whitespace checks pass, as do desktop/mobile door unlock and variant
+checks, four-layout staircase checks and the four-layout README render. The
+frozen fixture and regenerated README PNG are both byte-identical.
+
+Contribution, 2026-11-13: verified `gpt-6.1-sol`, effort `xhigh`, authors these
+local checks and documentation. Parent independent/external review and native
+gameplay confirmation remain separate obligations.
+
+Parent combined verification uses the full generated profile with identity v2,
+door v4 and entry v3. The current pins and full125-source comparison are in
+the [combined parent contribution](../research/re2/immutable-doors.md#re2-door-012-bounded-kind7-numeric-copy-preserves-door-access).
+Both complete generations and all 21 copied-RAM/private-history publications
+agree with the intended three-door consequence. Actual visits remain 68
+sources/71 regions, with 47 Cleared, 15 Incomplete, 6 Unknown rooms and 4 Unknown
+item rows. Door-incomplete sources become 34. Separate unlock knowledge stays
+Unknown for the three no-lock Open observations.
+
+The combined evidence directory is
+`~/.cache/re-map/evidence/2026-11-13-kind7-native-identity-integration/`.
+Its comparators require explicit `--checkout`, `--evidence` or `--baseline`
+arguments and compare against committed native identity `f0f1f77`. Successful
+complete generations are numbered 3/4; attempts 1/2 failed at import after a
+conflict-resolution mistake, before producing metadata. Root restores the
+affected module bodies from `f0f1f77` and checks all other AST nodes unchanged
+before the accepted generations. Original failed outputs remain retained.
+
+The combined full suite passes 8,559 tests with explicit owned CUE. Final scoped
+Ruff, formatting, 467 local links and whitespace checks pass. Root separately
+reruns the 30 copied-native component cases and reproduces the exact original
+observed-source README publication. Independent core and integration reviews
+report no findings within their recorded scopes; the integration review runs
+155 focused tests, rejects 32 catalog mutations and compares all 21 retained
+publications. The configured Gemini 3.8 Flash high snapshot review reports no
+findings. Claude Opus 5.5 is disabled. No review adds gameplay or native-restore
+confirmation. Exact results are in the combined `root-final-manifest.json`.

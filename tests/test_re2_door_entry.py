@@ -131,6 +131,25 @@ def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
                 field: catalog[field]
                 for field in ("facts", "scenario_excluded_offsets", "unsupported")
             }
+            if key == "03-07":
+                # RE2-DOOR-012 changes only these three Copy-blocked slots.
+                # Restore their old diagnostics solely for the historical
+                # all-source hash check; the public facts are tested directly.
+                assert [f["creator_offsets"] for f in actual["facts"]] == [
+                    [1686],
+                    [1718],
+                    [1750],
+                ]
+                assert not actual["unsupported"]
+                actual["facts"] = []
+                actual["unsupported"] = [
+                    {
+                        "slot": slot,
+                        "creator_offsets": [at],
+                        "reasons": ["source:copy_changes_unclosed_operand"],
+                    }
+                    for slot, at in enumerate((1686, 1718, 1750))
+                ]
             assert (
                 hashlib.sha256(
                     json.dumps(actual, sort_keys=True, separators=(",", ":")).encode()
@@ -159,7 +178,7 @@ def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
                 walks[key + "/" + pk + "/" + role.name] = encode(
                     structured_control(data, program, role)
                 )
-    assert len(rooms) == 125 and totals == [148, 158, 12, 131]
+    assert len(rooms) == 125 and totals == [151, 161, 12, 128]
     assert len(walks) == baseline["walks"] == 7844
     for name, value in (("neutral", neutral), ("walks", walks)):
         assert (

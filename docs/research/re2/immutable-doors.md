@@ -683,3 +683,206 @@ the real README fixture reproduces byte-identically and its image is unchanged.
 Root authors this integration contribution as verified `gpt-6.1-sol`, effort
 `xhigh`. Exact comparisons, commands, review limits and hashes are retained in
 `~/.cache/re-map/evidence/2026-11-12-ff-a0-integration/`.
+
+## RE2-DOOR-012: bounded kind7 numeric Copy preserves door access
+
+Status: Candidate for Resident Evil 2 Dual Shock Ver., USA Leon Disc 1,
+SLUS-00748, Original/Normal Leon A. This is owned-source analysis and copied-native
+component execution, followed by offline fresh-reader reconstruction. No emulator,
+native gameplay, save restoration or memory-card persistence is tested here.
+The three supplied copied RAMs retain their prior version94 capture provenance;
+no new DuckStation version is tested.
+
+The implementation and initial verification below use base2801dc8, before the
+separate native identity increment. The combined parent contribution at this
+section's end records the current pins and retained-history results.
+
+The public factory on clean base
+`2801dc8b3d0d9c8dac04c2fa93fce08ea82ed89a` rejects source `03-07` with
+`copy_changes_unclosed_operand`. Three existing, marker-covered departed door
+observations therefore remain Unchecked. The remaining Copy changes a kind7
+numeric operand, not a door selector. The correction adds a generic interval
+only to `TrustedDoors`; no room, slot, offset or sampled counter value selects
+that permission. The approved ordinary initialized actor/resource ownership
+premise remains explicit. This is no general heap, renderer, AI or whole-VM
+safety theorem.
+
+### Exact native and source contract
+
+Owned `SLUS_007.48` SHA256 is
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+The complete 69-resource, 125-source, 54-auxiliary typed binding remains
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+All native addresses below are PS1 virtual addresses, not RAM offsets or host
+pointers. Integers are unsigned little endian, with full-width masks.
+
+| Field | Address or source-relative interval | Width and mask |
+| --- | --- | --- |
+| kind7 dispatch cell | `0x800A73E0`, value `0x80051A2C` | u32, `0xFFFFFFFF` |
+| Copy1D dispatch cell | `0x800A753C`, value `0x800542B4` | u32, `0xFFFFFFFF` |
+| Reset46 dispatch cell | `0x800A75E0`, value `0x80055154` | u32, `0xFFFFFFFF` |
+| Ordinary current Actor pointer | `0x800CE330` | u32, `0xFFFFFFFF` |
+| kind7 numeric input and destination | payload+0 to Actor+`0x10C` | u16, `0xFFFF` |
+| Counter4 in the reported source | `0x800D47F4` | u16, `0xFFFF`, entire value domain |
+| AOT slot3 registry cell | `0x800CE564` | u32 pointer, `0xFFFFFFFF` |
+| Creator/Reset slot, kind and SAT | record+1/+2/+3 | u8 each, `0xFF`, protected |
+
+The complete kind7 handler `0x80051A2C..0x80051A48`, including its return delay
+slot, has SHA256
+`e5f95f108128ea15453b11c6490859804ae5aa248c04d1f14c396e4e31b8b7f7`.
+It loads the ordinary current Actor, reads payload+0 with `lhu`, writes only
+Actor+`0x10C` with `sh`, and returns zero. It has no helper call, callback,
+index-derived address, flag write, source write or task-PC write. Complete
+Copy `0x800542B4..0x80054310` is pinned to
+`239bd5e4d665be73ab33d1eac202e55faad6906e97fa0ff839c7b6beda15d513`;
+complete Reset `0x80055154..0x800551C8` is pinned to
+`3ac89bd618207ddc7c84953e22b53de29436d99cf95566b48ba2ad5cac9b3b05`.
+The public door entry compiler checks all three dispatch cells and complete
+windows before sealing its receipt, in addition to the unchanged executable,
+corpus, ingress, auxiliary and frame checks.
+
+For a freshly decoded kind7 record, payload begins at record+4 for Reset46,
+record+22 for four-point interaction67, and record+14 for an ordinary interaction.
+Only its first two bytes form the new Copy interval. The payload halfword must
+be aligned; a byte Copy may target either byte and a word Copy must begin at
+the halfword start. The mandatory fresh reader separately requires a
+word-aligned relocated RDT base. No header, SAT, geometry, route/key selector,
+later payload word, kind5 callback or kind6 flag selector receives permission.
+All existing write/asset/read overlap, counter, registration, all-origin,
+all-Reset, scenario and coherent fresh-read obligations remain mandatory.
+
+Source `03-07` is 224484 bytes, SHA256
+`98bd9ff76ab6c3633819244d2b7970f915212b9358b3d666685d37b9e04b6e73`,
+with retained-source floor 42536. Packet `1D040401` at 3756..3760 copies counter4
+into 3764..3766, the first payload word of kind7 Reset 3760..3770, slot3/SAT41.
+Its single ordinary kind7 creator at 1980 has canonical payload 1994..2000.
+These are source-relative byte offsets; the actual relocated base is not
+invented. The source loop and counter arithmetic are retained without assuming
+zero, progress or a particular Actor value.
+
+### Generated and fresh-reader outcomes
+
+Two complete owned-CUE generations agree byte-for-byte. The genuine factories
+produce 151 facts / 161 creators / 12 exclusions / 128 unsupported slots,
+compared with 148 / 158 / 12 / 131 at the base. Only `03-07` changes semantically:
+slots 0/1/2 at creators 1686/1718/1750 become enabled access facts. All other 124
+catalogs, every old fact and exclusion, all raw descriptors and every item,
+completion and other non-door metadata field are preserved. Floor and geometry
+bytes remain identical, and all three new access observations already have
+markers. Competing `01-04`/slot2 stays unsupported.
+
+Door audit is now `slus00748-trusted-normal-door-access-v4`, with entry audit
+`slus00748-bounded-ff-native-door-entry-v3`. The full semantic profile pin is
+`8a2133a11f94aa146db057115c67feeb766147f210587be09b723fb046549e02`;
+the independently updated identity and A0 profile pins use that same complete
+digest. The full actual door catalog pin is
+`6c6c7e6ab4092f1f8ef49b7b17cff4dbddf2797d1f7e2269792b16bdfa438a85`.
+No fields are omitted and no old-pin fallback is accepted. The independent
+identity catalog remains
+`11fd9074594ed0e455417a05d93d610bb6c59ef49a81208be3fa9f764b4b4a9f`.
+Generated rooms SHA256 is
+`50dc4d8a914850310f61f81ca5a2b8cc0c4ab925f69e5d4c747c3c7d04b72776`;
+unchanged floors SHA256 is
+`aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+
+The full 15 copied-RAM replay preserves all current-only and observed-two-source
+publications. Its six simulated 125-source publications change only these three
+door observations and `03-07`'s derived door summary. A separate six-publication
+reconstruction of the actual 68-source/71-region history produces the same
+three changes, reduces door-incomplete sources from 35 to 34, and yields 98 Open,
+82 Unchecked and one Blocked observation. The actual history is restored only
+in a private copy; no visit or region is added. In both comparisons, items,
+acquisition, clearance, pose, visits, regions and read counts remain equal.
+The four Unknown item rows and seven Unknown rooms in the actual history remain
+unresolved. Simulated125 visits are not gameplay coverage.
+
+These three doors become Open with label "Open". Their separate unlock state
+remains Unknown because they have no native lock flag. The private research
+projection's suggested known-unlocked consequence was not adopted. An initial
+local reader test and comparison assumed it; both were corrected to preserve
+the existing reader semantics, without a reader change or new padlock marker.
+The original failing checks are retained separately in private evidence.
+
+The real observed-source README fixture reproduces byte-identically at
+`696eaa68dcf5e31f10a3a28ec44d9ea018a2758193a07af1b74c7c101834b9b9`.
+Its regenerated PNG also remains byte-identical at
+`cdeecce390de12c0304e2ce1d877b170c0091443188aa90ccbe96ba241a24f16`.
+No simulated visit is substituted into that publication.
+
+[Validation commands and limits](../../testing/re2.md#bounded-kind7-numeric-door-copy-validation)
+cover range boundaries, native stores and ABI, sealed bindings, legacy domains,
+current descriptor contradictions, fresh flag reversals, reentry and opt-out.
+The original 7,844 four-role walks and 125 Existing neutral outputs retain their
+frozen hashes. Local review checks those paths, exact pin changes, all 125
+catalog consequences and consumer preservation. Residual 128 catalog slots,
+79 raw creators without shared map markers, native gameplay and memory-card
+persistence remain outside this correction; no guessed clearance or marker
+exception is introduced.
+
+Final verification passes 8,491 Python tests with explicit owned CUE, the 760-test
+door/native/reader selection, scoped lint/formatting, documentation links,
+whitespace and the applicable door/staircase/README browser checks.
+
+Contribution, 2026-11-13: the implementation agent, verified exact model
+`gpt-6.1-sol`, effort `xhigh`, authors this bounded correction, regressions,
+experiments and local review. Matching session/turn metadata is retained in
+`execution-metadata.json` under
+`~/.cache/re-map/evidence/2026-11-13-door-kind7-implementation-41719e34/`.
+The supplied unfinished residual-slot research packet is a private lead, not a
+finished review or public capability. Its source/native facts are independently
+reread from the owned CUE here; its unsealed projection never becomes a receipt.
+Earlier claims and attribution remain unchanged. Independent and configured
+external reviews belong to the parent and are not endorsements of this local
+implementation.
+
+Combined parent integration, 2026-11-13: root, separately verified
+`gpt-6.1-sol`, effort `xhigh`, integrates this correction on
+`f0f1f77941b9c197e6746ff713a8a112c8920c54`. The shared native task-field
+implementation stays byte-identical. Its mandatory phase/role arguments remain
+explicit. The kind7, Copy and Reset windows/tables stay inside the independent
+door compiler, with their windows retained in its sealed binding. They do not
+add requirements or permissions to the identity compiler.
+
+Both complete combined generations agree byte-for-byte. All 125 source
+comparisons preserve the previous identity, A0, item/presence and raw descriptor
+fields, every old door fact/exclusion and every floor byte. Only `03-07` gains
+the same three door facts. Complete profile SHA256 is
+`f4cff5958d262fa79a36a8fb33ea800427b15d80c75cf4c4d0cf0b4803577c3c`;
+door catalog SHA256 is
+`3aa42afeac66d5e159a9bcf4b88c97a1ca6e6e2d6ccf35fd7e7194c8feddc3d0`.
+The complete raw identity pin remains
+`70387e94440aef491be72b765f1d55cc87977dd653d5981b70bdcab2dc122407`.
+Combined rooms SHA256 is
+`2ed825c6142571e146fc3dd92b8bfcd8e1b8d55b216e40740afd19e71fe5601b`;
+floor SHA256 remains `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+No policy field or old-pin fallback is omitted from validation.
+
+Fifteen fresh copied-RAM publications and six fresh private-history
+reconstructions preserve every non-door field and read plan against the
+committed identity result. Retained visits remain 68 sources/71 regions, with
+47 Cleared, 15 Incomplete, 6 Unknown rooms and 4 Unknown item rows. Door outcomes
+are 98 Open, 82 Unchecked and 1 Blocked; 34 sources retain incomplete door
+knowledge. The three added Open observations retain separate Unknown unlock
+states. These results remain offline and Candidate, with no new gameplay or
+native restoration. Complete comparisons, failed integration diagnostics and
+reproduction scripts are retained under
+`~/.cache/re-map/evidence/2026-11-13-kind7-native-identity-integration/`.
+
+Final combined verification passes all 8,559 Python tests with the explicit
+owned CUE, Ruff/formatting for all nine changed Python files, 467 local
+documentation links and whitespace checks. The original observed-source README
+publication reproduces byte-identically; UI code and image bytes are unchanged.
+The independent child-core reviewer, verified `gpt-6.1-sol`, effort `xhigh`,
+reports no findings after 141 focused checks and a separate owned-input read.
+A separate integration reviewer, independently verified as the same exact model
+and effort, reports no findings after 155 focused tests, 32 raw catalog
+mutations, AST/pin/all-source comparisons and all 21 publication comparisons.
+Its scopes exclude gameplay, native restoration and rendered UX/AX.
+
+The configured external snapshot review returns "No findings." T3 reports
+`gemini-3.8-flash` with requested `thinking_level=high` through Antigravity,
+without a separate executed-model attestation. It inspects only the supplied
+source/contracts/tests and adds no execution or gameplay evidence. Configured
+Claude Opus 5.5 remains disabled and supplies no review. Root's final manifest
+retains the exact source/artifact hashes, completed review responses, commands,
+failed integration attempts and Candidate limits.

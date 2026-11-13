@@ -44,9 +44,9 @@ from games.re2.startup_declarations import (
     startup_flag_banks_match,
 )
 
-DOOR_AUDIT = "slus00748-trusted-normal-door-access-v3"
+DOOR_AUDIT = "slus00748-trusted-normal-door-access-v4"
 # Policy rights belong to this exact semantic profile, independent of packaging paths.
-DOOR_PROFILE_SHA256 = "c9afde348a1f7651e33e961443b7fa3c24e208a377587b05edd816c59df11e58"
+DOOR_PROFILE_SHA256 = "f4cff5958d262fa79a36a8fb33ea800427b15d80c75cf4c4d0cf0b4803577c3c"
 _HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
 

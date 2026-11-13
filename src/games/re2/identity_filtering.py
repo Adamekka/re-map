@@ -57,7 +57,7 @@ from games.re2.structured_control import ControlFrames
 
 IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v2"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "c9afde348a1f7651e33e961443b7fa3c24e208a377587b05edd816c59df11e58"
+    "f4cff5958d262fa79a36a8fb33ea800427b15d80c75cf4c4d0cf0b4803577c3c"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
     "70387e94440aef491be72b765f1d55cc87977dd653d5981b70bdcab2dc122407"
