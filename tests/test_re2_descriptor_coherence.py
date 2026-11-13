@@ -38,9 +38,22 @@ snapshot = test_re2_tracking.snapshot
 def test_conflicting_descriptor_headers_cannot_publish_or_add_visits(
     snapshot, definitions, four_point, changed_field
 ):
-    profile, _, _, read = snapshot
+    profile, _, put, read = snapshot
     source = str(profile.read_current_room(read).room)
     registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
+    room = profile.rooms[source]
+    if definitions == "items" and "identity_filtering_items" in room:
+        # The generic fixture installs every raw alternative. Keep the baseline
+        # compatible with the compiled identity before testing conflicting reads.
+        variants = room["identity_filtering_items"]["item_variants"]
+        refined_ids = {variant["global_id"] for variant in variants}
+        selected_offsets = {at for variant in variants for at in variant["offsets"]}
+        for item in room["items"]:
+            if item["global_id"] in refined_ids:
+                put(registry + item["slot"] * 4, 0, 4)
+        for item in room["items"]:
+            if item["offset"] in selected_offsets:
+                put(registry + item["slot"] * 4, 0x80100000 + item["offset"] + 2, 4)
     definition = next(
         row
         for row in profile.rooms[source][definitions]

@@ -19,10 +19,9 @@ from games.re2.door_authority import (
 from games.re2.door_entry import (
     DoorEntryFailure,
     _DoorEntryBinding,
-    _task_fields,
-    _TaskFields,
     compile_door_entry_binding,
 )
+from games.re2.native_entry_fields import NativeTaskPhase, _task_fields, _TaskFields
 from games.re2.positive_entry_domain import (
     PositiveEntryFailure,
     SourceEntryPolicy,
@@ -400,7 +399,12 @@ def test_neutral_task_attachment_keeps_phase_zero_allocator_boundary(owned, sele
     from test_re2_startup_declarations import END, described
 
     data, room, _ = described(END, (bytes((4, selector, 0x18, 2)) + END, END, END))
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     assert type(result) is _TaskFields
     assert {
         task for key, task, depth in result.entries if key == "17:2" and depth == 0
@@ -436,7 +440,12 @@ def test_actual_unentered_program_gains_every_producer_and_call_depth(owned, at,
         presence_counter_indices(p),
         presence_flag_write_proof(p)[0],
     )
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     assert type(result) is _TaskFields
     assert {(task, d) for key, task, d in result.entries if key == "17:24"} == (
         {(task, 0) for task in range(2, 10)} if depth == 0 else {(1, 1)}
@@ -462,7 +471,12 @@ def test_auxiliary_inactive_receiver_cannot_be_replaced_by_assumed_flags(
         )
     main.extend((poll(), END))
     data, room, _ = described(END, tuple(main))
-    result = _task_fields(data, room["programs"], auxiliary=True)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Auxiliary,
+        role=ControlFrames.NativeDoors,
+    )
     assert (type(result) is _TaskFields) is accepted
     if not accepted:
         assert result is PositiveEntryFailure.ForeignConsumer

@@ -1,4 +1,4 @@
-"""RE2-SCENARIO-009: source-bound normal-engine identity filtering only."""
+"""RE2-SCENARIO-010: source-bound native identity filtering only."""
 
 from __future__ import annotations
 
@@ -7,17 +7,29 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
-from games.re2.native_control import EFFECT_CLEANUP_NATIVE, native_bytes
+from games.re2.native_control import (
+    EFFECT_CLEANUP_NATIVE,
+    native_bytes,
+    native_nonyielding,
+)
+from games.re2.native_entry_fields import (
+    NativeTaskPhase,
+    _native_entry_witnesses,
+    _NativeEntryWitnesses,
+    _task_fields,
+    _TaskFields,
+)
 from games.re2.normal_engine_binding import (
     NORMAL_ENGINE_BINDING_SHA256,
     semantic_profile_digest,
     typed_binding_digest,
 )
+from games.re2.ordinary_task_ingress import auxiliary_isolation
 from games.re2.positive_entry_domain import (
     SourceEntryPolicy,
     _auxiliary_break_reads,
+    _NativeIdentityEntryRoles,
     _source_entry_roles,
-    _SourceEntryRoles,
 )
 from games.re2.scenario_entry_scope import (
     _ScopePolicy,
@@ -41,13 +53,14 @@ from games.re2.startup_declarations import (
     startup_declaration_audit,
     startup_flag_banks_match,
 )
+from games.re2.structured_control import ControlFrames
 
-IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v1"
+IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v2"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "b99e92bdcae309071943317038fab9ef4d39088020c424bfac16736688a15e7f"
+    "c9afde348a1f7651e33e961443b7fa3c24e208a377587b05edd816c59df11e58"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
-    "11fd9074594ed0e455417a05d93d610bb6c59ef49a81208be3fa9f764b4b4a9f"
+    "70387e94440aef491be72b765f1d55cc87977dd653d5981b70bdcab2dc122407"
 )
 HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
@@ -86,6 +99,72 @@ def identity_filtering_policy(profile: dict) -> IdentityFilteringPolicy:
     return IdentityFilteringPolicy.TrustedNormalEngine
 
 
+class _IdentityDispatchKind(Enum):
+    FixedFlag = "kind12 fixed flag callback"
+    PendingDoor = "kind1 immutable unlocked pending request"
+
+
+@dataclass(frozen=True)
+class _IdentityDispatch:
+    slot: int
+    kind: _IdentityDispatchKind
+    creator_offsets: tuple[int, ...]
+
+
+def _identity_dispatch(
+    data: bytes,
+    room: dict,
+    slot: int,
+    registered: frozenset[int],
+    writes: ScenarioSourceWriteWitnesses,
+    covered_models: frozenset[int],
+) -> _IdentityDispatch | IdentityFilteringFailure:
+    """Derive a local callback footprint; this unsealed fact grants no authority."""
+    assert type(data) is bytes and type(slot) is int
+    assert type(registered) is frozenset and type(covered_models) is frozenset
+    assert type(writes) is ScenarioSourceWriteWitnesses
+    origins = [
+        row
+        for program in room["programs"].values()
+        for row in program["commands"]
+        if row["kind"] in ("door", "item", "interaction", "reset")
+        and data[row["offset"] + 1] == slot
+    ]
+    kinds = {data[row["offset"] + 2] for row in origins}
+    if slot not in registered:
+        return IdentityFilteringFailure.Dispatch
+    offsets = tuple(sorted(row["offset"] for row in origins))
+    if kinds == {12}:
+        return _IdentityDispatch(slot, _IdentityDispatchKind.FixedFlag, offsets)
+    if kinds != {1}:
+        return IdentityFilteringFailure.Dispatch
+    # The mandatory policy check fixes STATUS1:0=0. This excludes the callback's
+    # special helper path; the ordinary busy word remains unknown on both paths.
+    assert (1, 0, 0) in HISTORICAL_FLAGS
+    for row in origins:
+        at = row["offset"]
+        packet = data[at : row["next"]]
+        if row["kind"] != "door" or row["opcode"] not in (0x3B, 0x68):
+            return IdentityFilteringFailure.Dispatch
+        four = row["opcode"] == 0x68
+        payload = 22 if four else 14
+        # Native68 installs the geometry bit itself. A rectangular record with
+        # that bit already set would select a payload outside its physical shape.
+        if len(packet) != (40 if four else 32) or not four and packet[3] & 0x80:
+            return IdentityFilteringFailure.Dispatch
+        if (
+            packet[payload + 15] & 0x80
+            or packet[payload + 12] not in covered_models
+            or any(
+                copy.target_offset < row["next"]
+                and at < copy.target_offset + copy.width
+                for copy in writes.copies
+            )
+        ):
+            return IdentityFilteringFailure.Dispatch
+    return _IdentityDispatch(slot, _IdentityDispatchKind.PendingDoor, offsets)
+
+
 @dataclass(frozen=True, init=False)
 class NormalEngineIdentityFiltering:
     source_data: bytes
@@ -95,7 +174,10 @@ class NormalEngineIdentityFiltering:
     protected_programs: frozenset[str]
     entry_locations: frozenset[tuple[str, int]]
     source_writes: ScenarioSourceWriteWitnesses
-    source_roles: _SourceEntryRoles
+    source_roles: _NativeIdentityEntryRoles
+    native_entries: _NativeEntryWitnesses
+    auxiliary_fields: tuple[tuple[int, _TaskFields], ...]
+    dispatches: tuple[_IdentityDispatch, ...]
     auxiliary_break_reads: tuple[tuple[int, str, int, int], ...]
     must_registered: frozenset[int]
     _binding: tuple
@@ -250,6 +332,73 @@ _NATIVE_WINDOWS = (
 )
 
 
+# Full callback/renderer/world windows accompany the common native entry proof.
+# Whole owned resource/ingress binding remains required; these are not standalone
+# capabilities or a general renderer/heap/DMA safety theorem.
+_NATIVE_IDENTITY_WINDOWS = (
+    (
+        0x80057EF0,
+        232,
+        "62ce8f46d6caa0339ae6b47ce2c8b238ce7af55ae9ab1c8433c76c235ad7a28e",
+    ),
+    (
+        0x80057FD8,
+        80,
+        "0a243cd1dc1687bd2110cf5ccdf5fc57d2d8fc62475bc0e97475c04c5fe763db",
+    ),
+    (
+        0x8002C2B0,
+        116,
+        "16b5fa5f892d7dd9ba38268ddc760387ff67ea44aa00b6691d0a7c9b0be130f3",
+    ),
+    (
+        0x80051514,
+        516,
+        "3aa961a1519d1d75499e0768bfae4465cd751daab64823f9aa4672ad3c81eeb8",
+    ),
+    (
+        0x800551C8,
+        152,
+        "75b63c9e98d72d170818720da3e2dfd3dc8ece23d0b6d92f68a4f12cacbacf50",
+    ),
+    (
+        0x80026B7C,
+        860,
+        "7a7600311bb0bad9dadfff3aaa13b5303a74ba161a5a78f61a0875297baf88eb",
+    ),
+    (
+        0x80013C1C,
+        664,
+        "917af35745938e01b1ee80ab5b81a4f2816de776d45201732cdc5f7e2c97c1fe",
+    ),
+    (
+        0x80013EB4,
+        420,
+        "eb490c58f1ac9e9007bc8554538b29c869c53f678b9333e65d56d85229a31a6e",
+    ),
+    (
+        0x80049E48,
+        1400,
+        "abb25ef30698ec834d7bc8661e0b408b7253d1cb7ac5bdf177ac1786475e8e62",
+    ),
+    (
+        0x80054BE4,
+        240,
+        "cdc298087b3776be7355f2fe25727b0e0aa38ef137eb2ebea8bd649ade213738",
+    ),
+    (
+        0x80055154,
+        116,
+        "3ac89bd618207ddc7c84953e22b53de29436d99cf95566b48ba2ad5cac9b3b05",
+    ),
+    (
+        0x8002C1A0,
+        272,
+        "9dee818177fc291cfc63fe8437971a39edf8d034fc2c792dd450dc7a37585074",
+    ),
+)
+
+
 def normal_engine_identity_filtering(
     data: bytes, room: dict, profile: dict, bound: BoundStartupDeclarations
 ) -> NormalEngineIdentityFiltering | IdentityFilteringFailure:
@@ -285,7 +434,7 @@ def normal_engine_identity_filtering(
                     native_bytes(resources.executable, at, width)
                 ).hexdigest()
                 == digest
-                for at, width, digest in _NATIVE_WINDOWS
+                for at, width, digest in (*_NATIVE_WINDOWS, *_NATIVE_IDENTITY_WINDOWS)
             )
             and int.from_bytes(
                 native_bytes(resources.executable, 0x800A73F4, 4), "little"
@@ -293,15 +442,54 @@ def normal_engine_identity_filtering(
             == 0x80052004
         ):
             return IdentityFilteringFailure.Binding
+        native = _native_entry_witnesses(resources.executable)
+        if type(native) is not _NativeEntryWitnesses:
+            return IdentityFilteringFailure.Binding
+        if (
+            int.from_bytes(native_bytes(resources.executable, 0x800A73C8, 4), "little")
+            != 0x80051514
+            or int.from_bytes(
+                native_bytes(resources.executable, 0x800109C4, 4), "little"
+            )
+            != 0x80025970
+            or not all(
+                native_nonyielding(resources.executable, at, {})
+                for at in (0x80057FD8, 0x8002C2B0)
+            )
+        ):
+            return IdentityFilteringFailure.Binding
+        auxiliaries = {
+            script.model: (script.data, {"programs": json.loads(script.programs_json)})
+            for script in resources.corpus.scripts
+        }
+        if (
+            auxiliary_isolation(auxiliaries)
+            != bound.ordinary_ingress.preserved_counters
+        ):
+            return IdentityFilteringFailure.Control
+        auxiliary_fields = []
+        for model, (aux_data, auxiliary_room) in sorted(auxiliaries.items()):
+            result = _task_fields(
+                aux_data,
+                auxiliary_room["programs"],
+                phase=NativeTaskPhase.Auxiliary,
+                role=ControlFrames.NativeIdentityFiltering,
+            )
+            if type(result) is not _TaskFields:
+                return IdentityFilteringFailure.Control
+            auxiliary_fields.append((model, result))
         writes = scenario_source_write_witnesses(
             data, room, profile, policy=SourceWritePolicy.IdentityFiltering
         )
         if type(writes) is not ScenarioSourceWriteWitnesses:
             return IdentityFilteringFailure.Source
         source = _source_entry_roles(
-            data, room["programs"], writes, policy=SourceEntryPolicy.IdentityFiltering
+            data,
+            room["programs"],
+            writes,
+            policy=SourceEntryPolicy.NativeIdentityFiltering,
         )
-        if type(source) is not _SourceEntryRoles:
+        if type(source) is not _NativeIdentityEntryRoles:
             return IdentityFilteringFailure.Control
         auxiliary = _auxiliary_break_reads(resources, source.foreign_fields)
         if type(auxiliary) is not tuple:
@@ -311,7 +499,7 @@ def normal_engine_identity_filtering(
             room,
             profile,
             context,
-            _ScopePolicy.IdentityFiltering,
+            _ScopePolicy.NativeIdentityFiltering,
             TaskControlSupport.Unaudited,
             source,
         )
@@ -326,19 +514,21 @@ def normal_engine_identity_filtering(
         if type(must) is not frozenset:
             return IdentityFilteringFailure.Dispatch
         rows = [r for p in room["programs"].values() for r in p["commands"]]
-        kinds = {}
-        for row in rows:
-            if row["kind"] in ("door", "item", "interaction", "reset"):
-                kinds.setdefault(data[row["offset"] + 1], set()).add(
-                    data[row["offset"] + 2]
-                )
-        for row in rows:
-            if row["opcode"] == 0x47:
-                slot = data[row["offset"] + 1]
-                # A NULL slot dereferences memory; kind5 can replace its caller.
-                # Only the reviewed fixed-store kind12 leaf is admitted here.
-                if slot not in must or kinds.get(slot) != {12}:
-                    return IdentityFilteringFailure.Dispatch
+        dispatches = []
+        for slot in sorted(
+            {data[row["offset"] + 1] for row in rows if row["opcode"] == 0x47}
+        ):
+            dispatch = _identity_dispatch(
+                data,
+                room,
+                slot,
+                must,
+                writes,
+                resources.ordinary_ingress.covered_models,
+            )
+            if type(dispatch) is not _IdentityDispatch:
+                return IdentityFilteringFailure.Dispatch
+            dispatches.append(dispatch)
         values = (
             data,
             _json(room),
@@ -348,6 +538,9 @@ def normal_engine_identity_filtering(
             scope.entry_locations,
             writes,
             source,
+            native,
+            tuple(auxiliary_fields),
+            tuple(dispatches),
             auxiliary,
             must,
         )

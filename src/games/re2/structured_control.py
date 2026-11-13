@@ -22,6 +22,7 @@ class ControlFrames(Enum):
     Doors = "trusted normal door frames"
     NativeDoors = "bounded FF/FF native door frames"
     IdentityFiltering = "normal-engine identity filtering frames"
+    NativeIdentityFiltering = "bounded native identity filtering frames"
 
 
 class PredicateOutcome(Enum):
@@ -51,7 +52,7 @@ class StructuredControl:
 @dataclass(frozen=True)
 class NativeStructuredControl(StructuredControl):
     # Source offsets and field selectors are attached to actual task/depth
-    # producers by door_entry. This walk does not infer task ownership.
+    # producers by native_entry_fields. This walk does not infer task ownership.
     accesses: tuple[tuple[int, ControlField, int, bool], ...]
     loop_reads: tuple[tuple[int, int, bool], ...]
 
@@ -72,7 +73,7 @@ def structured_control(
         for row in predicates
     )
     assert not predicates or role in (ControlFrames.Doors, ControlFrames.NativeDoors)
-    native = role is ControlFrames.NativeDoors
+    native = role in (ControlFrames.NativeDoors, ControlFrames.NativeIdentityFiltering)
     door = role in (ControlFrames.Doors, ControlFrames.NativeDoors)
     accesses, loop_reads = set(), set()
     outcomes = dict(predicates)
@@ -118,6 +119,7 @@ def structured_control(
                     ControlFrames.FreshPositive,
                     ControlFrames.IdentityFiltering,
                     ControlFrames.NativeDoors,
+                    ControlFrames.NativeIdentityFiltering,
                 )
                 else -1,
             )
@@ -226,7 +228,14 @@ def structured_control(
                 )
             elif (
                 row["kind"] == "flag_check"
-                or (role is ControlFrames.IdentityFiltering and opcode == 0x86)
+                or (
+                    role
+                    in (
+                        ControlFrames.IdentityFiltering,
+                        ControlFrames.NativeIdentityFiltering,
+                    )
+                    and opcode == 0x86
+                )
                 or opcode
                 in (
                     0x23,
@@ -398,6 +407,7 @@ def structured_control(
                                 ControlFrames.IdentityFiltering,
                                 ControlFrames.Doors,
                                 ControlFrames.NativeDoors,
+                                ControlFrames.NativeIdentityFiltering,
                             )
                             else (0x14,)
                         )
@@ -425,6 +435,7 @@ def structured_control(
                     ControlFrames.IdentityFiltering,
                     ControlFrames.Doors,
                     ControlFrames.NativeDoors,
+                    ControlFrames.NativeIdentityFiltering,
                 )
             ):
                 require(

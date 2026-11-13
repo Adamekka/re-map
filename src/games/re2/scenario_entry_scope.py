@@ -14,15 +14,20 @@ from dataclasses import dataclass
 from enum import Enum
 
 from games.bit_flags import msb_flag_location
-from games.re2.door_entry import _DoorEntryBinding, _TaskFields
+from games.re2.door_entry import _DoorEntryBinding
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
     flag_write_conflicts,
     presence_counter_indices,
     presence_flag_write_proof,
 )
+from games.re2.native_entry_fields import _TaskFields
 from games.re2.normal_engine_binding import OWNED_SOURCE_FIELDS
-from games.re2.positive_entry_domain import _PositiveEntryDomain, _SourceEntryRoles
+from games.re2.positive_entry_domain import (
+    _NativeIdentityEntryRoles,
+    _PositiveEntryDomain,
+    _SourceEntryRoles,
+)
 from games.re2.positive_pickup_roles import PickupRolesSupport, _PositivePickupRoles
 from games.re2.room_data import decode_room
 from games.re2.scenario_items import scenario_flags
@@ -84,6 +89,7 @@ class _ScopePolicy(Enum):
     TrustedPositivePrefix = "trusted normal positive prefix"
     TrustedDoors = "trusted normal door access"
     IdentityFiltering = "trusted normal identity filtering"
+    NativeIdentityFiltering = "trusted bounded native identity filtering"
 
 
 @dataclass(frozen=True)
@@ -388,6 +394,7 @@ def _source_scope_facts(
     entry_domain: _PositiveEntryDomain
     | _DoorEntryBinding
     | _SourceEntryRoles
+    | _NativeIdentityEntryRoles
     | _SourceEffects = _SourceEffects.Existing,
     *,
     pickup_roles: _PositivePickupRoles
@@ -406,7 +413,11 @@ def _source_scope_facts(
     )
 
     door_policy = policy is _ScopePolicy.TrustedDoors
-    identity_policy = policy is _ScopePolicy.IdentityFiltering
+    identity_policy = policy in (
+        _ScopePolicy.IdentityFiltering,
+        _ScopePolicy.NativeIdentityFiltering,
+    )
+    native_identity = policy is _ScopePolicy.NativeIdentityFiltering
 
     def require(condition: bool, reason: str = "source_control_or_write") -> None:
         if not condition:
@@ -451,7 +462,10 @@ def _source_scope_facts(
                 and entry_domain.bound.declarations == context.declaration_contract
             )
         elif identity_policy:
-            require(type(entry_domain) is _SourceEntryRoles)
+            require(
+                type(entry_domain)
+                is (_NativeIdentityEntryRoles if native_identity else _SourceEntryRoles)
+            )
         else:
             require(entry_domain is _SourceEffects.Existing)
         source_entries = entry_domain.facts if closed_entries else entry_domain
@@ -489,6 +503,7 @@ def _source_scope_facts(
             _ScopePolicy.TrustedPositivePrefix,
             _ScopePolicy.TrustedDoors,
             _ScopePolicy.IdentityFiltering,
+            _ScopePolicy.NativeIdentityFiltering,
         ):
             # Exact JSON types matter: Python equality alone equates True/1
             # and can otherwise accept substituted decoded operands.
@@ -729,6 +744,7 @@ def _source_scope_facts(
                         in (
                             _ScopePolicy.TrustedPositivePrefix,
                             _ScopePolicy.IdentityFiltering,
+                            _ScopePolicy.NativeIdentityFiltering,
                         )
                         and row["target"] in commands[key]
                         or isinstance(control, VerifiedSourceTaskControl)
@@ -762,6 +778,11 @@ def _source_scope_facts(
                 # sleeps. Every such initializer must retain the same four
                 # owned records, valid blend mode and RGB-mask domain.
                 require(packet[1] < 4 and packet[2] < 4 and packet[3] <= 7)
+            elif opcode == 0x74 and native_identity:
+                # This helper writes one fixed76-byte record, not a sampled
+                # pointer. Native buffer/record ownership is the approved premise;
+                # selectors and every explicit source write stay independently bound.
+                require(len(packet) == 4 and packet[1] < 4, "render_record_bounds")
             elif opcode == 0x74 and not door_policy:
                 # Both 53 and 74 call native 8002C2B0. Only this uninterrupted
                 # initialized-record recipe reuses 53's existing renderer/OT
@@ -829,6 +850,7 @@ def _source_scope_facts(
                     in (
                         _ScopePolicy.TrustedPositivePrefix,
                         _ScopePolicy.IdentityFiltering,
+                        _ScopePolicy.NativeIdentityFiltering,
                     )
                     and packet[1] == 24
                     # Native members11/13 store the owned Work's numeric X/Z
@@ -918,6 +940,7 @@ def _source_scope_facts(
         if policy in (
             _ScopePolicy.TrustedPositivePrefix,
             _ScopePolicy.IdentityFiltering,
+            _ScopePolicy.NativeIdentityFiltering,
         ):
             require(
                 decoded["candidate_list_complete"] and calls_fit_native_frames(calls)

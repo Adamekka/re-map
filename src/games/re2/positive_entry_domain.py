@@ -10,6 +10,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from games.re2.native_control import (
     GOTO_FF_IF_BASE,
@@ -44,10 +45,14 @@ from games.re2.structured_control import (
     structured_control,
 )
 
+if TYPE_CHECKING:
+    from games.re2.native_entry_fields import _TaskFields
+
 
 class SourceEntryPolicy(Enum):
     Existing = "existing positive source roles"
     IdentityFiltering = "normal-engine identity filtering source roles"
+    NativeIdentityFiltering = "bounded native identity filtering source roles"
 
 
 class PositiveEntryFailure(Enum):
@@ -109,7 +114,10 @@ def _numeric_copy_ranges(
                 ranges.append((at + 6, at + 12))
             elif opcode == 0x54:
                 ranges.extend(((at + 8, at + 14), (at + 14, at + 20)))
-            elif policy is SourceEntryPolicy.IdentityFiltering and opcode in (
+            elif policy in (
+                SourceEntryPolicy.IdentityFiltering,
+                SourceEntryPolicy.NativeIdentityFiltering,
+            ) and opcode in (
                 0x6A,
                 0x6B,
             ):
@@ -147,15 +155,21 @@ class _SourceEntryRoles:
     numeric_ranges: tuple[tuple[int, int], ...]
 
 
+@dataclass(frozen=True)
+class _NativeIdentityEntryRoles(_SourceEntryRoles):
+    native_fields: _TaskFields
+
+
 def _source_entry_roles(
     data: bytes,
     programs: dict,
     writes: ScenarioSourceWriteWitnesses,
     *,
     policy: SourceEntryPolicy = SourceEntryPolicy.Existing,
-) -> _SourceEntryRoles | PositiveEntryFailure:
+) -> _SourceEntryRoles | _NativeIdentityEntryRoles | PositiveEntryFailure:
     """Unsealed source analysis, never sufficient filtering/presence authority."""
     assert type(policy) is SourceEntryPolicy
+    native = policy is SourceEntryPolicy.NativeIdentityFiltering
 
     def require(condition, reason=PositiveEntryFailure.Control):
         if not condition:
@@ -214,7 +228,11 @@ def _source_entry_roles(
                 elif opcode == 0x17:
                     require(
                         packet[1:4] == b"\xff\xff\0"
-                        and row["target"] == program["entry"]
+                        and (
+                            row["target"] in {r["offset"] for r in program["commands"]}
+                            if native
+                            else row["target"] == program["entry"]
+                        )
                     )
                     gotos.add((key, at))
                 if row["kind"] in ("item", "door", "interaction", "reset"):
@@ -248,12 +266,13 @@ def _source_entry_roles(
                     require(bool(kinds) and 5 not in kinds)
         require(calls_fit_native_frames(calls))
         require(
-            not any(key in targets for key, _ in gotos for targets in calls.values())
+            native
+            or not any(key in targets for key, _ in gotos for targets in calls.values())
         )
         # Return reconstructs a canonical IF pointer rather than the escaped
         # pointer. A writer with Gosub needs a separate return-field role;
         # treating that call as neutral would invent its later store targets.
-        require(all(not calls[key] for key, _ in gotos))
+        require(native or all(not calls[key] for key, _ in gotos))
         allowed = (
             *numeric,
             *(
@@ -284,6 +303,59 @@ def _source_entry_roles(
             ),
             PositiveEntryFailure.SourceWrite,
         )
+        if native:
+            # The native analysis uses this module's shared neutral field check.
+            # Delay the import so that dependency cannot form an import cycle.
+            from games.re2.native_entry_fields import (
+                NativeTaskPhase,
+                _task_fields,
+                _TaskFields,
+            )
+
+            fields = _task_fields(
+                data,
+                programs,
+                phase=NativeTaskPhase.Ordinary,
+                role=ControlFrames.NativeIdentityFiltering,
+            )
+            if type(fields) is not _TaskFields:
+                return fields
+            entered = frozenset(key for key, _, _ in fields.entries)
+            return _NativeIdentityEntryRoles(
+                tuple(
+                    (key, at, targets)
+                    for key, frame in fields.frames
+                    if key in entered
+                    for at, targets in frame.edges
+                ),
+                frozenset((key, programs[key]["entry"]) for key in entered),
+                frozenset(gotos),
+                tuple(
+                    sorted(
+                        {
+                            (
+                                key,
+                                at,
+                                receiver * TASK_WIDTH + offset - task * TASK_WIDTH,
+                                target,
+                            )
+                            for key, at, task, _, receiver, offset, target in fields.stores
+                        }
+                    )
+                ),
+                tuple(
+                    sorted(
+                        {(key, at, offset) for key, at, _, _, offset in fields.reads}
+                    )
+                ),
+                frozenset(
+                    offset
+                    for _, _, task, _, receiver, offset, _ in fields.stores
+                    if task != receiver
+                ),
+                numeric,
+                fields,
+            )
         depths = _call_depths(programs, roots, calls)
         frames = {}
         for key in programs:

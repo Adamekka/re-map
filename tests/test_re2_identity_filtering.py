@@ -430,15 +430,19 @@ def test_dispatch_startup_registration_stops_at_yield(owned, filtering):
     )
 
 
-def test_complete_generated_filtering_catalog_has_only_one_added_consequence():
+def test_complete_generated_filtering_catalog_keeps_both_derived_consequences():
     document = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
     catalog = {r["id"]: r["identity_filtering_items"] for r in document["rooms"]}
     assert len(catalog) == 125
     assert {key: row for key, row in catalog.items() if any(row.values())} == {
+        "00-08": {
+            "absent_item_ids": [],
+            "item_variants": [{"global_id": 213, "offsets": [6934]}],
+        },
         "03-08": {
             "absent_item_ids": [],
             "item_variants": [{"global_id": 185, "offsets": [10558]}],
-        }
+        },
     }
     assert (
         identity_filtering_catalog_digest(document["rooms"])

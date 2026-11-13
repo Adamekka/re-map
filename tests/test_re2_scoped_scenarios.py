@@ -273,12 +273,16 @@ def test_scoped_identity_collection_rewinds_without_cached_verdict(
         assert tracker.region_visits == visits
 
 
-def test_unsafe_rooftop_entry_keeps_collected_identity_unresolved(snapshot):
+def test_native_identity_does_not_borrow_the_unproved_rooftop_entry_scope(snapshot):
     profile, _, put, read = snapshot
     source = profile.rooms["00-08"]
     assert source["scoped_scenario_items"] == {
         "absent_item_ids": [],
         "item_variants": [],
+    }
+    assert source["identity_filtering_items"] == {
+        "absent_item_ids": [],
+        "item_variants": [{"global_id": 213, "offsets": [6934]}],
     }
     bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
     put(bank + 213 // 32 * 4, 0x80000000 >> (213 % 32), 4)
@@ -286,10 +290,10 @@ def test_unsafe_rooftop_entry_keeps_collected_identity_unresolved(snapshot):
     tracker.mark_current(RoomId(0, 8))
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     record = tracker.rooms["00-08"]
-    assert record.completion is RoomCompletion.Unknown
-    assert not record.list_complete
+    assert record.completion is RoomCompletion.Cleared
+    assert record.list_complete
     assert [(item.label, item.state) for item in record.items] == [
-        ("Collectible", "taken")
+        (profile.names["items"]["20"], "taken")
     ]
 
 

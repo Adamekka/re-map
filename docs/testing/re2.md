@@ -994,3 +994,51 @@ Root's reproducible private scripts, full test log, original/combined comparison
 inputs and artifact hashes are under
 `~/.cache/re-map/evidence/2026-11-12-ff-a0-integration/`.
 The rebuilt observed-source README fixture and existing PNG remain byte-identical.
+
+## Native identity filtering validation
+
+[RE2-SCENARIO-010](../research/re2/scenario-selection.md#re2-scenario-010-bounded-native-frames-refine-an-acquired-identity)
+requires the whole owned resource/source/auxiliary binding and a separate
+mandatory filtering compiler. Set `RE_MAP_RE2_OWNED_CUE` explicitly. Run the
+new `test_re2_native_identity_filtering.py` and
+`test_re2_native_identity_tracking.py`, existing identity/source/door/frame
+modules and the full Python suite. The new source tests enumerate all125 real
+factory/query results, keep predicate86's two canonical edges, reject stale
+foreign consumers and door predicate hints, validate every additional native
+window, and exercise physical descriptor/registration/Reset/Copy/model/lock
+and renderer-selector bounds. Reader tests distinguish departed Unknown from
+fresh current Available, acquisition rewind, excluded current alternatives,
+failed/short/incoherent reads, departure/reentry and visits-only reconstruction.
+
+The generic overlapping-descriptor fixture selects the compiled identity before
+introducing contradictory header reads. It still verifies Retry without any
+partial publication or visit. The earlier rooftop test retains its empty scoped
+entry result and checks that the separate filtering result supplies the acquired
+identity. No old frozen control/source hashes are refreshed.
+
+Generate the entire metadata twice with explicit owned CUE and private output
+paths. Compare both complete room/floor files, every old item/presence/door field
+and all raw descriptors against source base2801dc8. Expected item change is only
+GID213's `00-08` selector6934; duplicate raw absence24 produces no extra metadata.
+Rooms SHA256 is `ccea907ff5669b4ced2c55c6c0938a582ee88dc8007a84be2d45990e38f753b5`;
+floors remain `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+The complete pin/generation/publication verifiers and actual comparisons are
+under `~/.cache/re-map/evidence/2026-11-12-native-identity-implementation/`.
+
+Replay all15 copied-RAM publications, then restore the authorized private
+68-source history copy and reconstruct six fresh forward/reverse publications.
+Rebuild the item inventory from the CURRENT complete metadata/replay before
+joining it to that history; the old generic-identity inventory is not a valid
+mapping for the newly resolved row. Compare all outside-target fields and read
+plans exactly. Four Unknown item rows remain, and no unvisited source is added.
+Reproduce the original observed-source README fixture and verify its unchanged
+image. These are offline source/reader results, with no new native gameplay,
+savestate-restoration or memory-card-persistence observation.
+
+The final feature suite passes 8,462 tests with the explicit owned CUE. Separate
+core and consumer reviews report no findings within their recorded scopes;
+the consumer independently repeats 384 focused tests and all 21 retained
+publications. The configured Gemini 3.8 Flash high snapshot review reports no
+findings; configured Claude Opus 5.5 is disabled. Exact results and source hashes
+are retained in the feature's `root-final-manifest.json`. No review supplies
+new native gameplay or restoration evidence.

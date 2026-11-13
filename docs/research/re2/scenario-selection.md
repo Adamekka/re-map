@@ -570,3 +570,130 @@ Parent final verification, 2026-11-12: the corrected feature passes all7,772 Pyt
 Combined staircase integration, 2026-11-12: both complete owned metadata generations agree with each other and the integrated checkout byte-for-byte. Room SHA256 remains `16605417db51a48f3393636c682e8be0ab44006d64e81a79fec44a37baa361a4`; [RE2-MAP-008](../re2.md#re2-map-008-native-staircase-doorway-contours) supplies floor SHA256 `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`. All145 frozen production/profile/data files and actual imported modules remain unchanged during generation/replay. Fresh replay preserves every field from the reviewed identity result across all fifteen publications. All125 raw source door lists and all170 legacy shared marker records remain identical to the original geometry baseline.
 
 The integrated checks pass1,220 focused Python tests, all four shared map/keyboard/interruption/refresh browser suites, the ten-contour/four-layout browser check and the four-layout README render. The original whole-room hash in the new staircase test initially fails because identity metadata changed; the corrected test pins every raw door descriptor, preserving its actual geometry requirement without coupling it to independent item policies. Root regenerates the explicit README publication twice from the same three verified copied RAM inputs and only their two observed sources, then replaces the screenshot with the exact desktop render. Only03-08's resolved identity/completion changes. Final scoped Ruff, formatting,492 local documentation links and whitespace checks pass. Individual feature full suites and the integrated focused checks remain distinct. Exact commands, hashes, failed initial check and final outputs are under `/Users/adamekka/.cache/re-map/evidence/2026-11-12-leon-a-identity-staircase-integration/`. No new gameplay, native restoration, user-history access or external endorsement is added.
+
+## RE2-SCENARIO-010: bounded native frames refine an acquired identity
+
+Status: Candidate under the human-approved initialized, unmodified normal-engine
+premise. Target remains RE2 Dual Shock Ver., USA Leon Disc 1, SLUS-00748,
+Original/Normal Leon A, executable SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+This increment uses owned source/native inspection and offline saved-RAM replay.
+No new emulator, collection, native restoration or memory-card observation occurs.
+
+The retained exploration has an acquired but unidentified GID213 in `00-08`.
+The prior filtering factory rejects its interior FF/FF control flow. Admitting
+that flow alone still leaves an initialized-render-record update and an ordinary
+door callback unclosed. The coherent correction derives all three contracts
+inside the independent filtering compiler; no Door, Guard, positive-entry or
+registration receipt transfers its authority.
+
+The shared unsealed native task/frame analysis now has mandatory ordinary or
+auxiliary phase and frame-role arguments. The explicit native identity role
+reuses actual producer/task/depth, foreign-store, canonical-return, Break/WHILE
+and auxiliary checks. It keeps both canonical predicate86 continuations and the
+IF pop. Only its own immediate CK21 or bounded CMP23 can consume an escaped IF
+cell. Retained-level Goto, foreign Member_cmp, SET/yield/call-separated stores,
+early Return, EventNext and sound compaction gain no identity permission. The
+original four control roles and both original source-entry policies retain their
+frozen outputs. Shared native windows and installer census are recomputed by
+each policy compiler, not supplied by a matching receipt mirror.
+
+For the new identity source policy, every relevant53 initializer retains record
+selector below4, blend below4 and RGB mask at most7;74 selects a record below4
+and consumes a signed16LE coefficient. The complete helper at PS1 virtual
+`0x8002C2B0..0x8002C324` writes within fixed76-byte records based at `0x800DFC1C`.
+It reads a data byte at record+`0x13`, not a per-record pointer. The native buffer
+selector at `0x800CE5E0` has the explicitly approved initialized0/1 ownership
+premise. No all-four-record bootstrap or arbitrary renderer/GPU/DMA theorem is
+claimed, and no record is initialized to an invented value. Actual `00-08`
+additionally has a separately checked same-record53 predecessor at7244 before
+74 at7252 on every shared-graph path from entry7200. That local dominance is
+not inferred from lexical adjacency or required to prove the helper's fixed
+immediate write bounds under the approved ownership premise.
+
+A new callback role requires guaranteed registration and every slot alternative
+to be an immutable physical3B/68 door record, correct installed geometry and
+payload bounds, a covered door resource and clear lock high bit. Reset, Copy,
+mixed kinds, unregistered/NULL, locked kind1 and kind2 paths remain rejected.
+Under protected STATUS1:0=0, the complete kind1 callback
+`0x80051514..0x80051718` has two helper-free feasible paths. Busy word
+`0x800CFDDC` remains unknown. Its non-stack writes are only pending phase
+`0x800DF348` u8, pending payload `0x800CE550` u32LE and second STATUS word
+`0x800CFBDC` u32LE OR `0xFF000000`. These do not touch fixed first STATUS word
+`0x800CFBD8`, source bytes or task/frame storage. Aot_on advances the same task
+PC after return. The later world transition sets SYS mask `0x02000000` before
+its owned auxiliary/loader lifecycle. Existing transition/reset rejection,
+room/RDT/source binding and fresh flag/coherence checks remain mandatory.
+Multibyte data and pointer words are little endian; byte/halfword/word masks
+are `0xFF`, `0xFFFF`, `0xFFFFFFFF`. Source offsets are RDT byte offsets, never
+host addresses or PS1 virtual addresses.
+
+All125 actual public factory/query results reproduce the bounded projection.
+Support becomes30 sources; all19 prior supported queries remain equal, without
+a legacy fallback. The new raw variant is GID213 creator6934, type20, amount15.
+The additional raw absence `01-13`/GID24 duplicates an existing scoped absence
+and is deduplicated by the generator. Complete metadata adds only the `00-08`
+identity record. Every other item, presence, door and floor field remains equal.
+
+The policy audit is `slus00748-trusted-normal-identity-filtering-v2`. Full semantic
+profile SHA256 is `c9afde348a1f7651e33e961443b7fa3c24e208a377587b05edd816c59df11e58`;
+the mandatory complete raw identity catalog is
+`70387e94440aef491be72b765f1d55cc87977dd653d5981b70bdcab2dc122407`.
+The independent door catalog changes its complete-profile binding only, to
+`aab4d3a03b2573d33c60e29410b94ec31725b7d9afaa5c2fb5eadcca566c1a00`.
+No semantic profile field is omitted and no old pin is accepted. Complete
+69-resource/125-source/54-auxiliary binding remains
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+
+Two complete generations agree byte-for-byte. Fifteen fresh copied-RAM
+publications and six publications restored from the private68-source/71-region
+history copy preserve every outside-target field. Only `00-08` gains its
+specific acquired identity, quantity and list completeness, becoming Cleared.
+The retained actual scope has47 Cleared,15 Incomplete and6 Unknown rooms;
+all4 Unknown item rows remain. Doors, pose, visits, regions, read requests and
+requested bytes stay equal. Earlier synthetic acquisition-clear images restore
+Unknown when no independent presence is established; a fresh matching current
+descriptor supplies its own Available state. Current excluded creators, even
+with zero activation bits, cause atomic Retry. Failed/short/incoherent flags
+cannot publish stale clearance. No visited room is added.
+
+The source-only projection, kind1 component and independent renderer inspection
+remain frozen in `2026-11-12-gid213-joint-corpus-projection/`,
+`2026-11-12-kind1-dispatch-closure-research/` and
+`2026-11-12-render-record-bootstrap-audit/` under the private evidence root.
+Root's actual compiler/generation/replay checks are in
+`~/.cache/re-map/evidence/2026-11-12-native-identity-implementation/`.
+Its baseline-failing regression, complete generation comparison, independently
+rebuilt current item inventory, publication comparison and rejected test-harness
+assumptions remain retained. The README fixture reproduces byte-identically;
+UI implementation and image bytes do not change.
+
+Contribution, 2026-11-13: root, verified `gpt-6.1-sol`, effort `xhigh`, authors
+the independent native identity implementation, shared extraction, regressions,
+complete regeneration, retained replay and this record. The preceding November
+12 source/kind1/renderer investigations retain their separate authorship and
+unsealed limits. The human supplied the normal-engine trust decisions.
+An independent core reviewer, separately verified `gpt-6.1-sol`, effort `xhigh`,
+checks six stable core files, actual phase/role extraction equivalence, foreign
+field/return/callback/Copy boundaries and unchanged old domains. Its57 owned
+identity tests and63 source-only shared helper tests pass;5 owned helper cases
+are skipped and18 deselected in that separate selection. It reports no findings
+within that core scope. Generated catalogs and reader replay remain root's
+separate verification, with no new gameplay or external endorsement implied.
+
+Parent final verification, 2026-11-13: all 8,462 Python tests pass with the
+explicit owned CUE. The separate consumer reviewer, verified `gpt-6.1-sol`,
+effort `xhigh`, reports no findings after 384 focused tests, 14 raw catalog
+mutations, 8 applicability reversals, all 19 prior public query comparisons,
+the complete 125-source metadata comparison and all 21 replay/history
+publications. Its 342 reviewed source files remain byte-identical. This review
+does not include native restoration, gameplay or rendered UX/AX.
+
+The configured external snapshot review returns "No findings." T3 reports
+model `gemini-3.8-flash`, with requested `thinking_level=high`, through
+Antigravity; it supplies no separate executed-model attestation. The review
+checks only the supplied source/contracts/tests, with no tools or runtime
+validation. Configured Claude Opus 5.5 remains disabled and supplies no review.
+These perspectives do not confirm the Candidate gameplay claim. Root's final
+source/artifact manifest records the actual reviewed inputs, completed review
+responses, checks and retained limitations.

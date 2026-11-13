@@ -50,7 +50,6 @@ import struct
 from test_re2_initializer_control import switch
 from test_re2_startup_declarations import END, described
 
-from games.re2.door_entry import _task_fields, _TaskFields
 from games.re2.native_control import (
     TASK_WIDTH,
     ControlField,
@@ -58,6 +57,7 @@ from games.re2.native_control import (
     control_field,
     if_store_cell,
 )
+from games.re2.native_entry_fields import NativeTaskPhase, _task_fields, _TaskFields
 from games.re2.positive_entry_domain import (
     PositiveEntryFailure,
     _foreign_fields_disjoint,
@@ -227,7 +227,12 @@ def test_eventnext_preserves_task_and_rejects_positive_call_depth(depth):
     main = [bytes((0x18, i + 1)) + END for i in range(depth)]
     main += [b"\x03\0\x18" + bytes((depth + 1,)) + END, END]
     data, room, _ = described(END, tuple(main))
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     if depth:
         assert result is PositiveEntryFailure.Control
     else:
@@ -265,7 +270,12 @@ def test_every_callback_reset_and_unentered_producer_alternative_contributes(
     data, room, _ = described(
         END, ((b"\x18\x02" if entered else b"") + END, END, packet + END, END)
     )
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     assert type(result) is _TaskFields
     assert {task for key, task, depth in result.entries if key == "17:3"} == set(
         range(2, 10)
@@ -295,7 +305,12 @@ def test_every_callback_reset_and_unentered_producer_alternative_contributes(
         bytes(changed), "synthetic", PRESENCE_FLAGS, PRESENCE_COUNTERS, PRESENCE_WRITES
     )
     assert (
-        _task_fields(bytes(changed), altered["programs"], auxiliary=False)
+        _task_fields(
+            bytes(changed),
+            altered["programs"],
+            phase=NativeTaskPhase.Ordinary,
+            role=ControlFrames.NativeDoors,
+        )
         is PositiveEntryFailure.Control
     )
 
@@ -308,7 +323,12 @@ def test_receiver_break_overlap_uses_all_actual_tasks_and_depths(nesting):
     data, room, _ = described(
         END, (b"\x04\xff\x18\x02\x04\xff\x18\x03" + END, END, polling(), receiver + END)
     )
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     assert (type(result) is _TaskFields) is (nesting == 1)
     if nesting > 1:
         assert result is PositiveEntryFailure.ForeignConsumer
@@ -316,7 +336,12 @@ def test_receiver_break_overlap_uses_all_actual_tasks_and_depths(nesting):
 
 def test_no_producer_does_not_invent_an_entry_or_native_store():
     data, room, _ = described(END, (END, END, polling()))
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     assert type(result) is _TaskFields
     assert all(key != "17:2" for key, _, _ in result.entries)
     assert all(key != "17:2" for key, *_ in result.stores)
@@ -347,7 +372,12 @@ def test_overlapping_while_receiver_requires_an_uninterrupted_bound_predicate(at
     data, room, _ = described(
         END, (b"\x04\xff\x18\x02\x04\xff\x18\x03" + END, END, polling(), outer)
     )
-    result = _task_fields(data, room["programs"], auxiliary=False)
+    result = _task_fields(
+        data,
+        room["programs"],
+        phase=NativeTaskPhase.Ordinary,
+        role=ControlFrames.NativeDoors,
+    )
     assert (type(result) is _TaskFields) is atomic
     if not atomic:
         assert result is PositiveEntryFailure.ForeignConsumer
