@@ -1116,6 +1116,121 @@ remains disabled; the fresh Gemini 3.8 Flash high review fails to open its
 provider session. It supplies no external endorsement. Root retains those
 results beside the new reproduction wrappers and their hashes.
 
+### Follow-up: retained inputs do not establish an eligible recurring query
+
+Status: Candidate source/input contract for the same pinned SLUS-00923 revision
+and Hard target. No height call, support result, physical floor/room binding,
+tracker admission or visit is added. The six retained inputs below were created
+with DuckStation `0.1-12640-gbb4e9ac5e`; they are separate from the older MAP-013/014
+captures made with `0.1-12083-g00e299795`.
+
+The documented R100/lower-R101/upper-R101 evidence paths are absent on this
+machine. A bounded inventory finds none of their three recorded RAM hashes
+among 21 two-MiB files in four explicit retained November 12 research trees.
+It examines neither archive payloads nor original user saves/history. This is
+a current reproducibility gap, not a rejection of the original observations.
+Their selected-mask comparison remains unclosed without the original inputs.
+
+The changed scope binds six R10D captures to the complete 169-source corpus.
+Their entire 1,636-byte loaded collision/index section, 39 records including
+the header, equals owned source SHA256
+`00f7421777e57655c426e675d8bad52bd8b2d544ff6c27b48101df45f183525c`.
+The loaded RDT is `0x8011A708`, collision pointer `0x8011C78C`, source offset
+8324. This exact sample match supplies no universal mutable-flag guarantee.
+The ordered work list contains eight other actors before player work
+`0x800CCC44`, bound to owner `0x800CCBC4`, then a zero terminator. The verifier's
+list bound is diagnostic, not a newly established native allocation capacity.
+
+All addresses here are cached PS1 virtual addresses, with little-endian
+multibyte values. Category is u8 work `+2`, radius is u16 `+0x1A`, prepared XYZ
+are i32 `+8/+0x0C/+0x10`, and owner Y adjustment is i16 `+0x1B8`. All six have
+category zero, radius 450, adjustment zero and category-mask table value
+`0x8000` at `0x8009CBC8`. The original caller supplies mode 9.
+
+| Gate representation | Location | Width and mask |
+| --- | --- | --- |
+| Work flags | work `+0x2E`, `0x800CCC72` | u16, `0x0080` |
+| Aligned overlapping word | work `+0x2C`, `0x800CCC70` | u32, `0x00800000` |
+| Owner-relative alias | actor `+0xAE` | u16, `0x0080` |
+
+The recurring caller reads the flags at `0x80033C4C`, masks `0x0080` at
+`0x80033C54`, and branches over the height call when clear at `0x80033C58`.
+Its delay slot always clears work-byte `+0x39` mask `0x08`. The call at
+`0x80033C64` otherwise supplies mode 9, then passes the result to raw-floor
+publisher `0x8004B7E8`. All six retained player flags are `0x4000`, `0xC000`
+or zero, with `0x0080` clear. Entering this caller with those fields would skip
+the height query. These captures do not observe that branch executing or prove
+the fields' future values. One capture is paused and retains its existing
+native-audit pause rejection.
+
+The dispatcher prepares work and collision state before that caller. Its
+`0x06C0` and `0x00C0` preparation masks preserve the gate. Static pass
+`0x8004AF04` returns before recomputation when X/Z and radius equal their prior
+values. All six retained inputs satisfy that condition, but earlier preparation
+could change the inputs. Recalculation instead clears `0x00C0` at `0x8004AFF8`;
+admitted shape paths can set `0x0080`. R10D's one direct setter candidate,
+zero-based record 10, fails region and radius-expanded X filters in all six.
+Those filters are hypothetical and dominated by the unchanged-input return.
+The inspected halfword stores at work `+0x2C` preserve the gate; a word alias
+would not. The candidate store scan includes data and unrelated structures and
+does not establish global writer or actor/VM closure.
+
+The gate is not universal. Registration `0x80033580` calls helper `0x80034124`,
+which clears work flags and, for category below three, calls the same height
+producer at `0x8003425C` without a `0x0080` test. It stores the returned u16 to
+owner `+0x122`. This is an inspected source counterexample, not an observed
+registration, an invented entry state or an executed height call.
+
+The next recurring-query observation needs the original caller with its gate
+set, owner/work identity, prepared XYZ/radius/category/mode, freshly bound
+collision/index bytes and bounded runtime records/owners. No gate was forced
+and no synthetic direct call substituted for that missing observation. Default,
+static-selected and runtime-selected support, physical floors, contour ownership
+and tracker reveal remain separate unresolved contracts.
+
+Private evidence is under
+`~/.cache/re-map/evidence/2026-11-13-re3-support-input-contract/` and
+`~/.cache/re-map/evidence/2026-11-13-re3-support-gate-producer/`. Their
+`reproduction-argv.json` files declare every required image/catalog/capture,
+source-investigator metadata and provenance input. Run the explicit `inspection`,
+`inventory` and `argv` vectors with each `--out` replaced by a fresh absolute
+path. Original report SHA256 values are
+`4a6fe31e80b9518441a64a948daad6e84ef0187131b8ffa65ac7495813c1dabb`
+and `62dd56b0e618afc36e0a358b3c1096c56c44f35f05ba4d3d7059788bb23def8a`.
+The original research manifests bind all 56 preserved artifacts.
+
+Contribution, 2026-11-13: investigator `investigate_re3_support_join`, verified
+`gpt-6.1-sol`, effort `xhigh`, authors the source/input verifiers, bounded
+calculations and private handoffs. Root, separately verified as the same exact
+model and effort, inspects the original branch/delay-slot and registration
+instructions, reruns all three vectors in new private directories and writes
+this follow-up. The gate report and availability inventory reproduce
+byte-identically. The input report differs only in selected source-investigator
+author metadata after its later turn; all numeric/source/input fields agree.
+All 56 original artifact hashes remain unchanged. Root's comparisons are under
+`~/.cache/re-map/evidence/2026-11-13-re3-support-integration/`.
+No emulator, native restoration, GPU/UI,
+history, production predicate or runtime profile changes occur.
+
+Independent review, 2026-11-13: `review_re3_support_contract`, verified
+`gpt-6.1-sol`, effort `xhigh`, reports no findings in the source/evidence and
+documentation scope. It independently extracts all 169 owned sources, checks
+eight native windows and 22 instruction-word/control-flow facts, reconstructs
+the six work/input/alias contexts and all 256 R10D index cells, and checks
+fresh-output refusal and explicit failure receipts. Its three fresh reruns
+preserve all 56 original artifacts and 12 capture/receipt inputs. Exact review
+and limits are in
+`~/.cache/re-map/evidence/2026-11-13-re3-support-contract-independent-review-01a1d478/`.
+
+The configured external snapshot review returns "No findings." T3 reports
+`gemini-3.8-flash`, requested `thinking_level=high`, through Antigravity,
+without a separate executed-model attestation. It inspects the supplied
+verifiers, bounded native excerpts, numeric results and documentation, with no
+tools or execution. Configured Claude Opus 5.5 remains disabled and supplies
+no review. Candidate status and all missing runtime/ownership contracts remain
+unchanged. Root's final manifest retains the reviewed source/artifact hashes,
+review responses, reproduction commands, local link checks and limitations.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
