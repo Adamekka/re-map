@@ -2,7 +2,7 @@
 
 [RE3 scope](../../re3.md) · [Disc identity](identity.md) · [Room sources](room-format.md) · [Runtime baseline](runtime.md)
 
-Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard remains the human-selected target. Claims 001 through 003 and 005 are Candidate contracts. Claim 004 adds confirmed observations of specific menu/pause boundaries. The audit reads the owned executable/disc and retained RAM; it does not operate an emulator. The retained captures came from DuckStation `0.1-12083-g00e299795`, as recorded in RE3-RUNTIME-001.
+Target: Resident Evil 3: Nemesis, PlayStation, USA, SLUS-00923, executable `SLUS_009.23`, SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Hard remains the human-selected target. Claims 001 through 003, 005 and 006 are Candidate contracts. Claim 004 adds confirmed observations of specific menu/pause boundaries. The audit reads the owned executable/disc and retained RAM; it does not operate an emulator. Claims 001 through 005 use captures from DuckStation `0.1-12083-g00e299795`, as recorded in RE3-RUNTIME-001. Claim 006 records a separate native episode on `0.1-12640-gbb4e9ac5e`.
 
 The immediate tracking failure is admission: plausible player fields already appear without controller input. A tracker needs fresh room/source agreement and an independently established campaign lifecycle before it can record visits. This audit supplies source witnesses and rejection evidence, while always reporting `campaign_admission` and `hard_identity` as `unresolved`.
 
@@ -184,6 +184,85 @@ Experiment evidence is under `/var/folders/9d/q5n746z953bcs654g_1sqcy80000gn/T/r
 | Parent `verify-native-checkpoints.py` | 2398 | `41749ea88be50d83279200b3095f30a6f35dd4e8884351e27157bab0898038af` |
 | Parent `native-checkpoints.json` | 666 | `34915b9f3ddef3f9489c8911d50bf4f4ac1c77039eef88ec997f7abc65193d60` |
 
+## RE3-NATIVE-006: a restored seed reaches source-bound world and native exit
+
+Status: Candidate lifecycle contract for the named revision. One bounded native episode supplies exact checkpoint/RAM comparisons and an observed original writer/consumer chain. It does not establish a general campaign-admission rule.
+
+The gap was a completed post-Hard/pre-world seed without a completed source-bound checkpoint, plus an earlier exit-request interval whose writer was unobserved. On 2026-11-12 UTC, one stock restoration let the original engine initialize R10D, clear its movement-input filter and later execute the current-value outcome/exit path. No game buttons were delivered. This episode adds no deliberate turning or translation observation; the earlier [Hard controls](hard-start.md#re3-input-002-native-hard-selection-and-control-in-two-rooms) and [filter-clear evidence](hard-start.md#re3-input-007-original-code-clears-the-startup-input-filter) retain their own provenance.
+
+The actual log identifies DuckStation `0.1-12640-gbb4e9ac5e`, source commit `bb4e9ac5e6b3872126dc76f1fe4f46169c96b082`, native state version 94. Installed and private binary SHA256 is `ddceaaa426e67e328430fcb916320803fddc014374ea45a00778e58081f36dcb`. PID 4556 first booted BIOS with private argv `-nofullscreen -bios`; its settings and port 2401 ownership were checked before loading the exact private seed. Both Achievements/Cheevos namespaces disabled Enabled, ChallengeMode and UseRAIntegration. Cards were `None`, game overrides disabled, credentials absent, gameplay hidden and audio muted. No patches, guest-memory/register writes or user-save/history access occurred. Private settings later gained only four UI window-geometry keys; every prelaunch setting remained intact.
+
+### Checkpoint creation and exact restoration boundary
+
+The stock seed was `hard-startup-current/state.sav` from the frozen fresh-admission episode. Save SHA256 `9fd59cebaa32a0c007663d4437a481d067f83fac2863be760515d3366e93cc56` and serialized RAM SHA256 `9d880e76f431a6bd946785c602b65f2f0b17fd6760ac94de3a2196229289ca0a` match the one restored full 2 MiB stopped capture exactly. Its source/allocation pointers and actor fields were zero. It was a post-Hard/pre-world seed, not an already source-bound R10D state.
+
+| New private native checkpoint | Save SHA256 | Serialized/direct RAM SHA256 | Stopped observation |
+| --- | --- | --- | --- |
+| `checkpoints/first-source-bound-filtered/state.sav` | `28e059a0202e8fbed456d6c3abd6991dc36a026b727764fa3aaded25bf27ce23` | `64edcde7f57c8ee4b7e9050d02a4279105c2f1ba3a8c1aed0648fcebf8e327a3` | R10D; current/ceiling 200/200; control `0x01000000`; NonGameplay |
+| `checkpoints/source-bound-unfiltered/state.sav` | `4ac6a3ef7c8b60d6f477c793864e336bee9209ab41cf08f53c61421407c4d543` | `b537be7a6424dacee13fb29dc47f0b59f6f438cbc1ac4a74700a6cfdfd8491f3` | R10D; current/ceiling 200/200; control zero; Display |
+
+Both new files completed, identify serial `SLUS-00923` and version 94, and decode both declared zstd frames with matching screenshot dimensions and payload lengths. Full serialized RAM at payload offset 6755 equals the corresponding coherent direct capture. Neither new checkpoint was restored. These checks establish creation/completion and exact RAM equality, not complete serialized-device equality, future restoration behavior or memory-card persistence.
+
+### Field meanings and original execution
+
+All addresses here are PS1 cached KSEG0 virtual addresses. Subtract `0x80000000` for main-RAM capture offsets. Data is little endian; u8 has no byte-order distinction. Code locations contain 32-bit LE MIPS instructions. PC and A0/A1/A2/V0/V1/RA below are 32-bit CPU registers, not RAM offsets or host-process addresses.
+
+| Field | PS1 virtual address | Width and mask |
+| --- | --- | --- |
+| Actor base | `0x800CCBC4` | Object address, not a stored scalar |
+| Current value, actor `+0xCC` | `0x800CCC90` | u16 storage, full `0xFFFF`; outcome code sign-extends to signed16 |
+| Separate ceiling, actor `+0xCE` | `0x800CCC92` | u16 storage, full `0xFFFF`; cap code consumes signed16 |
+| Lifecycle | `0x800CC858` | u32, full `0xFFFFFFFF`; world publish `0x08000000`, exit request `0x00020000`, consumer adds `0x00000040` |
+| Native input control | `0x800CCBA0` | u32, full `0xFFFFFFFF`; movement filter `0x01000000` |
+| Script task cursor | `0x800DEFEC` | u32 pointer, full `0xFFFFFFFF` |
+| Primary/secondary routine | `0x800CCBC8` / `0x800CCBC9` | u8 each, full `0xFF` |
+| Consumer task/interface guards | `0x800DCC14` / `0x800D442E` | u16 / u8, full `0xFFFF` / `0xFF` |
+| Consumer camera equality | `0x800D1F7A` / `0x800CCBBE` | i16 / u8, full `0xFFFF` / `0xFF` |
+| Task-selector entry 3 | `0x8009C968` | Three u32 words, full `0xFFFFFFFF` each: file index, code entry, load-base pointer |
+
+The frozen runtime report's `health_u16` label at `0x800CCC92` refers to the ceiling. It must not be read as the changing current value. Original code reads/subtracts/stores actor `+0xCC` at `0x8003DD98..0x8003DDAC`; the add/cap path at `0x8003DE64..0x8003DE98` uses `+0xCE` separately.
+
+| Epoch | Original stopped execution and observed result |
+| --- | --- |
+| 8 / 9 | Before world publication at `0x80024884`, lifecycle is `0x20001000` and V0 is `0x28001000`. The next source-bound normal-handler capture at `0x80039020` has R10D and the filter set. |
+| 11 | The control-word write watchpoint stops at return PC `0x80052C70` with control zero. Original SET store `0x800547BC` consumed `4D 02 07 00` at RDT offset 14334, virtual `0x8011DF06`; task cursor is `0x8011DF0A`. The reader reports Display. |
+| 12 / 13 | Before `sh A0,0xCC(A2)` at `0x8003DDAC`, current/ceiling is 200/200, A0 is 170, A1 zero, A2 `0x800CCBC4`, RA `0x80104DC4`. The callback return at that RA has 170/200 and V0 zero. This brackets the actual 200 to 170 subtraction/store. |
+| 14 | Bounded read only: current/ceiling 20/200, primary/secondary 1/13 and reader Display. There is no full-RAM capture or full offline audit for this epoch. |
+| 15 | Before exit-request store `0x8003DE4C`, current storage is `0xFFE2`, signed16 -30, and ceiling remains 200. A0 `0x800CA738`, A1 `0x00020000` and V1 `0x2C021000` identify the original store changing lifecycle `0x2C001000` to `0x2C021000`. Reader Retry. |
+| 16 / 17 / 18 | Consumer `0x80024028` observes lifecycle `0x28021000`, task guard zero, interface guard zero and equal cameras. Selector `0x80031F50` receives A0 1/A1 3, RA `0x80024030`. Entry 3 identifies file 0, code `0x80194010`, load-base pointer `0x8001031C`. The next source-verified stop executes owned DIEDEMO at `0x80194010`, with request clear and lifecycle `0x28001040`. Reader Retry. |
+| 19 / 20 / 21 | Selector A0 0/A1 0 chooses TITLE. The full epoch-20 capture and bounded epoch-21 read have the owned TITLE prefix, inactive world and zero actor fields while stale R10D bytes remain. Reader NonGameplay. No route or confirmation input caused this return. |
+
+Lifecycle changed another bit between epochs 15 and 16; only the request mask is followed across that interval. Epoch 19's raw-input word `0xFFFFFFFF` is retained as observed. Its reset writer was not traced, and it is not evidence of delivered input. The earlier frozen epoch-43 request writer remains unclassified. This new episode does not retroactively identify it.
+
+Owned-source binding compares the complete 51757-byte R10D.BIN object 3 at `0x80100000`, SHA256 `d8d1eba90103848621db9d62812eb03be6fbcd24c4a802fe88d51f684dcc7e7e`, at the subtraction and exit-writer captures. The callback return lies within that exact image. Source inspection is pinned to the owned executable identity above and the frozen `2026-11-12-re3-controller-mux-static/verified-final/` disassemblies `current-value-and-ceiling.asm`, `exit-request-consumer.asm`, `task-select.asm` and `DIEDEMO-entry.asm`. The replay also compares live code spans `[0x8003DD7C,0x8003DEA4)`, `[0x80023FA0,0x80024048)`, `[0x80031F50,0x80031FC0)` and `[0x8005472C,0x800547C0)` against that executable, plus the four revision windows. DIEDEMO SHA256 is `8d7c655d51fcc6c8f35024a7b0192215d897e4b3ab23f20b237cd1cdf7eb62d1`; TITLE SHA256 remains the value in RE3-NATIVE-002. Overlay identity is checked before interpreting reused virtual addresses.
+
+### Offline reproduction, cleanup and limits
+
+Frozen evidence root is `/Users/adamekka/.cache/re-map/evidence/2026-11-12-re3-seed-world-followup/`. Its `handoff.md`, `controller.jsonl`, checkpoint receipts, source/model records and manifest retain the exact inputs and observations. On 2026-11-13, offline verification rehashed all 334 entries and all 516 earlier entries across `2026-11-12-re3-fresh-admission-runtime`, `2026-11-12-re3-controller-mux-static` and `2026-11-12-re3-native-exit-attract`, before and after verification. Ten original application/settings/BIOS/media resources also remained unchanged. No emulator operation was performed for this documentation audit.
+
+The unchanged 169-source binder, reader and native audit reproduce all nine coherent full captures exactly: one Display, four Retry, four NonGameplay. Dependency hashes agree with the frozen runtime. `campaign_admission` and `hard_identity` stay unresolved. Bounded epoch 14 adds no tenth full capture. The recorded-input producer did not hit within the bound, so this is no fresh recorded-negative matrix. No production predicate/profile, ownership, physical-floor, item, door or clearance contract follows. Generic SET1:63/0:23 aliases remain synthetic writer-closure obligations, not observed original-script counterexamples.
+
+Run only the offline follow-up verifier into a new private output directory, with `PYTHONDONTWRITEBYTECODE=1`. Supply explicit `--evidence` as the follow-up root, `--frozen` as the fresh-admission root, `--static` as the controller-mux root, `--checkout` as this checkout, `--image` as the owned RE3 BIN, and `--output` as a nonexistent path. Never replay the retained launch/controller/preparation scripts to reproduce this offline check. The November 13 output is `/Users/adamekka/.cache/re-map/evidence/2026-11-13-re3-native-doc-integration/audit/followup/verification.json`, byte-identical to the frozen report.
+
+Cleanup records wrapper exit 0 after 1165.1356 seconds, below the 1200-second watchdog, debugger-client exit 0, removed callbacks/watchpoints, PID 4556 absent and port 2401 bindable. The first cleanup attempt had already terminated the owned process and freed the port when it failed on missing optional preparation metadata. Preserve `cleanup-initial-failure.json`: `preflight.json`, `original-resources-before.json` and `binary-version.txt` were absent in the new episode folder. They were not later created to repair the record. Retained prelaunch settings, the actual pre-load PID receipt, live version log and previously verified frozen baselines provide the available configuration/resource evidence.
+
+Despite its docstring, frozen `verify_cleanup.py` rewrites `prepare-used.py` and `cleanup-final.json` in its evidence directory. It requires an adapted copy with explicit fresh outputs, not direct rerunning. The November 13 copy adds required `--output` and redirects only those two writes; `cleanup-adaptation.diff` records the change. Its output reproduces the frozen cleanup report exactly and all four manifests still rehash unchanged. The new audit also preserves two corrected local verifier assumptions in `audit-attempts.json`: ARD and BIN require their own container offsets, and private settings acquired UI geometry. Neither changed the captured episode. Guest observations end at epoch 21, `2026-11-12T19:26:28.508362Z`; no guest read covers debugger disconnect through SIGTERM.
+
+| Evidence | SHA256 |
+| --- | --- |
+| Frozen `handoff.md` | `e230e2a18bcbbedc0a32222d949fbf26afa48063b6b1fbadb0ecc40e492dd518` |
+| Frozen `artifact-manifest.json` | `7714d52dadf15ee751fedbbc6474417f48fc1e6356e4802128e3d01fc9aad730` |
+| Frozen `verify_followup.py` | `37521e3ebeb3144a69b0eb18890301ada6041f549f9bfec8f6b2c852823ac6e2` |
+| Frozen and reproduced `verification.json` | `0d4c6290f7117b7c6eb5bc4ba06886fb964149763d3d7f643ee8455d408199ce` |
+| Frozen and reproduced `cleanup-final.json` | `cfdf08dc3a2b02a56705e594e8110daf5433629ab484e2e813a761e0eedb2e37` |
+| Audit `audit-before.json`, including exact runtime/audit model metadata | `707d3c72f3a7a8f35e34628d8b75d73a92b1c693d8cc389743192f957cef85e8` |
+| Audit `independent-verification.json` | `a24242fc6c3e369935b80f9819bad1e068cc2268df833cc792d97c6f9ae58a13` |
+| Audit `verify_independently.py` | `bdb60c64559667b0d445eafb58c6158ff0f7c308901c9b59d5540b33dddf684b` |
+| Audit `verify_cleanup_fresh_outputs.py` | `3aaaf39ca08e4adb18b7ea880720ba46f1358be48efa4cb2947fafbc7a1bc167` |
+| Audit `cleanup-adaptation.diff` | `ee644a106c9a951c7719449ac9229c5aedc6245142e92ec30d94f218ab5f7eaf` |
+
+Audit paths are under `/Users/adamekka/.cache/re-map/evidence/2026-11-13-re3-native-doc-integration/audit/`. Raw RAM, native saves, screenshots, BIOS and disc bytes remain private outside Git. The original temporary audit was archived byte-for-byte at this durable path. Run relative-output audit helpers only from a fresh copied directory; hashes do not replace retained inputs. This is same-provider evidence verification, with no external endorsement or new runtime validation on November 13.
+
 ## Reproduction and verification
 
 The [audit tool](../../../tools/re3_native_contracts.py) requires an owned BIN, an extracted executable and one or more explicit 2 MiB capture paths. It verifies the complete executable fingerprint and the four baseline runtime code windows, catalogs the supplied disc with the same required fingerprint, rereads and hashes each ARD, checks all native source-table rows, then audits the captures. It outputs numeric metadata and hashes only. An input failure returns 1 with a diagnostic and no partial JSON. Rejection evidence is a successful audit result, not a supported gameplay state.
@@ -223,3 +302,7 @@ The later [Hard control experiment](hard-start.md#re3-input-002-native-hard-sele
 - 2026-11-06 UTC; Codex root, exact runtime model `gpt-6.1-sol`; authored the additional offline rejection, three diagnostics, nine synthetic cases and RE3-NATIVE-005. Reproduced the missing reason before the fix, checked filter/dispatcher source, verified all manifest files and eleven revised audits against all owned sources, decoded both key native checkpoints and rechecked process/port cleanup. This integration performed no new emulator operation or user-history change.
 - 2026-11-06 UTC; independent internal reviewer, `gpt-6.1-sol` verified from its matching session metadata and latest turn context; audited the native evidence and reviewed the new code, nine tests and RE3-NATIVE-005. Independently checked nine native states, eleven captures' critical code, both full-RAM restores, all 67 manifest files, private settings, cleanup and unchanged earlier audit fields. All 59 native-contract tests passed. Review corrected an overstated live-register attribution: A0/RA come from native payloads, while live PC and full RAM agree. Field masks, independent reasons, surviving inputs, failure provenance and unresolved positive admission were checked; no edits or emulator operation occurred.
 - 2026-11-06 UTC; external snapshot reviewer, `gemini-3.8-flash` at high reasoning through Antigravity; returned no findings on the new diagnostics/rejection, synthetic fixtures, inherited capture/source checks and RE3-NATIVE-005. Review covered masks/widths, gated reads, independent causes, errors, rewind, input preservation, test risks, scope/reuse and evidence/admission limits. It ran no tests, native execution or gameplay experiments. Claude Opus 5.5 remained disabled in the provider inventory and supplied no review.
+- 2026-11-12 UTC; native investigator, exact executing model `gpt-6.1-sol`, effort `xhigh`, verified from session `01a1d067-4a20-7472-8442-415e931be0e5` and its final turn context; performed the single seed restore, original no-input world/exit episode, checkpoint creation, offline replay and private cleanup recorded in RE3-NATIVE-006. Authored the frozen handoff, not this later project-document section. Earlier research authorship and human Hard selection remain unchanged.
+- 2026-11-13 UTC; same-provider documentation auditor, exact executing model `gpt-6.1-sol`, effort `xhigh`, verified from session `01a1d417-fd61-7350-90e2-a577efd1b262` and its turn context; authored RE3-NATIVE-006 and qualified the header's emulator scope. Reproduced the nine-capture/169-source report byte-for-byte, independently decoded the seed and two new checkpoints, checked exact RAM and source-packet/code identity, rehashed 334 new plus 516 prior manifest entries before/after, and verified ten original resources and process/port cleanup through an output-redirected verifier. Review covered field signs/widths/masks, bounded/full-capture distinctions, prior-writer uncertainty, missing preparation metadata, mutating-verifier behavior and admission/restoration limits. Model-source paths and selected metadata are retained in `audit-before.json`; no emulator operation, external review or production-code change occurred.
+
+- 2026-11-13 UTC; Codex root, verified `gpt-6.1-sol`, effort `xhigh`; checked the final record against the frozen native handoff and independent audit outputs, preserved the native-versus-offline limits, and archived every independent audit file byte-identically outside the temporary directory. Added the research index entry. This contribution performs no new emulator operation or native-state validation.
