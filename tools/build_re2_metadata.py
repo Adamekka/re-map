@@ -1092,7 +1092,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
                     else []
                 ),
                 *(
-                    ["RE2-SCENARIO-009", "RE2-SCENARIO-010"]
+                    ["RE2-SCENARIO-009", "RE2-SCENARIO-010", "RE2-SCENARIO-011"]
                     if identity_policy is IdentityFilteringPolicy.TrustedNormalEngine
                     else []
                 ),

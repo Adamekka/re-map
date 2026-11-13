@@ -88,6 +88,7 @@ def test_complete_owned_factory_and_query_consequences(owned):
         "01-0c",
         "01-0f",
         "01-13",
+        "01-19",
         "01-1b",
         "02-00",
         "02-02",
@@ -110,6 +111,7 @@ def test_complete_owned_factory_and_query_consequences(owned):
         "01-03": ((36,), ()),
         "01-0c": ((), ((207, (7534,)),)),
         "01-13": ((24,), ()),
+        "01-19": ((), ((117, (2762,)),)),
         "03-08": ((), ((185, (10558,)),)),
     }
     supported, queries = set(), {}

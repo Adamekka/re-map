@@ -697,3 +697,222 @@ validation. Configured Claude Opus 5.5 remains disabled and supplies no review.
 These perspectives do not confirm the Candidate gameplay claim. Root's final
 source/artifact manifest records the actual reviewed inputs, completed review
 responses, checks and retained limitations.
+
+## RE2-SCENARIO-011: qualified native effects refine another acquired identity
+
+Status: Candidate under the human-approved normal initialized, unmodified
+engine premise for identity filtering. Target is Resident Evil 2 Dual Shock
+Ver., USA, Leon Disc 1, SLUS-00748, Leon A, Original Game, Normal. Executable
+`SLUS_007.48` is 987136 bytes, SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+Work starts from verified clean parent
+`4da19a6c4393491841481fd7ada13d437bbf8863`. This increment grants identity
+filtering only. Separate approvals for presence and doors do not supply input
+capabilities to this compiler. Ordinary initialized actor, render and audio
+ownership is an explicit premise; no live Work, actor, render pointer, task
+state or busy flag is sampled or initialized to make the analysis succeed.
+
+This is owned-source inspection, copied-handler execution and retained-RAM
+reader reconstruction. No emulator, game input, user save, original history or
+original lock is accessed. Historical DuckStation `0.1-12083-g00e299795` and the
+retained version-94 RAM extraction provenance are inherited evidence, with no
+newly tested emulator or native restore. VisitHistory operates only on new
+further copies of the explicitly authorized private history, SHA256
+`956fcfa522f0af958b92b3308f1926d6082afa497d5f749f35f47c3e49c6ee05`.
+
+### Failure, native contracts and correction
+
+The actual baseline public factory supports30 of125 bound sources. For source
+`01-19`, SHA256
+`8a43ce177e8f0bcc7b48bd55ee7f70d3c7010405958d614fc94c8845c5f5e3ba`,
+it returns `IdentityFilteringFailure.Control` at the Copy operand gate and
+provides no query input. The raw alternatives remain GID117 creator2762,
+type20/amount15, and creator2826, type70/amount1, both slot4. Earlier numeric60
+and mode0music59 premises alone still failed. Adjacent wait-pair handling,
+scalar5F and the actual native60 source effect are all required together.
+The retained unsealed component reports are leads, not compiled evidence.
+
+All addresses below are PS1 virtual addresses. Source positions are RDT byte
+offsets, not virtual or host addresses. Multibyte integers are little endian;
+byte, halfword and word masks are `0xFF`, `0xFFFF` and `0xFFFFFFFF`.
+
+- Opcode0B dispatch entry `0x800A74F4` selects `0x80053A8C`,52 bytes, SHA256
+  `10d0b52e7147b6ba6ff60473a9ff48f947ad8e452a9e1a85105234c1495864bf`.
+  It reads signed s8 call depth at task+2 and increments the u8 LoopLevel at
+  task+8+depth, advances own u32 PC at task+`0x1C` by1 and returns1.
+- Opcode0C entry `0x800A74F8` selects `0x80053AC0`,92 bytes, SHA256
+  `f0076ab27ba6e1764e9192c09b0f2b75ab83a142469c68a527de0fd8b93d6cbf`.
+  It tests u32 `0x800CFBD8`, mask`0x20`, then u8 `0x800E873C`, mask`0x80`.
+  Either busy flag retains PC and LoopLevel. Both clear advance PC by1 and
+  decrement LoopLevel. Both paths return2. Neither flag is assumed clear.
+- The already bound scheduler `0x800536C4`,264 bytes, SHA256
+  `2d6e34c985401d66077e1c1e6fde4f6555179852fcd2462d75b42c2f7456e298`,
+  immediately dispatches again after1 and yields to the next task after2.
+  The existing installer/Gosub windows establish LoopLevel255 with actual
+  byte stores. They establish the sentinel, not an invented default. Native
+  task base is `0x800D7860`, stride`0x174`, with proven call depths0..3.
+- Mode0 opcode59 is the existing ordinary music ownership class, restricted
+  to its four-byte packet and even source offset. Handler `0x80058028`,104
+  bytes, SHA256
+  `ef35697aa80134ab0d9aa64022b1803453990566262f493f6e1af9d085d57623`,
+  dispatches through `0x800A762C`. Its helper `0x800129B4`,632 bytes, and
+  18-byte lookup at `0x80010818` have SHA256
+  `481d7ff44a25ed5260ad54c33c39e28afd2362c8902c06e5e4f2aa43cf3452be` and
+  `141ff707efcc9e45e140231058d8c47c78c64d1d0c4a3841773aa5ea453d2148`.
+  This audio
+  path is not claimed to be a nonyielding leaf. Other modes and Copy to its
+  packet retain their rejection paths.
+- Opcode5F entry `0x800A7644` selects the complete60-byte leaf `0x80058090`,
+  SHA256 `5313e0a90bfee5312fca4ae573e8d95ef1c1ad15bf8b71184f4515f92da0ded8`.
+  Exactly two source bytes and scalar0..127 permit a u32 store to fixed
+  `0x800D5B50`; PC advances2, return1, no callee or dynamic destination.
+  Native128..255 no-store cases remain unsupported. No5F Copy right is added.
+- Opcode60 entry `0x800A7648` selects `0x80058898`,316 bytes, exclusive end
+  `0x800589D4`, SHA256
+  `0b130175d971818fd3e4d6cdf9283558d597055611e657579c3ec4b3b112c638`.
+  Its sole callee `0x80016FE4`,40 bytes, SHA256
+  `e1b2f550450d80602c4d0241d28957baa7858601a9f7084497291c8d580e70d2`,
+  has no callees. Both close through the existing native nonyielding graph.
+
+The wait role requires adjacent one-byte0B/0C in one program, including dormant
+procedures. No root, branch, Goto or return continuation may enter0C except
+its preceding0B or its pending self edge. The shared structured walk retains
+both0C outcomes and caller IF/call/loop state, but never an escaped-IF fresh
+CK token. Four logical loop frames are valid; transient level4 indexes no
+fifth frame and restores3 before another source command. Empty stacks wrap
+255 to0 and back. The existing task/depth producer walk attaches actual
+LoopLevel accesses; installer/replacement, Copy, call-depth, Break, WHILE and
+foreign-consumer checks remain mandatory. Native arithmetic separately shows
+that the bounded foreign IF cells are disjoint from receiving LoopLevel
+bytes; no fabricated overlap receipt is used as evidence.
+
+Native60's identity domain is exactly14 bytes, category3 and unsigned actor
+index below32. The native signed byte multiplied by4 addresses the u32 actor
+pointer table `0x800CFE1C` through index31 at `0x800CFE98`. It reads the
+native-owned u32 render pointer at actor+`0x16C`, independently of task Work.
+Categories0/1/2/4/default and negative/high indices remain unsupported;
+default categories can leave a stale destination. The table's executable
+image fingerprint does not assert any live/default actor-pointer value.
+
+Four u16 stores write record+4/+6/+0/+2 from packet+6/+8/+10/+12. The callee
+reads/writes u32 RGB words at record+`0x1C`/+`0x44`, preserving high command
+byte mask`0xFF000000` and replacing low24 bits, mask`0x00FFFFFF`, from packet
+bytes3..5 in that order. Owned extent is`0x48`. Remaining writes are own
+PC+14 and saved S0/S1/RA in the32-byte ABI stack frame, return1. There are no
+source, AOT, acquisition, fixed-flag, task-activation or control-frame writes.
+No actor/AI/heap/VM/GPU theorem is required or claimed beyond the approved
+ordinary ownership premise.
+
+LHU/SH alignment is checked against the required word-aligned live RDT base
+and exact even source offsets. Target native60 starts at5318; its numeric
+operands5324/5326/5328/5330 are even. Only the four separate two-byte cells
+inside packet+6..14 receive numeric Copy permission. Opcode/category/index,
+RGB and crossing or odd halfword writes remain protected. The initial broad
+eight-byte range failed three odd-halfword controls; splitting it into four
+cells corrected that unsafe synthetic domain without changing an owned
+query. An initial branch-control fixture also used an out-of-procedure IF
+target; the corrected relative offset reaches the intended0C rejection.
+A generalized reader test initially retained one old room literal; correcting
+the fixture makes all four target applicability mismatches execute.
+
+The complete census finds314 pairs in31 sources,13 scalar5F commands in eight
+sources and20 native60 commands in six sources, all category3/index0..5,
+width14 and even offsets. Only `01-19` and `05-04` have numeric60 Copy overlap;
+none overlaps a selector or RGB. All54 auxiliaries have none of these new
+effects and preserve exactly their prior typed facts. Shared native task
+support stays89/125, with new receiving LoopLevel facts in16 sources. The
+unproduced pair in `05-10` changes its neutral frame graph but supplies no
+native receiving-field fact. The original `00-19` source-writer failure and
+every other unsupported source remain failures.
+
+### Actual factory, generation and reader consequences
+
+The public compiler independently recomputes the complete native/resource,
+source/ingress, context, auxiliary, frame, writer, registration and callback
+inputs before its own identity seal. No door receipt, private diagnostic,
+source rewriting, second control interpreter or old-policy fallback is used.
+The query algorithm and full creator/Reset/descriptor protections are unchanged.
+
+Actual public support becomes31/125, adding only `01-19`. All30 previous raw
+queries are equal, including empty queries. The sole new result is GID117
+creator2762 with no absence fact. `05-04` still fails source scope after its
+Copy gate closes; `06-01` still fails registration after its effect gate closes.
+These later failure gates also match the retained coherent projection.
+
+The new audit is `slus00748-trusted-normal-identity-filtering-v3`. All independent
+policies bind the complete semantic profile SHA256
+`d5937ab613d34cf6e25b1accc533ecf219a4ba0f041576e6ec5371567127f145`.
+The whole69-resource/125-source/54-auxiliary binder remains
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+Actual complete owned generation supplies raw identity catalog pin
+`264a9239136db1aaa8ab12c941b3a2e99d263c8f57e7fba8dadd6f299619f016`
+and door catalog pin
+`982775c26740114c9670ab49da17833d9e0bb2ff0a4974a2c541c47511d7d2ef`.
+Door auditv4/entryv3 and all151 facts,161 creators,12 exclusions and128
+unsupported rows remain unchanged. Complete profile fields and raw alternatives
+remain protected. Only required identity/audit/research literals and the
+independent door catalogs' complete-profile binding may change elsewhere.
+
+The retained15 publications keep current-only, observed two-source and
+simulated125-source visits separate. Six additional publications reconstruct
+the authorized68-source/71-region history. Every outside-target field and all21
+complete ordered read plans agree with the exact parent. For the read-plan
+baseline, an import loader executes unchanged immutable Git source bytes
+without creating a checkout, transforming source or bypassing the public
+profile/catalog loader. Its21 full Tracker values match the parent's retained
+actual publications before any read-plan comparison.
+
+GID117 was already Taken. Its existing row now reads Handgun ammo, quantity15,
+and the room becomes Cleared. The actual history changes from47 Cleared,
+15 Incomplete,6 Unknown to48 Cleared,15 Incomplete,5 Unknown. All4 Unknown item
+rows remain; doors stay98 Open,82 Unchecked,1 Blocked across34 incomplete-door
+sources. Item-state counts, acquisition, pose, visits, regions and reveal stay
+equal. This is identity-based reconstruction from prior data, not an independent
+presence or quantity proof. Synthetic earlier acquisition-clear images return
+Unknown without positive presence; a fresh matching selected descriptor
+supplies Available independently. Current excluded creators, including zero
+activation bits, reject publication atomically. Flag/mode/source mismatches
+and failed/short/incoherent reads retain fresh-state checks.
+
+Private evidence and reproducible explicit-input scripts are under
+`~/.cache/re-map/evidence/2026-11-13-qualified-native-identity-implementation/`.
+They retain the original baseline, full125 results, exact native/resource/source
+pins, complete generation comparisons, fresh inventory joins, publication/read
+plans, initial failures/corrections, commands and changed-file hashes. See
+[testing notes](../../testing/re2.md#qualified-native-identity-effects-validation)
+for final check results and reproduction. The original observed two-source
+README fixture and screenshot remain byte-identical. No synthetic visit enters
+the README. UI and floor geometry do not change, so browser checks are not
+applicable to this increment.
+
+Contribution, 2026-11-13: implementation sub-agent, verified executing model
+`gpt-6.1-sol`, effort`xhigh`, authors the production changes, local source
+review, regressions, owned generation, retained reader experiments and this
+record. Matching local session_meta/turn_context identify session
+`01a1d490-f204-7b42-824c-58d90d46ba82` in the prepared checkout. Prior component
+research retains its separate authorship and unsealed status. The human
+supplied the trust decisions. Parent independent and configured external final
+reviews remain pending; no endorsement or gameplay confirmation is attributed
+to this implementation pass. Native pickup/restore, memory-card persistence,
+other revisions/scenarios and remaining item/door gaps remain unverified.
+
+Final integration, 2026-11-13: root, verified `gpt-6.1-sol`, effort `xhigh`,
+integrates the exact reviewed implementation and reproduces all 21 publications
+and ordered read plans from the main checkout. All 19 request files match the
+reviewed child byte-for-byte before this contribution; 51 imported source modules
+are checked against main. The fresh inventory/history join and README publication
+also agree. The implementation's run of 8,766 tests and two complete generations
+apply to these identical production, test, profile and catalog bytes.
+
+Independent core and consumer reviews, both task-verified `gpt-6.1-sol` at
+`xhigh`, report no findings. The core review checks 240 focused cases, native
+handlers, all 125 source-writer outcomes, producer/receiver fields and all 54
+auxiliaries. The consumer review checks 98 focused cases, 48 startup rejection
+probes, every room field and all 21 publications/read plans against the exact
+parent. Neither claims new gameplay or rendered UI validation. The configured
+external snapshot review returns "No findings." T3 reports
+`gemini-3.8-flash`, requested `thinking_level=high`, through Antigravity, without
+a separate executed-model attestation. Claude Opus 5.5 remains disabled and
+supplies no review. Root evidence and exact review references are under
+`~/.cache/re-map/evidence/2026-11-13-native117-root-integration/` and
+`~/.cache/re-map/evidence/2026-11-13-native117-external-review/`.

@@ -1,4 +1,4 @@
-"""RE2-SCENARIO-010: source-bound native identity filtering only."""
+"""RE2-SCENARIO-010/011: source-bound native identity filtering only."""
 
 from __future__ import annotations
 
@@ -55,12 +55,12 @@ from games.re2.startup_declarations import (
 )
 from games.re2.structured_control import ControlFrames
 
-IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v2"
+IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v3"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "f4cff5958d262fa79a36a8fb33ea800427b15d80c75cf4c4d0cf0b4803577c3c"
+    "d5937ab613d34cf6e25b1accc533ecf219a4ba0f041576e6ec5371567127f145"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
-    "70387e94440aef491be72b765f1d55cc87977dd653d5981b70bdcab2dc122407"
+    "264a9239136db1aaa8ab12c941b3a2e99d263c8f57e7fba8dadd6f299619f016"
 )
 HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
@@ -337,6 +337,53 @@ _NATIVE_WINDOWS = (
 # capabilities or a general renderer/heap/DMA safety theorem.
 _NATIVE_IDENTITY_WINDOWS = (
     (
+        0x80053A8C,
+        52,
+        "10d0b52e7147b6ba6ff60473a9ff48f947ad8e452a9e1a85105234c1495864bf",
+    ),
+    (
+        0x80053AC0,
+        92,
+        "f0076ab27ba6e1764e9192c09b0f2b75ab83a142469c68a527de0fd8b93d6cbf",
+    ),
+    (
+        0x80058028,
+        104,
+        "ef35697aa80134ab0d9aa64022b1803453990566262f493f6e1af9d085d57623",
+    ),
+    (
+        0x800129B4,
+        632,
+        "481d7ff44a25ed5260ad54c33c39e28afd2362c8902c06e5e4f2aa43cf3452be",
+    ),
+    (
+        0x80010818,
+        18,
+        "141ff707efcc9e45e140231058d8c47c78c64d1d0c4a3841773aa5ea453d2148",
+    ),
+    (
+        0x80058090,
+        60,
+        "5313e0a90bfee5312fca4ae573e8d95ef1c1ad15bf8b71184f4515f92da0ded8",
+    ),
+    (
+        0x80058898,
+        316,
+        "0b130175d971818fd3e4d6cdf9283558d597055611e657579c3ec4b3b112c638",
+    ),
+    (
+        0x80016FE4,
+        40,
+        "e1b2f550450d80602c4d0241d28957baa7858601a9f7084497291c8d580e70d2",
+    ),
+    # Bind the table's executable image, never a live/default actor pointer.
+    # Native-owned actor/render initialization remains the explicit premise.
+    (
+        0x800CFE1C,
+        128,
+        "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca",
+    ),
+    (
         0x80057EF0,
         232,
         "62ce8f46d6caa0339ae6b47ce2c8b238ce7af55ae9ab1c8433c76c235ad7a28e",
@@ -452,9 +499,23 @@ def normal_engine_identity_filtering(
                 native_bytes(resources.executable, 0x800109C4, 4), "little"
             )
             != 0x80025970
+            or any(
+                int.from_bytes(
+                    native_bytes(resources.executable, 0x800A74C8 + opcode * 4, 4),
+                    "little",
+                )
+                != target
+                for opcode, target in (
+                    (0x0B, 0x80053A8C),
+                    (0x0C, 0x80053AC0),
+                    (0x59, 0x80058028),
+                    (0x5F, 0x80058090),
+                    (0x60, 0x80058898),
+                )
+            )
             or not all(
                 native_nonyielding(resources.executable, at, {})
-                for at in (0x80057FD8, 0x8002C2B0)
+                for at in (0x80057FD8, 0x8002C2B0, 0x80058090, 0x80058898, 0x80016FE4)
             )
         ):
             return IdentityFilteringFailure.Binding

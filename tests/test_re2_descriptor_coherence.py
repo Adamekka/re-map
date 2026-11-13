@@ -15,24 +15,26 @@ snapshot = test_re2_tracking.snapshot
 
 
 @pytest.mark.parametrize(
-    "profile",
+    "profile,snapshot,definitions,four_point",
     [
-        "re2_leon_a_slus00421",
-        "re2_claire_b_slus00592",
-        "re2_leon_a_slus00748",
-        "re2_claire_b_slus00756",
+        *(
+            (profile, source, definitions, four)
+            for profile in (
+                "re2_leon_a_slus00421",
+                "re2_claire_b_slus00592",
+                "re2_leon_a_slus00748",
+                "re2_claire_b_slus00756",
+            )
+            for source, definitions, four in (
+                ("00-01", "doors", False),
+                ("05-08", "doors", True),
+                ("00-01", "items", False),
+                ("00-08", "items", True),
+            )
+        ),
+        ("re2_leon_a_slus00748", "01-19", "items", False),
     ],
-    indirect=True,
-)
-@pytest.mark.parametrize(
-    "snapshot,definitions,four_point",
-    [
-        ("00-01", "doors", False),
-        ("05-08", "doors", True),
-        ("00-01", "items", False),
-        ("00-08", "items", True),
-    ],
-    indirect=["snapshot"],
+    indirect=["profile", "snapshot"],
 )
 @pytest.mark.parametrize("changed_field", ["kind", "geometry", "activation"])
 def test_conflicting_descriptor_headers_cannot_publish_or_add_visits(

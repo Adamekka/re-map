@@ -114,6 +114,13 @@ def _numeric_copy_ranges(
                 ranges.append((at + 6, at + 12))
             elif opcode == 0x54:
                 ranges.extend(((at + 8, at + 14), (at + 14, at + 20)))
+            elif policy is SourceEntryPolicy.NativeIdentityFiltering and opcode == 0x60:
+                # Only numeric render halfwords may change. The mandatory
+                # source scope separately checks category/index and alignment.
+                # Separate cells reject an odd SH spanning adjacent halfwords.
+                ranges.extend(
+                    (at + offset, at + offset + 2) for offset in (6, 8, 10, 12)
+                )
             elif policy in (
                 SourceEntryPolicy.IdentityFiltering,
                 SourceEntryPolicy.NativeIdentityFiltering,

@@ -1136,3 +1136,106 @@ report no findings within their recorded scopes; the integration review runs
 publications. The configured Gemini 3.8 Flash high snapshot review reports no
 findings. Claude Opus 5.5 is disabled. No review adds gameplay or native-restore
 confirmation. Exact results are in the combined `root-final-manifest.json`.
+
+## Qualified native identity effects validation
+
+[RE2-SCENARIO-011](../research/re2/scenario-selection.md#re2-scenario-011-qualified-native-effects-refine-another-acquired-identity)
+starts from exact clean parent `4da19a6c4393491841481fd7ada13d437bbf8863`.
+Its public baseline independently reproduces30/125 and the `01-19` control
+failure before any query. The implemented public factory supports31/125,
+adding only GID117 creator2762, retaining creator2826 and every prior query.
+This is identity filtering only, with no door/positive/Guard capability reuse.
+
+Use `/Users/adamekka/.cache/re-map/verification-venv/bin/python3.12` and explicit
+owned `RE_MAP_RE2_OWNED_CUE`. The new qualified-effect regression checks paired
+one-byte0B/0C, dormant procedures, branch/Goto/return ingress, busy self and
+completion edges, fresh IF tokens, actual producer/depth attachment, replacement,
+four/five loop and call-frame boundaries, bounded source selectors and exact
+native windows/tables. Scalar5F keeps0..127; native60 admits only category3,
+unsigned index0..31,14-byte even packets and four numeric halfword Copy cells.
+Odd, crossing, selector and RGB writes fail. Original policies receive no new
+rights. All54 auxiliary fact sets and89 supported native task sources remain.
+
+The copied-handler cases reuse the existing audited runner, original owned
+instructions, explicit synthetic ABI/full2MiB RAM, code-hook store decoding and
+read bounds. No memory-write hook or game engine runs. Native0C covers both
+unknown busy flags, all five transient levels0..4 and both return2 outcomes.
+Native60 covers full numeric halfword boundaries, actor indices0/31, preserved
+RGB command bytes, own PC, ABI saves and all untouched RAM. These are component
+executions, not gameplay observations.
+
+```sh
+python -m pytest -q tests/test_re2_qualified_identity_effects.py tests/test_re2_native_identity_filtering.py tests/test_re2_native_identity_tracking.py tests/test_re2_identity_filtering.py tests/test_re2_descriptor_coherence.py
+python tools/build_re2_metadata.py "$RE_MAP_RE2_OWNED_CUE" <private-rooms-1> <private-floors-1> --profile profiles/re2_leon_a_slus00748.json
+python tools/build_re2_metadata.py "$RE_MAP_RE2_OWNED_CUE" <private-rooms-2> <private-floors-2> --profile profiles/re2_leon_a_slus00748.json
+python -m pytest -q
+```
+
+Compare both complete generated artifacts byte-for-byte, every metadata field
+against the parent and every floor byte. The sole raw item consequence is the
+new117/2762 identity variant. Door semantics remain151 facts/161 creators/
+12 exclusions/128 unsupported rows; door auditv4 and entryv3 stay unchanged.
+The new identity audit isv3, with full semantic-profile and both complete raw
+catalog pins recomputed from actual owned generation. No field is dropped to
+make a digest match.
+
+Run the retained `replay.py --checkout <checkout> --output <new-file>` for all15
+publications. Rebuild the CURRENT inventory with `inventory_current.py` before
+joining the authorized copied history through `audit_actual_re2_history.py`.
+Its strict label/order and replay joins remain enabled. All six actual-history
+publications preserve68 sources/71 regions, all4 Unknown item rows and doors.
+Only `01-19` changes from Unknown to Cleared after its already-Taken identity
+becomes specific. Actual counts become48 Cleared/15 Incomplete/5 Unknown;
+98 Open/82 Unchecked/1 Blocked and34 incomplete-door sources stay equal.
+The private `read_plans.py` also compares all21 complete ordered address/width
+plans against public readers loaded from exact immutable parent Git bytes.
+No checkout or production-source transformation is needed for that baseline.
+
+Generated-reader cases cover current/departed/fresh reconstruction, repeated
+acquisition reversals, all four applicability mismatches, selected/excluded
+current descriptors, activation bits, failed/short/incoherent reads and source
+mismatch without partial publication. An earlier acquisition-clear synthetic
+image returns Unknown unless a current descriptor independently supplies
+presence. The initial odd-Copy boundary failures and incorrect synthetic IF/
+reader fixtures are retained with their corrections in the private evidence.
+
+The evidence directory is
+`~/.cache/re-map/evidence/2026-11-13-qualified-native-identity-implementation/`.
+It contains baseline/final public125 results, the complete source/native census,
+generation and publication comparators, exact ordered read plans, final command
+results, verified executing-session metadata and changed-file manifests.
+The README publication helper reproduces the original observed two-source
+fixture SHA256 `696eaa68dcf5e31f10a3a28ec44d9ea018a2758193a07af1b74c7c101834b9b9`;
+image SHA256 remains
+`cdeecce390de12c0304e2ce1d877b170c0091443188aa90ccbe96ba241a24f16`.
+No UI/floor change requires a browser check or a new screenshot. Parent
+independent/configured external review is pending. No gameplay, native restore
+or memory-card persistence is newly validated.
+
+Final local verification, 2026-11-13: all8,766 tests pass with the explicit owned
+CUE. The focused run passes599 cases; three additional target descriptor-header
+cases pass separately and are included in the full suite. All88 new copied-native
+component cases pass. Scoped Ruff `E4,E7,E9,F,I`, ignoring established `E402`,
+and formatting pass for all14 changed Python files. Local links and whitespace
+checks pass. The two final complete generations6/7 and the exact metadata used
+by the full suite are byte-identical, with stable source/profile/name inputs.
+Rooms SHA256 is `84d77998e98c605d5623df51901b7f4610624adc6444430f442a21ef6dcb10f9`;
+floors remain `aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+Generations1/4/5 are earlier complete iterations;2/3 are explicitly cancelled
+after the final research-ID literal change. They are not the two accepted final
+runs. Exact commands, native/source pins, all125 consequences and all21 final
+publication comparisons remain private. Local review checks source/control,
+capability separation, fresh reader behavior and artifact preservation; parent
+independent and external final reviews remain separate.
+
+Final parent integration, 2026-11-13: root reproduces all 21 complete publications
+and ordered read plans, using the canonical main checkout and a fresh current
+inventory join. All results equal the reviewed implementation; the read plans
+also equal the exact parent. README publication and all 19 request-file hashes
+match before the documentation contribution. The core and consumer independent
+reviews find no issues after 240 and 98 focused cases respectively; the latter
+also runs 48 explicit startup rejection probes. Configured Gemini 3.8 Flash at
+high reasoning reports no findings on the supplied snapshot. Configured Claude
+Opus 5.5 is disabled. These reviews add no native/gameplay or rendered UI evidence.
+Exact commands and the root report are retained under
+`~/.cache/re-map/evidence/2026-11-13-native117-root-integration/`.

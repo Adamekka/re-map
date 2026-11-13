@@ -649,9 +649,37 @@ def _source_scope_facts(
                     and opcode in (5, 0x15, 0x28)
                     or identity_policy
                     and opcode in (0x4C, 0x6A, 0x6B, 0x86, 0x87)
+                    or native_identity
+                    and opcode in (0x0B, 0x0C, 0x59, 0x5F, 0x60)
                 ),
                 "unmodeled_native_opcode",
             )
+            if native_identity and opcode == 0x59:
+                # Mode0 uses ordinary engine music ownership; other native
+                # modes do not inherit it. Its LHU needs an even RDT offset.
+                require(
+                    len(packet) == 4 and packet[1] == 0 and row["offset"] % 2 == 0,
+                    "music_request59_bounds",
+                )
+            if native_identity and opcode == 0x5F:
+                # The leaf writes only a fixed audio scalar. Unused high-byte
+                # no-store cases remain unsupported, with no implicit default.
+                require(
+                    len(packet) == 2 and packet[1] < 128,
+                    "fixed_audio_scalar5F_bounds",
+                )
+            if native_identity and opcode == 0x60:
+                # Category3 reloads the owned actor table, then actor+16C's
+                # render pointer, independently of task Work. Signed indices
+                # and stale-destination default categories stay rejected.
+                # LHU/SH use even offsets on the required aligned RDT base.
+                require(
+                    len(packet) == 14
+                    and packet[1] == 3
+                    and packet[2] < 32
+                    and row["offset"] % 2 == 0,
+                    "owned_actor_render60_bounds",
+                )
             if door_policy or identity_policy:
                 if row["kind"] == "flag_write":
                     require(

@@ -106,6 +106,25 @@ def structured_control(
         return end
 
     try:
+        if role is ControlFrames.NativeIdentityFiltering:
+            # Validate dormant commands too. The pair borrows only LoopLevel;
+            # no root or interior entry may reach its decrement without 0B.
+            for at, row in rows.items():
+                if row["opcode"] == 0x0B:
+                    require(
+                        row["next"] == at + 1
+                        and at + 1 in rows
+                        and rows[at + 1]["opcode"] == 0x0C
+                        and rows[at + 1]["next"] == at + 2
+                    )
+                elif row["opcode"] == 0x0C:
+                    require(
+                        at != program["entry"]
+                        and at - 1 in rows
+                        and rows[at - 1]["opcode"] == 0x0B
+                        and rows[at - 1]["next"] == at
+                        and row["next"] == at + 1
+                    )
         while pending:
             position, conditions, loops, pointer, previous = pending.pop()
             state = (
@@ -462,6 +481,24 @@ def structured_control(
                 # Break restores only the saved IF byte. Unlike Return it
                 # leaves the current IF pointer unchanged in the native code.
                 pending.append((end, conditions, loops[:-1], pointer))
+            elif (
+                opcode in (0x0B, 0x0C) and role is ControlFrames.NativeIdentityFiltering
+            ):
+                access(ControlField.LoopLevel, write=False)
+                access(ControlField.LoopLevel, write=True)
+                if opcode == 0x0C:
+                    require(
+                        previous == position
+                        or previous == position - 1
+                        and rows[previous]["opcode"] == 0x0B
+                    )
+                    # Both busy flags stay unknown. Return2 yields on both
+                    # edges, retaining caller frames but no fresh IF/CK token.
+                    pending.append((position, conditions, loops, pointer))
+                # Four logical frames may transiently hold level4. This pair
+                # indexes no fifth frame and restores3 before the next command.
+                # Empty stacks wrap the native installer/Gosub sentinel255.
+                pending.append((following, conditions, loops, pointer))
             elif opcode in (0x0A, 0x15):
                 raise ValueError("standalone control tail")
             else:

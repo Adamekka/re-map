@@ -430,7 +430,7 @@ def test_dispatch_startup_registration_stops_at_yield(owned, filtering):
     )
 
 
-def test_complete_generated_filtering_catalog_keeps_both_derived_consequences():
+def test_complete_generated_filtering_catalog_keeps_only_compiled_consequences():
     document = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
     catalog = {r["id"]: r["identity_filtering_items"] for r in document["rooms"]}
     assert len(catalog) == 125
@@ -438,6 +438,10 @@ def test_complete_generated_filtering_catalog_keeps_both_derived_consequences():
         "00-08": {
             "absent_item_ids": [],
             "item_variants": [{"global_id": 213, "offsets": [6934]}],
+        },
+        "01-19": {
+            "absent_item_ids": [],
+            "item_variants": [{"global_id": 117, "offsets": [2762]}],
         },
         "03-08": {
             "absent_item_ids": [],
@@ -521,15 +525,21 @@ def test_new_identity_flags_are_in_atomic_read_transaction(snapshot, failure):
 
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
-@pytest.mark.parametrize("snapshot", ["03-08"], indirect=True)
+@pytest.mark.parametrize(
+    "snapshot,target,gids",
+    [("03-08", "03-08", (149, 150, 185, 214)), ("01-19", "01-19", (117,))],
+    indirect=["snapshot"],
+)
 @pytest.mark.parametrize("bank,bit", [(1, 0), (1, 1), (1, 6), (0, 25)])
-def test_changed_scenario_or_mode_never_publishes_stale_clearance(snapshot, bank, bit):
+def test_changed_scenario_or_mode_never_publishes_stale_clearance(
+    snapshot, target, gids, bank, bit
+):
     profile, _, put, read = snapshot
     registry = int(profile.runtime_layout["aot_table_address_ps1"], 0)
     for slot in range(32):
         put(registry + slot * 4, 0, 4)
     acquired_bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
-    for gid in (149, 150, 185, 214):
+    for gid in gids:
         at = acquired_bank + gid // 32 * 4
         put(
             at,
@@ -538,7 +548,7 @@ def test_changed_scenario_or_mode_never_publishes_stale_clearance(snapshot, bank
         )
     tracker = Tracker()
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
-    assert tracker.rooms["03-08"].completion is RoomCompletion.Cleared
+    assert tracker.rooms[target].completion is RoomCompletion.Cleared
     before = copy.deepcopy(tracker)
     address = profile.flag_banks[bank][0] + bit // 32 * 4
     value = int.from_bytes(read(address, 4).data, "little")
@@ -554,8 +564,8 @@ def test_changed_scenario_or_mode_never_publishes_stale_clearance(snapshot, bank
     }
     synthetic = replace(profile, runtime_layout=layout)
     assert poll_re2(synthetic, tracker, read).status is PollStatus.Display
-    assert tracker.rooms["03-08"].completion is RoomCompletion.Unknown
-    assert sum(i.label == "Collectible" for i in tracker.rooms["03-08"].items) == 1
+    assert tracker.rooms[target].completion is RoomCompletion.Unknown
+    assert sum(i.label == "Collectible" for i in tracker.rooms[target].items) == 1
     put(address, value, 4)
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert tracker == before
@@ -618,6 +628,9 @@ def test_loader_rejects_uncompiled_identity_metadata(tmp_path, fault):
         ("03-08", "items", 10558, 22),
         ("03-08", "items", 10558, 104),
         ("03-08", "items", 10584, 22),
+        ("01-19", "items", 2762, 21),
+        ("01-19", "items", 2762, 104),
+        ("01-19", "items", 2826, 21),
         ("00-01", "reset_item_candidates", 9740, 8),
     ],
 )

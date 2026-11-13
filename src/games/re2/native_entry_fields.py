@@ -271,6 +271,16 @@ def _task_fields(
             for _, _, other, _, cell in reads
         ):
             return PositiveEntryFailure.ForeignConsumer
+        if role is ControlFrames.NativeIdentityFiltering and receiver != task:
+            # A suspended wait keeps its incremented LoopLevel. Foreign IF
+            # stores must not corrupt that byte before its completing retry.
+            if any(
+                field is ControlField.LoopLevel
+                and receiver * TASK_WIDTH + offset < cell + width
+                and cell < receiver * TASK_WIDTH + offset + 4
+                for _, _, _, _, field, cell, width, _ in control
+            ):
+                return PositiveEntryFailure.ForeignConsumer
     return _TaskFields(
         tuple(sorted(producers)),
         tuple(sorted(entries)),
