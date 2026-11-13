@@ -1231,6 +1231,245 @@ no review. Candidate status and all missing runtime/ownership contracts remain
 unchanged. Root's final manifest retains the reviewed source/artifact hashes,
 review responses, reproduction commands, local link checks and limitations.
 
+## RE3-MAP-019: an original constructor query reaches its height consumer
+
+Status: Candidate for Resident Evil 3 Nemesis, PS1 USA NTSC-U, SLUS-00923,
+targeting the previously human-selected Hard seed retained by
+[NATIVE-006](native-contracts.md#re3-native-006-a-restored-seed-reaches-source-bound-world-and-native-exit).
+This adds one original
+constructor query to [MAP-018](#re3-map-018-the-support-index-is-bounded-but-height-also-consumes-runtime-work).
+It does not establish a recurring query, positive campaign admission, selected
+support, physical floor/room ownership or tracker visibility. The source
+follow-up below attributes this exact sampled return to a header fallback.
+The executable
+SHA256 remains `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`.
+The private DuckStation is `0.1-12640-gbb4e9ac5e`, binary SHA256
+`ddceaaa426e67e328430fcb916320803fddc014374ea45a00778e58081f36dcb`.
+
+### A changed restore route, with the failed attempt preserved
+
+The earlier file-dialog attempt never verified a restore. Its final coherent
+RAM was BIOS-only, SHA256
+`9c4fd8def18ba905b6be191d05824a2cd3115e6f8d5354a2da2a68a203b1e143`.
+It observed zero constructor calls, height returns or consumers. UI binding
+failures and the disabled Open action are retained; unknown actions were not
+repeated. Its exact-owned PID 84278 exits zero and port 2427 is freed according
+to the retained cleanup receipts. This failure is separate from the new run.
+
+The changed route follows original DuckStation source at commit
+`bb4e9ac5e6b3872126dc76f1fe4f46169c96b082`.
+[QTHost](https://github.com/stenzek/duckstation/blob/bb4e9ac5e6b3872126dc76f1fe4f46169c96b082/src/duckstation-qt/qthost.cpp#L3425)
+accepts `-statefile` without a boot filename. Its `-version` path prints the
+version then returns false from argument parsing; main returns exit 1. The
+new check accepts that status only alongside the exact expected version
+banner and pinned binary, never an arbitrary nonzero exit or empty output.
+[System](https://github.com/stenzek/duckstation/blob/bb4e9ac5e6b3872126dc76f1fe4f46169c96b082/src/core/system.cpp#L1744)
+selects existing saved media from the state header. It loads the state before
+GDB initialization and the final startup pause, using `Main/StartPaused`.
+The source receipt pins QTHost SHA256
+`6b966bbf9c11733cbb8f0db85772ae2d03be5b9bfc91fd90099109ec3dcaef2d`
+and System SHA256
+`b395cd59bda7d110a72b2ae6fb7458945cc0fc327d13141b1b36c4c6415c5a22`.
+
+The new private invocation is
+`DuckStation -nogui -nofullscreen -batch -statefile <private>/seed.sav`.
+Before spawning automatic loading, both achievement namespaces have Enabled,
+ChallengeMode and UseRAIntegration false; cards are None, overrides and BIOS
+instruction patches are disabled, audio is muted and the private black shader
+is configured. No accounts, cheats or controller input are supplied. The saved
+media path at native v94 header byte 168, u32 LE length/offset, names the owned
+CUE; its BIN SHA256 is
+`d6c828dc92d50b28fd58329dbe607d4d22eeaeb1d9a46be54ac81b130fc2c7a6`.
+There is no executable override. The actual boot log confirms that media.
+The later PID/listener audit is explicitly post-automatic-load. It does not
+replace the prelaunch configuration proof or claim to precede loading.
+
+One early controller exits before connecting because the listener is not yet
+ready. After actual listener ownership is checked, one client connects; the
+restore is not repeated. The first live two MiB RAM equals the seed payload
+exactly, SHA256
+`9d880e76f431a6bd946785c602b65f2f0b17fd6760ac94de3a2196229289ca0a`.
+PC is `0x800292F0`. GPR0..31, HI/LO and PC also match the prior exact stock
+restore receipt. Seed SHA256 is
+`9fd59cebaa32a0c007663d4437a481d067f83fac2863be760515d3366e93cc56`;
+its prior Hard provenance remains separate from a fresh difficulty selection.
+No complete-device or buffered/current-instruction equality is claimed.
+
+### Original arguments, return and store
+
+All addresses below are PS1 cached virtual addresses. Captured multibyte
+fields are little endian. Seven bounded host-timed resumes traverse startup;
+the eighth reaches the constructor. Host seconds are not guest frames. All 25
+sampled input words are zero; no guest-memory, PC, pose or flag write is sent.
+
+| Original stop | Observation |
+| --- | --- |
+| `0x8003425C`, before JAL | S1 work `0x800CCC44`, S3 owner `0x800CCBC4`, A0 vector pointer `0x801FF9F0`, A1 radius 450, SP `0x801FF9D8` |
+| `0x8004D720`, function entry | XYZ i32 `[13262,0,-12537]`, A1 450, actual A2 mask `0x8000`, A3 mode 9, RA `0x80034264` and unchanged caller SP |
+| `0x8004DAD8`, before runtime tail | S3 intermediate 0, six source-index candidates and an immediate runtime-list sentinel |
+| `0x80034264`, return | V0 signed i32 zero; SP, RA, S0-S7, FP and GP equal their actual entry values |
+| `0x80034268`, consumer stop | Width-two native write watch reports owner `+0x122`, address `0x800CCCE6`; original SH stores V0 low u16 zero |
+
+Pre-JAL A2 is still `0x801FF9F0` and A3 is 1380. The preceding LW and JAL delay
+slot prepare the final arguments, so the actual function-entry registers define
+the query. They must not be replaced by the earlier pre-JAL values. Pinned
+[CPU source](https://github.com/stenzek/duckstation/blob/bb4e9ac5e6b3872126dc76f1fe4f46169c96b082/src/core/cpu_core.cpp#L1604)
+and [GDB source](https://github.com/stenzek/duckstation/blob/bb4e9ac5e6b3872126dc76f1fe4f46169c96b082/src/core/gdb_server.cpp#L1137)
+also distinguish delayed loads and deferred memory-watch stops.
+
+The consumer field already contains zero. Return and consumer RAM are
+byte-identical, SHA256
+`b333e43794e5c9783da30c53ce9adcef82934915859b21f52586e387b5866309`.
+That equality alone proves no write. The separate native watch receipt and
+the original SH decoded against actual return registers establish its target,
+width and value. No copied execution substitutes for this native observation.
+No new checkpoint was created; only the existing seed was restored.
+
+### Fresh source and constructor-phase limits
+
+All 169 owned sources are reconstructed and bound. Each of five stopped call
+captures uniquely binds `CD_DATA/STAGE1/R10D.ARD`, native file index 413,
+RDT SHA256 `b49017b7a7bd28d71f1129001d2acffb6ce549928f700e9a927a5f19ad4cddb2`.
+RDT pointer and allocation are `0x8011A708`. Its relocated u32 collision
+pointer at `+0x20` is `0x8011C78C`, source offset 8324. All 1636 bytes of
+geometry, flags and index match the owned section in all five samples,
+SHA256 `00f7421777e57655c426e675d8bad52bd8b2d544ff6c27b48101df45f183525c`.
+The count is 39 records including the header. Full query/caller/handler code
+windows also match. These sample bindings do not imply future immutability.
+
+The actual grid cell 75 yields indices `[19,20,30,32,35,36]` and a `0xFF`
+terminator, matching the original output buffer at `0x800DEB98`. Their kinds
+are `[2,2,2,4,4,6]`; mode 9 entries name `0x8004DEA8`. This is a native
+nonempty-bucket observation. It does not admit every listed record. Header
+height i16, S3 at DAD8 and V0 are all zero. Scratch flags/attributes at
+`0x800DEB7C/0x800DEB7E`, both u16, are `0x1000/0`. No DAA0 stop occurs while
+DAA0 and DAD8 are both armed. These separate native observations alone do not
+close candidate admission, winner selection or default/static attribution.
+
+Work `+4` u32 names the owner, category u8 `+2` is 0 and radius u16 `+0x1A`
+is 450. Linked head/tail at `0x800DCED0/0x800DCED4` both name `0x800CCC44`,
+whose next pointer u32 `+0x34` is 0. Ordinary ordered array `0x800DCDD0`
+still starts with zero; a later ordinary slot-eight association is not reused.
+Runtime work at `0x800DCED8`, stride 24, has u32 sentinel `0xFFFFFFFF` at
+`+0x0C` in all five samples. This sampled list is empty; no runtime owner
+pointer or future list lifetime is inferred.
+
+The constructor bypasses the recurring `0x0080` gate. Work `+0x2E` u16 and
+its aligned `+0x2C` u32 alias are both zero; the recurring masks would be
+`0x0080/0x00800000`. This is not the recurring caller `0x80033C64` or its raw
+floor publisher. All five samples remain NonGameplay in the existing reader,
+with Hard/campaign admission unresolved. One constructor context stays
+Candidate, not Confirmed. Room/contour/floor associations, reveal, visits,
+clearance, memory-card persistence and a production profile remain unresolved.
+
+### Bounded source attribution of this sampled return
+
+A subsequent source/data investigation traces every admission branch for
+these exact captured inputs, without CPU or emulator execution. All five
+samples bind the complete original code windows and collision data. The
+verifier checks 45 instruction words and the actual short-circuit arithmetic.
+Each indexed record is rejected before a shape handler or winner update:
+
+| Record | First rejection | Native branch |
+| --- | --- | --- |
+| 19 | Z delta 6022 exceeds width 3390 | `0x8004D9A8` |
+| 20 | Z delta 6254 exceeds width 3246 | `0x8004D9A8` |
+| 30 | X delta 18097 exceeds width 17128 | `0x8004D984` |
+| 32 | Wrapping u32 X delta `0xFFFFF9B5` exceeds width 6242 | `0x8004D984` |
+| 35 | Wrapping u32 X delta `0xFFFFF839` exceeds width 5332 | `0x8004D984` |
+| 36 | Flags `0x0226 & 0x8000 == 0` | `0x8004D838` |
+
+The first five pass the prior signed floor/height checks. Their attribute
+bit `0x1000` is clear, so no rotation changes the bounds. Mode 9 has bit
+`0x20` clear, so radius 450 does not expand these static bounds. Radius is
+not globally irrelevant. All failure branches advance at `0x8004DAB8`; none
+reaches a shape handler or `0x8004DAA0`. The loaded header height 0 therefore
+survives to the tail. The mode 9 pass-through handler addresses are checked
+but are not invoked on this path.
+
+The JAL delay-slot store at `0x8004DADC` passes that height at
+`0x801FF980`. The runtime tail's `0x38`-byte frame loads the same fifth
+argument through `SP+0x48`. Its region-mask leaf reads the bound header and
+query X/Z before the first sentinel test. The sampled `0xFFFFFFFF` sentinel
+skips every runtime record body and returns the incoming height unchanged
+at `0x8004DD90`. The actual return capture agrees with that source-derived
+header fallback. This establishes no selected static or runtime support.
+It adds no observation of internal native branches or a live mutable-source
+lifetime proof, and does not classify other inputs or future runtime lists.
+
+`2026-11-13-re3-constructor-support-attribution/verify_attribution.py` accepts
+the same explicit owned media/catalog/capture inputs and a fresh `--out`.
+Its SHA256 is `b199d581975648b484020aecde980d14843933b056893812d4d9d6631a13bec8`.
+Two author reruns and root's fresh rerun produce attribution report SHA256
+`0402fb3ab0cbae2ed4d5db11dd806d026fca65d8067d7ca77f306bceac28ca6a`.
+All 317 original CLI manifest entries remain unchanged. Investigator
+`investigate_re3_constructor_support`, task-verified `gpt-6.1-sol` at `xhigh`,
+session `01a1d4e2-5a9b-7720-9e14-4cae8f14aace`, authors this inference and
+verifier. The earlier native observation retains its separate authorship.
+
+### Reproduction, preservation and contribution
+
+Private evidence is under
+`~/.cache/re-map/evidence/2026-11-13-re3-height-native-cli/`; the failed attempt
+remains under `2026-11-13-re3-height-native-registration/`. The explicit
+read-only vector in `reproduction-argv.json` runs `verify_call.py` with required
+`--evidence`, `--checkout`, owned `--image`, `--catalog`, `--source-contract`
+and a nonexistent `--out`. It starts no emulator. `verify_attempt.py` retains
+the failed attempt's zero observations. The successful verifier SHA256 is
+`6b081cfdc7993fb00842dca4ff9beb42d4545acfd5ea25b27f173c6fc6f33c7f`.
+Root's fresh reports reproduce SHA256
+`9361876ecbe93a222d97d217f658405a1eef379b2d354a7bc048022ecdb4a679`
+and `0de1397f0cd7a071dd4c30c1414b1b55fe5f840d457ff6f518701daf249be0f3`
+for the successful and failed attempts respectively. All 317 new manifest
+entries, 359 preserved prior entries and seven original resources rehash
+unchanged. Counts are manifest entries, not necessarily distinct files.
+
+Retained cleanup removes the connected client's own watch/breakpoints, closes
+it and verifies exact-owned argv before SIGTERM. PID 5871 exits zero after
+902.866949 seconds, below the 1200-second watchdog, without SIGKILL. Port 2431
+is absent and bindable in that receipt. Private settings gain only four window
+geometry keys. Guest claims end at the coherent consumer capture,
+`2026-11-13T11:33:59.870162Z`; disconnect-to-SIGTERM execution is unobserved.
+This integration reruns verifiers and hash checks, not cleanup or gameplay.
+No production code, profile, UI, exploration history or README image changes.
+
+Contribution, 2026-11-13: investigator `investigate_re3_support_join`, verified
+`gpt-6.1-sol`, effort `xhigh`, session `01a1d45e-f6cc-7d23-a4f9-863afabedcf2`,
+authors the native attempt, setup/controller adaptations, verifier and private
+handoff. Root, separately verified as `gpt-6.1-sol` at `xhigh`, authors the
+pinned CLI source contract, independently inspects caller/source/consumer
+boundaries, reruns both verifiers, checks preservation and writes this record.
+Earlier helper authorship and the human's Hard selection remain separate.
+Root evidence is under
+`~/.cache/re-map/evidence/2026-11-13-re3-constructor-integration/`.
+
+Independent evidence review `review_re3_constructor_observation`, verified
+`gpt-6.1-sol`, effort `xhigh`, reports no findings. It reproduces both reports,
+checks all manifest/resource hashes, original ABI/source/index/consumer facts,
+34 native commands, 25 zero-input observations, isolation and cleanup receipts,
+and pinned CPU/GDB startup/load-delay/watch semantics. It adds no emulator run,
+second native situation, rendered UI assessment or new gameplay confirmation.
+Exact source URLs and limits are retained under
+`~/.cache/re-map/evidence/2026-11-13-re3-independent-review-01a1d4c1/`.
+
+Independent attribution review `review_re3_constructor_attribution`, separately
+task-verified `gpt-6.1-sol` at `xhigh`, reports no findings. It reproduces the
+attribution report, independently calculates signed intervals from the owned
+source, disassembles the original branches/delay slots, checks fifth-argument
+and sentinel control, and preserves all 317 original and 11 attribution
+manifest entries. It reviews the actual documentation and its limits, without
+CPU/emulator execution. Exact evidence is under
+`~/.cache/re-map/evidence/2026-11-13-re3-attribution-review-01a1d4ea/`.
+
+The configured external snapshot review returns "No findings." T3 reports
+`gemini-3.8-flash`, requested `thinking_level=high`, through Antigravity,
+without a separate executed-model attestation. The supplied snapshot includes
+the claim, verifiers, numeric reports, bounded original disassembly and pinned
+DuckStation source excerpts. The reviewer performs no tools or execution.
+Configured Claude Opus 5.5 remains disabled and supplies no review. Root's
+final manifest retains the reviewed hashes, responses and local link/whitespace
+checks. These reviews add no native situation or gameplay confirmation.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
