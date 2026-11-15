@@ -239,6 +239,53 @@ Parent corrections, 2026-11-12: the human explicitly authorizes correcting the e
 
 Parent verification, 2026-11-12: the corrected snapshot passes 7,535 full Python tests with the explicit owned CUE, including all three baseline-failing reverse-marker regressions. Root reruns the ten-contour/four-layout browser check and four-layout RE2 README render; the desktop PNG remains byte-identical. Final scoped Ruff, formatting, 481 local documentation links and whitespace checks pass. The two retained complete generations and all 170 legacy shared records remain byte-identical. Final verification is recorded in `root-final-checks-reader.json` beside the original handoff. Independent native reviews check source/contour fidelity, loader and publication invariants, side-specific access/reveal isolation, shared UI transforms, README provenance and copied-RAM equality. Configured Claude Opus 5.5 is disabled; Gemini 3.8 Flash high fails to open its provider session. Neither supplies an external endorsement. These checks add no gameplay observation.
 
+### Remaining marker gaps, 2026-11-15
+
+A fresh audit on `22d74a9` retains 180 shared markers covering 242 of 321 raw
+creators. Of the 79 omissions, 40 now have access facts, 38 remain
+access-unresolved and one is scenario-excluded. The earlier 31-with-facts count
+above describes the 2026-11-12 snapshot. Access interpretation improved while
+geometry stayed unchanged.
+
+All 38 omitted creators in the copied 68-source/71-region history have eligible
+already-visited region contexts. In each of six frozen history publications,
+they account for 19 Open, one Blocked and 18 Unchecked observations. These are
+missing markers in the explored scope, not new gameplay, passage or clearance
+observations. State knowledge and marker coverage remain separate.
+
+The audit rereads all 125 owned RDTs, executable and MAPS.PIX, binds all 321
+creator packets and reconstructs all 356 native contexts. Creator-level reasons
+are 58 beyond the existing eight-unit center bound, 17 without a supported
+opening and four without a native outline. Alias/floor context reasons overlap
+and must not be added as creator counts. Broader boundary extraction supplies
+no further placement within the existing bound. The separate reciprocal-alias
+candidate adds only an unvisited creator and supplies no explored-scope gain.
+No new projection, distance, footprint or alias rule is adopted.
+
+One useful original-engine association target is `01-0c:7178`, slot 3, in
+already-visited region `re2-02:0C`. Its unique nearest native opening is
+`[203,111] -> [203,115]`, but the projected center is about 8.4685 units away.
+Nearest alone does not establish that portal. Both source creators 7146 and
+7178 target `01-0e`, so a unique-reciprocal shortcut also fails. A new placement
+needs the actual registered descriptor, source/target selectors, actor pose and
+native map projection through an original traversal. The three available
+copied snapshot records identify only sources `03-08` and `03-0a`; neither has
+an omitted creator. No stock restore is tested by this audit. Observing their
+already placed doors cannot validate the
+missing-marker class. No native episode is performed for this audit.
+
+Author `gpt-6.1-sol`, effort `xhigh`, session
+`01a1e02b-d60b-73b3-98ad-194ecd42c2ec`, records exact packets, counts,
+reproduction and limits in
+`~/.cache/re-map/evidence/2026-11-15-leon-a-door-geometry-audit/` and the separate
+`2026-11-15-leon-a-door-geometry-seed-followup/`. Codex root, the same verified
+model/effort, independently reproduces byte-identical census and six-history
+impact reports and verifies both explicit manifests, 39 and six files. Root
+records this dated contribution without changing production geometry, source
+authority, visits or README images. Its reproduction is
+`~/.cache/re-map/evidence/2026-11-15-leon-a-door-geometry-root-reproduction/`.
+No new rendered UX/AX, external review or gameplay validation is claimed.
+
 ## RE2-LIVE-001: coherent opening-room reads and explicit runtime limits
 
 Status: Candidate for SLUS-00421. One controlled opening-room observation is available; multiple independent pickup, key-door and restore situations are not yet confirmed.
