@@ -490,3 +490,126 @@ The same verified model/effort, independent session
 delta before launch and freezes the ended episode afterward. Earlier authors
 and reviews retain their original attribution. No Opus or Gemini review is
 requested after the user's prohibition; no such review endorses this episode.
+
+## RE3-LIVE-006: world publication precedes filtered normal player returns
+
+**Status: Candidate**, 2026-11-15. A separate original Hard cold boot
+observes the world-publication store, then the normal player handler and five
+returns while control remains filtered. No gameplay input is sent. This adds
+an observed startup boundary, not sufficient campaign admission or movement
+validation. Executable, TITLE, revision and DuckStation identities remain
+those in [RE3-LIVE-004](#re3-live-004-original-title-input-reaches-the-game-but-release-remains-unverified).
+The eight runtime scripts remain byte-identical to the reviewed `736ea61a`
+manifest in RE3-LIVE-005. Production code and profiles are unchanged.
+
+### Original store and fresh reader results
+
+All addresses below are PS1 virtual addresses unless explicitly identified
+as RAM offsets. Words are unsigned 32-bit little-endian; source selectors are
+signed 16-bit little-endian and actor floor is signed 8-bit.
+
+| Coherent full 2 MiB capture | Epoch / PC | Unchanged public reader |
+| --- | --- | --- |
+| Before world publication | 32 / `0x80024884` | NonGameplay |
+| After world publication | 33 / `0x80024888` | Retry: player ownership not ready |
+| First captured normal player entry | 34 / `0x80039020` | NonGameplay: control paused or filtered |
+
+One actual address-free instruction step executes original opcode
+`0xACC22120`, `SW v0,0x2120(a2)`. The observed registers select destination
+`0x800CC858` and value `0x28001000`. The complete before/after RAM comparison
+equals that original store prediction: lifecycle changes from `0x20001000`
+to `0x28001000`, with only RAM offset `0xCC85B` changing. The RAM comparison
+operates on retained capture copies. Serialized-device equality is untested.
+
+At the normal entry, `a0=0x800CCBC4` and `ra=0x80038D34`; the scratchpad word
+at `0x1F8003F8` holds outer return `0x80023F14`. Source selectors are stage
+zero, room 13, camera 11, with actor floor zero. Structural loaded-source
+witnesses bind `CD_DATA/STAGE1/R10D.ARD`. They do not establish complete
+immutable loaded-RDT identity; mutable initializer bytes differ from the
+owned source. Control word `0x800CCBA0` retains mask `0x01000000`.
+
+Epochs 35, 38, 39, 40 and 41 reach the original outer return `0x80023F14`
+with unchanged pose, facing, source and filter. Epochs 36/37 are interrupted
+non-return observations. All remain NonGameplay. There is no settled Display
+baseline, gameplay toggle, turn, translation or reentry. The next run is
+rejected at the watchdog reserve after five normal returns; the separate
+64-return limit is not reached. This does not show that the startup filter
+never clears. The normal caller and published world bit alone still do not
+establish player control, consistent with
+[RE3-NATIVE-005](native-contracts.md#re3-native-005-the-normal-player-handler-can-retain-filtered-movement-input).
+
+### Preservation, reproduction and contribution
+
+The title path again verifies Left and separate New Game/Hard Start edges,
+with native release before each subsequent action. Six successful CUA calls
+and paired outputs, plus one completion event, are bound to the original root
+session. The same private path/bundle and independent sole PID/argv/config/
+listener checks apply. Achievements, hardcore, integration, cards, accounts,
+patches and user history remain excluded; audio is muted and the private
+black shader is configured. No game image, save or restore is requested.
+
+The final input lease is off with two zero cycles. The remaining callback is
+removed with `OK` and cleanup records the client closed. The wrapper reaps its
+owned child with exit zero after 860.858 host seconds, and port 2469 is free
+in its receipt and a fresh closed probe. The observer handle is missing after
+the emitted failure; its process exit code is unobserved. Execution after the
+last coherent stop remains unobserved. Strict postexit settings validation
+retains its exact-hash failure; a separate comparison finds only the empty
+Hotkeys removal and four UI geometry additions, with original values unchanged.
+
+Actual inputs are under
+`~/.cache/re-map/evidence/2026-11-15-re3-hard-control-target/`. Frozen evidence
+and the offline `verify_episode.py` command are in
+`~/.cache/re-map/evidence/2026-11-15-re3-original-world-control/handoff.md`.
+Use the ended episode as explicit `--source-root` and a new absent
+`--output-directory`; never rerun its operational scripts or signal its PID.
+All three captures reproduce the actual reader and native audit with the
+original EXE/TITLE and all 169 compiled sources. Root's independent replay is
+byte-identical, SHA256
+`810f355921d852a193d885bb2c3c004eb401c2ab1f9c7886198e7c5d165c7719`.
+The verified 80-file manifest has SHA256
+`c92c0769838adfe7278c7ded605f3095bad1369ebd7ec5b894d0f30e150df8a8`.
+
+Root `gpt-6.1-sol`, effort `xhigh`, session
+`01a1ac67-edda-7172-9e99-4bff796300a9`, performs the episode, CUA actions,
+shutdown checks, independent replay and this writing. Independent freeze/replay
+is by the same verified model/effort, session
+`01a1df49-09da-7e82-bb6b-d97b47926c4f`. Root reviews actual capture, store,
+source, input and cleanup records. The independent replay performs no further
+native execution. Earlier authorship remains separate. No external-model review is
+requested or claimed.
+
+### Bounded repeat, 2026-11-16 Europe/Prague
+
+A separate original Hard cold boot repeats the exact world-store observation
+and normal caller, then reaches the planned 64 normal-return bound at epoch
+103. All remain NonGameplay with control mask `0x01000000` set. The observed
+host-running intervals total 5.604 seconds, not guest-frame time; the separate
+120-second limit is not reached. Stage/room, floor, pose and facing remain
+unchanged. Camera changes 11 to 12 within the owned source's 13-camera table.
+No Display baseline, gameplay input, turn or translation is obtained. This
+does not establish that the filter never clears.
+
+Runtime manifest is
+`0e26cdb94d4e99b52e08cb022356a4bbb87158579ceec0fbbe562f958a3a7926`.
+Only the launcher changes from the earlier runtime: its recorded deadline,
+printed limit and termination loop share the required preflight budget. The
+new total watchdog is 1,800 host seconds; input, movement, source and route
+bounds remain unchanged. All six menu ON/OFF calls succeed after a documented
+CUA runtime reset, without establishing the cause of the preceding tool
+failure or permanent recording health.
+
+The operator removes the remaining callback with `OK`, closes the client and
+verifies observer/wrapper/owned-child exit zero and port 2473 free. Strict
+postexit settings failure and unobserved execution after the final stop remain
+explicit. The operator is `gpt-6.1-sol`/`xhigh`, session
+`01a1df49-09da-7e82-bb6b-d97b47926c4f`; root reviews, independently replays
+and writes this follow-up without further native operation.
+
+The final offline command and three coherent captures are bound in
+`~/.cache/re-map/evidence/2026-11-16-re3-control-wait-bound/handoff.md`.
+Its verified 83-file manifest has SHA256
+`d8a394ccfeb1f7f18c6abb0f22c6c381ee6ab388d489e471fc402417691927c1`.
+The final verification report has SHA256
+`269edccf46b6370e03a5a6540e597df33c05c16ac19e66d80fa19e037edbb05b`.
+Earlier loaded-source and admission limits are unchanged.
