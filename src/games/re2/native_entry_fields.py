@@ -19,25 +19,22 @@ from games.re2.native_control import (
     native_bytes,
     native_nonyielding,
 )
+from games.re2.native_entry_inventory import (
+    NativeEntryInventory,
+    NativeTaskPhase,
+    native_entry_inventory,
+)
 from games.re2.positive_entry_domain import (
     PositiveEntryFailure,
     _foreign_fields_disjoint,
 )
-from games.re2.script_control_limits import (
-    NATIVE_CALL_FRAME_COUNT,
-    calls_fit_native_frames,
-)
+from games.re2.program_entry_domain import EnteredFrameDomain, FrameDomain
 from games.re2.structured_control import (
     ControlFrames,
     NativeStructuredControl,
     PredicateOutcome,
     structured_control,
 )
-
-
-class NativeTaskPhase(Enum):
-    Ordinary = "ordinary tasks 0..9"
-    Auxiliary = "door auxiliary tasks 10..13"
 
 
 @dataclass(frozen=True)
@@ -62,6 +59,8 @@ def _task_fields(
     role: ControlFrames,
     numeric_counts: NumericCountPolicy = NumericCountPolicy.Existing,
     predicates: tuple[tuple[str, tuple[tuple[int, PredicateOutcome], ...]], ...] = (),
+    frame_domain: EnteredFrameDomain | FrameDomain = FrameDomain.WholeSource,
+    copy_predicates: tuple[tuple[str, int, int], ...] = (),
 ) -> _TaskFields | PositiveEntryFailure:
     """Attach actual native task/depth roots to the existing shared frame walk."""
     assert type(phase) is NativeTaskPhase
@@ -71,90 +70,39 @@ def _task_fields(
         numeric_counts is NumericCountPolicy.Existing
         or role is ControlFrames.NativeIdentityFiltering
     )
+    assert not copy_predicates or role is ControlFrames.NativeDoors
+    inventory = native_entry_inventory(data, programs, phase)
+    if type(inventory) is not NativeEntryInventory:
+        return inventory
     auxiliary = phase is NativeTaskPhase.Auxiliary
-    # Native roots have no source offset. Their distinct owner marks the zero
-    # placeholders; the actual native call sites are bound separately below.
-    producers = (
-        [("native", 0, "17:0", (10,))]
-        if auxiliary
-        else [
-            ("native", 0, "16:0", (0,)),
-            ("native", 0, "17:0", (1,)),
-            ("native", 0, "17:1", (0,)),
-        ]
-    )
-    calls = {key: set() for key in programs}
-    replacements = []
-    for key, program in programs.items():
-        for row in program["commands"]:
-            at, op = row["offset"], row["opcode"]
-            packet = data[at : row["next"]]
-            if row["kind"] == "call":
-                calls[key].add(f"17:{packet[1]}")
-            elif op == 3:
-                if auxiliary or packet[1:3] != b"\0\x18":
-                    return PositiveEntryFailure.Control
-                replacements.append((key, at, f"17:{packet[3]}"))
-            elif op == 4:
-                # The phase-zero installer maps every selector>=10 to AUTO2..9.
-                # Auxiliary phase has its separate explicit10..13/AUTO contract.
-                start, limit = (10, 14) if auxiliary else (2, 10)
-                tasks = (
-                    (packet[1],) if packet[1] < limit else tuple(range(start, limit))
-                )
-                if packet[2] != 0x18 or auxiliary and packet[1] < 10:
-                    return PositiveEntryFailure.Control
-                producers.append((key, at, f"17:{packet[3]}", tasks))
-            elif not auxiliary and row["kind"] in ("interaction", "reset"):
-                if packet[2] != 5:
-                    continue
-                payload = 4 if row["kind"] == "reset" else 22 if op == 0x67 else 14
-                if packet[payload : payload + 3] != b"\xff\0\x18":
-                    return PositiveEntryFailure.Control
-                producers.append(
-                    (key, at, f"17:{packet[payload + 3]}", tuple(range(2, 10)))
-                )
-    if any(
-        not targets <= programs.keys() for targets in calls.values()
-    ) or not calls_fit_native_frames(calls):
-        return PositiveEntryFailure.Control
-    # Include every producer, including an unentered procedure's writers and
-    # every Reset alternative. No sampled inactive task can remove a root.
-    pending = [
-        (target, task, 0)
-        for owner, _, target, tasks in producers
-        if not auxiliary or owner == "native"
-        for task in tasks
-    ]
-    entries = set()
-    while pending:
-        key, task, depth = pending.pop()
-        if (key, task, depth) in entries:
-            continue
-        if key not in programs or depth >= NATIVE_CALL_FRAME_COUNT:
-            return PositiveEntryFailure.Control
-        entries.add((key, task, depth))
-        pending.extend((target, task, depth + 1) for target in calls[key])
-        for owner, at, target in replacements:
-            if owner == key:
-                if depth != 0:
-                    return PositiveEntryFailure.Control
-                pending.append((target, task, depth))
-        if auxiliary:
-            pending.extend(
-                (target, slot, 0)
-                for owner, _, target, tasks in producers
-                if owner == key
-                for slot in tasks
-            )
+    producers, entries = inventory.producers, inventory.entries
+    replacements, calls = inventory.replacements, inventory.calls
+    if type(frame_domain) is EnteredFrameDomain:
+        if not frame_domain.matches(data, programs, inventory):
+            return PositiveEntryFailure.Binding
+        frame_programs = frame_domain.entered_programs
+    else:
+        assert type(frame_domain) is FrameDomain
+        frame_programs = frozenset(programs)
     stores, reads, control, frames, loop_reads, initializations = [], [], [], [], [], []
     outcomes = dict(predicates)
     for key, program in programs.items():
+        if key not in frame_programs:
+            continue
         roles = [(task, depth) for owner, task, depth in entries if owner == key]
-        # Walk every program for control/source protection, but attach a native
-        # receiving field only when an actual producer supplies task and depth.
+        # Missing isolation keeps all original frames. A validated domain keeps
+        # raw source protection separate and requires each entered frame here;
+        # only actual producers supply receiving task/depth fields.
         frame = structured_control(
-            data, program, role, predicates=outcomes.get(key, ())
+            data,
+            program,
+            role,
+            predicates=outcomes.get(key, ()),
+            copy_predicates=tuple(
+                (header, predicate)
+                for owner, header, predicate in copy_predicates
+                if owner == key
+            ),
         )
         if type(frame) is not NativeStructuredControl:
             return PositiveEntryFailure.Control
@@ -301,11 +249,7 @@ def _task_fields(
         ),
         tuple(sorted(frames)),
         tuple(sorted(replacements)),
-        tuple(
-            sorted(
-                (key, target) for key, targets in calls.items() for target in targets
-            )
-        ),
+        tuple(calls),
         tuple(sorted(initializations, key=lambda r: (r[0], r[1], r[2], r[3].value))),
         tuple(sorted(loop_reads)),
     )

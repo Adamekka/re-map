@@ -48,9 +48,9 @@
     ]
   },
   "trusted_door_policy": {
-    "audit": "slus00748-trusted-normal-door-access-v4",
+    "audit": "slus00748-trusted-normal-door-access-v5",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441",
-    "entry_audit": "slus00748-bounded-ff-native-door-entry-v3"
+    "entry_audit": "slus00748-bounded-ff-native-door-entry-v4"
   },
   "startup_effect_audit": {
     "audit": "slus00748-sca-clipping-v1",
@@ -2334,7 +2334,7 @@
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
   },
   "identity_filtering_policy": {
-    "audit": "slus00748-trusted-normal-identity-filtering-v4",
+    "audit": "slus00748-trusted-normal-identity-filtering-v5",
     "executable_sha256": "e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441"
   },
   "reset_candidate_catalog": {

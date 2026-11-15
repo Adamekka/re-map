@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
+from games.re2.door_operand_roles import DoorOperandRoles, door_operand_roles
 from games.re2.native_control import native_bytes
 from games.re2.native_entry_fields import (
     NativeTaskPhase,
@@ -32,6 +33,11 @@ from games.re2.positive_entry_domain import (
     _source_entry_roles,
     _SourceEntryRoles,
 )
+from games.re2.program_entry_domain import (
+    EnteredFrameDomain,
+    FrameDomain,
+    entered_frame_domain,
+)
 from games.re2.scenario_items import scenario_flags
 from games.re2.scenario_selection import (
     ScenarioSelectionFailure,
@@ -45,7 +51,7 @@ from games.re2.structured_control import (
     PredicateOutcome,
 )
 
-DOOR_ENTRY_AUDIT = "slus00748-bounded-ff-native-door-entry-v3"
+DOOR_ENTRY_AUDIT = "slus00748-bounded-ff-native-door-entry-v4"
 _SEAL = object()
 
 
@@ -63,6 +69,8 @@ class _DoorEntryBinding:
     source: _SourceEntryRoles | PositiveEntryFailure
     source_fields: _TaskFields | PositiveEntryFailure
     source_writes: ScenarioSourceWriteWitnesses | ScenarioSelectionFailure
+    frame_domain: EnteredFrameDomain | FrameDomain
+    operands: DoorOperandRoles | str
     auxiliary_fields: tuple[tuple[int, _TaskFields], ...]
     auxiliary_reads: tuple[tuple[int, str, int, int], ...]
     native_entries: tuple[tuple[int, int], ...]
@@ -202,8 +210,16 @@ def compile_door_entry_binding(
         native_writes = scenario_source_write_witnesses(
             data, room, profile, policy=SourceWritePolicy.NormalDoors
         )
+        frame_domain = FrameDomain.WholeSource
+        operands = "door_operand_source_writes"
         source_fields = PositiveEntryFailure.SourceWrite
         if type(native_writes) is ScenarioSourceWriteWitnesses:
+            frame_domain = entered_frame_domain(data, room, native_writes)
+            operands = door_operand_roles(
+                data, room, profile, executable, native_writes
+            )
+            if type(operands) is not DoorOperandRoles:
+                return DoorEntryFailure.Binding
             fixed = {
                 (r["bank"], r["bit"]): r["expected"] for r in scenario_flags(profile)
             }
@@ -235,6 +251,8 @@ def compile_door_entry_binding(
                 phase=NativeTaskPhase.Ordinary,
                 role=ControlFrames.NativeDoors,
                 predicates=predicates,
+                frame_domain=frame_domain,
+                copy_predicates=operands.copy_predicates,
             )
         foreign = (
             frozenset(
@@ -258,6 +276,8 @@ def compile_door_entry_binding(
             source,
             source_fields,
             native_writes,
+            frame_domain,
+            operands,
             tuple(auxiliary_fields),
             auxiliary_reads,
             native_entries,

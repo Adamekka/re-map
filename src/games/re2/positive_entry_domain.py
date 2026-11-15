@@ -53,6 +53,12 @@ if TYPE_CHECKING:
         IdentityPrimitiveReservation,
     )
     from games.re2.native_entry_fields import _TaskFields
+    from games.re2.program_entry_domain import EnteredFrameDomain
+
+
+class FrameDomain(Enum):
+    WholeSource = "original whole-source operative checks required"
+    Unproved = "raw entry metadata preservation is unproved"
 
 
 class SourceEntryPolicy(Enum):
@@ -173,6 +179,7 @@ class _NativeIdentityEntryRoles(_SourceEntryRoles):
     native_fields: _TaskFields
     compactions: tuple[IdentityCompaction, ...]
     primitive_reservations: tuple[IdentityPrimitiveReservation, ...]
+    frame_domain: EnteredFrameDomain | FrameDomain
 
 
 def _source_entry_roles(
@@ -183,10 +190,12 @@ def _source_entry_roles(
     policy: SourceEntryPolicy = SourceEntryPolicy.Existing,
     compactions: tuple[IdentityCompaction, ...] = (),
     primitive_reservations: tuple[IdentityPrimitiveReservation, ...] = (),
+    frame_domain: EnteredFrameDomain | FrameDomain = FrameDomain.WholeSource,
 ) -> _SourceEntryRoles | _NativeIdentityEntryRoles | PositiveEntryFailure:
     """Unsealed source analysis, never sufficient filtering/presence authority."""
     assert type(policy) is SourceEntryPolicy
     native = policy is SourceEntryPolicy.NativeIdentityFiltering
+    assert native or frame_domain is FrameDomain.WholeSource
     assert type(compactions) is tuple
     assert not compactions or native
     assert type(primitive_reservations) is tuple
@@ -350,6 +359,7 @@ def _source_entry_roles(
                 phase=NativeTaskPhase.Ordinary,
                 role=ControlFrames.NativeIdentityFiltering,
                 numeric_counts=NumericCountPolicy.IdentityConservative,
+                frame_domain=frame_domain,
             )
             if type(fields) is not _TaskFields:
                 return fields
@@ -390,6 +400,7 @@ def _source_entry_roles(
                 fields,
                 compactions,
                 primitive_reservations,
+                frame_domain,
             )
         depths = _call_depths(programs, roots, calls)
         frames = {}

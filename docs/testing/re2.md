@@ -1334,3 +1334,69 @@ are not endorsements. Exact attribution and limits are recorded in
 [the parent review contribution](../research/re2/scenario-selection.md#parent-integration-and-review).
 Parent evidence is under
 `~/.cache/re-map/evidence/2026-11-15-native191-root-integration/`.
+
+### Framed angle predicate and entry projection validation
+
+[RE2-DOOR-013](../research/re2/immutable-doors.md#re2-door-013-framed-angle-predicate-and-preserved-native-entry-projection)
+starts at exact `11a362a` and requires the explicit owned Leon CUE. Run
+`tests/test_re2_door_predicate39.py`,
+`tests/test_re2_door_predicate39_execution.py`,
+`tests/test_re2_identity_program_isolation.py`,
+`tests/test_re2_door_native_frames.py`, `tests/test_re2_door_entry.py` and
+`tests/test_re2_trusted_doors.py`. The unchanged full suite also includes the
+acquired191 freshness/reversal/atomicity controls. Intentional tracked RE1
+fixture reads by that suite are authorized; no tests are deselected.
+
+The real early gate must compile fresh `00-01` source/profile/room/bound inputs,
+then query 6082 only after genuine DoorAuthority. The exact fact is slot 1,
+route `00-02`/floor 0, SAT `31`, lock 0/0; slot 0 remains history-dependent. Synthetic
+frame tests retain true and false39 edges and reject unframed39, escaped
+prefix bypass, suspension, wrong Copy width/destination/counter, changed Work
+and changed native/source bindings. Source ingress mutations include Event_exec,
+Gosub, replacement, kind5 creators/Reset and a producer in an otherwise
+unentered owner. Missing metadata/domain knowledge cannot become an empty set.
+All54 auxiliary inputs and 126 Break reads remain checked, with explicit `0x64`/`0x68`
+collision controls. Effect-tail selectors and cross-policy reuse are rejected.
+The original 135 native calls use the unchanged fixture/store auditor, with no
+MEM_WRITE hooks, stubs, native patches, forced PC or instruction repairs.
+
+Private evidence is under
+`~/.cache/re-map/evidence/2026-11-15-door0001-implementation-sol/`.
+`all_public.py` records actual125 door, identity and positive factory/query
+outcomes. `exact_baseline.py` loads immutable `11a362a` Python source bytes through a
+read-only Git loader and a frozen profile; it creates no checkout. The new
+`read_plans_11a.py` similarly names and checks the exact base. The historical
+b07 loader and its strict assertions remain unchanged. Only the three explicit
+packaging paths change in the frozen baseline profile.
+
+Rebuild CURRENT inventory before joining copied history. Compare all 21 complete
+publications and exact ordered read plans, separating the two actually current
+sources, retained 68-source/71-region visits and simulated 125 visits. Preserve
+items, clearance, acquisition, pose, visits and regions. New door summaries
+must follow only the two measured facts and fresh flags. Reproduce the existing
+README fixture/publication without replacing it, and compare its image and
+all floor geometry bytes. The two final complete generations must use identical
+frozen relevant code/profile/name inputs. Derive complete semantic and raw
+catalog pins without omitting fields. These checks do not add gameplay or
+save/load persistence confirmation.
+
+Final local results, 2026-11-15: all 9,007 Python tests pass with the explicit
+owned CUE; the focused selection passes 570 cases, including 135 original native
+calls through the unchanged fixture and store auditor. Two final complete
+generations are byte-identical from 131 frozen inputs and match the installed
+rooms/floors. All 125 metadata/API comparisons, all 21 publications/full ordered
+read plans, the fresh CURRENT inventory/history joins and the unchanged README
+publication/image checks pass. The exact 7,844-walk base/current comparison
+changes only Strict and Doors for 00-01/17:19. Existing neutral outputs remain
+exact. Scoped lint/formatting, documentation links and whitespace are required
+again on the final diff before commit. Failed setup and expectation attempts
+remain separate from these passing results in the private command records.
+
+Parent integration, 2026-11-15: the exact feature code passes all 9,007 tests
+again in the main checkout. Fresh owned bindings and all 21 complete
+publication/read-plan comparisons match the feature evidence; all 131 frozen
+generation inputs match. An independent read-only review reproduces 469 tests,
+all 125 consumer outcomes and all 7,844 frame walks, with no findings. The
+external Gemini review times out without an opinion; Claude remains disabled.
+See the [parent review contribution](../research/re2/immutable-doors.md#parent-integration-review-2026-11-15)
+for scope, attribution and remaining unresolved outcomes.

@@ -39,11 +39,11 @@ from games.re2.structured_control import ControlFrames, structured_control
     "key,offsets,targets",
     [
         ("00-1b", (2282, 2314), ((0, 26, 0), (0, 3, 3))),
-        ("01-04", (6366, 6398), ((1, 1, 0), (1, 5, 0))),
+        ("01-04", (6366, 6398, 6430), ((1, 1, 0), (1, 5, 0), (1, 3, 0))),
         ("02-08", (2450, 2482), ((1, 27, 0), (2, 0, 0))),
     ],
 )
-def test_owned_public_factory_admits_six_exact_door_rows(owned, key, offsets, targets):
+def test_owned_public_factory_admits_exact_door_rows(owned, key, offsets, targets):
     p, _, _, _, sources, bound, _, rooms = owned
     data, room = sources[key], rooms[key]
     authority = compile_door_authority(data, room, p, bound)
@@ -54,24 +54,15 @@ def test_owned_public_factory_admits_six_exact_door_rows(owned, key, offsets, ta
     ]
     assert [(f.stage, f.room, f.floor) for f in facts] == list(targets)
     assert all(
-        f.activation_floor == f.lock_id == f.lock_type == 0
-        and f.enabled is True
-        and f.activation_mask == 49
+        f.activation_floor == 0 and f.enabled is True and f.activation_mask == 49
         for f in facts
     )
     assert excluded == ()
-    assert list(gaps) == (
-        [
-            {
-                "slot": 2,
-                "creator_offsets": [6430],
-                "reasons": ["competing_non_door_origin"],
-            }
-        ]
-        if key == "01-04"
-        else []
+    assert [(f.lock_id, f.lock_type) for f in facts] == (
+        [(0, 0), (0, 0), (133, 89)] if key == "01-04" else [(0, 0), (0, 0)]
     )
-    assert len(door_access_catalog(data, room, p, bound)["facts"]) == 2
+    assert not gaps
+    assert len(door_access_catalog(data, room, p, bound)["facts"]) == len(offsets)
 
 
 def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
@@ -98,12 +89,23 @@ def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
             Path(__file__).parent / "fixtures/re2/door-native-frame-catalogs.json"
         ).read_text()
     )
+    correction = json.loads(
+        (Path(__file__).parent / "fixtures/re2/door39-consequences.json").read_text()
+    )
+    corrected = correction["targets"]
     neutral, walks = {}, {}
     totals = [0, 0, 0, 0]
     for key, room in rooms.items():
         data = sources[key]
         catalog = door_access_catalog(data, room, p, bound)
-        if key in stage_a:
+        if key in corrected:
+            # Exact measured consequences replace the historical expectations;
+            # no old fact is forced to survive a corrected entry/frame walk.
+            assert {
+                field: catalog[field]
+                for field in ("facts", "scenario_excluded_offsets", "unsupported")
+            } == corrected[key]
+        elif key in stage_a:
             assert {
                 field: catalog[field]
                 for field in ("facts", "scenario_excluded_offsets", "unsupported")
@@ -178,14 +180,15 @@ def test_all125_catalogs_and_unchanged_neutral_and_frame_domains(owned):
                 walks[key + "/" + pk + "/" + role.name] = encode(
                     structured_control(data, program, role)
                 )
-    assert len(rooms) == 125 and totals == [151, 161, 12, 128]
+    assert len(rooms) == 125 and totals == [153, 163, 12, 126]
     assert len(walks) == baseline["walks"] == 7844
     for name, value in (("neutral", neutral), ("walks", walks)):
-        assert (
-            hashlib.sha256(
-                json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-            ).hexdigest()
-            == baseline[name + "_sha256"]
+        assert hashlib.sha256(
+            json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest() == (
+            correction["walks_sha256"]
+            if name == "walks"
+            else baseline[name + "_sha256"]
         )
 
 

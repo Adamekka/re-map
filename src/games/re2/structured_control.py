@@ -63,6 +63,7 @@ def structured_control(
     role: ControlFrames,
     *,
     predicates: tuple[tuple[int, PredicateOutcome], ...] = (),
+    copy_predicates: tuple[tuple[int, int], ...] = (),
 ) -> StructuredControl | ControlFrameFailure:
     assert type(role) is ControlFrames
     assert type(predicates) is tuple and all(
@@ -73,6 +74,10 @@ def structured_control(
         for row in predicates
     )
     assert not predicates or role in (ControlFrames.Doors, ControlFrames.NativeDoors)
+    assert type(copy_predicates) is tuple
+    assert not copy_predicates or role is ControlFrames.NativeDoors
+    prefix_headers = dict(copy_predicates)
+    prefix_predicates = {predicate: header for header, predicate in copy_predicates}
     native = role in (ControlFrames.NativeDoors, ControlFrames.NativeIdentityFiltering)
     door = role in (ControlFrames.Doors, ControlFrames.NativeDoors)
     accesses, loop_reads = set(), set()
@@ -211,7 +216,17 @@ def structured_control(
                     # deliberately do not preserve an atomic-store token.
                     test = rows[following]
                     test_packet = data[following : test["next"]]
-                    require(test["opcode"] in (0x21, 0x23))
+                    if position in prefix_headers:
+                        # The source/native-bound role covers only this same-task
+                        # Copy chain through its immediate Boolean consumption.
+                        require(role is ControlFrames.NativeDoors)
+                        test = rows[prefix_headers[position]]
+                        require(test["opcode"] == 0x39)
+                        test_packet = data[test["offset"] : test["next"]]
+                    require(
+                        test["opcode"]
+                        in ((0x39,) if position in prefix_headers else (0x21, 0x23))
+                    )
                     require(test["opcode"] != 0x21 or test_packet[3] in (0, 1))
                     require(
                         test["opcode"] != 0x23
@@ -258,12 +273,15 @@ def structured_control(
                 or opcode
                 in (
                     0x23,
+                    0x39,
                     0x3E,
                     0x50,
                     0x5E,
                     0x85,
                 )
             ):
+                if opcode == 0x39:
+                    require(door and bool(conditions))
                 if (
                     role
                     in (ControlFrames.FreshPositive, ControlFrames.IdentityFiltering)
@@ -278,7 +296,11 @@ def structured_control(
                     access(ControlField.IfPointer, write=False)
                 # Missing knowledge retains both paths; only the source-bound
                 # door caller may provide an immutable fixed-scenario result.
-                outcome = outcomes.get(position, PredicateOutcome.Both)
+                outcome = (
+                    PredicateOutcome.Both
+                    if opcode == 0x39
+                    else outcomes.get(position, PredicateOutcome.Both)
+                )
                 if outcome is not PredicateOutcome.DoesNotMatch:
                     pending.append((following, conditions, loops, pointer))
                 if conditions and outcome is not PredicateOutcome.Matches:
@@ -287,11 +309,21 @@ def structured_control(
                         # target alone cannot justify that cell's value.
                         require(conditions[-1][1] == pointer - 4)
                         if pointer > GOTO_FF_IF_BASE:
-                            require(
-                                previous == position - 4
-                                and rows[previous]["opcode"] == 6
-                            )
-                            require(opcode in (0x21, 0x23))
+                            if opcode == 0x39:
+                                header = prefix_predicates.get(position)
+                                require(header is not None)
+                                require(rows[header]["target"] == conditions[-1][0])
+                                require(
+                                    previous in rows
+                                    and rows[previous]["opcode"] == 0x1D
+                                    and rows[previous]["next"] == position
+                                )
+                            else:
+                                require(
+                                    previous == position - 4
+                                    and rows[previous]["opcode"] == 6
+                                )
+                                require(opcode in (0x21, 0x23))
                         access(ControlField.IfTarget, pointer - 4, write=False)
                         access(ControlField.IfPointer, write=True)
                         access(ControlField.IfLevel, write=True)

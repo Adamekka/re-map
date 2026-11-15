@@ -21,7 +21,7 @@ from games.re2.startup_declarations import (
 
 # Pinned outputs of the owned-source compiler under this audit. This prevents
 # edited numeric metadata from manufacturing rights without the compiler inputs.
-DOOR_CATALOG_SHA256 = "669d08ddb0fe7cb326cba073b71fae82c1b7468d18b7718b17a33670f07f4523"
+DOOR_CATALOG_SHA256 = "43641e6b40a954b6ebd81f7cd8799be4ff7ac080ec4cb6102a9e815e32e28fe6"
 _SEAL = object()
 
 

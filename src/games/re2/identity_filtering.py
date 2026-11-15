@@ -43,6 +43,7 @@ from games.re2.positive_entry_domain import (
     _NativeIdentityEntryRoles,
     _source_entry_roles,
 )
+from games.re2.program_entry_domain import entered_frame_domain
 from games.re2.scenario_entry_scope import (
     _ScopePolicy,
     _source_scope_facts,
@@ -67,9 +68,9 @@ from games.re2.startup_declarations import (
 )
 from games.re2.structured_control import ControlFrames
 
-IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v4"
+IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v5"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "6dd2a84159859c7f580881bf16ab90c524692632395dfb05a8bba4f24d53ae3c"
+    "06a03140e74e66d914a6fba0f31aff38c1509f3cd8ce2d0aa7f95d3dca3e1a76"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
     "47e043b2483a11ce15c02f8d973ef4b17c1bc0de375f68c1b5e937d368029e1a"
@@ -560,12 +561,14 @@ def normal_engine_identity_filtering(
         )
         if type(writes) is not ScenarioSourceWriteWitnesses:
             return IdentityFilteringFailure.Source
+        frame_domain = entered_frame_domain(data, room, writes)
         ordinary = _task_fields(
             data,
             room["programs"],
             phase=NativeTaskPhase.Ordinary,
             role=ControlFrames.NativeIdentityFiltering,
             numeric_counts=NumericCountPolicy.IdentityConservative,
+            frame_domain=frame_domain,
         )
         if type(ordinary) is not _TaskFields:
             return IdentityFilteringFailure.Control
@@ -599,6 +602,7 @@ def normal_engine_identity_filtering(
             policy=SourceEntryPolicy.NativeIdentityFiltering,
             compactions=compactions,
             primitive_reservations=reservations,
+            frame_domain=frame_domain,
         )
         if type(source) is not _NativeIdentityEntryRoles:
             return IdentityFilteringFailure.Control

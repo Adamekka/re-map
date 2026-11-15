@@ -1,0 +1,974 @@
+{
+  "claim": "RE2-DOOR-013",
+  "base": "11a362a039d85be4d9c875732dc2bb4a33ddef01",
+  "targets": {
+    "00-00": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            4246
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        }
+      ]
+    },
+    "00-01": {
+      "facts": [
+        {
+          "activation_floor": 0,
+          "activation_mask": 49,
+          "creator_offsets": [
+            6082
+          ],
+          "enabled": true,
+          "floor": 0,
+          "lock_id": 0,
+          "lock_type": 0,
+          "room": 2,
+          "slot": 1,
+          "stage": 0
+        }
+      ],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            6050
+          ],
+          "reasons": [
+            "history_dependent_kind_reset"
+          ],
+          "slot": 0
+        }
+      ]
+    },
+    "00-03": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            13962
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        }
+      ]
+    },
+    "00-12": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            10418
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        },
+        {
+          "creator_offsets": [
+            10450
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 1
+        },
+        {
+          "creator_offsets": [
+            10482
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 2
+        }
+      ]
+    },
+    "01-04": {
+      "facts": [
+        {
+          "activation_floor": 0,
+          "activation_mask": 49,
+          "creator_offsets": [
+            6366
+          ],
+          "enabled": true,
+          "floor": 0,
+          "lock_id": 0,
+          "lock_type": 0,
+          "room": 1,
+          "slot": 0,
+          "stage": 1
+        },
+        {
+          "activation_floor": 0,
+          "activation_mask": 49,
+          "creator_offsets": [
+            6398
+          ],
+          "enabled": true,
+          "floor": 0,
+          "lock_id": 0,
+          "lock_type": 0,
+          "room": 5,
+          "slot": 1,
+          "stage": 1
+        },
+        {
+          "activation_floor": 0,
+          "activation_mask": 49,
+          "creator_offsets": [
+            6430
+          ],
+          "enabled": true,
+          "floor": 0,
+          "lock_id": 133,
+          "lock_type": 89,
+          "room": 3,
+          "slot": 2,
+          "stage": 1
+        }
+      ],
+      "scenario_excluded_offsets": [],
+      "unsupported": []
+    },
+    "02-04": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            4100,
+            6428
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 3
+        },
+        {
+          "creator_offsets": [
+            4132
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 4
+        }
+      ]
+    },
+    "03-01": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            8682
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        },
+        {
+          "creator_offsets": [
+            8714
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 1
+        },
+        {
+          "creator_offsets": [
+            8746
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 2
+        },
+        {
+          "creator_offsets": [
+            8778
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 3
+        },
+        {
+          "creator_offsets": [
+            8810
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 20
+        },
+        {
+          "creator_offsets": [
+            8842
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 21
+        }
+      ]
+    },
+    "03-05": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            3630
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        },
+        {
+          "creator_offsets": [
+            3662
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 1
+        },
+        {
+          "creator_offsets": [
+            3694
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 2
+        }
+      ]
+    },
+    "03-0e": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            13902
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        },
+        {
+          "creator_offsets": [
+            13972
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 1
+        },
+        {
+          "creator_offsets": [
+            13938
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 5
+        }
+      ]
+    },
+    "04-00": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            5470
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        }
+      ]
+    },
+    "04-09": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            6526
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        }
+      ]
+    },
+    "05-0a": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            1522
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        },
+        {
+          "creator_offsets": [
+            1554
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 1
+        }
+      ]
+    },
+    "05-17": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            13698
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        },
+        {
+          "creator_offsets": [
+            13730
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 1
+        }
+      ]
+    },
+    "06-04": {
+      "facts": [],
+      "scenario_excluded_offsets": [],
+      "unsupported": [
+        {
+          "creator_offsets": [
+            4350
+          ],
+          "reasons": [
+            "source:door_entered_native_frames"
+          ],
+          "slot": 0
+        }
+      ]
+    }
+  },
+  "walks_sha256": "0578b35e2764ddbfbcd70366b3388d19a26e77512a587a805bf6e35ac728e7ba",
+  "changed_walks": {
+    "00-01/17:19/Strict": {
+      "before": {
+        "edges": [
+          [
+            8606,
+            [
+              8610,
+              8682
+            ]
+          ],
+          [
+            8610,
+            [
+              8616,
+              8682
+            ]
+          ],
+          [
+            8616,
+            [
+              8619
+            ]
+          ],
+          [
+            8619,
+            [
+              8620
+            ]
+          ],
+          [
+            8620,
+            [
+              8623
+            ]
+          ],
+          [
+            8623,
+            [
+              8624
+            ]
+          ],
+          [
+            8624,
+            [
+              8627
+            ]
+          ],
+          [
+            8627,
+            [
+              8628
+            ]
+          ],
+          [
+            8628,
+            [
+              8631
+            ]
+          ],
+          [
+            8631,
+            [
+              8632
+            ]
+          ],
+          [
+            8632,
+            [
+              8636,
+              8656
+            ]
+          ],
+          [
+            8636,
+            [
+              8640
+            ]
+          ],
+          [
+            8640,
+            [
+              8644
+            ]
+          ],
+          [
+            8644,
+            [
+              8652
+            ]
+          ],
+          [
+            8652,
+            [
+              8680
+            ]
+          ],
+          [
+            8656,
+            [
+              8660
+            ]
+          ],
+          [
+            8660,
+            [
+              8664
+            ]
+          ],
+          [
+            8664,
+            [
+              8672
+            ]
+          ],
+          [
+            8672,
+            [
+              8674
+            ]
+          ],
+          [
+            8674,
+            [
+              8678
+            ]
+          ],
+          [
+            8678,
+            [
+              8679
+            ]
+          ],
+          [
+            8679,
+            [
+              8680
+            ]
+          ],
+          [
+            8680,
+            [
+              8682
+            ]
+          ],
+          [
+            8682,
+            [
+              8686
+            ]
+          ],
+          [
+            8686,
+            [
+              8606
+            ]
+          ]
+        ],
+        "if_stores": [
+          [
+            8606,
+            192,
+            8682
+          ],
+          [
+            8606,
+            1216,
+            8682
+          ],
+          [
+            8632,
+            196,
+            8656
+          ],
+          [
+            8632,
+            1220,
+            8656
+          ]
+        ],
+        "break_reads": [],
+        "states": 50,
+        "reached": [
+          8606,
+          8610,
+          8616,
+          8619,
+          8620,
+          8623,
+          8624,
+          8627,
+          8628,
+          8631,
+          8632,
+          8636,
+          8640,
+          8644,
+          8652,
+          8656,
+          8660,
+          8664,
+          8672,
+          8674,
+          8678,
+          8679,
+          8680,
+          8682,
+          8686
+        ]
+      },
+      "after": {
+        "enum": "ControlFrameFailure",
+        "value": "source control frame or escaped pointer is unsupported"
+      }
+    },
+    "00-01/17:19/Doors": {
+      "before": {
+        "edges": [
+          [
+            8606,
+            [
+              8610
+            ]
+          ],
+          [
+            8610,
+            [
+              8616,
+              8682
+            ]
+          ],
+          [
+            8616,
+            [
+              8619
+            ]
+          ],
+          [
+            8619,
+            [
+              8620
+            ]
+          ],
+          [
+            8620,
+            [
+              8623
+            ]
+          ],
+          [
+            8623,
+            [
+              8624
+            ]
+          ],
+          [
+            8624,
+            [
+              8627
+            ]
+          ],
+          [
+            8627,
+            [
+              8628
+            ]
+          ],
+          [
+            8628,
+            [
+              8631
+            ]
+          ],
+          [
+            8631,
+            [
+              8632
+            ]
+          ],
+          [
+            8632,
+            [
+              8636
+            ]
+          ],
+          [
+            8636,
+            [
+              8640
+            ]
+          ],
+          [
+            8640,
+            [
+              8644
+            ]
+          ],
+          [
+            8644,
+            [
+              8652
+            ]
+          ],
+          [
+            8652,
+            [
+              8680
+            ]
+          ],
+          [
+            8680,
+            [
+              8682
+            ]
+          ],
+          [
+            8682,
+            [
+              8686
+            ]
+          ],
+          [
+            8686,
+            [
+              8606
+            ]
+          ]
+        ],
+        "if_stores": [
+          [
+            8606,
+            192,
+            8682
+          ],
+          [
+            8606,
+            1216,
+            8682
+          ],
+          [
+            8632,
+            196,
+            8656
+          ],
+          [
+            8632,
+            1220,
+            8656
+          ]
+        ],
+        "break_reads": [],
+        "states": 36,
+        "reached": [
+          8606,
+          8610,
+          8616,
+          8619,
+          8620,
+          8623,
+          8624,
+          8627,
+          8628,
+          8631,
+          8632,
+          8636,
+          8640,
+          8644,
+          8652,
+          8680,
+          8682,
+          8686
+        ]
+      },
+      "after": {
+        "edges": [
+          [
+            8606,
+            [
+              8610
+            ]
+          ],
+          [
+            8610,
+            [
+              8616,
+              8682
+            ]
+          ],
+          [
+            8616,
+            [
+              8619
+            ]
+          ],
+          [
+            8619,
+            [
+              8620
+            ]
+          ],
+          [
+            8620,
+            [
+              8623
+            ]
+          ],
+          [
+            8623,
+            [
+              8624
+            ]
+          ],
+          [
+            8624,
+            [
+              8627
+            ]
+          ],
+          [
+            8627,
+            [
+              8628
+            ]
+          ],
+          [
+            8628,
+            [
+              8631
+            ]
+          ],
+          [
+            8631,
+            [
+              8632
+            ]
+          ],
+          [
+            8632,
+            [
+              8636
+            ]
+          ],
+          [
+            8636,
+            [
+              8640
+            ]
+          ],
+          [
+            8640,
+            [
+              8644
+            ]
+          ],
+          [
+            8644,
+            [
+              8652,
+              8656
+            ]
+          ],
+          [
+            8652,
+            [
+              8680
+            ]
+          ],
+          [
+            8656,
+            [
+              8660
+            ]
+          ],
+          [
+            8660,
+            [
+              8664
+            ]
+          ],
+          [
+            8664,
+            [
+              8672
+            ]
+          ],
+          [
+            8672,
+            [
+              8674
+            ]
+          ],
+          [
+            8674,
+            [
+              8678
+            ]
+          ],
+          [
+            8678,
+            [
+              8679
+            ]
+          ],
+          [
+            8679,
+            [
+              8680
+            ]
+          ],
+          [
+            8680,
+            [
+              8682
+            ]
+          ],
+          [
+            8682,
+            [
+              8686
+            ]
+          ],
+          [
+            8686,
+            [
+              8606
+            ]
+          ]
+        ],
+        "if_stores": [
+          [
+            8606,
+            192,
+            8682
+          ],
+          [
+            8606,
+            1216,
+            8682
+          ],
+          [
+            8632,
+            196,
+            8656
+          ],
+          [
+            8632,
+            1220,
+            8656
+          ]
+        ],
+        "break_reads": [],
+        "states": 50,
+        "reached": [
+          8606,
+          8610,
+          8616,
+          8619,
+          8620,
+          8623,
+          8624,
+          8627,
+          8628,
+          8631,
+          8632,
+          8636,
+          8640,
+          8644,
+          8652,
+          8656,
+          8660,
+          8664,
+          8672,
+          8674,
+          8678,
+          8679,
+          8680,
+          8682,
+          8686
+        ]
+      }
+    }
+  }
+}

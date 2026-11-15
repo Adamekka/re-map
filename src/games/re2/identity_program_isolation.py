@@ -20,6 +20,7 @@ from games.re2.normal_engine_binding import (
     typed_binding_digest,
 )
 from games.re2.positive_entry_domain import _NativeIdentityEntryRoles
+from games.re2.program_entry_domain import EnteredFrameDomain, entered_frame_domain
 from games.re2.script_control_limits import programs_digest
 
 if TYPE_CHECKING:
@@ -101,7 +102,25 @@ def identity_program_isolation(
     fields = source.native_fields
     entered = frozenset(key for key, _, _ in fields.entries)
     frames = dict(fields.frames)
-    if not entered or not entered <= programs.keys() or set(frames) != programs.keys():
+    domain = entered_frame_domain(data, room, writes)
+    if type(source.frame_domain) is EnteredFrameDomain:
+        if typed_binding_digest(domain) != typed_binding_digest(source.frame_domain):
+            return IdentityIsolationSupport.Metadata
+        if (
+            fields.producers != domain.inventory.producers
+            or fields.entries != domain.inventory.entries
+            or fields.calls != domain.inventory.calls
+            or fields.replacements != domain.inventory.replacements
+        ):
+            return IdentityIsolationSupport.Entries
+        expected_frames = entered
+    else:
+        expected_frames = programs.keys()
+    if (
+        not entered
+        or not entered <= programs.keys()
+        or set(frames) != set(expected_frames)
+    ):
         return IdentityIsolationSupport.Entries
     # The genuine shared inventory seeds every textual event/descriptor
     # alternative, even from an unentered owner. Calls/replacements then close
@@ -143,7 +162,17 @@ def identity_program_isolation(
         for r in effect.writes
     ]
     explicit_writes.extend((r.offset, r.width) for r in writes.record_writes)
-    explicit_writes.extend((r.target_offset, r.width) for r in writes.copies)
+    if type(domain) is not EnteredFrameDomain:
+        # Without the preserved raw projection, retain the original whole-block
+        # Copy check. Valid numeric operands get no implicit metadata exemption.
+        explicit_writes.extend((r.target_offset, r.width) for r in writes.copies)
+    else:
+        # The shared domain protects entry tables, opcodes and every textual
+        # producer/control/write packet. The genuine source role separately
+        # checks each Copy's numeric range; a script-wide immutability demand
+        # would contradict those already validated operand roles.
+        if source.frame_domain != domain:
+            return IdentityIsolationSupport.Metadata
     explicit_writes.extend(
         (r.offset, r.width)
         for fact in source.compactions
@@ -244,7 +273,9 @@ def identity_program_isolation(
         typed_binding_digest(source),
         entered,
         source.entry_locations,
-        tuple(protected),
+        domain.protected_source
+        if type(domain) is EnteredFrameDomain
+        else tuple(protected),
         typed_binding_digest(
             (native, writes, auxiliary_fields, auxiliary_reads, registered, dispatches)
         ),

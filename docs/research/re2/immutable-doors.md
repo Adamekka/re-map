@@ -886,3 +886,237 @@ source/contracts/tests and adds no execution or gameplay evidence. Configured
 Claude Opus 5.5 remains disabled and supplies no review. Root's final manifest
 retains the exact source/artifact hashes, completed review responses, commands,
 failed integration attempts and Candidate limits.
+
+## RE2-DOOR-013: framed angle predicate and preserved native entry projection
+
+Status: Candidate, 2026-11-15. Resident Evil 2 Dual Shock Ver., USA, Disc 1
+Leon, SLUS-00748, Leon A, Original Game, Normal. Executable `SLUS_007.48`
+is 987136 bytes, SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+This dependent correction starts at local unpublished
+`11a362a039d85be4d9c875732dc2bb4a33ddef01`. It consumes the human's separately
+approved initialized, unmodified normal-engine door and filtering premises.
+It grants no pickup UI, strict, positive, arbitrary actor-index or global
+counter-range permission. No DuckStation version is newly tested. Retained
+RAM comes from the previously copied version94 saves; native component inputs
+are explicit synthetic ABI/resource controls, not gameplay.
+
+### Failure and actual gain
+
+The owned `00-01` source, SHA256
+`ece1ea515b65c4ef54222054eb8b140c19692248d71e958060fb098755636bf5`,
+previously returned `DoorFailure(copy_changes_unclosed_operand)`. The early
+real compiler gate now returns `DoorAuthority`; its real access query emits
+only slot 1/creator 6082, enabled SAT `31`, route stage 0/room 2/floor 0, activation
+floor 0, lock 0/0. Slot 0/creator 6050 retains `history_dependent_kind_reset`.
+Its entered Reset/callback alternatives are preserved. Neither slot is
+scenario-excluded. This is a source interpretation gain, not observed passage,
+known unlock state, room clearance or new gameplay coverage.
+
+The same generic entry separation also resolves `01-04` slot 2/creator 6430,
+route stage1/room3/floor 0, lock 133/type 89. Its competing non-door origin is in
+an unentered owner. Raw descriptors remain in metadata. The complete 125-source
+public API comparison has 153 facts covering 163 creators, 12 exclusions and 126
+unsupported slots, versus 151/161/12/128 at the exact base. No prior door fact or
+exclusion is withdrawn. Twelve other sources retain unsupported slots with
+an earlier explicit `door_entered_native_frames` failure. Every consequence,
+including diagnostics, is retained in `complete125-consequences.json`.
+
+All 33 earlier identity queries remain exact, including the empty `03-02`
+query and acquired 191/creator 3922. Identity `01-04` advances from unsupported
+frames to its existing registration/dispatch failure and gains no query.
+All 125 positive factory/query outcomes remain exact. No GID0 or pickup UI
+extension is made here.
+
+### One raw inventory and the joint preflight
+
+The existing native producer/call/replacement pass is extracted without a
+second control interpreter. It retains every textual Event_exec and kind5
+creator/Reset alternative, including producers in otherwise unentered owners.
+Gosub and replacement closure retain actual native task and call depth.
+`00-01` has 201 entries across 32 programs. Procedures 17:11/12/33/34 have no
+entry under the preserved projection. The Work3 index Copy in 17:34 therefore
+gets no selector permission. Counter 4 is a u16LE value at PS1 virtual `0x800D47F4`, mask `0xFFFF`,
+and still has real player-X and auxiliary writers; no global 1..4 range is inferred.
+
+Source offsets in this claim are decimal file offsets. Native code and RAM
+addresses are PS1 virtual addresses, never host-process addresses. The
+unsealed, source-bound domain protects the actual two u32LE RDT section
+pointer cells at file offsets 72/76, derived u16LE procedure offset tables, every
+opcode, and complete control/producer/source-write packets. Record/model
+writers must miss the complete script extents. Copies may change only their
+separately validated numeric operands, or non-control operands in a proved
+unentered owner. New producers, calls, replacements, descriptor alternatives,
+interior entries or source writes withdraw the old exclusion. Missing knowledge
+explicitly requires the original whole-source frame and operative checks.
+Every entered program must pass its intended policy's complete operative,
+receiver, resource, writer, registration and dispatch checks before that
+policy's real compiler seals authority.
+
+The identity wrapper uses this projection for Copies instead of requiring the
+entire script block immutable. Its complete block protection against record,
+model, compaction and rebind writes remains. This removes the contradictory
+blanket Copy check while retaining the genuine source role's numeric operand
+validation. Identity-only numeric receiving-count semantics are unchanged.
+See the [joint induction](scenario-selection.md#joint-entry-and-operative-contract).
+
+### Bound native operands and both continuations
+
+The shared frame walker models opcode `39`'s true continuation and actual false
+active-IF consumption. Standalone `39` remains unsupported. At 17:19, IF 8632,
+halfword Copies 8636/8640 and predicate 8644 form one uninterrupted same-task
+prefix. True reaches 8652; false pops the current IF level/pointer and consumes
+the fresh target 8656. Both outcomes remain, even if an unsealed caller attempts
+to provide a narrowed actor result. No source predicate truth or progress is
+assumed.
+
+Complete original wrapper/helper/table/Copy/Work/pump bytes bind the qualified
+arithmetic. Four signed16 coordinates produce differences within ±65535.
+The original zero-divisor arm skips DIV; the shifted numerator cannot equal
+INT_MIN, excluding the actual signed-overflow trap when the divisor is -1.
+No generic native trap arm is ignored. The copied-original regression runs 108
+unchanged component calls, including zero vectors, signed16 extremes,
+tolerance extremes, both Boolean outcomes and the original IF/ELSE/ENDIF
+handlers. It uses the unchanged execution fixture and code-hook store auditor,
+with full 2 MiB final RAM, return PC/V0 and SP/S0-S7 checks. GP/FP are not
+separately asserted; pinned functions do not write them.
+
+Actual task 9/depth 0 stores reach task 12 offsets `0x64`/`0x68`, u32LE, full-word mask
+`0xFFFFFFFF`, PS1 virtual `0x800D8A34`/`0x800D8A38`. The existing receiving algorithms
+check those against all 54 auxiliary derivations and 126 Break reads. Both
+new-cell overlap counts are zero. Collision regressions retain every model's
+actual reads and add an adversarial overlapping read; no fabricated returned
+native role participates in an authority gate.
+
+Only the bound Esp_call scalar tail at opcode `3A`+14..16 joins the normal-door
+Copy ranges. Original native `0x80056610` reads signed16, and `0x8001BFC8` stores that
+u16LE halfword, mask `0xFFFF`, in the owned effect record+`0x22`. At `0x8001C048` A1 is replaced
+from the original matrix. This tail selects no bank, element, reference,
+callback or allocation destination. Full allocation failure stays possible.
+The old sound-tail interpretation is Rejected. Twenty-seven additional
+unchanged original component calls cover tail `0/1/7FFF/8000/FFFF`, byte Copy
+truncation and Work3's real signed-byte indexing. The other policies receive
+no tail right. Explicit selectors and fresh flag checks remain mandatory.
+
+### Provenance and limits
+
+The qualified, unsealed source/native reports remain unchanged under
+`~/.cache/re-map/evidence/2026-11-15-door-0001-predicate39/` and
+`2026-11-15-door-0001-mutable-roles/`. Their manifest SHA256 values are
+`b6186dc43c193cc5693ee7fcc50f12f34487b51f3dfc7199b35c5dda444378fe`
+and `365c50e205972674ee0c1263621aee09c591e38bcf12db61715f1cba91dc1e8e`.
+Their original author, `/root/recover_door_0001_boundary`, verified exact model
+`gpt-6.1-sol`, effort `xhigh`, authored private arithmetic, Copy, Esp_call,
+Work3 and receiver qualification. Those frozen reports use an older semantic
+profile and confer no current authority. Failed interpretations and prior
+attribution are preserved.
+
+Contribution, 2026-11-15: this implementation sub-agent, independently verified
+in matching session/turn metadata as `gpt-6.1-sol`, effort `xhigh`, authors the
+shared extraction, projection, intended-policy integration, frame correction,
+narrow operand binding, regressions, real factory comparisons and this record.
+The human supplies scope, trust decisions and the later shared-projection
+clarification from the separate GID0 investigation. Local review checks changed
+source/control/receiver contracts, rights separation, exact native/source
+bindings and the measured consequences. It is not independent or external
+review. Parent integration owns those reviews. No emulator, game input,
+native restoration, memory-card persistence or new gameplay is claimed.
+
+Reproduction inputs, exact source/artifact hashes, commands, failed harness
+setups and results are retained in the new private directory
+`~/.cache/re-map/evidence/2026-11-15-door0001-implementation-sol/`.
+[Focused validation](../../testing/re2.md#framed-angle-predicate-and-entry-projection-validation)
+keeps source interpretation, controlled CPU execution, retained RAM replay and
+real gameplay distinct.
+
+### Complete outputs and retained reader comparison
+
+Two final complete generations from 131 frozen relevant code/profile/name inputs
+are byte-identical and match the installed metadata. Door audit is v5, native
+entry audit v4 and identity audit v5. Complete semantic profile SHA256 is
+`06a03140e74e66d914a6fba0f31aff38c1509f3cd8ce2d0aa7f95d3dca3e1a76`.
+The complete independently derived door catalog SHA256 is
+`43641e6b40a954b6ebd81f7cd8799be4ff7ac080ec4cb6102a9e815e32e28fe6`.
+The recomputed raw identity pin remains
+`47e043b2483a11ce15c02f8d973ef4b17c1bc0de375f68c1b5e937d368029e1a`.
+Rooms SHA256 is
+`b186bc4013c8bf9d1775e41e84e4e254edb617bdf1aa3508b8631c9c96086303`.
+Every non-door room field and all floor bytes remain exact. Floor SHA256 remains
+`aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+No field is omitted from a semantic or catalog digest and no old pin is accepted.
+
+The new exact `11a362a` loader reproduces all 21 base publications, including complete
+ordered read plans. Fresh CURRENT inventory precedes strict copied-history
+joins. All 21 current plans and non-door publication fields remain equal. The
+nine current-only/observed-two-source publications are entirely unchanged.
+Each of six simulated 125 and six actual retained-history publications changes
+only `00-01:6082` and `01-04:6430` from Unchecked to Open, plus `01-04`'s door
+summary. Labels are respectively "Open" and "Unlocked". Their independent
+unlock states remain Unknown and Unlocked. Actual retained visits remain 68
+sources/71 regions, with 49 Cleared/15 Incomplete/4 Unknown rooms and four
+Unknown item rows. Door counts become 100 Open/80 Unchecked/1 Blocked;
+33 sources retain incomplete door knowledge. No visited room is declared clear
+because of these door changes. The source history remains unchanged and is
+locked only after copying it into new private paths.
+
+The actual observed-source README fixture/publication and existing PNG remain
+byte-identical. Their SHA256 values remain
+`696eaa68dcf5e31f10a3a28ec44d9ea018a2758193a07af1b74c7c101834b9b9`
+and `cdeecce390de12c0304e2ce1d877b170c0091443188aa90ccbe96ba241a24f16`.
+No UI or geometry change is made for this proof.
+
+The exact base/current four-role matrix checks all 7,844 walks. Only
+`00-01/17:19/Strict` and `00-01/17:19/Doors` differ. The previously optimistic
+Strict frame becomes unsupported; the door walk gains the missing false
+continuation. No previously granted particular fact depended on that Strict
+frame. All 125 Existing neutral results keep their original digest. The
+historical fixture remains unchanged; the new consequence fixture records both
+changed walks and the new complete matrix digest. This distinguishes corrected
+control results from actual door facts and avoids forcing old conclusions.
+
+Final local verification, 2026-11-15: all 9,007 tests pass with the explicit
+owned CUE and authorized tracked-fixture reads, without deselection or test
+runner changes. The 570-test focused run includes both original CPU component
+groups, all receiver/ingress controls and fresh acquisition/unlock/atomicity
+checks. Initial failing harness/expectation runs remain in private evidence.
+They include the old door diagnostics/counts, old two-walk digest, a synthetic
+variant fixture carrying stale departed-source authority, an incorrect polling
+enum name, an over-strong rejection of an auxiliary LoopEnd write instead of a
+live read, and a comparison expecting "Open" where existing copy says
+"Unlocked". These are corrected tests/expectations, not new production
+exceptions. Production inputs and code remain identical to the two frozen
+final generations. No independent or external review is performed by this
+implementation agent.
+
+### Parent integration review, 2026-11-15
+
+Codex root, verified `gpt-6.1-sol`, effort `xhigh`, integrated the exact
+`5bb167bfdae2796a292dca517ba7ef8f3585b987` feature bytes and reviewed the shared
+producer, entered-frame, Copy, receiver and authority contracts. Fresh root
+bindings reproduce all 69 resources, 125 sources, 54 auxiliaries, native
+operand windows and receiver fields. All 21 integrated publications and full
+ordered read plans equal the feature's frozen results. All 131 generation
+inputs remain exact, so the two frozen complete generations also apply to the
+integrated code. The integrated full suite passes 9,007 tests in 307.09 seconds;
+scoped lint, formatting, documentation links and whitespace checks pass.
+
+Independent reviewer `/root/review_re2_191_final`, verified `gpt-6.1-sol`,
+effort `xhigh`, reviewed all 27 changed paths without edits. It reproduced
+469 focused tests, including 135 original component calls, all 125 public
+door/identity/positive outcomes, all 7,844 frame walks, all 21 publications
+and ordered reads, bindings and pins. It returned no findings. It did not
+repeat the full suite or complete generations and performed no gameplay.
+
+The requested Gemini `gemini-3.8-flash` high-effort external review returned
+no opinion before Antigravity's 15-minute inactivity timeout. Claude Opus 5.5
+was unavailable because its configured provider was disabled. Neither is an
+endorsement. Parent review records, exact input comparisons, failed external
+receipt and validation logs remain in
+`~/.cache/re-map/evidence/2026-11-15-door0001-root-integration/` and
+`~/.cache/re-map/evidence/2026-11-15-door0001-root-review/`.
+
+Identity source `01-04` now reaches the dispatch rejection instead of the
+earlier control rejection. Its GID0 query remains unavailable; all 33 previously
+supported identity queries remain exact. The four Unknown item rows, four
+Unknown rooms and 126 unsupported door slots remain unresolved. This parent
+work adds no emulator observation, restoration or persistence claim.

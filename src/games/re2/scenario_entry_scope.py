@@ -15,6 +15,7 @@ from enum import Enum
 
 from games.bit_flags import msb_flag_location
 from games.re2.door_entry import _DoorEntryBinding
+from games.re2.door_operand_roles import DoorOperandRoles
 from games.re2.event_presence import (
     FLAG_WRITE_OPERATIONS,
     flag_write_conflicts,
@@ -33,6 +34,7 @@ from games.re2.positive_entry_domain import (
     _SourceEntryRoles,
 )
 from games.re2.positive_pickup_roles import PickupRolesSupport, _PositivePickupRoles
+from games.re2.program_entry_domain import EnteredFrameDomain
 from games.re2.room_data import decode_room
 from games.re2.scenario_items import scenario_flags
 from games.re2.scenario_selection import (
@@ -547,6 +549,18 @@ def _source_scope_facts(
             # Unavailable isolation retains the original whole-source operative
             # checks. Unknown proof never grants an empty set or exclusions.
             operative_programs = frozenset(programs)
+        if door_entries and type(entry_domain.frame_domain) is EnteredFrameDomain:
+            domain = entry_domain.frame_domain
+            require(domain.matches(data, programs, domain.inventory))
+            require(
+                type(entry_domain.source_fields) is _TaskFields,
+                "door_entered_native_frames",
+            )
+            require(
+                set(dict(entry_domain.source_fields.frames)) == domain.entered_programs,
+                "door_entered_native_frames",
+            )
+            operative_programs = domain.entered_programs
         require(all(key in programs for key in ("16:0", "17:0", "17:1")))
         commands = {
             key: {row["offset"]: row for row in program["commands"]}
@@ -598,6 +612,15 @@ def _source_scope_facts(
             )
         if closed_entries or identity_policy:
             scalar_immediates.extend(source_entries.numeric_ranges)
+        if door_entries:
+            require(type(entry_domain.operands) is DoorOperandRoles)
+            scalar_immediates.extend(entry_domain.operands.effect_tails)
+            if type(entry_domain.frame_domain) is EnteredFrameDomain:
+                require(
+                    entry_domain.frame_domain.writes_sha256
+                    == typed_binding_digest(writes)
+                )
+                scalar_immediates.extend(entry_domain.frame_domain.inert_operands)
         if door_policy:
             # Copy may change values, never source selectors, PC/frame targets,
             # access identity or fixed scenario bits. Each extra domain belongs
@@ -1084,6 +1107,8 @@ def _source_scope_facts(
         # Each policy keeps its own frame contract within the shared walk.
         reached_locations, all_edges = set(), []
         for key, program in programs.items():
+            if key not in operative_programs:
+                continue
             predicates = (
                 tuple(
                     (

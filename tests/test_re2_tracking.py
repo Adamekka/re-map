@@ -1846,6 +1846,11 @@ def test_live_door_slot_suppresses_only_superseded_current_variants(snapshot):
     }
     source["doors"].append(alternative)
     profile = replace(profile, rooms={**profile.rooms, "00-01": source})
+    if profile.door_catalogs:
+        # This test deliberately invents a creator. Its raw slot-choice checks
+        # use explicit opt-out from the original departed-source catalog.
+        profile = replace(profile, door_catalogs={})
+
     pointer = 0x80100000 + original["offset"] + 2
     other_pointer = 0x80100000 + alternative["offset"] + 2
     ram[other_pointer & 0x1FFFFF : (other_pointer & 0x1FFFFF) + 30] = read(

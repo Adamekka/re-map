@@ -95,7 +95,19 @@ def test_target_joint_preflight_keeps_raw_candidates_and_opaque_ifs(owned, targe
     assert set(rooms["03-05"]["programs"]) - isolation.entered_programs == {"17:6"}
     assert len(isolation.entered_programs) == 12
     assert target.protected_programs == frozenset(rooms["03-05"]["programs"])
-    assert isolation.protected_source == ((72, 4), (76, 4), (3628, 100), (3728, 2100))
+    assert (72, 4) in isolation.protected_source and (
+        76,
+        4,
+    ) in isolation.protected_source
+    assert (3728, 2100) not in isolation.protected_source
+    assert all(
+        any(
+            start <= row["offset"] < start + width
+            for start, width in isolation.protected_source
+        )
+        for program in rooms["03-05"]["programs"].values()
+        for row in program["commands"]
+    )
     assert [
         (f.offset, f.if_cells, f.work_offsets) for f in target.member_if_predicates
     ] == [
@@ -237,8 +249,9 @@ def test_entry_changes_require_operative_checks_and_reject_the_unowned_store(
         if mode == "interior":
             assert isolation is IdentityIsolationSupport.Entries
         else:
-            assert type(isolation) is IdentityProgramIsolation
-            assert "17:6" in isolation.entered_programs
+            # A changed raw entry cannot reuse the old entered-only frames.
+            # The real compiler must derive the new domain and check that owner.
+            assert isolation is IdentityIsolationSupport.Entries
     assert (
         type(
             _source_scope_facts(

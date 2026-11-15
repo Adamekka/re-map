@@ -1087,7 +1087,7 @@ def build(cue: Path, profile: dict, names: dict) -> tuple[dict, dict]:
             "research_ids": [
                 *header["research_ids"],
                 *(
-                    ["RE2-DOOR-009"]
+                    ["RE2-DOOR-009", "RE2-DOOR-013"]
                     if access_policy is DoorPolicy.TrustedNormalEngine
                     else []
                 ),

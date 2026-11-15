@@ -98,8 +98,8 @@ def test_complete_owned_corpus_reproduces_every_slot_and_creator(owned):
         later,
         excluded,
         accepted_creators,
-    ) == (279, 321, 151, 146, 14, 72, 12, 161)
-    assert creators - excluded - accepted_creators == 148
+    ) == (279, 321, 153, 148, 15, 72, 12, 163)
+    assert creators - excluded - accepted_creators == 146
 
 
 def test_door_authority_is_separate_and_compiler_owned(owned):
@@ -186,7 +186,7 @@ def test_catalog_loader_rejects_changed_facts_and_policy():
     profile = json.loads((ROOT / "profiles/re2_leon_a_slus00748.json").read_text())
     document = json.loads((ROOT / "data/rooms_slus00748.json").read_text())
     rooms = {r["id"]: r for r in document["rooms"]}
-    assert len(load_door_catalogs(profile, rooms, document)) == 75
+    assert len(load_door_catalogs(profile, rooms, document)) == 76
     original = copy.deepcopy(document)
     for mutation in ("target", "enabled", "excluded", "missing", "profile", "program"):
         document = copy.deepcopy(original)
@@ -221,15 +221,14 @@ def test_catalog_loader_rejects_changed_facts_and_policy():
 def test_source_owned_unsafe_paths_remain_unsupported(owned):
     p, _, _, _, sources, bound, _, rooms = owned
     expected = {
-        "00-03": "goto_receiving_frame_consumer",
-        "00-01": "copy_changes_unclosed_operand",
+        "00-03": "door_entered_native_frames",
         "03-00": "sound_compaction_write_domain",
     }
     for key, reason in expected.items():
         assert compile_door_authority(
             sources[key], rooms[key], p, bound
         ) == DoorFailure(reason)
-    for key, slot in [("00-09", 0), ("00-09", 2), ("05-06", 3)]:
+    for key, slot in [("00-01", 0), ("00-09", 0), ("00-09", 2), ("05-06", 3)]:
         catalog = door_access_catalog(sources[key], rooms[key], p, bound)
         gap = next(g for g in catalog["unsupported"] if g["slot"] == slot)
         assert "history_dependent_kind_reset" in gap["reasons"]
@@ -349,7 +348,7 @@ def test_every_departed_creator_and_keyed_variant_rebuilds_with_fresh_flags(snap
             # Only derived door summaries may change on each room record.
             assert tracker.rooms[key].items == legacy.rooms[key].items
             assert tracker.rooms[key].completion == legacy.rooms[key].completion
-        assert len(covered) == 161
+        assert len(covered) == 162
         assert len(excluded) == 12
         assert not excluded & observed.keys()
         for identity, actual in observed.items():
@@ -689,3 +688,42 @@ def test_synthetic_departure_reentry_and_earlier_state_rebuild_without_access_ca
     assert poll_re2(profile, fresh, first_read).status is PollStatus.Display
     assert fresh.doors == tracker.doors
     assert fresh.rooms == tracker.rooms
+
+
+@pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
+@pytest.mark.parametrize("snapshot", ["00-05"], indirect=True)
+def test_door39_departed_gain_preserves_items_and_reverses_key_state_atomically(
+    snapshot,
+):
+    import copy
+
+    from emulator.duckstation_gdb import MemRead
+
+    profile, _, put, read = snapshot
+    tracker = Tracker()
+    for stage, room in ((0, 1), (1, 4)):
+        tracker.mark_current(RoomId(stage, room))
+    items = None
+    key_address = profile.flag_banks[profile.runtime_layout["key_bank"]][0]
+    for unlocked in (False, True, False):
+        for word in range(2):
+            put(key_address + 4 * word, 0xFFFFFFFF if unlocked else 0, 4)
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        doors = {d.observation_id: d for d in tracker.doors}
+        assert doors["00-01:6082"].state == "OPEN"
+        assert doors["00-01:6082"].unlock_state is DoorUnlockState.Unknown
+        assert doors["00-01:6050"].state == "UNCHECKED"
+        assert doors["01-04:6430"].state == ("OPEN" if unlocked else "LOCKED")
+        observed_items = {key: row.items for key, row in tracker.rooms.items()}
+        if items is None:
+            items = copy.deepcopy(observed_items)
+        assert observed_items == items
+        before = copy.deepcopy(tracker)
+
+        def failed_read(address, width):
+            if address == key_address:
+                return MemRead(False, b"")
+            return read(address, width)
+
+        assert poll_re2(profile, tracker, failed_read).status is PollStatus.ReadFailure
+        assert tracker == before
