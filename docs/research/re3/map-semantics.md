@@ -1470,6 +1470,146 @@ Configured Claude Opus 5.5 remains disabled and supplies no review. Root's
 final manifest retains the reviewed hashes, responses and local link/whitespace
 checks. These reviews add no native situation or gameplay confirmation.
 
+### Follow-up: ordinary input leaves the recurring gate clear
+
+A later isolated episode on the same pinned revision and DuckStation build
+adds ordinary input observations, not a recurring support query. Its existing
+seed retains the earlier human Hard provenance. There is no new difficulty
+selection or sufficient general Hard/campaign admission rule.
+
+An intervening episode had ended during interruption before any experimental
+resume or input. Its exact seed RAM and CPU receipt were verified, but its
+wrapper-exit and orderly debugger-close receipts are unavailable. Its retained
+read-only report reproduces SHA256
+`e319bb3582458d003d7ecf6c47f27fe1c001eca23f12b744ecbfce67d60298c6`.
+That ended attempt is not a negative ordinary-input test and was not resumed.
+
+The new episode uses a new private application and port 2441. Before any input
+or resume, the full two MiB RAM has SHA256
+`9d880e76f431a6bd946785c602b65f2f0b17fd6760ac94de3a2196229289ca0a`.
+All GPRs, HI/LO and PC match the prior stock receipt. The explicit application
+path is reconciled with the sole DuckStation process, exact-owned PID 28000 and
+argv, before CUA input. The prelaunch achievement/card/patch exclusions and
+private muted black shader remain mandatory.
+
+A width-four native write watch reports control word `0x800CCBA0` changing
+from `0x01000000` to zero. The deferred GDB stop reports PC `0x80052C70`;
+A0 is zero, A2 names that control word and V1 is `0xFEFFFFFF`. The bound source
+packet at `0x8011DF06` is `4D 02 07 00`, with task cursor `0x8011DF0A`.
+Attribution to the original SW at `0x800547BC` uses pinned code/source and
+register inference. This episode has no execute stop at that SW or a saved
+current-instruction checkpoint. The separate direct CPU-payload evidence in
+[INPUT-007](hard-start.md#re3-input-007-original-code-clears-the-startup-input-filter)
+retains its own authorship and limits.
+
+Native controller readback then records Right while facing changes from 2048
+to 2448. A later Up sample accompanies XYZ changing from
+`[13209,0,-14515]` to `[12823,0,-14170]`, with facing then 2528. These are
+coherent before/after observations with the delivered input, not an isolated
+Up-only motion vector or a guest-frame count derived from host time. The
+existing Candidate reader returns Display at these stops; that result does
+not supply the unresolved general admission rule.
+
+Raw held input at `0x800CC830` and logical held input at `0x800CC83C` are
+u32 little endian. Right reads `0x2000/0x2`; the later Up sample reads
+`0x1000/0x11`. Private F16/F13 controller-macro toggles deliver those inputs.
+XYZ at `0x800CCBF8` are three signed i32 little-endian fields; facing at
+`0x800CCC32` is u16 little endian. No input word is written through GDB.
+
+Both full preinput world captures contain the complete 1,636-byte R10D
+collision section equal to the owned source. Postinput evidence instead
+consists of bounded fields, the public source transaction and four controller
+revision-window Boolean match receipts. No raw postinput code-window bytes,
+full postinput RAM or collision equality is claimed. The eight earlier
+nonplayer works in the ordered list are not treated as player observations.
+
+The two postinput player work `+0x2E` samples are u16 `0x4000`, with the
+recurring `0x0080` gate clear. No hit is reported while the original gated
+callsite breakpoint at `0x80033C64` is armed. Turning and moving add no observed
+recurring height return, support selection, physical floor/contour ownership,
+tracker visit or production-profile readiness. The constructor result above
+remains a separate native call.
+
+The four host key transitions complete before process exit. Right's release
+is also visible in the later guest input sample. Up's release has a successful
+host receipt but no final guest-zero readback. The 600-second watchdog ends
+the episode before manual final capture and breakpoint removal finish. The
+wrapper records exit zero after 600.188951 seconds; the retained cleanup audit
+records the PID absent and port 2441 bindable. Two late breakpoint-removal
+requests fail because the process is already gone, and the client closes by EOF.
+This is not an orderly manual debugger teardown. Claims end at the coherent
+epoch-12 observation. Execution during any later disconnect interval remains
+unobserved.
+
+Private evidence is retained separately under
+`~/.cache/re-map/evidence/2026-11-13-re3-recurring-input-native2/`; the
+interrupted episode remains under `2026-11-13-re3-recurring-input-native/`.
+The episode was not restarted after watchdog exit. No game-byte/PC/gate patch,
+synthetic native call, new checkpoint, user exploration history or production
+change is part of this follow-up.
+
+The interrupted verifier expected an `author-final.json` that was never
+created. Recovery preserves that absence and the original verifier; it does
+not synthesize a historical receipt. The unfinished `host-input-actions.json`
+also remains unchanged. Its zero-input/Right-held intermediate fields are
+superseded by the final controller chronology and actual CUA return records.
+
+The offline recovery is retained under
+`~/.cache/re-map/evidence/2026-11-15-re3-native2-recovery/`.
+`reproduction-argv-final.json` supplies every mandatory input to
+`verify_control_recovered.py`: evidence, checkout, owned image, catalog,
+pinned source contract, stock CPU receipt, separate recovery-author metadata,
+CUA return receipts and frozen input manifest. Replace only its `--out`
+with a new absolute directory. The verifier launches no emulator, CPU,
+debugger or UI and sends no process signal. Its SHA256 is
+`255c49e8c310c297421894db8f63365cc79abe77a67c0acb35ef3c7c1bafc016`.
+Two final recovery runs and root's fresh run produce identical report SHA256
+`5c633bdd031bcf8e1cbc569192a7f661801ff42a0e209a3accc72cdbb1ef73dd`.
+Existing-output and synthetic late-key-return controls reject. These are
+offline verifier controls, not additional native observations.
+
+All 315 frozen original entries, 306 prior-episode entries and seven original
+resources rehash unchanged. The private settings gain only the four recorded
+window-geometry keys; the achievement/card/patch exclusions remain intact.
+Counts are manifest entries, not necessarily distinct files. Root also checks
+all 47 recovery-manifest entries. No November 15 process/port probe or new
+native run is represented by these retained receipts.
+
+Contribution, 2026-11-13: investigator
+`investigate_re3_constructor_support`, task-verified `gpt-6.1-sol` at `xhigh`,
+authors the native attempt, input and cleanup receipts, interrupted verifier
+and evidence. Root, separately verified as the same model and effort, inspects
+the write-watch/source distinction and bounded capture/cleanup limits and
+writes this follow-up. The earlier constructor, attribution and human difficulty
+selection retain their separate authorship.
+
+Contribution, 2026-11-15: `recover_re3_native2_evidence`, verified
+`gpt-6.1-sol` at `xhigh`, session `01a1df48-ad57-7732-8783-e2641b71dbbc`,
+authors the recovered offline verifier, exact CUA return checks, rejection
+controls and final evidence manifest. Root, separately verified as the same
+model and effort, checks the final inputs, reproduces the report and updates
+this record. Neither contribution adds a native episode. Root evidence is
+under `~/.cache/re-map/evidence/2026-11-15-re3-input-followup-integration/`.
+
+Independent review, 2026-11-15: `review_re3_input_recovery`, verified
+`gpt-6.1-sol` at `xhigh`, reports no findings within this follow-up. It
+reproduces the final report, checks the 47 recovery artifacts, 315 original
+entries and 306 prior entries, independently reads the input/pose deltas and
+CUA returns, and checks native instructions, cleanup limits and 383 local
+documentation links. Its evidence is retained under
+`~/.cache/re-map/evidence/2026-11-15-re3-input-independent-review-01a1df5a/`.
+It performs no new native execution or external review.
+
+The configured external snapshot reviewer identifies an ambiguous reference
+from seed RAM to the preceding report digest. Root replaces that reference
+with the explicit two-MiB RAM digest and checks it against the retained RAM
+and verifier. T3 reports `gemini-3.8-flash`, requested
+`thinking_level=high`, through Antigravity, without a separate executed-model
+attestation. The reviewer inspects the supplied documentation, verifier,
+controller and numeric/source receipts and performs no tools or execution.
+Configured Claude Opus 5.5 remains disabled and supplies no review. These
+reviews add no native situation, support result or readiness claim.
+
 ## Reproduction and evidence
 
 The existing [disc inspector](identity.md) and [room catalog](room-format.md#reproduction-and-interface) establish the owned input identity. The exact MAP resource is 634880 bytes at ISO LBA 6807, SHA256 `7182beb90347fe4ea0c2a4db30dff93aaee88b8ef1b633398ffcef6f3d3d1268`. LBA uses the zero-offset single MODE2/2352 track contract of RE3-ID-001.
