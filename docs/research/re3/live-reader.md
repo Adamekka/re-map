@@ -264,3 +264,108 @@ field is unavailable. Claude Opus 5.5 remains disabled and supplies no review.
 This advisory source/evidence review performs no native execution. Root review
 and the rejected whole-file comparison assumption remain under
 `~/.cache/re-map/evidence/2026-11-15-re3-attract-evidence-review/`.
+
+## RE3-LIVE-004: original title input reaches the game but release remains unverified
+
+**Status: Candidate**, 2026-11-15. One fresh original RE3 USA `SLUS-00923`
+cold boot reaches the native title menu and accepts one observed Left edge.
+The first post-OFF release check fails, so the episode stops before Hard
+selection. This adds no positive campaign admission, movement, reentry or
+production-profile readiness.
+
+The owned executable remains SHA256
+`2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`;
+TITLE remains
+`b7807319bc0a26339d925c3a260de22df6c2d4144b0dfa5346b9fa062e6924cd`.
+The tested DuckStation is `0.1-12640-gbb4e9ac5e`, source commit
+`bb4e9ac5e6b3872126dc76f1fe4f46169c96b082`, binary SHA256
+`ddceaaa426e67e328430fcb916320803fddc014374ea45a00778e58081f36dcb`.
+The version-only child and one private game launch have separate receipts.
+No save, restoration, card, patch, guest write or user-history access occurs.
+
+### Actual input and stopped observations
+
+All addresses below are PS1 virtual addresses. Multi-byte fields are little
+endian, with full-width masks unless a narrower mask is stated.
+
+Two paused full 2 MiB captures bracket identical consumed fields, registers,
+code witnesses and public-reader results. Both reproduce `NonGameplay`:
+
+| Stop | PC | RAM SHA256 |
+| --- | --- | --- |
+| TITLE main-state-zero entry | `0x80194160` | `19c9d8b44cb44e78439cda01c5e2f5e5b1db652518791e9c8feb7639adcdb93d` |
+| Released ordinary title menu | `0x80195634` | `6ed625765f7d76ff45f9ad867bf14e4f36ee477c4786ca1786b7f43477ce4f29` |
+
+The observed main/substate bytes at `0x80197508/+1` are `3/0`; current cursor
+at `+4` is one. Two original input completions at `0x80038604` have packet
+`FFFF` at `0x800CC7EA`, two bytes, and five zero u32 words starting at
+`0x800CC830`. Only then does one CUA F12 action toggle the configured Left
+macro on. Its first completion still has zero input; its second has:
+
+- Active-low packet bytes `7F FF`.
+- Raw held and rising-edge u32 words at `0x800CC830/+4`, both `0x8000`.
+- Raw repeat at `+8`, zero; logical held/edge at `+12/+16`, both eight.
+
+This observes delivery separately from the host tool's success response.
+The same F12 action then returns success for OFF while the guest is stopped.
+At epoch eight, original cursor-wrap code `0x801956E8` has cursor zero and
+previous cursor one. These still belong to the preceding native input sample;
+they do not prove release.
+
+The first awaited post-OFF completion fails the release predicate at epoch
+nine. Cleanup retains `awaiting-release`, one completed input cycle and zero
+released cycles. The exact executed code therefore establishes that the
+all-zero release predicate was false. It does not retain that failed sample's
+packet or words: the assertion occurs before the normal result is emitted,
+and its diagnostic is an empty `AssertionError`. A delayed host event is a
+possible explanation, not an observed cause. No uncertain action is repeated,
+no additional button is sent, and no Hard-selection or player-control stop is
+claimed. Epoch eight is the last fully retained stopped observation.
+
+### Binding, cleanup and limits
+
+CUA accepts the new private absolute app path and returns its bundle identity.
+It does not expose a PID. The binding composes that documented path selection
+with the sole running matching executable, independently checked PID, exact
+argv/config and PID-owned port 2463. The receipts distinguish this process
+cross-check from CUA-returned properties. Both achievement namespaces, hardcore
+and integration are disabled before boot; cards, accounts, patches and
+overrides are absent. Muted audio and a private black shader are configured;
+the log records that shader loading. No gameplay image is requested or emitted.
+
+The failure writes an owned stop request. All seven remaining execute callbacks
+are removed with `OK`, the sole debugger client closes, and the wrapper reaps
+its child with exit zero after 503.68 host seconds. Port 2463 is bindable both
+in the wrapper receipt and a fresh closed probe. Execution after the last
+fully retained observation remains unobserved. No operation targets the ended
+PID afterward.
+
+Strict postexit settings validation fails and remains failed. A separate
+offline comparison finds every original actual value unchanged, with only the
+empty Hotkeys section omitted and four observed UI geometry keys added. No
+configuration or live validator is repaired.
+
+### Reproduction and contribution
+
+Native inputs and receipts remain under
+`~/.cache/re-map/evidence/2026-11-15-re3-hard-positive-preflight/`.
+Root review, archived executed scripts, actual CUA tool receipts, postexit
+comparison and offline verifier remain under
+`~/.cache/re-map/evidence/2026-11-15-re3-hard-positive-root-review/`.
+Run `verify_episode.py --output NEW_ABSENT_JSON` with the verification Python
+environment for offline replay only. It binds the two captures, all 169 owned
+sources, actual input/cursor records and cleanup. Never rerun the ended launcher
+or controller, reconnect to its old instance or signal its saved PID.
+
+Preparation is by `gpt-6.1-sol`, effort `xhigh`, session
+`01a1dfd0-5c8b-7372-804c-cd98fb34c563`. Independent preparation review by the same
+verified model/effort, session `01a1e070-da48-7642-a29e-08684b94ced4`, checks the
+eight scripts, native bindings and bounded offline controls; root fixes its
+reproduced cancellation-cleanup defect before launch. Root's verified session
+`01a1ac67-edda-7172-9e99-4bff796300a9`, also `gpt-6.1-sol`/`xhigh`, performs the
+episode, CUA actions, shutdown verification, offline replay and this writing.
+The independent preparation review is not a review or execution of this later
+native episode. Configured Gemini 3.8 Flash/high review times out without
+output; its executed-model field is null. Claude Opus 5.5 was unavailable at
+the preparation review attempt. Neither supplies an endorsement of this
+contribution.
