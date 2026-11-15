@@ -11,6 +11,7 @@ from games.re2.native_control import (
     TASK_BASE,
     TASK_WIDTH,
     ControlField,
+    NumericCountPolicy,
     canonical_if_pointer,
     control_field,
     if_store_cell,
@@ -59,11 +60,17 @@ def _task_fields(
     *,
     phase: NativeTaskPhase,
     role: ControlFrames,
+    numeric_counts: NumericCountPolicy = NumericCountPolicy.Existing,
     predicates: tuple[tuple[str, tuple[tuple[int, PredicateOutcome], ...]], ...] = (),
 ) -> _TaskFields | PositiveEntryFailure:
     """Attach actual native task/depth roots to the existing shared frame walk."""
     assert type(phase) is NativeTaskPhase
     assert role in (ControlFrames.NativeDoors, ControlFrames.NativeIdentityFiltering)
+    assert type(numeric_counts) is NumericCountPolicy
+    assert (
+        numeric_counts is NumericCountPolicy.Existing
+        or role is ControlFrames.NativeIdentityFiltering
+    )
     auxiliary = phase is NativeTaskPhase.Auxiliary
     # Native roots have no source offset. Their distinct owner marks the zero
     # placeholders; the actual native call sites are bound separately below.
@@ -242,7 +249,7 @@ def _task_fields(
         offset for _, _, task, _, receiver, offset, _ in stores if receiver != task
     )
     if not auxiliary and not _foreign_fields_disjoint(
-        foreign, tuple(cell for *_, cell in reads)
+        foreign, tuple(cell for *_, cell in reads), numeric_counts=numeric_counts
     ):
         return PositiveEntryFailure.ForeignConsumer
     for _, _, task, depth, receiver, offset, _ in stores:

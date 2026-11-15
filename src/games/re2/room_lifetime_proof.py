@@ -32,7 +32,11 @@ from games.re2.nonchoice_messages import (
     nonchoice_message_proofs,
 )
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
-from games.re2.room_sound_bindings import RoomSoundBindingFailure, room_sound_bindings
+from games.re2.room_sound_bindings import (
+    InitialSoundLayout,
+    RoomSoundBindingFailure,
+    room_sound_bindings,
+)
 from games.re2.room_write_partitions import (
     EmbeddedModelResource,
     RoomWritePartitionConfig,
@@ -416,7 +420,8 @@ def room_lifetime_proof(
             if sections[22] or any(row["opcode"] == 0x6C for row in reached.values()):
                 return RoomLifetimeFailure.SoundBinding
             sound = room_sound_bindings(
-                data, tuple(sections), partitions.heap_floor, frozenset(required_sounds)
+                InitialSoundLayout(data, tuple(sections), partitions.heap_floor),
+                frozenset(required_sounds),
             )
             if isinstance(sound, RoomSoundBindingFailure):
                 return RoomLifetimeFailure.SoundBinding

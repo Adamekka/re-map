@@ -9,6 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from games.re2.room_sound_bindings import (
+    InitialSoundLayout,
     RoomSoundBindingFailure,
     RoomSoundBindings,
     room_sound_bindings,
@@ -38,7 +39,8 @@ def sound_source():
 def test_selected_samples_bind_exact_resources_and_unique_tone_flag_bytes(sound_source):
     data, sections, floor = sound_source
     result = room_sound_bindings(
-        bytes(data), tuple(sections), floor, frozenset((10, 11, 13, 14))
+        InitialSoundLayout(bytes(data), tuple(sections), floor),
+        frozenset((10, 11, 13, 14)),
     )
     assert isinstance(result, RoomSoundBindings)
     assert result.resources == (SourceRange(100, 192), SourceRange(292, 0xE20))
@@ -50,7 +52,9 @@ def test_selected_samples_bind_exact_resources_and_unique_tone_flag_bytes(sound_
 
 def test_absent_edt_entry_has_no_native_tone_write(sound_source):
     data, sections, floor = sound_source
-    result = room_sound_bindings(bytes(data), tuple(sections), floor, frozenset((47,)))
+    result = room_sound_bindings(
+        InitialSoundLayout(bytes(data), tuple(sections), floor), frozenset((47,))
+    )
     assert isinstance(result, RoomSoundBindings) and result.tone_writes == ()
 
 
@@ -59,7 +63,8 @@ def test_eof_is_the_resource_boundary_when_no_later_section_exists(sound_source)
     sections[2] = 0
     struct.pack_into("<23I", data, 8, *sections)
     result = room_sound_bindings(
-        bytes(data[:floor]), tuple(sections), floor, frozenset((10,))
+        InitialSoundLayout(bytes(data[:floor]), tuple(sections), floor),
+        frozenset((10,)),
     )
     assert isinstance(result, RoomSoundBindings)
     assert result.resources[1] == SourceRange(292, 0xE20)
@@ -69,7 +74,9 @@ def test_nonzero_section_22_is_not_a_lifetime_decision_in_the_parser(sound_sourc
     data, sections, floor = sound_source
     sections[22] = 100
     struct.pack_into("<23I", data, 8, *sections)
-    result = room_sound_bindings(bytes(data), tuple(sections), floor, frozenset((10,)))
+    result = room_sound_bindings(
+        InitialSoundLayout(bytes(data), tuple(sections), floor), frozenset((10,))
+    )
     assert isinstance(result, RoomSoundBindings)
 
 
@@ -77,7 +84,10 @@ def test_nonzero_section_22_is_not_a_lifetime_decision_in_the_parser(sound_sourc
 def test_sample_index_cannot_read_a_different_source_region(sound_source, sample):
     data, sections, floor = sound_source
     assert (
-        room_sound_bindings(bytes(data), tuple(sections), floor, frozenset((sample,)))
+        room_sound_bindings(
+            InitialSoundLayout(bytes(data), tuple(sections), floor),
+            frozenset((sample,)),
+        )
         is RoomSoundBindingFailure.Sample
     )
 
@@ -134,7 +144,9 @@ def test_malformed_layout_is_a_modeled_failed_binding(sound_source, mutation):
         struct.pack_into("<H", data, vab + 18, 129)
     if mutation not in ("short-header", "header-mismatch"):
         struct.pack_into("<23I", data, 8, *sections)
-    result = room_sound_bindings(bytes(data), tuple(sections), floor, frozenset((10,)))
+    result = room_sound_bindings(
+        InitialSoundLayout(bytes(data), tuple(sections), floor), frozenset((10,))
+    )
     assert result is (
         RoomSoundBindingFailure.SourceBinding
         if mutation in ("short-header", "header-mismatch")
@@ -159,6 +171,8 @@ def test_selected_sound_cannot_escape_its_program_tones_or_voices(
     data[100 + 10 * 4 : 100 + 11 * 4] = packet
     data[292 + 32] = tones
     assert (
-        room_sound_bindings(bytes(data), tuple(sections), floor, frozenset((10,)))
+        room_sound_bindings(
+            InitialSoundLayout(bytes(data), tuple(sections), floor), frozenset((10,))
+        )
         is RoomSoundBindingFailure.Sample
     )

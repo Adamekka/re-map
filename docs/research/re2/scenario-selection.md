@@ -916,3 +916,238 @@ a separate executed-model attestation. Claude Opus 5.5 remains disabled and
 supplies no review. Root evidence and exact review references are under
 `~/.cache/re-map/evidence/2026-11-13-native117-root-integration/` and
 `~/.cache/re-map/evidence/2026-11-13-native117-external-review/`.
+
+## RE2-SCENARIO-012: joint program isolation resolves an acquired identity
+
+Status: Candidate, 2026-11-15. Revision is Resident Evil 2 Dual Shock Ver., USA
+Disc 1 Leon, SLUS-00748, Leon A, Original Game, Normal. Executable
+`SLUS_007.48` is 987136 bytes, SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`.
+The implementation starts at exact clean base
+`b07f16305006d3fa0075d5a78e83fab34fe2e678`. It uses the human-approved
+initialized, unmodified normal-engine filtering premise. Presence and door
+policies retain their separate meanings. This is no general allocator,
+renderer, interrupt or script-engine theorem.
+
+The reported failure is source `03-05` retaining an acquired generic GID191
+and an Unknown verdict in the authorized68-source/71-region history. Its
+owned source, `PL0/RDT/ROOM4050.RDT`, is170064 bytes, SHA256
+`3b461c8d9efc211a7e4b81585012a34dbe0f50371c8fa294e6296a9f0394ca08`.
+Raw191 creators3896/type31/amount1 and3922/type21/amount7 remain, as does the
+separate190 creator3866. The public query selects3922 without an absence fact.
+It preserves both unknown member6 outcomes; the existing fixed historical
+scenario flags distinguish the two creator identities.
+
+### Joint entry and operative contract
+
+A new unsealed program-isolation fact uses the genuine shared source/task
+inventory and native frames. Every native root, literal Event_exec and kind5
+creator/Reset alternative contributes, including producers textually located
+in an unentered owner. Calls and replacements close those roots. The actual
+source has12 entered programs and only `17:6` unentered. Its four literal
+member writes therefore never execute under this contract. No Member2,
+Member3 or arbitrary Work-store permission is added.
+
+The shared source partitioner derives the complete script blocks and the two
+header pointer cells `8+4*section`, for sections16/17. Explicit model, record,
+Copy, compaction and rebind writes must preserve those intervals. Configured
+flag/counter and object-record domains must miss task records, main procedure
+and phase fields, allocator cursor, loaded-source pointer and AOT control.
+All54 auxiliary facts, the full owned binder, canonical ingress, native entry,
+descriptor alternatives, registration and dispatch remain mandatory.
+
+The compiler then runs the complete intended-policy operative check on every
+entered program before its own seal. Canonical entry, metadata preservation
+and checked entered transfers form one joint induction. Neither half alone
+justifies exclusion. When isolation is unavailable, an explicit support result
+requires the original whole-source operative checks. Unknown knowledge never
+becomes an empty entry set. Unsupported unentered frame semantics still fail
+the existing shared walker; this increment adds no broader frame equivalence.
+
+Raw creators, Reset variants, completeness and source bytes remain intact.
+Bound pickup/Reset numeric operands need not all be immutable; the protected
+opcode/control/entry/producer projection and descriptor alternatives remain
+mandatory. The query consumes the sealed canonical entry plan and the existing
+all-creator algorithm. No second control interpreter, transformed source,
+private diagnostic receipt, positive/door conversion or policy fallback is used.
+
+### Bounded native ingredients
+
+The original foreign IF store at17:5/4946, task0/depth2, reaches receiving
+task3+`A4`, PS1 virtual `800D7D60`. Its aligned u32LE word covers two complete
+canonical LoopCount u16LE cells, masks`FFFF`. The identity-only numeric receiving
+role admits those words while retaining every pointer, level, return, SavedIF,
+Break, actual task/depth and auxiliary-consumer check. NEXT/Sleeping consume
+numeric counts; arbitrary values can change duration or repetition, never
+supply a pointer or fixed progress. Structured loop/wait paths remain
+conservative. The existing fresh escaped-IF21/23 restriction is unchanged.
+
+Sound parsing now takes explicit initial or compacted layout inputs. Original
+source bytes and header2/header5 values58324/55028 stay immutable. The two
+actual first-entry layouts have EDT/VH/true-floor tuples27140/27332/30436 and
+41084/41276/44380. Each is rederived from the source-derived mask and original
+native copy geometry. All48 EDT slots, eight tone-flag bytes and136 rebind
+stores are bounded independently. No old retained floor or rewritten header
+stands in for a current range. At least one record must remain; all-drop,
+repeat/reentry and unsafe range cases fail.
+
+The cached sound reader `8005C040..8005C5E4` is bound with its complete callees.
+Eight exact calls to guarded scalar helper`800395B8` have literal positive
+divisors1/9/3/5 twice. Exact callsite dominance, helper/leaf bytes and preserved
+S0 exclude both exceptional divide arms. One shared `native_nonyielding` walker
+consumes those independently checked facts; the helper remains unsupported
+without them. Cached EDT/VH cannot span another ordinary SCD/rebind pass under
+the already approved normal clock. No idle flag or new interrupt premise is
+invented, and deferred effects do not publish those cached sound pointers.
+
+Member_cmp `80055E8C..80055F50` and getter`80055F50..80056188`, their complete
+comparison/getter tables, Work_set and existing IF/scheduler windows are bound.
+Only six-byte member6 IF-prefix packets, comparison operators0..6 and even
+source offsets receive location facts. Work_set category1 loads the canonical
+player pointer at`800CFE14`, u32LE, into current task+`154`; member6 reads owned
+Work+8, u8. The value and signed16LE-immediate comparison remain unknown.
+All four actual uses carry their reaching Work providers. Nested3806 uses
+IF cell`C4`, while3760/3860/4118 use`C0`. The existing IF collector appends
+unknown/Both only at those bound locations. Standalone, DO/REPEAT, foreign-IF,
+other-member and positive/door rights are unchanged.
+
+Native5D `800582F0..800584F0`, SHA256
+`8dd5d1fe99af691b8e3b83fe9f51dbc7ec69175c53675801b974edd9119945ca`,
+is a leaf with a fixed13-row table at`8009DDCC`. Positive byte countN reserves
+`N*13*2*52` bytes under the existing normal allocator/resource/render owner.
+The actual count6 reserves8112 bytes through initial17:0/4106→17:3 at task1,
+depth1. Count/base/cursor fields are `800D8CCD` u8, `800D8CC4` u32LE and
+`800CE32C` u32LE. The actual four-aligned cursorF stays symbolic. Earlier
+Actor44 alternatives are not summed as simultaneous allocations, neither
+compacted floor is substituted as F, and ordinary temporary releases need no
+global cursor monotonicity claim. The pinned ordinary reset clears the old
+count before fresh main entry. Count0 is rejected because it skips PC+2 and
+return1. Shared/callback/repeated invocation, later compaction or mutation of
+relied source/control inputs withdraws the role. No registration atomic domain
+is expanded merely because the native graph does not yield.
+
+### Measured consequences and limits
+
+Actual public support becomes33/125. Relative to production31, `03-02` gains
+only an empty query and `03-05` gains191/3922. All31 previous query results and
+all54 auxiliary fact sets remain equal. Real neutral task-field support is90/125,
+adding only03-05; all89 earlier field digests remain identical. Complete generation changes only the
+03-05 identity-filtering selection, the identity audit/research identifiers,
+and independent door catalogs' complete-profile binding. Every other room
+field, raw alternative and floor byte is preserved. Door auditv4/entryv3 and
+151 facts/161 creators/12 exclusions/128 unsupported rows retain their meaning.
+
+The new identity audit is `slus00748-trusted-normal-identity-filtering-v4`.
+The complete semantic-profile SHA256 is
+`6dd2a84159859c7f580881bf16ab90c524692632395dfb05a8bba4f24d53ae3c`.
+Independent identity, positive-pickup and door policies retain every semantic
+field in that full pin. The actual complete generated identity catalog is
+`47e043b2483a11ce15c02f8d973ef4b17c1bc0de375f68c1b5e937d368029e1a`;
+the independent door catalog is
+`669d08ddb0fe7cb326cba073b71fae82c1b7468d18b7718b17a33670f07f4523`.
+The69-resource/125-source/54-auxiliary binder remains
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+These pins come from actual full profile and generation inputs, not injected
+hashes or omitted fields.
+
+All21 retained publications and exact ordered address/width read plans are
+compared with public readers loaded from immutable b07 Git bytes. The CURRENT
+inventory is rebuilt before strict history joins. Only the already-Taken191
+row becomes specific, and03-05 becomes Cleared. Actual68-source/71-region
+counts become49 Cleared/15 Incomplete/4 Unknown. The four Unknown item rows,
+98 Open/82 Unchecked/1 Blocked doors and34 incomplete-door sources are unchanged.
+Every outside-target dataclass field, quantity, acquisition, pose, visit, region
+and request sequence is equal. Observed two-source, actual68-source and
+simulated125-source scopes remain separate.
+
+The unchanged quantity interpreter uses the selected creator's original amount7;
+neither isolation nor a native effect fact supplies quantity authority. Fresh
+unacquired191 without an independent presence witness leaves the room Unknown.
+An inactive selected descriptor also leaves presence unresolved. Current selected
+active presence remains separate; excluded current descriptors produce Retry
+before publication. Rewind, reconstruction, applicability and failed/short/
+incoherent/source reads retain the existing atomic publication policy. The
+[room-completion policy](../../room-completion.md) is unchanged.
+
+The original README fixture, publication and image are identical. No UI or floor
+change requires a browser run or screenshot update. Historical DuckStation
+`0.1-12083-g00e299795` and retained version94 extraction provenance are inherited,
+not a newly tested build or restore contract. No emulator, input, new save,
+original user history or lock is accessed. No gameplay, native restore,
+memory-card persistence or broader campaign readiness is established.
+
+### Reproduction and authorship
+
+Private evidence is
+`~/.cache/re-map/evidence/2026-11-15-native191-isolation-implementation-sol/`.
+It preserves early/final public matrices, complete generation comparisons,
+21-publication/read-plan comparisons, command results, own model metadata,
+scoped path hashes and the corrected intermediate failures. The first complete
+generation is an intermediate run because source checks changed during it;
+two later frozen runs2/3 match byte-for-byte. The initial query runtime-import
+error and two malformed negative fixtures were corrected without changing native
+bytes or weakening production behavior. An inactive-descriptor expectation was
+corrected to the existing Unknown result rather than granting presence.
+
+Implementation, tests, generation, retained replay, local source review and
+writing are by `gpt-6.1-sol`, effort`xhigh`, verified from own task-bound
+session`01a1d52b-e482-7bf2-be61-b7324f88cf3d` and active turn metadata.
+Original Nov13 count/moved-sound/cached-reader research retains its separate
+`gpt-6.1-sol`/`xhigh` session`01a1d436-0816-7cd3-a553-d0c7f4959e9e`
+authorship. Member6/5D research retains
+session`01a1d4ba-4805-7931-985e-49c0ef8f5a0f`. Nov15 recovery of the generic
+isolation relation and23 neutral controls is separately authored by
+`gpt-6.1-sol`/`xhigh`, session`01a1df49-09da-7e82-bb6b-d97b47926c4f`.
+Human approval supplies the normal-owner premise. Parent reproductions and
+primary inspection remain separately attributed. Parent independent/configured
+external final reviews are pending; no endorsement is claimed for this change.
+
+Final local verification, 2026-11-15: all8,956 tests pass. The two frozen full
+generations match, including rooms SHA256
+`3fb7e515ba6e02cce6bf205cd7ba88732476975072e6e0cf389a9db27405118b`
+and unchanged floors SHA256
+`aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+All125 metadata,89 previous native task fields,54 auxiliaries and21 retained
+publication/read-plan comparisons pass. Scoped Ruff, formatting, local links
+and whitespace pass. These remain local/offline checks, with parent final
+independent/configured external review and gameplay validation separate.
+
+### Parent integration and review
+
+2026-11-15. Parent integration, primary review and fresh reproduction are by
+`gpt-6.1-sol`, effort `xhigh`, verified from root session
+`01a1ac67-edda-7172-9e99-4bff796300a9`. The feature commit
+`98b186e496da60b4a013d240571765c7084b0740` is applied onto the separate RE3
+documentation contribution at `1d0867b19d4a4dac0070a7dfc898b4d0f02246ca`.
+The production, test, profile and catalog bytes match the reviewed feature;
+the research index preserves both games' contributions.
+
+The parent reproduces all 125 public factory/query records, the complete
+69-resource/125-source/54-auxiliary binding and 81 native windows, and all 21
+retained publications with their exact ordered read plans. All 57 frozen
+generation inputs match the integrated tree; both complete final outputs match
+its room and floor files. The README fixture and publication are unchanged.
+The integrated unmodified full suite passes **8,956 tests** in 295.64 seconds.
+Scoped Ruff, formatting, documentation links and whitespace checks pass. Primary
+inspection found no verified issue in the joint entry/preflight induction,
+shared native/source consumers, policy separation or fresh reader behavior.
+
+Independent review by `gpt-6.1-sol`, effort `xhigh`, session
+`01a1dfb0-0997-79a2-ad90-8c2f427bcc90`, reports no findings across all 26 changed
+paths and their shared consumers. It independently passes 568 focused tests,
+including 77 original Member_cmp calls, and reproduces the complete public
+matrix, owned/native bindings and 21 publications/read plans. It does not repeat
+the full suite or complete generations, or add gameplay, restore or rendered
+UI evidence.
+
+The configured Gemini 3.8 Flash review was requested at high reasoning through
+Antigravity. The provider returned no review for 15 minutes and the task failed;
+there is no completed external opinion or executed-model attestation. Configured
+Claude Opus 5.5 remains disabled. Neither unavailable review is an endorsement.
+The finding remains Candidate under the approved normal-engine premise.
+
+Parent commands, source hashes, exact replay results and the failed external
+review receipt are retained under
+`~/.cache/re-map/evidence/2026-11-15-native191-root-integration/`.
+The independent review is retained separately under
+`~/.cache/re-map/evidence/2026-11-15-native191-independent-review/`.

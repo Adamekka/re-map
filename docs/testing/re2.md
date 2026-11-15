@@ -1239,3 +1239,98 @@ high reasoning reports no findings on the supplied snapshot. Configured Claude
 Opus 5.5 is disabled. These reviews add no native/gameplay or rendered UI evidence.
 Exact commands and the root report are retained under
 `~/.cache/re-map/evidence/2026-11-13-native117-root-integration/`.
+
+## Acquired191 identity and program isolation
+
+[RE2-SCENARIO-012](../research/re2/scenario-selection.md#re2-scenario-012-joint-program-isolation-resolves-an-acquired-identity)
+starts at exact clean b07. The genuine public125-source pass runs before bulk
+generation:03-05 selects191/3922 with no absence fact,03-02 has an empty query,
+and all31 previous queries and54 auxiliary facts remain equal. Source support
+is33/125; that count is not a tracking or playthrough-readiness measure.
+
+Run with explicit owned `RE_MAP_RE2_OWNED_CUE` and the verification Python:
+
+```sh
+python -m pytest -q tests/test_re2_identity_program_isolation.py tests/test_re2_acquired_identity191.py tests/test_re2_native_identity_filtering.py tests/test_re2_identity_filtering.py tests/test_re2_native_identity_tracking.py tests/test_re2_qualified_identity_effects.py tests/test_re2_room_sound_bindings.py tests/test_re2_descriptor_coherence.py
+python tools/build_re2_metadata.py "$RE_MAP_RE2_OWNED_CUE" <private-rooms-2> <private-floors-2> --profile profiles/re2_leon_a_slus00748.json
+python tools/build_re2_metadata.py "$RE_MAP_RE2_OWNED_CUE" <private-rooms-3> <private-floors-3> --profile profiles/re2_leon_a_slus00748.json
+python -m pytest -q
+```
+
+The unmodified full-suite command intentionally includes tracked RE1
+save/card reproducibility tests, as explicitly clarified by the user. Only the
+fixtures consumed by named tests are read; no fixture content changes or broad
+incidental fixture hashing are authorized. Original/untracked user saves,
+original user history and emulator actions stay outside this task.
+
+New controls cover source/native/profile/window mutations; canonical and
+interior entries; missing owner/native/auxiliary/frame/descriptor/dispatch
+premises; metadata writes; entered unsafe member stores; count-only receiving
+words and explicit Break collisions; both true sound floors and layout
+rederivation; local cached-reader callsite facts; positive one-pass5D ownership;
+and member6 Work/operand/IF limits. Whole-source checks remain explicit when
+isolation is unavailable. No Member2/Member3 exception, positive/door permission
+or empty-entry fallback is added.
+
+Seventy-seven original Member_cmp calls reuse the unchanged audited copied-native
+runner. Every case verifies Boolean return, PC+6, ABI registers, decoded stores,
+read bounds and full2MiB RAM equality. No memory-write hook, native branch patch,
+stub, PC repair or sampled player truth is used. These are component executions,
+not gameplay. Existing generation retains its bounded native map selectors.
+
+Dedicated191 reader controls exercise fresh acquisition reversals, current and
+departed reconstruction, independent selected descriptor presence, inactive
+selected uncertainty, excluded active/inactive contradictions, all four
+applicability flags and failed/short/incoherent/source reads without partial
+publication. The separate190 pickup is explicitly held collected in synthetic
+cases isolating191. This setup is not a new production default or observed save.
+
+Rebuild CURRENT inventory before strict joins with the authorized copied68-source/
+71-region history. Compare all21 publications and full ordered read plans with
+immutable b07 public modules. Only the already-Taken191 row becomes specific;
+03-05 clears, giving49 Cleared/15 Incomplete/4 Unknown rooms. All four Unknown
+item rows,98 Open/82 Unchecked/1 Blocked doors and34 incomplete-door sources remain.
+No new visit, region, pose, acquisition or outside-target quantity changes.
+README fixture/publication/image and every floor byte stay identical.
+
+Private reproducible scripts and results are under
+`~/.cache/re-map/evidence/2026-11-15-native191-isolation-implementation-sol/`.
+The first complete generation is retained as an intermediate iteration; only
+subsequent runs from frozen code/profile/name inputs count as the two final
+reproductions. Independent full profile and raw catalog pins are derived from
+actual complete outputs. Scope is offline interpretation and retained replay,
+without a new emulator, restore, memory-card or gameplay confirmation. Local
+review and verified model attribution are recorded separately from the parent's
+pending independent/configured external final reviews.
+
+Final local verification, 2026-11-15: all8,956 tests pass with the explicit owned
+CUE and intentional tracked-fixture reads. The focused combined run passes804
+cases; the final dedicated191 reader run passes14 additional cases, all included
+in the full suite. Final complete generations2/3 are byte-identical and match
+the metadata used by the tests. Rooms SHA256 is
+`3fb7e515ba6e02cce6bf205cd7ba88732476975072e6e0cf389a9db27405118b`;
+floors remain`aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+The independent real task-field comparison is89→90, adding only03-05 and
+preserving all89 earlier field digests. All21 publications/read plans,125
+metadata consequences and54 auxiliaries pass their strict comparisons.
+Scoped Ruff `E4/E7/E9/F/I`, ignoring established`E402`, formatting, local links
+and whitespace checks pass. Local review covers the joint induction, complete
+bindings, rights separation, native effect bounds, source metadata and fresh
+reader behavior. Parent independent/configured external reviews remain pending.
+
+Parent integration verification, 2026-11-15: the unmodified integrated full suite
+passes **8,956 tests** in 295.64 seconds. Fresh parent runs reproduce all 125
+public factory/query records, 69/125/54 owned bindings, 81 native windows and all 21
+publications with exact read plans. All 57 final generation inputs match; the two
+complete outputs match the integrated rooms/floors. README fixture/publication,
+Ruff, formatting, local links and whitespace checks pass.
+
+Independent `gpt-6.1-sol`/`xhigh` review reports no findings and independently
+passes 568 focused cases, including 77 original Member_cmp executions, plus the
+complete public/binding/replay comparisons. The configured high-reasoning
+Gemini 3.8 Flash review failed after 15 minutes of provider silence without a
+returned review. Claude Opus 5.5 is disabled. These unavailable external reviews
+are not endorsements. Exact attribution and limits are recorded in
+[the parent review contribution](../research/re2/scenario-selection.md#parent-integration-and-review).
+Parent evidence is under
+`~/.cache/re-map/evidence/2026-11-15-native191-root-integration/`.

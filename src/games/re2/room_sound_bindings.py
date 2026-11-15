@@ -13,6 +13,26 @@ from enum import Enum
 from games.re2.room_write_partitions import SourceRange
 
 
+@dataclass(frozen=True)
+class InitialSoundLayout:
+    source_data: bytes
+    section_offsets: tuple[int, ...]
+    retained_floor: int
+
+
+@dataclass(frozen=True)
+class CompactedSoundLayout:
+    origin: InitialSoundLayout
+    mask: int
+    retained_indices: tuple[int, ...]
+    directory_offset: int
+    directory_pairs: tuple[tuple[int, int], ...]
+    edt: int
+    vab: int
+    retained_floor: int
+    copy_writes: tuple[SourceRange, ...]
+
+
 class RoomSoundBindingFailure(Enum):
     SourceBinding = "room sound section binding mismatch"
     Layout = "invalid room sound resource layout"
@@ -40,12 +60,21 @@ class RoomSoundBindings:
 
 
 def room_sound_bindings(
-    data: bytes,
-    section_offsets: tuple[int, ...],
-    retained_floor: int,
+    layout: InitialSoundLayout | CompactedSoundLayout,
     samples: frozenset[int],
 ) -> RoomSoundBindings | RoomSoundBindingFailure:
-    """Parse source ranges only; section 22 does not grant a lifetime proof."""
+    """Parse immutable origin bytes, then validate explicit current coordinates.
+
+    Neither layout grants a lifetime or native/source execution capability.
+    """
+    assert type(layout) in (InitialSoundLayout, CompactedSoundLayout)
+    origin = layout if type(layout) is InitialSoundLayout else layout.origin
+    assert type(origin) is InitialSoundLayout
+    data, section_offsets, retained_floor = (
+        origin.source_data,
+        origin.section_offsets,
+        origin.retained_floor,
+    )
     assert type(data) is bytes and type(section_offsets) is tuple
     assert len(section_offsets) == 23 and all(
         type(offset) is int for offset in section_offsets
@@ -104,7 +133,140 @@ def room_sound_bindings(
             if offset >= boundary:
                 return RoomSoundBindingFailure.Sample
             writes.add(offset)
-    return RoomSoundBindings(
-        (SourceRange(edt, 192), SourceRange(vab, boundary - vab)),
-        tuple(SourceRange(offset, 1) for offset in sorted(writes)),
+    resources = (SourceRange(edt, 192), SourceRange(vab, boundary - vab))
+    tones = tuple(SourceRange(offset, 1) for offset in sorted(writes))
+    if type(layout) is CompactedSoundLayout:
+        # Old header aliases remain immutable file metadata, not live ends.
+        # Re-derive every moved field instead of trusting a frozen caller record.
+        if compacted_sound_layout(origin, layout.mask) != layout:
+            return RoomSoundBindingFailure.Layout
+        shift = layout.edt - edt
+        resources = tuple(SourceRange(r.offset + shift, r.width) for r in resources)
+        tones = tuple(SourceRange(r.offset + shift, r.width) for r in tones)
+        if not (
+            resources[0].offset == layout.edt
+            and resources[1].offset == layout.vab
+            and resources[1].offset + resources[1].width == layout.retained_floor
+            and all(
+                layout.edt <= r.offset < r.offset + r.width <= layout.retained_floor
+                for r in (*resources, *tones)
+            )
+        ):
+            return RoomSoundBindingFailure.Layout
+    return RoomSoundBindings(resources, tones)
+
+
+def compacted_sound_layout(
+    origin: InitialSoundLayout, mask: int
+) -> CompactedSoundLayout | RoomSoundBindingFailure:
+    """Bound one native forward-copy pass; repeated compaction is not implied."""
+    assert type(origin) is InitialSoundLayout and type(mask) is int
+    data, sections, floor = (
+        origin.source_data,
+        origin.section_offsets,
+        origin.retained_floor,
+    )
+    if (
+        len(data) < 100
+        or len(sections) != 23
+        or sections != struct.unpack_from("<23I", data, 8)
+    ):
+        return RoomSoundBindingFailure.SourceBinding
+    if not 0 <= mask <= 0xFFFFFFFF:
+        return RoomSoundBindingFailure.Layout
+    section = sections[22]
+    if (
+        not 100
+        <= section
+        < sections[0]
+        < sections[1]
+        < floor
+        == sections[2]
+        <= len(data)
+    ):
+        return RoomSoundBindingFailure.Layout
+    directory, count = struct.unpack_from("<II", data, section)
+    if not (
+        1 <= count <= 32
+        and section + 8 <= section + directory
+        and section + directory + count * 8 == sections[0]
+        and section % 4 == directory % 4 == 0
+    ):
+        return RoomSoundBindingFailure.Layout
+    pairs = tuple(
+        struct.unpack_from("<II", data, section + directory + 8 * i)
+        for i in range(count)
+    )
+    if not all(
+        8 <= first < second < end <= directory
+        for (first, second), end in zip(
+            pairs, (*[p[0] for p in pairs[1:]], directory), strict=True
+        )
+    ):
+        return RoomSoundBindingFailure.Layout
+    kept = tuple(i for i in range(count) if not mask & (0x80000000 >> i))
+    if not kept:
+        # Native forward copy executes at least once even for length zero.
+        # Exclude that unsafe domain instead of treating it as an empty copy.
+        return RoomSoundBindingFailure.Layout
+    cursor, packed, writes = pairs[0][0], [], []
+    for index, (first, second) in enumerate(pairs):
+        if index not in kept:
+            continue
+        if cursor != first:
+            # Native copy ends at the next SECOND offset. Cursor advancement
+            # below deliberately uses the next FIRST offset instead.
+            size = (
+                directory - first if index == count - 1 else pairs[index + 1][1] - first
+            )
+            if not 0 < size or cursor > first or cursor + size > directory:
+                return RoomSoundBindingFailure.Layout
+            writes.append(SourceRange(section + cursor, size))
+            writes.extend(
+                (
+                    SourceRange(section + directory + len(packed) * 8, 4),
+                    SourceRange(section + directory + len(packed) * 8 + 4, 4),
+                )
+            )
+        packed.append((cursor, second - first + cursor))
+        cursor += (
+            directory - first if index == count - 1 else pairs[index + 1][0] - first
+        )
+    new_directory = section + cursor
+    edt = new_directory + len(packed) * 8
+    vab = edt + sections[1] - sections[0]
+    current_floor = edt + floor - sections[0]
+    if (
+        not section + 8 <= new_directory < edt <= sections[0]
+        or not edt < vab < current_floor <= floor
+    ):
+        return RoomSoundBindingFailure.Layout
+    writes.extend(
+        (
+            SourceRange(new_directory, len(packed) * 8),
+            SourceRange(section, 4),
+            SourceRange(section + 4, 4),
+            SourceRange(edt, floor - sections[0]),
+            SourceRange(8, 4),
+            SourceRange(12, 4),
+        )
+    )
+    if any(
+        r.offset not in (8, 12)
+        and not section <= r.offset <= floor - r.width
+        or r.offset < floor
+        and sections[0] < r.offset + r.width
+        for r in writes
+    ):
+        return RoomSoundBindingFailure.Layout
+    return CompactedSoundLayout(
+        origin,
+        mask,
+        kept,
+        new_directory,
+        tuple(packed),
+        edt,
+        vab,
+        current_floor,
+        tuple(writes),
     )

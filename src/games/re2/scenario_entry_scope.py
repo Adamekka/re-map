@@ -21,8 +21,12 @@ from games.re2.event_presence import (
     presence_counter_indices,
     presence_flag_write_proof,
 )
+from games.re2.identity_program_isolation import (
+    IdentityIsolationSupport,
+    IdentityProgramIsolation,
+)
 from games.re2.native_entry_fields import _TaskFields
-from games.re2.normal_engine_binding import OWNED_SOURCE_FIELDS
+from games.re2.normal_engine_binding import OWNED_SOURCE_FIELDS, typed_binding_digest
 from games.re2.positive_entry_domain import (
     _NativeIdentityEntryRoles,
     _PositiveEntryDomain,
@@ -399,6 +403,8 @@ def _source_scope_facts(
     *,
     pickup_roles: _PositivePickupRoles
     | PickupRolesSupport = PickupRolesSupport.Existing,
+    isolation: IdentityProgramIsolation
+    | IdentityIsolationSupport = IdentityIsolationSupport.WholeSource,
 ) -> _SourceScopeFacts | DoorSourceFacts | DoorSourceFailure | ScenarioSelectionFailure:
     """Close ordinary source entries without assuming opaque tasks terminate.
 
@@ -524,6 +530,23 @@ def _source_scope_facts(
         # independent collectible completeness flag can include unreachable
         # orphan markers and grants no door right in either direction.
         programs = room["programs"]
+        if type(isolation) is IdentityProgramIsolation:
+            require(native_identity)
+            require(
+                isolation.source_sha256 == room["sha256"]
+                and isolation.programs_sha256 == programs_digest(programs)
+                and isolation.source_roles_sha256
+                == typed_binding_digest(source_entries)
+                and isolation.entry_locations == source_entries.entry_locations
+                and isolation.entered_programs
+                == frozenset(key for key, _ in isolation.entry_locations)
+            )
+            operative_programs = isolation.entered_programs
+        else:
+            require(type(isolation) is IdentityIsolationSupport)
+            # Unavailable isolation retains the original whole-source operative
+            # checks. Unknown proof never grants an empty set or exclusions.
+            operative_programs = frozenset(programs)
         require(all(key in programs for key in ("16:0", "17:0", "17:1")))
         commands = {
             key: {row["offset"]: row for row in program["commands"]}
@@ -636,50 +659,18 @@ def _source_scope_facts(
         for key, row in rows:
             packet = data[row["offset"] : row["next"]]
             opcode = row["opcode"]
-            # Camera_back 2A has no operands. Its STATUS set/clear masks
-            # 00100000/00000100 are disjoint from fixed scenario bits.
-            require(
-                opcode in _DOOR_NATIVE_EFFECTS
-                if door_policy
-                else (
-                    opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
-                    or policy is not _ScopePolicy.AuditedNativeWork
-                    and opcode in (0x2A, 0x64, 0x65, 0x85)
-                    or (closed_entries or identity_policy)
-                    and opcode in (5, 0x15, 0x28)
-                    or identity_policy
-                    and opcode in (0x4C, 0x6A, 0x6B, 0x86, 0x87)
-                    or native_identity
-                    and opcode in (0x0B, 0x0C, 0x59, 0x5F, 0x60)
-                ),
-                "unmodeled_native_opcode",
-            )
-            if native_identity and opcode == 0x59:
-                # Mode0 uses ordinary engine music ownership; other native
-                # modes do not inherit it. Its LHU needs an even RDT offset.
-                require(
-                    len(packet) == 4 and packet[1] == 0 and row["offset"] % 2 == 0,
-                    "music_request59_bounds",
+            if row["kind"] in ("door", "item", "interaction", "reset"):
+                require(packet[1] < 32)
+                kind = (
+                    1
+                    if row["kind"] == "door"
+                    else 2
+                    if row["kind"] == "item"
+                    else packet[2]
                 )
-            if native_identity and opcode == 0x5F:
-                # The leaf writes only a fixed audio scalar. Unused high-byte
-                # no-store cases remain unsupported, with no implicit default.
-                require(
-                    len(packet) == 2 and packet[1] < 128,
-                    "fixed_audio_scalar5F_bounds",
-                )
-            if native_identity and opcode == 0x60:
-                # Category3 reloads the owned actor table, then actor+16C's
-                # render pointer, independently of task Work. Signed indices
-                # and stale-destination default categories stay rejected.
-                # LHU/SH use even offsets on the required aligned RDT base.
-                require(
-                    len(packet) == 14
-                    and packet[1] == 3
-                    and packet[2] < 32
-                    and row["offset"] % 2 == 0,
-                    "owned_actor_render60_bounds",
-                )
+                require(kind <= 14)
+                slot_kinds.setdefault(packet[1], set()).add(kind)
+                bindings.append((key, row, packet, kind))
             if door_policy or identity_policy:
                 if row["kind"] == "flag_write":
                     require(
@@ -726,6 +717,73 @@ def _source_scope_facts(
                     require(
                         not fixed_words.get(address, 0) & mask, "scenario_kind6_write"
                     )
+            if key not in operative_programs:
+                # Raw descriptors, producers, Copy and metadata remain checked
+                # above. This is no permission for the unentered stores; joint
+                # entry preservation and every entered operative check must pass.
+                continue
+            # Camera_back 2A has no operands. Its STATUS set/clear masks
+            # 00100000/00000100 are disjoint from fixed scenario bits.
+            require(
+                opcode in _DOOR_NATIVE_EFFECTS
+                if door_policy
+                else (
+                    opcode in _ENTRY_PRESERVING_NATIVE_EFFECTS
+                    or policy is not _ScopePolicy.AuditedNativeWork
+                    and opcode in (0x2A, 0x64, 0x65, 0x85)
+                    or (closed_entries or identity_policy)
+                    and opcode in (5, 0x15, 0x28)
+                    or identity_policy
+                    and opcode in (0x4C, 0x6A, 0x6B, 0x86, 0x87)
+                    or native_identity
+                    and opcode in (0x0B, 0x0C, 0x59, 0x5F, 0x60)
+                    or native_identity
+                    and opcode == 0x6C
+                    and any(
+                        f.program == key
+                        and f.offset == row["offset"]
+                        and f.layout.origin.source_data == data
+                        for f in source_entries.compactions
+                    )
+                    or native_identity
+                    and opcode == 0x5D
+                    and any(
+                        f.program == key
+                        and f.offset == row["offset"]
+                        and f.source_sha256 == hashlib.sha256(data).hexdigest()
+                        and len(packet) == 2
+                        and f.count == packet[1] > 0
+                        for f in source_entries.primitive_reservations
+                    )
+                ),
+                "unmodeled_native_opcode",
+            )
+            if native_identity and opcode == 0x59:
+                # Mode0 uses ordinary engine music ownership; other native
+                # modes do not inherit it. Its LHU needs an even RDT offset.
+                require(
+                    len(packet) == 4 and packet[1] == 0 and row["offset"] % 2 == 0,
+                    "music_request59_bounds",
+                )
+            if native_identity and opcode == 0x5F:
+                # The leaf writes only a fixed audio scalar. Unused high-byte
+                # no-store cases remain unsupported, with no implicit default.
+                require(
+                    len(packet) == 2 and packet[1] < 128,
+                    "fixed_audio_scalar5F_bounds",
+                )
+            if native_identity and opcode == 0x60:
+                # Category3 reloads the owned actor table, then actor+16C's
+                # render pointer, independently of task Work. Signed indices
+                # and stale-destination default categories stay rejected.
+                # LHU/SH use even offsets on the required aligned RDT base.
+                require(
+                    len(packet) == 14
+                    and packet[1] == 3
+                    and packet[2] < 32
+                    and row["offset"] % 2 == 0,
+                    "owned_actor_render60_bounds",
+                )
             if row["kind"] == "call":
                 target = f"17:{packet[1]}"
                 require(target in programs)
@@ -798,7 +856,9 @@ def _source_scope_facts(
             elif opcode == 5 and (closed_entries or identity_policy):
                 require(2 <= packet[1] < 10)
             elif (
-                opcode in (0x1B, 0x1C, 0x6C)
+                opcode in (0x1B, 0x1C)
+                or opcode == 0x6C
+                and not native_identity
                 or not door_policy
                 and opcode in (5, 0x19, 0x6E)
             ):
@@ -955,18 +1015,6 @@ def _source_scope_facts(
                 # The position predicate indexes player/partner plus 32 enemy
                 # pointers. Its truth stays unknown, including the IF-pop edge.
                 require(packet[1] < 34 and packet[2] < 34)
-            if row["kind"] in ("door", "item", "interaction", "reset"):
-                require(packet[1] < 32)
-                kind = (
-                    1
-                    if row["kind"] == "door"
-                    else 2
-                    if row["kind"] == "item"
-                    else packet[2]
-                )
-                require(kind <= 14)
-                slot_kinds.setdefault(packet[1], set()).add(kind)
-                bindings.append((key, row, packet, kind))
         for _, row, packet, kind in bindings:
             if kind == 5:
                 payload = (
@@ -990,7 +1038,9 @@ def _source_scope_facts(
                 room["sha256"],
                 programs_digest(programs),
                 frozenset(programs),
-                source_entries.entry_locations
+                isolation.entry_locations
+                if type(isolation) is IdentityProgramIsolation
+                else source_entries.entry_locations
                 if closed_entries or identity_policy
                 else frozenset((key, p["entry"]) for key, p in programs.items()),
             )

@@ -33,7 +33,11 @@ from games.re2.positive_pickup_roles import _PositivePickupRoles
 from games.re2.positive_prefix import VerifiedNormalEnginePositivePrefix
 from games.re2.room_data import reset_item_variants
 from games.re2.room_entry_contract import VerifiedRoomEntryContract
-from games.re2.room_sound_bindings import RoomSoundBindings, room_sound_bindings
+from games.re2.room_sound_bindings import (
+    InitialSoundLayout,
+    RoomSoundBindings,
+    room_sound_bindings,
+)
 from games.re2.room_write_partitions import (
     EmbeddedModelResource,
     RoomWritePartitions,
@@ -1019,9 +1023,9 @@ def _known_declared_items(
             # constructor or arbitrary native entry. Audited incoming auxiliary
             # scripts also have no compactor entry. Section22 need not be null.
             sounds = room_sound_bindings(
-                data,
-                tuple(room["section_offsets"]),
-                partitions.heap_floor,
+                InitialSoundLayout(
+                    data, tuple(room["section_offsets"]), partitions.heap_floor
+                ),
                 frozenset(required_sounds),
             )
             require(

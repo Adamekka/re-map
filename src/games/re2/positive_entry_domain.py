@@ -18,9 +18,11 @@ from games.re2.native_control import (
     IF_FRAME_WIDTH,
     TASK_WIDTH,
     ControlField,
+    NumericCountPolicy,
     control_field,
     loop_end_cell,
     native_bytes,
+    numeric_count_word,
 )
 from games.re2.normal_engine_binding import (
     NORMAL_ENGINE_BINDING_SHA256,
@@ -46,6 +48,10 @@ from games.re2.structured_control import (
 )
 
 if TYPE_CHECKING:
+    from games.re2.identity_source_effects import (
+        IdentityCompaction,
+        IdentityPrimitiveReservation,
+    )
     from games.re2.native_entry_fields import _TaskFields
 
 
@@ -165,6 +171,8 @@ class _SourceEntryRoles:
 @dataclass(frozen=True)
 class _NativeIdentityEntryRoles(_SourceEntryRoles):
     native_fields: _TaskFields
+    compactions: tuple[IdentityCompaction, ...]
+    primitive_reservations: tuple[IdentityPrimitiveReservation, ...]
 
 
 def _source_entry_roles(
@@ -173,10 +181,16 @@ def _source_entry_roles(
     writes: ScenarioSourceWriteWitnesses,
     *,
     policy: SourceEntryPolicy = SourceEntryPolicy.Existing,
+    compactions: tuple[IdentityCompaction, ...] = (),
+    primitive_reservations: tuple[IdentityPrimitiveReservation, ...] = (),
 ) -> _SourceEntryRoles | _NativeIdentityEntryRoles | PositiveEntryFailure:
     """Unsealed source analysis, never sufficient filtering/presence authority."""
     assert type(policy) is SourceEntryPolicy
     native = policy is SourceEntryPolicy.NativeIdentityFiltering
+    assert type(compactions) is tuple
+    assert not compactions or native
+    assert type(primitive_reservations) is tuple
+    assert not primitive_reservations or native
 
     def require(condition, reason=PositiveEntryFailure.Control):
         if not condition:
@@ -197,7 +211,18 @@ def _source_entry_roles(
                 at, opcode = row["offset"], row["opcode"]
                 packet = data[at : row["next"]]
                 controls.append((at, at + 1))
-                require(opcode not in (3, 0x19, 0x1B, 0x1C, 0x6C, 0x6E, 0x8D))
+                require(opcode not in (3, 0x19, 0x1B, 0x1C, 0x6E, 0x8D))
+                if opcode == 0x6C:
+                    # This unsealed role accepts only the compiler-derived
+                    # source/native/layout fact for this exact invocation.
+                    require(
+                        any(
+                            f.program == key
+                            and f.offset == at
+                            and f.layout.origin.source_data == data
+                            for f in compactions
+                        )
+                    )
                 if opcode in (
                     1,
                     4,
@@ -324,6 +349,7 @@ def _source_entry_roles(
                 programs,
                 phase=NativeTaskPhase.Ordinary,
                 role=ControlFrames.NativeIdentityFiltering,
+                numeric_counts=NumericCountPolicy.IdentityConservative,
             )
             if type(fields) is not _TaskFields:
                 return fields
@@ -362,6 +388,8 @@ def _source_entry_roles(
                 ),
                 numeric,
                 fields,
+                compactions,
+                primitive_reservations,
             )
         depths = _call_depths(programs, roots, calls)
         frames = {}
@@ -421,7 +449,13 @@ def _source_entry_roles(
         return PositiveEntryFailure.Control
 
 
-def _foreign_fields_disjoint(foreign: frozenset[int], reads: tuple[int, ...]) -> bool:
+def _foreign_fields_disjoint(
+    foreign: frozenset[int],
+    reads: tuple[int, ...],
+    *,
+    numeric_counts: NumericCountPolicy = NumericCountPolicy.Existing,
+) -> bool:
+    assert type(numeric_counts) is NumericCountPolicy
     # WHILE writes its own end before atomic predicate consumption. Break
     # retains the end pointer across arbitrary source effects and must be
     # checked separately against every possible ordinary/auxiliary consumer.
@@ -443,13 +477,23 @@ def _foreign_fields_disjoint(foreign: frozenset[int], reads: tuple[int, ...]) ->
                 cell, width = control_field(depth, field, index)
                 other_fields.update(range(cell, cell + width))
     return not any(
-        any(cell <= byte < cell + 4 for byte in other_fields) for cell in foreign
+        any(cell <= byte < cell + 4 for byte in other_fields)
+        for cell in foreign
+        if not (
+            numeric_counts is NumericCountPolicy.IdentityConservative
+            and numeric_count_word(cell)
+        )
     ) and not any(
         cell <= read + 3 and read <= cell + 3 for cell in foreign for read in reads
     )
 
 
-def _auxiliary_break_reads(resources, foreign: frozenset[int]):
+def _auxiliary_break_reads(
+    resources,
+    foreign: frozenset[int],
+    *,
+    numeric_counts: NumericCountPolicy = NumericCountPolicy.Existing,
+):
     """Neutral full-corpus consumer facts, without authority conversion."""
 
     def require(condition, reason=PositiveEntryFailure.Control):
@@ -509,7 +553,9 @@ def _auxiliary_break_reads(resources, foreign: frozenset[int]):
                 )
         require(
             _foreign_fields_disjoint(
-                foreign, tuple(read for *_, read in auxiliary_reads)
+                foreign,
+                tuple(read for *_, read in auxiliary_reads),
+                numeric_counts=numeric_counts,
             ),
             PositiveEntryFailure.ForeignConsumer,
         )

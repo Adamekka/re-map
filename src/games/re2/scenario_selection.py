@@ -626,6 +626,10 @@ def scoped_scenario_items(
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert isinstance(context, VerifiedScenarioContext)
     from games.re2.identity_filtering import NormalEngineIdentityFiltering
+    from games.re2.identity_program_isolation import (
+        IdentityIsolationSupport,
+        IdentityProgramIsolation,
+    )
     from games.re2.normal_engine_binding import typed_binding_digest
 
     assert (
@@ -651,11 +655,24 @@ def scoped_scenario_items(
         )
         refined = type(registration) is VerifiedPersistentRegistration
         assert not filtering or not refined
+        entry_locations = entry_scope.entry_locations
         if filtering:
             require(
                 entry_scope.matches(data, room, profile, context),
                 ScenarioSelectionFailure.EntryScope,
             )
+            if type(entry_scope.program_isolation) is IdentityProgramIsolation:
+                # The sealed factory binds this entry plan only after metadata
+                # preservation and all entered operative checks both succeed.
+                require(
+                    entry_scope.program_isolation.source_sha256 == room["sha256"]
+                    and entry_locations
+                    == entry_scope.program_isolation.entry_locations,
+                    ScenarioSelectionFailure.EntryScope,
+                )
+                entry_locations = entry_scope.program_isolation.entry_locations
+            else:
+                require(type(entry_scope.program_isolation) is IdentityIsolationSupport)
         if refined:
             require(
                 registration.matches(data, room, profile, context.declaration_contract)
@@ -725,7 +742,7 @@ def scoped_scenario_items(
             for key, program in programs.items()
         }
         require(
-            all(at in commands[key] for key, at in entry_scope.entry_locations),
+            all(at in commands[key] for key, at in entry_locations),
             ScenarioSelectionFailure.EntryScope,
         )
         banks = {
@@ -868,11 +885,7 @@ def scoped_scenario_items(
                 for row in programs[key]["commands"]
             ):
                 continue
-            pending = [
-                (key, at, ())
-                for key, at in entry_scope.entry_locations
-                if key in scopes
-            ]
+            pending = [(key, at, ()) for key, at in entry_locations if key in scopes]
             seen, reached = set(), set()
             supported = True
             while pending and supported:
@@ -922,6 +935,13 @@ def scoped_scenario_items(
                             )
                             or filtering
                             and test["opcode"] == 0x86
+                            or filtering
+                            and any(
+                                fact.program == key
+                                and fact.offset == cursor
+                                and fact.if_offset == row["offset"]
+                                for fact in entry_scope.member_if_predicates
+                            )
                         ):
                             # This read-only numeric test can take either path;
                             # the query needs no invented runtime counter value.

@@ -1,4 +1,4 @@
-"""RE2-SCENARIO-010/011: source-bound native identity filtering only."""
+"""RE2-SCENARIO-010/011/012: source-bound native identity filtering only."""
 
 from __future__ import annotations
 
@@ -7,8 +7,20 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
+from games.re2.identity_program_isolation import (
+    IdentityIsolationSupport,
+    IdentityProgramIsolation,
+    identity_program_isolation,
+)
+from games.re2.identity_source_effects import (
+    MemberIfPredicate,
+    identity_compactions,
+    identity_primitive_reservations,
+    member_if_predicates,
+)
 from games.re2.native_control import (
     EFFECT_CLEANUP_NATIVE,
+    NumericCountPolicy,
     native_bytes,
     native_nonyielding,
 )
@@ -55,12 +67,12 @@ from games.re2.startup_declarations import (
 )
 from games.re2.structured_control import ControlFrames
 
-IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v3"
+IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v4"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "d5937ab613d34cf6e25b1accc533ecf219a4ba0f041576e6ec5371567127f145"
+    "6dd2a84159859c7f580881bf16ab90c524692632395dfb05a8bba4f24d53ae3c"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
-    "264a9239136db1aaa8ab12c941b3a2e99d263c8f57e7fba8dadd6f299619f016"
+    "47e043b2483a11ce15c02f8d973ef4b17c1bc0de375f68c1b5e937d368029e1a"
 )
 HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
@@ -180,6 +192,8 @@ class NormalEngineIdentityFiltering:
     dispatches: tuple[_IdentityDispatch, ...]
     auxiliary_break_reads: tuple[tuple[int, str, int, int], ...]
     must_registered: frozenset[int]
+    member_if_predicates: tuple[MemberIfPredicate, ...]
+    program_isolation: IdentityProgramIsolation | IdentityIsolationSupport
     _binding: tuple
 
     def __init__(self, *args, **kwargs):
@@ -453,7 +467,8 @@ def normal_engine_identity_filtering(
     assert type(data) is bytes and type(room) is dict and type(profile) is dict
     assert type(bound) is BoundStartupDeclarations
     try:
-        if identity_filtering_policy(profile) is IdentityFilteringPolicy.Unaudited:
+        policy = identity_filtering_policy(profile)
+        if policy is IdentityFilteringPolicy.Unaudited:
             return IdentityFilteringFailure.OptOut
         config = startup_declaration_audit(profile)
         resources = bound.entry_resources
@@ -535,6 +550,7 @@ def normal_engine_identity_filtering(
                 auxiliary_room["programs"],
                 phase=NativeTaskPhase.Auxiliary,
                 role=ControlFrames.NativeIdentityFiltering,
+                numeric_counts=NumericCountPolicy.IdentityConservative,
             )
             if type(result) is not _TaskFields:
                 return IdentityFilteringFailure.Control
@@ -544,28 +560,55 @@ def normal_engine_identity_filtering(
         )
         if type(writes) is not ScenarioSourceWriteWitnesses:
             return IdentityFilteringFailure.Source
+        ordinary = _task_fields(
+            data,
+            room["programs"],
+            phase=NativeTaskPhase.Ordinary,
+            role=ControlFrames.NativeIdentityFiltering,
+            numeric_counts=NumericCountPolicy.IdentityConservative,
+        )
+        if type(ordinary) is not _TaskFields:
+            return IdentityFilteringFailure.Control
+        compactions = identity_compactions(
+            data,
+            room,
+            profile,
+            ordinary,
+            writes,
+            resources.executable,
+            bound.declarations.flag_addresses,
+        )
+        if type(compactions) is not tuple:
+            return IdentityFilteringFailure.Source
+        reservations = identity_primitive_reservations(
+            data,
+            room,
+            profile,
+            ordinary,
+            writes,
+            resources.executable,
+            compactions,
+            policy,
+        )
+        if type(reservations) is not tuple:
+            return IdentityFilteringFailure.Source
         source = _source_entry_roles(
             data,
             room["programs"],
             writes,
             policy=SourceEntryPolicy.NativeIdentityFiltering,
+            compactions=compactions,
+            primitive_reservations=reservations,
         )
         if type(source) is not _NativeIdentityEntryRoles:
             return IdentityFilteringFailure.Control
-        auxiliary = _auxiliary_break_reads(resources, source.foreign_fields)
+        auxiliary = _auxiliary_break_reads(
+            resources,
+            source.foreign_fields,
+            numeric_counts=NumericCountPolicy.IdentityConservative,
+        )
         if type(auxiliary) is not tuple:
             return IdentityFilteringFailure.Control
-        scope = _source_scope_facts(
-            data,
-            room,
-            profile,
-            context,
-            _ScopePolicy.NativeIdentityFiltering,
-            TaskControlSupport.Unaudited,
-            source,
-        )
-        if type(scope) is not _SourceScopeFacts:
-            return IdentityFilteringFailure.Source
         must = guaranteed_registration(
             data,
             room,
@@ -590,6 +633,37 @@ def normal_engine_identity_filtering(
             if type(dispatch) is not _IdentityDispatch:
                 return IdentityFilteringFailure.Dispatch
             dispatches.append(dispatch)
+        isolation = identity_program_isolation(
+            data,
+            room,
+            profile,
+            bound,
+            native,
+            source,
+            writes,
+            tuple(auxiliary_fields),
+            auxiliary,
+            must,
+            tuple(dispatches),
+            policy,
+        )
+        scope = _source_scope_facts(
+            data,
+            room,
+            profile,
+            context,
+            _ScopePolicy.NativeIdentityFiltering,
+            TaskControlSupport.Unaudited,
+            source,
+            isolation=isolation,
+        )
+        if type(scope) is not _SourceScopeFacts:
+            return IdentityFilteringFailure.Source
+        predicates = member_if_predicates(
+            data, room["programs"], ordinary, resources.executable
+        )
+        if type(predicates) is not tuple:
+            return IdentityFilteringFailure.Source
         values = (
             data,
             _json(room),
@@ -604,6 +678,8 @@ def normal_engine_identity_filtering(
             tuple(dispatches),
             auxiliary,
             must,
+            predicates,
+            isolation,
         )
         result = object.__new__(NormalEngineIdentityFiltering)
         for field, value in zip(fields(result)[:-1], values, strict=True):

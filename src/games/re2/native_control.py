@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+from dataclasses import dataclass
 from enum import Enum
 
 from games.re2.script_control_limits import (
@@ -45,6 +46,11 @@ class ControlField(Enum):
     ProgramCounter = "script PC"
 
 
+class NumericCountPolicy(Enum):
+    Existing = "protected count storage"
+    IdentityConservative = "identity-only arbitrary unsigned counts"
+
+
 def canonical_if_pointer(saved_if: int) -> int:
     """Return reconstructs from a signed byte, never the saved foreign pointer."""
     assert -1 <= saved_if < NATIVE_IF_FRAME_COUNT
@@ -80,6 +86,21 @@ def control_field(depth: int, field: ControlField, index: int) -> tuple[int, int
     }[field]
 
 
+def numeric_count_word(offset: int) -> bool:
+    """An aligned IF word must cover exactly two complete canonical u16 counts."""
+    assert type(offset) is int
+    counts = {
+        byte
+        for depth in range(NATIVE_CALL_FRAME_COUNT)
+        for loop in range(NATIVE_LOOP_FRAME_COUNT)
+        for cell, width in (control_field(depth, ControlField.LoopCount, loop),)
+        for byte in range(cell, cell + width)
+    }
+    # NEXT/Sleeping consume numeric u16, never pointers or indices. Arbitrary
+    # values can change duration/multiplicity; neither proves loop progress.
+    return offset % 4 == 0 and all(byte in counts for byte in range(offset, offset + 4))
+
+
 def goto_if_cell(task: int, depth: int) -> tuple[int, int]:
     """Return the receiving task/offset of FF IF-pointer's next target store."""
     return if_store_cell(task, depth, GOTO_FF_IF_BASE)
@@ -108,8 +129,19 @@ def native_bytes(executable: bytes, address: int, width: int) -> bytes:
     return executable[offset : offset + width]
 
 
+@dataclass(frozen=True)
+class NativeScalarCall:
+    address: int
+    target: int
+    arguments: tuple[int, int, int, int]
+
+
 def native_nonyielding(
-    executable: bytes, entry: int, switches: dict[int, tuple[int, ...]]
+    executable: bytes,
+    entry: int,
+    switches: dict[int, tuple[int, ...]],
+    *,
+    scalar_calls: tuple[NativeScalarCall, ...] = (),
 ) -> bool:
     """Close calls/branches; reject indirect, cooperative and external transfers.
 
@@ -117,8 +149,20 @@ def native_nonyielding(
     input clock. A handler returning one is insufficient if a callee can yield.
     Switch destinations are separately bounded pinned-native table entries.
     """
+    assert type(scalar_calls) is tuple
+    assert all(type(fact) is NativeScalarCall for fact in scalar_calls)
+    calls = {fact.address: fact for fact in scalar_calls}
+    assert len(calls) == len(scalar_calls)
     pending, seen = [entry], set()
     try:
+        if scalar_calls:
+            from games.re2.native_sound_calls import sound_reader_scalar_calls
+
+            if (
+                entry != 0x8005C040
+                or sound_reader_scalar_calls(executable) != scalar_calls
+            ):
+                return False
 
         def delay_is_plain(address):
             word = int.from_bytes(native_bytes(executable, address + 4, 4), "little")
@@ -155,7 +199,14 @@ def native_nonyielding(
                 return False
             if op in (2, 3):
                 target = (address + 4) & 0xF0000000 | (word & 0x3FFFFFF) << 2
-                pending.append(target)
+                if op == 3 and address in calls:
+                    # This exact invocation has independently checked literals,
+                    # guarded divide and preserved S0. Other calls still traverse
+                    # both exceptional guards and reject the helper's traps.
+                    if target != calls[address].target:
+                        return False
+                else:
+                    pending.append(target)
                 if not delay_is_plain(address):
                     return False
                 if op == 3:
