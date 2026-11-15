@@ -369,3 +369,124 @@ native episode. Configured Gemini 3.8 Flash/high review times out without
 output; its executed-model field is null. Claude Opus 5.5 was unavailable at
 the preparation review attempt. Neither supplies an endorsement of this
 contribution.
+
+## RE3-LIVE-005: original Hard selection and released title input precede world publication
+
+**Status: Candidate**, 2026-11-15. A new original RE3 USA `SLUS-00923`
+cold boot verifies the title navigation, separate New Game and Hard
+confirmations, and release after each input. It reaches the original Hard
+initializer and stops immediately before world publication. Ordinary campaign
+control, movement and sufficient Hard/campaign admission remain unverified.
+The executable, TITLE and DuckStation identities are exactly those listed in
+[RE3-LIVE-004](#re3-live-004-original-title-input-reaches-the-game-but-release-remains-unverified).
+No production reader, profile or tracking behavior changes.
+
+### Startup ordering and actual input
+
+A separate intervening attempt stops at epoch zero because the observer checks
+its owned debugger listener before that listener exists. The process later
+briefly opens the listener during shutdown; no debugger connection, native
+sample or input occurs. Its owned child exits zero after 2.719 host seconds.
+This is an observer-startup ordering failure, not a failed game admission test.
+The attempt is preserved under
+`~/.cache/re-map/evidence/2026-11-15-re3-menu-release-startup-failure/`.
+
+The next instance uses the same eight reviewed runtime scripts, SHA256
+manifest `736ea61a553600d3438aa84e262e03b945ca28df76938c8f5b43f3f875eb8ad9`.
+A retained readiness receipt verifies the actual sole owned PID, argv,
+configuration and PID-owned listening port before the observer connects.
+No ended instance or launch marker is reused.
+
+All following addresses are PS1 virtual addresses. Multi-byte values are
+little endian. Two zero-input completions at `0x80038604` precede the first
+input. One Left edge moves title cursor one to zero at `0x801956E8`; a separate
+Start edge selects New Game. Only after release does another Start edge
+confirm difficulty cursor zero at the original `0x80195C68` callback. No Easy
+selection or alternate route is used.
+
+| Input | Active-low packet at `0x800CC7EA`, two bytes | Raw held and edge at `0x800CC830/+4`, u32 each | Logical held and edge at `+12/+16`, u32 each |
+| --- | --- | --- | --- |
+| Left | `7F FF` | `0x8000` each | eight each |
+| Start, each separate confirmation | `F7 FF` | `0x0800` each | zero each |
+
+Each of the three ON actions first produces one still-released completion,
+then the exact observed packet and rising edge. Each certain same-key OFF
+action is followed by one completion retaining the acknowledged held input
+with zero edge/repeat, then two consecutive `FFFF`/five-zero completions.
+The full pulses consume approximately 0.309, 0.245 and 0.326 host-running
+seconds respectively; these are not guest-frame counts. No uncertain toggle
+is repeated. This newly retained release sequence does not reconstruct the
+missing failure sample from RE3-LIVE-004.
+
+### Hard path and final boundary
+
+The original Hard path is observed at `0x80195DB0` and `0x80195E1C`, with
+cursor zero and the original code/register witnesses. Lifecycle word
+`0x800CC858`, u32, is already `0x20000000` before the original clear of mask
+`0x100`; it remains equal afterward. Both full RAM captures are
+byte-identical. This proves neither a one-to-zero transition nor a general
+Hard classifier.
+
+At original initializer stop `0x80196174`, lifecycle is `0x20001000` and the
+separate saved-option word `0x800D1F30`, u32, still has mask `0x1` clear.
+The pinned initializer's conditional Easy-only write remains source
+interpretation; no complete initializer, inventory or campaign-control result
+is inferred from those values alone.
+
+Seven full 2 MiB captures retain identical before/after consumed fields,
+registers, code witnesses and snapshot/live reader results. Every capture
+reproduces `NonGameplay`. They contain six distinct RAM payloads within one
+episode, not independent gameplay situations. The final retained bounded
+observation is epoch 35, PC `0x80024884`, immediately **before** the original
+world-publication store, also `NonGameplay`. No full capture is taken there
+because the remaining watchdog budget is below the required capture/teardown
+reserve. The next command is rejected by the general watchdog-margin gate
+before its proposed single step executes. There is no after-publication, ordinary-player-entry,
+released movement or reentry observation in this episode.
+
+### Isolation, cleanup and contribution
+
+Both achievement namespaces, hardcore and integration are disabled before
+boot. The instance uses no cards, accounts, cheats, patches, save/restore or
+user exploration history. Muted audio and the private black shader are
+configured; no game image is requested or emitted. CUA's exact requested app
+path and returned running bundle identity compose with the independent sole
+PID/argv/config/listener checks. An initial inventory assertion counts a
+historical nonrunning entry and fails before any key action; the later
+running-only inventory is retained separately from that failed call.
+
+All six actual key actions have paired tool receipts. The final input lease
+is off with two released cycles. Both remaining execute callbacks are removed
+with `OK`; the client closes and the wrapper reaps its child with exit zero
+after 883.219 host seconds. Port 2467 is bindable in the wrapper receipt and a
+fresh closed probe. Execution after the final coherent stop remains unobserved.
+Strict postexit configuration validation fails and remains failed. A separate
+semantic comparison finds only the empty Hotkeys section removed and four UI
+geometry keys added; all original values agree. No settings are repaired.
+
+Native inputs, seven captures and actual CUA receipts are under
+`~/.cache/re-map/evidence/2026-11-15-re3-hard-listener-ready/`. The bounded
+offline verification and frozen evidence are under
+`~/.cache/re-map/evidence/2026-11-15-re3-original-hard-selection/`.
+Never rerun an ended launcher/controller or operate on its historical PID.
+
+The frozen 103-entry `artifact-manifest.json` has SHA256
+`7cada3c2d487253e36753ea9993a0b15906bbc4ec6702e04230f2b937cc75ebe`.
+Final `verified-02/verification.json` has SHA256
+`9bf68726be9cd8c869d67af98ee509383a882a8c9290ea2394a94a398c8b4578`.
+Its handoff gives the exact offline reproduction command: use the verification
+Python environment and `verify_episode.py`, with the ended episode as explicit
+`--source-root` and a new absent `--output-directory`. The replay binds all
+seven captures, the actual controller/CUA records, original EXE/TITLE and all
+169 owned sources. It imports no operational script and opens no fixture.
+Root's fresh offline replay is byte-identical to the frozen final report and
+independently verifies every entry in the 103-file manifest.
+
+Root `gpt-6.1-sol`, effort `xhigh`, session
+`01a1ac67-edda-7172-9e99-4bff796300a9`, reviews the revised setup, performs
+the native episode and CUA actions, verifies shutdown and writes this claim.
+The same verified model/effort, independent session
+`01a1df49-09da-7e82-bb6b-d97b47926c4f`, checks the final offline controller
+delta before launch and freezes the ended episode afterward. Earlier authors
+and reviews retain their original attribution. No Opus or Gemini review is
+requested after the user's prohibition; no such review endorses this episode.
