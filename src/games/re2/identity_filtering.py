@@ -1,4 +1,4 @@
-"""RE2-SCENARIO-010/011/012: source-bound native identity filtering only."""
+"""RE2-SCENARIO-010/011/012/013: source-bound native identity filtering only."""
 
 from __future__ import annotations
 
@@ -7,10 +7,19 @@ import json
 from dataclasses import dataclass, fields
 from enum import Enum
 
+from games.re2.identity_pickup_effects import (
+    NormalPickupFilteringEffect,
+    normal_pickup_filtering_effect,
+)
 from games.re2.identity_program_isolation import (
     IdentityIsolationSupport,
     IdentityProgramIsolation,
     identity_program_isolation,
+    required_identity_dispatch_slots,
+)
+from games.re2.identity_registration import (
+    IdentityRegistrationControl,
+    identity_registration_control,
 )
 from games.re2.identity_source_effects import (
     MemberIfPredicate,
@@ -43,7 +52,7 @@ from games.re2.positive_entry_domain import (
     _NativeIdentityEntryRoles,
     _source_entry_roles,
 )
-from games.re2.program_entry_domain import entered_frame_domain
+from games.re2.program_entry_domain import EnteredFrameDomain, entered_frame_domain
 from games.re2.scenario_entry_scope import (
     _ScopePolicy,
     _source_scope_facts,
@@ -68,12 +77,12 @@ from games.re2.startup_declarations import (
 )
 from games.re2.structured_control import ControlFrames
 
-IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v5"
+IDENTITY_FILTERING_AUDIT = "slus00748-trusted-normal-identity-filtering-v6"
 IDENTITY_FILTERING_PROFILE_SHA256 = (
-    "06a03140e74e66d914a6fba0f31aff38c1509f3cd8ce2d0aa7f95d3dca3e1a76"
+    "cb914fde0ee6fc48a7772f21ac5facb6c66b280e4680d87cda56f15357859ecb"
 )
 IDENTITY_FILTERING_CATALOG_SHA256 = (
-    "47e043b2483a11ce15c02f8d973ef4b17c1bc0de375f68c1b5e937d368029e1a"
+    "6e8c0b63dcc784d8783fbc54c5d9e307242614e87f576cd1eb4133fb70d2fc80"
 )
 HISTORICAL_FLAGS = ((1, 0, 0), (1, 1, 0), (1, 6, 0), (0, 25, 1))
 _SEAL = object()
@@ -115,6 +124,11 @@ def identity_filtering_policy(profile: dict) -> IdentityFilteringPolicy:
 class _IdentityDispatchKind(Enum):
     FixedFlag = "kind12 fixed flag callback"
     PendingDoor = "kind1 immutable unlocked pending request"
+    NormalPickup = "kind2 ordinary pickup filtering only"
+
+
+class _DispatchEffect(Enum):
+    Existing = "existing fixed-flag or pending-door footprint"
 
 
 @dataclass(frozen=True)
@@ -122,6 +136,7 @@ class _IdentityDispatch:
     slot: int
     kind: _IdentityDispatchKind
     creator_offsets: tuple[int, ...]
+    effect: NormalPickupFilteringEffect | _DispatchEffect
 
 
 def _identity_dispatch(
@@ -131,6 +146,8 @@ def _identity_dispatch(
     registered: frozenset[int],
     writes: ScenarioSourceWriteWitnesses,
     covered_models: frozenset[int],
+    *,
+    pickup_effects: tuple[NormalPickupFilteringEffect, ...] = (),
 ) -> _IdentityDispatch | IdentityFilteringFailure:
     """Derive a local callback footprint; this unsealed fact grants no authority."""
     assert type(data) is bytes and type(slot) is int
@@ -148,7 +165,16 @@ def _identity_dispatch(
         return IdentityFilteringFailure.Dispatch
     offsets = tuple(sorted(row["offset"] for row in origins))
     if kinds == {12}:
-        return _IdentityDispatch(slot, _IdentityDispatchKind.FixedFlag, offsets)
+        return _IdentityDispatch(
+            slot, _IdentityDispatchKind.FixedFlag, offsets, _DispatchEffect.Existing
+        )
+    if kinds == {2}:
+        effects = [effect for effect in pickup_effects if effect.slot == slot]
+        if len(effects) != 1:
+            return IdentityFilteringFailure.Dispatch
+        return _IdentityDispatch(
+            slot, _IdentityDispatchKind.NormalPickup, offsets, effects[0]
+        )
     if kinds != {1}:
         return IdentityFilteringFailure.Dispatch
     # The mandatory policy check fixes STATUS1:0=0. This excludes the callback's
@@ -175,7 +201,9 @@ def _identity_dispatch(
             )
         ):
             return IdentityFilteringFailure.Dispatch
-    return _IdentityDispatch(slot, _IdentityDispatchKind.PendingDoor, offsets)
+    return _IdentityDispatch(
+        slot, _IdentityDispatchKind.PendingDoor, offsets, _DispatchEffect.Existing
+    )
 
 
 @dataclass(frozen=True, init=False)
@@ -191,7 +219,9 @@ class NormalEngineIdentityFiltering:
     native_entries: _NativeEntryWitnesses
     auxiliary_fields: tuple[tuple[int, _TaskFields], ...]
     dispatches: tuple[_IdentityDispatch, ...]
+    pickup_effects: tuple[NormalPickupFilteringEffect, ...]
     auxiliary_break_reads: tuple[tuple[int, str, int, int], ...]
+    registration_control: IdentityRegistrationControl
     must_registered: frozenset[int]
     member_if_predicates: tuple[MemberIfPredicate, ...]
     program_isolation: IdentityProgramIsolation | IdentityIsolationSupport
@@ -613,19 +643,57 @@ def normal_engine_identity_filtering(
         )
         if type(auxiliary) is not tuple:
             return IdentityFilteringFailure.Control
+        registration = identity_registration_control(
+            data, room, profile, context, source, writes, native, bound
+        )
+        if type(registration) is not IdentityRegistrationControl:
+            return IdentityFilteringFailure.Dispatch
         must = guaranteed_registration(
             data,
             room,
-            source.edges,
-            atomic_opcodes=resources.ordinary_ingress.atomic_opcodes,
+            registration.edges,
+            atomic_opcodes=registration.atomic_opcodes,
         )
         if type(must) is not frozenset:
             return IdentityFilteringFailure.Dispatch
-        rows = [r for p in room["programs"].values() for r in p["commands"]]
+        pickup_effects = []
+        # Native manual AOT activation also reaches kind2 without scripted47.
+        # Validate every possibly installed pickup, retaining all raw same-slot
+        # creator/Reset/Copy alternatives in each body fact.
+        operative = (
+            source.frame_domain.entered_programs
+            if type(source.frame_domain) is EnteredFrameDomain
+            else frozenset(room["programs"])
+        )
+        pickup_slots = {
+            data[row["offset"] + 1]
+            for key in operative
+            for row in room["programs"][key]["commands"]
+            if row["kind"] == "item"
+            or row["kind"] == "reset"
+            and row["interaction"] == 2
+        }
+        required_dispatches = required_identity_dispatch_slots(data, room, source)
+        normal_pickup_dispatch = any(
+            data[row["offset"] + 1] in required_dispatches
+            for key in operative
+            for row in room["programs"][key]["commands"]
+            if row["kind"] == "item"
+            or row["kind"] == "reset"
+            and row["interaction"] == 2
+        )
+        # Existing manual-only sources retain their existing normal-owner
+        # contract. Extending scripted47 to pickups requires the stronger body
+        # relation for every potentially installed pickup in that source.
+        for slot in sorted(pickup_slots if normal_pickup_dispatch else ()):
+            effect = normal_pickup_filtering_effect(
+                data, room, profile, bound, source, writes, slot
+            )
+            if type(effect) is not NormalPickupFilteringEffect:
+                return IdentityFilteringFailure.Dispatch
+            pickup_effects.append(effect)
         dispatches = []
-        for slot in sorted(
-            {data[row["offset"] + 1] for row in rows if row["opcode"] == 0x47}
-        ):
+        for slot in sorted(required_dispatches):
             dispatch = _identity_dispatch(
                 data,
                 room,
@@ -633,6 +701,7 @@ def normal_engine_identity_filtering(
                 must,
                 writes,
                 resources.ordinary_ingress.covered_models,
+                pickup_effects=tuple(pickup_effects),
             )
             if type(dispatch) is not _IdentityDispatch:
                 return IdentityFilteringFailure.Dispatch
@@ -650,7 +719,17 @@ def normal_engine_identity_filtering(
             must,
             tuple(dispatches),
             policy,
+            pickup_effects=tuple(pickup_effects),
         )
+        # New pickup bodies or an omitted dormant dispatch require actual
+        # isolation. Existing full-source callers retain their complete raw
+        # dispatch and operative checks when no entered-only proof is available.
+        if type(isolation) is not IdentityProgramIsolation and (
+            pickup_effects
+            or required_dispatches
+            != required_identity_dispatch_slots(data, room, source, whole_source=True)
+        ):
+            return IdentityFilteringFailure.Source
         scope = _source_scope_facts(
             data,
             room,
@@ -680,7 +759,9 @@ def normal_engine_identity_filtering(
             native,
             tuple(auxiliary_fields),
             tuple(dispatches),
+            tuple(pickup_effects),
             auxiliary,
+            registration,
             must,
             predicates,
             isolation,

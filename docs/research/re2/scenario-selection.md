@@ -1151,3 +1151,234 @@ review receipt are retained under
 `~/.cache/re-map/evidence/2026-11-15-native191-root-integration/`.
 The independent review is retained separately under
 `~/.cache/re-map/evidence/2026-11-15-native191-independent-review/`.
+
+## RE2-SCENARIO-013: qualified registration and ordinary pickup filtering
+
+Status: Candidate for Resident Evil 2 Dual Shock, NTSC-U Leon Disc 1,
+`SLUS_007.48`, exact executable SHA256
+`e576348f64d015ecff6e1ce875a8924ee252ba7f3f9478b0917cbbdeb97db441`,
+987,136 bytes. No revision generalization or new gameplay confirmation.
+Implementation starts at exact unpublished
+`6b73a959fed9e690d4db64f7fccbcf63486acfa8`. Its production/profile/catalog
+inputs equal the earlier `5bb167b` design base; intervening RE3 documentation
+supplies no RE2 authority.
+
+The genuine factory now returns `NormalEngineIdentityFiltering` for `01-04`.
+Only that returned capability enters `scoped_scenario_items`, whose result is
+`absent_item_ids=(0,)`, with no new item variant. The raw GID0 creator in
+unentered `17:24` remains in the source and catalog. This result depends on the
+human-approved initialized, unmodified normal-engine premise and the complete
+source/native/auxiliary preflight. It grants no positive presence, awarded
+quantity, inventory capacity, historical pickup identity, UI progress, strict
+entry or door authority.
+
+### Source and registration control
+
+The source is `PL0/RDT/ROOM2040.RDT`, 196,792 bytes, SHA256
+`4816336f9147fc6179d7f39dca7e5a33ee302555091312ced2e1c1bca40afd46`.
+The complete fresh 69-resource/125-source/54-auxiliary binder remains
+`727c49593f3d756594049140e357d8c4c6f47aefdb215d7fd6d0a0a79ed670a8`.
+The unmodified shared registration walk and global ingress atom set remain
+unchanged. Without the separate registration-control fact, this source still
+stops at init `16:0/6462` and returns exactly `{0,1,2}`.
+
+A separate unsealed registration fact binds genuine native frames/edges,
+protected CK packets, immutable context, source writes and native installers.
+All absolute addresses here are PS1 virtual, never host addresses or RAM
+file offsets. Flag words are u32 little endian with descending bit masks.
+
+| CK source offset | Physical word / mask | Admitted result |
+| --- | --- | --- |
+| init 6466, main 6608, `1:6==1` | `0x800CFBD8` / `0x02000000` | false |
+| main 6620, `1:1==1` | `0x800CFBD8` / `0x40000000` | false |
+| main 6718, `4:85==0` | `0x800D485C` / `0x00000400` | both |
+
+The new registration frame role consumes actual CK edges. Existing identity
+frames still reject arbitrary predicate hints. Both unknown `4:85` paths
+remain, including the original `04ff1806` AUTO Event_exec at 6726. Its actual
+phase-zero installer scans/selects only tasks 2 through 9, preserves initializer
+owner 0/1 and its original continuation, clears six native Work words, and
+returns without executing the child or yielding to the scheduler. This bounded
+installer contract does not prove later child AI or scheduling safety. The
+unchanged native component fixture exercises owners 0/1 with early, middle,
+last and fully occupied AUTO selections. A cooperative native callee, early
+END, yield, current-owner replacement or lost fixed predicate cannot establish
+the later registration. The real resulting set is
+`{0,1,2,3,4,5,6,8,9,10,11,12}`.
+
+The shared entered domain still has 21 programs and 119 task/depth entries.
+Raw producers, kind5/Reset alternatives, all 54 auxiliaries and all 126 foreign
+Break reads remain complete. Dormant `17:12`, `17:23` and `17:24` remain protected.
+Required scripted47 footprints follow the proven entered domain, so dormant
+Reset1 at 9344 and `4701` at 9354 need no callable footprint. Adding a producer
+reinstates that program's actual frame/effect obligations. New pickup bodies
+or omitted dormant dispatches require genuine program isolation. Existing
+whole-source callers retain their complete raw dispatch and operative checks;
+missing isolation never supplies an entered-only exemption.
+
+### Ordinary pickup effect and normal ownership
+
+The actual entered call is `17:8/7956`, `4704`. Its sole physical slot4 creator
+is 6732, `4e0402000000007d007d0100010014000f000300ff01`: type20, amount15,
+GID3, modelFF, flag1. Registration is established before dispatch. The factory
+also validates the other possibly installed manual pickup in this source;
+scripted47 alone does not define the native callback universe.
+
+The separate unsealed effect is carried inside the actual dispatch. It accepts
+physical 22-byte4E and 30-byte69 constructors, explicit slots0..31, complete
+u16 type/amount/GID, bounded physical model or FF, and flags0/1. Ordinary types
+are below104, excluding two-slot14..18 and special82. All same-slot creators,
+Resets and Copy intersections remain relevant, including dormant alternatives.
+File/special controllers, high-byte aliases, unsafe models, flag80/other flags,
+cross-kind alternatives and selected-source compaction remain unsupported.
+Resets retain physical model/flag fields; a Reset type30 alternative can change
+the installed physical creator's amount, not the Reset instruction's storage.
+
+The exact original kind2/routine6/UI bodies and tables bind the normal native
+owner relation. Flag1 starts routine6; its later phase2 captures then-current
+STOP. Pending/routine6 can span ordinary passes, and another qualified request
+may replace selected globals. There is no cached historical descriptor pointer.
+Disabled kind0 explicitly writes unknown counters0/1. Type30/SYSTEM40 may
+replace the selected u16 amount with2, which supplies no award or capacity fact.
+Inventory writes remain bounded to `0x800D4A38..0x800D4E38` exclusive, including
+the no-space sentinel alternatives. Acquisition and bounded object writes
+remain separate from task, source-control and fixed-context storage.
+
+Native UI saves source header9, RDT bytes44..48 as u32LE, at `0x800DCBCC`, binds
+`0x800A93A8` temporarily, then restores it in the delay-slot store at
+`0x80068EE4` before `0x8003210C` releases native task0. Active UI suspends ordinary
+SCD/AOT independently of literal STOP. No constant STOP=7 or eventual UI
+completion is assumed. Source STOP and STATUS writers remain modeled source
+effects. In particular, the kind6 bank10/bit86 writer at6796 resolves to
+`0x800CFBE8`, mask `0x00000200`; logical bank names cannot substitute for physical
+alias checks. Normal room load invalidates old requests/routine6 before source
+replacement. Source/header/global/Work/Message and other callback preflight
+remain mandatory before the final capability seal.
+
+### Measured consequences and reproduction
+
+All125 fresh factory/query comparisons preserve the previous33 successful
+filtering queries and every positive result. Five sources gain filtering
+support: `01-04`, `01-15`, `02-09`, `04-08` and `06-01`. Only two new raw query
+results contain item facts: GID0 absence and `04-08/GID65` variant5520. The latter
+was already represented by an older catalog policy, so generated item metadata
+changes only `01-04`'s absence. The other three new queries are empty. `00-11`
+and `05-04` advance to a source-effect failure and remain unsupported. Final
+identity support is38/125, with46 Control,27 Source,12 Dispatch and2 Binding
+failures. No target-only expected gain set controls the compiler.
+
+Door rights remain153 facts /163 creators /12 exclusions /126 unsupported.
+Their full catalog profile provenance migrates to the new semantic profile;
+all other door fields and outcomes remain exact. All11,766 neutral frame walks
+across the six existing roles match exact6b73 source bytes. Original strict,
+guard and presence policies retain their own contracts.
+
+The new semantic profile is
+`cb914fde0ee6fc48a7772f21ac5facb6c66b280e4680d87cda56f15357859ecb`.
+Identity audit is `slus00748-trusted-normal-identity-filtering-v6`; complete
+identity catalog digest is
+`6e8c0b63dcc784d8783fbc54c5d9e307242614e87f576cd1eb4133fb70d2fc80`.
+The full door catalog digest, including its migrated profile provenance, is
+`41d3d912d624f18c2921914443ff41c18e86200fa3894aecc16668461f8ca199`.
+Other profile pins migrate as binding changes without additional rights. No
+field is dropped from semantic/catalog digest definitions.
+
+Rebuilt CURRENT inventory precedes copied-history joins. All21 full tracker
+comparisons preserve their ordered read plans, doors, pose, visits, regions,
+quantities and other item results. GID0's Unknown row disappears in the six
+actual-history and six simulated-all-source publications. Four actual-history
+Unknown item rows become three; the four Unknown rooms remain `00-11`, `01-0c`,
+`01-0d` and `03-09`. `01-04` stays Incomplete. No clearance gain is claimed.
+These are offline comparisons against three frozen copied RAM snapshots,
+historically cheat-tainted according to System v94 header bit5. Their original
+cheat effect is unknown. No taint bit, source copy or history is cleared or
+altered. They are not untainted gameplay or memory-card persistence evidence.
+No emulator, debugger, live user save/card/history/lock, controller input or
+native guest code patch is used in this contribution.
+
+Private evidence is
+`~/.cache/re-map/evidence/2026-11-15-gid0-qualified-pickup-implementation/`.
+`observe.py` records genuine stage returns without replacing arguments, locals,
+results or compilers. `public_matrix.py --ref 6b73a959fed9e690d4db64f7fccbcf63486acfa8`
+loads exact immutable baseline modules/profile and rereads the owned inputs;
+`--ref CURRENT` uses current code. `read_plans6b73.py` compares all21 baseline
+trackers and complete ordered plans with the parent's integrated goldens. The
+old11a loader and old evidence remain unchanged. `generate_frozen.py` performs
+complete generation and binds imported code plus explicit profile/name inputs.
+Generation01 is intermediate because code changed after its imports. Final
+frozen generation results and test exits are recorded separately in the handoff.
+
+Use the explicit owned CUE and verification interpreter:
+
+```sh
+export RE_MAP_RE2_OWNED_CUE='/Users/adamekka/Games/DuckStation/Resident Evil 2 - Dual Shock Ver. (Disc 1) (Leon).cue'
+/Users/adamekka/.cache/re-map/verification-venv/bin/python -m pytest -q tests/test_re2_qualified_pickup_filtering.py
+/Users/adamekka/.cache/re-map/verification-venv/bin/python -m pytest -q
+```
+
+Implementation, current synthetic/native component execution, offline
+comparisons, self-review and writing on2026-11-15 are by `gpt-6.1-sol`,
+effort `xhigh`, verified from own session
+`01a1e044-8765-7b10-a28d-e8ac6e108bce` and task-turn metadata in private
+`author.json`. Earlier GID0 source isolation, kind2 body recovery and integration
+design retain their original `gpt-6.1-sol`/`xhigh` session
+`01a1df49-09da-7e82-bb6b-d97b47926c4f` attribution. The earlier native callback
+and capacity investigation retains session
+`01a1d4ba-4805-7931-985e-49c0ef8f5a0f`; its quantity/capacity conclusions are not
+transferred. Human approval supplies the normal-engine premise. Parent
+reproduction and independent/configured external final review remain separate
+and pending. Test, model and opcode counts do not confirm gameplay behavior.
+
+Final local verification,2026-11-15: all9,094 tests pass in350.77s with the
+explicit owned CUE, including the unchanged full runner and tracked RE1 fixture
+reads. The focused final selection passes90 cases. Two complete final
+generations use the same65 imported code/config/name inputs and match installed
+output byte-for-byte: rooms SHA256
+`35a820619759a3d1d20771bcae84095c849a4f880178743b4818ebad9f6d56c8`,
+unchanged floors SHA256
+`aa7280b8ee4e82db93ee375ddd7c384c298235a972e4dadfb87b1275bb4a6996`.
+All125 independent metadata/API comparisons,560 presence calls,21 complete
+publication/read-plan comparisons and four rendered layouts pass. The desktop
+README PNG remains byte-identical. Scoped Ruff introduces no diagnostics;
+11 unrelated existing whole-file diagnostics match exact6b73. Formatting,
+470 local documentation links and whitespace pass. The first full run's three
+obsolete GID0 expectations were migrated without removing their acquisition,
+reentry, restart or earlier-image assertions. Those failed attempts remain in
+private evidence. Parent independent/configured external review remains pending.
+
+### Parent integration and final review
+
+2026-11-15. Parent reproduction, primary review and integration are by
+`gpt-6.1-sol`, effort `xhigh`, verified session
+`01a1ac67-edda-7172-9e99-4bff796300a9`. Independent review by
+`gpt-6.1-sol`, effort `xhigh`, session
+`01a1e070-da48-7642-a29e-08684b94ced4` reproduced 865 focused tests,
+50 original native component calls, all 125 API comparisons, 11,766 existing
+frame walks and all 21 complete publications/read plans. One Low documentation
+finding was corrected: the shared predicate comment now includes the separately
+bound registration caller. Its AST, including positions, and compiled bytecode
+are identical. No verified production finding remains from that review.
+
+The parent full suite passes 9,094 tests in 326.82s with the explicit owned CUE.
+Two fresh complete parent generations bind the final 65 raw code/config/name
+inputs, including the comment correction, and reproduce the rooms and floors
+hashes above. The parent genuine factory observation excludes only GID0; all 21
+integrated publications and ordered read plans reproduce the child results.
+Fourteen changed Python files pass scoped Ruff and formatting; 470 local links
+and whitespace checks pass. The README fixture/image and floor bytes are
+unchanged. This adds no UI or new gameplay validation.
+
+Configured Gemini 3.8 Flash/high external review failed after 15 minutes without
+provider output. Its executed-model field is null; no returned review or
+endorsement exists. Claude Opus 5.5 was unavailable because its provider was
+disabled. These review limitations replace the pending status above, while
+preserving the independent review and parent checks separately.
+
+Parent commands, final input hashes, comparison results and the failed external
+receipt are retained under
+`~/.cache/re-map/evidence/2026-11-15-gid0-root-integration/` and
+`~/.cache/re-map/evidence/2026-11-15-gid0-root-review/`. The independent report is
+`~/.cache/re-map/evidence/2026-11-15-gid0-independent-review/final-review.json`.
+Frozen child evidence remains unchanged. In particular, its original helper
+commands that write reports beside their scripts must be copied into a fresh
+evidence directory before rerunning; they must not overwrite frozen reports.

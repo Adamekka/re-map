@@ -64,11 +64,15 @@ def _task_fields(
 ) -> _TaskFields | PositiveEntryFailure:
     """Attach actual native task/depth roots to the existing shared frame walk."""
     assert type(phase) is NativeTaskPhase
-    assert role in (ControlFrames.NativeDoors, ControlFrames.NativeIdentityFiltering)
+    assert role in (
+        ControlFrames.NativeDoors,
+        ControlFrames.NativeIdentityFiltering,
+        ControlFrames.NativeIdentityRegistration,
+    )
     assert type(numeric_counts) is NumericCountPolicy
-    assert (
-        numeric_counts is NumericCountPolicy.Existing
-        or role is ControlFrames.NativeIdentityFiltering
+    assert numeric_counts is NumericCountPolicy.Existing or role in (
+        ControlFrames.NativeIdentityFiltering,
+        ControlFrames.NativeIdentityRegistration,
     )
     assert not copy_predicates or role is ControlFrames.NativeDoors
     inventory = native_entry_inventory(data, programs, phase)
@@ -226,7 +230,14 @@ def _task_fields(
             for _, _, other, _, cell in reads
         ):
             return PositiveEntryFailure.ForeignConsumer
-        if role is ControlFrames.NativeIdentityFiltering and receiver != task:
+        if (
+            role
+            in (
+                ControlFrames.NativeIdentityFiltering,
+                ControlFrames.NativeIdentityRegistration,
+            )
+            and receiver != task
+        ):
             # A suspended wait keeps its incremented LoopLevel. Foreign IF
             # stores must not corrupt that byte before its completing retry.
             if any(

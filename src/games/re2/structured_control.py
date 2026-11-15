@@ -23,6 +23,9 @@ class ControlFrames(Enum):
     NativeDoors = "bounded FF/FF native door frames"
     IdentityFiltering = "normal-engine identity filtering frames"
     NativeIdentityFiltering = "bounded native identity filtering frames"
+    NativeIdentityRegistration = (
+        "source-bound fixed-context identity registration frames"
+    )
 
 
 class PredicateOutcome(Enum):
@@ -73,9 +76,18 @@ def structured_control(
         and type(row[1]) is PredicateOutcome
         for row in predicates
     )
-    assert not predicates or role in (ControlFrames.Doors, ControlFrames.NativeDoors)
+    registration = role is ControlFrames.NativeIdentityRegistration
+    assert not predicates or role in (
+        ControlFrames.Doors,
+        ControlFrames.NativeDoors,
+        ControlFrames.NativeIdentityRegistration,
+    )
     assert type(copy_predicates) is tuple
     assert not copy_predicates or role is ControlFrames.NativeDoors
+    # Registration has a separate unsealed role. Existing identity callers
+    # cannot supply hints that prune their ordinary preservation obligations.
+    if registration:
+        role = ControlFrames.NativeIdentityFiltering
     prefix_headers = dict(copy_predicates)
     prefix_predicates = {predicate: header for header, predicate in copy_predicates}
     native = role in (ControlFrames.NativeDoors, ControlFrames.NativeIdentityFiltering)
@@ -247,7 +259,9 @@ def structured_control(
                         and test_packet[1] == 0
                         and test_packet[3] < 7
                     )
-                if not door:
+                # A source-bound fixed-context walk consumes the actual CK
+                # edges below. The older identity walk keeps its synthetic skip.
+                if not door and not registration:
                     pending.append((row["target"], conditions, loops, pointer))
                 # Door exclusion follows the predicate's actual continuations.
                 # The older roles retain their conservative synthetic skip.
@@ -294,8 +308,8 @@ def structured_control(
                 if native and conditions:
                     access(ControlField.IfLevel, write=False)
                     access(ControlField.IfPointer, write=False)
-                # Missing knowledge retains both paths; only the source-bound
-                # door caller may provide an immutable fixed-scenario result.
+                # Missing knowledge retains both paths. Bound door/registration
+                # callers may fix results; ordinary identity supplies no hints.
                 outcome = (
                     PredicateOutcome.Both
                     if opcode == 0x39

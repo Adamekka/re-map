@@ -25,6 +25,7 @@ from games.re2.script_control_limits import programs_digest
 
 if TYPE_CHECKING:
     from games.re2.identity_filtering import IdentityFilteringPolicy, _IdentityDispatch
+    from games.re2.identity_pickup_effects import NormalPickupFilteringEffect
     from games.re2.scenario_selection import ScenarioSourceWriteWitnesses
     from games.re2.startup_declarations import BoundStartupDeclarations
 
@@ -48,6 +49,26 @@ class IdentityProgramIsolation:
     dependencies_sha256: str
 
 
+def required_identity_dispatch_slots(
+    data: bytes,
+    room: dict,
+    source: _NativeIdentityEntryRoles,
+    *,
+    whole_source: bool = False,
+) -> frozenset[int]:
+    programs = (
+        source.frame_domain.entered_programs
+        if not whole_source and type(source.frame_domain) is EnteredFrameDomain
+        else frozenset(room["programs"])
+    )
+    return frozenset(
+        data[row["offset"] + 1]
+        for key in programs
+        for row in room["programs"][key]["commands"]
+        if row["opcode"] == 0x47
+    )
+
+
 def identity_program_isolation(
     data: bytes,
     room: dict,
@@ -61,6 +82,8 @@ def identity_program_isolation(
     registered: frozenset[int],
     dispatches: tuple[_IdentityDispatch, ...],
     owner: IdentityFilteringPolicy,
+    *,
+    pickup_effects: tuple[NormalPickupFilteringEffect, ...] = (),
 ) -> IdentityProgramIsolation | IdentityIsolationSupport:
     """Preserve canonical entries without interpreting another SCD control flow.
 
@@ -68,6 +91,11 @@ def identity_program_isolation(
     instruction with these same dependencies before its own authority seal.
     """
     from games.re2.identity_filtering import IdentityFilteringPolicy, _IdentityDispatch
+    from games.re2.identity_pickup_effects import (
+        NormalPickupFilteringEffect,
+        PickupSourceDomain,
+        normal_pickup_source_domain,
+    )
     from games.re2.ordinary_task_ingress import auxiliary_isolation
     from games.re2.scenario_selection import ScenarioSourceWriteWitnesses
 
@@ -241,10 +269,22 @@ def identity_program_isolation(
         or type(registered) is not frozenset
         or any(type(fact) is not _IdentityDispatch for fact in dispatches)
         or {fact.slot for fact in dispatches}
-        != {packet[1] for _, r, packet in rows if r["opcode"] == 0x47}
+        != required_identity_dispatch_slots(data, room, source)
     ):
         return IdentityIsolationSupport.Effects
-    for _, row, packet in rows:
+    for effect in pickup_effects:
+        if type(effect) is not NormalPickupFilteringEffect:
+            return IdentityIsolationSupport.Effects
+        domain_effect = normal_pickup_source_domain(data, room, writes, effect.slot)
+        if (
+            effect.source_sha256 != room["sha256"]
+            or effect.programs_sha256 != programs_digest(programs)
+            or type(domain_effect) is not PickupSourceDomain
+            or effect.origins != domain_effect.origins
+            or effect.source_effects != domain_effect.source_effects
+        ):
+            return IdentityIsolationSupport.Effects
+    for key, row, packet in rows:
         if row["kind"] not in ("door", "item", "interaction", "reset"):
             continue
         kind = 1 if row["kind"] == "door" else 2 if row["kind"] == "item" else packet[2]
@@ -252,7 +292,12 @@ def identity_program_isolation(
             packet[1] >= 32
             or kind > 14
             or row["kind"] == "reset"
+            and (key in entered or type(source.frame_domain) is not EnteredFrameDomain)
             and row["interaction"] not in (0, 4)
+            and not (
+                row["interaction"] == 2
+                and any(effect.slot == packet[1] for effect in pickup_effects)
+            )
         ):
             return IdentityIsolationSupport.Effects
         # Kind5's complete creator/reset projection already participates in the
@@ -277,6 +322,14 @@ def identity_program_isolation(
         if type(domain) is EnteredFrameDomain
         else tuple(protected),
         typed_binding_digest(
-            (native, writes, auxiliary_fields, auxiliary_reads, registered, dispatches)
+            (
+                native,
+                writes,
+                auxiliary_fields,
+                auxiliary_reads,
+                registered,
+                dispatches,
+                pickup_effects,
+            )
         ),
     )

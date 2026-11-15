@@ -1400,3 +1400,59 @@ all 125 consumer outcomes and all 7,844 frame walks, with no findings. The
 external Gemini review times out without an opinion; Claude remains disabled.
 See the [parent review contribution](../research/re2/immutable-doors.md#parent-integration-review-2026-11-15)
 for scope, attribution and remaining unresolved outcomes.
+
+### Qualified registration and ordinary pickup filtering
+
+[RE2-SCENARIO-013](../research/re2/scenario-selection.md#re2-scenario-013-qualified-registration-and-ordinary-pickup-filtering)
+uses exact base `6b73a959fed9e690d4db64f7fccbcf63486acfa8` and the required owned
+Leon Dual Shock CUE. Run `tests/test_re2_qualified_pickup_filtering.py`, the
+existing identity filtering/isolation/native-identity tests, and the unchanged
+full pytest suite. Tracked RE1 fixture reads by that suite remain authorized.
+
+The genuine early gate must return its own filtering capability before GID0
+is queried. The original registration helper/ingress still returns `{0,1,2}`.
+The source-bound registration role must retain unknown4:85 both ways, fixed1:6
+and1:1 packet/physical bindings, early END/yield/cycle/bounds behavior and the
+actual non-replacing AUTO initializer owner0/1. The unchanged native fixture
+checks AUTO2..9 selection, including all busy, without stubs or patched code.
+Existing six-role frame outputs must match exact6b73 for all11,766 walks.
+
+The ordinary pickup relation covers both physical geometries and the actual
+flag1/routine6 path, full u16 fields, every same-slot creator/Reset/Copy
+alternative, header9 ownership and selected-source lifetime. File/two-slot/
+special controllers, flag80, high-byte aliases, source compaction and unsafe
+model indices remain rejection controls. All54 auxiliary bindings and all126
+Break aliases remain mandatory. Missing registration or a new ingress into
+17:12/23/24 cannot reuse the old frame domain or an absence result. Disabled
+kind0 counter effects remain explicit. Positive, strict, presence and door
+rights are compared separately across all125 sources.
+
+Private reproduction scripts and exact commands are in
+`~/.cache/re-map/evidence/2026-11-15-gid0-qualified-pickup-implementation/`.
+Use `public_matrix.py` for immutable6b73 versus CURRENT complete API matrices,
+`read_plans6b73.py` for all21 full tracker/read-plan comparisons, and
+`generate_frozen.py` for two complete generations with identical relevant
+code/profile/name inputs. Rebuild CURRENT inventory before copied-history
+joins. Only the authorized frozen RAM and history copies may be read, with
+new private history copies for locking. The three historical snapshots retain
+their System v94 header-bit5 cheat taint and unknown original effect; offline
+replay supplies no new gameplay confirmation.
+
+Measured actual-history Unknown item rows decrease4 to3; Unknown rooms remain4,
+and01-04 stays Incomplete. Every other item/quantity, door, pose, visit, region
+and ordered read plan stays exact. Render the existing observed-source README
+fixture on desktop/mobile/tablet sizes without adding visits. Its desktop image
+is byte-identical, so the README screenshot is retained. Final generation,
+full-suite, scoped lint/format, local links and whitespace results are recorded
+in the private handoff. Parent independent/configured external review remains
+pending; local verification is not an endorsement or gameplay confirmation.
+
+Final local verification,2026-11-15: focused90 and unchanged full9,094 tests pass.
+Both complete frozen generations use identical65 relevant imported inputs and
+match installed rooms/floors. All125 metadata/API comparisons,560 presence
+queries,11,766 original-role walks and21 complete tracker/read-plan comparisons
+pass. Four README layouts pass and the desktop PNG is unchanged. Scoped Ruff
+has no new diagnostics;11 existing whole-file diagnostics remain unchanged
+from6b73. Formatting,470 local links and whitespace pass. The three outdated
+GID0 assertions from the first full run were updated within this scope, with
+all acquisition reversal/reentry/restart/history controls retained.

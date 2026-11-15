@@ -402,9 +402,11 @@ def test_effect_tail_binding_never_grants_header_selector_copy(owned, target, se
     assert (10038, 10040) in target.entry_binding.operands.effect_tails
 
 
-def test_validated_numeric_copies_preserve_projection_without_identity_promotion(owned):
+def test_validated_numeric_copies_preserve_projection_with_separate_identity_stages(
+    owned,
+):
     from games.re2.identity_filtering import (
-        IdentityFilteringFailure,
+        NormalEngineIdentityFiltering,
         normal_engine_identity_filtering,
     )
     from games.re2.positive_entry_domain import (
@@ -428,10 +430,11 @@ def test_validated_numeric_copies_preserve_projection_without_identity_promotion
         frame_domain=domain,
     )
     assert type(source) is _NativeIdentityEntryRoles
-    assert (
-        normal_engine_identity_filtering(data, room, p, bound)
-        is IdentityFilteringFailure.Dispatch
-    )
+    assert not isinstance(domain, NormalEngineIdentityFiltering)
+    filtering = normal_engine_identity_filtering(data, room, p, bound)
+    assert type(filtering) is NormalEngineIdentityFiltering
+    assert filtering.source_roles.frame_domain == domain
+    assert 4 in filtering.must_registered and filtering.pickup_effects
 
 
 @pytest.mark.parametrize("fault", ["source", "programs", "empty", "entries"])

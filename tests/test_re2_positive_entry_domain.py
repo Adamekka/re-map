@@ -399,7 +399,7 @@ def test_goto_cannot_accumulate_unclosed_loop_or_if_frames(owned):
 
 @pytest.mark.parametrize("profile", ["re2_leon_a_slus00748"], indirect=True)
 @pytest.mark.parametrize("snapshot", ["00-17"], indirect=True)
-def test_generated_target_rewinds_without_resolving_item_zero(snapshot):
+def test_generated_target_rewinds_with_separate_item_zero_exclusion(snapshot):
     from games.game_profile import RoomId
     from games.re2.live_tracking import poll_re2
     from tracker.exploration_state import Tracker
@@ -420,11 +420,16 @@ def test_generated_target_rewinds_without_resolving_item_zero(snapshot):
         items = {
             definition["global_id"]: state
             for definition, state in zip(
-                profile.rooms["01-04"]["items"], record.items, strict=True
+                (r for r in profile.rooms["01-04"]["items"] if r["global_id"] != 0),
+                record.items,
+                strict=True,
             )
         }
         assert items[3].state == ("taken" if acquired else "uncollected")
-        assert items[3].quantity == 15 and items[0].state == "unknown"
+        assert items[3].quantity == 15 and set(items) == {3, 46}
+        assert profile.rooms["01-04"]["identity_filtering_items"][
+            "absent_item_ids"
+        ] == [0]
         fresh = Tracker()
         fresh.mark_current(RoomId(1, 4))
         assert poll_re2(profile, fresh, read).status is PollStatus.Display
@@ -658,13 +663,15 @@ def test_entry_domain_departure_reentry_restart_and_earlier_snapshot(
         indexed = {
             definition["global_id"]: item
             for definition, item in zip(
-                profile.rooms["01-04"]["items"], target.items, strict=True
+                (r for r in profile.rooms["01-04"]["items"] if r["global_id"] != 0),
+                target.items,
+                strict=True,
             )
         }
         assert indexed[3].state == (
             "taken" if acquired else "available" if current else "uncollected"
         )
-        assert indexed[3].quantity == 15 and indexed[0].state == "unknown"
+        assert indexed[3].quantity == 15 and set(indexed) == {3, 46}
         # Independent pickup46 remains uncollected throughout these controls.
         assert target.completion is RoomCompletion.Incomplete
         assert set(tracker.rooms) == (

@@ -439,6 +439,7 @@ def test_complete_generated_filtering_catalog_keeps_only_compiled_consequences()
             "absent_item_ids": [],
             "item_variants": [{"global_id": 213, "offsets": [6934]}],
         },
+        "01-04": {"absent_item_ids": [0], "item_variants": []},
         "01-19": {
             "absent_item_ids": [],
             "item_variants": [{"global_id": 117, "offsets": [2762]}],
