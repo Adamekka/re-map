@@ -140,3 +140,127 @@ Synthetic tests exercise every request's failure and short reply, stale UI cache
 - 2026-11-07; Codex root, exact verified model `gpt-6.1-sol`, effort `xhigh`, authored the shared typed evaluator, guarded map-position API, regressions, retained replay and this claim. A separate investigator using the same verified model/effort identified the stale UI caches, source aliases and geometry-selection limits in `/tmp/re-map-re3-map-ownership-20261107-crm26a4j/handoff.md`, SHA256 `25893bf49446e3181cd763fbe73aa5625ac84cdfd2ca4cb8580c476cb341860c`. Its observations were retained-file interpretation and original-source inspection, without new gameplay. Earlier authorship remains unchanged.
 - 2026-11-07; independent reviewer, exact verified model `gpt-6.1-sol`, effort `xhigh`, checked source/configuration and constructor binding, native arithmetic, shared logic, read order/coherence, restoration, failures, tests and evidence limits. It reproduced 1996 identical old/new diagnostic cases: 54 archived captures, 1792 selector pairs and 150 remap/flag/previous/alternate/32-bit-boundary contexts. It passed 213 focused tests and found the private verifier's baseline incorrectly followed current HEAD. That reproducibility defect was corrected to the pinned commit before the final replay. No supported production finding remained. The review report is `/tmp/re-map-re3-live-map-review-20261107-lmfb84tf/final-review.json`, SHA256 `b1b8378c5ad027d4a05db433618a7d3da1fffcb8bb419511f04986272a9e132a`.
 - 2026-11-07; external snapshot reviewer `gemini-3.8-flash`, high reasoning through Antigravity, checked the full changed source, new and existing tests, prior projection implementation, unchanged catalog/runtime/parser interfaces, the new claim and retained replay summary. Its test-clarity suggestion was applied: the fully masked previous identifier explicitly retains its initial value in the unchanged-field case. Root verified the suggestions against the admission contract; no supported production defect remained. The final delta also restores the original heading comments. Final focused checks and owned-source replay passed afterward. The returned review is `/tmp/re-map-current-position-external-20261107.json`, SHA256 `947c3f3dcb931a67af70ad36d538944d0a8523bcc0c9b4e55bd7e5bc32a14c0d`. This advisory review adds no runtime validation. Claude Opus 5.5 remained disabled and supplied no review.
+
+## RE3-LIVE-003: original attract playback remains rejected after world publication
+
+Status: Candidate. One new original-engine negative control for Resident Evil 3:
+Nemesis, PlayStation, NTSC-U, SLUS-00923, supplied revision. Executable
+`SLUS_009.23` SHA256 remains
+`2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`.
+The separate private instance uses DuckStation `0.1-12640-gbb4e9ac5e`, binary
+SHA256 `ddceaaa426e67e328430fcb916320803fddc014374ea45a00778e58081f36dcb`.
+It cold-boots the original disc without a seed, save or restoration. The agent
+sends no controller input and uses no CUA. This does not select Hard or start
+a campaign.
+
+### Original publishers and recorded input
+
+All game addresses below are cached PS1 virtual addresses. Multibyte fields
+are little endian. Source offsets are relative to the complete owned packet;
+capture offsets subtract `0x80000000` from a virtual address.
+
+| Original instruction address | Field and width | Observed before/after |
+| --- | --- | --- |
+| `0x801967DC`, SW | Lifecycle `0x800CC858`, u32 | `0x20000000` to `0x30000000`; recorded mask `0x10000000` becomes set |
+| `0x80024884`, SW | Same lifecycle u32 | `0x30000000` to `0x38000000`; world mask `0x08000000` becomes set while recorded phase remains zero |
+| `0x800248B0`, SB | Recorded phase `0x800C79AE`, u8 | zero to one |
+| `0x80038418`, SW | Recorded index `0x800C79B0`, u32 | zero to one |
+| `0x8003841C`, SH | Raw input `0x800CC830`, low u16 | zero written over existing zero; no input-value transition |
+
+Recorded phase is separate from ingress phase at `0x800C7960` and signed actor
+floor at `0x800CCBCD`. The unchanged public reader returns `NonGameplay` at all
+11 named coherent stops, including world-set/recorded-phase-zero and later
+recorded-phase-one states. Native source auditing independently retains the
+recorded-input rejection; campaign admission and Hard identity remain
+`unresolved`. No new guard or readiness rule follows.
+
+The fresh source pointer at `0x800C79A8`, u32, is `0x80192000`. All 3,620 bytes
+match owned `CD_DATA/ETC/PDEMO00.DAT`, native file index 65, ISO LBA 9534, SHA256
+`4846be41d32c20718ad10b0ea2b5e8f1f7bf44dd0e174a203d33e3b49ecb006f`.
+Its length at source offset `0x71A`, u16, is 815. Before original LHU at
+`0x80038410`, index zero selects u16 at source offset `0x71C`, virtual
+`0x8019271C`. That bounded word is zero and equals V1 after the original
+load-delay instruction. The later index store is observed separately. The
+comparison uses the pre-LHU word, not the incremented index. V1 and raw input
+were already zero, so this does not demonstrate a nonzero recorded-input
+transition.
+
+### Coherence, source scope and cleanup
+
+Each named capture brackets a paused full 2 MiB read with identical consumed
+fields, GPR0..31, HI/LO, PC, source/code witnesses and public-reader results.
+Address-free stepping follows the original instructions without guest writes,
+patches, stubs or PC repair. Each of the five store pairs equals its original
+store prediction across the full 2 MiB RAM. This compares RAM, not all
+serialized devices. The 11 stops contain eight distinct RAM payloads within
+one episode; they are not 11 independent gameplay situations.
+
+All 169 owned sources compile offline. After world loading the unchanged
+header/camera/zone witnesses bind `CD_DATA/STAGE1/R103.ARD`, RDT SHA256
+`d0bd104f6798ef8277d417b71b715cb0e31fcd309d0e0430318e021eb851ca4e`.
+This does not establish full immutable script identity or the allocation
+extent. Reused overlay addresses after
+loading are not interpreted as TITLE code.
+
+Both achievement namespaces, hardcore and integration are disabled before
+loading; cards, accounts, cheats, patches and game overrides are absent.
+Audio is muted and the private black shader is active. Exact private
+binary/config/argv, portable-source branch, log location, shader and PID-owned
+port corroborate isolation. This build does not print a literal DataRoot field;
+that missing log receipt is preserved.
+
+All owned execute callbacks are removed before the sole client closes with
+exit zero. The still-owned wrapper processes the explicit completion request,
+reaps its child with exit zero after 570.68 host seconds, and verifies port
+2461 bindable before its 900-second watchdog. Native observations end at epoch
+14, PC `0x80038420`. Execution after the last coherent capture, including
+disconnect and teardown, remains unobserved.
+
+On orderly exit DuckStation removes the empty Hotkeys section and adds four UI
+geometry keys. The first strict post-exit settings check fails and remains in
+evidence. The final offline comparison requires every original actual
+configuration key/value unchanged and exactly those serialization differences.
+Neither settings nor reviewed runtime checks are repaired or relaxed.
+
+### Reproduction and contribution
+
+Private evidence is
+`~/.cache/re-map/evidence/2026-11-15-re3-attract-preflight/`.
+`native-reproduction.json` gives the exact offline command with a new output
+path. Run only `verify_native.py`; never rerun a completed launch/controller
+or signal its historical PID. The verifier binds the named captures, reviewed
+runtime files, explicit RE3/shared code and owned inputs, prohibits fixture
+opens, and checks the port without changing another process.
+
+`native-handoff.json` SHA256 is
+`aa1e0a2172678d03f45df6201818b98e29532d07fef678976a95f1a03a9aac64`.
+The two byte-identical final verification reports have SHA256
+`ac8e34f25d692264f9bbd5fa246ed6e9a835515c1f523227bbb887271d4266cf`.
+`native-final-manifest.json`, SHA256
+`a5c3a81a97f08d18ca582280df989d9d106c1520a8ca92f3839bf2e4054f100a`,
+binds 55 named evidence files and four private runtime resources. Root's fresh
+offline run produces the identical report and verifies this explicit manifest.
+It uses no emulator and opens no fixture content.
+
+2026-11-15 UTC contributions: native investigator `gpt-6.1-sol`, effort
+`xhigh`, session `01a1dfd0-5c8b-7372-804c-cd98fb34c563`, turn
+`01a1e01a-ef86-7fd3-b6dd-b60e3c2d8f8c`, performs the episode, cleanup and
+bounded offline verification. Codex root, the same verified model/effort,
+reviews and corrects the private setup before launch, independently reproduces
+the frozen native report, and writes this contribution. Earlier authorship
+and human Hard selection remain separate. This adds no positive Hard/campaign
+admission, exploration, physical-floor ownership, item/door completion or
+production-profile readiness.
+
+The completed external snapshot review requested `gemini-3.8-flash` at high
+reasoning effort through Antigravity and returned no findings, with no tools
+or pending child work. It checked the complete new verifier/controller/isolation
+scripts, wrapper, native result report and cleanup/settings receipts, plus the
+unchanged public reader transaction and debugger request/stepping methods.
+Snapshot SHA256 is
+`f2fa82307f58a1842a3e2a3900d966efcf46f146abaf27b4a4a6a95ed078c044`.
+The returned model field names `gemini-3.8-flash`; the separate executed-model
+field is unavailable. Claude Opus 5.5 remains disabled and supplies no review.
+This advisory source/evidence review performs no native execution. Root review
+and the rejected whole-file comparison assumption remain under
+`~/.cache/re-map/evidence/2026-11-15-re3-attract-evidence-review/`.
