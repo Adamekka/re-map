@@ -69,6 +69,18 @@ def poll_re2(
     layout = profile.runtime_layout
     quantity_override = layout["pickup_quantity_override"]
     markers: dict[tuple[int, int], bytes] = {}
+    # Bits each coherence comparison checks; see the final check below.
+    masks = {
+        (int(layout["system_flags_address_ps1"], 0), 4): layout["gameplay_mask"]
+        | layout["demo_mask"]
+        | layout["game_over_mask"]
+        | layout["transition_mask"]
+        | layout["system_mode_mask"]
+        | layout.get("scenario_reset_mask", 0)
+        | quantity_override["system_mask"],
+        (int(layout["status_flags_address_ps1"], 0), 4): layout["scenario_mask"],
+        (int(layout["player_active_address_ps1"], 0), 4): 1,
+    }
 
     class ReadFailure(Exception):
         pass
@@ -80,8 +92,14 @@ def poll_re2(
                 f"RE2 state read failed at {address:#x}: {result.error or 'short reply'}"
             )
         # The first sample is the one interpretation may have used, so the
-        # final coherence check compares against it.
-        markers.setdefault((address, width), result.data)
+        # final coherence check compares against it. A later sample that
+        # differs means interpretation may have mixed states.
+        first = markers.setdefault((address, width), result.data)
+        mask = masks.get((address, width), (1 << (8 * width)) - 1)
+        if (
+            int.from_bytes(first, "little") ^ int.from_bytes(result.data, "little")
+        ) & mask:
+            raise ValueError("Game state changed during read")
         return result.data
 
     try:
@@ -950,17 +968,6 @@ def poll_re2(
 
         # Publish only after all consumed state and source pointers agree.
         # Savestate loads must reverse flags before any cached room is shown.
-        masks = {
-            (int(layout["system_flags_address_ps1"], 0), 4): layout["gameplay_mask"]
-            | layout["demo_mask"]
-            | layout["game_over_mask"]
-            | layout["transition_mask"]
-            | layout["system_mode_mask"]
-            | layout.get("scenario_reset_mask", 0)
-            | quantity_override["system_mask"],
-            (int(layout["status_flags_address_ps1"], 0), 4): layout["scenario_mask"],
-            (int(layout["player_active_address_ps1"], 0), 4): 1,
-        }
         for (address, width), packet in markers.items():
             result = read_memory(address, width)
             if not result.ok or len(result.data) != width:

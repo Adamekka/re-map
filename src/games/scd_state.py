@@ -211,6 +211,9 @@ class _Path:
     # Written variables whose unread values depend only on how the player
     # arrives or acts, such as a copied actor member.
     arrival: set[int]
+    # Tasks waiting on another task, as their call stacks resuming at the wait
+    # loop's head.
+    suspended: set[Continuation]
     # An unreadable game-state branch could leave this procedure or task
     # early, so everything after it depends on that game state.
     diverged: bool = False
@@ -233,6 +236,7 @@ class _Path:
             dict(self.patches),
             set(self.unknown_banks),
             set(self.arrival),
+            set(self.suspended),
             self.diverged,
             self.steps,
         )
@@ -264,6 +268,7 @@ class _Path:
             values(self.patches),
             frozenset(self.unknown_banks),
             frozenset(self.arrival),
+            frozenset(self.suspended),
             tuple(
                 sorted(self.pending if taint else {proc for proc, _ in self.pending})
             ),
@@ -292,6 +297,43 @@ class _Path:
 _UNWRITTEN = object()
 
 
+def _wait_reads(
+    program: dict[str, list[list]], proc: str, head: int
+) -> tuple[set[tuple[int, int]], set[int]]:
+    """Flags and variables a wait loop and the procedures it calls read.
+
+    The loop runs from row ``head`` to the backward Goto that returns there.
+    """
+    rows = program[proc]
+    offsets = [row[0] for row in rows]
+    # A Goto may target an unmodeled command; it resumes at the next row.
+    end = next(
+        index
+        for index in range(head, len(rows))
+        if rows[index][2] == "goto" and bisect_left(offsets, rows[index][3]) == head
+    )
+    flags: set[tuple[int, int]] = set()
+    variables: set[int] = set()
+    pending = [rows[head : end + 1]]
+    called: set[int] = set()
+    while pending:
+        for _, _, op, *args in pending.pop():
+            if op == "ck":
+                flags.add((args[0], args[1]))
+            elif op == "cmp":
+                variables.add(args[0])
+            elif op == "switch":
+                variables.add(args[1])
+            elif op == "gosub" and args[0] not in called:
+                called.add(args[0])
+                pending.append(program[f"main:{args[0]}"])
+    return flags, variables
+
+
+# A suspended task: its frames as (procedure, row index, blocks, tainted).
+Continuation = tuple[tuple[str, int, tuple[tuple[str, int, int, bool], ...], bool], ...]
+
+
 def _fresh_path(proc: str) -> _Path:
     return _Path(
         [_Frame(proc, 0, [], False)],
@@ -304,6 +346,7 @@ def _fresh_path(proc: str) -> _Path:
         set(),
         set(),
         {},
+        set(),
         set(),
         set(),
     )
@@ -528,7 +571,15 @@ class _Interpreter:
                 join = (frame.proc, frame.index)
                 self.join_counts[join] = self.join_counts.get(join, 0) + 1
                 observed = self.join_writes.setdefault(join, ({}, {}, {}))
-                written = (path.flags, path.variables, path.patches)
+                # A variable's arrival classification is part of its value.
+                written = (
+                    path.flags,
+                    {
+                        index: (value, index in path.arrival, taint)
+                        for index, (value, taint) in path.variables.items()
+                    },
+                    path.patches,
+                )
                 for values, seen in zip(written, observed):
                     for name in values.keys() | seen.keys():
                         # An arrival that did not write it reads game state.
@@ -554,8 +605,16 @@ class _Interpreter:
                             # as unread, so dropping a disagreed one reads the
                             # same.
                         widened.append(kept)
-                    path.flags, path.variables, path.patches = widened
-                    path.arrival = set()
+                    path.flags, variables, path.patches = widened
+                    path.variables = {
+                        index: (value, taint)
+                        for index, (value, _, taint) in variables.items()
+                    }
+                    path.arrival = {
+                        index
+                        for index, (value, arrival, _) in variables.items()
+                        if arrival and value is None
+                    }
                     key = path.key(self.entry)
                     if key in self.seen:
                         return None
@@ -675,17 +734,34 @@ class _Interpreter:
                         ):
                             # No condition encloses the jump, so the task waits
                             # until another task changes what it waits on, such
-                            # as a Switch selector. Later analysis reruns it
-                            # with every value the room writes unread.
-                            task = path.frames[0].proc
-                            if not task.startswith("main:"):
-                                raise _Unsupported(f"{task} waits")
-                            path.triggers.add(int(task[5:]))
+                            # as a Switch selector. Later analysis resumes it at
+                            # the loop head with every value the room writes
+                            # unread; what ran before the wait does not repeat.
+                            head = self._index(frame.proc, target)
+                            path.suspended.add(
+                                (
+                                    *(
+                                        (f.proc, f.index, tuple(f.blocks), f.tainted)
+                                        for f in path.frames[:-1]
+                                    ),
+                                    (
+                                        frame.proc,
+                                        head,
+                                        # Blocks opened inside the loop close
+                                        # before its head.
+                                        tuple(b for b in frame.blocks if b[2] < head),
+                                        frame.tainted,
+                                    ),
+                                )
+                            )
                             path.frames.clear()
                             continue
                         self._fail(path, False)
                         continue
                 nxt = self._index(frame.proc, target)
+                # Blocks that open at or after a backward target are entered
+                # again from their opening command.
+                frame.blocks = [block for block in frame.blocks if block[2] < nxt]
             elif op == "case":
                 pass
             elif op == "set":
@@ -910,6 +986,8 @@ class EntryState:
     terminals: tuple[Outcome, ...]
     # Procedures that player interactions or delayed tasks can still start.
     triggers: frozenset[int]
+    # Tasks waiting for another task to change what they wait on.
+    suspended: frozenset[Continuation]
     written: frozenset[tuple[int, int]]
     written_variables: frozenset[int]
     # Banks written at an undeterminable bit.
@@ -948,6 +1026,7 @@ def evaluate_entry(
             frozenset(),
             frozenset(),
             frozenset(),
+            frozenset(),
         )
     return EntryState(
         Support.Supported,
@@ -958,6 +1037,7 @@ def evaluate_entry(
             for path in paths
             for proc in path.triggers | {proc for proc, _ in path.pending}
         ),
+        frozenset(task for path in paths for task in path.suspended),
         frozenset(interpreter.written),
         frozenset(interpreter.written_variables),
         frozenset(interpreter.written_banks),
@@ -983,20 +1063,39 @@ def evaluate_later(
     written = set(entry.written) | acquisition_flags
     written_variables = set(entry.written_variables)
     written_banks = set(entry.written_banks)
-    roots = entry.triggers | repeating
+    # Each task to analyze starts a procedure or resumes a waiting one.
+    roots = {("start", proc) for proc in entry.triggers | repeating} | {
+        ("resume", task) for task in entry.suspended
+    }
     possible: set[int] = set()
-    seen: set[int] = set()
+    seen: set[tuple] = set()
     queue = sorted(roots)
     while queue:
-        proc = queue.pop()
-        if proc in seen:
+        work = queue.pop()
+        if work in seen:
             continue
-        seen.add(proc)
-        name = f"main:{proc}"
-        if name not in program:
-            return LaterState(
-                Support.Unsupported, f"missing procedure {name}", frozenset()
-            )
+        seen.add(work)
+        kind, task = work
+        if kind == "start":
+            name = f"main:{task}"
+            if name not in program:
+                return LaterState(
+                    Support.Unsupported, f"missing procedure {name}", frozenset()
+                )
+            frames = ((name, 0, (), False),)
+        else:
+            frames = task
+            # The wait may end through native code changing what its loop
+            # reads, so those values are unread when it resumes.
+            reads = _wait_reads(program, frames[-1][0], frames[-1][1])
+            flags, variables = reads
+            if not (flags <= written and variables <= written_variables):
+                written |= flags
+                written_variables |= variables
+                seen.clear()
+                possible.clear()
+                queue = sorted(roots)
+                continue
 
         def volatile(bank: int, bit: int) -> bool | None:
             if (bank, bit) in written or bank in written_banks:
@@ -1022,7 +1121,11 @@ def evaluate_later(
         # a parked item, so each one starts from every entry outcome.
         starts = []
         for outcome in entry.terminals:
-            path = _fresh_path(name)
+            path = _fresh_path(frames[0][0])
+            path.frames = [
+                _Frame(proc, index, list(blocks), tainted)
+                for proc, index, blocks, tainted in frames
+            ]
             path.slots = dict(outcome.slots)
             starts.append(path)
         try:
@@ -1044,7 +1147,11 @@ def evaluate_later(
             continue
         for path in outcomes:
             possible |= path.created | {item[:3] for item in path.dispatched}
-            queue.extend(path.triggers | {proc for proc, _ in path.pending})
+            queue.extend(
+                ("start", proc)
+                for proc in path.triggers | {proc for proc, _ in path.pending}
+            )
+            queue.extend(("resume", task) for task in path.suspended)
     return LaterState(Support.Supported, "", frozenset(possible))
 
 

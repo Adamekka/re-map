@@ -618,3 +618,110 @@ def test_handing_over_a_parked_item_under_game_state_is_unresolved():
         )
     }
     assert evaluate(program, gids=[13]).item_presence == {13: None}
+
+
+def test_resumed_wait_does_not_repeat_what_ran_before_it():
+    program = {
+        "init:0": rows(["end"]),
+        # The pickup is replaced at once, then the task waits for good.
+        "main:0": rows(
+            ["item", 3, 0x31, 20, 15, 1],
+            ["aot", 3, 4, 0x31, -1],
+            ["goto", 20],
+            ["end"],
+        ),
+    }
+    result = evaluate(program, gids=[1])
+    assert result.item_presence == {1: False}
+    assert result.later_items == frozenset()
+
+
+def test_resumed_wait_keeps_state_set_before_it_unread():
+    program = {
+        "init:0": rows(["aot", 4, 5, 0x31, 2], ["end"]),
+        # Variable 5 is set once, then case 0 waits until another task
+        # changes it.
+        "main:0": rows(
+            ["var", 5, 0, 0],
+            ["switch", 70, 5, [[20, 0], [50, None]]],
+            ["case"],
+            ["goto", 10],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        ),
+        "main:2": rows(["var", 5, 0, 1], ["end"]),
+    }
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+
+
+def test_crowded_join_keeps_an_agreed_actor_member():
+    flat = [
+        ["var", 4, 3, -1],
+        *independent_writes(8, lambda index: [["set", 5, index, 1]], 1),
+    ]
+    last = (len(flat) + 4) * 10
+    program = {
+        "init:0": rows(
+            *flat,
+            ["if", last],
+            ["cmp", 4, 5, 0],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+            ["end"],
+        )
+    }
+    # Every arrival holds the same actor member, so its value still gives
+    # alternatives rather than unresolved game state.
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+
+
+def test_jumping_back_before_a_block_reenters_it_once():
+    from games.scd_state import evaluate_entry
+
+    program = {
+        "main:0": rows(
+            ["switch", 80, 5, [[10, 0], [50, 1]]],
+            ["case"],
+            ["var", 5, 0, 1],
+            # Back to the Switch, which opens its block again.
+            ["goto", 0],
+            ["break"],
+            ["case"],
+            # Wait inside case 1.
+            ["goto", 60],
+            ["break"],
+            ["end"],
+        )
+    }
+    state = GameState(
+        lambda bank, bit: False,
+        lambda index: 0,
+        frozenset(),
+        frozenset(),
+        lambda item: False,
+    )
+    entry = evaluate_entry(program, state, ("main:0",))
+    assert [[frame[2] for frame in task] for task in entry.suspended] == [
+        [(("switch", 80, 0, False),)]
+    ]
+
+
+def test_wait_on_state_only_native_code_changes_resumes():
+    program = {
+        "init:0": rows(["end"]),
+        # No room script writes variable 7; native code eventually does.
+        "main:0": rows(
+            ["switch", 60, 7, [[10, 0], [40, None]]],
+            ["case"],
+            ["goto", 0],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        ),
+    }
+    result = evaluate(program, gids=[1])
+    assert result.item_presence == {1: True}
+    assert result.later_items == frozenset({1})
