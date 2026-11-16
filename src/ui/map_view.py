@@ -232,10 +232,13 @@ select:disabled,button:disabled,input:disabled { opacity:.45; cursor:default; }
 #current-room[aria-pressed="true"] { border-color:var(--open); background:var(--cleared-fill); opacity:1; }
 #zoom-controls button { min-width:34px; }
 /* Finger-sized targets for the toolbar on touch screens. */
-@media(pointer:coarse) { header :is(select,button) { min-height:44px; } #zoom-controls button { min-width:44px; } }
+/* Padding sizes the legend toggle because flex layout would drop its disclosure marker. */
+@media(pointer:coarse) { header :is(select,button),#item-search { min-height:44px; box-sizing:border-box; } details#legend > summary { padding-top:14px; padding-bottom:14px; } #zoom-controls button { min-width:44px; } }
 #status { margin-left:auto; display:flex; align-items:center; gap:8px; color:var(--soft); font-size:13px; }
 #status::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--paused); }
 #status[data-state="live"]::before { background:var(--live); }
+/* Narrow headers keep the status beside the title instead of on a row of its own. */
+@media(max-width:760px) { #status { order:1; } #map-controls { order:2; flex-basis:100%; } }
 main { display:grid; grid-template-columns:minmax(0,1fr); background:var(--panel); }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,var(--control),#111a22); }
 #map { display:block; width:100%; height:60vh; min-height:340px; }
@@ -415,13 +418,14 @@ const zoomIn = document.getElementById('zoom-in');
 const zoomOut = document.getElementById('zoom-out');
 const fitRooms = document.getElementById('fit-rooms');
 const legend = document.getElementById('legend');
-// Stacked layouts put the legend above room details, so it starts collapsed
-// there; this query matches the two-column layout in the stylesheet.
-const wideLayout = matchMedia('(min-width:761px) and (min-height:420px)').matches;
+// The legend starts open only beside a roomy two-column map. Stacked layouts
+// put it above room details and short windows need the height for the map.
+// The width matches the two-column breakpoint in the stylesheet.
+const roomyLayout = matchMedia('(min-width:761px) and (min-height:600px)').matches;
 // The viewer's choice is a per-viewer convenience; storage can be unavailable.
 let savedLegend = null;
 try { savedLegend = localStorage.getItem('legend-open'); } catch {}
-legend.open = savedLegend===null ? wideLayout : savedLegend==='true';
+legend.open = savedLegend===null ? roomyLayout : savedLegend==='true';
 // Record only the viewer's own toggles; click runs before the state changes.
 legend.querySelector('summary').addEventListener('click',()=>{try { localStorage.setItem('legend-open',String(!legend.open)); } catch {}});
 itemSearch.addEventListener('input',()=>{if(lastState!==null && lastState.status==='display') updateOverview(lastState);});
@@ -439,6 +443,7 @@ floorSelect.addEventListener('change',()=>{
   floorView={mode:'browse',area:floorSelect.value};
   selected=null;
   draw(lastState);
+  revealRoomDetails();
 });
 currentRoomButton.addEventListener('click',()=>{
   viewHistory=[];
@@ -448,6 +453,7 @@ currentRoomButton.addEventListener('click',()=>{
   // Refit the current floor so a zoomed or panned view cannot hide our return.
   viewport={mode:'empty'};
   draw(lastState);
+  revealRoomDetails();
 });
 function rememberView() {
   // Interrupted maps retain room outlines, but those clicks cannot add a readable view to history.
@@ -467,8 +473,10 @@ backRoomButton.addEventListener('click',()=>{
   selectedArea=previous.area;selected=previous.id;viewport=previous.viewport;
   draw(lastState);
   focusInspectedRoom();
-  // Return to the place in the sidebar list where this view was left.
-  document.querySelector('aside').scrollTo({top:previous.sidebarScroll});
+  // Return to the place in the sidebar list where this view was left. Only a
+  // focused outline stays visible meanwhile; room details would scroll away.
+  // Stacked layouts never scroll the sidebar, so their page stays at the map.
+  if(svg.querySelector('.room.selected')) document.querySelector('aside').scrollTo({top:previous.sidebarScroll});
 });
 function applyViewport() {
   const ready=lastState!==null && lastState.status==='display';

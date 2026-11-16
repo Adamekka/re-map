@@ -41,10 +41,31 @@ try {
   });
   const sidebarScroll = page => page.locator('aside').evaluate(node => node.scrollTop);
 
-  // Wide windows, including short ones beside the emulator, keep the details beside a full-height map.
-  for (const viewport of [{ width: 1280, height: 720 }, { width: 1280, height: 480 }]) {
+  // Wide windows, including short ones beside the emulator, keep the details
+  // beside a full-height map. The legend starts open only with room to spare.
+  // Boundary sizes keep the stylesheet and script breakpoints in agreement.
+  for (const [viewport, columns, legendOpen] of [
+    [{ width: 1280, height: 720 }, true, true],
+    [{ width: 761, height: 600 }, true, true],
+    [{ width: 761, height: 599 }, true, false],
+    [{ width: 1280, height: 420 }, true, false],
+    [{ width: 1280, height: 419 }, false, false],
+    [{ width: 760, height: 720 }, false, false],
+    [{ width: 390, height: 844 }, false, false],
+  ]) {
     const { context, page, errors } = await openMap(viewport);
-    assert(await sideBySide(page), JSON.stringify(viewport) + ': sidebar must sit beside the map without page scrolling');
+    const label = JSON.stringify(viewport);
+    assert.equal(await sideBySide(page), columns, label + (columns ? ': sidebar must sit beside the map without page scrolling' : ': details must stack below the map'));
+    assert.equal(await page.locator('#legend').evaluate(node => node.open), legendOpen, label + ': legend default');
+    if (!columns) {
+      // Stacked pages scroll as a whole; Back shows the map and its focused room rather than the list.
+      const terrace = page.locator('#remaining-items .room-link[data-room="01-12"]');
+      await terrace.scrollIntoViewIfNeeded();
+      await terrace.click();
+      await page.getByRole('button', { name: 'Back to previous room', exact: true }).click();
+      assert(await page.locator('#map .room.selected').evaluate(node => node === document.activeElement), label + ': Back must focus the earlier room');
+      assert(await page.locator('#map').evaluate(node => { const box = node.getBoundingClientRect(); return box.top < innerHeight && box.bottom > 0; }), label + ': Back must keep the focused map visible');
+    }
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -77,6 +98,10 @@ try {
   await page.locator('#map .room[data-region="09"]').dispatchEvent('click');
   assert.match(await page.locator('#room-id').textContent(), /^Room 00-09/);
   assert.equal(await sidebarScroll(page), 0, 'selecting a room on the map must reveal its details');
+  await page.locator('aside').evaluate(node => { node.scrollTop = node.scrollHeight; });
+  await page.getByRole('button', { name: 'Follow player', exact: true }).click();
+  assert.equal(await page.locator('#room-id').textContent(), 'Room 00-07 · Current room');
+  assert.equal(await sidebarScroll(page), 0, 'Follow player must reveal the current room details');
 
   // Interruption clears live verdicts from the status dot and the badge.
   await storeroom.click();
@@ -88,10 +113,7 @@ try {
   assert.deepEqual(desktop.errors, []);
   await desktop.context.close();
 
-  // The legend starts open beside a wide map, collapsed above stacked details, and keeps the viewer's choice.
-  const narrow = await openMap({ width: 390, height: 844 });
-  assert.equal(await narrow.page.locator('#legend').evaluate(node => node.open), false);
-  await narrow.context.close();
+  // The legend keeps the viewer's choice across reloads.
   const wide = await openMap({ width: 1280, height: 720 });
   const legend = wide.page.locator('#legend');
   assert.equal(await legend.evaluate(node => node.open), true);
@@ -104,4 +126,4 @@ try {
 } finally {
   await browser.close();
 }
-console.log('Map layout checks passed: side-by-side sidebar, status and completion badges, item symbols, sidebar reveal and Back restore, legend preference.');
+console.log('Map layout checks passed: side-by-side sidebar, status and completion badges, item symbols, sidebar reveal and Back restore, breakpoints, Follow player, legend preference.');
