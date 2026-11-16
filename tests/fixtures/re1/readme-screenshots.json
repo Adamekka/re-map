@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "purpose": "Test-only README screenshots: one retained Jill savestate replayed over a synthetic exploration history; not the user's playthrough history.",
+  "author": {
+    "date": "2026-11-16",
+    "model": "claude-opus-5-5",
+    "contribution": "Fixture, replay and renderer for the README screenshots. Capture provenance remains in manifest.json."
+  },
+  "profile": "profiles/re1_directors_cut_slus00551.json",
+  "catalog": "data/floor_plans_slus00551.json",
+  "manifest": "tests/fixtures/re1/manifest.json",
+  "capture": {
+    "path": "tests/fixtures/re1/savestates/later-areas/y-mansion-approach.sav",
+    "room": "05-1b",
+    "region": "mansion1f:1B"
+  },
+  "explored_areas": [
+    "mansion1f",
+    "mansion2f",
+    "mansionb1",
+    "courtyard1f",
+    "courtyardb1",
+    "guardhouse1f",
+    "guardhouseb1"
+  ],
+  "screenshots": [
+    { "view": "follow", "path": "docs/images/re1-jill-map.png" },
+    { "view": "inspect", "room": "03-09", "path": "docs/images/re1-guardhouse.png" }
+  ]
+}

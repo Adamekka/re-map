@@ -2,7 +2,7 @@
 
 A live map for the PS1 Resident Evil games in DuckStation. It reads game memory through DuckStation's built-in GDB server and draws the rooms you've entered, the items still in them and which doors are locked. Nothing on the disc is modified.
 
-![Explored Jill Mansion rooms with remaining items and door access](docs/images/re1-jill-map.png)
+![Mansion 1F late in a Jill run, mostly cleared, with the player in the Store Room](docs/images/re1-jill-map.png)
 
 ## Supported games
 
@@ -102,7 +102,7 @@ Door colors show whether a door is open. A lock that needs a specific key gets t
 
 Click a room for its item and door list. A check mark means collected, a question mark means unresolved. A count other than one appears after the item name, such as `×15`. Underlined door destinations jump to that room.
 
-![RE2 map showing two observed rooms and room completion](docs/images/re2-map.png)
+![Guardhouse 1F with the Drug Storeroom selected and its remaining items listed](docs/images/re1-guardhouse.png)
 
 ## Controls
 

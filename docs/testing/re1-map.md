@@ -58,14 +58,24 @@ Run `python3 -m pytest -q tests/test_dynamic_quantities.py` for quantity reads/w
 
 ## README screenshot
 
-The RE1 README image comes from the test-only [render fixture](../../tests/fixtures/re1/readme-map.json). Its five retained Training Jill captures are listed in [the save manifest](../../tests/fixtures/re1/manifest.json), which records source checksums, game identity, emulator build limits and patch notes. The capture sequence is a replay setup, not a continuous gameplay route or the user's exploration history. Only the four directly observed room/region visits accumulate. All item, door, story and player results are reread from the final selected capture, including reversal of earlier collected states.
+The README images come from the test-only [screenshot fixture](../../tests/fixtures/re1/readme-screenshots.json). It replays one retained Jill savestate, `y-mansion-approach.sav`, over a synthetic exploration history that marks every room on the Mansion, Courtyard and Guardhouse floors as visited. The visits are presentation only. Every item, door and completion result comes from the savestate's game flags, read through the production poller as after a tracker restart. [The save manifest](../../tests/fixtures/re1/manifest.json) lists the savestate's checksum, emulator build and its temporary health-lock patch, RE1-CHEAT-003. With the [test dependencies](../testing.md#python-test-environment), Bun, Playwright, Chromium and `zstd` available, run from the repository root:
+
+```sh
+.local/venv/bin/python -m pytest -q tests/test_readme_screenshots.py
+bun tests/render_readme_screenshots.mjs .local/venv/bin/python tests/fixtures/re1/readme-screenshots.json
+```
+
+The renderer writes each listed screenshot straight to `docs/images/` at 1440×1000. Playwright intercepts the page and state requests, so no server or DuckStation instance starts and no user history is touched. On 2026-11-16, Claude `claude-opus-5-5` authored the fixture, replay and renderer and inspected both images. These images add no gameplay validation.
+
+### Earlier README render fixture
+
+The earlier README image came from the test-only [render fixture](../../tests/fixtures/re1/readme-map.json). It remains a responsive render check and the layout check's input. Its five retained Training Jill captures are listed in [the save manifest](../../tests/fixtures/re1/manifest.json), which records source checksums, game identity, emulator build limits and patch notes. The capture sequence is a replay setup, not a continuous gameplay route or the user's exploration history. Only the four directly observed room/region visits accumulate. All item, door, story and player results are reread from the final selected capture, including reversal of earlier collected states.
 
 With the [test dependencies](../testing.md#python-test-environment), Bun, Playwright, Chromium and `zstd` available, run from the repository root:
 
 ```sh
 .local/venv/bin/python -m pytest -q tests/test_readme_map_fixture.py
 bun tests/render_readme_map.mjs .local/venv/bin/python tests/fixtures/re1/readme-map.json .local/readme-map
-cp .local/readme-map/re1-readme-desktop.png docs/images/re1-jill-map.png
 ```
 
 The renderer uses the production revision-bound poller, catalog, `map_state` and `map_page`. Playwright intercepts the page and state requests. No server or DuckStation instance starts, and no user history is accessed. Extracted RAM lives only in an automatically removed temporary directory.
