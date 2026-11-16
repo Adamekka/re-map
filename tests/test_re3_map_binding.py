@@ -144,6 +144,20 @@ def test_native_room_boundary_cases_keep_original_stage_context(
     assert result["native_stage_room"] == expected
 
 
+@pytest.mark.parametrize(
+    "stage,room,x,adjust",
+    [(1, 15, -8823, 0), (1, 15, -8822, 0x251D), (3, 21, 799, 0), (3, 21, 800, -0x2328)],
+)
+def test_split_rooms_report_their_projection_x_adjustment(
+    context, stage, room, x, adjust
+):
+    layout = map_data.compile_map_position_layout(context.data, context.executable)
+    result = map_data.resolve_native_map_position(
+        layout, map_data.MapPositionContext(stage, room, x, 0, 0, 0, 0, 0, 0, 0)
+    )
+    assert result.projection_x_adjust == adjust
+
+
 def test_event_bit_can_prevent_the_position_dependent_room_remap(context):
     struct.pack_into("<2h", context.ram, 0xD1F76, 2, 23)
     struct.pack_into("<I", context.ram, 0xD1FB8, 0x00800000)

@@ -115,6 +115,8 @@ class NativeMapPosition:
     native_layer_index: int
     native_map_xy: tuple[int, int]
     projection_anchor: ProjectionAnchor
+    # Native split rooms shift world X before projecting through the anchor.
+    projection_x_adjust: int
     map_sha256: str
     executable_sha256: str
 
@@ -415,6 +417,7 @@ def resolve_native_map_position(
         layer,
         (map_x + dx, map_y - dz),
         anchor,
+        adjusted_x - world_x,
         layout.map_sha256,
         layout.executable_sha256,
     )
