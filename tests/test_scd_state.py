@@ -805,9 +805,7 @@ def test_resumed_wait_keeps_its_own_outcomes_interactions():
             ["end"],
         ),
     }
-    result = evaluate(
-        program, variables={26: None}, approach=frozenset({26}), gids=[1]
-    )
+    result = evaluate(program, variables={26: None}, approach=frozenset({26}), gids=[1])
     assert result.item_presence == {1: False}
 
 
@@ -839,5 +837,79 @@ def test_suspended_task_keeps_its_callers_loop_count():
         lambda item: False,
     )
     entry = evaluate_entry(program, state, ("main:0",))
-    (frames, _), = {task for outcome in entry.terminals for task in outcome.suspended}
+    ((frames, _),) = {task for outcome in entry.terminals for task in outcome.suspended}
     assert frames[0][4] == ((0, (1, 0, 39)),)
+
+
+def test_resumes_differing_only_in_taint_run_once(monkeypatch):
+    import games.scd_state as scd_state
+
+    # Each unreadable condition's early jump taints the same pickup write on
+    # one side only, so entry outcomes differ in taint alone.
+    body = []
+    for index in range(3):
+        base = len(body) * 10
+        body += [
+            ["if", base + 30],
+            ["ck", 4, index, 1],
+            ["goto", base + 40],
+            ["case"],
+            ["item", index, 0x31, 20, 15, 100 + index],
+        ]
+    base = len(body) * 10
+    body += [
+        ["switch", base + 40, 7, [[base + 10, 0]]],
+        ["case"],
+        ["goto", base],
+        ["break"],
+        ["end"],
+    ]
+    program = {"main:0": rows(*body)}
+    state = GameState(
+        lambda bank, bit: None if bank == 4 else False,
+        lambda index: 0,
+        frozenset(),
+        frozenset(),
+        lambda item: False,
+    )
+    entry = scd_state.evaluate_entry(program, state, ("main:0",))
+    assert len(entry.terminals) > 1
+    runs = []
+    original = scd_state._Interpreter.run
+
+    def counted(self, start):
+        runs.append(len(start))
+        return original(self, start)
+
+    monkeypatch.setattr(scd_state._Interpreter, "run", counted)
+    later = scd_state.evaluate_later(program, state, entry, frozenset(), frozenset())
+    assert later.support is Support.Supported
+    assert len(runs) == 1
+
+
+def test_later_analysis_bounds_its_total_work(monkeypatch):
+    import games.scd_state as scd_state
+
+    # Each choice parks a pickup in another slot before the same wait, so
+    # resumed tasks multiply with their interactions.
+    labels = [[10 + 30 * index, index] for index in range(10)]
+    body = [["switch", 10 + 30 * len(labels), 5, labels]]
+    for index in range(len(labels)):
+        body += [["case"], ["item", index, 0, 20, 15, 100 + index], ["break"]]
+    wait = len(body) * 10
+    body += [
+        ["switch", wait + 40, 7, [[wait + 10, 0]]],
+        ["case"],
+        ["goto", wait],
+        ["break"],
+        ["end"],
+    ]
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(*body),
+        "main:1": rows(["end"]),
+    }
+    monkeypatch.setattr(scd_state, "MAX_LATER_STEPS", 50)
+    result = evaluate(program, variables={5: None}, approach=frozenset({5}))
+    assert result.support is Support.Unsupported
+    assert result.reason == "later script evaluation step limit"

@@ -51,6 +51,10 @@ MAX_TERMINALS = 4096
 MAX_STEPS = 200_000
 # Total work for one interpreter, across every path.
 MAX_TOTAL_STEPS = 2_000_000
+# Total work for one room's later analysis, across every started or resumed
+# task and every restart. About 2.5 times the most any owned room needed in
+# 20 pseudo-random states (1.55 million steps, RE3 03-0b).
+MAX_LATER_STEPS = 4_000_000
 # Distinct states one join point keeps exact. Beyond this, arriving paths
 # forget every value any path arriving there wrote, which then reads as a
 # tainted unknown, so independent unread conditions cannot multiply paths
@@ -1110,7 +1114,19 @@ def evaluate_later(
     # Each task to analyze starts a procedure or resumes a waiting one.
     # A resumed task keeps the interactions of the path that suspended it.
     def resumed(task: Continuation, slots: dict) -> tuple:
-        return ("resume", task, tuple(sorted(slots.items())))
+        # Later analysis never reads taint, so interactions differing only in
+        # taint resume once.
+        return (
+            "resume",
+            task,
+            tuple(
+                sorted((slot, descriptor) for slot, (descriptor, _) in slots.items())
+            ),
+        )
+
+    def ordered(work: set[tuple]) -> list[tuple]:
+        # A stable order keeps the reported reason for Unsupported repeatable.
+        return sorted(work, key=repr)
 
     roots = {("start", proc) for proc in entry.triggers | repeating} | {
         resumed(task, outcome.slots)
@@ -1118,8 +1134,9 @@ def evaluate_later(
         for task in outcome.suspended
     }
     possible: set[int] = set()
+    spent = 0
     seen: set[tuple] = set()
-    queue = list(roots)
+    queue = ordered(roots)
     while queue:
         work = queue.pop()
         if work in seen:
@@ -1148,7 +1165,7 @@ def evaluate_later(
                 written_variables |= variables
                 seen.clear()
                 possible.clear()
-                queue = list(roots)
+                queue = ordered(roots)
                 continue
 
         def volatile(bank: int, bit: int) -> bool | None:
@@ -1175,7 +1192,7 @@ def evaluate_later(
         # a parked item, so each one starts from every entry outcome.
         starts = []
         for interactions in (
-            [dict(slots[0])]
+            [{slot: (descriptor, False) for slot, descriptor in slots[0]}]
             if kind == "resume"
             else [dict(outcome.slots) for outcome in entry.terminals]
         ):
@@ -1190,6 +1207,11 @@ def evaluate_later(
             outcomes = interpreter.run(starts)
         except _Unsupported as error:
             return LaterState(Support.Unsupported, str(error), frozenset())
+        spent += interpreter.total_steps
+        if spent > MAX_LATER_STEPS:
+            return LaterState(
+                Support.Unsupported, "later script evaluation step limit", frozenset()
+            )
         if not (
             interpreter.written <= written
             and interpreter.written_variables <= written_variables
@@ -1201,7 +1223,7 @@ def evaluate_later(
             # New writes can open conditions in procedures already checked.
             seen.clear()
             possible.clear()
-            queue = list(roots)
+            queue = ordered(roots)
             continue
         for path in outcomes:
             possible |= path.created | {item[:3] for item in path.dispatched}
@@ -1209,7 +1231,9 @@ def evaluate_later(
                 ("start", proc)
                 for proc in path.triggers | {proc for proc, _ in path.pending}
             )
-            queue.extend(resumed(task, path.slots) for task in path.suspended)
+            queue.extend(
+                ordered({resumed(task, path.slots) for task in path.suspended})
+            )
     return LaterState(Support.Supported, "", frozenset(possible))
 
 
