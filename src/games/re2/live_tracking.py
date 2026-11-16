@@ -12,6 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from games.bit_flags import msb_flag_location
+from games.door_access_state import door_access
 from games.game_profile import RoomId
 from games.item_quantity import ItemQuantityState
 from games.player_heading import heading_degrees
@@ -902,21 +903,13 @@ def poll_re2(
                 if observed is None and departed_enabled is not None:
                     # Only departed, source-bound facts establish activation.
                     # Fresh key flags still determine access and can reverse it.
-                    if not departed_enabled:
-                        state = "BLOCKED"
-                        label = (
-                            "Unlocked; door inactive"
-                            if unlocked
-                            else "Door is inactive"
-                        )
-                    elif unlocked:
-                        state, label = "OPEN", "Unlocked"
-                    elif not lock["lock_id"] & 0x80:
-                        state, label = "OPEN", "Open"
-                    elif key_type == 0xFE:
-                        state, label = "UNLOCKABLE", "Unlock from this side"
-                    else:
-                        state, label = "LOCKED", key_label or "Locked"
+                    state, label = door_access(
+                        departed_enabled,
+                        unlocked,
+                        lock["lock_id"],
+                        key_type,
+                        key_label,
+                    )
                 elif observed is None and definition["offset"] in departed_open_offsets:
                     # Source/native write proofs establish this binding for
                     # the room lifetime. Fresh conditions revoke it on rewind.
@@ -930,19 +923,14 @@ def poll_re2(
                         if unlocked
                         else "Door conditions unresolved"
                     )
-                elif observed.get("inactive", False):
-                    state = "BLOCKED"
-                    label = (
-                        "Unlocked; door inactive" if unlocked else "Door is inactive"
-                    )
-                elif unlocked:
-                    state, label = "OPEN", "Unlocked"
-                elif not lock["lock_id"] & 0x80:
-                    state, label = "OPEN", "Open"
-                elif key_type == 0xFE:
-                    state, label = "UNLOCKABLE", "Unlock from this side"
                 else:
-                    state, label = "LOCKED", key_label or "Locked"
+                    state, label = door_access(
+                        not observed.get("inactive", False),
+                        unlocked,
+                        lock["lock_id"],
+                        key_type,
+                        key_label,
+                    )
                 doors.append(
                     DoorDetail(
                         source_id,
