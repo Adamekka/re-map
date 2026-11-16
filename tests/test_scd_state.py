@@ -1,0 +1,292 @@
+"""Shared room-script evaluation. RE2-EVAL-001."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from games.scd_state import (  # noqa: E402
+    EngineTasks,
+    GameState,
+    ScriptStateCache,
+    Support,
+    room_script_state,
+)
+
+TASKS = EngineTasks(("init:0", "main:0", "main:1"), frozenset({1}))
+BANK = 8
+
+
+def rows(*body: list) -> list[list]:
+    # Offsets advance by ten; tests address jump targets by these offsets.
+    return [[index * 10, index * 10 + 10, *row] for index, row in enumerate(body)]
+
+
+def evaluate(program, flags=None, variables=None, approach=frozenset(), gids=()):
+    flags = flags or {}
+    variables = variables or {}
+    state = GameState(
+        lambda bank, bit: flags.get((bank, bit), False),
+        lambda index: variables.get(index, 0),
+        approach,
+        frozenset({11}),
+    )
+    program = {"main:0": rows(["end"]), "main:1": rows(["end"]), **program}
+    return room_script_state(program, state, TASKS, {gid: (BANK, gid) for gid in gids})
+
+
+def test_flag_condition_selects_the_created_item():
+    program = {
+        "init:0": rows(
+            ["if", 40],
+            ["ck", 4, 7, 1],
+            ["item", 3, 0x31, 20, 15, 77],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, gids=[77]).item_presence == {77: False}
+    present = evaluate(program, flags={(4, 7): True}, gids=[77])
+    assert present.item_presence == {77: True}
+    assert present.item_identity == {77: (20, 15)}
+
+
+def test_else_branch_and_variable_comparison():
+    program = {
+        "init:0": rows(
+            ["if", 40],
+            ["cmp", 32, 0, 14],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["else", 60],
+            ["item", 3, 0x31, 21, 7, 2],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, variables={32: 14}, gids=[1, 2]).item_presence == {
+        1: True,
+        2: False,
+    }
+    assert evaluate(program, variables={32: 2}, gids=[1, 2]).item_presence == {
+        1: False,
+        2: True,
+    }
+
+
+def test_unreadable_state_keeps_divergent_items_unresolved():
+    program = {
+        "init:0": rows(
+            ["if", 30],
+            ["cond", 0],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        )
+    }
+    result = evaluate(program, gids=[1])
+    assert result.support is Support.Supported
+    assert result.item_presence == {1: None}
+
+
+def test_arrival_alternatives_each_keep_their_items():
+    # The entered floor selects which items load; both exist in the room.
+    program = {
+        "init:0": rows(
+            ["if", 40],
+            ["cond", 1],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["else", 60],
+            ["item", 4, 0x31, 21, 7, 2],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, gids=[1, 2]).item_presence == {1: True, 2: True}
+
+
+def test_tainted_flag_write_propagates_to_later_conditions():
+    program = {
+        "init:0": rows(
+            ["if", 30],
+            ["cond", 0],
+            ["set", 4, 1, 1],
+            ["if", 60],
+            ["ck", 4, 1, 1],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        )
+    }
+    assert evaluate(program, gids=[1]).item_presence == {1: None}
+
+
+def test_switch_takes_the_first_match_or_default():
+    program = {
+        "init:0": rows(
+            ["switch", 70, 5, [[10, 1], [40, None]]],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 21, 7, 2],
+            ["break"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, variables={5: 1}, gids=[1, 2]).item_presence == {
+        1: True,
+        2: False,
+    }
+    assert evaluate(program, variables={5: 9}, gids=[1, 2]).item_presence == {
+        1: False,
+        2: True,
+    }
+
+
+def test_trigger_reward_is_obtainable_before_the_puzzle_is_solved():
+    program = {
+        "init:0": rows(["aot", 6, 5, 0x31, 2], ["aot", 7, 5, 0x31, 3], ["end"]),
+        # Solving the puzzle sets a room flag that a second trigger checks.
+        "main:2": rows(["set", 4, 9, 1], ["end"]),
+        "main:3": rows(
+            ["if", 40],
+            ["ck", 4, 9, 1],
+            ["reset", 6, 2, 0x31, -1, 70, 1, 5],
+            ["end"],
+            ["end"],
+        ),
+    }
+    result = evaluate(program, gids=[5])
+    assert result.item_presence == {5: True}
+    assert result.later_items == frozenset({5})
+    assert result.item_identity == {5: (70, 1)}
+
+
+def test_parked_item_handed_over_by_aot_on_is_obtainable():
+    program = {
+        "init:0": rows(
+            ["item", 3, 0, 20, 15, 13],
+            ["aot", 8, 5, 0x31, 2],
+            ["end"],
+        ),
+        "main:2": rows(["aot_on", 3], ["end"]),
+    }
+    assert evaluate(program, gids=[13]).item_presence == {13: True}
+
+
+def test_collected_item_identity_survives_its_own_acquisition_flag():
+    # The Reset only runs while the pickup is uncollected; once collected its
+    # identity still names the Reset's item rather than the parked creator.
+    program = {
+        "init:0": rows(["item", 2, 0, 57, 1, 55], ["aot", 4, 5, 0x31, 2], ["end"]),
+        "main:2": rows(
+            ["if", 40],
+            ["ck", BANK, 55, 0],
+            ["reset", 2, 2, 0x31, -1, 61, 1, 55],
+            ["end"],
+            ["end"],
+        ),
+    }
+    result = evaluate(program, flags={(BANK, 55): True}, gids=[55])
+    assert result.item_identity == {55: (61, 1)}
+
+
+def test_per_frame_procedure_runs_on_entry():
+    program = {
+        "init:0": rows(["end"]),
+        "main:1": rows(["item", 3, 0x31, 20, 15, 1], ["end"]),
+    }
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+
+
+def test_door_replaced_by_event_and_alternative_creators():
+    program = {
+        "init:0": rows(
+            ["door", 0, 0x31],
+            ["door", 1, 0x31],
+            ["if", 50],
+            ["ck", 4, 70, 0],
+            ["reset", 1, 5, 0x31, 9, -1, -1, -1],
+            ["if", 90],
+            ["ck", 1, 6, 1],
+            ["door", 0, 0x31],
+            ["end"],
+            ["end"],
+        ),
+        "main:9": rows(["end"]),
+    }
+    doors = evaluate(program).doors
+    assert doors[0].sat == 0x31 and not doors[0].replaced
+    assert doors[10].replaced
+    # The special-mode alternative for slot 0 does not run.
+    assert 70 not in doors
+    swapped = evaluate(program, flags={(4, 70): True, (1, 6): True}).doors
+    assert 0 not in swapped and swapped[70].sat == 0x31
+    assert not swapped[10].replaced
+
+
+def test_unresolved_door_creator_choice():
+    program = {
+        "init:0": rows(
+            ["if", 40],
+            ["cond", 0],
+            ["door", 0, 0x31],
+            ["else", 60],
+            ["door", 0, 0],
+            ["end"],
+            ["end"],
+        )
+    }
+    doors = evaluate(program).doors
+    assert doors[20].sat is None and doors[40].sat is None
+
+
+def test_jump_outside_the_model_is_unsupported():
+    program = {"init:0": rows(["gosub", 9], ["end"])}
+    assert evaluate(program).support is Support.Unsupported
+
+
+def test_cache_revalidates_every_value_it_read():
+    flags = {(4, 7): False}
+    state = GameState(
+        lambda bank, bit: flags.get((bank, bit), False),
+        lambda index: 0,
+        frozenset(),
+        frozenset(),
+    )
+    program = {
+        "init:0": rows(
+            ["if", 40], ["ck", 4, 7, 1], ["item", 3, 0x31, 20, 15, 77], ["end"], ["end"]
+        ),
+        "main:0": rows(["end"]),
+        "main:1": rows(["end"]),
+    }
+    cache = ScriptStateCache()
+    acquisition = {77: (BANK, 77)}
+    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
+        77: False
+    }
+    flags[4, 7] = True
+    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
+        77: True
+    }
+
+
+def test_work_copy_patch_selects_the_checked_flag():
+    # Work_copy stores variable 7 into the Ck's bit operand at offset 20 + 2.
+    program = {
+        "init:0": rows(
+            ["patch", 22, 7, 1],
+            ["if", 50],
+            ["ck", 4, 0, 1],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(
+        program, flags={(4, 9): True}, variables={7: 9}, gids=[1]
+    ).item_presence == {1: True}
+    assert evaluate(
+        program, flags={(4, 0): True}, variables={7: 9}, gids=[1]
+    ).item_presence == {1: False}
