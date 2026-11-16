@@ -390,7 +390,7 @@ def _read_current_room(
         observed = []
         for offset, expected in ranges:
             packet = read(base + offset, len(expected))
-            if packet != expected:
+            if not source.admits(offset, expected, packet):
                 return CurrentRoomFailure(
                     PollStatus.Retry, "Loaded room does not match its source"
                 )

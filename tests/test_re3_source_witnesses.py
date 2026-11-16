@@ -320,3 +320,34 @@ def test_ambiguity_key_cannot_use_an_opaque_word_that_relocates_to_zero(coherent
     wrapped = shared.compile_source_witness(replace(coherent.source, rdt=bytes(data)))
     assert wrapped.normalized_fingerprint == ordinary.normalized_fingerprint
     assert wrapped.ranges(0x80100000) == ordinary.ranges(0x80100000)
+
+
+def test_witness_admits_only_native_camera_renaming_and_header_word_14(coherent):
+    source = shared.compile_source_witness(coherent.source)
+    zones = bytes([0, 0, 3, 7, *range(16)]) + bytes([0, 0, 0xFF, 0xFF, *range(16)])
+
+    def renamed(first, second):
+        packet = bytearray(zones)
+        packet[2], packet[3] = first, second
+        return bytes(packet)
+
+    zone_offset = source.zones_offset
+    # Command 0x53 swapped cameras 3 and 7.
+    assert source.admits(zone_offset, zones, renamed(7, 3))
+    # Two cameras cannot both become camera 5.
+    assert not source.admits(zone_offset, zones, renamed(5, 5))
+    # Bytes outside the camera numbers, and the terminator, stay fixed.
+    other = bytearray(zones)
+    other[4] ^= 1
+    assert not source.admits(zone_offset, zones, bytes(other))
+    terminator = bytearray(zones)
+    terminator[22] = 1
+    assert not source.admits(zone_offset, zones, bytes(terminator))
+    header = bytes(range(84))
+    cleared = bytearray(header)
+    cleared[56:60] = bytes(4)
+    assert source.admits(8, header, bytes(cleared))
+    other_word = bytearray(header)
+    other_word[52:56] = bytes(4)
+    assert not source.admits(8, header, bytes(other_word))
+    assert not source.admits(96, header, bytes(cleared))

@@ -39,6 +39,9 @@ from ui.debug_view import render
 
 # Item and door interaction kinds in the native registry.
 _KIND_DOOR = 1
+# Handler 0x80051CB0 changes room as soon as the player touches this kind,
+# with no action button or lock check.
+_KIND_WALK_THROUGH = 13
 _KIND_ITEM = 2
 
 
@@ -157,6 +160,7 @@ def _door_definitions(rdt: bytes, program: dict[str, list[list]]) -> list[dict]:
     for rows in program.values():
         for offset, following, _, slot, _ in (row for row in rows if row[2] == "door"):
             door = parse_door(rdt, offset, -1)
+            walk_through = rdt[offset + 2] == _KIND_WALK_THROUGH
             doors[offset] = {
                 "offset": offset,
                 "slot": slot,
@@ -164,8 +168,10 @@ def _door_definitions(rdt: bytes, program: dict[str, list[list]]) -> list[dict]:
                 "stage": door.target_stage,
                 "room": door.target_room,
                 "floor": door.target_floor,
-                "lock_id": door.key_id,
-                "lock_type": door.key_type,
+                "kind": _KIND_WALK_THROUGH if walk_through else _KIND_DOOR,
+                # A walk-through exit has no lock.
+                "lock_id": 0 if walk_through else door.key_id,
+                "lock_type": 0 if walk_through else door.key_type,
                 "four_point": following - offset == 40,
                 "center": list(door.center),
             }
@@ -179,16 +185,18 @@ def live_door(definition: dict, kind: int, sat: int, data: bytes) -> dict | None
     creator stays unresolved (None); a slot a script replaced in place with
     another interaction kind is inactive.
     """
-    if kind == _KIND_DOOR and bool(sat & 0x80) != definition["four_point"]:
+    door = kind == definition["kind"]
+    if door and bool(sat & 0x80) != definition["four_point"]:
         return None
     operand = 20 if definition["four_point"] else 12
+    walk_through = definition["kind"] == _KIND_WALK_THROUGH
     return {
         **definition,
-        "enabled": kind == _KIND_DOOR and bool(sat & 0x7F),
+        "enabled": door and bool(sat & 0x7F),
         "stage": data[operand + 8],
         "room": data[operand + 9],
-        "lock_id": data[operand + 15],
-        "lock_type": data[operand + 16],
+        "lock_id": 0 if walk_through else data[operand + 15],
+        "lock_type": 0 if walk_through else data[operand + 16],
     }
 
 

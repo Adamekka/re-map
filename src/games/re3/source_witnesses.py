@@ -97,6 +97,7 @@ class SourceWitness:
             # Unlike header words, even a zero camera mask receives the base.
             struct.pack_into("<I", cameras, offset, (value + base) & 0xFFFFFFFF)
         result = []
+        assert len(self.zones) <= _MAX_READ, "camera zones must fit one read"
         for offset, expected in (
             (1, self.source.rdt[1:8]),
             (8, header),
@@ -106,6 +107,44 @@ class SourceWitness:
             for start in range(0, len(expected), _MAX_READ):
                 result.append((offset + start, expected[start : start + _MAX_READ]))
         return tuple(result)
+
+    def admits(self, offset: int, expected: bytes, packet: bytes) -> bool:
+        """Whether a loaded range from ranges() still witnesses this source.
+
+        Two native changes are allowed and nothing else. The room loader can
+        clear header word 14 (seen in 04-03). Script command 0x53 (handler
+        0x80054A68) swaps camera numbers in bytes 2-3 of each 20-byte zone
+        record up to the terminator, so those bytes may differ by one
+        consistent renaming of cameras. RE3-EVAL-001.
+        """
+        if packet == expected:
+            return True
+        if len(packet) != len(expected):
+            return False
+        if offset == 8:
+            return (
+                packet[:56] == expected[:56]
+                and packet[56:60] == bytes(4)
+                and packet[60:] == expected[60:]
+            )
+        if offset != self.zones_offset:
+            return False
+        renamed = set()
+        record = 0
+        while expected[record + 2] != 0xFF:
+            renamed.update((record + 2, record + 3))
+            record += 20
+        if any(
+            packet[index] != expected[index]
+            for index in range(len(expected))
+            if index not in renamed
+        ):
+            return False
+        renaming: dict[int, int] = {}
+        for index in renamed:
+            if renaming.setdefault(expected[index], packet[index]) != packet[index]:
+                return False
+        return len(set(renaming.values())) == len(renaming)
 
 
 @dataclass(frozen=True)

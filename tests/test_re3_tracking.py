@@ -57,6 +57,7 @@ def tracking(live, tmp_path):
     }
     door = {
         "offset": 0,
+        "kind": 1,
         "slot": 0,
         "activation_floor": 0,
         "stage": 0,
@@ -260,7 +261,14 @@ def test_owned_profile_evaluates_every_room():
 def test_four_point_door_payload_and_geometry_bit():
     from games.re3.tracking import live_door
 
-    definition = {"offset": 200, "slot": 5, "four_point": True, "stage": 0, "room": 9}
+    definition = {
+        "offset": 200,
+        "kind": 1,
+        "slot": 5,
+        "four_point": True,
+        "stage": 0,
+        "room": 9,
+    }
     packet = bytearray(38)
     packet[20 + 8], packet[20 + 9] = 0, 1
     packet[20 + 15], packet[20 + 16] = 0x81, 0xFE
@@ -275,6 +283,33 @@ def test_four_point_door_payload_and_geometry_bit():
     assert live_door(definition, 1, 0x31, bytes(packet)) is None
     # A message replacing the door in place leaves it inactive.
     assert live_door(definition, 4, 0x31, bytes(packet))["enabled"] is False
+
+
+def test_walk_through_exit_is_an_unlocked_door():
+    from games.re3.tracking import live_door
+
+    # Kind 13 changes room on contact without a lock check (0x80051CB0).
+    definition = {
+        "offset": 200,
+        "kind": 13,
+        "slot": 5,
+        "four_point": False,
+        "stage": 0,
+        "room": 9,
+        "lock_id": 0,
+        "lock_type": 0,
+    }
+    packet = bytearray(38)
+    packet[12 + 8], packet[12 + 9] = 0, 0x18
+    packet[12 + 15], packet[12 + 16] = 0x83, 0x40
+    door = live_door(definition, 13, 0x31, bytes(packet))
+    assert (door["enabled"], door["room"], door["lock_id"], door["lock_type"]) == (
+        True,
+        0x18,
+        0,
+        0,
+    )
+    assert live_door(definition, 1, 0x31, bytes(packet))["enabled"] is False
 
 
 def test_state_change_between_reads_publishes_nothing(tracking):
