@@ -884,7 +884,7 @@ def test_resumes_differing_only_in_taint_run_once(monkeypatch):
         return original(self, start)
 
     monkeypatch.setattr(scd_state._Interpreter, "run", counted)
-    later = scd_state.evaluate_later(program, state, entry, frozenset(), frozenset())
+    later = scd_state.evaluate_later(program, state, entry, frozenset())
     assert later.support is Support.Supported
     assert len(runs) == 1
 
@@ -950,7 +950,7 @@ def test_resumes_differing_only_in_task_taint_run_once(monkeypatch):
         return original(self, start)
 
     monkeypatch.setattr(scd_state._Interpreter, "run", counted)
-    later = scd_state.evaluate_later(program, state, entry, frozenset(), frozenset())
+    later = scd_state.evaluate_later(program, state, entry, frozenset())
     assert later.support is Support.Supported
     assert runs == [False]
 
@@ -978,9 +978,14 @@ def test_while_waiting_on_native_state_keeps_its_effects_pending():
     assert (waiting.sat, waiting.replaced) == (0, True)
     opened = evaluate(program(["ck", 9, 27, 0]), flags={(9, 27): True}).doors[10]
     assert (opened.sat, opened.replaced) == (0x31, False)
-    # A variable the room's own scripts write ends the wait by itself.
-    counted = evaluate(program(["cmp", 4, 0, 0])).doors[10]
+    # Another running task writes variable 4, so the wait ends by itself.
+    counted = evaluate(
+        {**program(["cmp", 4, 0, 0]), "main:1": rows(["var", 4, 0, 1], ["end"])}
+    ).doors[10]
     assert (counted.sat, counted.replaced) == (0x31, False)
+    # Only the waiting task's own earlier write sets it: nothing can end it.
+    stuck = evaluate(program(["cmp", 4, 0, 0])).doors[10]
+    assert (stuck.sat, stuck.replaced) == (0, True)
 
 
 def door_after_wait(wait: list[list], extra: dict | None = None) -> dict:
@@ -1233,3 +1238,97 @@ def test_tainted_do_predicate_that_leaves_taints_what_follows():
         ),
     }
     assert evaluate(program).doors[0].sat is None
+
+
+def test_tainted_if_that_skips_writes_taints_what_follows():
+    # Flag 9:1 is set only under unread game state; when set, the If skips
+    # the counter, and the door is restored only if the counter stayed 0.
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["door", 6, 0x31],
+            ["reset", 6, 0, 0, -1, -1, -1, -1],
+            ["if", 50],
+            ["cond", 0],
+            ["set", 9, 1, 1],
+            ["if", 80],
+            ["ck", 9, 1, 0],
+            ["calc", 6, 0, 1],
+            ["if", 110],
+            ["cmp", 6, 0, 0],
+            ["reset", 6, 1, 0x31, -1, -1, -1, -1],
+            ["end"],
+        ),
+    }
+    assert evaluate(program).doors[0].sat is None
+
+
+def test_else_wait_ends_when_a_predicate_in_the_else_fails():
+    # if 9:27: leave; else: while 9:28 holds, jump back. A running task
+    # clears 9:28.
+    wait = [["if", 50], ["ck", 9, 27, 1], ["else", 70], ["ck", 9, 28, 1], ["goto", 20]]
+    clearing = {"main:1": rows(["set", 9, 28, 0], ["end"])}
+    assert door_state(door_after_wait(wait, clearing), flags={(9, 28): True}) == (
+        0x31,
+        False,
+    )
+
+
+def test_else_wait_needs_only_the_if_predicates_that_do_not_hold_yet():
+    # Leaving needs 9:27 and 9:28; 9:27 already holds and the room sets 9:28.
+    wait = [
+        ["if", 60],
+        ["ck", 9, 27, 1],
+        ["ck", 9, 28, 1],
+        ["else", 70],
+        ["goto", 20],
+    ]
+    setting = {"main:1": rows(["set", 9, 28, 1], ["end"])}
+    assert door_state(door_after_wait(wait, setting), flags={(9, 27): True}) == (
+        0x31,
+        False,
+    )
+
+
+def test_branch_inside_a_wait_reads_the_whole_loop():
+    # A forward jump can skip the counter test, so the wait is classified by
+    # every read: native flag 9:27 keeps it waiting.
+    wait = [
+        ["loop", 100, -1, "while"],
+        ["ck", 9, 27, 0],
+        ["if", 70],
+        ["ck", 4, 9, 0],
+        ["goto", 90],
+        ["cmp", 5, 3, 3],
+        ["calc", 5, 0, 1],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait)) == (0, True)
+
+
+def test_counter_ends_a_wait_with_a_native_bound():
+    wait = [
+        ["var", 4, 0, 0],
+        ["loop", 90, -1, "while"],
+        ["cmp", 4, 3, 3],
+        # The bound comes from native variable 7 through Work_copy.
+        ["var", 5, 1, 7],
+        ["patch", 44, 5, 2],
+        ["calc", 4, 0, 1],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait), variables={7: 3}) == (0x31, False)
+
+
+def test_outer_counter_guard_ends_an_inner_native_wait():
+    wait = [
+        ["var", 4, 0, 0],
+        ["loop", 100, -1, "while"],
+        ["cmp", 4, 3, 3],
+        ["calc", 4, 0, 1],
+        ["if", 90],
+        ["ck", 9, 27, 0],
+        ["goto", 30],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait)) == (0x31, False)
