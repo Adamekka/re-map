@@ -703,7 +703,8 @@ def test_jumping_back_before_a_block_reenters_it_once():
         lambda item: False,
     )
     entry = evaluate_entry(program, state, ("main:0",))
-    assert [[frame[2] for frame in task] for task in entry.suspended] == [
+    suspended = {task for outcome in entry.terminals for task in outcome.suspended}
+    assert [[frame[2] for frame in task] for task, _ in suspended] == [
         [(("switch", 80, 0, False),)]
     ]
 
@@ -725,3 +726,118 @@ def test_wait_on_state_only_native_code_changes_resumes():
     result = evaluate(program, gids=[1])
     assert result.item_presence == {1: True}
     assert result.later_items == frozenset({1})
+
+
+def test_resumed_wait_reads_through_a_copied_selector():
+    program = {
+        "init:0": rows(["end"]),
+        # The selector is copied from variable 7, which native code changes.
+        "main:0": rows(
+            ["var", 6, 1, 7],
+            ["switch", 70, 6, [[20, 0], [50, None]]],
+            ["case"],
+            ["goto", 0],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        ),
+    }
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+
+
+def test_resumed_wait_covers_the_goto_that_repeated():
+    program = {
+        "init:0": rows(["end"]),
+        # An earlier conditional jump returns to the same head; the wait is
+        # the later one inside the Switch on variable 7.
+        "main:0": rows(
+            ["if", 30],
+            ["ck", 4, 1, 1],
+            ["goto", 0],
+            ["switch", 90, 7, [[40, 0], [70, None]]],
+            ["case"],
+            ["goto", 0],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        ),
+    }
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+
+
+def test_wait_calling_a_missing_procedure_is_unsupported():
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["switch", 80, 7, [[10, 0], [70, None]]],
+            ["case"],
+            # A call that never runs, to a procedure the room lacks.
+            ["if", 50],
+            ["ck", 4, 1, 1],
+            ["gosub", 9],
+            ["goto", 0],
+            ["break"],
+            ["case"],
+            ["end"],
+        ),
+    }
+    assert evaluate(program).support is Support.Unsupported
+
+
+def test_resumed_wait_keeps_its_own_outcomes_interactions():
+    program = {
+        "init:0": rows(["end"]),
+        # One arrival parks an inactive pickup; the other waits, then
+        # activates slot 3, which it never filled.
+        "main:0": rows(
+            ["switch", 100, 26, [[10, 0], [80, None]]],
+            ["case"],
+            ["switch", 60, 7, [[30, 0]]],
+            ["case"],
+            ["goto", 20],
+            ["break"],
+            ["aot_on", 3],
+            ["break"],
+            ["case"],
+            ["item", 3, 0, 20, 15, 1],
+            ["end"],
+        ),
+    }
+    result = evaluate(
+        program, variables={26: None}, approach=frozenset({26}), gids=[1]
+    )
+    assert result.item_presence == {1: False}
+
+
+def test_suspended_task_keeps_its_callers_loop_count():
+    from games.scd_state import evaluate_entry
+
+    program = {
+        # The caller's loop is in its second pass when the callee waits.
+        "main:0": rows(
+            ["loop", 40, -1],
+            ["calc", 4, 0, 1],
+            ["gosub", 7],
+            ["loop_end"],
+            ["end"],
+        ),
+        "main:7": rows(
+            ["switch", 40, 4, [[10, 2]]],
+            ["case"],
+            ["goto", 0],
+            ["break"],
+            ["end"],
+        ),
+    }
+    state = GameState(
+        lambda bank, bit: False,
+        lambda index: 0,
+        frozenset(),
+        frozenset(),
+        lambda item: False,
+    )
+    entry = evaluate_entry(program, state, ("main:0",))
+    (frames, _), = {task for outcome in entry.terminals for task in outcome.suspended}
+    assert frames[0][4] == ((0, (1, 0, 39)),)

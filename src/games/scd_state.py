@@ -298,40 +298,48 @@ _UNWRITTEN = object()
 
 
 def _wait_reads(
-    program: dict[str, list[list]], proc: str, head: int
+    program: dict[str, list[list]], proc: str, head: int, last: int
 ) -> tuple[set[tuple[int, int]], set[int]]:
     """Flags and variables a wait loop and the procedures it calls read.
 
-    The loop runs from row ``head`` to the backward Goto that returns there.
+    The loop runs from row ``head`` to row ``last``, the backward Goto that
+    repeated.
     """
-    rows = program[proc]
-    offsets = [row[0] for row in rows]
-    # A Goto may target an unmodeled command; it resumes at the next row.
-    end = next(
-        index
-        for index in range(head, len(rows))
-        if rows[index][2] == "goto" and bisect_left(offsets, rows[index][3]) == head
-    )
     flags: set[tuple[int, int]] = set()
     variables: set[int] = set()
-    pending = [rows[head : end + 1]]
+    pending = [program[proc][head : last + 1]]
     called: set[int] = set()
     while pending:
         for _, _, op, *args in pending.pop():
             if op == "ck":
                 flags.add((args[0], args[1]))
+            elif op == "set" and args[2] == 7:
+                # A toggle reads the flag it writes.
+                flags.add((args[0], args[1]))
             elif op == "cmp":
                 variables.add(args[0])
             elif op == "switch":
                 variables.add(args[1])
+            elif op == "var" and args[1] == 1:
+                variables.add(args[2])
+            elif op == "calc":
+                variables.add(args[0])
+            elif op == "calc2":
+                variables.update((args[0], args[2]))
+            elif op == "patch":
+                variables.add(args[1])
             elif op == "gosub" and args[0] not in called:
+                name = f"main:{args[0]}"
+                if name not in program:
+                    raise _Unsupported(f"missing procedure {name}")
                 called.add(args[0])
-                pending.append(program[f"main:{args[0]}"])
+                pending.append(program[name])
     return flags, variables
 
 
-# A suspended task: its frames as (procedure, row index, blocks, tainted).
-Continuation = tuple[tuple[str, int, tuple[tuple[str, int, int, bool], ...], bool], ...]
+# A suspended task: its frames as (procedure, row index, blocks, tainted,
+# loop counts), and the row of the backward Goto that waits.
+Continuation = tuple[tuple[tuple, ...], int]
 
 
 def _fresh_path(proc: str) -> _Path:
@@ -599,8 +607,23 @@ class _Interpreter:
                                 kept[name] = (*next(iter(agreed)), taint)
                             elif self.entry:
                                 # Arrivals disagree, so it becomes a tainted
-                                # unknown and paths differing in it merge.
-                                kept[name] = (None, *next(iter(agreed))[1:], True)
+                                # unknown and paths differing in it merge. A
+                                # variable depends on arrival only if every
+                                # arrival says so; a patch keeps its width.
+                                kept[name] = (
+                                    None,
+                                    *(
+                                        (
+                                            all(
+                                                value[1]
+                                                for value in values - {_UNWRITTEN}
+                                            ),
+                                        )
+                                        if seen is observed[1]
+                                        else next(iter(agreed))[1:]
+                                    ),
+                                    True,
+                                )
                             # Later analysis treats every value the room writes
                             # as unread, so dropping a disagreed one reads the
                             # same.
@@ -740,18 +763,36 @@ class _Interpreter:
                             head = self._index(frame.proc, target)
                             path.suspended.add(
                                 (
-                                    *(
-                                        (f.proc, f.index, tuple(f.blocks), f.tainted)
-                                        for f in path.frames[:-1]
-                                    ),
                                     (
-                                        frame.proc,
-                                        head,
-                                        # Blocks opened inside the loop close
-                                        # before its head.
-                                        tuple(b for b in frame.blocks if b[2] < head),
-                                        frame.tainted,
+                                        *(
+                                            (
+                                                f.proc,
+                                                f.index,
+                                                tuple(f.blocks),
+                                                f.tainted,
+                                                tuple(sorted(f.loops.items())),
+                                            )
+                                            for f in path.frames[:-1]
+                                        ),
+                                        (
+                                            frame.proc,
+                                            head,
+                                            # Blocks and loops that open inside
+                                            # the wait loop end before its head.
+                                            tuple(
+                                                b for b in frame.blocks if b[2] < head
+                                            ),
+                                            frame.tainted,
+                                            tuple(
+                                                sorted(
+                                                    (key, loop)
+                                                    for key, loop in frame.loops.items()
+                                                    if loop[1] <= target <= loop[2]
+                                                )
+                                            ),
+                                        ),
                                     ),
+                                    frame.index,
                                 )
                             )
                             path.frames.clear()
@@ -975,6 +1016,9 @@ class Outcome:
     # Slot descriptors with whether unreadable game state controlled them.
     slots: dict[int, tuple[Descriptor, bool]]
     dispatched: frozenset[tuple[int, int, int, bool]]
+    # Tasks waiting for another task to change what they wait on; they resume
+    # with this outcome's interactions.
+    suspended: frozenset[Continuation]
 
 
 @dataclass(frozen=True)
@@ -986,8 +1030,6 @@ class EntryState:
     terminals: tuple[Outcome, ...]
     # Procedures that player interactions or delayed tasks can still start.
     triggers: frozenset[int]
-    # Tasks waiting for another task to change what they wait on.
-    suspended: frozenset[Continuation]
     written: frozenset[tuple[int, int]]
     written_variables: frozenset[int]
     # Banks written at an undeterminable bit.
@@ -1026,18 +1068,19 @@ def evaluate_entry(
             frozenset(),
             frozenset(),
             frozenset(),
-            frozenset(),
         )
     return EntryState(
         Support.Supported,
         "",
-        tuple(Outcome(path.slots, frozenset(path.dispatched)) for path in paths),
+        tuple(
+            Outcome(path.slots, frozenset(path.dispatched), frozenset(path.suspended))
+            for path in paths
+        ),
         frozenset(
             proc
             for path in paths
             for proc in path.triggers | {proc for proc, _ in path.pending}
         ),
-        frozenset(task for path in paths for task in path.suspended),
         frozenset(interpreter.written),
         frozenset(interpreter.written_variables),
         frozenset(interpreter.written_banks),
@@ -1063,38 +1106,49 @@ def evaluate_later(
     written = set(entry.written) | acquisition_flags
     written_variables = set(entry.written_variables)
     written_banks = set(entry.written_banks)
+
     # Each task to analyze starts a procedure or resumes a waiting one.
+    # A resumed task keeps the interactions of the path that suspended it.
+    def resumed(task: Continuation, slots: dict) -> tuple:
+        return ("resume", task, tuple(sorted(slots.items())))
+
     roots = {("start", proc) for proc in entry.triggers | repeating} | {
-        ("resume", task) for task in entry.suspended
+        resumed(task, outcome.slots)
+        for outcome in entry.terminals
+        for task in outcome.suspended
     }
     possible: set[int] = set()
     seen: set[tuple] = set()
-    queue = sorted(roots)
+    queue = list(roots)
     while queue:
         work = queue.pop()
         if work in seen:
             continue
         seen.add(work)
-        kind, task = work
+        kind, task, *slots = work
         if kind == "start":
             name = f"main:{task}"
             if name not in program:
                 return LaterState(
                     Support.Unsupported, f"missing procedure {name}", frozenset()
                 )
-            frames = ((name, 0, (), False),)
+            frames = ((name, 0, (), False, ()),)
         else:
-            frames = task
+            frames, last = task
             # The wait may end through native code changing what its loop
             # reads, so those values are unread when it resumes.
-            reads = _wait_reads(program, frames[-1][0], frames[-1][1])
-            flags, variables = reads
+            try:
+                flags, variables = _wait_reads(
+                    program, frames[-1][0], frames[-1][1], last
+                )
+            except _Unsupported as error:
+                return LaterState(Support.Unsupported, str(error), frozenset())
             if not (flags <= written and variables <= written_variables):
                 written |= flags
                 written_variables |= variables
                 seen.clear()
                 possible.clear()
-                queue = sorted(roots)
+                queue = list(roots)
                 continue
 
         def volatile(bank: int, bit: int) -> bool | None:
@@ -1120,13 +1174,17 @@ def evaluate_later(
         # Triggers act on the interactions entry created, such as handing over
         # a parked item, so each one starts from every entry outcome.
         starts = []
-        for outcome in entry.terminals:
+        for interactions in (
+            [dict(slots[0])]
+            if kind == "resume"
+            else [dict(outcome.slots) for outcome in entry.terminals]
+        ):
             path = _fresh_path(frames[0][0])
             path.frames = [
-                _Frame(proc, index, list(blocks), tainted)
-                for proc, index, blocks, tainted in frames
+                _Frame(proc, index, list(blocks), tainted, dict(loops))
+                for proc, index, blocks, tainted, loops in frames
             ]
-            path.slots = dict(outcome.slots)
+            path.slots = interactions
             starts.append(path)
         try:
             outcomes = interpreter.run(starts)
@@ -1143,7 +1201,7 @@ def evaluate_later(
             # New writes can open conditions in procedures already checked.
             seen.clear()
             possible.clear()
-            queue = sorted(roots)
+            queue = list(roots)
             continue
         for path in outcomes:
             possible |= path.created | {item[:3] for item in path.dispatched}
@@ -1151,7 +1209,7 @@ def evaluate_later(
                 ("start", proc)
                 for proc in path.triggers | {proc for proc, _ in path.pending}
             )
-            queue.extend(("resume", task) for task in path.suspended)
+            queue.extend(resumed(task, path.slots) for task in path.suspended)
     return LaterState(Support.Supported, "", frozenset(possible))
 
 
