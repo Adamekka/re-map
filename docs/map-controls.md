@@ -14,7 +14,7 @@ Each room button has an accessible description of completion and whether it is c
 | `0` | Fit all explored rooms on the displayed floor |
 | Enter or Space | Inspect the focused room |
 
-The mouse wheel and zoom buttons also zoom; dragging moves the map. On a touch screen, drag with one finger or pinch with two fingers to zoom and move the view. Lift one finger to continue dragging with the other. Gestures keep the selected room; tap a room to inspect it.
+The mouse wheel and the zoom buttons in the map's top-right corner also zoom, and **Fit** shows all explored rooms; dragging moves the map. On a touch screen, drag with one finger or pinch with two fingers to zoom and move the view. Lift one finger to continue dragging with the other. Gestures keep the selected room; tap a room to inspect it.
 
 Enter and Space bring an inspected room into view after zooming or panning. Back restores the previous view.
 

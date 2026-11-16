@@ -215,18 +215,18 @@ _PAGE = """<!doctype html>
 <style>
 :root { color-scheme:dark; font:15px system-ui,sans-serif; background:#10151b; color:#e7edf2; }
 body { margin:0; }
-header { padding:22px 28px 16px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
-h1 { margin:0; font-size:21px; font-weight:600; }
-#place { color:#b0beca; }
-#map-controls { padding:0 28px 14px; display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
-#zoom-controls { display:inline-flex; align-items:center; gap:10px; }
+header { padding:12px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; border-bottom:1px solid #303d48; }
+h1 { margin:0; font-size:19px; font-weight:600; }
+#map-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+/* Map controls float above the map so the floor plan keeps the full height. */
+#zoom-controls { position:absolute; top:10px; right:10px; z-index:1; display:flex; align-items:center; gap:6px; padding:5px; background:rgba(16,21,27,.86); border:1px solid #303d48; border-radius:6px; }
 select,button,input { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
 select:disabled,button:disabled,input:disabled { opacity:.55; }
 #current-room[aria-pressed="true"] { border-color:#71b6cf; background:#244c6e; }
-#status { padding:0 28px 14px; min-height:20px; color:#abb9c5; }
-main { display:grid; grid-template-columns:minmax(0,1fr) 280px; margin:0 28px; border:1px solid #303d48; background:#151e27; }
+#status { margin-left:auto; color:#abb9c5; font-size:13px; }
+main { display:grid; grid-template-columns:minmax(0,1fr); background:#151e27; }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
-#map { display:block; width:100%; height:65vh; min-height:410px; }
+#map { display:block; width:100%; height:60vh; min-height:340px; }
 #map { user-select:none; }
 #map:focus-visible { outline:2px solid #d9f6ff; outline-offset:-2px; }
 #map.navigable { cursor:grab; touch-action:none; }
@@ -279,8 +279,10 @@ distinct from room outlines and fills. */
 .door.UNCHECKED .unlock-symbol rect { stroke-dasharray:.9 .6; }
 .door.BLOCKED .unlock-symbol rect { stroke:#ed6965; }
 .door.OPEN .unlock-symbol rect { stroke:#71b6cf; }
-aside { border-left:1px solid #303d48; padding:22px; }
-#room-name { font-size:18px; font-weight:600; margin:0 0 8px; }
+aside { border-top:1px solid #303d48; }
+#room-details { padding:20px 16px; }
+/* Focus recovery scrolls details into view; keep them clear of the viewport edge. */
+#room-name { font-size:18px; font-weight:600; margin:0 0 8px; scroll-margin:16px; }
 #room-id { color:#91a5b4; font-size:13px; margin-bottom:18px; }
 #completion { padding-bottom:14px; color:#ced9e1; }
 h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#91a5b4; margin:22px 0 10px; }
@@ -299,15 +301,16 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 .list-symbol.locked,.list-symbol.blocked { color:#ed6965; }
 .list-symbol.unlockable { color:#e9b85e; }
 .list-symbol.unlocked { color:#a5d5ac; }
-#legend { display:flex; flex-wrap:wrap; gap:12px 24px; padding:18px 28px 24px; color:#abb9c5; font-size:13px; }
+#legend { color:#abb9c5; font-size:13px; border-top:1px solid #303d48; background:#10151b; }
+#legend summary { padding:10px 16px; cursor:pointer; }
+#legend-entries { display:flex; flex-wrap:wrap; gap:10px 20px; padding:0 16px 14px; }
 .key { display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-2px; }
 .key.door-key { height:3px; vertical-align:3px; }
 .key.unlocked-key { height:0; border-top:3px dashed #a5d5ac; }
 #note { color:#91a5b4; font-size:13px; line-height:1.5; }
-#overview { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:0 28px 28px; }
-#item-search-label { grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:13px; color:#abb9c5; }
-#item-search { box-sizing:border-box; width:min(100%,320px); }
-#cleared-section { grid-column:1/-1; }
+#overview { display:flex; flex-direction:column; gap:24px; padding:20px 16px; border-top:1px solid #303d48; }
+#item-search-label { display:flex; flex-direction:column; gap:8px; font-size:13px; color:#abb9c5; }
+#item-search { box-sizing:border-box; width:100%; }
 #overview h2 { margin:0 0 12px; }
 #overview h3 { margin:18px 0 8px; font-size:14px; font-weight:500; }
 #overview p { margin:0; font-size:13px; color:#91a5b4; }
@@ -316,18 +319,29 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 .room-link:hover,.room-link:focus-visible { border-color:#d9f6ff; }
 #overview .room-link span { display:block; text-align:left; color:inherit; }
 #overview .room-link span+span { margin-top:4px; color:#94a7b6; }
-@media(max-width:760px) { header { padding:18px; } #map-controls { padding:0 18px 12px; } #status { padding:0 18px 12px; } main { margin:0 18px; grid-template-columns:1fr; } #map { min-height:340px; height:52vh; } aside { border-left:0; border-top:1px solid #303d48; } #legend { padding:18px; } #overview { margin:0 18px 18px; grid-template-columns:1fr; gap:22px; } }
+/* Wide windows keep the map and sidebar on screen together during play;
+the sidebar scrolls on its own instead of the page. */
+@media(min-width:761px) and (min-height:560px) {
+  body { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
+  main { flex:1; min-height:0; grid-template-columns:minmax(0,1fr) 300px; grid-template-rows:minmax(0,1fr); }
+  /* The legend stays below the floor plan so it never covers explored rooms. */
+  #map-shell { display:flex; flex-direction:column; }
+  #map { flex:1; height:auto; min-height:0; }
+  aside { border-top:0; border-left:1px solid #303d48; overflow-y:auto; }
+  #legend { font-size:12px; }
+  #legend summary { padding:8px 16px; }
+  #legend-entries { gap:8px 18px; padding:0 16px 10px; }
+}
+@media(min-width:1100px) and (min-height:560px) { main { grid-template-columns:minmax(0,1fr) 340px; } }
 </style>
 </head>
 <body>
-<header><h1>__GAME_TITLE__</h1><span id="place"></span></header>
-<nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button></span><button id="fit-rooms" type="button" disabled>Fit explored rooms</button></nav>
-<div id="status" role="status">Waiting for game.</div>
+<header><h1>__GAME_TITLE__</h1><nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button></nav><div id="status" role="status">Waiting for game.</div></header>
 <main>
-<div id="map-shell"><svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag, pinch or use the mouse wheel."></svg></div>
-<aside><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></aside>
-</main>
-<div id="legend">
+<div id="map-shell">
+<div id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button><button id="fit-rooms" type="button" aria-label="Fit explored rooms" title="Fit explored rooms" disabled>Fit</button></div>
+<svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag, pinch or use the mouse wheel."></svg>
+<details id="legend" open><summary>Legend</summary><div id="legend-entries">
 <span><i class="key" style="background:#685331"></i>Story / key items remain</span>
 <span><i class="key" style="background:#743e40"></i>Supplies / other items remain</span>
 <span><i class="key" style="background:#244c6e"></i>Cleared</span>
@@ -338,13 +352,18 @@ li > span:last-child { color:#94a7b6; text-align:right; }
 <span><i class="key door-key" style="background:#e9b85e"></i>Unlock from this side</span>
 <span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
 <span><i class="key door-key unlocked-key"></i>Unlocked · access unconfirmed</span>
+</div></details>
 </div>
+<aside>
+<section id="room-details"><div id="room-name" tabindex="-1">No room entered</div><div id="room-id"></div><div id="completion"></div><h2>Items</h2><ul id="items"></ul><h2>Doors</h2><ul id="doors"></ul><p id="note"></p></section>
 <section id="overview" aria-label="Explored room items">
 <label id="item-search-label" for="item-search">Find item or room<input id="item-search" type="search" autocomplete="off" aria-controls="remaining-items incomplete-checks cleared-rooms" disabled></label>
 <section id="cleared-section" aria-labelledby="cleared-heading" hidden><h2 id="cleared-heading">Cleared rooms</h2><div id="cleared-rooms"></div></section>
 <section id="remaining-section" aria-labelledby="remaining-heading"><h2 id="remaining-heading">Remaining items</h2><p id="remaining-status">Waiting for game.</p><div id="remaining-items"></div></section>
 <section id="checks-section" aria-labelledby="checks-heading"><h2 id="checks-heading">Incomplete item checks</h2><p id="checks-status">Waiting for game.</p><div id="incomplete-checks"></div></section>
 </section>
+</aside>
+</main>
 <script>
 const catalog = __GRAPH__;
 const instanceMeta = document.querySelector('meta[name="map-instance"]');
@@ -375,6 +394,10 @@ const currentRoomButton = document.getElementById('current-room');
 const zoomIn = document.getElementById('zoom-in');
 const zoomOut = document.getElementById('zoom-out');
 const fitRooms = document.getElementById('fit-rooms');
+const legend = document.getElementById('legend');
+// The legend's open state is a per-viewer convenience; storage can be unavailable.
+try { if(localStorage.getItem('legend-open')==='false') legend.open=false; } catch {}
+legend.addEventListener('toggle',()=>{try { localStorage.setItem('legend-open',String(legend.open)); } catch {}});
 itemSearch.addEventListener('input',()=>{if(lastState!==null && lastState.status==='display') updateOverview(lastState);});
 itemSearch.addEventListener('keydown',event=>{
   if(event.key==='Escape' && itemSearch.value!=='') {
@@ -819,7 +842,6 @@ function draw(state) {
   const plan=areas.get(displayedArea);
   if(selectedArea!==displayedArea) {selected=null;selectedArea=displayedArea;}
   const byId=new Map((plan ? plan.rooms : []).map(room=>[room.id,room]));
-  document.getElementById('place').textContent=plan ? plan.name : 'Room '+state.current;
   svg.setAttribute('aria-label',plan ? 'Explored '+plan.name : 'Explored rooms');
   const visible=new Map(state.explored_areas[displayedArea].filter(room=>byId.has(room.id)).map(room=>[room.id,room]));
   const currentId=showingCurrentFloor ? state.map_region : null;
@@ -1124,6 +1146,8 @@ function inspectRoom(area,id) {
 }
 function focusInspectedRoom() {
   document.querySelector('main').scrollIntoView({block:'start'});
+  // Wide layouts scroll the sidebar separately; reveal the inspected room's details.
+  document.querySelector('aside').scrollTo({top:0});
   const room=svg.querySelector('.room.selected');
   // An unoutlined current room has details but no SVG focus target.
   const target=room || document.getElementById('room-name');

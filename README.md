@@ -31,6 +31,8 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
+The map fills the window, with the selected room's details and the remaining items in a sidebar beside it. On a narrow screen they appear below the map. Collapse **Legend** under the map to give the floor plan more room.
+
 Rooms appear as you enter them. Gold means story/key items remain; red means supplies or other items remain; blue means cleared; gray means the item check is incomplete. Story/key items determine the color when both kinds remain. RE1 puzzle rewards keep their room incomplete until collected, even before the puzzle is solved. In RE1 and RE2, the cyan arrow follows your approximate position where placement is established and rotates with your facing direction. Placement is approximate because the original maps distort room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors. Underlined destination names in **Doors** open that explored room on the tracker.
 
 The item list uses gold symbols for story/key items and red symbols for supplies, alongside their names and status text. Verified item counts other than one appear beside item names, including in **Remaining items**. Weapon resources, key uses and unresolved amounts have no multiplier. Check marks, question marks and door/key symbols distinguish collection and access states. An unresolved item identity uses a neutral collectible symbol.
@@ -43,7 +45,7 @@ In RE2, a green open padlock shows a freshly confirmed unlock. A dashed frame me
 
 **Back** returns to the previous inspected room with its zoom and pan. Use **Floor** to browse explored floors. Click **Follow player** to stop inspecting a selected room and resume selecting each room you enter. The highlighted button shows when following is active.
 
-Use the mouse wheel or **+ / −** buttons to zoom, and drag the map to move it. **Fit explored rooms** shows the whole explored floor again. With the map focused, arrow keys move the view, plus/minus zoom, and zero fits explored rooms. Use Tab to focus the map or rooms, then Enter or Space to inspect a focused room. See [map controls](docs/map-controls.md).
+Use the mouse wheel or the **+ / −** buttons in the map's top-right corner to zoom, and drag the map to move it. **Fit** shows the whole explored floor again. With the map focused, arrow keys move the view, plus/minus zoom, and zero fits explored rooms. Use Tab to focus the map or rooms, then Enter or Space to inspect a focused room. See [map controls](docs/map-controls.md).
 
 Use **Remaining items** to find pickups in explored rooms, and click a room to open it on the map. Off-screen outlines come into view at your chosen zoom, zooming out if needed to fit. **Incomplete item checks** names unresolved items and identifies incomplete item lists, with links to their rooms.
 
