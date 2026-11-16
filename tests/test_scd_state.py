@@ -1332,3 +1332,106 @@ def test_outer_counter_guard_ends_an_inner_native_wait():
         ["loop_end"],
     ]
     assert door_state(door_after_wait(wait)) == (0x31, False)
+
+
+def test_tainted_if_that_skips_a_writing_call_taints_what_follows():
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["door", 6, 0x31],
+            ["reset", 6, 0, 0, -1, -1, -1, -1],
+            ["if", 50],
+            ["cond", 0],
+            ["set", 9, 1, 1],
+            ["if", 80],
+            ["ck", 9, 1, 0],
+            ["gosub", 5],
+            ["if", 110],
+            ["cmp", 6, 0, 0],
+            ["reset", 6, 1, 0x31, -1, -1, -1, -1],
+            ["end"],
+        ),
+        "main:5": rows(["calc", 6, 0, 1], ["end"]),
+    }
+    assert evaluate(program).doors[0].sat is None
+
+
+def test_tainted_while_exit_taints_what_follows():
+    # With 9:1 set under unread game state the While leaves; otherwise it
+    # waits for a flag only the waiting task itself sets.
+    wait = [
+        ["if", 50],
+        ["cond", 0],
+        ["set", 9, 1, 1],
+        ["loop", 80, -1, "while"],
+        ["ck", 9, 1, 0],
+        ["loop_end"],
+    ]
+    assert evaluate(door_after_wait(wait)).doors[0].sat is None
+
+
+def test_nested_call_with_a_branch_reads_the_whole_loop():
+    wait = [["loop", 60, -1, "while"], ["ck", 9, 27, 0], ["gosub", 5], ["loop_end"]]
+    calls = {
+        "main:5": rows(["gosub", 6], ["end"]),
+        "main:6": rows(["if", 30], ["ck", 9, 28, 1], ["set", 9, 27, 1], ["end"]),
+    }
+    assert door_state(door_after_wait(wait, calls)) == (0, True)
+
+
+def test_waiting_callee_is_not_released_by_its_caller():
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["door", 6, 0x31],
+            ["reset", 6, 0, 0, -1, -1, -1, -1],
+            ["gosub", 5],
+            # Runs only after the callee stops waiting.
+            ["set", 9, 27, 1],
+            ["reset", 6, 1, 0x31, -1, -1, -1, -1],
+            ["end"],
+        ),
+        "main:5": rows(["loop", 30, -1, "while"], ["ck", 9, 27, 0], ["loop_end"], ["end"]),
+    }
+    assert door_state(program) == (0, True)
+
+
+def test_procedure_called_only_before_a_wait_cannot_release_it():
+    wait = [
+        ["gosub", 8],
+        ["set", 9, 27, 0],
+        ["loop", 70, -1, "while"],
+        ["ck", 9, 27, 0],
+        ["loop_end"],
+    ]
+    called = {"main:8": rows(["set", 9, 27, 1], ["end"])}
+    assert door_state(door_after_wait(wait, called)) == (0, True)
+
+
+def test_else_wait_ignores_current_values_its_loop_overwrites():
+    # The If tests 9:27, clears 9:28, then tests it; 9:28 holds now but is
+    # always clear by the time it is tested again.
+    wait = [
+        ["if", 70],
+        ["ck", 9, 27, 1],
+        ["set", 9, 28, 0],
+        ["ck", 9, 28, 1],
+        ["else", 80],
+        ["goto", 20],
+    ]
+    setting = {"main:1": rows(["set", 9, 27, 1], ["end"])}
+    assert door_state(door_after_wait(wait, setting), flags={(9, 28): True}) == (
+        0,
+        True,
+    )
+
+
+def test_work_copy_before_a_wait_fixes_its_operand():
+    wait = [
+        ["patch", 42, 4, 1],
+        ["loop", 70, -1, "while"],
+        ["ck", 9, 0, 0],
+        ["calc", 4, 0, 1],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait)) == (0, True)

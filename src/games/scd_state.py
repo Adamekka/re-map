@@ -323,7 +323,19 @@ _STRAIGHT = (
     "gosub",
 )
 # Commands whose effect a skipped block would have had.
-_EFFECTS = ("set", "var", "calc", "calc2", "patch", "item", "door", "aot", "reset")
+_EFFECTS = (
+    "set",
+    "var",
+    "calc",
+    "calc2",
+    "patch",
+    "item",
+    "door",
+    "aot",
+    "reset",
+    "aot_on",
+    "exec",
+)
 
 
 @dataclass(frozen=True)
@@ -334,6 +346,8 @@ class _Writes:
     flags: dict[tuple[int, int], set[bool]]
     banks: dict[int, set[bool]]
     variables: set[int]
+    # Work_copy target offset -> variables it copies there.
+    patches: dict[int, set[int]]
 
     def can_write(
         self, flag: tuple[int, int], values: set[bool], patched: bool
@@ -357,8 +371,11 @@ def _writes(rows, patch_targets: frozenset[int]) -> _Writes:
     flags: dict[tuple[int, int], set[bool]] = {}
     banks: dict[int, set[bool]] = {}
     variables: set[int] = set()
+    patches: dict[int, set[int]] = {}
     for row in rows:
-        if row[2] == "set":
+        if row[2] == "patch":
+            patches.setdefault(row[3], set()).add(row[4])
+        elif row[2] == "set":
             values = {True, False} if row[5] == 7 else {bool(row[5])}
             if row[0] + 2 in patch_targets:
                 banks.setdefault(row[3], set()).update(values)
@@ -366,7 +383,7 @@ def _writes(rows, patch_targets: frozenset[int]) -> _Writes:
                 flags.setdefault((row[3], row[4]), set()).update(values)
         elif row[2] in ("var", "calc", "calc2"):
             variables.add(row[3])
-    return _Writes(flags, banks, variables)
+    return _Writes(flags, banks, variables, patches)
 
 
 def _runnable_procedures(
@@ -476,6 +493,7 @@ class _Interpreter:
         program: dict[str, list[list]],
         state: GameState,
         entry: bool,
+        automatic: tuple[str, ...],
         runnable: frozenset[str],
     ) -> None:
         self.program = program
@@ -498,6 +516,8 @@ class _Interpreter:
         # ``runnable`` names the procedures the room's automatic tasks can run,
         # call or start. Their writes may release another task's wait.
         self.runnable = runnable
+        # The automatic and repeating procedures the engine runs itself.
+        self.roots = automatic
         self.other_writes: dict[str, _Writes] = {}
         self.written: set[tuple[int, int]] = set()
         self.written_variables: set[int] = set()
@@ -791,17 +811,16 @@ class _Interpreter:
                         and self.entry
                         and block is not None
                         and (
-                            any(
-                                row[2] in _EFFECTS
-                                for row in rows[
-                                    frame.index : self._index(frame.proc, block[1])
-                                ]
+                            # Leaving a loop skips its repeats, which may wait.
+                            block[0] == "loop"
+                            or self._has_effects(
+                                rows[frame.index : self._index(frame.proc, block[1])]
                             )
                             or self._exits(frame.proc, frame.index, block[1])
                         )
                     ):
-                        # A tainted predicate skipped writes or an exit, so
-                        # what follows depends on unread game state.
+                        # A tainted predicate skipped writes, repeats or an
+                        # exit, so what follows depends on unread game state.
                         path.diverged = True
                     self._fail(path, read_taint and self.entry)
                     continue
@@ -1129,11 +1148,28 @@ class _Interpreter:
                         raise _Unsupported(f"missing procedure {name}")
                     called.add(row[3])
                     body = self.program[name]
-                    if any(callee[2] not in (*_STRAIGHT, "end") for callee in body):
+                    # A called procedure may end but not branch or test.
+                    if any(
+                        callee[2] not in (*_STRAIGHT, "end") or callee[2] in _CONDITIONS
+                        for callee in body
+                    ):
                         return False
-                    if any(callee[2] in _CONDITIONS for callee in body):
-                        return False
+                    pending.append([callee for callee in body if callee[2] != "end"])
         return True
+
+    def _has_effects(self, rows: list[list]) -> bool:
+        """Whether ``rows`` write anything or start a task, directly or in a
+        procedure they call."""
+        pending = [rows]
+        called: set[int] = set()
+        while pending:
+            for row in pending.pop():
+                if row[2] in _EFFECTS:
+                    return True
+                if row[2] == "gosub" and row[3] not in called:
+                    called.add(row[3])
+                    pending.append(self.program.get(f"main:{row[3]}", []))
+        return False
 
     @staticmethod
     def _predicates(rows: list[list], first: int, stop: int) -> list[int]:
@@ -1204,6 +1240,9 @@ class _Interpreter:
             self._predicates(rows, first, matching)
             + self._predicates(rows, opener + 1, goto),
             self._predicates(rows, matching + 1, opener),
+            # A predicate's current value predicts its next test only if no
+            # write between the loop head and the If's tests can change it.
+            not self._has_effects(rows[first:opener]),
         )
 
     def _waits_on_native(
@@ -1217,7 +1256,7 @@ class _Interpreter:
         """
         proc = path.frames[-1].proc
         loop = _loop_rows(self.program, proc, head, last)
-        writes = self._releasing_writes(proc, loop)
+        writes = self._releasing_writes(path, loop)
         if shape is None:
             flags, variables = _wait_reads(self.program, proc, head, last)
             return (
@@ -1253,9 +1292,11 @@ class _Interpreter:
                 return args[0] == 1
             if op == "has":
                 return False
-            sources = [
-                row[4] for row in self.patches if row[3] in (offset + 2, offset + 4)
-            ]
+            # Only a Work_copy that can run while the task waits changes the
+            # operand; one that ran before the wait fixed it.
+            sources = writes.patches.get(offset + 2, set()) | writes.patches.get(
+                offset + 4, set()
+            )
             if any(room_controlled(source) for source in sources):
                 return True
             if op == "ck":
@@ -1273,27 +1314,50 @@ class _Interpreter:
 
         if shape[0] == "all":
             return not any(can_make(index, False) for index in shape[1])
-        _, repeating, leaving = shape
+        _, repeating, leaving, current = shape
         return not (
             any(can_make(index, False) for index in repeating)
-            or all(holds_now(index) or can_make(index, True) for index in leaving)
+            or all(
+                current and holds_now(index) or can_make(index, True)
+                for index in leaving
+            )
         )
 
-    def _releasing_writes(self, proc: str, loop: list[list]) -> _Writes:
-        """Writes that can happen while a task waits in ``loop``: those in
-        the loop and the procedures it calls, and those of every other
-        runnable procedure. The waiting task's own earlier writes cannot."""
-        if proc not in self.other_writes:
-            self.other_writes[proc] = _writes(
+    def _releasing_writes(self, path: _Path, loop: list[list]) -> _Writes:
+        """Writes that can happen while a task waits in ``loop``.
+
+        Those are the loop's own, including the procedures it calls, and
+        those of work the engine schedules independently: the automatic and
+        repeating procedures, tasks other scripts start, and what they call.
+        Procedures on the waiting task's call stack, and procedures only they
+        call outside the loop, cannot run meanwhile.
+        """
+        stack = frozenset(frame.proc for frame in path.frames)
+        if stack not in self.other_writes:
+            starts = set(self.roots)
+            for name in self.runnable:
+                for _, _, op, *args in self.program[name]:
+                    started = (
+                        args[0]
+                        if op == "exec"
+                        else args[3]
+                        if op in ("aot", "reset")
+                        else -1
+                    )
+                    if started >= 0:
+                        starts.add(f"main:{started}")
+            independent = _runnable_procedures(
+                self.program, tuple(sorted(starts - stack))
+            )
+            self.other_writes[stack] = _writes(
                 (
                     row
-                    for name in self.runnable
-                    if name != proc
+                    for name in sorted(independent - stack)
                     for row in self.program[name]
                 ),
                 self.patch_targets,
             )
-        others, own = self.other_writes[proc], _writes(loop, self.patch_targets)
+        others, own = self.other_writes[stack], _writes(loop, self.patch_targets)
         return _Writes(
             {
                 flag: others.flags.get(flag, set()) | own.flags.get(flag, set())
@@ -1304,6 +1368,11 @@ class _Interpreter:
                 for bank in others.banks.keys() | own.banks.keys()
             },
             others.variables | own.variables,
+            {
+                target: others.patches.get(target, set())
+                | own.patches.get(target, set())
+                for target in others.patches.keys() | own.patches.keys()
+            },
         )
 
     def _suspend(self, path: _Path, head: int, target: int, last: int) -> None:
@@ -1427,7 +1496,9 @@ class EntryState:
     written_variables: frozenset[int]
     # Banks written at an undeterminable bit.
     written_banks: frozenset[int]
-    # Procedures the automatic tasks can run, call or start.
+    # The automatic and repeating procedures, and every procedure they can
+    # run, call or start.
+    automatic: tuple[str, ...]
     runnable: frozenset[str]
     # Procedures the engine restarts while the room runs.
     repeating: frozenset[int]
@@ -1450,10 +1521,11 @@ def evaluate_entry(
     roots = tasks.roots
     # Only procedures the room has can restart.
     repeating = frozenset(proc for proc in tasks.repeating if f"main:{proc}" in program)
-    runnable = _runnable_procedures(
-        program, (*roots, *(f"main:{proc}" for proc in sorted(repeating)))
+    automatic = (*roots, *(f"main:{proc}" for proc in sorted(repeating)))
+    runnable = _runnable_procedures(program, automatic)
+    interpreter = _Interpreter(
+        program, state, entry=True, automatic=automatic, runnable=runnable
     )
-    interpreter = _Interpreter(program, state, entry=True, runnable=runnable)
     try:
         if not roots or any(root not in program for root in roots):
             raise _Unsupported("missing automatic procedure")
@@ -1471,6 +1543,7 @@ def evaluate_entry(
             frozenset(),
             frozenset(),
             frozenset(),
+            automatic,
             runnable,
             repeating,
         )
@@ -1489,6 +1562,7 @@ def evaluate_entry(
         frozenset(interpreter.written),
         frozenset(interpreter.written_variables),
         frozenset(interpreter.written_banks),
+        automatic,
         runnable,
         repeating,
     )
@@ -1602,6 +1676,7 @@ def evaluate_later(
                 lambda item: None,
             ),
             entry=False,
+            automatic=entry.automatic,
             runnable=entry.runnable,
         )
         # Triggers act on the interactions entry created, such as handing over
