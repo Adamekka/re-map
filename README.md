@@ -31,7 +31,7 @@ The GDB server is built into DuckStation. You do not need to install or start a 
 
 Keep the terminal running while you play. Press Ctrl+C there to stop the tracker.
 
-The map fills the window, with the selected room's details and the remaining items in a sidebar beside it. On a narrow screen they appear below the map. **Legend** under the map starts collapsed on narrow or short windows. Open or collapse it and the map remembers your choice.
+The map fills the window, with the selected room's details and the remaining items in a sidebar beside it. In a narrow or short window they appear below the map. **Legend** under the map starts collapsed on narrow or short windows. Open or collapse it and the map remembers your choice.
 
 Rooms appear as you enter them. Gold means story/key items remain; red means supplies or other items remain; blue means cleared; gray means the item check is incomplete. Story/key items determine the color when both kinds remain. RE1 puzzle rewards keep their room incomplete until collected, even before the puzzle is solved. In RE1 and RE2, the cyan arrow follows your approximate position where placement is established and rotates with your facing direction. Placement is approximate because the original maps distort room proportions. The legend identifies approximate placement or a room-only marker when position is unavailable. The white outline also marks the current room. Click a room to see its items and doors. Underlined destination names in **Doors** open that explored room on the tracker.
 

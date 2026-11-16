@@ -232,8 +232,8 @@ select:disabled,button:disabled,input:disabled { opacity:.45; cursor:default; }
 #current-room[aria-pressed="true"] { border-color:var(--open); background:var(--cleared-fill); opacity:1; }
 #zoom-controls button { min-width:34px; }
 /* Finger-sized targets for the toolbar on touch screens. */
-/* Padding sizes the legend toggle because flex layout would drop its disclosure marker. */
-@media(pointer:coarse) { header :is(select,button),#item-search { min-height:44px; box-sizing:border-box; } details#legend > summary { padding-top:14px; padding-bottom:14px; } #zoom-controls button { min-width:44px; } }
+/* The legend toggle stays a block because flex layout would drop its disclosure marker. */
+@media(pointer:coarse) { header :is(select,button),#item-search { min-height:44px; box-sizing:border-box; } details#legend > summary { min-height:44px; box-sizing:border-box; padding-top:14px; padding-bottom:14px; } #zoom-controls button { min-width:44px; } }
 #status { margin-left:auto; display:flex; align-items:center; gap:8px; color:var(--soft); font-size:13px; }
 #status::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--paused); }
 #status[data-state="live"]::before { background:var(--live); }
@@ -1195,12 +1195,16 @@ function revealRoomDetails() {
   document.querySelector('aside').scrollTo({top:0});
 }
 function focusInspectedRoom() {
-  document.querySelector('main').scrollIntoView({block:'start'});
   revealRoomDetails();
   const room=svg.querySelector('.room.selected');
-  // An unoutlined current room has details but no SVG focus target.
-  const target=room || document.getElementById('room-name');
-  target.focus({preventScroll:true});
+  if(room) {
+    document.querySelector('main').scrollIntoView({block:'start'});
+    room.focus({preventScroll:true});
+  } else {
+    // An unoutlined current room has details but no SVG focus target. Stacked
+    // pages can place those details below the map, so let focus reveal them.
+    document.getElementById('room-name').focus();
+  }
 }
 function observedRoomViews(state) {
   // Camera outlines share a logical room's items. Prefer its current outline

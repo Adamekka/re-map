@@ -120,11 +120,23 @@ try {
     await page.waitForFunction(() => lastState.area === 'unmapped');
     await follow.click();
     assert.equal(await page.locator('#map .room').count(), 0);
+    const detailsVisible = () => page.locator('#room-name').evaluate(node => { const box = node.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight; });
+    // A scrolled sidebar must not carry focused details out of view on Back.
+    await page.locator('aside').evaluate(node => { node.scrollTop = node.scrollHeight; });
     await floor.selectOption(fixture.second);
     assert(await back.isEnabled(), 'a current room without an outline can be returned to while it stays current');
     await back.press('Enter');
     assert.equal(await floor.inputValue(), 'unmapped');
     assert(await page.locator('#room-name').evaluate(node => node === document.activeElement), 'Back to an unoutlined room must focus its details');
+    assert.equal(await page.locator('aside').evaluate(node => node.scrollTop), 0, 'Back must not restore a list position over focused details');
+    assert(await detailsVisible(), 'Back must keep focused room details visible');
+    // Short stacked windows place details below the map; focus must still reveal them.
+    await page.setViewportSize({ width: 844, height: 390 });
+    await floor.selectOption(fixture.second);
+    await back.press('Enter');
+    assert(await page.locator('#room-name').evaluate(node => node === document.activeElement));
+    assert(await detailsVisible(), 'stacked Back must scroll focused room details into view');
+    await page.setViewportSize({ width: 1280, height: 720 });
     await floor.selectOption(fixture.second);
     const unmappedOption = await floor.locator('option[value="unmapped"]').elementHandle();
     await floor.focus();

@@ -40,6 +40,6 @@ Select an underlined destination in **Doors** to inspect its explored room. The 
 
 ## Return to previous inspections
 
-**Back** retraces room selections, door/item results and floor browsing in the current browser session. It restores the previous zoom and pan while showing fresh items, completion and door access. Zooming, panning and live player movement do not add entries. Repeatedly selecting the same view adds no extra step. When the sidebar sits beside the map, Back also returns to your place in its list; narrow screens show the map instead. **Follow player** clears this inspection history and resumes following.
+**Back** retraces room selections, door/item results and floor browsing in the current browser session. It restores the previous zoom and pan while showing fresh items, completion and door access. Zooming, panning and live player movement do not add entries. Repeatedly selecting the same view adds no extra step. When the sidebar sits beside the map, Back also returns to your place in its list for outlined rooms; narrow or short windows show the map instead, or the room details when the room has no outline. **Follow player** clears this inspection history and resumes following.
 
 Only views still available in explored history remain accessible. A room without an outline can be revisited through Back while it remains the same current room. Back is disabled during interrupted tracking and recovers valid entries when tracking returns.
