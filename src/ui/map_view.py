@@ -331,8 +331,13 @@ li > span:last-child { color:var(--muted); text-align:right; }
 #overview li { padding:0; border:0; margin-bottom:6px; }
 .room-link { display:block; width:100%; text-align:left; cursor:pointer; padding:8px 11px; border-color:var(--line); }
 .room-link:hover,.room-link:focus-visible { border-color:var(--current); }
-#overview .room-link span { display:block; text-align:left; color:inherit; }
-#overview .room-link span+span { margin-top:4px; color:var(--muted); }
+#overview .room-link > span { display:block; text-align:left; color:inherit; }
+#overview .room-link > span+span { margin-top:4px; color:var(--muted); }
+#overview .room-link > .result-items { display:flex; flex-wrap:wrap; gap:4px 12px; }
+.result-item { display:inline-flex; align-items:center; gap:5px; }
+.result-item.story { color:var(--story); }
+.result-item.supplies { color:var(--supplies); }
+.result-item .list-symbol { width:14px; height:14px; }
 /* Wide windows keep the map and sidebar on screen together during play;
 the sidebar scrolls on its own instead of the page. */
 @media(min-width:761px) and (min-height:560px) {
@@ -1195,26 +1200,26 @@ function updateOverview(state) {
   for(const views of observedRoomViews(state).values()) {
     const {visit}=views[0];
     if(typeof visit.items_complete!=='boolean') throw new Error('Room item coverage is missing');
-    function addResult(entries,labels) {
+    function addResult(entries,details) {
       // Match explored outlines before choosing one logical-room result, so
       // searching another visited floor can navigate to that floor's outline.
       const match=views.find(({area,visit})=>{
         const floor=areas.has(area) ? areas.get(area).name : 'Room '+visit.room;
-        return [roomName(area,visit),floor,...labels].join(' ').toLowerCase().includes(query);
+        return [roomName(area,visit),floor,...details.map(detail=>detail.text)].join(' ').toLowerCase().includes(query);
       });
       if(!match) return;
       const {area,visit}=match;
-      entries.push({area,id:visit.id,room:visit.room,name:roomName(area,visit),labels});
+      entries.push({area,id:visit.id,room:visit.room,name:roomName(area,visit),details});
     }
     if(visit.state==='CLEARED') addResult(cleared,[]);
-    const labels=visit.items.filter(itemRemains).map(itemLabel);
-    if(labels.length) addResult(remaining,labels);
+    const items=visit.items.filter(itemRemains).map(item=>({kind:'item',text:itemLabel(item),...itemVisual(item.label)}));
+    if(items.length) addResult(remaining,items);
     // A remaining item makes the room red even when other item checks are
     // incomplete. Completion color alone cannot identify those gaps.
     const unresolved=visit.items.filter(item=>item.state==='unknown').map(itemLabel);
     if(!visit.items_complete || unresolved.length) addResult(checks,[
-      ...(unresolved.length ? ['Unresolved: '+unresolved.join(', ')] : []),
-      ...(!visit.items_complete ? ['Item list incomplete'] : []),
+      ...(unresolved.length ? [{kind:'note',text:'Unresolved: '+unresolved.join(', ')}] : []),
+      ...(!visit.items_complete ? [{kind:'note',text:'Item list incomplete'}] : []),
     ]);
   }
   const key=JSON.stringify([query,remaining,checks,query ? cleared : []]);
@@ -1239,8 +1244,20 @@ function updateOverview(state) {
         }
         const row=document.createElement('li'),link=document.createElement('button'),name=document.createElement('span');
         link.type='button';link.className='room-link';link.dataset.room=entry.room;name.textContent=entry.name;link.append(name);
-        if(entry.labels.length) {
-          const labels=document.createElement('span');labels.textContent=entry.labels.join(', ');link.append(labels);
+        if(entry.details.length) {
+          const details=document.createElement('span');details.className='result-items';
+          for(const detail of entry.details) {
+            const line=document.createElement('span');
+            if(detail.kind==='item') {
+              // Remaining pickups reuse the room panel's symbols and category colors.
+              line.className='result-item '+detail.category;
+              const text=document.createElement('span');text.textContent=detail.text;
+              line.append(listSymbol(detail.symbol,detail.category),text);
+            } else if(detail.kind==='note') line.textContent=detail.text;
+            else throw new Error('Unknown overview detail kind: '+detail.kind);
+            details.append(line);
+          }
+          link.append(details);
         }
         link.addEventListener('click',()=>inspectRoom(entry.area,entry.id));
         row.append(link);groups.get(entry.area).append(row);
