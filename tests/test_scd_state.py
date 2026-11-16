@@ -702,7 +702,7 @@ def test_jumping_back_before_a_block_reenters_it_once():
         frozenset(),
         lambda item: False,
     )
-    entry = evaluate_entry(program, state, ("main:0",))
+    entry = evaluate_entry(program, state, EngineTasks(("main:0",), frozenset()))
     suspended = {task for outcome in entry.terminals for task in outcome.suspended}
     assert [[frame[2] for frame in task] for task, _ in suspended] == [
         [(("switch", 80, 0, False),)]
@@ -836,7 +836,7 @@ def test_suspended_task_keeps_its_callers_loop_count():
         frozenset(),
         lambda item: False,
     )
-    entry = evaluate_entry(program, state, ("main:0",))
+    entry = evaluate_entry(program, state, EngineTasks(("main:0",), frozenset()))
     ((frames, _),) = {task for outcome in entry.terminals for task in outcome.suspended}
     assert frames[0][4] == ((0, (1, 0, 39)),)
 
@@ -872,7 +872,9 @@ def test_resumes_differing_only_in_taint_run_once(monkeypatch):
         frozenset(),
         lambda item: False,
     )
-    entry = scd_state.evaluate_entry(program, state, ("main:0",))
+    entry = scd_state.evaluate_entry(
+        program, state, EngineTasks(("main:0",), frozenset())
+    )
     assert len(entry.terminals) > 1
     runs = []
     original = scd_state._Interpreter.run
@@ -937,7 +939,9 @@ def test_resumes_differing_only_in_task_taint_run_once(monkeypatch):
         frozenset(),
         lambda item: False,
     )
-    entry = scd_state.evaluate_entry(program, state, ("init:0",))
+    entry = scd_state.evaluate_entry(
+        program, state, EngineTasks(("init:0",), frozenset())
+    )
     runs = []
     original = scd_state._Interpreter.run
 
@@ -1151,3 +1155,81 @@ def test_patched_predicate_bit_needs_a_releasing_write_in_its_bank():
     assert door_state(door_after_wait(wait, clearing)) == (0, True)
     setting = {"main:1": rows(["set", 9, 5, 1], ["end"])}
     assert door_state(door_after_wait(wait, setting)) == (0x31, False)
+
+
+def test_else_wait_needs_every_predicate_of_its_if():
+    # Leaving needs both 9:27 and 9:28; the room can only set 9:27.
+    wait = [
+        ["if", 70],
+        ["ck", 9, 27, 1],
+        ["set", 3, 3, 1],
+        ["ck", 9, 28, 1],
+        ["else", 80],
+        ["goto", 20],
+    ]
+    setting = {"main:1": rows(["set", 9, 27, 1], ["end"])}
+    assert door_state(door_after_wait(wait, setting)) == (0, True)
+
+
+def test_one_releasable_predicate_ends_a_compound_while():
+    # The loop repeats while the counter is below 3 and native flag 9:27 is
+    # clear, so the counter alone ends it.
+    wait = [
+        ["var", 4, 0, 0],
+        ["loop", 80, -1, "while"],
+        ["cmp", 4, 3, 3],
+        ["ck", 9, 27, 0],
+        ["calc", 4, 0, 1],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait)) == (0x31, False)
+
+
+def test_patched_comparison_value_follows_its_native_source():
+    wait = [
+        ["var", 4, 0, 0],
+        ["loop", 80, -1, "while"],
+        ["cmp", 4, 0, 0],
+        # Work_copy writes native variable 7's copy into the compared value
+        # for the next pass.
+        ["var", 5, 1, 7],
+        ["patch", 44, 5, 2],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait)) == (0, True)
+
+
+def test_patched_predicate_bit_chosen_by_a_room_variable_can_end_a_wait():
+    wait = [["if", 60], ["patch", 42, 4, 1], ["ck", 9, 0, 0], ["goto", 20]]
+    choosing = {"main:1": rows(["var", 4, 0, 1], ["end"])}
+    assert door_state(door_after_wait(wait, choosing)) == (0x31, False)
+
+
+def test_do_on_unread_game_state_waits_natively():
+    wait = [["loop", 50, -1, "do"], ["loop_end"], ["cond", 0]]
+    assert evaluate(door_after_wait(wait)).doors[0].sat is None
+
+
+def test_tainted_do_predicate_that_leaves_taints_what_follows():
+    # Flag 9:1 is set only under unread game state. With it set the Do leaves
+    # after one pass and the door is restored; otherwise it runs twice.
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["door", 6, 0x31],
+            ["reset", 6, 0, 0, -1, -1, -1, -1],
+            ["if", 50],
+            ["cond", 0],
+            ["set", 9, 1, 1],
+            ["var", 6, 0, 0],
+            ["loop", 100, -1, "do"],
+            ["calc", 6, 0, 1],
+            ["loop_end"],
+            ["ck", 9, 1, 0],
+            ["if", 130],
+            ["cmp", 6, 0, 1],
+            ["reset", 6, 1, 0x31, -1, -1, -1, -1],
+            ["end"],
+        ),
+    }
+    assert evaluate(program).doors[0].sat is None

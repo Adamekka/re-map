@@ -305,20 +305,29 @@ _UNWRITTEN = object()
 _CONDITIONS = ("ck", "cmp", "cond", "has")
 
 
-def _leading_conditions(
-    rows: list[list], opener: int, repeats_when_true: bool
+def _block_conditions(
+    rows: list[list], first: int, stop: int, repeats_when_true: bool
 ) -> list[tuple[int, bool]]:
-    """Predicate rows that directly follow an If or While opener.
+    """Predicate rows directly in a block, from row ``first`` to ``stop``.
 
-    Work_copy rows may precede the predicate. Each row comes with whether the
-    wait repeats while that predicate holds.
+    Any of them failing leaves the block, so all decide it; rows of nested
+    blocks do not. Each comes with whether the wait repeats while it holds.
     """
-    index = opener + 1
+    offsets = [row[0] for row in rows]
     found = []
-    while index < len(rows) and rows[index][2] in (*_CONDITIONS, "patch"):
-        if rows[index][2] != "patch":
+    index = first
+    while index < stop:
+        _, _, op, *args = rows[index]
+        if op in _CONDITIONS:
             found.append((index, repeats_when_true))
-        index += 1
+            index += 1
+        elif op in ("if", "loop", "switch"):
+            index = bisect_left(offsets, args[0])
+            if op == "if" and index > 0 and rows[index - 1][2] == "else":
+                # Skip the Else body as well.
+                index = bisect_left(offsets, rows[index - 1][3])
+        else:
+            index += 1
     return found
 
 
@@ -444,9 +453,10 @@ class _Interpreter:
             name: [row[0] for row in rows] for name, rows in program.items()
         }
         self.state = state
-        self.patch_targets = frozenset(
-            row[3] for rows in program.values() for row in rows if row[2] == "patch"
+        self.patches = tuple(
+            row for rows in program.values() for row in rows if row[2] == "patch"
         )
+        self.patch_targets = frozenset(row[3] for row in self.patches)
         # Values the room's runnable scripts can write. A wait ends through the
         # room's own progress only if one of them can release it; otherwise it
         # waits for native code, such as a pickup or a key use.
@@ -783,10 +793,8 @@ class _Interpreter:
                     # As for an If: unreadable game state taints the repeat,
                     # while arrival-dependent outcomes are alternatives.
                     taint = (
-                        holds is not False
-                        and (read_taint or holds is None and not approach)
-                        and self.entry
-                    )
+                        read_taint or holds is None and not approach
+                    ) and self.entry
                     if holds is None:
                         other = path.fork()
                         exited = other.frames[-1]
@@ -797,8 +805,11 @@ class _Interpreter:
                         # follows depend on it.
                         other.diverged = other.diverged or taint
                         work.append(other)
-                    if taint:
+                    if taint and holds is not False:
                         frame.blocks[-1] = ("loop", end, start, True)
+                    elif taint:
+                        # A tainted predicate decided to leave.
+                        path.diverged = True
                 count = frame.loops.get(opener, (0,))[0] + 1
                 if holds is not False and count < LOOP_LIMIT:
                     frame.loops[opener] = (count, opener, end - 1)
@@ -810,9 +821,9 @@ class _Interpreter:
                         frame.proc,
                         start,
                         last,
-                        [(last, True)]
-                        if kind == "do"
-                        else _leading_conditions(rows, start, True) or None,
+                        _block_conditions(rows, start + 1, frame.index, True)
+                        + ([(last, True)] if kind == "do" else [])
+                        or None,
                     )
                 ):
                     # A While or Do that waits on native state keeps waiting
@@ -897,7 +908,9 @@ class _Interpreter:
                             frame.proc,
                             head,
                             frame.index,
-                            self._deciding_conditions(rows, enclosing, head),
+                            self._deciding_conditions(
+                                rows, enclosing, head, frame.index
+                            ),
                         ):
                             self._suspend(path, head, target, frame.index)
                             continue
@@ -1059,18 +1072,20 @@ class _Interpreter:
         )
 
     def _deciding_conditions(
-        self, rows: list[list], enclosing: tuple, head: int
+        self, rows: list[list], enclosing: tuple, head: int, goto: int
     ) -> list[tuple[int, bool]] | None:
         """Predicate rows that decide whether a conditional wait repeats.
 
-        Only an If, Else or While that opens inside the wait loop decides it;
-        an Else repeats while its If's predicate fails. Otherwise None.
+        Only an If, Else or While that opens inside the wait loop decides it,
+        through the predicates directly in it before the jump at row
+        ``goto``. An Else repeats while its If's true branch fails. Otherwise
+        None.
         """
         kind, _, opener, _ = enclosing
         if opener < head:
             return None
         if kind == "if" or kind == "loop" and rows[opener][5] == "while":
-            return _leading_conditions(rows, opener, True) or None
+            return _block_conditions(rows, opener + 1, goto, True) or None
         if kind == "else":
             # The If jumps past its true branch to the row after this Else.
             matching = next(
@@ -1082,7 +1097,7 @@ class _Interpreter:
                 None,
             )
             if matching is not None:
-                return _leading_conditions(rows, matching, False) or None
+                return _block_conditions(rows, matching + 1, opener, False) or None
         return None
 
     def _waits_on_native(
@@ -1101,62 +1116,79 @@ class _Interpreter:
         it depends on.
         """
         assert conditions is None or conditions, "a wait needs its predicate"
-        rows = self.program[proc]
         if conditions is None:
             flags, variables = _wait_reads(self.program, proc, head, last)
-            releasing = {flag: {True, False} for flag in flags}
-            patched: set[int] = set()
-        else:
-            releasing = {}
-            variables = set()
-            patched = set()
-            for index, repeats_when_true in conditions:
-                offset, _, op, *args = rows[index]
-                if op == "ck":
-                    value = not args[2] if repeats_when_true else bool(args[2])
-                    if offset + 2 in self.patch_targets:
-                        # Work_copy chooses the bit, so any write in the bank
-                        # that produces the value may release it.
-                        patched.add(args[0])
-                        releasing.setdefault((args[0], -1), set()).add(value)
-                    else:
-                        releasing.setdefault((args[0], args[1]), set()).add(value)
-                elif op == "cmp":
-                    if offset + 2 in self.patch_targets:
-                        return True
-                    variables.add(args[0])
-                elif op == "has":
+            return (
+                any(not self._writable(flag, {True, False}, False) for flag in flags)
+                or not variables <= self.variable_writes
+            )
+        rows = self.program[proc]
+        loop = _loop_rows(self.program, proc, head, last)
+
+        def releasable(index: int, repeats_when_true: bool) -> bool:
+            """Whether a runnable script can make this row end the wait."""
+            offset, _, op, *args = rows[index]
+            if op == "cond":
+                # Arrival predicates are assumed to change; unread game state
+                # changes only through native code.
+                return args[0] == 1
+            if op == "has":
+                return False
+            variables = {
+                row[4] for row in self.patches if row[3] in (offset + 2, offset + 4)
+            }
+            if op == "ck":
+                value = not args[2] if repeats_when_true else bool(args[2])
+                patched = offset + 2 in self.patch_targets
+                if self._writable((args[0], args[1]), {value}, patched):
                     return True
-            # Follow copies and calculations in the loop and the procedures
-            # it calls back to their sources; an unread or actor value comes
-            # from native code.
-            loop = _loop_rows(self.program, proc, head, last)
+                if not variables:
+                    return False
+            elif offset + 2 not in self.patch_targets:
+                variables.add(args[0])
+            # Follow copies and calculations in the loop and the procedures it
+            # calls back to their sources; an unread or actor value comes from
+            # native code.
             changed = True
             while changed:
                 changed = False
-                for _, _, op, *args in loop:
-                    if op in ("var", "calc", "calc2") and args[0] in variables:
-                        if op == "var" and args[1] in (2, 3):
-                            return True
+                for _, _, row_op, *row_args in loop:
+                    if row_op in ("var", "calc", "calc2") and row_args[0] in variables:
+                        if row_op == "var" and row_args[1] in (2, 3):
+                            return False
                         sources = (
-                            {args[2]}
-                            if op == "var" and args[1] == 1 or op == "calc2"
+                            {row_args[2]}
+                            if row_op == "var" and row_args[1] == 1 or row_op == "calc2"
                             else set()
                         )
                         if not sources <= variables:
                             variables |= sources
                             changed = True
-        for (bank, bit), values in releasing.items():
-            writable = set(self.bank_writes.get(bank, set()))
-            if bank in patched and bit < 0:
-                for (other, _), written in self.flag_writes.items():
-                    if other == bank:
-                        writable |= written
-            else:
-                writable |= self.flag_writes.get((bank, bit), set())
-            if not values & writable:
-                return True
-        return not variables <= self.variable_writes
+            return variables <= self.variable_writes
+
+        released = [releasable(*condition) for condition in conditions]
+        # A wait that repeats while all its predicates hold ends when any one
+        # fails; an Else wait ends only when all of its If's predicates hold.
+        if all(repeats_when_true for _, repeats_when_true in conditions):
+            return not any(released)
+        return not all(released)
+
+    def _writable(
+        self, flag: tuple[int, int], values: set[bool], patched: bool
+    ) -> bool:
+        """Whether a runnable script can write one of ``values`` to ``flag``.
+
+        For a Work_copy-chosen bit, any write in its bank counts.
+        """
+        bank, bit = flag
+        writable = set(self.bank_writes.get(bank, set()))
+        if patched:
+            for (other, _), written in self.flag_writes.items():
+                if other == bank:
+                    writable |= written
+        else:
+            writable |= self.flag_writes.get((bank, bit), set())
+        return bool(values & writable)
 
     def _suspend(self, path: _Path, head: int, target: int, last: int) -> None:
         """End the task at a wait whose loop runs from row ``head`` to ``last``.
@@ -1294,10 +1326,13 @@ class LaterState:
 
 
 def evaluate_entry(
-    program: dict[str, list[list]], state: GameState, roots: tuple[str, ...]
+    program: dict[str, list[list]], state: GameState, tasks: EngineTasks
 ) -> EntryState:
     """Run the room's automatic tasks in order, as entering the room would."""
-    runnable = _runnable_procedures(program, roots)
+    roots = tasks.roots
+    runnable = _runnable_procedures(
+        program, (*roots, *(f"main:{proc}" for proc in sorted(tasks.repeating)))
+    )
     interpreter = _Interpreter(program, state, entry=True, runnable=runnable)
     try:
         if not roots or any(root not in program for root in roots):
@@ -1527,7 +1562,7 @@ def room_script_state(
     """Evaluate one room. ``acquisition_flags`` maps each pickup ID the room's
     scripts can create to its acquisition flag."""
     roots = tuple(root for root in tasks.roots if root in program)
-    entry = evaluate_entry(program, state, roots)
+    entry = evaluate_entry(program, state, EngineTasks(roots, tasks.repeating))
     if entry.support is Support.Unsupported:
         return RoomScriptState(Support.Unsupported, entry.reason)
     later = evaluate_later(
