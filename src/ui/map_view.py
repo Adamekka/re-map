@@ -213,112 +213,126 @@ _PAGE = """<!doctype html>
 <meta name="map-instance" content="__INSTANCE_ID__">
 <title>__GAME_TITLE__ room map</title>
 <style>
-:root { color-scheme:dark; font:15px system-ui,sans-serif; background:#10151b; color:#e7edf2; }
+:root {
+  color-scheme:dark; font:15px system-ui,sans-serif; background:var(--bg); color:var(--text);
+  --bg:#10151b; --panel:#151e27; --line:#303d48; --line-soft:#2d3943; --text:#e7edf2; --muted:#91a5b4; --soft:#abb9c5; --control:#1c2b36; --control-line:#506473; --accent:#a5efff; --current:#d9f6ff; --open:#71b6cf; --locked:#ed6965; --unlockable:#e9b85e; --unlocked:#a5d5ac; --story-fill:#685331; --supplies-fill:#743e40; --cleared-fill:#244c6e; --unknown-fill:#42515d; --story:#e9be72; --supplies:#df9793;
+}
 body { margin:0; }
-header { padding:12px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; border-bottom:1px solid #303d48; }
+header { padding:12px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; border-bottom:1px solid var(--line); }
 h1 { margin:0; font-size:19px; font-weight:600; }
 #map-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 /* Map controls float above the map so the floor plan keeps the full height. */
-#zoom-controls { position:absolute; top:10px; right:10px; z-index:1; display:flex; align-items:center; gap:6px; padding:5px; background:rgba(16,21,27,.86); border:1px solid #303d48; border-radius:6px; }
-select,button,input { font:inherit; color:inherit; background:#1c2b36; border:1px solid #506473; border-radius:4px; padding:7px 10px; }
-select:disabled,button:disabled,input:disabled { opacity:.55; }
-#current-room[aria-pressed="true"] { border-color:#71b6cf; background:#244c6e; }
-#status { margin-left:auto; color:#abb9c5; font-size:13px; }
-main { display:grid; grid-template-columns:minmax(0,1fr); background:#151e27; }
-#map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,#1c2b36,#111a22); }
+#zoom-controls { position:absolute; top:10px; right:10px; z-index:1; display:flex; align-items:center; gap:6px; padding:5px; background:rgba(16,21,27,.86); border:1px solid var(--line); border-radius:6px; }
+select,button,input { font:inherit; color:inherit; background:var(--control); border:1px solid var(--control-line); border-radius:6px; padding:6px 11px; transition:background-color .12s,border-color .12s; }
+button,select { cursor:pointer; }
+:is(select,button):not(:disabled):hover { background:#243744; border-color:#6d8495; }
+:is(select,button,input):focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+select:disabled,button:disabled,input:disabled { opacity:.45; cursor:default; }
+/* Following disables the button until the view changes; keep that active state legible. */
+#current-room[aria-pressed="true"] { border-color:var(--open); background:var(--cleared-fill); opacity:1; }
+#zoom-controls button { min-width:32px; padding:4px 8px; }
+#status { margin-left:auto; display:flex; align-items:center; gap:8px; color:var(--soft); font-size:13px; }
+#status::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--unlockable); }
+#status[data-state="live"]::before { background:var(--unlocked); }
+main { display:grid; grid-template-columns:minmax(0,1fr); background:var(--panel); }
+#map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,var(--control),#111a22); }
 #map { display:block; width:100%; height:60vh; min-height:340px; }
 #map { user-select:none; }
-#map:focus-visible { outline:2px solid #d9f6ff; outline-offset:-2px; }
+#map:focus-visible { outline:2px solid var(--current); outline-offset:-2px; }
 #map.navigable { cursor:grab; touch-action:none; }
 #map.panning,#map.panning .room { cursor:grabbing; }
-#zoom-level { min-width:4ch; text-align:center; font-size:13px; color:#abb9c5; }
+#zoom-level { min-width:4ch; text-align:center; font-size:13px; color:var(--soft); }
 .room { cursor:pointer; }
 .room[aria-disabled="true"] { cursor:default; }
-.room path { stroke:#8a9ca9; stroke-width:.65; fill:#42515d; stroke-linejoin:miter; }
-.room.INCOMPLETE path { fill:#743e40; }
-.room.INCOMPLETE.story-items > path:first-child { fill:#685331; }
-.room.CLEARED path { fill:#244c6e; }
+.room path { stroke:#8a9ca9; stroke-width:.65; fill:var(--unknown-fill); stroke-linejoin:miter; }
+.room.INCOMPLETE path { fill:var(--supplies-fill); }
+.room.INCOMPLETE.story-items > path:first-child { fill:var(--story-fill); }
+.room.CLEARED path { fill:var(--cleared-fill); }
 /* Unresolved rooms keep the neutral fill explicitly so a future default
 cannot merge them with a decided state. */
-.room.UNKNOWN path { fill:#42515d; }
-.room.current path { stroke:#d9f6ff; stroke-width:1.05; }
+.room.UNKNOWN path { fill:var(--unknown-fill); }
+.room.current path { stroke:var(--current); stroke-width:1.05; }
 .room.selected:not(.current) > path:first-child { stroke:#f0cf8c; }
 /* Native SVG focus rings can cover nearby doors. Highlight the room wall instead. */
 .room:focus-visible { outline:none; }
 .room:focus-visible > path:first-child { stroke-width:1.35; }
-.room:focus-visible:not(.current) > path:first-child { stroke:#a5efff; }
+.room:focus-visible:not(.current) > path:first-child { stroke:var(--accent); }
 .room text { fill:#dce7ee; font:2.6px system-ui,sans-serif; pointer-events:none; text-anchor:middle; }
 .room.current text { font-weight:700; fill:#fff; }
 .room path.map-detail { fill:none; stroke:#bed0dd; stroke-width:1; stroke-linecap:square; pointer-events:none; }
 .room path.map-detail-border { stroke:#8a9ca9; stroke-width:1.4; }
 .room path.map-detail-core { stroke:#17232d; }
-.room .map-detail+text { paint-order:stroke; stroke:#151e27; stroke-width:.5; stroke-linejoin:round; }
+.room .map-detail+text { paint-order:stroke; stroke:var(--panel); stroke-width:.5; stroke-linejoin:round; }
 .player { pointer-events:none; }
-.player path { fill:#a5efff; stroke:#10202b; stroke-width:.6; stroke-linejoin:round; }
-.key.player-key { background:#a5efff; clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%); }
+.player path { fill:var(--accent); stroke:#10202b; stroke-width:.6; stroke-linejoin:round; }
+.key.player-key { background:var(--accent); clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%); }
 .door :is(line,polyline) { stroke-width:1.4; stroke-linecap:square; }
-.door.OPEN :is(line,polyline) { stroke:#71b6cf; }
-.door.LOCKED :is(line,polyline),.door.BLOCKED :is(line,polyline) { stroke:#ed6965; }
-.door.UNLOCKABLE :is(line,polyline) { stroke:#e9b85e; }
+.door.OPEN :is(line,polyline) { stroke:var(--open); }
+.door.LOCKED :is(line,polyline),.door.BLOCKED :is(line,polyline) { stroke:var(--locked); }
+.door.UNLOCKABLE :is(line,polyline) { stroke:var(--unlockable); }
 .door.UNCHECKED :is(line,polyline) { stroke:#d0d9de; }
-.door.UNCHECKED.unlocked :is(line,polyline):not(.door-border) { stroke:#a5d5ac; stroke-dasharray:1.5 1; }
+.door.UNCHECKED.unlocked :is(line,polyline):not(.door-border) { stroke:var(--unlocked); stroke-dasharray:1.5 1; }
 /* RE2 doors sit directly on walls, so a dark border keeps access colors
 distinct from room outlines and fills. */
-.door :is(line,polyline).door-border { stroke:#10151b; stroke-width:2.6; }
+.door :is(line,polyline).door-border { stroke:var(--bg); stroke-width:2.6; }
 .door title { pointer-events:none; }
 .key-symbol { pointer-events:all; }
 .key-symbol rect { fill:#14202a; stroke-width:.4; }
 .key-symbol path { fill:none; stroke:#f3e7cd; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.door.OPEN .key-symbol rect { stroke:#71b6cf; }
-.door.LOCKED .key-symbol rect,.door.BLOCKED .key-symbol rect { stroke:#ed6965; }
-.door.UNLOCKABLE .key-symbol rect { stroke:#e9b85e; }
+.door.OPEN .key-symbol rect { stroke:var(--open); }
+.door.LOCKED .key-symbol rect,.door.BLOCKED .key-symbol rect { stroke:var(--locked); }
+.door.UNLOCKABLE .key-symbol rect { stroke:var(--unlockable); }
 .unlock-symbol { pointer-events:all; }
-.unlock-symbol rect { fill:#14202a; stroke:#a5d5ac; stroke-width:.4; }
-.unlock-symbol path { fill:none; stroke:#a5d5ac; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.unlock-symbol rect { fill:#14202a; stroke:var(--unlocked); stroke-width:.4; }
+.unlock-symbol path { fill:none; stroke:var(--unlocked); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 /* The badge covers the door bar, so its frame must retain access status. */
 .door.UNCHECKED .unlock-symbol rect { stroke-dasharray:.9 .6; }
-.door.BLOCKED .unlock-symbol rect { stroke:#ed6965; }
-.door.OPEN .unlock-symbol rect { stroke:#71b6cf; }
-aside { border-top:1px solid #303d48; }
+.door.BLOCKED .unlock-symbol rect { stroke:var(--locked); }
+.door.OPEN .unlock-symbol rect { stroke:var(--open); }
+aside { border-top:1px solid var(--line); }
 #room-details { padding:20px 16px; }
 /* Focus recovery scrolls details into view; keep them clear of the viewport edge. */
 #room-name { font-size:18px; font-weight:600; margin:0 0 8px; scroll-margin:16px; }
-#room-id { color:#91a5b4; font-size:13px; margin-bottom:18px; }
-#completion { padding-bottom:14px; color:#ced9e1; }
-h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#91a5b4; margin:22px 0 10px; }
+#room-id { color:var(--muted); font-size:13px; margin-bottom:14px; }
+/* The badge repeats the room's map fill so details and outline read as one state. */
+#completion { display:inline-block; padding:4px 10px; border-radius:999px; font-size:13px; font-weight:500; color:#eef3f6; background:var(--unknown-fill); }
+#completion[data-state="INCOMPLETE"] { background:var(--supplies-fill); }
+#completion[data-state="INCOMPLETE"][data-story-items] { background:var(--story-fill); }
+#completion[data-state="CLEARED"] { background:var(--cleared-fill); }
+h2 { font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin:24px 0 8px; }
 ul { list-style:none; margin:0; padding:0; }
-li { padding:8px 0; border-top:1px solid #2d3943; display:flex; gap:10px; justify-content:space-between; font-size:13px; }
-li > span:last-child { color:#94a7b6; text-align:right; }
+li { padding:8px 0; border-top:1px solid var(--line-soft); display:flex; gap:10px; justify-content:space-between; font-size:13px; }
+li > span:last-child { color:var(--muted); text-align:right; }
 .entry-name,.entry-status { display:flex; align-items:center; gap:8px; min-width:0; }
 .entry-status { justify-content:flex-end; max-width:48%; flex-shrink:0; }
 .door-room-link { padding:0; border:0; background:none; text-align:left; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
-.door-room-link:hover,.door-room-link:focus-visible { color:#a5efff; }
+.door-room-link:hover,.door-room-link:focus-visible { color:var(--accent); }
 .list-symbol { display:block; flex:none; width:18px; height:18px; overflow:visible; fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round; stroke-linejoin:round; }
-.entry-name.story,.list-symbol.story { color:#e9be72; }
-.entry-name.supplies,.list-symbol.supplies { color:#df9793; }
-.list-symbol.neutral { color:#94a7b6; }
-.list-symbol.collected,.list-symbol.open { color:#71b6cf; }
-.list-symbol.locked,.list-symbol.blocked { color:#ed6965; }
-.list-symbol.unlockable { color:#e9b85e; }
-.list-symbol.unlocked { color:#a5d5ac; }
-#legend { color:#abb9c5; font-size:13px; border-top:1px solid #303d48; background:#10151b; }
+.entry-name.story,.list-symbol.story { color:var(--story); }
+.entry-name.supplies,.list-symbol.supplies { color:var(--supplies); }
+.list-symbol.neutral { color:var(--muted); }
+.list-symbol.collected,.list-symbol.open { color:var(--open); }
+.list-symbol.locked,.list-symbol.blocked { color:var(--locked); }
+.list-symbol.unlockable { color:var(--unlockable); }
+.list-symbol.unlocked { color:var(--unlocked); }
+#legend { color:var(--soft); font-size:13px; border-top:1px solid var(--line); background:var(--bg); }
 #legend summary { padding:10px 16px; cursor:pointer; }
 #legend-entries { display:flex; flex-wrap:wrap; gap:10px 20px; padding:0 16px 14px; }
 .key { display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-2px; }
 .key.door-key { height:3px; vertical-align:3px; }
-.key.unlocked-key { height:0; border-top:3px dashed #a5d5ac; }
-#note { color:#91a5b4; font-size:13px; line-height:1.5; }
-#overview { display:flex; flex-direction:column; gap:24px; padding:20px 16px; border-top:1px solid #303d48; }
-#item-search-label { display:flex; flex-direction:column; gap:8px; font-size:13px; color:#abb9c5; }
+.key.unlocked-key { height:0; border-top:3px dashed var(--unlocked); }
+#note { color:var(--muted); font-size:13px; line-height:1.5; }
+#overview { display:flex; flex-direction:column; gap:24px; padding:20px 16px; border-top:1px solid var(--line); }
+#item-search-label { display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--soft); }
 #item-search { box-sizing:border-box; width:100%; }
 #overview h2 { margin:0 0 12px; }
 #overview h3 { margin:18px 0 8px; font-size:14px; font-weight:500; }
-#overview p { margin:0; font-size:13px; color:#91a5b4; }
+#overview p { margin:0; font-size:13px; color:var(--muted); }
 #overview li { padding:0; border:0; margin-bottom:6px; }
-.room-link { display:block; width:100%; text-align:left; cursor:pointer; }
-.room-link:hover,.room-link:focus-visible { border-color:#d9f6ff; }
+.room-link { display:block; width:100%; text-align:left; cursor:pointer; padding:8px 11px; border-color:var(--line); }
+.room-link:hover,.room-link:focus-visible { border-color:var(--current); }
 #overview .room-link span { display:block; text-align:left; color:inherit; }
-#overview .room-link span+span { margin-top:4px; color:#94a7b6; }
+#overview .room-link span+span { margin-top:4px; color:var(--muted); }
 /* Wide windows keep the map and sidebar on screen together during play;
 the sidebar scrolls on its own instead of the page. */
 @media(min-width:761px) and (min-height:560px) {
@@ -327,7 +341,7 @@ the sidebar scrolls on its own instead of the page. */
   /* The legend stays below the floor plan so it never covers explored rooms. */
   #map-shell { display:flex; flex-direction:column; }
   #map { flex:1; height:auto; min-height:0; }
-  aside { border-top:0; border-left:1px solid #303d48; overflow-y:auto; }
+  aside { border-top:0; border-left:1px solid var(--line); overflow-y:auto; }
   #legend { font-size:12px; }
   #legend summary { padding:8px 16px; }
   #legend-entries { gap:8px 18px; padding:0 16px 10px; }
@@ -336,21 +350,21 @@ the sidebar scrolls on its own instead of the page. */
 </style>
 </head>
 <body>
-<header><h1>__GAME_TITLE__</h1><nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button></nav><div id="status" role="status">Waiting for game.</div></header>
+<header><h1>__GAME_TITLE__</h1><nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button></nav><div id="status" role="status" data-state="paused">Waiting for game.</div></header>
 <main>
 <div id="map-shell">
 <div id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button><button id="fit-rooms" type="button" aria-label="Fit explored rooms" title="Fit explored rooms" disabled>Fit</button></div>
 <svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag, pinch or use the mouse wheel."></svg>
 <details id="legend" open><summary>Legend</summary><div id="legend-entries">
-<span><i class="key" style="background:#685331"></i>Story / key items remain</span>
-<span><i class="key" style="background:#743e40"></i>Supplies / other items remain</span>
-<span><i class="key" style="background:#244c6e"></i>Cleared</span>
-<span><i class="key" style="background:#42515d"></i>Check incomplete</span>
-<span><i class="key" style="border:2px solid #d9f6ff;box-sizing:border-box"></i>Current room</span>
+<span><i class="key" style="background:var(--story-fill)"></i>Story / key items remain</span>
+<span><i class="key" style="background:var(--supplies-fill)"></i>Supplies / other items remain</span>
+<span><i class="key" style="background:var(--cleared-fill)"></i>Cleared</span>
+<span><i class="key" style="background:var(--unknown-fill)"></i>Check incomplete</span>
+<span><i class="key" style="border:2px solid var(--current);box-sizing:border-box"></i>Current room</span>
 <span><i class="key player-key"></i><span id="player-label">You</span></span>
-<span><i class="key door-key" style="background:#ed6965"></i>Locked</span>
-<span><i class="key door-key" style="background:#e9b85e"></i>Unlock from this side</span>
-<span><i class="key door-key" style="background:#71b6cf"></i>Open</span>
+<span><i class="key door-key" style="background:var(--locked)"></i>Locked</span>
+<span><i class="key door-key" style="background:var(--unlockable)"></i>Unlock from this side</span>
+<span><i class="key door-key" style="background:var(--open)"></i>Open</span>
 <span><i class="key door-key unlocked-key"></i>Unlocked · access unconfirmed</span>
 </div></details>
 </div>
@@ -724,6 +738,9 @@ function itemVisual(label) {
   // story. Keep it neutral instead of classifying every unknown as a key item.
   return itemVisuals.get(label) || {category:'neutral',symbol:'collectible'};
 }
+function hasStoryItems(visit) {
+  return visit.items.some(item=>itemRemains(item) && itemVisual(item.label).category==='story');
+}
 function itemLabel(item) {
   // Omit the usual single unit and never turn an unresolved amount into a count.
   // Native amounts can encode weapon resources or key uses rather than object counts.
@@ -773,6 +790,7 @@ function draw(state) {
     endPan();
     applyViewport();
     status.textContent=state.error || 'Waiting for a readable game.';
+    status.dataset.state='paused';
     const interruptedMessage='Tracking interrupted';
     // Retain visit geometry; completion colors need a fresh game read after a load or reconnect.
     svg.querySelectorAll('.room').forEach(room=>{
@@ -785,6 +803,8 @@ function draw(state) {
     svg.querySelectorAll('.door,.player').forEach(marker=>marker.remove());
     document.getElementById('room-id').textContent=document.getElementById('room-id').textContent.replace(' · Current room','');
     document.getElementById('completion').textContent=interruptedMessage;
+    document.getElementById('completion').dataset.state='UNKNOWN';
+    delete document.getElementById('completion').dataset.storyItems;
     document.getElementById('items').replaceChildren();
     document.getElementById('doors').replaceChildren();
     document.getElementById('note').textContent='';
@@ -847,13 +867,14 @@ function draw(state) {
   const currentId=showingCurrentFloor ? state.map_region : null;
   const picked=selected && visible.has(selected) ? selected : showingCurrentFloor ? currentId : visible.keys().next().value;
   status.textContent=plan ? visible.size+' '+(visible.size===1?'room':'rooms')+' explored' : state.map_error;
+  status.dataset.state='live';
   if(plan && showingCurrentFloor && !byId.has(currentId)) status.textContent+=' · This room has no outline on the game map.';
   document.getElementById('player-label').textContent=state.player_position.kind==='approximate' ? 'You · approximate' : 'You · room only';
   const completion={INCOMPLETE:'Items remain',CLEARED:'Cleared',UNKNOWN:'Item check incomplete',VISITED:'Visited'};
   for(const [id,visit] of visible) {
     const room=byId.get(id);
     if(!Object.hasOwn(completion,visit.state)) throw new Error('Unknown room completion: '+visit.state);
-    const storyItems=visit.items.some(item=>itemRemains(item) && itemVisual(item.label).category==='story');
+    const storyItems=hasStoryItems(visit);
     const group=element('g',{class:'room '+visit.state+(storyItems?' story-items':'')+(id===currentId?' current':'')+(id===picked?' selected':''),role:'button',tabindex:0,'aria-label':room.name,'data-region':id});
     const path=room.rings.map(ring=>'M'+ring.map(point=>point.join(',')).join('L')+'Z').join('');
     group.append(element('path',{d:path,'fill-rule':'evenodd'}));
@@ -1068,7 +1089,10 @@ function draw(state) {
   if(!visit) throw new Error('Explored floor has no selected room');
   document.getElementById('room-name').textContent=roomName(displayedArea,visit);
   document.getElementById('room-id').textContent='Room '+visit.room+(showingCurrentFloor && picked===currentId?' · Current room':'');
-  document.getElementById('completion').textContent=completion[visit.state];
+  const completionBadge=document.getElementById('completion');
+  completionBadge.textContent=completion[visit.state];
+  completionBadge.dataset.state=visit.state;
+  completionBadge.toggleAttribute('data-story-items',hasStoryItems(visit));
   const items=document.getElementById('items');items.replaceChildren();
   for(const item of visit.items) {
     const row=document.createElement('li'), name=document.createElement('span'), detail=document.createElement('span');
