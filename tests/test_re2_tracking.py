@@ -463,7 +463,11 @@ def profile(request):
 
 @pytest.fixture(params=["00-01"])
 def snapshot(request, profile):
-    source = request.param
+    return build_snapshot(profile, request.param)
+
+
+def build_snapshot(profile, source):
+    """Synthetic coherent RAM with every catalog creator live in ``source``."""
     room = copy.deepcopy(profile.rooms[source])
     # These generic reader cases deliberately model an unproven source. The
     # actual scripted reward's generated proof is checked separately below.

@@ -18,7 +18,7 @@ Default histories are `.local/re2-leon-a-slus00748.json` and `.local/re2-claire-
 
 Match the existing tracker behavior: spatial floor plans revealed by entering rooms, room names, actual facing, floor browsing, zoom and pan, persistent exploration isolated by game/revision/scenario/playthrough, remaining items, separate unresolved checks, game-derived door access, and fresh item/door/story state after savestate changes. Exploration survives earlier savestates; acquired items and unlocked doors must rewind with the game.
 
-Leon A coverage remains incomplete. The [full source audit](research/re2/coverage.md) records remaining item, door and map gaps separately from observed gameplay and saved-state replay. A small explored-state replay does not establish campaign-wide support.
+The DualShock Leon A and Claire B profiles evaluate each explored room's own scripts with the game's current flags and variables, so items and doors outside the current room no longer stay unresolved. Items a room can still give you, including puzzle rewards, count as remaining; items no script creates for the current story state are not listed; doors show whether they are open, locked or inactive now. [RE2-EVAL-001](research/re2/script-evaluation.md#re2-eval-001-evaluate-room-scripts-with-fresh-flags-to-resolve-departed-items-and-doors) records the method, saved-state and native checks, and limits. The earlier [full source audit](research/re2/coverage.md) remains as the baseline.
 
 The shared [map controls](map-controls.md) support keyboard panning, zoom and fit, alongside mouse controls and floor browsing. [Back](map-controls.md#return-to-previous-inspections) retraces manual inspections with the chosen zoom/pan and fresh game state.
 

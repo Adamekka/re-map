@@ -76,6 +76,9 @@ def map_state(tracker: Tracker) -> dict:
         "current_detail": room_detail(str(current), region),
         "rooms": explored_areas[area],
         "explored_areas": explored_areas,
+        # Every door a visited source creates now is listed below, so a marker
+        # bound only to visited sources but no listed door is not present.
+        "visited_sources": sorted(tracker.rooms),
         "doors": [
             {
                 "source": str(door.source),
@@ -962,6 +965,9 @@ function draw(state) {
     const ownerIds=owner.room_ids.map(mapRoomId),neighborIds=neighbor ? neighbor.room_ids.map(mapRoomId) : [];
     const observations=isRe2 ? state.doors.filter(door=>marker.observation_ids.includes(door.observation_id)) : neighbor ? state.doors.filter(door=>
       ownerIds.includes(mapRoomId(door.source))&&neighborIds.includes(mapRoomId(door.target)) || neighborIds.includes(mapRoomId(door.source))&&ownerIds.includes(mapRoomId(door.target))) : [];
+    // Scripts in a visited RE2 source run another creator for this doorway, or
+    // none, so the marker is not a door in the current game state.
+    if(isRe2&&!observations.length&&marker.observation_ids.every(id=>state.visited_sources.includes(id.split(':')[0]))) continue;
     const pickedSource=visible.get(picked)?.room || state.current;
     const candidates=observations.filter(door=>door.source===pickedSource);
     const currentCandidates=observations.filter(door=>door.source===state.current);

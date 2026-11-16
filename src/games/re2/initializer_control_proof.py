@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from games.re2.actor_part_proofs import ScalarProgramContinuation, SourceCopyWrite
 from games.re2.script_control_limits import calls_fit_native_frames, programs_digest
+from games.scd_compile import switch_labels
 
 if TYPE_CHECKING:
     from games.re2.room_write_partitions import RoomWritePartitionConfig
@@ -146,28 +147,7 @@ def native_switch_labels(
     data: bytes, start: int, stop: int
 ) -> tuple[int, tuple[int, ...]]:
     """Follow the native unsigned case links, including the closing marker."""
-    following = start + 4
-    end = following + struct.unpack_from("<H", data, start + 2)[0]
-    if not following < end < stop or data[end - 2] != 0x16:
-        raise ValueError("invalid RE2 switch bounds")
-    label, labels = following, []
-    while True:
-        if not following <= label <= end - 2:
-            raise ValueError("RE2 switch case outside its bounds")
-        marker = data[label]
-        labels.append(label)
-        if marker == 0x14 and label + 6 <= end - 2:
-            label += 6 + struct.unpack_from("<H", data, label + 2)[0]
-        elif marker == 0x15 and label < end - 2:
-            # Default stops the native search. Its body and the closing
-            # marker still need independent decoder visits.
-            labels.append(end - 2)
-            break
-        elif marker == 0x16 and label == end - 2:
-            break
-        else:
-            raise ValueError("invalid RE2 switch label chain")
-    return end, tuple(labels)
+    return switch_labels(data, start, stop, 0x14, 0x15, 0x16)
 
 
 @dataclass(frozen=True)

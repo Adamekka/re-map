@@ -7,7 +7,7 @@ import json
 import math
 from collections.abc import Callable
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from games.game_profile import ItemQuery, RoomId, RoomQuery
@@ -56,12 +56,18 @@ from games.re2.script_dispatch_items import (
     ScriptItemDispatchSupport,
     script_item_dispatch,
 )
+from games.re2.script_model import (
+    ScriptEvaluationConfig,
+    ScriptEvaluationSupport,
+    script_evaluation,
+)
 from games.re2.startup_declarations import (
     StartupDeclarationAuditConfig,
     startup_declaration_audit,
 )
 from games.re2.startup_effects import StartupEffectAuditConfig, startup_effect_audit
 from games.runtime_identity import MemoryResult, RuntimeSignature
+from games.scd_state import ScriptStateCache
 
 
 @dataclass(frozen=True)
@@ -143,6 +149,11 @@ class Re2Profile:
     unit_count_item_types: frozenset[int]
     reset_candidate_policy: ResetCandidateConfig | ResetCandidateSupport
     door_catalogs: dict[str, BoundDoorCatalog]
+    script_evaluation: ScriptEvaluationConfig | ScriptEvaluationSupport
+    # Evaluations persist across polls and revalidate every value they read.
+    script_cache: ScriptStateCache = field(
+        default_factory=ScriptStateCache, compare=False
+    )
 
     @staticmethod
     def load(path: Path) -> Re2Profile:
@@ -1370,6 +1381,7 @@ class Re2Profile:
                     "RE2 identity filtering catalog differs from the audited compiler output"
                 )
         door_catalogs = load_door_catalogs(raw, rooms, document)
+        evaluation = script_evaluation(raw, path, rooms)
         return Re2Profile(
             raw["profile_id"],
             target,
@@ -1393,6 +1405,7 @@ class Re2Profile:
             unit_counts,
             reset_config,
             door_catalogs,
+            evaluation,
         )
 
     def verify_runtime(

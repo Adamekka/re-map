@@ -20,7 +20,15 @@ from games.re2.event_presence import presence_matches
 from games.re2.re2_profile import Re2Profile
 from games.re2.reset_candidates import DescriptorOrigin, tracking_item_candidates
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
+from games.re2.script_model import ScriptEvaluationConfig
 from games.runtime_identity import MemoryResult
+from games.scd_state import (
+    GameState,
+    RoomScriptState,
+)
+from games.scd_state import (
+    Support as ScriptSupport,
+)
 from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
 from ui.debug_view import render
@@ -220,6 +228,60 @@ def poll_re2(
             address, mask = msb_flag_location(address, bit)
             return bool(value(address, 4) & mask)
 
+        evaluation = profile.script_evaluation
+
+        def script_state(source: dict) -> RoomScriptState | None:
+            """RE2-EVAL-001: what entering this source now would create."""
+            if not isinstance(evaluation, ScriptEvaluationConfig):
+                return None
+
+            def entry_flag(bank: int, bit: int) -> bool | None:
+                if (bank, bit) in evaluation.entry_cleared_flags:
+                    # The room loader clears these before its scripts run.
+                    return False
+                if bank not in profile.flag_banks:
+                    return None
+                if bit >= profile.flag_banks[bank][1] * 8:
+                    return None
+                return flag(bank, bit)
+
+            def entry_variable(index: int) -> int | None:
+                if index in evaluation.entry_variables:
+                    return evaluation.entry_variables[index]
+                if index == evaluation.stage_variable:
+                    return source["stage"]
+                if index == evaluation.room_variable:
+                    return source["room"]
+                if (
+                    index in evaluation.unread_variables
+                    or index in evaluation.approach_variables
+                ):
+                    return None
+                raw = value(evaluation.variables_address + 2 * index, 2)
+                return raw - 0x10000 if raw & 0x8000 else raw
+
+            program = evaluation.models[source["id"]]
+            return profile.script_cache.get(
+                source["id"],
+                program,
+                GameState(
+                    entry_flag,
+                    entry_variable,
+                    evaluation.approach_variables,
+                    evaluation.approach_banks,
+                ),
+                evaluation.tasks,
+                {
+                    gid: (
+                        layout["item_bank_early"]
+                        if source["stage"] < layout["item_bank_stage_boundary"]
+                        else layout["item_bank_late"],
+                        gid,
+                    )
+                    for gid in evaluation.item_ids[source["id"]]
+                },
+            )
+
         registry = read(
             int(layout["aot_table_address_ps1"], 0), layout["aot_capacity"] * 4
         )
@@ -243,6 +305,8 @@ def poll_re2(
                     },
                 )
         unresolved_registry = False
+        # Slot -> (source offset, interaction kind) for every live descriptor.
+        live_slots: dict[int, tuple[int, int]] = {}
         for slot in range(layout["aot_capacity"]):
             pointer = int.from_bytes(registry[slot * 4 : slot * 4 + 4], "little")
             if not pointer:
@@ -254,6 +318,7 @@ def poll_re2(
                 )
             prefix = read(pointer, 2)
             kind = prefix[0]
+            live_slots[slot] = (offset, kind)
             if kind not in (0, 1, 2):
                 continue
             definitions = (
@@ -487,6 +552,9 @@ def poll_re2(
                 grouped.setdefault(item["global_id"], []).append(item)
             details = []
             identities_complete = True
+            scripted = script_state(source)
+            if scripted is not None and scripted.support is not ScriptSupport.Supported:
+                scripted = None
             conditional = (
                 {
                     rule["global_id"]: rule["presence"]
@@ -537,6 +605,14 @@ def poll_re2(
                 observed_items = available + dispatched
                 types = {item["type"] for item in observed_items or variants}
                 item_type = next(iter(types)) if len(types) == 1 else None
+                if (
+                    item_type is None
+                    and scripted is not None
+                    and gid in scripted.item_identity
+                ):
+                    # Every evaluated creator for the fresh state agrees on
+                    # this identity, including after a Reset changed it.
+                    item_type = scripted.item_identity[gid][0]
                 label = profile.names["items"].get(str(item_type), "Collectible")
                 if item_type is None:
                     # Collection belongs to the acquisition ID. Its unresolved
@@ -569,9 +645,21 @@ def poll_re2(
                     state = "uncollected"
                 else:
                     state = "unknown"
+                if state == "unknown" and scripted is not None:
+                    presence = scripted.item_presence.get(gid)
+                    if presence is False:
+                        # No creator runs for the fresh state, now or after
+                        # any room trigger. RE2-EVAL-001.
+                        continue
+                    if presence:
+                        state = "uncollected"
                 amounts = (
                     {live_items[item["origin"]].amount for item in observed_items}
                     if observed_items
+                    else {scripted.item_identity[gid][1]}
+                    if scripted is not None
+                    and gid in scripted.item_identity
+                    and scripted.item_identity[gid][0] == item_type
                     else {amount for item in variants for amount in item["amounts"]}
                 )
                 if (
@@ -624,9 +712,47 @@ def poll_re2(
                         award["item_type"] in profile.unit_count_item_types,
                     )
                 )
+            if scripted is not None:
+                catalogued = {
+                    item["global_id"]
+                    for item in tracking_item_candidates(
+                        source, profile.reset_candidate_policy, selected=False
+                    )
+                }
+                for gid in sorted(set(scripted.item_presence) - catalogued):
+                    # A Reset can create a pickup with no catalogued creator.
+                    taken = flag(bank, gid)
+                    presence = scripted.item_presence[gid]
+                    if not taken and presence is False:
+                        continue
+                    identity = scripted.item_identity.get(gid)
+                    if identity is None:
+                        identities_complete = False
+                    details.append(
+                        ItemDetail(
+                            profile.names["items"].get(str(identity[0]), "Collectible")
+                            if identity is not None
+                            else "Collectible",
+                            "taken"
+                            if taken
+                            else "uncollected"
+                            if presence
+                            else "unknown",
+                            identity[1]
+                            if identity is not None
+                            else ItemQuantityState.Unreconstructed,
+                            identity is not None
+                            and identity[0] in profile.unit_count_item_types,
+                        )
+                    )
             complete = (
-                source["candidate_list_complete"]
-                and context_valid
+                (
+                    # The evaluation enumerates every creator the scripts run,
+                    # so it establishes the full list. RE2-EVAL-001.
+                    scripted is not None
+                    or source["candidate_list_complete"]
+                    and context_valid
+                )
                 and identities_complete
                 and not (visited == key and unresolved_registry)
             )
@@ -679,6 +805,19 @@ def poll_re2(
                 if (
                     visited == key
                     and observed is None
+                    and isinstance(evaluation, ScriptEvaluationConfig)
+                ):
+                    live = live_slots.get(definition["slot"])
+                    if live is None or live[0] != definition["offset"]:
+                        # The slot is empty or holds another interaction, so
+                        # this creator is not a door in the room now.
+                        continue
+                    # A script replaced this door in place with a message or
+                    # event, so it cannot be passed now. RE2-EVAL-001.
+                    observed = {**definition, "inactive": True}
+                if (
+                    visited == key
+                    and observed is None
                     and any(
                         door["slot"] == definition["slot"]
                         for door in live_doors.values()
@@ -687,6 +826,22 @@ def poll_re2(
                     # A live slot identifies its current script variant. Other
                     # creators for that slot are not additional current doors.
                     continue
+                # Departed activation from a source-bound fact or evaluation.
+                departed_enabled = (
+                    access_fact.enabled if access_fact is not None else None
+                )
+                if visited != key and scripted is not None:
+                    verdict = scripted.doors.get(definition["offset"])
+                    if verdict is None:
+                        # Fresh scripts run another creator for this slot, or
+                        # none at all. RE2-EVAL-001.
+                        continue
+                    if departed_enabled is None and verdict.sat is not None:
+                        # The evaluated descriptor binds this creator's
+                        # activation and lock for the fresh state.
+                        departed_enabled = (
+                            bool(verdict.sat & 0x7F) and not verdict.replaced
+                        )
                 lock = observed or definition
                 key_type = lock["lock_type"]
                 key_label = (
@@ -699,8 +854,8 @@ def poll_re2(
                     key_unlocked = flag(layout["key_bank"], lock["lock_id"] & 0x3F)
                     # Current payloads can change targets and locks, so source
                     # operands cannot replace a missing live binding.
-                    bound = observed is not None or access_fact is not None
-                    if visited != key and access_fact is None:
+                    bound = observed is not None or departed_enabled is not None
+                    if visited != key and departed_enabled is None:
                         creators = [
                             creator
                             for creator in source["doors"] + source["items"]
@@ -744,10 +899,10 @@ def poll_re2(
                 unlocked = unlock_state is DoorUnlockState.Unlocked
                 if unlocked:
                     key_label = ""
-                if observed is None and access_fact is not None:
+                if observed is None and departed_enabled is not None:
                     # Only departed, source-bound facts establish activation.
                     # Fresh key flags still determine access and can reverse it.
-                    if not access_fact.enabled:
+                    if not departed_enabled:
                         state = "BLOCKED"
                         label = (
                             "Unlocked; door inactive"

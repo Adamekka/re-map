@@ -1895,6 +1895,28 @@
     ]
   },
   "room_metadata_path": "../data/rooms_slus00748.json",
+  "script_evaluation": {
+    "models_path": "../data/script_models_slus00748.json",
+    "roots": ["init:0", "main:0", "main:1"],
+    "repeating_procedures": [1],
+    "variables_address_ps1": "0x800D47EC",
+    "variable_count": 36,
+    "entry_cleared_flags": [
+      {"bank": 5, "first_bit": 32, "last_bit": 63},
+      {"bank": 10, "first_bit": 0, "last_bit": 31}
+    ],
+    "entry_variables": [
+      {"variable": 0, "value": -1},
+      {"variable": 1, "value": -1},
+      {"variable": 2, "value": -1},
+      {"variable": 3, "value": -1}
+    ],
+    "stage_variable": 24,
+    "room_variable": 25,
+    "unread_variables": [12, 13, 14, 15, 28, 29],
+    "approach_variables": [26, 27],
+    "approach_banks": [11]
+  },
   "floor_plans_path": "../data/floor_plans_slus00748.json",
   "names_path": "../data/re2_names.json",
   "runtime_layout": {

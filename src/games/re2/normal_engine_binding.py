@@ -68,12 +68,20 @@ def typed_binding_digest(value: object) -> str:
 
 def semantic_profile_digest(profile: dict) -> str:
     # File locations may change during packaging; they grant no native rights.
+    # Script evaluation is a separate capability that feeds none of the pinned
+    # normal-engine proofs, so it cannot change what they authorize.
     return hashlib.sha256(
         json.dumps(
             {
                 k: v
                 for k, v in profile.items()
-                if k not in ("room_metadata_path", "floor_plans_path", "names_path")
+                if k
+                not in (
+                    "room_metadata_path",
+                    "floor_plans_path",
+                    "names_path",
+                    "script_evaluation",
+                )
             },
             sort_keys=True,
             separators=(",", ":"),
