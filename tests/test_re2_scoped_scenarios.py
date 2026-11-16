@@ -1,7 +1,9 @@
 """RE2-SCENARIO-001: scoped facts never grant presence or bypass fresh state."""
 
 import copy
+import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -556,3 +558,42 @@ def test_scoped_catalog_requires_revision_source_and_complete_identity_binding(
     config.write_text(json.dumps(raw | {"room_metadata_path": str(metadata)}))
     with pytest.raises(ValueError, match="RE2"):
         Re2Profile.load(config)
+
+
+@pytest.mark.parametrize("work", ["above-sound", "in-sound", "in-scripts"])
+def test_relocated_sound_releases_work_above_relied_source(snapshot, work):
+    """RE2-EVAL-001: native 03-04/03-09 move sound below section2.
+
+    Free work then starts below section2 but above every source byte the
+    reader relies on.
+    """
+    profile, _, put, read = snapshot
+    room = copy.deepcopy(profile.rooms["00-01"])
+    for proof in room["sound_proofs"]:
+        proof["sha256"] = hashlib.sha256(bytes(proof["width"])).hexdigest()
+    profile = replace(profile, rooms={**profile.rooms, "00-01": room})
+    offsets = room["section_offsets"]
+    scripts = max(offsets[16:18])
+    scripts_end = min(offset for offset in offsets if offset > scripts)
+    # The moved headers sit between the scripts and their file position.
+    start = 0x80100000 + ((scripts_end + offsets[0]) // 2 & ~3)
+    put(0x80100008, start, 4)
+    put(0x8010000C, start + offsets[1] - offsets[0], 4)
+    sound_end = start + offsets[1] - offsets[0] + room["sound_proofs"][1]["width"]
+    put(
+        int(profile.runtime_layout["scenario_work_address_ps1"], 0),
+        {
+            "above-sound": sound_end + 4 & ~3,
+            "in-sound": start + 64,
+            "in-scripts": 0x80100000 + scripts_end - 4 & ~3,
+        }[work],
+        4,
+    )
+    tracker = Tracker()
+    result = poll_re2(profile, tracker, read)
+    if work == "above-sound":
+        assert result.status is PollStatus.Display
+    else:
+        assert result.status is PollStatus.Retry
+        assert result.text == "Native work ownership is not yet coherent"
+        assert tracker == Tracker()

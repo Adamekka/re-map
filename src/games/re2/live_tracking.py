@@ -223,10 +223,45 @@ def poll_re2(
             # The scoped native contract reserves all SCD bytes below section2
             # for the loaded room. A bad work owner cannot authorize old-room
             # identity/exclusion facts, even when its scenario bits look valid.
+            reserved = sections[2]
+            if offsets[:2] != room["section_offsets"][:2]:
+                # Moving the sound headers down releases everything above them,
+                # including section2, so free work may start below it. It must
+                # still lie above every source byte this reader relies on: the
+                # scripts up to the next section, the hashed proofs and the
+                # moved sound headers. RE2-EVAL-001.
+                scripts = max(room["section_offsets"][16:18])
+                relied = [
+                    min(
+                        (
+                            offset
+                            for offset in room["section_offsets"]
+                            if offset > scripts
+                        ),
+                        default=room["size"],
+                    ),
+                    *(proof["offset"] + proof["width"] for proof in room["proofs"]),
+                    *(
+                        proof["offset"] + proof["width"]
+                        for relation in room.get("script_item_dispatch_relations", [])
+                        for proof in (
+                            relation["table_proof"],
+                            relation["program_proof"],
+                            *relation["message_proofs"],
+                        )
+                    ),
+                ]
+                reserved = max(
+                    base + max(relied),
+                    *(
+                        sections[proof["section"]] + proof["width"]
+                        for proof in room["sound_proofs"]
+                    ),
+                )
             if not (
                 base >= 0x80100000
                 and sections[2] >= base + 100
-                and sections[2] <= work <= 0x80200000
+                and reserved <= work <= 0x80200000
                 and work % 4 == 0
             ):
                 return PollResult(
