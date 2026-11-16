@@ -79,7 +79,9 @@ def poll_re2(
             raise ReadFailure(
                 f"RE2 state read failed at {address:#x}: {result.error or 'short reply'}"
             )
-        markers[address, width] = result.data
+        # The first sample is the one interpretation may have used, so the
+        # final coherence check compares against it.
+        markers.setdefault((address, width), result.data)
         return result.data
 
     try:
@@ -98,6 +100,10 @@ def poll_re2(
             # bytes consumed by interpretation, not these entire read blocks.
             del markers[address, width]
 
+        # Values outside the blocks, sampled once so every consumer in this
+        # poll interprets the same state.
+        sampled: dict[tuple[int, int], bytes] = {}
+
         def value(address: int, width: int) -> int:
             for base, data in blocks:
                 offset = address - base
@@ -105,7 +111,9 @@ def poll_re2(
                     packet = data[offset : offset + width]
                     markers[address, width] = packet
                     return int.from_bytes(packet, "little")
-            return int.from_bytes(read(address, width), "little")
+            if (address, width) not in sampled:
+                sampled[address, width] = read(address, width)
+            return int.from_bytes(sampled[address, width], "little")
 
         system = value(int(layout["system_flags_address_ps1"], 0), 4)
         status = value(int(layout["status_flags_address_ps1"], 0), 4)
@@ -240,10 +248,12 @@ def poll_re2(
                 return flag(bank, bit)
 
             def carries(item_type: int) -> bool:
+                # The native search (0x800696CC) tests the first slot before
+                # it compares the count, so it reads that slot even when empty.
                 count = value(evaluation.inventory_count_address, 1)
                 return any(
                     value(evaluation.inventory_slots_address + 4 * slot, 1) == item_type
-                    for slot in range(count)
+                    for slot in range(max(count, 1))
                 )
 
             return profile.script_cache.get(
@@ -785,6 +795,8 @@ def poll_re2(
             }
             for definition in source["doors"]:
                 if visited != key and definition["offset"] in excluded_doors:
+                    # The current scenario never creates this door.
+                    absent_doors.add(f"{visited}:{definition['offset']}")
                     continue
                 access_fact = access_facts.get(definition["offset"])
                 observed = (

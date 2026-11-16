@@ -344,3 +344,25 @@ def test_inventory_change_between_reads_publishes_nothing(tracking):
 
     assert poll_re3(profile, tracker, changing).status is PollStatus.Retry
     assert tracker.rooms["00-01"].items == ()
+
+
+def test_inventory_pointer_change_between_reads_publishes_nothing(tracking):
+    profile, _, read, ram = tracking
+    tracker = Tracker()
+    reads = 0
+
+    def changing(address, width):
+        nonlocal reads
+        if address == FLAGS and width == 1696:
+            reads += 1
+            # The second block read follows a load that moved the inventory.
+            struct.pack_into(
+                "<I",
+                ram,
+                INVENTORY_POINTER - 0x80000000,
+                INVENTORY + (0x400 if reads > 1 else 0),
+            )
+        return read(address, width)
+
+    assert poll_re3(profile, tracker, changing).status is PollStatus.Retry
+    assert tracker.rooms == {}

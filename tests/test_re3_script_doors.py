@@ -63,3 +63,13 @@ def test_jump_into_evt_end_padding_decodes_both_commands():
     ]
     # A command that falls through cannot share bytes with another decode.
     assert compile_with(0x05) == [[0, 0, "invalid"]]
+
+
+def test_every_patch_writer_of_a_target_is_checked():
+    from games.re3.script_model import RE3_OPCODES
+    from games.scd_compile import compile_procedure
+
+    # A halfword Work_copy over Ck's bit and expected value, then a byte one
+    # at the same operand: the halfword write is not modeled.
+    data = bytes([0x1D, 7, 6, 1, 0x1D, 7, 2, 0, 0x4C, 4, 7, 1, 0x01, 0])
+    assert compile_procedure(RE3_OPCODES, data, 0, len(data)) == [[0, 0, "invalid"]]

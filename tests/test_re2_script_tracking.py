@@ -120,3 +120,47 @@ def test_map_state_lists_doors_absent_in_game_state(leon):
     profile, _, _, read = build_snapshot(leon, "00-01")
     assert poll_re2(profile, tracker, read).status is PollStatus.Display
     assert map_state(tracker)["absent_doors"] == []
+
+
+def test_inventory_change_during_a_poll_publishes_nothing(leon):
+    from dataclasses import replace
+
+    from games.scd_state import ScriptStateCache
+
+    profile, _, _, read = build_snapshot(leon, "00-01")
+    evaluation = profile.script_evaluation
+
+    def checks():
+        return [
+            [offset * 10, offset * 10 + 10, *row]
+            for offset, row in enumerate([["if", 30], ["has", 98], ["end"], ["end"]])
+        ]
+
+    # Source 05-01 checks a carried item in two procedures, so a poll consumes
+    # the inventory count twice.
+    profile = replace(
+        profile,
+        script_evaluation=replace(
+            evaluation,
+            models={
+                **evaluation.models,
+                "05-01": {"init:0": checks(), "main:0": checks(), "main:1": checks()},
+            },
+        ),
+        script_cache=ScriptStateCache(),
+    )
+    tracker = Tracker()
+    tracker.mark_current(RoomId(5, 1))
+    reads = 0
+
+    def changing(address, width):
+        nonlocal reads
+        result = read(address, width)
+        if address == evaluation.inventory_count_address and width == 1:
+            reads += 1
+            if reads > 1:
+                # A savestate load adds an item after the first sample.
+                return type(result)(True, bytes([1]), "")
+        return result
+
+    assert poll_re2(profile, tracker, changing).status is PollStatus.Retry

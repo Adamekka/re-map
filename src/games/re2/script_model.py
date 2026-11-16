@@ -37,12 +37,13 @@ RE2_OPCODES = OpcodeSet(
     cmp=0x23,
     set_=0x22,
     # Actor members such as the entry floor, facing, enemy position and
-    # button/trigger checks, plus the equipped weapon (0x80058528) and poison
-    # status (0x800592F8), which the player changes at will.
-    approach_conditions=frozenset({0x39, 0x3E, 0x4F, 0x50, 0x81, 0x85, 0x86}),
+    # button/trigger checks.
+    approach_conditions=frozenset({0x39, 0x3E, 0x4F, 0x50, 0x85}),
     # Inventory search 0x800696CC over slots at 0x800D4A3C.
     has_item=0x5E,
-    state_conditions=frozenset(),
+    # Player state tests: bit 0x80 of byte 0x800D5BF8 (0x80058528) and the
+    # halfword at 0x800CFE10 (0x800592F8).
+    state_conditions=frozenset({0x81, 0x86}),
     # Save, Copy and Member_copy.
     variable_writes={
         0x24: (0, 1, 2),

@@ -201,8 +201,9 @@ class _Path:
     triggers: set[int]
     # (gid, type, amount) for every item a create or Reset wrote.
     created: set[tuple[int, int, int]]
-    # (gid, type, amount) handed over by Aot_on, bypassing activation masks.
-    dispatched: set[tuple[int, int, int]]
+    # (gid, type, amount, tainted) handed over by Aot_on, bypassing
+    # activation masks.
+    dispatched: set[tuple[int, int, int, bool]]
     # Source offset -> (value, width, tainted) stored by Work_copy.
     patches: dict[int, tuple[int | None, int, bool]]
     # Banks written at a bit no reader can determine.
@@ -259,7 +260,7 @@ class _Path:
             values(self.variables),
             frozenset(self.triggers),
             frozenset(self.created),
-            frozenset(self.dispatched),
+            frozenset(item if taint else item[:3] for item in self.dispatched),
             values(self.patches),
             frozenset(self.unknown_banks),
             frozenset(self.arrival),
@@ -285,6 +286,10 @@ class _Path:
             tuple(sorted(self.executed.items())),
             self.outcome(taint),
         )
+
+
+# A join arrival that left a flag, variable or patch as game state.
+_UNWRITTEN = object()
 
 
 def _fresh_path(proc: str) -> _Path:
@@ -342,9 +347,7 @@ class _Interpreter:
         # Join -> arrivals, and every flag, variable and patch target that
         # arriving paths had written.
         self.join_counts: dict[tuple[str, int], int] = {}
-        self.join_writes: dict[
-            tuple[str, int], tuple[set[tuple[int, int]], set[int], dict[int, int]]
-        ] = {}
+        self.join_writes: dict[tuple[str, int], tuple[dict, dict, dict]] = {}
         self.exit_cache: dict[tuple[str, int, int], bool] = {}
 
     def _joins(self, rows: list[list]) -> frozenset[int]:
@@ -524,29 +527,34 @@ class _Interpreter:
                     return None
                 join = (frame.proc, frame.index)
                 self.join_counts[join] = self.join_counts.get(join, 0) + 1
-                flags, variables, patches = self.join_writes.setdefault(
-                    join, (set(), set(), {})
-                )
-                flags.update(path.flags)
-                variables.update(path.variables)
-                patches.update(
-                    (target, width) for target, (_, width, _) in path.patches.items()
-                )
+                observed = self.join_writes.setdefault(join, ({}, {}, {}))
+                written = (path.flags, path.variables, path.patches)
+                for values, seen in zip(written, observed):
+                    for name in values.keys() | seen.keys():
+                        # An arrival that did not write it reads game state.
+                        seen.setdefault(
+                            name,
+                            {_UNWRITTEN} if self.join_counts[join] > 1 else set(),
+                        ).add(values.get(name, _UNWRITTEN))
                 if self.join_counts[join] > JOIN_WIDEN:
-                    if self.entry:
-                        # Every value any arriving path wrote becomes a tainted
-                        # unknown, so paths differing only in what they wrote
-                        # merge here.
-                        path.flags = dict.fromkeys(flags, (None, True))
-                        path.variables = dict.fromkeys(variables, (None, True))
-                        path.patches = {
-                            target: (None, width, True)
-                            for target, width in patches.items()
-                        }
-                    else:
-                        # Later analysis treats every value the room writes as
-                        # unread, so forgetting them reads the same.
-                        path.flags, path.variables, path.patches = {}, {}, {}
+                    widened = []
+                    for seen in observed:
+                        kept = {}
+                        for name, values in seen.items():
+                            agreed = {value[:-1] for value in values - {_UNWRITTEN}}
+                            if _UNWRITTEN not in values and len(agreed) == 1:
+                                # Every arriving path wrote this same value.
+                                taint = any(value[-1] for value in values)
+                                kept[name] = (*next(iter(agreed)), taint)
+                            elif self.entry:
+                                # Arrivals disagree, so it becomes a tainted
+                                # unknown and paths differing in it merge.
+                                kept[name] = (None, *next(iter(agreed))[1:], True)
+                            # Later analysis treats every value the room writes
+                            # as unread, so dropping a disagreed one reads the
+                            # same.
+                        widened.append(kept)
+                    path.flags, path.variables, path.patches = widened
                     path.arrival = set()
                     key = path.key(self.entry)
                     if key in self.seen:
@@ -566,8 +574,9 @@ class _Interpreter:
                 if value is None:
                     other = path.fork()
                     # Unreadable game state taints both branches until they
-                    # join. Arrival-dependent branches are alternatives.
-                    taint = read_taint or not approach
+                    # join. Arrival-dependent branches are alternatives. Later
+                    # analysis reports only effects, which taint never changes.
+                    taint = (read_taint or not approach) and self.entry
                     if taint:
                         self._diverge(path, other)
                     self._fail(other, taint)
@@ -575,9 +584,9 @@ class _Interpreter:
                     if taint:
                         self._taint_block(path)
                 elif not value:
-                    self._fail(path, read_taint)
+                    self._fail(path, read_taint and self.entry)
                     continue
-                elif read_taint:
+                elif read_taint and self.entry:
                     self._taint_block(path)
             elif op == "else":
                 if not frame.blocks or frame.blocks[-1][0] != "if":
@@ -625,8 +634,9 @@ class _Interpreter:
                     chosen = [label for label, _ in labels]
                     if all(value is not None for _, value in labels):
                         chosen.append(end)
-                taint = read_taint or (
-                    current is None and not self._arrival(path, variable)
+                taint = self.entry and (
+                    read_taint
+                    or (current is None and not self._arrival(path, variable))
                 )
                 if (
                     taint
@@ -663,11 +673,15 @@ class _Interpreter:
                         if not any(
                             block[0] in ("if", "else", "loop") for block in frame.blocks
                         ):
-                            # No condition encloses the jump, so it waits until
-                            # another task ends this one.
-                            path.frames.pop()
-                            if path.frames:
-                                path.frames[-1].index += 1
+                            # No condition encloses the jump, so the task waits
+                            # until another task changes what it waits on, such
+                            # as a Switch selector. Later analysis reruns it
+                            # with every value the room writes unread.
+                            task = path.frames[0].proc
+                            if not task.startswith("main:"):
+                                raise _Unsupported(f"{task} waits")
+                            path.triggers.add(int(task[5:]))
+                            path.frames.clear()
                             continue
                         self._fail(path, False)
                         continue
@@ -772,15 +786,22 @@ class _Interpreter:
                 if call >= 0:
                     path.triggers.add(call)
             elif op == "aot_on":
-                current = path.slots.get(args[0], (None, False))[0]
+                # An interaction written under unreadable game state taints
+                # what activating it does.
+                current, slot_taint = path.slots.get(args[0], (None, False))
                 if isinstance(current, Interaction) and current.call >= 0:
-                    path.pending.append((current.call, tainted))
+                    path.pending.append((current.call, tainted or slot_taint))
                 elif isinstance(current, Item):
                     # Aot_on hands over an item directly, bypassing a zero
                     # activation mask (RE2-DISPATCH-001). A door activation is
                     # a scripted walk through it and changes no interaction.
                     path.dispatched.add(
-                        (current.global_id, current.item_type, current.amount)
+                        (
+                            current.global_id,
+                            current.item_type,
+                            current.amount,
+                            tainted or slot_taint,
+                        )
                     )
             elif op == "gosub":
                 if len(path.frames) >= CALL_DEPTH:
@@ -877,7 +898,7 @@ class _Interpreter:
 class Outcome:
     # Slot descriptors with whether unreadable game state controlled them.
     slots: dict[int, tuple[Descriptor, bool]]
-    dispatched: frozenset[tuple[int, int, int]]
+    dispatched: frozenset[tuple[int, int, int, bool]]
 
 
 @dataclass(frozen=True)
@@ -1022,7 +1043,7 @@ def evaluate_later(
             queue = sorted(roots)
             continue
         for path in outcomes:
-            possible |= path.created | path.dispatched
+            possible |= path.created | {item[:3] for item in path.dispatched}
             queue.extend(path.triggers | {proc for proc, _ in path.pending})
     return LaterState(Support.Supported, "", frozenset(possible))
 
@@ -1095,9 +1116,12 @@ def room_script_state(
             if holds(descriptor)
         }
         for outcome in entry.terminals:
-            handed = {(t, a) for g, t, a in outcome.dispatched if g == gid}
+            handed = {(t, a) for g, t, a, _ in outcome.dispatched if g == gid}
             kinds |= handed
             active = bool(handed)
+            dispatch_taint = any(
+                taint for g, _, _, taint in outcome.dispatched if g == gid
+            )
             for descriptor, _ in outcome.slots.values():
                 # SAT bit 7 selects four-point geometry, not activation.
                 if (
@@ -1107,7 +1131,7 @@ def room_script_state(
                 ):
                     active = True
                     kinds.add((descriptor.item_type, descriptor.amount))
-            tainted = any(
+            tainted = dispatch_taint or any(
                 outcome.slots[slot][1] for slot in holding if slot in outcome.slots
             )
             rows.append((active, tainted))

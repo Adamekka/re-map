@@ -488,9 +488,9 @@ def test_copied_actor_member_selects_alternative_arrivals():
             ["end"],
         )
     }
-    assert evaluate(
-        overwritten, approach=frozenset({26}), gids=[1]
-    ).item_presence == {1: None}
+    assert evaluate(overwritten, approach=frozenset({26}), gids=[1]).item_presence == {
+        1: None
+    }
 
 
 def test_each_call_runs_its_loops_afresh():
@@ -519,12 +519,15 @@ def test_each_call_runs_its_loops_afresh():
     assert evaluate(program, gids=[1]).item_presence == {1: True}
 
 
-def independent_writes(count: int, body) -> list[list]:
-    """``count`` blocks, each writing under its own unreadable condition."""
+def independent_writes(count: int, body, first: int = 0) -> list[list]:
+    """``count`` blocks, each writing under its own unreadable condition.
+
+    ``first`` is the row index of the first block within the procedure.
+    """
     flat = []
     for index in range(count):
         block = [["cond", 0], *body(index)]
-        end = (len(flat) + len(block) + 1) * 10
+        end = (first + len(flat) + len(block) + 1) * 10
         flat += [["if", end], *block]
     return flat
 
@@ -541,3 +544,77 @@ def test_independent_writes_merge_at_crowded_joins():
     assert result.support is Support.Supported
     assert result.item_presence == {1: True}
 
+
+def test_waiting_callee_ends_its_whole_task():
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(["gosub", 7], ["door", 6, 0x31], ["end"]),
+        "main:7": rows(["goto", 0], ["end"]),
+    }
+    assert evaluate(program).doors == {}
+
+
+def test_waiting_task_resumes_in_later_analysis():
+    program = {
+        "init:0": rows(["aot", 4, 5, 0x31, 2], ["end"]),
+        # Case 0 waits until another task changes variable 5.
+        "main:0": rows(
+            ["switch", 60, 5, [[10, 0], [40, None]]],
+            ["case"],
+            ["goto", 0],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        ),
+        "main:2": rows(["var", 5, 0, 1], ["end"]),
+    }
+    result = evaluate(program, gids=[1])
+    assert result.item_presence == {1: True}
+    assert result.later_items == frozenset({1})
+
+
+def test_crowded_join_keeps_values_every_path_agrees_on():
+    def guarded(created: list) -> list[list]:
+        # Variable 4 stays 0 through 256 combinations of independent writes,
+        # so the creator after them never runs.
+        flat = [
+            ["var", 4, 0, 0],
+            *independent_writes(8, lambda index: [["set", 5, index, 1]], 1),
+        ]
+        last = (len(flat) + 4) * 10
+        return rows(*flat, ["if", last], ["cmp", 4, 0, 1], created, ["end"], ["end"])
+
+    entry = {"init:0": guarded(["item", 3, 0x31, 20, 15, 1])}
+    assert evaluate(entry, gids=[1]).item_presence == {1: False}
+    later = {
+        "init:0": rows(["aot", 4, 5, 0x31, 2], ["end"]),
+        "main:2": guarded(["reset", 4, 2, 0x31, -1, 70, 1, 5]),
+    }
+    result = evaluate(later, gids=[5])
+    assert result.later_items == frozenset()
+    assert result.item_presence == {5: False}
+
+
+def test_activating_an_interaction_written_under_game_state_taints_its_callback():
+    program = {
+        "init:0": rows(
+            ["if", 30], ["cond", 0], ["aot", 4, 5, 0x31, 2], ["aot_on", 4], ["end"]
+        ),
+        "main:2": rows(["door", 6, 0x31], ["end"]),
+    }
+    assert evaluate(program).doors[0].sat is None
+
+
+def test_handing_over_a_parked_item_under_game_state_is_unresolved():
+    program = {
+        "init:0": rows(
+            ["item", 3, 0, 20, 15, 13],
+            ["if", 40],
+            ["cond", 0],
+            ["aot_on", 3],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, gids=[13]).item_presence == {13: None}

@@ -109,8 +109,7 @@ def compile_procedure(
     rows: list[list] = []
     decoded: dict[int, int] = {}
     patches = []
-    widths_of: dict[int, int] = {}
-    terminal: set[int] = set()
+    ends: set[int] = set()
     pending = [start]
     widths = opcodes.widths
     while pending:
@@ -245,8 +244,7 @@ def compile_procedure(
             row = ["exec", packet[3] if packet[2] == opcodes.gosub else -1]
         elif opcode == opcodes.work_copy:
             row = ["patch", following + packet[2], packet[1], 2 if packet[3] else 1]
-            patches.append(row[1])
-            widths_of[row[1]] = row[3]
+            patches.append((row[1], row[3]))
         kind = row[0] if row is not None else ""
         if kind in ("if", "loop"):
             pending.extend((following, row[1]))
@@ -258,18 +256,19 @@ def compile_procedure(
             # Break continues at its enclosing block's end, which the opener
             # already queued.
             pending.append(following)
-        if kind in ("end", "goto", "else", "break"):
-            terminal.add(position)
+        if kind == "end":
+            ends.add(position)
         if row is not None:
             rows.append([position, following, *row])
     ordered = sorted(decoded.items())
     if any(
-        end > begin and first not in terminal
+        end > begin and first not in ends
         for (first, end), (begin, _) in zip(ordered, ordered[1:])
     ):
-        # Two control paths disagree about command boundaries. Only a command
-        # that never falls through, such as Evt_end, may overlap a later
-        # decode, because a jump may land in its padding.
+        # Two control paths disagree about command boundaries. Only a
+        # terminator such as Evt_end may overlap a later decode, because a jump
+        # may land in its padding. The interpreter finds an If's Else by row
+        # position, so a decode inside other commands is not modeled.
         return [[start, start, "invalid"]]
     rows.sort()
     # Patches may change a predicate or flag write's bit, variable or value,
@@ -278,7 +277,8 @@ def compile_procedure(
     # operand would silently keep its source value, so the procedure is not
     # modeled.
     relevant = set()
-    for target in patches:
+    # Each writer is checked on its own; one target may have several.
+    for target, width in patches:
         owner = max((row for row in rows if row[0] <= target), default=None)
         if owner is None or owner[1] <= target:
             if not start <= target < stop:
@@ -291,9 +291,9 @@ def compile_procedure(
         if (
             op in ("ck", "set")
             and field == 2
-            and widths_of[target] == 1
+            and width == 1
             or op == "cmp"
-            and (field == 4 or field == 2 and widths_of[target] == 1)
+            and (field == 4 or field == 2 and width == 1)
         ):
             relevant.add(target)
         elif op == "loop" and field >= 4:
