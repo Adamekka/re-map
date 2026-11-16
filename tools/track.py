@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import logging
+import re
 import sys
 import time
 from collections.abc import Callable
@@ -19,6 +20,7 @@ from pathlib import Path
 from threading import Thread
 
 from output_safety import aliases_input
+from re3_room_catalog import load_owned_sources
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -43,6 +45,7 @@ from games.re1.tracking_engine import (
 from games.re1.tracking_rules import read_rule_snapshot
 from games.re2.live_tracking import poll_re2
 from games.re2.re2_profile import RE2_TARGETS, Re2Profile
+from games.re3.tracking import RE3_TARGET, Re3Profile, poll_re3
 from tracker.exploration_state import DoorDetail, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
 from tracker.visit_history import HistoryError, HistoryIdentity, VisitHistory
@@ -53,12 +56,14 @@ logger = logging.getLogger(__name__)
 
 
 def poll_once(
-    profile: Re1Profile | Re2Profile,
+    profile: Re1Profile | Re2Profile | Re3Profile,
     tracker: Tracker,
     read_memory: Callable[[int, int], MemoryResult],
 ) -> PollResult:
     if isinstance(profile, Re2Profile):
         return poll_re2(profile, tracker, read_memory)
+    if isinstance(profile, Re3Profile):
+        return poll_re3(profile, tracker, read_memory)
     identity = profile.verify_runtime(read_memory)
     if not identity.ok:
         return PollResult(
@@ -569,6 +574,12 @@ def main() -> int:
         help="exploration history to resume (default: a separate file for each game)",
     )
     ap.add_argument(
+        "--disc",
+        type=Path,
+        default=argparse.SUPPRESS,
+        help="owned disc CUE; required for RE3, whose room sources load from it",
+    )
+    ap.add_argument(
         "--new-playthrough",
         action="store_true",
         help="start a fresh exploration history for the selected history file",
@@ -585,10 +596,11 @@ def main() -> int:
         key: history_directory / target.history_filename
         for key, target in RE2_TARGETS.items()
     }
+    re3_history_path = history_directory / RE3_TARGET.history_filename
     history_paths = (
         [args.history_file]
         if hasattr(args, "history_file")
-        else [re1_history_path, *re2_history_paths.values()]
+        else [re1_history_path, *re2_history_paths.values(), re3_history_path]
     )
     backup_count = 3
     try:
@@ -650,7 +662,26 @@ def main() -> int:
 
     profile_id = json.loads(args.profile.read_text())["profile_id"]
     is_re2 = profile_id.startswith("re2_")
-    profile = Re2Profile.load(args.profile) if is_re2 else Re1Profile.load(args.profile)
+    is_re3 = profile_id.startswith("re3_")
+    if is_re3:
+        if not hasattr(args, "disc"):
+            print("RE3 tracking needs --disc with your owned disc CUE", file=sys.stderr)
+            return 2
+        try:
+            cue = args.disc.expanduser()
+            track = re.search(r'FILE\s+"([^"]+)"', cue.read_text())
+            if track is None:
+                raise ValueError("the CUE names no data track")
+            executable, sources = load_owned_sources(cue.parent / track[1])
+            profile = Re3Profile.load(args.profile, executable, sources)
+        except (OSError, ValueError) as exc:
+            logger.error("RE3 disc rejected: %s", exc)
+            print(f"RE3 disc rejected: {exc}", file=sys.stderr)
+            return 2
+    else:
+        profile = (
+            Re2Profile.load(args.profile) if is_re2 else Re1Profile.load(args.profile)
+        )
     # Preserve existing histories while isolating the new RE2 revision.
     # Explicit --history-file selections still belong to the caller.
     history_path = (
@@ -658,12 +689,14 @@ def main() -> int:
         if hasattr(args, "history_file")
         else re2_history_paths[profile_id]
         if is_re2
+        else re3_history_path
+        if is_re3
         else re1_history_path
     )
     logger.info(
         "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision
     )
-    if not is_re2 and not profile.has_room_addresses():
+    if not is_re2 and not is_re3 and not profile.has_room_addresses():
         logger.error("Profile %s has no validated room addresses", profile.profile_id)
         print(
             f"profile {profile.profile_id} has no validated room addresses; refusing to guess"
@@ -676,15 +709,17 @@ def main() -> int:
             f"profile {profile.profile_id} has no runtime identity check; refusing live reads"
         )
         return 2
-    if not is_re2 and (
-        profile.runtime_room_layout is None or profile.door_state_layout is None
+    if (
+        not is_re2
+        and not is_re3
+        and (profile.runtime_room_layout is None or profile.door_state_layout is None)
     ):
         print(
             f"profile {profile.profile_id} has no runtime room/door layout",
             file=sys.stderr,
         )
         return 2
-    if args.map and not is_re2 and profile.profile_id != MAP_PROFILE_ID:
+    if args.map and not is_re2 and not is_re3 and profile.profile_id != MAP_PROFILE_ID:
         logger.error("Map unavailable for profile %s", profile.profile_id)
         print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
         return 2
@@ -706,7 +741,7 @@ def main() -> int:
                 profile.profile_id,
                 profile.runtime_signature.concatenated_sha256,
                 # Scenario identity keeps supported runs separate within a revision.
-                profile.target.scenario if is_re2 else "jill",
+                profile.target.scenario if is_re2 or is_re3 else "jill",
             ),
             region_rooms,
             args.new_playthrough,
@@ -833,6 +868,8 @@ def main() -> int:
                             if result.status == PollStatus.NonGameplay
                             else f"Waiting for Resident Evil 2, {profile.target.label}."
                             if is_re2 and result.status == PollStatus.WrongGame
+                            else "Waiting for Resident Evil 3: Nemesis on Hard."
+                            if is_re3 and result.status == PollStatus.WrongGame
                             else "Waiting for Resident Evil Director's Cut, Jill."
                             if result.status == PollStatus.WrongGame
                             else result.text

@@ -117,7 +117,11 @@ def map_page(graph: dict, instance_id: UUID) -> bytes:
     graph = {**graph, "areas": areas}
     graph_json = json.dumps(graph).replace("<", "\\u003c")
     title = (
-        "Resident Evil 2" if graph["profile_id"].startswith("re2_") else "Resident Evil"
+        "Resident Evil 2"
+        if graph["profile_id"].startswith("re2_")
+        else "Resident Evil 3: Nemesis"
+        if graph["profile_id"].startswith("re3_")
+        else "Resident Evil"
     )
     return (
         _PAGE.replace("__INSTANCE_ID__", instance_id.hex)
@@ -348,7 +352,8 @@ const catalog = __GRAPH__;
 const instanceMeta = document.querySelector('meta[name="map-instance"]');
 if(instanceMeta===null) throw new Error('Map page instance metadata is missing');
 const mapInstance = instanceMeta.content;
-const isRe2 = catalog.profile_id.startsWith('re2_');
+// RE2 and RE3 bind door markers and detail lines to source creators.
+const sourceBound = /^re[23]_/.test(catalog.profile_id);
 const areas = new Map(catalog.areas.map(plan => [plan.id,plan]));
 const knownRooms = new Map(catalog.areas.flatMap(plan=>[...plan.rooms,...plan.unoutlined_rooms].flatMap(region=>region.room_ids.map(id=>[id,region.name]))));
 const svg = document.getElementById('map');
@@ -839,8 +844,8 @@ function draw(state) {
     if(detail) {
       // Paint all borders before all cores so adjacent native strokes form
       // one outlined structure without pale seams between its source cells.
-      if(isRe2) group.append(element('path',{class:'map-detail map-detail-border',d:detail}));
-      group.append(element('path',{class:'map-detail'+(isRe2 ? ' map-detail-core' : ''),d:detail}));
+      if(sourceBound) group.append(element('path',{class:'map-detail map-detail-border',d:detail}));
+      group.append(element('path',{class:'map-detail'+(sourceBound ? ' map-detail-core' : ''),d:detail}));
     }
     const label=element('text',{});group.append(label);svg.append(group);
     function setLines(lines) {
@@ -890,7 +895,7 @@ function draw(state) {
           return candidates!==undefined && candidates.some(([minX,minY,maxX,maxY])=>point.x>=minX && point.x<=maxX && point.y>=minY && point.y<=maxY) && path.isPointInStroke(point);
         };
       });
-      const points=room.rings.flat().concat(isRe2 ? room.detail_segments.flat() : []);
+      const points=room.rings.flat().concat(sourceBound ? room.detail_segments.flat() : []);
       const xs=[...new Set(points.map(point=>point[0]))].sort((a,b)=>a-b);
       const ys=[...new Set(points.map(point=>point[1]))].sort((a,b)=>a-b);
       const centers=[];
@@ -963,16 +968,16 @@ function draw(state) {
     // Boundary markers encode no destination. Even a unique off-plan exit cannot
     // prove its wall identity; retain its known access in the door list instead.
     const ownerIds=owner.room_ids.map(mapRoomId),neighborIds=neighbor ? neighbor.room_ids.map(mapRoomId) : [];
-    const observations=isRe2 ? state.doors.filter(door=>marker.observation_ids.includes(door.observation_id)) : neighbor ? state.doors.filter(door=>
+    const observations=sourceBound ? state.doors.filter(door=>marker.observation_ids.includes(door.observation_id)) : neighbor ? state.doors.filter(door=>
       ownerIds.includes(mapRoomId(door.source))&&neighborIds.includes(mapRoomId(door.target)) || neighborIds.includes(mapRoomId(door.source))&&ownerIds.includes(mapRoomId(door.target))) : [];
     // Scripts in a visited RE2 source run another creator for this doorway, or
     // none, so the marker is not a door in the current game state.
-    if(isRe2&&!observations.length&&marker.observation_ids.every(id=>state.visited_sources.includes(id.split(':')[0]))) continue;
+    if(sourceBound&&!observations.length&&marker.observation_ids.every(id=>state.visited_sources.includes(id.split(':')[0]))) continue;
     const pickedSource=visible.get(picked)?.room || state.current;
     const candidates=observations.filter(door=>door.source===pickedSource);
     const currentCandidates=observations.filter(door=>door.source===state.current);
     // A missing selected RE2 side cannot borrow the opposite side's lock.
-    const pickedSide=isRe2 && [owner,neighbor].some(room=>room && room.room_ids.includes(pickedSource));
+    const pickedSide=sourceBound && [owner,neighbor].some(room=>room && room.room_ids.includes(pickedSource));
     const chosen=candidates.length ? candidates : pickedSide ? [] : currentCandidates.length ? currentCandidates : observations;
     // Opposite sides can agree on access while saying "No lock"/"Unlocked".
     // Resolve access and known key identity independently of that wording.
@@ -983,8 +988,8 @@ function draw(state) {
     const unlocked=chosen.length===1 && chosen[0].unlock_state==='UNLOCKED';
     // RE2 descriptors identify the source side. RE1's paired metadata must
     // agree on key identity before either direction can display a symbol.
-    const keyLabels=[...new Set((isRe2 ? chosen : observations).map(door=>door.key_label).filter(Boolean))];
-    const group=element('g',{class:'door '+access+(unlocked?' unlocked':''),'data-door':marker.id,'data-observations':isRe2 ? marker.observation_ids.join(' ') : ''});
+    const keyLabels=[...new Set((sourceBound ? chosen : observations).map(door=>door.key_label).filter(Boolean))];
+    const group=element('g',{class:'door '+access+(unlocked?' unlocked':''),'data-door':marker.id,'data-observations':sourceBound ? marker.observation_ids.join(' ') : ''});
     const contour=Object.hasOwn(marker,'polyline');
     const points=contour ? marker.polyline : marker.segment;
     const [a,b]=points;

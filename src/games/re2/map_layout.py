@@ -333,8 +333,16 @@ class Re2MapLayout:
     ) -> ApproximatePosition | RoomOnlyPosition:
         if area == "unmapped":
             return RoomOnlyPosition("This room has no map outline for positioning.")
+        return self.project_from(
+            tuple(self.regions[area, region]["world_origin"]), area, region, x, z
+        )
+
+    def project_from(
+        self, origin: tuple[int, int], area: str, region: str, x: int, z: int
+    ) -> ApproximatePosition | RoomOnlyPosition:
+        """Project with an explicit origin, such as one part of a split room."""
         entry = self.regions[area, region]
-        px, py = self.projection.project(tuple(entry["world_origin"]), x, z)
+        px, py = self.projection.project(origin, x, z)
         inside = False
         for ring in entry["rings"]:
             for first, last in zip(ring, ring[1:] + ring[:1]):
@@ -360,10 +368,10 @@ class Re2MapLayout:
             )
         return ApproximatePosition(px, py)
 
-    def select(
+    def _matches(
         self, room: str, floor: int, value: Callable[[int, int], int]
-    ) -> tuple[str, str]:
-        matches = [
+    ) -> list[dict]:
+        return [
             row
             for row in self.locations[room]
             if row["floor_min"] <= floor <= row["floor_max"]
@@ -373,6 +381,34 @@ class Re2MapLayout:
                 for address, mask, expected, negate in row["conditions"]
             )
         ]
+
+    def select(
+        self, room: str, floor: int, value: Callable[[int, int], int]
+    ) -> tuple[str, str]:
+        matches = self._matches(room, floor, value)
         if len(matches) != 1:
             raise ValueError("RE2 map selection is unresolved or ambiguous")
         return matches[0]["area"], matches[0]["region"]
+
+    def select_at(
+        self, room: str, floor: int, value: Callable[[int, int], int], x: int, z: int
+    ) -> tuple[str, str, tuple[int, int]]:
+        """Select a location whose world bounds contain X/Z, with its origin.
+
+        Rooms that the native map draws on several rows carry inclusive
+        ``position_bounds`` and a per-location ``world_origin``.
+        """
+        matches = [
+            row
+            for row in self._matches(room, floor, value)
+            if all(
+                low <= {"x": x, "z": z}[axis] <= high
+                for axis, (low, high) in row["position_bounds"].items()
+            )
+        ]
+        if len(matches) != 1:
+            raise ValueError("map selection is unresolved or ambiguous")
+        row = matches[0]
+        if row["area"] == "unmapped":
+            return "unmapped", "", (0, 0)
+        return row["area"], row["region"], tuple(row["world_origin"])

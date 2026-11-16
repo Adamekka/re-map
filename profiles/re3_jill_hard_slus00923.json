@@ -1,0 +1,61 @@
+{
+  "profile_id": "re3_jill_hard_slus00923",
+  "game": "Resident Evil 3: Nemesis",
+  "region": "NTSC-U",
+  "serial": "SLUS-00923",
+  "revision": "USA; Hard; revision pinned by executable SHA256",
+  "executable_identity": "SLUS_009.23 SHA256 2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29",
+  "address_space": "PS1 virtual address, little-endian",
+  "research_ids": ["RE3-EVAL-001", "RE3-LIVE-001", "RE3-MAP-004", "RE3-MAP-007"],
+  "runtime_layout": {
+    "state_blocks": [["0x800D1F2C", 1696], ["0x800CC830", 1384]],
+    "aot_table_address_ps1": "0x800CC890",
+    "aot_capacity": 40,
+    "item_bank_early": 7,
+    "item_bank_late": 8,
+    "item_bank_stage_boundary": 2,
+    "key_bank": 9,
+    "unit_count_item_types": [],
+    "heading_offset_degrees": 90,
+    "heading_direction": 1
+  },
+  "flag_bank_addresses_ps1": {
+    "0": "0x800CC858", "1": "0x800D1F2C", "2": "0x800CCBA0", "3": "0x800D1FA0",
+    "4": "0x800D1FC0", "5": "0x800D1FC8", "6": "0x800D1FE8", "7": "0x800D2008",
+    "8": "0x800D2028", "9": "0x800D20CC", "10": "0x800D204C", "11": "0x800D2050",
+    "12": "0x800D2054", "13": "0x800D2058", "14": "0x800D205C", "15": "0x800D2060",
+    "16": "0x800D2064", "17": "0x800D2068", "18": "0x800D206C", "19": "0x800D2070",
+    "20": "0x800D2074", "21": "0x800D2078", "22": "0x800D207C", "23": "0x800D2080",
+    "24": "0x800D2084", "25": "0x800D2088", "26": "0x800D208C", "27": "0x800D2090",
+    "28": "0x800D2094", "29": "0x800D2098", "30": "0x800D209C", "31": "0x800D20A0",
+    "32": "0x800D20A4", "33": "0x800D20A8", "34": "0x800D20AC", "35": "0x800D20B0",
+    "36": "0x800D20B4", "37": "0x800D20B8", "38": "0x800D20BC", "39": "0x800D20C0",
+    "40": "0x800D20C4", "41": "0x800D20C8", "42": "0x800CC854", "44": "0x800CCBAC",
+    "45": "0x800D20D4", "46": "0x800D2048", "47": "0x800D258C", "48": "0x800D25AC",
+    "49": "0x800D1F30"
+  },
+  "script_evaluation": {
+    "roots": ["main:0", "main:1"],
+    "repeating_procedures": [1],
+    "variables_address_ps1": "0x800D1F46",
+    "variable_count": 45,
+    "entry_cleared_flags": [
+      {"bank": 4, "first_bit": 32, "last_bit": 63},
+      {"bank": 44, "first_bit": 0, "last_bit": 127}
+    ],
+    "entry_variables": [
+      {"variable": 0, "value": -1},
+      {"variable": 1, "value": -1},
+      {"variable": 2, "value": -1},
+      {"variable": 3, "value": -1}
+    ],
+    "stage_variable": 24,
+    "room_variable": 25,
+    "unread_variables": [12, 13, 14, 15, 28, 29, 30, 36],
+    "approach_variables": [26, 27],
+    "approach_banks": []
+  },
+  "map_projection": {"world_bias": 0, "units_per_pixel": 450},
+  "names_path": "../data/re3_names.json",
+  "floor_plans_path": "../data/floor_plans_slus00923.json"
+}

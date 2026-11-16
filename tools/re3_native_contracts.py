@@ -16,8 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from build_item_table import _read_file
-from re3_room_catalog import build_catalog
+from re3_room_catalog import build_catalog, catalog_sources
 
 from games.re3 import EXECUTABLE_SHA256
 
@@ -169,24 +168,7 @@ def main() -> int:
             raise ContractError(
                 "Owned media has unsupported sources; audit would be incomplete"
             )
-        sources = []
-        with args.image.open("rb") as stream:
-            for row in catalog["rooms"]:
-                ard = _read_file(stream, row["lba"], row["size"])
-                if hashlib.sha256(ard).hexdigest() != row["sha256"]:
-                    raise ContractError("ARD changed after catalog inspection")
-                obj = row["container"]["objects"][8]
-                rdt = ard[obj["offset"] : obj["offset"] + obj["size"]]
-                sources.append(
-                    RoomSource(
-                        row["path"],
-                        row["source_stage"],
-                        row["source_room"],
-                        row["lba"],
-                        row["size"],
-                        rdt,
-                    )
-                )
+        sources = catalog_sources(args.image, catalog)
         captures = [
             {
                 "file": str(path),

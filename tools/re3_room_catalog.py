@@ -23,6 +23,7 @@ from build_item_table import _read_file
 from list_psx_files import _read_dir, _sector_data
 from output_safety import aliases_input
 
+from games.re3 import EXECUTABLE_SHA256
 from games.re3.room_data import (
     RoomFormatFailure,
     aligned_block_size,
@@ -30,6 +31,7 @@ from games.re3.room_data import (
     decode_map,
     decode_room,
 )
+from games.re3.source_witnesses import RoomSource
 
 
 def build_catalog(image: Path, executable_path: str, expected_sha256: str) -> dict | RoomFormatFailure:
@@ -124,6 +126,51 @@ def build_catalog(image: Path, executable_path: str, expected_sha256: str) -> di
             }
     except (OSError, ValueError, struct.error) as error:
         return RoomFormatFailure("disc", 0, str(error))
+
+
+def catalog_sources(image: Path, catalog: dict) -> tuple[RoomSource, ...]:
+    """Extract each catalogued room's RDT from the owned image."""
+    sources = []
+    with image.open("rb") as stream:
+        for row in catalog["rooms"]:
+            ard = _read_file(stream, row["lba"], row["size"])
+            if hashlib.sha256(ard).hexdigest() != row["sha256"]:
+                raise ValueError("ARD changed after catalog inspection")
+            obj = row["container"]["objects"][8]
+            sources.append(
+                RoomSource(
+                    row["path"],
+                    row["source_stage"],
+                    row["source_room"],
+                    row["lba"],
+                    row["size"],
+                    ard[obj["offset"] : obj["offset"] + obj["size"]],
+                )
+            )
+    return tuple(sources)
+
+
+def load_owned_sources(image: Path) -> tuple[bytes, tuple[RoomSource, ...]]:
+    """Read the pinned executable and every room source from the owned image."""
+    catalog = build_catalog(image, "SLUS_009.23", EXECUTABLE_SHA256)
+    if isinstance(catalog, RoomFormatFailure):
+        raise ValueError(catalog.detail)
+    if catalog["unsupported"]:
+        raise ValueError("Owned RE3 media has unsupported room sources")
+    with image.open("rb") as stream:
+        pvd = _sector_data(stream, 16)
+        root = struct.unpack_from("<I", pvd, 158)[0]
+        root_size = struct.unpack_from("<I", pvd, 166)[0]
+        executable = None
+        for name, extent, length, _ in _read_dir(stream, root, root_size):
+            if name == "SLUS_009.23":
+                executable = _read_file(stream, extent, length)
+    if (
+        executable is None
+        or hashlib.sha256(executable).hexdigest() != EXECUTABLE_SHA256
+    ):
+        raise ValueError("Owned RE3 executable changed after catalog inspection")
+    return executable, catalog_sources(image, catalog)
 
 
 def main() -> int:

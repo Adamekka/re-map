@@ -72,3 +72,13 @@ python3 tools/track.py --profile profiles/re2_claire_b_slus00756.json --map
 Each revision and scenario has a separate exploration history. Keep RetroAchievements in Casual/Softcore mode when using the tracker and savestates. The [RE2 guide](docs/re2.md) lists the exact disc identities and validation limits.
 
 ![RE2 map showing two observed rooms and room completion](docs/images/re2-map.png)
+
+## Resident Evil 3
+
+Start a new game on **Hard** with Resident Evil 3: Nemesis USA, **SLUS-00923**, then run the tracker with your own disc, which it reads at startup:
+
+```sh
+python3 tools/track.py --profile profiles/re3_jill_hard_slus00923.json --disc "$HOME/Games/DuckStation/Resident Evil 3 - Nemesis.cue" --map
+```
+
+The [RE3 guide](docs/re3.md) lists the disc identity and validation limits.
