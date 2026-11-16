@@ -215,25 +215,27 @@ _PAGE = """<!doctype html>
 <style>
 :root {
   color-scheme:dark; font:15px system-ui,sans-serif; background:var(--bg); color:var(--text);
-  --bg:#10151b; --panel:#151e27; --line:#303d48; --line-soft:#2d3943; --text:#e7edf2; --muted:#91a5b4; --soft:#abb9c5; --control:#1c2b36; --control-line:#506473; --accent:#a5efff; --current:#d9f6ff; --open:#71b6cf; --locked:#ed6965; --unlockable:#e9b85e; --unlocked:#a5d5ac; --story-fill:#685331; --supplies-fill:#743e40; --cleared-fill:#244c6e; --unknown-fill:#42515d; --story:#e9be72; --supplies:#df9793;
+  --bg:#10151b; --panel:#151e27; --line:#303d48; --line-soft:#2d3943; --text:#e7edf2; --muted:#91a5b4; --soft:#abb9c5; --control:#1c2b36; --control-line:#506473; --accent:#a5efff; --current:#d9f6ff; --open:#71b6cf; --locked:#ed6965; --unlockable:#e9b85e; --unlocked:#a5d5ac; --story-fill:#685331; --supplies-fill:#743e40; --cleared-fill:#244c6e; --unknown-fill:#42515d; --story:#e9be72; --supplies:#df9793; --control-hover:#243744; --control-hover-line:#6d8495; --live:#a5d5ac; --paused:#e9b85e;
 }
 body { margin:0; }
 header { padding:12px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; border-bottom:1px solid var(--line); }
 h1 { margin:0; font-size:19px; font-weight:600; }
 #map-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
-/* Map controls float above the map so the floor plan keeps the full height. */
-#zoom-controls { position:absolute; top:10px; right:10px; z-index:1; display:flex; align-items:center; gap:6px; padding:5px; background:rgba(16,21,27,.86); border:1px solid var(--line); border-radius:6px; }
+#zoom-controls { display:inline-flex; align-items:center; gap:6px; }
 select,button,input { font:inherit; color:inherit; background:var(--control); border:1px solid var(--control-line); border-radius:6px; padding:6px 11px; transition:background-color .12s,border-color .12s; }
 button,select { cursor:pointer; }
-:is(select,button):not(:disabled):hover { background:#243744; border-color:#6d8495; }
+/* Zero specificity lets specific controls such as result cards and door links keep their own hover. */
+@media(hover:hover) { :where(select:not(:disabled),button:not(:disabled)):hover { background:var(--control-hover); border-color:var(--control-hover-line); } }
 :is(select,button,input):focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
 select:disabled,button:disabled,input:disabled { opacity:.45; cursor:default; }
 /* Following disables the button until the view changes; keep that active state legible. */
 #current-room[aria-pressed="true"] { border-color:var(--open); background:var(--cleared-fill); opacity:1; }
-#zoom-controls button { min-width:32px; padding:4px 8px; }
+#zoom-controls button { min-width:34px; }
+/* Finger-sized targets for the toolbar on touch screens. */
+@media(pointer:coarse) { header :is(select,button) { min-height:44px; } #zoom-controls button { min-width:44px; } }
 #status { margin-left:auto; display:flex; align-items:center; gap:8px; color:var(--soft); font-size:13px; }
-#status::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--unlockable); }
-#status[data-state="live"]::before { background:var(--unlocked); }
+#status::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--paused); }
+#status[data-state="live"]::before { background:var(--live); }
 main { display:grid; grid-template-columns:minmax(0,1fr); background:var(--panel); }
 #map-shell { position:relative; min-width:0; background:radial-gradient(ellipse at center,var(--control),#111a22); }
 #map { display:block; width:100%; height:60vh; min-height:340px; }
@@ -340,7 +342,7 @@ li > span:last-child { color:var(--muted); text-align:right; }
 .result-item .list-symbol { width:14px; height:14px; }
 /* Wide windows keep the map and sidebar on screen together during play;
 the sidebar scrolls on its own instead of the page. */
-@media(min-width:761px) and (min-height:560px) {
+@media(min-width:761px) and (min-height:420px) {
   body { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
   main { flex:1; min-height:0; grid-template-columns:minmax(0,1fr) 300px; grid-template-rows:minmax(0,1fr); }
   /* The legend stays below the floor plan so it never covers explored rooms. */
@@ -351,16 +353,15 @@ the sidebar scrolls on its own instead of the page. */
   #legend summary { padding:8px 16px; }
   #legend-entries { gap:8px 18px; padding:0 16px 10px; }
 }
-@media(min-width:1100px) and (min-height:560px) { main { grid-template-columns:minmax(0,1fr) 340px; } }
+@media(min-width:1100px) and (min-height:420px) { main { grid-template-columns:minmax(0,1fr) 340px; } }
 </style>
 </head>
 <body>
-<header><h1>__GAME_TITLE__</h1><nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button></nav><div id="status" role="status" data-state="paused">Waiting for game.</div></header>
+<header><h1>__GAME_TITLE__</h1><nav id="map-controls" aria-label="Map controls"><button id="back-room" type="button" aria-label="Back to previous room" disabled>Back</button><label for="floor">Floor</label><select id="floor" disabled></select><button id="current-room" type="button" aria-pressed="false" disabled>Follow player</button><span id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button><button id="fit-rooms" type="button" aria-label="Fit explored rooms" title="Fit explored rooms" disabled>Fit</button></span></nav><div id="status" role="status" data-state="paused">Waiting for game.</div></header>
 <main>
 <div id="map-shell">
-<div id="zoom-controls" role="group" aria-label="Map zoom"><button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button><output id="zoom-level" aria-label="Zoom level"></output><button id="zoom-in" type="button" aria-label="Zoom in" disabled>+</button><button id="fit-rooms" type="button" aria-label="Fit explored rooms" title="Fit explored rooms" disabled>Fit</button></div>
 <svg id="map" role="group" tabindex="-1" aria-label="Explored rooms" aria-description="Arrow keys move the map. Plus and minus zoom. Zero fits explored rooms. You can also drag, pinch or use the mouse wheel."></svg>
-<details id="legend" open><summary>Legend</summary><div id="legend-entries">
+<details id="legend"><summary>Legend</summary><div id="legend-entries">
 <span><i class="key" style="background:var(--story-fill)"></i>Story / key items remain</span>
 <span><i class="key" style="background:var(--supplies-fill)"></i>Supplies / other items remain</span>
 <span><i class="key" style="background:var(--cleared-fill)"></i>Cleared</span>
@@ -414,9 +415,15 @@ const zoomIn = document.getElementById('zoom-in');
 const zoomOut = document.getElementById('zoom-out');
 const fitRooms = document.getElementById('fit-rooms');
 const legend = document.getElementById('legend');
-// The legend's open state is a per-viewer convenience; storage can be unavailable.
-try { if(localStorage.getItem('legend-open')==='false') legend.open=false; } catch {}
-legend.addEventListener('toggle',()=>{try { localStorage.setItem('legend-open',String(legend.open)); } catch {}});
+// Stacked layouts put the legend above room details, so it starts collapsed
+// there; this query matches the two-column layout in the stylesheet.
+const wideLayout = matchMedia('(min-width:761px) and (min-height:420px)').matches;
+// The viewer's choice is a per-viewer convenience; storage can be unavailable.
+let savedLegend = null;
+try { savedLegend = localStorage.getItem('legend-open'); } catch {}
+legend.open = savedLegend===null ? wideLayout : savedLegend==='true';
+// Record only the viewer's own toggles; click runs before the state changes.
+legend.querySelector('summary').addEventListener('click',()=>{try { localStorage.setItem('legend-open',String(!legend.open)); } catch {}});
 itemSearch.addEventListener('input',()=>{if(lastState!==null && lastState.status==='display') updateOverview(lastState);});
 itemSearch.addEventListener('keydown',event=>{
   if(event.key==='Escape' && itemSearch.value!=='') {
@@ -450,7 +457,7 @@ function rememberView() {
   if(!room && selectedArea!==lastState.area) throw new Error('Only the current room can have an unoutlined view');
   const view=room ? {kind:'outline',area:selectedArea,id:room.dataset.region} : {kind:'details',area:selectedArea,id:lastState.map_region,room:lastState.current};
   // Snapshots retain display choices so Back can render fresh game-derived state.
-  viewHistory.push({...view,viewport:structuredClone(viewport)});
+  viewHistory.push({...view,viewport:structuredClone(viewport),sidebarScroll:document.querySelector('aside').scrollTop});
 }
 backRoomButton.addEventListener('click',()=>{
   if(lastState===null || lastState.status!=='display' || viewHistory.length===0) throw new Error('Back requires readable inspection history');
@@ -460,6 +467,8 @@ backRoomButton.addEventListener('click',()=>{
   selectedArea=previous.area;selected=previous.id;viewport=previous.viewport;
   draw(lastState);
   focusInspectedRoom();
+  // Return to the place in the sidebar list where this view was left.
+  document.querySelector('aside').scrollTo({top:previous.sidebarScroll});
 });
 function applyViewport() {
   const ready=lastState!==null && lastState.status==='display';
@@ -996,7 +1005,7 @@ function draw(state) {
     label.setAttribute('transform','translate('+layout.center.join(' ')+') rotate('+layout.angle+') scale('+layout.scale+') translate('+layout.offset.join(' ')+')');
     setLines(layout.lines);
     // Retained SVG buttons need their own activation guard while tracking is interrupted.
-    group.addEventListener('click',()=>{if(lastState.status!=='display') return;rememberView();selected=id;draw(lastState);});
+    group.addEventListener('click',()=>{if(lastState.status!=='display') return;rememberView();selected=id;draw(lastState);revealRoomDetails();});
     group.addEventListener('keydown',event=>{
       if(lastState.status!=='display') return;
       if(event.key==='Enter' || event.key===' ') {
@@ -1173,10 +1182,13 @@ function inspectRoom(area,id) {
   }
   focusInspectedRoom();
 }
+function revealRoomDetails() {
+  // Wide layouts scroll the sidebar separately; show the inspected room's details.
+  document.querySelector('aside').scrollTo({top:0});
+}
 function focusInspectedRoom() {
   document.querySelector('main').scrollIntoView({block:'start'});
-  // Wide layouts scroll the sidebar separately; reveal the inspected room's details.
-  document.querySelector('aside').scrollTo({top:0});
+  revealRoomDetails();
   const room=svg.querySelector('.room.selected');
   // An unoutlined current room has details but no SVG focus target.
   const target=room || document.getElementById('room-name');

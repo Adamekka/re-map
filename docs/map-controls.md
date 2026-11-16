@@ -14,7 +14,7 @@ Each room button has an accessible description of completion and whether it is c
 | `0` | Fit all explored rooms on the displayed floor |
 | Enter or Space | Inspect the focused room |
 
-The mouse wheel and the zoom buttons in the map's top-right corner also zoom, and **Fit** shows all explored rooms; dragging moves the map. On a touch screen, drag with one finger or pinch with two fingers to zoom and move the view. Lift one finger to continue dragging with the other. Gestures keep the selected room; tap a room to inspect it.
+The mouse wheel and zoom buttons also zoom, and **Fit** shows all explored rooms; dragging moves the map. On a touch screen, drag with one finger or pinch with two fingers to zoom and move the view. Lift one finger to continue dragging with the other. Gestures keep the selected room; tap a room to inspect it.
 
 Enter and Space bring an inspected room into view after zooming or panning. Back restores the previous view.
 
@@ -40,6 +40,6 @@ Select an underlined destination in **Doors** to inspect its explored room. The 
 
 ## Return to previous inspections
 
-**Back** retraces room selections, door/item results and floor browsing in the current browser session. It restores the previous zoom and pan while showing fresh items, completion and door access. Zooming, panning and live player movement do not add entries. Repeatedly selecting the same view adds no extra step. **Follow player** clears this inspection history and resumes following.
+**Back** retraces room selections, door/item results and floor browsing in the current browser session. It restores the previous zoom, pan and sidebar scroll position while showing fresh items, completion and door access. Zooming, panning and live player movement do not add entries. Repeatedly selecting the same view adds no extra step. **Follow player** clears this inspection history and resumes following.
 
 Only views still available in explored history remain accessible. A room without an outline can be revisited through Back while it remains the same current room. Back is disabled during interrupted tracking and recovers valid entries when tracking returns.
