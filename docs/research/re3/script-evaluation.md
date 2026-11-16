@@ -4,7 +4,7 @@
 
 ## RE3-EVAL-001: evaluate RE3 room scripts with fresh flags for a runnable tracker
 
-Status: Candidate for Resident Evil 3: Nemesis, USA, SLUS-00923, Hard; executable `SLUS_009.23` SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Executable disassembly, owned-source compilation and retained-RAM replay. No new emulator session was run for this claim.
+Status: Candidate for Resident Evil 3: Nemesis, USA, SLUS-00923, Hard; executable `SLUS_009.23` SHA256 `2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29`. Executable disassembly, owned-source compilation, retained-RAM replay and [native loads](#native-room-loads-2026-11-16) of the other 168 rooms from one Hard savestate in room `00-0d`.
 
 The human asked for RE3 tracking with no unresolved rooms, items or doors. This claim adds the runnable profile `profiles/re3_jill_hard_slus00923.json`. It reuses the shared interpreter from [RE2-EVAL-001](../re2/script-evaluation.md#re2-eval-001-evaluate-room-scripts-with-fresh-flags-to-resolve-departed-items-and-doors), the guarded current-room reader from [RE3-LIVE-001](live-reader.md#re3-live-001-bounded-hard-current-room-and-pose-observations), and the [floor plans](floor-plans.md).
 
@@ -34,7 +34,7 @@ Under 40 pseudo-random states of every flag, variable and inventory slot, with p
 
 ### Limits
 
-No native room loads were compared for RE3, and the retained captures cover one room. Native code outside scripts is not modeled. Stage 6 and 7 rooms may belong to Mercenaries. Unit-count item types and prompt-answer banks are not yet identified, so quantities show as recorded and prompt answers stored in flags count as game state. The pseudo-random stress states are not gameplay states.
+Native room loads came from one early Hard savestate, each covering one entry outcome; three loaded rooms (`05-0b`, `04-0a`, `06-0c`) were not polled by the tracker, and the retained gameplay captures cover one room. Native code outside scripts is not modeled. Stage 6 and 7 rooms may belong to Mercenaries. Unit-count item types and prompt-answer banks are not yet identified, so quantities show as recorded and prompt answers stored in flags count as game state. The pseudo-random stress states are not gameplay states.
 
 Contribution, 2026-11-16: requested by the human. Claude `claude-opus-5-5` wrote the RE3 opcode set, engine analysis, tracker integration, tests and this record. A `claude-opus-5-5` subagent derived the opcode width table and the floor plans. No external review has been performed yet.
 
