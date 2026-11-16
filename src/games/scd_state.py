@@ -47,6 +47,10 @@ MAX_TERMINALS = 4096
 MAX_STEPS = 200_000
 # Total work for one interpreter, across every path.
 MAX_TOTAL_STEPS = 2_000_000
+# Distinct states one join point keeps exact. Beyond this, arriving paths
+# forget the values they wrote, which then read as tainted unknowns, so
+# independent unread conditions cannot multiply paths without bound.
+JOIN_WIDEN = 64
 # Loops and backward jumps run at most this many times per path. Their exit is
 # assumed to happen eventually, as it does for normal script waits.
 LOOP_LIMIT = 2
@@ -210,9 +214,17 @@ class _Unsupported(Exception):
 
 class _Interpreter:
     def __init__(
-        self, program: dict[str, list[list]], state: GameState, fresh_source: bool
+        self,
+        program: dict[str, list[list]],
+        state: GameState,
+        fresh_source: bool,
+        inline_tasks: bool,
     ) -> None:
         self.program = program
+        # Entry runs started tasks in order on the same path. Later analysis
+        # only needs what each task can create, so it queues them instead of
+        # multiplying every interleaving.
+        self.inline_tasks = inline_tasks
         self.offsets = {
             name: [row[0] for row in rows] for name, rows in program.items()
         }
@@ -231,6 +243,7 @@ class _Interpreter:
         # Without merging, independent unread conditions multiply outcomes.
         self.joins = {name: self._joins(rows) for name, rows in program.items()}
         self.seen: set[tuple] = set()
+        self.join_counts: dict[tuple[str, int], int] = {}
 
     def _joins(self, rows: list[list]) -> frozenset[int]:
         offsets = [row[0] for row in rows]
@@ -238,6 +251,9 @@ class _Interpreter:
         for row in rows:
             if row[2] in ("if", "else", "goto", "loop"):
                 targets.add(row[3])
+            if row[2] == "loop":
+                # Loop_end returns to the body's first row.
+                targets.add(row[1])
             elif row[2] == "switch":
                 targets.update((row[3], *(label for label, _ in row[5])))
         return frozenset(bisect_left(offsets, target) for target in targets)
@@ -279,6 +295,7 @@ class _Interpreter:
     def run(self, start: list[_Path]) -> list[_Path]:
         done, work, finished = [], list(start), set()
         self.seen.clear()
+        self.join_counts.clear()
         while work:
             path = work.pop()
             result = self._step_until_done(path, work)
@@ -334,7 +351,7 @@ class _Interpreter:
     def _step_until_done(self, path: _Path, work: list[_Path]) -> _Path | None:
         while True:
             if not path.frames:
-                while path.pending:
+                while self.inline_tasks and path.pending:
                     if self._start_task(path, path.pending.pop(0)):
                         break
                 else:
@@ -349,6 +366,18 @@ class _Interpreter:
                 key = path.key()
                 if key in self.seen:
                     return None
+                join = (frame.proc, frame.index)
+                self.join_counts[join] = self.join_counts.get(join, 0) + 1
+                if self.join_counts[join] > JOIN_WIDEN:
+                    path.flags = {flag: (None, True) for flag in path.flags}
+                    path.variables = {index: (None, True) for index in path.variables}
+                    path.patches = {
+                        target: (None, width, True)
+                        for target, (_, width, _) in path.patches.items()
+                    }
+                    key = path.key()
+                    if key in self.seen:
+                        return None
                 self.seen.add(key)
             if frame.index >= len(rows):
                 # Procedures end with an explicit terminator. Running off the
@@ -628,7 +657,7 @@ def evaluate_entry(
     program: dict[str, list[list]], state: GameState, roots: tuple[str, ...]
 ) -> EntryState:
     """Run the room's automatic tasks in order, as entering the room would."""
-    interpreter = _Interpreter(program, state, fresh_source=True)
+    interpreter = _Interpreter(program, state, fresh_source=True, inline_tasks=True)
     try:
         if not roots or any(root not in program for root in roots):
             raise _Unsupported("missing automatic procedure")
@@ -710,6 +739,7 @@ def evaluate_later(
                 state.approach_banks,
             ),
             fresh_source=False,
+            inline_tasks=False,
         )
         # Triggers act on the interactions entry created, such as handing over
         # a parked item, so each one starts from every entry outcome.

@@ -95,21 +95,27 @@ def switch_labels(
 def compile_procedure(
     opcodes: OpcodeSet, data: bytes, start: int, stop: int
 ) -> list[list]:
+    # Decode only commands control flow reaches. Procedures can embed data
+    # that a Goto skips, and padding follows their last terminator.
     rows: list[list] = []
-    boundaries = {stop}
-    targets = []
+    decoded: dict[int, int] = {}
     patches = []
-    position = start
+    pending = [start]
     widths = opcodes.widths
-    while position < stop:
+    while pending:
+        position = pending.pop()
+        if position in decoded or position == stop:
+            # A block may end at the procedure's end; running there is
+            # reported by the interpreter if a path reaches it.
+            continue
+        if not start <= position < stop:
+            return [[start, start, "invalid"]]
         opcode = data[position]
         if opcode >= len(widths) or position + widths[opcode] > stop:
-            # Procedures are padded after their last terminator. Jumps into
-            # this region make the runtime evaluation Unsupported.
-            break
+            return [[start, start, "invalid"]]
         packet = data[position : position + widths[opcode]]
         following = position + len(packet)
-        boundaries.add(position)
+        decoded[position] = following
         row: list | None = None
         if opcode in opcodes.ends:
             row = ["end"]
@@ -134,10 +140,8 @@ def compile_procedure(
                     opcodes.end_switch,
                 )
             except ValueError:
-                # Not a native case chain: padding after the last terminator
-                # can look like a Switch. Stop decoding as for any other
-                # undecodable byte; jumps beyond here fail the boundary check.
-                break
+                # A reachable selector without a native case chain.
+                return [[start, start, "invalid"]]
             row = [
                 "switch",
                 end,
@@ -219,17 +223,24 @@ def compile_procedure(
         elif opcode == opcodes.work_copy:
             row = ["patch", following + packet[2], packet[1], 2 if packet[3] else 1]
             patches.append(row[1])
+        kind = row[0] if row is not None else ""
+        if kind in ("if", "loop"):
+            pending.extend((following, row[1]))
+        elif kind in ("else", "goto"):
+            pending.append(row[1])
+        elif kind == "switch":
+            pending.extend((row[1], *(label for label, _ in row[3])))
+        elif kind not in ("end", "break"):
+            # Break continues at its enclosing block's end, which the opener
+            # already queued.
+            pending.append(following)
         if row is not None:
-            if row[0] in ("if", "else", "goto", "loop"):
-                targets.append(row[1])
-            elif row[0] == "switch":
-                targets.extend((row[1], *(label for label, _ in row[3])))
             rows.append([position, following, *row])
-        position = following
-    if any(target not in boundaries for target in targets):
-        # Unmodeled commands are omitted, so jumps resolve to the next kept
-        # row. That is only sound when every target is a command boundary.
+    ordered = sorted(decoded.items())
+    if any(end > begin for (_, end), (begin, _) in zip(ordered, ordered[1:])):
+        # Two control paths decode overlapping commands.
         return [[start, start, "invalid"]]
+    rows.sort()
     # Patches may change a predicate or flag write's bit, variable or value,
     # which the interpreter follows. Unreadable predicates, loop counts and a
     # non-item Reset's data do not affect the model. Any other patched modeled
