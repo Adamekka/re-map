@@ -24,8 +24,12 @@ class OpcodeSet:
     # Loop openers store their block length after the opcode and one operand
     # byte; Do's predicate follows its closing command.
     loops: frozenset[int]
-    # The loop opener whose unsigned count at operand offset 4 is a constant.
+    # The loop opener whose unsigned count at operand offset 4 is a constant,
+    # and the While and Do openers. A While tests its predicate at the start
+    # of its body; a Do tests it after its closing command.
     for_loop: int
+    while_loop: int
+    do_loop: int
     loop_ends: frozenset[int]
     switch: int
     case: int
@@ -142,6 +146,11 @@ def compile_procedure(
                 struct.unpack_from("<H", packet, 4)[0]
                 if opcode == opcodes.for_loop
                 else -1,
+                "while"
+                if opcode == opcodes.while_loop
+                else "do"
+                if opcode == opcodes.do_loop
+                else "for",
             ]
         elif opcode in opcodes.loop_ends:
             row = ["loop_end"]

@@ -25,6 +25,8 @@ RE2_OPCODES = OpcodeSet(
     # For, While, Do and For2.
     loops=frozenset({0x0D, 0x0F, 0x11, 0x1B}),
     for_loop=0x0D,
+    while_loop=0x0F,
+    do_loop=0x11,
     loop_ends=frozenset({0x0E, 0x10, 0x12}),
     # Switch handler 0x80054020 compares signed case values in label order.
     switch=0x13,

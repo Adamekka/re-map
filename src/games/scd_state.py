@@ -302,6 +302,44 @@ class _Path:
 _UNWRITTEN = object()
 
 
+_CONDITIONS = ("ck", "cmp", "cond", "has")
+
+
+def _leading_conditions(rows: list[list], opener: int) -> list[int]:
+    """Rows of the predicate that directly follows an If or While opener."""
+    index = opener + 1
+    while index < len(rows) and rows[index][2] in _CONDITIONS:
+        index += 1
+    return list(range(opener + 1, index))
+
+
+def _runnable_procedures(program: dict[str, list[list]]) -> set[str]:
+    """Procedures the automatic roots can run, call or start, transitively."""
+    pending = [name for name in ("init:0", "main:0", "main:1") if name in program]
+    runnable: set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in runnable:
+            continue
+        runnable.add(name)
+        for _, _, op, *args in program[name]:
+            procedures = (
+                [args[0]]
+                if op in ("gosub", "exec")
+                else [args[3]]
+                if op == "aot"
+                else [args[3]]
+                if op == "reset"
+                else []
+            )
+            pending.extend(
+                f"main:{procedure}"
+                for procedure in procedures
+                if procedure >= 0 and f"main:{procedure}" in program
+            )
+    return runnable
+
+
 def _wait_reads(
     program: dict[str, list[list]], proc: str, head: int, last: int
 ) -> tuple[set[tuple[int, int]], set[int]]:
@@ -392,20 +430,25 @@ class _Interpreter:
         self.patch_targets = frozenset(
             row[3] for rows in program.values() for row in rows if row[2] == "patch"
         )
-        # Flags and variables any room script writes. A wait that reads only
-        # these ends through the room's own progress; one that reads anything
-        # else waits for native code, such as a pickup or a key use.
-        sets = [row for rows in program.values() for row in rows if row[2] == "set"]
-        self.script_flags = frozenset((row[3], row[4]) for row in sets)
-        self.script_banks = frozenset(
-            row[3] for row in sets if row[0] + 2 in self.patch_targets
-        )
-        self.script_variables = frozenset(
-            row[3]
-            for rows in program.values()
-            for row in rows
-            if row[2] in ("var", "calc", "calc2")
-        )
+        # Values the room's runnable scripts can write. A wait ends through the
+        # room's own progress only if one of them can release it; otherwise it
+        # waits for native code, such as a pickup or a key use.
+        runnable = _runnable_procedures(program)
+        self.flag_writes: dict[tuple[int, int], set[bool]] = {}
+        self.bank_writes: dict[int, set[bool]] = {}
+        self.variable_writes: set[int] = set()
+        for name in runnable:
+            for row in program[name]:
+                if row[2] == "set":
+                    values = {True, False} if row[5] == 7 else {bool(row[5])}
+                    if row[0] + 2 in self.patch_targets:
+                        self.bank_writes.setdefault(row[3], set()).update(values)
+                    else:
+                        self.flag_writes.setdefault((row[3], row[4]), set()).update(
+                            values
+                        )
+                elif row[2] in ("var", "calc", "calc2"):
+                    self.variable_writes.add(row[3])
         self.written: set[tuple[int, int]] = set()
         self.written_variables: set[int] = set()
         self.written_banks: set[int] = set()
@@ -695,7 +738,7 @@ class _Interpreter:
                 frame.blocks.pop()
                 nxt = self._index(frame.proc, args[0])
             elif op == "loop":
-                end, count = args
+                end, count, _ = args
                 if count == 0:
                     # The native For handler skips a zero-count body.
                     nxt = self._index(frame.proc, end)
@@ -706,17 +749,36 @@ class _Interpreter:
                     raise _Unsupported("loop end outside a loop")
                 _, end, start, _ = frame.blocks[-1]
                 opener = rows[start][0]
+                kind = rows[start][5]
+                last = frame.index
+                if kind == "do":
+                    # A Do repeats while the predicate after its closing
+                    # command holds.
+                    last += 1
+                    if last >= len(rows) or rows[last][2] not in _CONDITIONS:
+                        raise _Unsupported("Do without a following predicate")
+                    _, _, predicate, *operands = rows[last]
+                    holds = self._condition(path, rows[last][0], predicate, operands)[0]
+                else:
+                    holds = True
                 count = frame.loops.get(opener, (0,))[0] + 1
-                if count < LOOP_LIMIT:
+                if holds is not False and count < LOOP_LIMIT:
                     frame.loops[opener] = (count, opener, end - 1)
                     nxt = start + 1
-                elif rows[start][4] < 0 and self._waits_on_native(
-                    frame.proc, start, frame.index
+                elif (
+                    holds is True
+                    and kind in ("while", "do")
+                    and self._waits_on_native(
+                        frame.proc,
+                        start,
+                        last,
+                        [last] if kind == "do" else _leading_conditions(rows, start),
+                    )
                 ):
                     # A While or Do that waits on native state keeps waiting
                     # until that state changes.
                     frame.loops.pop(opener, None)
-                    self._suspend(path, start, opener)
+                    self._suspend(path, start, opener, last)
                     continue
                 else:
                     # Forget the count on exit so later joins can merge.
@@ -783,10 +845,26 @@ class _Interpreter:
                         # enclosing condition eventually stopped holding.
                         del frame.loops[offset]
                         head = self._index(frame.proc, target)
-                        if not any(
-                            block[0] in ("if", "else", "loop") for block in frame.blocks
-                        ) or self._waits_on_native(frame.proc, head, frame.index):
-                            self._suspend(path, head, target)
+                        enclosing = next(
+                            (
+                                block
+                                for block in reversed(frame.blocks)
+                                if block[0] in ("if", "else", "loop")
+                            ),
+                            None,
+                        )
+                        if enclosing is None or self._waits_on_native(
+                            frame.proc,
+                            head,
+                            frame.index,
+                            # The enclosing If or While decides whether the
+                            # jump repeats; an Else's condition is not
+                            # located, so every read in the loop counts.
+                            _leading_conditions(rows, enclosing[2])
+                            if enclosing[0] != "else"
+                            else None,
+                        ):
+                            self._suspend(path, head, target, frame.index)
                             continue
                         self._fail(path, False)
                         continue
@@ -945,19 +1023,63 @@ class _Interpreter:
             if offset < end
         )
 
-    def _waits_on_native(self, proc: str, head: int, last: int) -> bool:
-        """Whether a wait loop reads state no room script writes."""
-        flags, variables = _wait_reads(self.program, proc, head, last)
-        return (
-            any(
-                flag not in self.script_flags and flag[0] not in self.script_banks
-                for flag in flags
-            )
-            or not variables <= self.script_variables
-        )
+    def _waits_on_native(
+        self, proc: str, head: int, last: int, conditions: list[int] | None
+    ) -> bool:
+        """Whether a wait loop waits for native code rather than the room.
 
-    def _suspend(self, path: _Path, head: int, target: int) -> None:
-        """End the task at a wait whose loop runs from row ``head``.
+        ``conditions`` are the rows that decide whether the loop repeats, or
+        None to use every read in the loop. A wait is native if no runnable
+        script can release one of their values: write a flag to the value
+        that ends the wait, or write a variable they depend on.
+        """
+        rows = self.program[proc]
+        if conditions is None:
+            flags, variables = _wait_reads(self.program, proc, head, last)
+            needed = {flag: {True, False} for flag in flags}
+            inventory = False
+        else:
+            needed = {}
+            variables = set()
+            inventory = False
+            for index in conditions:
+                _, _, op, *args = rows[index]
+                if op == "ck":
+                    # The wait continues while the flag holds this value.
+                    needed.setdefault((args[0], args[1]), set()).add(not args[2])
+                elif op == "cmp":
+                    variables.add(args[0])
+                elif op == "has":
+                    inventory = True
+            # Follow copies and calculations inside the loop back to their
+            # sources; an unread or actor value comes from native code.
+            changed = True
+            while changed:
+                changed = False
+                for _, _, op, *args in rows[head : last + 1]:
+                    if op in ("var", "calc", "calc2") and args[0] in variables:
+                        if op == "var" and args[1] in (2, 3):
+                            return True
+                        sources = (
+                            {args[2]}
+                            if op == "var" and args[1] == 1 or op == "calc2"
+                            else set()
+                        )
+                        if not sources <= variables:
+                            variables |= sources
+                            changed = True
+        if inventory:
+            return True
+        for (bank, bit), releasing in needed.items():
+            writable = self.flag_writes.get((bank, bit), set()) | self.bank_writes.get(
+                bank, set()
+            )
+            if not releasing & writable:
+                return True
+        return not variables <= self.variable_writes
+
+    def _suspend(self, path: _Path, head: int, target: int, last: int) -> None:
+        """End the task at a wait whose loop runs from row ``head`` to ``last``.
 
         Later analysis resumes it there with its call stack, so what ran before
         the wait does not repeat.
@@ -992,7 +1114,7 @@ class _Interpreter:
                         ),
                     ),
                 ),
-                frame.index,
+                last,
             )
         )
         path.frames.clear()

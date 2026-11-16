@@ -352,7 +352,7 @@ def test_later_pass_keeps_paths_that_start_different_tasks():
 def test_zero_count_for_loop_skips_its_body():
     program = {
         "init:0": rows(
-            ["loop", 30, 0],
+            ["loop", 30, 0, "for"],
             ["item", 3, 0x31, 20, 15, 7],
             ["loop_end"],
             ["end"],
@@ -815,7 +815,7 @@ def test_suspended_task_keeps_its_callers_loop_count():
     program = {
         # The caller's loop is in its second pass when the callee waits.
         "main:0": rows(
-            ["loop", 40, -1],
+            ["loop", 40, -1, "while"],
             ["calc", 4, 0, 1],
             ["gosub", 7],
             ["loop_end"],
@@ -961,7 +961,7 @@ def test_while_waiting_on_native_state_keeps_its_effects_pending():
                 ["var", 4, 0, 0],
                 ["door", 6, 0x31],
                 ["reset", 6, 0, 0, -1, -1, -1, -1],
-                ["loop", 60, -1],
+                ["loop", 60, -1, "while"],
                 read,
                 ["loop_end"],
                 ["reset", 6, 1, 0x31, -1, -1, -1, -1],
@@ -977,3 +977,89 @@ def test_while_waiting_on_native_state_keeps_its_effects_pending():
     # A variable the room's own scripts write ends the wait by itself.
     counted = evaluate(program(["cmp", 4, 0, 0])).doors[10]
     assert (counted.sat, counted.replaced) == (0x31, False)
+
+
+def door_after_wait(wait: list[list], extra: dict | None = None) -> dict:
+    """Slot 6's door is replaced, then restored after ``wait``'s rows."""
+    return {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["door", 6, 0x31],
+            ["reset", 6, 0, 0, -1, -1, -1, -1],
+            *wait,
+            ["reset", 6, 1, 0x31, -1, -1, -1, -1],
+            ["end"],
+        ),
+        **(extra or {}),
+    }
+
+
+def door_state(program: dict, **state) -> tuple:
+    door = evaluate(program, **state).doors[0]
+    return door.sat, door.replaced
+
+
+def test_do_waiting_on_native_state_keeps_its_effects_pending():
+    # The predicate follows the closing command.
+    wait = [["loop", 50, -1, "do"], ["loop_end"], ["ck", 9, 27, 0]]
+    assert door_state(door_after_wait(wait)) == (0, True)
+    assert door_state(door_after_wait(wait), flags={(9, 27): True}) == (0x31, False)
+
+
+def test_do_whose_predicate_fails_exits_after_one_pass():
+    wait = [
+        ["loop", 60, -1, "do"],
+        ["set", 9, 3, 1],
+        ["loop_end"],
+        ["ck", 9, 3, 0],
+    ]
+    assert door_state(door_after_wait(wait)) == (0x31, False)
+
+
+def test_incidental_native_read_does_not_make_a_counter_loop_wait():
+    wait = [
+        ["var", 4, 0, 0],
+        ["loop", 80, -1, "while"],
+        ["cmp", 4, 3, 3],
+        ["calc", 4, 0, 1],
+        # A native variable copied into a temporary the loop never tests.
+        ["var", 5, 1, 7],
+        ["loop_end"],
+    ]
+    assert door_state(door_after_wait(wait)) == (0x31, False)
+
+
+def test_only_a_runnable_releasing_write_ends_a_wait():
+    wait = [["loop", 50, -1, "while"], ["ck", 9, 27, 0], ["loop_end"]]
+    # Procedure 8 would set the flag, but nothing runs it.
+    unrunnable = {"main:8": rows(["set", 9, 27, 1], ["end"])}
+    assert door_state(door_after_wait(wait, unrunnable)) == (0, True)
+    # A script that only clears the flag cannot release the wait either.
+    clearing = {"main:1": rows(["set", 9, 27, 0], ["end"])}
+    assert door_state(door_after_wait(wait, clearing)) == (0, True)
+    # A trigger the room creates can set it, so the wait ends by itself.
+    trigger = {
+        "init:0": rows(["aot", 2, 5, 0x31, 8], ["end"]),
+        "main:8": rows(["set", 9, 27, 1], ["end"]),
+    }
+    assert door_state(door_after_wait(wait, trigger)) == (0x31, False)
+
+
+def test_patched_flag_writer_can_release_a_wait_in_its_bank():
+    wait = [["loop", 50, -1, "while"], ["ck", 9, 27, 0], ["loop_end"]]
+    patched = {
+        "main:1": rows(["patch", 32, 4, 1], ["end"], ["end"], ["set", 9, 0, 1]),
+    }
+    assert door_state(door_after_wait(wait, patched)) == (0x31, False)
+
+
+def test_conditional_goto_waits_only_on_native_state():
+    def program(flag: tuple[int, int]) -> dict:
+        return door_after_wait(
+            [["if", 60], ["ck", *flag, 0], ["goto", 20], ["end"]],
+            {"main:1": rows(["set", 4, 1, 1], ["end"])},
+        )
+
+    assert door_state(program((9, 27))) == (0, True)
+    # Flag 4:1 is set by a running script, so the jump ends by itself.
+    assert door_state(program((4, 1))) == (0x31, False)

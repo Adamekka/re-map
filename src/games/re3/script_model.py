@@ -31,6 +31,8 @@ RE3_OPCODES = OpcodeSet(
     # left unmodeled, so its Next makes a procedure Unsupported.
     loops=frozenset({0x0D, 0x10, 0x12}),
     for_loop=0x0D,
+    while_loop=0x10,
+    do_loop=0x12,
     loop_ends=frozenset({0x0F, 0x11, 0x13}),
     switch=0x14,
     case=0x15,
