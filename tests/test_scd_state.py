@@ -24,7 +24,9 @@ def rows(*body: list) -> list[list]:
     return [[index * 10, index * 10 + 10, *row] for index, row in enumerate(body)]
 
 
-def evaluate(program, flags=None, variables=None, approach=frozenset(), gids=()):
+def evaluate(
+    program, flags=None, variables=None, approach=frozenset(), gids=(), carried=()
+):
     flags = flags or {}
     variables = variables or {}
     state = GameState(
@@ -32,6 +34,7 @@ def evaluate(program, flags=None, variables=None, approach=frozenset(), gids=())
         lambda index: variables.get(index, 0),
         approach,
         frozenset({11}),
+        lambda item: item in carried,
     )
     program = {"main:0": rows(["end"]), "main:1": rows(["end"]), **program}
     return room_script_state(program, state, TASKS, {gid: (BANK, gid) for gid in gids})
@@ -253,6 +256,7 @@ def test_cache_revalidates_every_value_it_read():
         lambda index: 0,
         frozenset(),
         frozenset(),
+        lambda item: False,
     )
     program = {
         "init:0": rows(
@@ -290,3 +294,250 @@ def test_work_copy_patch_selects_the_checked_flag():
     assert evaluate(
         program, flags={(4, 0): True}, variables={7: 9}, gids=[1]
     ).item_presence == {1: False}
+
+
+def test_task_started_under_unreadable_state_keeps_its_taint():
+    program = {
+        "init:0": rows(["if", 30], ["cond", 0], ["exec", 2], ["end"]),
+        "main:2": rows(["item", 3, 0x31, 20, 15, 7], ["end"]),
+    }
+    assert evaluate(program, gids=[7]).item_presence == {7: None}
+
+
+def test_early_exit_under_unreadable_state_taints_later_creators():
+    program = {
+        "init:0": rows(
+            ["if", 30],
+            ["cond", 0],
+            ["end"],
+            ["item", 3, 0x31, 20, 15, 7],
+            ["door", 0, 0x31],
+            ["end"],
+        )
+    }
+    result = evaluate(program, gids=[7])
+    assert result.item_presence == {7: None}
+    assert result.doors[40].sat is None
+
+
+def test_item_replaced_under_unreadable_state_is_unresolved():
+    program = {
+        "init:0": rows(
+            ["item", 3, 0x31, 20, 15, 7],
+            ["if", 40],
+            ["cond", 0],
+            ["item", 3, 0x31, 21, 7, 8],
+            ["end"],
+        )
+    }
+    assert evaluate(program, gids=[7, 8]).item_presence == {7: None, 8: None}
+
+
+def test_later_pass_keeps_paths_that_start_different_tasks():
+    program = {
+        "init:0": rows(["aot", 4, 5, 0x31, 2], ["end"]),
+        "main:2": rows(
+            ["if", 40],
+            ["cond", 1],
+            ["case"],
+            ["else", 50],
+            ["exec", 6],
+            ["end"],
+        ),
+        "main:6": rows(["item", 3, 0x31, 20, 15, 7], ["end"]),
+    }
+    assert evaluate(program, gids=[7]).item_presence == {7: True}
+
+
+def test_zero_count_for_loop_skips_its_body():
+    program = {
+        "init:0": rows(
+            ["loop", 30, 0],
+            ["item", 3, 0x31, 20, 15, 7],
+            ["loop_end"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, gids=[7]).item_presence == {7: False}
+
+
+def test_byte_patch_keeps_a_negative_operands_high_byte():
+    # Work_copy replaces the low byte of Cmp's value -1 (0xFFFF) with 5.
+    program = {
+        "init:0": rows(
+            ["patch", 24, 7, 1],
+            ["if", 50],
+            ["cmp", 3, 0, -1],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(program, variables={7: 5, 3: -251}, gids=[1]).item_presence == {
+        1: True
+    }
+
+
+def test_calc_follows_native_operators():
+    program = {
+        "init:0": rows(
+            ["var", 4, 0, 6],
+            ["calc", 4, 0, 1],
+            ["calc2", 4, 2, 5],
+            ["switch", 70, 4, [[40, 21], [60, None]]],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["break"],
+            ["case"],
+            ["end"],
+        )
+    }
+    # (6 + 1) * var5 = 21 selects the first case.
+    assert evaluate(program, variables={5: 3}, gids=[1]).item_presence == {1: True}
+    assert evaluate(program, variables={5: 2}, gids=[1]).item_presence == {1: False}
+
+
+def test_carried_item_check_reads_the_inventory():
+    program = {
+        "init:0": rows(
+            ["if", 40], ["has", 54], ["item", 3, 0x31, 20, 15, 77], ["end"], ["end"]
+        )
+    }
+    assert evaluate(program, gids=[77]).item_presence == {77: False}
+    assert evaluate(program, gids=[77], carried={54}).item_presence == {77: True}
+
+
+def test_cache_revalidates_the_inventory():
+    carried = set()
+    state = GameState(
+        lambda bank, bit: False,
+        lambda index: 0,
+        frozenset(),
+        frozenset(),
+        lambda item: item in carried,
+    )
+    program = {
+        "init:0": rows(
+            ["if", 40], ["has", 54], ["item", 3, 0x31, 20, 15, 77], ["end"], ["end"]
+        ),
+        "main:0": rows(["end"]),
+        "main:1": rows(["end"]),
+    }
+    cache = ScriptStateCache()
+    acquisition = {77: (BANK, 77)}
+    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
+        77: False
+    }
+    carried.add(54)
+    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
+        77: True
+    }
+
+
+def test_wait_inside_a_switch_case_ends_the_task():
+    program = {
+        "main:0": rows(
+            ["switch", 60, 4, [[10, 0], [50, None]]],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["goto", 20],
+            ["break"],
+            ["case"],
+            ["item", 3, 0x31, 20, 15, 2],
+            ["end"],
+        )
+    }
+    # Case 0 waits at its backward jump and never reaches the later item.
+    assert evaluate(program, variables={4: 0}, gids=[1, 2]).item_presence == {
+        1: True,
+        2: False,
+    }
+    assert evaluate(program, variables={4: 1}, gids=[1, 2]).item_presence == {
+        1: False,
+        2: True,
+    }
+
+
+def test_copied_actor_member_selects_alternative_arrivals():
+    program = {
+        "init:0": rows(
+            ["var", 16, 3, -1],
+            ["calc", 16, 6, 2048],
+            ["var", 4, 1, 16],
+            ["if", 70],
+            ["cmp", 4, 5, 0],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+            ["end"],
+        )
+    }
+    # Each actor state is one way the visit can go, so the item exists.
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+    # An unread game-state result stays unresolved.
+    program["init:0"][0] = [0, 10, "var", 16, 2, -1]
+    assert evaluate(program, gids=[1]).item_presence == {1: None}
+    # An arrival variable overwritten with game state no longer forks into
+    # alternatives.
+    overwritten = {
+        "init:0": rows(
+            ["var", 26, 2, -1],
+            ["if", 50],
+            ["cmp", 26, 5, 0],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+            ["end"],
+        )
+    }
+    assert evaluate(
+        overwritten, approach=frozenset({26}), gids=[1]
+    ).item_presence == {1: None}
+
+
+def test_each_call_runs_its_loops_afresh():
+    program = {
+        "init:0": rows(
+            ["gosub", 7],
+            ["gosub", 7],
+            ["if", 60],
+            ["cmp", 4, 0, 4],
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+            ["end"],
+        ),
+        # Each call counts two iterations in variable 6 and adds them to 4.
+        "main:7": rows(
+            ["var", 6, 0, 0],
+            ["calc", 6, 0, 1],
+            ["calc", 4, 0, 1],
+            ["if", 70],
+            ["cmp", 6, 3, 2],
+            ["goto", 10],
+            ["end"],
+            ["end"],
+        ),
+    }
+    assert evaluate(program, gids=[1]).item_presence == {1: True}
+
+
+def independent_writes(count: int, body) -> list[list]:
+    """``count`` blocks, each writing under its own unreadable condition."""
+    flat = []
+    for index in range(count):
+        block = [["cond", 0], *body(index)]
+        end = (len(flat) + len(block) + 1) * 10
+        flat += [["if", end], *block]
+    return flat
+
+
+def test_independent_writes_merge_at_crowded_joins():
+    program = {
+        "init:0": rows(
+            *independent_writes(24, lambda index: [["set", 5, index, 1]]),
+            ["item", 3, 0x31, 20, 15, 1],
+            ["end"],
+        )
+    }
+    result = evaluate(program, gids=[1])
+    assert result.support is Support.Supported
+    assert result.item_presence == {1: True}
+

@@ -96,6 +96,9 @@ class Tracker:
     current_region: str = ""
     map_error: str = ""
     doors: tuple[DoorDetail, ...] = ()
+    # Door creators, as source:offset, that game state shows are not doors
+    # now, such as an alternative creator that the room's scripts do not run.
+    absent_doors: frozenset[str] = frozenset()
 
     def _key(self, room: RoomId) -> str:
         return str(room)

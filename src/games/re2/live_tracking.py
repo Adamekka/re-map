@@ -23,13 +23,9 @@ from games.re2.reset_candidates import DescriptorOrigin, tracking_item_candidate
 from games.re2.script_dispatch_items import ScriptItemDispatchConfig
 from games.re2.script_model import ScriptEvaluationConfig
 from games.runtime_identity import MemoryResult
-from games.scd_state import (
-    GameState,
-    RoomScriptState,
-)
-from games.scd_state import (
-    Support as ScriptSupport,
-)
+from games.scd_entry import entry_state
+from games.scd_state import RoomScriptState
+from games.scd_state import Support as ScriptSupport
 from tracker.exploration_state import DoorDetail, DoorUnlockState, ItemDetail, Tracker
 from tracker.polling import PollResult, PollStatus
 from ui.debug_view import render
@@ -236,42 +232,32 @@ def poll_re2(
             if not isinstance(evaluation, ScriptEvaluationConfig):
                 return None
 
-            def entry_flag(bank: int, bit: int) -> bool | None:
-                if (bank, bit) in evaluation.entry_cleared_flags:
-                    # The room loader clears these before its scripts run.
-                    return False
+            def readable_flag(bank: int, bit: int) -> bool | None:
                 if bank not in profile.flag_banks:
                     return None
                 if bit >= profile.flag_banks[bank][1] * 8:
                     return None
                 return flag(bank, bit)
 
-            def entry_variable(index: int) -> int | None:
-                if index in evaluation.entry_variables:
-                    return evaluation.entry_variables[index]
-                if index == evaluation.stage_variable:
-                    return source["stage"]
-                if index == evaluation.room_variable:
-                    return source["room"]
-                if (
-                    index in evaluation.unread_variables
-                    or index in evaluation.approach_variables
-                ):
-                    return None
-                raw = value(evaluation.variables_address + 2 * index, 2)
-                return raw - 0x10000 if raw & 0x8000 else raw
+            def carries(item_type: int) -> bool:
+                count = value(evaluation.inventory_count_address, 1)
+                return any(
+                    value(evaluation.inventory_slots_address + 4 * slot, 1) == item_type
+                    for slot in range(count)
+                )
 
-            program = evaluation.models[source["id"]]
             return profile.script_cache.get(
                 source["id"],
-                program,
-                GameState(
-                    entry_flag,
-                    entry_variable,
-                    evaluation.approach_variables,
-                    evaluation.approach_banks,
+                evaluation.models[source["id"]],
+                entry_state(
+                    evaluation.entry,
+                    readable_flag,
+                    lambda address: value(address, 2),
+                    carries,
+                    source["stage"],
+                    source["room"],
                 ),
-                evaluation.tasks,
+                evaluation.entry.tasks,
                 {
                     gid: (
                         layout["item_bank_early"]
@@ -485,6 +471,7 @@ def poll_re2(
                         )
 
         evaluations, doors = [], []
+        absent_doors: set[str] = set()
         for visited in sorted(set(tracker.rooms) | {key}):
             source = profile.rooms[visited]
             source_id = RoomId(source["stage"], source["room"])
@@ -812,10 +799,14 @@ def poll_re2(
                     if live is None or live[0] != definition["offset"]:
                         # The slot is empty or holds another interaction, so
                         # this creator is not a door in the room now.
+                        absent_doors.add(f"{visited}:{definition['offset']}")
                         continue
-                    # A script replaced this door in place with a message or
-                    # event, so it cannot be passed now. RE2-EVAL-001.
-                    observed = {**definition, "inactive": True}
+                    if live[1] not in (0, 1, 2):
+                        # A script replaced this door in place with a message
+                        # or event, so it cannot be passed now. A door or item
+                        # descriptor the registry could not bind stays
+                        # unresolved instead. RE2-EVAL-001.
+                        observed = {**definition, "inactive": True}
                 if (
                     visited == key
                     and observed is None
@@ -836,6 +827,7 @@ def poll_re2(
                     if verdict is None:
                         # Fresh scripts run another creator for this slot, or
                         # none at all. RE2-EVAL-001.
+                        absent_doors.add(f"{visited}:{definition['offset']}")
                         continue
                     if departed_enabled is None and verdict.sat is not None:
                         # The evaluated descriptor binds this creator's
@@ -1012,6 +1004,7 @@ def poll_re2(
             "Door conditions are unresolved." if not record.doors_complete else ""
         )
     tracker.doors = tuple(doors)
+    tracker.absent_doors = frozenset(absent_doors)
     return PollResult(
         PollStatus.Display, render(rid, tracker.rooms[key], profile.profile_id)
     )

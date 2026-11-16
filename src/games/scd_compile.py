@@ -24,6 +24,8 @@ class OpcodeSet:
     # Loop openers store their block length after the opcode and one operand
     # byte; Do's predicate follows its closing command.
     loops: frozenset[int]
+    # The loop opener whose unsigned count at operand offset 4 is a constant.
+    for_loop: int
     loop_ends: frozenset[int]
     switch: int
     case: int
@@ -33,16 +35,23 @@ class OpcodeSet:
     ck: int
     cmp: int
     set_: int
+    # Whether the player carries the item type in operand 1.
+    has_item: int
     # Unreadable predicates. Approach predicates depend only on how the player
     # arrives or acts; state predicates read persistent game state.
     approach_conditions: frozenset[int]
     state_conditions: frozenset[int]
     # opcode -> (kind, destination operand index, source operand index):
     # kind 0 stores the signed 16-bit value at the source index, 1 copies the
-    # variable named by the source byte, 2 stores an unreadable result.
+    # variable named by the source byte, 2 stores an unreadable result and 3
+    # an actor member, which depends on how the player arrives or acts.
     variable_writes: dict[int, tuple[int, int, int]]
     # Commands that store an unreadable result in one fixed variable.
     fixed_variable_writes: dict[int, int]
+    # Calc: operator at operand 2, variable at 3, signed value at 4. Calc2:
+    # operator at 1, variable at 2, source variable at 3.
+    calc: int
+    calc2: int
     # opcode -> offset of the type/amount/ID triple.
     items: dict[int, int]
     doors: frozenset[int]
@@ -100,6 +109,8 @@ def compile_procedure(
     rows: list[list] = []
     decoded: dict[int, int] = {}
     patches = []
+    widths_of: dict[int, int] = {}
+    terminal: set[int] = set()
     pending = [start]
     widths = opcodes.widths
     while pending:
@@ -126,7 +137,13 @@ def compile_procedure(
         elif opcode == opcodes.goto:
             row = ["goto", position + struct.unpack_from("<h", packet, 4)[0]]
         elif opcode in opcodes.loops:
-            row = ["loop", following + struct.unpack_from("<H", packet, 2)[0]]
+            row = [
+                "loop",
+                following + struct.unpack_from("<H", packet, 2)[0],
+                struct.unpack_from("<H", packet, 4)[0]
+                if opcode == opcodes.for_loop
+                else -1,
+            ]
         elif opcode in opcodes.loop_ends:
             row = ["loop_end"]
         elif opcode == opcodes.switch:
@@ -164,6 +181,8 @@ def compile_procedure(
             row = ["ck", packet[1], packet[2], packet[3]]
         elif opcode == opcodes.cmp:
             row = ["cmp", packet[2], packet[3], struct.unpack_from("<h", packet, 4)[0]]
+        elif opcode == opcodes.has_item:
+            row = ["has", packet[1]]
         elif opcode in opcodes.approach_conditions:
             row = ["cond", 1]
         elif opcode in opcodes.state_conditions:
@@ -180,6 +199,10 @@ def compile_procedure(
             row = ["var", packet[destination], kind, argument]
         elif opcode in opcodes.fixed_variable_writes:
             row = ["var", opcodes.fixed_variable_writes[opcode], 2, -1]
+        elif opcode == opcodes.calc:
+            row = ["calc", packet[3], packet[2], struct.unpack_from("<h", packet, 4)[0]]
+        elif opcode == opcodes.calc2:
+            row = ["calc2", packet[2], packet[1], packet[3]]
         elif opcode == opcodes.set_:
             row = ["set", packet[1], packet[2], packet[3]]
         elif opcode in opcodes.items:
@@ -223,6 +246,7 @@ def compile_procedure(
         elif opcode == opcodes.work_copy:
             row = ["patch", following + packet[2], packet[1], 2 if packet[3] else 1]
             patches.append(row[1])
+            widths_of[row[1]] = row[3]
         kind = row[0] if row is not None else ""
         if kind in ("if", "loop"):
             pending.extend((following, row[1]))
@@ -234,11 +258,18 @@ def compile_procedure(
             # Break continues at its enclosing block's end, which the opener
             # already queued.
             pending.append(following)
+        if kind in ("end", "goto", "else", "break"):
+            terminal.add(position)
         if row is not None:
             rows.append([position, following, *row])
     ordered = sorted(decoded.items())
-    if any(end > begin for (_, end), (begin, _) in zip(ordered, ordered[1:])):
-        # Two control paths decode overlapping commands.
+    if any(
+        end > begin and first not in terminal
+        for (first, end), (begin, _) in zip(ordered, ordered[1:])
+    ):
+        # Two control paths disagree about command boundaries. Only a command
+        # that never falls through, such as Evt_end, may overlap a later
+        # decode, because a jump may land in its padding.
         return [[start, start, "invalid"]]
     rows.sort()
     # Patches may change a predicate or flag write's bit, variable or value,
@@ -255,12 +286,21 @@ def compile_procedure(
             continue
         field = target - owner[0]
         op = owner[2]
-        if op in ("ck", "set") and field == 2 or op == "cmp" and field in (2, 4):
+        # A halfword patch at the bit or variable byte would also overwrite the
+        # expected value, operation or operator, which is not modeled.
+        if (
+            op in ("ck", "set")
+            and field == 2
+            and widths_of[target] == 1
+            or op == "cmp"
+            and (field == 4 or field == 2 and widths_of[target] == 1)
+        ):
             relevant.add(target)
+        elif op == "loop" and field >= 4:
+            # A patched count is no longer a constant that can skip the body.
+            owner[4] = -1
         elif not (
             op == "cond"
-            or op == "loop"
-            and field >= 4
             # Reset operands: slot, kind, SAT, then data; events keep their
             # procedure in data bytes 2-3.
             or op == "reset"

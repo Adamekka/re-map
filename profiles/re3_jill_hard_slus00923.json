@@ -8,16 +8,19 @@
   "address_space": "PS1 virtual address, little-endian",
   "research_ids": ["RE3-EVAL-001", "RE3-LIVE-001", "RE3-MAP-004", "RE3-MAP-007"],
   "runtime_layout": {
-    "state_blocks": [["0x800D1F2C", 1696], ["0x800CC830", 1384]],
+    "state_blocks": [["0x800D1F2C", 1696], ["0x800CC830", 1384], ["0x800DBB58", 64]],
     "aot_table_address_ps1": "0x800CC890",
-    "aot_capacity": 40,
+    "aot_capacity": 32,
     "item_bank_early": 7,
     "item_bank_late": 8,
     "item_bank_stage_boundary": 2,
     "key_bank": 9,
+    "file_type_min": 131,
     "unit_count_item_types": [],
     "heading_offset_degrees": 90,
-    "heading_direction": 1
+    "heading_direction": 1,
+    "inventory_pointer_address_ps1": "0x800D23B4",
+    "inventory_count_offset": 298
   },
   "flag_bank_addresses_ps1": {
     "0": "0x800CC858", "1": "0x800D1F2C", "2": "0x800CCBA0", "3": "0x800D1FA0",
@@ -30,7 +33,7 @@
     "28": "0x800D2094", "29": "0x800D2098", "30": "0x800D209C", "31": "0x800D20A0",
     "32": "0x800D20A4", "33": "0x800D20A8", "34": "0x800D20AC", "35": "0x800D20B0",
     "36": "0x800D20B4", "37": "0x800D20B8", "38": "0x800D20BC", "39": "0x800D20C0",
-    "40": "0x800D20C4", "41": "0x800D20C8", "42": "0x800CC854", "44": "0x800CCBAC",
+    "40": "0x800D20C4", "41": "0x800D20C8", "42": "0x800CC854", "43": "0x800DBB58", "44": "0x800CCBAC",
     "45": "0x800D20D4", "46": "0x800D2048", "47": "0x800D258C", "48": "0x800D25AC",
     "49": "0x800D1F30"
   },
@@ -51,8 +54,8 @@
     ],
     "stage_variable": 24,
     "room_variable": 25,
-    "unread_variables": [12, 13, 14, 15, 28, 29, 30, 36],
-    "approach_variables": [26, 27],
+    "unread_variables": [12, 13, 14, 15, 28, 30, 36],
+    "approach_variables": [26, 27, 29],
     "approach_banks": []
   },
   "map_projection": {"world_bias": 0, "units_per_pixel": 450},

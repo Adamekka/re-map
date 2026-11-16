@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from games.re2.re2_profile import Re2Profile  # noqa: E402
 from games.re2.script_model import ScriptEvaluationConfig  # noqa: E402
+from games.scd_entry import entry_state  # noqa: E402
 from games.scd_state import GameState, Support, room_script_state  # noqa: E402
 
 PROFILES = {
@@ -28,26 +29,20 @@ PROFILES = {
 
 
 def fresh_game(profile: Re2Profile, room: dict, scenario: set) -> GameState:
-    evaluation = profile.script_evaluation
-
     def flag(bank: int, bit: int) -> bool | None:
         if bank not in profile.flag_banks:
             return None
         return (bank, bit) in scenario
 
-    def variable(index: int) -> int | None:
-        if index in evaluation.entry_variables:
-            return evaluation.entry_variables[index]
-        if index == evaluation.stage_variable:
-            return room["stage"]
-        if index == evaluation.room_variable:
-            return room["room"]
-        if index in evaluation.unread_variables | evaluation.approach_variables:
-            return None
-        return 0
-
-    return GameState(
-        flag, variable, evaluation.approach_variables, evaluation.approach_banks
+    # Every script variable starts at zero in a new game.
+    return entry_state(
+        profile.script_evaluation.entry,
+        flag,
+        lambda address: 0,
+        # A new game starts with an empty inventory.
+        lambda item: False,
+        room["stage"],
+        room["room"],
     )
 
 
@@ -67,7 +62,7 @@ def test_every_source_resolves_from_a_fresh_game(profile_id, script_evaluation):
         result = room_script_state(
             evaluation.models[key],
             fresh_game(profile, room, PROFILES[profile_id][1]),
-            evaluation.tasks,
+            evaluation.entry.tasks,
             {gid: (bank, gid) for gid in evaluation.item_ids[key]},
         )
         if result.support is not Support.Supported:

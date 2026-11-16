@@ -71,3 +71,52 @@ def test_fresh_acquisition_and_rewind_reach_departed_evaluations(leon):
         else:
             assert "uncollected" in states
             assert tracker.rooms[room].completion is RoomCompletion.Incomplete
+
+
+def test_current_door_slots_follow_the_live_registry(leon):
+    profile, _, put, read = build_snapshot(leon, "00-01")
+    definition = profile.rooms["00-01"]["doors"][0]
+    pointer = 0x80100000 + definition["offset"] + 2
+    registry = (
+        int(profile.runtime_layout["aot_table_address_ps1"], 0) + definition["slot"] * 4
+    )
+    observation = f"00-01:{definition['offset']}"
+
+    def door():
+        tracker = Tracker()
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        return [d for d in tracker.doors if d.observation_id == observation]
+
+    [live] = door()
+    assert live.state == "OPEN"
+    # A message written over the door in place blocks it.
+    put(pointer, 4, 1)
+    assert [d.state for d in door()] == ["BLOCKED"]
+    # A door descriptor whose geometry bit disagrees cannot be trusted.
+    put(pointer, 1, 1)
+    put(pointer + 1, 0x31 | (0x00 if definition["four_point"] else 0x80), 1)
+    assert [d.state for d in door()] == ["UNCHECKED"]
+    # An empty slot holds no door now.
+    put(registry, 0, 4)
+    assert door() == []
+
+
+def test_map_state_lists_doors_absent_in_game_state(leon):
+    from ui.map_view import map_state
+
+    profile, _, put, read = build_snapshot(leon, "00-01")
+    definition = profile.rooms["00-01"]["doors"][0]
+    put(
+        int(profile.runtime_layout["aot_table_address_ps1"], 0)
+        + definition["slot"] * 4,
+        0,
+        4,
+    )
+    tracker = Tracker()
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert f"00-01:{definition['offset']}" in map_state(tracker)["absent_doors"]
+    # A rewind that restores the slot removes the absence.
+    tracker = Tracker()
+    profile, _, _, read = build_snapshot(leon, "00-01")
+    assert poll_re2(profile, tracker, read).status is PollStatus.Display
+    assert map_state(tracker)["absent_doors"] == []

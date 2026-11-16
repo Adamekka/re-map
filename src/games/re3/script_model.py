@@ -30,6 +30,7 @@ RE3_OPCODES = OpcodeSet(
     # For, While and Do. For2 (0x0E) never occurs in the owned scripts and is
     # left unmodeled, so its Next makes a procedure Unsupported.
     loops=frozenset({0x0D, 0x10, 0x12}),
+    for_loop=0x0D,
     loop_ends=frozenset({0x0F, 0x11, 0x13}),
     switch=0x14,
     case=0x15,
@@ -43,18 +44,21 @@ RE3_OPCODES = OpcodeSet(
     # Actor member comparison (0x80053C74) and the player-control check
     # (0x80058B84).
     approach_conditions=frozenset({0x27, 0x43}),
-    # Inventory searches (0x80055A18, 0x80055620), a game-state table test
+    # Inventory search 0x8006CC8C through the pointer at 0x800D23B4.
+    has_item=0x6B,
+    # An inventory quantity test (0x80055A18), a game-state table test
     # (0x800555BC) and a system-flag test (0x80055660).
-    state_conditions=frozenset({0x35, 0x36, 0x6B, 0x6C}),
-    # Save, Copy, Calc, Calc2 and Member_copy.
+    state_conditions=frozenset({0x35, 0x36, 0x6C}),
+    # Save, Copy and Member_copy.
     variable_writes={
         0x1E: (0, 1, 2),
         0x1F: (1, 1, 2),
-        0x20: (2, 3, 0),
-        0x21: (2, 2, 0),
-        0x42: (2, 1, 0),
+        0x42: (3, 1, 0),
     },
     fixed_variable_writes={},
+    # Operator table 0x80010900 (handler 0x80053A54).
+    calc=0x20,
+    calc2=0x21,
     items={0x67: 14, 0x68: 22},
     doors=frozenset({0x61, 0x62}),
     interactions=frozenset({0x63, 0x64}),

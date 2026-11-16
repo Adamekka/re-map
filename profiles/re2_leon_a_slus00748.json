@@ -1915,7 +1915,9 @@
     "room_variable": 25,
     "unread_variables": [12, 13, 14, 15, 28, 29],
     "approach_variables": [26, 27],
-    "approach_banks": [11]
+    "approach_banks": [11],
+    "inventory_slots_address_ps1": "0x800D4A3C",
+    "inventory_count_address_ps1": "0x800D46AC"
   },
   "floor_plans_path": "../data/floor_plans_slus00748.json",
   "names_path": "../data/re2_names.json",

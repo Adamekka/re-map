@@ -41,3 +41,25 @@ def test_door_creators_model_unknown_and_unterminated_procedures():
     assert isinstance(truncated, RoomFormatFailure) and truncated.offset == 1
     unterminated = door_creators(*procedure(bytes([0x00, 0x00])))
     assert unterminated == RoomFormatFailure("script", 2, "procedure ends without evt_end")
+
+
+def test_jump_into_evt_end_padding_decodes_both_commands():
+    from games.re3.script_model import RE3_OPCODES
+    from games.scd_compile import compile_procedure
+
+    def compile_with(command: int) -> list[list]:
+        # If falls through to a two-byte command at 6; a Goto at 14 jumps to 7,
+        # inside that command.
+        data = bytearray([0x06, 0, 10, 0, 0, 0, command, 0x01, 0, 0, 0, 0, 0, 0])
+        data += bytes([0x18, 0, 0, 0]) + struct.pack("<h", 7 - 14)
+        return compile_procedure(RE3_OPCODES, bytes(data), 0, len(data))
+
+    # Evt_end never falls through, so its padding is free for the jump target.
+    assert [row[:3] for row in compile_with(0x01)] == [
+        [0, 4, "if"],
+        [6, 8, "end"],
+        [7, 9, "end"],
+        [14, 20, "goto"],
+    ]
+    # A command that falls through cannot share bytes with another decode.
+    assert compile_with(0x05) == [[0, 0, "invalid"]]

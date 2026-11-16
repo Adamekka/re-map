@@ -14,16 +14,20 @@ Unsupported control flow makes the whole evaluation Unsupported.
 
 Instruction rows are lists ``[offset, next, op, *args]``:
 
-- ``if end`` / ``else target`` / ``loop end`` / ``loop_end`` / ``case`` /
+- ``loop end count``: count -1 unless a constant For count can skip the body
+- ``if end`` / ``else target`` / ``loop_end`` / ``case`` /
   ``break`` / ``goto target`` / ``end`` / ``invalid``
 - ``switch end variable [[label, value], ...]`` with value None for Default
 - ``ck bank bit expected``
 - ``cmp variable operation value`` with ==, >, >=, <, <=, != and bit test
+- ``has item``: the player carries an item type
 - ``cond approach``: an unreadable condition; approach 1 means it depends only
   on how the player arrives or acts
 - ``set bank bit operation`` with 0 clear, 1 set, 7 toggle
 - ``var variable kind argument``: kind 0 stores the constant argument, 1
-  copies variable ``argument`` and 2 stores an unreadable result
+  copies variable ``argument``, 2 stores an unreadable result and 3 an actor
+  member, which depends on how the player arrives or acts
+- ``calc variable operator value`` / ``calc2 variable operator source``
 - ``item slot sat type amount gid`` / ``door slot sat``
 - ``aot slot kind sat call`` (``call`` is a procedure number or -1)
 - ``reset slot kind sat call type amount gid`` (item fields -1 unless an item)
@@ -48,8 +52,9 @@ MAX_STEPS = 200_000
 # Total work for one interpreter, across every path.
 MAX_TOTAL_STEPS = 2_000_000
 # Distinct states one join point keeps exact. Beyond this, arriving paths
-# forget the values they wrote, which then read as tainted unknowns, so
-# independent unread conditions cannot multiply paths without bound.
+# forget every value any path arriving there wrote, which then reads as a
+# tainted unknown, so independent unread conditions cannot multiply paths
+# without bound.
 JOIN_WIDEN = 64
 # Loops and backward jumps run at most this many times per path. Their exit is
 # assumed to happen eventually, as it does for normal script waits.
@@ -106,6 +111,8 @@ class GameState:
     variable: VariableReader
     approach_variables: frozenset[int]
     approach_banks: frozenset[int]
+    # Whether the player carries an item type, or None when unreadable.
+    inventory: Callable[[int], bool | None]
 
 
 @dataclass(frozen=True)
@@ -129,12 +136,55 @@ _COMPARE = (
 )
 
 
+def _calculate(operator: int, current: int | None, operand: int | None) -> int | None:
+    """Apply a native Calc operator to signed 16-bit values.
+
+    Division, modulo and the logical right shift differ between revisions for
+    negative inputs, and a zero divisor traps, so those cases stay unread.
+    """
+    if current is None or operand is None:
+        return None
+    if operator == 0:
+        result = current + operand
+    elif operator == 1:
+        result = current - operand
+    elif operator == 2:
+        result = current * operand
+    elif operator in (3, 4) and current >= 0 and operand > 0:
+        result = current // operand if operator == 3 else current % operand
+    elif operator == 5:
+        result = current | operand
+    elif operator == 6:
+        result = current & operand
+    elif operator == 7:
+        result = current ^ operand
+    elif operator == 8:
+        result = ~current
+    elif operator == 9 and 0 <= operand < 32:
+        result = current << operand
+    elif (
+        operator in (10, 11) and 0 <= operand < 32 and (operator == 11 or current >= 0)
+    ):
+        result = current >> operand
+    else:
+        return None
+    result &= 0xFFFF
+    return result - 0x10000 if result & 0x8000 else result
+
+
 @dataclass
 class _Frame:
     proc: str
     index: int
     # (kind, end offset, opening row index, tainted)
     blocks: list[tuple[str, int, int, bool]]
+    # A task started under unreadable game state; calls keep their callers'
+    # frames, so only task starts need this.
+    tainted: bool
+    # Loop opener or backward Goto offset -> (iterations, first offset, last
+    # offset) of the loop region. A count lasts while execution stays in its
+    # region, so a fresh entry or a new call runs the loop again.
+    loops: dict[int, tuple[int, int, int]] = field(default_factory=dict)
 
 
 @dataclass
@@ -145,9 +195,9 @@ class _Path:
     slots: dict[int, tuple[Descriptor, bool]]
     flags: dict[tuple[int, int], tuple[bool | None, bool]]
     variables: dict[int, tuple[int | None, bool]]
-    pending: list[int]
+    # Tasks to start, with whether unreadable game state started them.
+    pending: list[tuple[int, bool]]
     executed: dict[int, int]
-    loops: dict[tuple[str, int], int]
     triggers: set[int]
     # (gid, type, amount) for every item a create or Reset wrote.
     created: set[tuple[int, int, int]]
@@ -157,54 +207,100 @@ class _Path:
     patches: dict[int, tuple[int | None, int, bool]]
     # Banks written at a bit no reader can determine.
     unknown_banks: set[int]
+    # Written variables whose unread values depend only on how the player
+    # arrives or acts, such as a copied actor member.
+    arrival: set[int]
+    # An unreadable game-state branch could leave this procedure or task
+    # early, so everything after it depends on that game state.
+    diverged: bool = False
     steps: int = 0
 
     def fork(self) -> _Path:
         return _Path(
-            [_Frame(f.proc, f.index, list(f.blocks)) for f in self.frames],
+            [
+                _Frame(f.proc, f.index, list(f.blocks), f.tainted, dict(f.loops))
+                for f in self.frames
+            ],
             dict(self.slots),
             dict(self.flags),
             dict(self.variables),
             list(self.pending),
             dict(self.executed),
-            dict(self.loops),
             set(self.triggers),
             set(self.created),
             set(self.dispatched),
             dict(self.patches),
             set(self.unknown_banks),
+            set(self.arrival),
+            self.diverged,
             self.steps,
         )
 
     def tainted(self) -> bool:
-        return any(block[3] for frame in self.frames for block in frame.blocks)
+        return self.diverged or any(
+            frame.tainted or any(block[3] for block in frame.blocks)
+            for frame in self.frames
+        )
 
-    def outcome(self) -> tuple:
-        # Finished paths differ only through their effects.
+    def outcome(self, taint: bool) -> tuple:
+        """Effects that tell finished paths apart, with or without taint."""
+
+        def values(written: dict) -> tuple:
+            return tuple(
+                sorted(
+                    (key, value if taint else value[:-1])
+                    for key, value in written.items()
+                )
+            )
+
         return (
-            tuple(sorted(self.slots.items())),
-            tuple(sorted(self.flags.items())),
-            tuple(sorted(self.variables.items())),
+            values(self.slots),
+            values(self.flags),
+            values(self.variables),
             frozenset(self.triggers),
             frozenset(self.created),
             frozenset(self.dispatched),
-            tuple(sorted(self.patches.items())),
+            values(self.patches),
             frozenset(self.unknown_banks),
+            frozenset(self.arrival),
+            tuple(
+                sorted(self.pending if taint else {proc for proc, _ in self.pending})
+            ),
+            self.diverged and taint,
         )
 
-    def key(self) -> tuple:
+    def key(self, taint: bool) -> tuple:
         return (
-            tuple((f.proc, f.index, tuple(f.blocks)) for f in self.frames),
-            tuple(self.pending),
+            tuple(
+                (
+                    f.proc,
+                    f.index,
+                    tuple(block if taint else block[:3] for block in f.blocks),
+                    f.tainted and taint,
+                    tuple(sorted(f.loops.items())),
+                )
+                for f in self.frames
+            ),
+            tuple(self.pending if taint else [proc for proc, _ in self.pending]),
             tuple(sorted(self.executed.items())),
-            tuple(sorted(self.loops.items())),
-            self.outcome(),
+            self.outcome(taint),
         )
 
 
 def _fresh_path(proc: str) -> _Path:
     return _Path(
-        [_Frame(proc, 0, [])], {}, {}, {}, [], {}, {}, set(), set(), set(), {}, set()
+        [_Frame(proc, 0, [], False)],
+        {},
+        {},
+        {},
+        [],
+        {},
+        set(),
+        set(),
+        set(),
+        {},
+        set(),
+        set(),
     )
 
 
@@ -217,21 +313,21 @@ class _Interpreter:
         self,
         program: dict[str, list[list]],
         state: GameState,
-        fresh_source: bool,
-        inline_tasks: bool,
+        entry: bool,
     ) -> None:
         self.program = program
-        # Entry runs started tasks in order on the same path. Later analysis
-        # only needs what each task can create, so it queues them instead of
-        # multiplying every interleaving.
-        self.inline_tasks = inline_tasks
+        # Entry runs the room's automatic tasks on a freshly loaded source,
+        # which has no Work_copy patches yet, and runs started tasks in order
+        # on the same path. Later analysis covers procedures that may run after
+        # any patch, so patched fields are unread. It only needs what each task
+        # can create or start, so it queues started tasks instead of
+        # multiplying every interleaving, and merges paths that differ only in
+        # taint, which never changes control flow.
+        self.entry = entry
         self.offsets = {
             name: [row[0] for row in rows] for name, rows in program.items()
         }
         self.state = state
-        # A freshly loaded source has no Work_copy patches yet. Procedures
-        # started later may run after any patch, so patched fields are unread.
-        self.fresh_source = fresh_source
         self.patch_targets = frozenset(
             row[3] for rows in program.values() for row in rows if row[2] == "patch"
         )
@@ -243,7 +339,13 @@ class _Interpreter:
         # Without merging, independent unread conditions multiply outcomes.
         self.joins = {name: self._joins(rows) for name, rows in program.items()}
         self.seen: set[tuple] = set()
+        # Join -> arrivals, and every flag, variable and patch target that
+        # arriving paths had written.
         self.join_counts: dict[tuple[str, int], int] = {}
+        self.join_writes: dict[
+            tuple[str, int], tuple[set[tuple[int, int]], set[int], dict[int, int]]
+        ] = {}
+        self.exit_cache: dict[tuple[str, int, int], bool] = {}
 
     def _joins(self, rows: list[list]) -> frozenset[int]:
         offsets = [row[0] for row in rows]
@@ -279,11 +381,12 @@ class _Interpreter:
             value, width, tainted = path.patches[offset]
             if value is None:
                 return None, True
-            value = original & ~0xFF | value & 0xFF if width == 1 else value & 0xFFFF
+            # Patch the low byte of the operand's 16-bit encoding.
+            value = original & 0xFF00 | value & 0xFF if width == 1 else value & 0xFFFF
             if signed and value & 0x8000:
                 value -= 0x10000
             return value, tainted
-        if offset in self.patch_targets and not self.fresh_source:
+        if offset in self.patch_targets and not self.entry:
             return None, True
         return original, False
 
@@ -292,21 +395,31 @@ class _Interpreter:
             return path.variables[index]
         return self.state.variable(index), False
 
+    def _arrival(self, path: _Path, index: int) -> bool:
+        """Whether the variable's unread value depends only on arrival."""
+        if index in path.variables:
+            return index in path.arrival
+        return index in self.state.approach_variables
+
     def run(self, start: list[_Path]) -> list[_Path]:
         done, work, finished = [], list(start), set()
         self.seen.clear()
         self.join_counts.clear()
+        self.join_writes.clear()
         while work:
             path = work.pop()
             result = self._step_until_done(path, work)
-            if result is not None and result.outcome() not in finished:
-                finished.add(result.outcome())
+            if result is not None:
+                outcome = result.outcome(self.entry)
+                if outcome in finished:
+                    continue
+                finished.add(outcome)
                 done.append(result)
                 if len(done) > MAX_TERMINALS:
                     raise _Unsupported("too many script outcomes")
         return done
 
-    def _start_task(self, path: _Path, proc: int) -> bool:
+    def _start_task(self, path: _Path, proc: int, tainted: bool) -> bool:
         name = f"main:{proc}"
         if name not in self.program:
             raise _Unsupported(f"missing procedure {name}")
@@ -314,8 +427,34 @@ class _Interpreter:
         if count >= LOOP_LIMIT:
             return False
         path.executed[proc] = count + 1
-        path.frames = [_Frame(name, 0, [])]
+        path.frames = [_Frame(name, 0, [], tainted)]
         return True
+
+    def _exits(self, proc: str, first: int, end: int) -> bool:
+        """Whether rows from ``first`` up to offset ``end`` can leave early.
+
+        A terminator, a jump out of the region or a Break leaves the code that
+        follows the region unexecuted on that branch.
+        """
+        key = (proc, first, end)
+        cached = self.exit_cache.get(key)
+        if cached is not None:
+            return cached
+        rows = self.program[proc]
+        begin = rows[first][0] if first < len(rows) else end
+        result = False
+        for offset, following, op, *args in rows[first:]:
+            if offset >= end:
+                break
+            if op in ("end", "break"):
+                result = True
+            elif op in ("goto", "else") and not begin <= args[0] <= end:
+                # The region's own closing Else lands on its else body.
+                result = not (op == "else" and following == end)
+            if result:
+                break
+        self.exit_cache[key] = result
+        return result
 
     def _condition(
         self, path: _Path, offset: int, op: str, args: list
@@ -339,20 +478,23 @@ class _Interpreter:
                 return None, False, True
             current, tainted = self._variable(path, index & 0xFF)
             tainted = tainted or index_taint or value_taint
-            approach = index in self.state.approach_variables
+            approach = self._arrival(path, index & 0xFF)
             if args[1] >= len(_COMPARE):
                 # The native handler returns false for other operators.
                 return False, approach, tainted
             if current is None:
                 return None, approach, tainted
             return _COMPARE[args[1]](current, value), approach, tainted
+        if op == "has":
+            present = self.state.inventory(args[0])
+            return present, False, False
         return None, args[0] == 1, False
 
     def _step_until_done(self, path: _Path, work: list[_Path]) -> _Path | None:
         while True:
             if not path.frames:
-                while self.inline_tasks and path.pending:
-                    if self._start_task(path, path.pending.pop(0)):
+                while self.entry and path.pending:
+                    if self._start_task(path, *path.pending.pop(0)):
                         break
                 else:
                     return path
@@ -362,23 +504,6 @@ class _Interpreter:
                 raise _Unsupported("script evaluation step limit")
             frame = path.frames[-1]
             rows = self.program[frame.proc]
-            if frame.index in self.joins[frame.proc]:
-                key = path.key()
-                if key in self.seen:
-                    return None
-                join = (frame.proc, frame.index)
-                self.join_counts[join] = self.join_counts.get(join, 0) + 1
-                if self.join_counts[join] > JOIN_WIDEN:
-                    path.flags = {flag: (None, True) for flag in path.flags}
-                    path.variables = {index: (None, True) for index in path.variables}
-                    path.patches = {
-                        target: (None, width, True)
-                        for target, (_, width, _) in path.patches.items()
-                    }
-                    key = path.key()
-                    if key in self.seen:
-                        return None
-                self.seen.add(key)
             if frame.index >= len(rows):
                 # Procedures end with an explicit terminator. Running off the
                 # decoded range means trailing bytes were not understood.
@@ -386,6 +511,47 @@ class _Interpreter:
             offset, _, op, *args = rows[frame.index]
             while frame.blocks and offset >= frame.blocks[-1][1]:
                 frame.blocks.pop()
+            if frame.loops:
+                # Leaving a loop's region ends its iterations.
+                frame.loops = {
+                    key: loop
+                    for key, loop in frame.loops.items()
+                    if loop[1] <= offset <= loop[2]
+                }
+            if frame.index in self.joins[frame.proc]:
+                key = path.key(self.entry)
+                if key in self.seen:
+                    return None
+                join = (frame.proc, frame.index)
+                self.join_counts[join] = self.join_counts.get(join, 0) + 1
+                flags, variables, patches = self.join_writes.setdefault(
+                    join, (set(), set(), {})
+                )
+                flags.update(path.flags)
+                variables.update(path.variables)
+                patches.update(
+                    (target, width) for target, (_, width, _) in path.patches.items()
+                )
+                if self.join_counts[join] > JOIN_WIDEN:
+                    if self.entry:
+                        # Every value any arriving path wrote becomes a tainted
+                        # unknown, so paths differing only in what they wrote
+                        # merge here.
+                        path.flags = dict.fromkeys(flags, (None, True))
+                        path.variables = dict.fromkeys(variables, (None, True))
+                        path.patches = {
+                            target: (None, width, True)
+                            for target, width in patches.items()
+                        }
+                    else:
+                        # Later analysis treats every value the room writes as
+                        # unread, so forgetting them reads the same.
+                        path.flags, path.variables, path.patches = {}, {}, {}
+                    path.arrival = set()
+                    key = path.key(self.entry)
+                    if key in self.seen:
+                        return None
+                self.seen.add(key)
             nxt = frame.index + 1
             tainted = path.tainted()
             if op == "end":
@@ -395,13 +561,15 @@ class _Interpreter:
                 continue
             if op == "if":
                 frame.blocks.append(("if", args[0], frame.index, False))
-            elif op in ("ck", "cmp", "cond"):
+            elif op in ("ck", "cmp", "cond", "has"):
                 value, approach, read_taint = self._condition(path, offset, op, args)
                 if value is None:
                     other = path.fork()
                     # Unreadable game state taints both branches until they
                     # join. Arrival-dependent branches are alternatives.
                     taint = read_taint or not approach
+                    if taint:
+                        self._diverge(path, other)
                     self._fail(other, taint)
                     work.append(other)
                     if taint:
@@ -417,18 +585,24 @@ class _Interpreter:
                 frame.blocks.pop()
                 nxt = self._index(frame.proc, args[0])
             elif op == "loop":
-                frame.blocks.append(("loop", args[0], frame.index, False))
+                end, count = args
+                if count == 0:
+                    # The native For handler skips a zero-count body.
+                    nxt = self._index(frame.proc, end)
+                else:
+                    frame.blocks.append(("loop", end, frame.index, False))
             elif op == "loop_end":
                 if not frame.blocks or frame.blocks[-1][0] != "loop":
                     raise _Unsupported("loop end outside a loop")
                 _, end, start, _ = frame.blocks[-1]
-                key = (frame.proc, start)
-                path.loops[key] = path.loops.get(key, 0) + 1
-                if path.loops[key] < LOOP_LIMIT:
+                opener = rows[start][0]
+                count = frame.loops.get(opener, (0,))[0] + 1
+                if count < LOOP_LIMIT:
+                    frame.loops[opener] = (count, opener, end - 1)
                     nxt = start + 1
                 else:
                     # Forget the count on exit so later joins can merge.
-                    del path.loops[key]
+                    frame.loops.pop(opener, None)
                     frame.blocks.pop()
                     nxt = self._index(frame.proc, end)
             elif op == "switch":
@@ -452,8 +626,16 @@ class _Interpreter:
                     if all(value is not None for _, value in labels):
                         chosen.append(end)
                 taint = read_taint or (
-                    current is None and variable not in self.state.approach_variables
+                    current is None and not self._arrival(path, variable)
                 )
+                if (
+                    taint
+                    and len(chosen) > 1
+                    and self._exits_besides_breaks(frame.proc, frame.index + 1, end)
+                ):
+                    # A case can leave early, so code after the switch
+                    # depends on the unread selector.
+                    path.diverged = True
                 for label in chosen[1:]:
                     other = path.fork()
                     other.frames[-1].blocks.append(("switch", end, frame.index, taint))
@@ -467,18 +649,22 @@ class _Interpreter:
                 if not frame.blocks:
                     raise _Unsupported("break outside a loop or switch")
                 _, end, start, _ = frame.blocks.pop()
-                path.loops.pop((frame.proc, start), None)
+                frame.loops.pop(rows[start][0], None)
                 nxt = self._index(frame.proc, end)
             elif op == "goto":
                 target = args[0]
                 if target <= offset:
-                    key = (frame.proc, offset)
-                    path.loops[key] = path.loops.get(key, 0) + 1
-                    if path.loops[key] >= LOOP_LIMIT:
+                    count = frame.loops.get(offset, (0,))[0] + 1
+                    frame.loops[offset] = (count, target, offset)
+                    if count >= LOOP_LIMIT:
                         # A repeated backward jump is a wait. Continue as if
                         # the enclosing condition eventually stopped holding.
-                        del path.loops[key]
-                        if not frame.blocks:
+                        del frame.loops[offset]
+                        if not any(
+                            block[0] in ("if", "else", "loop") for block in frame.blocks
+                        ):
+                            # No condition encloses the jump, so it waits until
+                            # another task ends this one.
                             path.frames.pop()
                             if path.frames:
                                 path.frames[-1].index += 1
@@ -519,15 +705,44 @@ class _Interpreter:
             elif op == "var":
                 variable, kind, argument = args
                 self.written_variables.add(variable)
+                arrival = False
                 if kind == 0:
                     path.variables[variable] = (argument, tainted)
                 elif kind == 1:
                     value, read_taint = self._variable(path, argument)
+                    arrival = value is None and self._arrival(path, argument)
                     path.variables[variable] = (value, tainted or read_taint)
                 else:
-                    # Unread arithmetic or actor values. Comparisons on them
-                    # fork as game state.
+                    # Comparisons on unread results fork as game state, and on
+                    # actor members as alternative arrivals.
+                    arrival = kind == 3
                     path.variables[variable] = (None, tainted)
+                if arrival:
+                    path.arrival.add(variable)
+                else:
+                    path.arrival.discard(variable)
+            elif op in ("calc", "calc2"):
+                variable, operator, argument = args
+                self.written_variables.add(variable)
+                current, read_taint = self._variable(path, variable)
+                inputs = [(current, self._arrival(path, variable))]
+                if op == "calc":
+                    operand, operand_taint = argument, False
+                else:
+                    operand, operand_taint = self._variable(path, argument)
+                    inputs.append((operand, self._arrival(path, argument)))
+                result = _calculate(operator, current, operand)
+                path.variables[variable] = (
+                    result,
+                    tainted or read_taint or operand_taint,
+                )
+                # The result depends only on arrival when every unread input
+                # does; a known input the operator rejects is not one.
+                unread = [arrival for value, arrival in inputs if value is None]
+                if result is None and unread and all(unread):
+                    path.arrival.add(variable)
+                else:
+                    path.arrival.discard(variable)
             elif op == "item":
                 slot, sat, item_type, amount, gid = args
                 path.slots[slot] = (Item(offset, sat, item_type, amount, gid), tainted)
@@ -559,7 +774,7 @@ class _Interpreter:
             elif op == "aot_on":
                 current = path.slots.get(args[0], (None, False))[0]
                 if isinstance(current, Interaction) and current.call >= 0:
-                    path.pending.append(current.call)
+                    path.pending.append((current.call, tainted))
                 elif isinstance(current, Item):
                     # Aot_on hands over an item directly, bypassing a zero
                     # activation mask (RE2-DISPATCH-001). A door activation is
@@ -573,10 +788,8 @@ class _Interpreter:
                 name = f"main:{args[0]}"
                 if name not in self.program:
                     raise _Unsupported(f"missing procedure {name}")
-                # A call made under tainted control inherits that taint.
-                path.frames.append(
-                    _Frame(name, 0, [("call", 1 << 62, -1, True)] if tainted else [])
-                )
+                # The caller's frame stays on the stack and keeps its taint.
+                path.frames.append(_Frame(name, 0, [], False))
                 continue
             elif op == "patch":
                 target, variable, width = args
@@ -585,11 +798,50 @@ class _Interpreter:
             elif op == "exec":
                 if args[0] < 0:
                     raise _Unsupported("task start without a resolved procedure")
-                path.pending.append(args[0])
+                if self.entry or all(proc != args[0] for proc, _ in path.pending):
+                    # Later analysis only queues which procedures start, so a
+                    # repeated start would only multiply otherwise equal paths.
+                    path.pending.append((args[0], tainted))
             else:
                 # Includes "invalid": the compiler could not bound this code.
                 raise _Unsupported(f"unsupported model operation {op}")
             frame.index = nxt
+
+    def _exits_besides_breaks(self, proc: str, first: int, end: int) -> bool:
+        rows = self.program[proc]
+        begin = rows[first][0] if first < len(rows) else end
+        return any(
+            op == "end" or op == "goto" and not begin <= args[0] <= end
+            for offset, _, op, *args in rows[first:]
+            if offset < end
+        )
+
+    def _diverge(self, taken: _Path, skipped: _Path) -> None:
+        """Mark branches whose skipped region could have left early.
+
+        ``taken`` enters the innermost if, else or loop block and ``skipped``
+        will jump past it; a true if branch later skips its else body.
+        """
+        frame = taken.frames[-1]
+        block = next(
+            (b for b in reversed(frame.blocks) if b[0] in ("if", "else", "loop")),
+            None,
+        )
+        if block is None:
+            return
+        kind, end, start, _ = block
+        if self._exits(frame.proc, start + 1, end):
+            skipped.diverged = True
+        rows = self.program[frame.proc]
+        index = self._index(frame.proc, end)
+        if (
+            kind == "if"
+            and index > 0
+            and rows[index - 1][1] == end
+            and rows[index - 1][2] == "else"
+            and self._exits(frame.proc, index, rows[index - 1][3])
+        ):
+            taken.diverged = True
 
     def _taint_block(self, path: _Path) -> None:
         frame = path.frames[-1]
@@ -607,7 +859,7 @@ class _Interpreter:
         if not frame.blocks:
             raise _Unsupported("condition outside an if or loop block")
         kind, end, start, _ = frame.blocks.pop()
-        path.loops.pop((frame.proc, start), None)
+        frame.loops.pop(self.program[frame.proc][start][0], None)
         index = self._index(frame.proc, end)
         rows = self.program[frame.proc]
         if (
@@ -657,15 +909,14 @@ def evaluate_entry(
     program: dict[str, list[list]], state: GameState, roots: tuple[str, ...]
 ) -> EntryState:
     """Run the room's automatic tasks in order, as entering the room would."""
-    interpreter = _Interpreter(program, state, fresh_source=True, inline_tasks=True)
+    interpreter = _Interpreter(program, state, entry=True)
     try:
         if not roots or any(root not in program for root in roots):
             raise _Unsupported("missing automatic procedure")
         paths = interpreter.run([_fresh_path(roots[0])])
         for root in roots[1:]:
             for path in paths:
-                path.frames = [_Frame(root, 0, [])]
-                path.loops.clear()
+                path.frames = [_Frame(root, 0, [], False)]
             paths = interpreter.run(paths)
     except _Unsupported as error:
         return EntryState(
@@ -681,7 +932,11 @@ def evaluate_entry(
         Support.Supported,
         "",
         tuple(Outcome(path.slots, frozenset(path.dispatched)) for path in paths),
-        frozenset(proc for path in paths for proc in path.triggers | set(path.pending)),
+        frozenset(
+            proc
+            for path in paths
+            for proc in path.triggers | {proc for proc, _ in path.pending}
+        ),
         frozenset(interpreter.written),
         frozenset(interpreter.written_variables),
         frozenset(interpreter.written_banks),
@@ -737,9 +992,10 @@ def evaluate_later(
                 volatile_variable,
                 state.approach_variables,
                 state.approach_banks,
+                # The player can pick up, use or combine items in the room.
+                lambda item: None,
             ),
-            fresh_source=False,
-            inline_tasks=False,
+            entry=False,
         )
         # Triggers act on the interactions entry created, such as handing over
         # a parked item, so each one starts from every entry outcome.
@@ -767,7 +1023,7 @@ def evaluate_later(
             continue
         for path in outcomes:
             possible |= path.created | path.dispatched
-            queue.extend(path.triggers | set(path.pending))
+            queue.extend(path.triggers | {proc for proc, _ in path.pending})
     return LaterState(Support.Supported, "", frozenset(possible))
 
 
@@ -823,23 +1079,37 @@ def room_script_state(
         kinds = {
             (item_type, amount) for g, item_type, amount in later.possible if g == gid
         }
+
+        def holds(descriptor: Descriptor) -> bool:
+            if isinstance(descriptor, Interaction):
+                descriptor = descriptor.replaced
+            return isinstance(descriptor, Item) and descriptor.global_id == gid
+
+        # Any slot that holds this item in some outcome. A write to it under
+        # unreadable game state, including one that replaces the item with
+        # something else, makes the item's presence state-dependent.
+        holding = {
+            slot
+            for outcome in entry.terminals
+            for slot, (descriptor, _) in outcome.slots.items()
+            if holds(descriptor)
+        }
         for outcome in entry.terminals:
             handed = {(t, a) for g, t, a in outcome.dispatched if g == gid}
             kinds |= handed
-            active, tainted = bool(handed), False
-            for descriptor, write_taint in outcome.slots.values():
-                if isinstance(descriptor, Item) and descriptor.global_id == gid:
-                    # SAT bit 7 selects four-point geometry, not activation.
-                    if descriptor.sat & 0x7F:
-                        active = True
-                        kinds.add((descriptor.item_type, descriptor.amount))
-                    tainted = tainted or write_taint
-                elif (
-                    isinstance(descriptor, Interaction)
-                    and isinstance(descriptor.replaced, Item)
-                    and descriptor.replaced.global_id == gid
+            active = bool(handed)
+            for descriptor, _ in outcome.slots.values():
+                # SAT bit 7 selects four-point geometry, not activation.
+                if (
+                    isinstance(descriptor, Item)
+                    and descriptor.global_id == gid
+                    and descriptor.sat & 0x7F
                 ):
-                    tainted = tainted or write_taint
+                    active = True
+                    kinds.add((descriptor.item_type, descriptor.amount))
+            tainted = any(
+                outcome.slots[slot][1] for slot in holding if slot in outcome.slots
+            )
             rows.append((active, tainted))
         if rows and all(active for active, _ in rows):
             presence[gid] = True
@@ -921,11 +1191,14 @@ class ScriptStateCache:
         tasks: EngineTasks,
         acquisition_flags: dict[int, tuple[int, int]],
     ) -> RoomScriptState:
+        readers = {
+            "flag": state.flag,
+            "variable": state.variable,
+            "inventory": state.inventory,
+        }
         cached = self._entries.get(key)
         if cached is not None and all(
-            (state.flag(*read[1:]) if read[0] == "flag" else state.variable(read[1]))
-            == value
-            for read, value in cached[0].items()
+            readers[read[0]](*read[1:]) == value for read, value in cached[0].items()
         ):
             return cached[1]
         reads: dict[tuple, object] = {}
@@ -940,9 +1213,20 @@ class ScriptStateCache:
             reads["variable", index] = value
             return value
 
+        def inventory(item: int) -> bool | None:
+            value = state.inventory(item)
+            reads["inventory", item] = value
+            return value
+
         result = room_script_state(
             program,
-            GameState(flag, variable, state.approach_variables, state.approach_banks),
+            GameState(
+                flag,
+                variable,
+                state.approach_variables,
+                state.approach_banks,
+                inventory,
+            ),
             tasks,
             acquisition_flags,
         )
