@@ -913,3 +913,39 @@ def test_later_analysis_bounds_its_total_work(monkeypatch):
     result = evaluate(program, variables={5: None}, approach=frozenset({5}))
     assert result.support is Support.Unsupported
     assert result.reason == "later script evaluation step limit"
+
+
+def test_resumes_differing_only_in_task_taint_run_once(monkeypatch):
+    import games.scd_state as scd_state
+
+    program = {
+        # The waiting task starts once under an unreadable condition and once
+        # outside it.
+        "init:0": rows(["if", 30], ["ck", 4, 1, 1], ["exec", 2], ["exec", 2], ["end"]),
+        "main:2": rows(
+            ["switch", 40, 7, [[10, 0]]],
+            ["case"],
+            ["goto", 0],
+            ["break"],
+            ["end"],
+        ),
+    }
+    state = GameState(
+        lambda bank, bit: None if bank == 4 else False,
+        lambda index: 0,
+        frozenset(),
+        frozenset(),
+        lambda item: False,
+    )
+    entry = scd_state.evaluate_entry(program, state, ("init:0",))
+    runs = []
+    original = scd_state._Interpreter.run
+
+    def counted(self, start):
+        runs.append(start[0].frames[0].tainted)
+        return original(self, start)
+
+    monkeypatch.setattr(scd_state._Interpreter, "run", counted)
+    later = scd_state.evaluate_later(program, state, entry, frozenset(), frozenset())
+    assert later.support is Support.Supported
+    assert runs == [False]

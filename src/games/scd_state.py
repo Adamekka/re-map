@@ -52,8 +52,9 @@ MAX_STEPS = 200_000
 # Total work for one interpreter, across every path.
 MAX_TOTAL_STEPS = 2_000_000
 # Total work for one room's later analysis, across every started or resumed
-# task and every restart. About 2.5 times the most any owned room needed in
-# 20 pseudo-random states (1.55 million steps, RE3 03-0b).
+# task and every restart, checked after each task, so the last task may add
+# up to MAX_TOTAL_STEPS more. About 2.5 times the most any owned room needed
+# in 20 pseudo-random states (1.55 million steps, RE3 03-0b).
 MAX_LATER_STEPS = 4_000_000
 # Distinct states one join point keeps exact. Beyond this, arriving paths
 # forget every value any path arriving there wrote, which then reads as a
@@ -1114,11 +1115,24 @@ def evaluate_later(
     # Each task to analyze starts a procedure or resumes a waiting one.
     # A resumed task keeps the interactions of the path that suspended it.
     def resumed(task: Continuation, slots: dict) -> tuple:
-        # Later analysis never reads taint, so interactions differing only in
-        # taint resume once.
+        # Later analysis never reads taint, so tasks and interactions that
+        # differ only in taint resume once.
+        frames, last = task
         return (
             "resume",
-            task,
+            (
+                tuple(
+                    (
+                        proc,
+                        index,
+                        tuple(block[:3] + (False,) for block in blocks),
+                        False,
+                        loops,
+                    )
+                    for proc, index, blocks, _, loops in frames
+                ),
+                last,
+            ),
             tuple(
                 sorted((slot, descriptor) for slot, (descriptor, _) in slots.items())
             ),
