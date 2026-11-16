@@ -518,7 +518,8 @@ class _Interpreter:
         self.runnable = runnable
         # The automatic and repeating procedures the engine runs itself.
         self.roots = automatic
-        self.other_writes: dict[str, _Writes] = {}
+        # Waiting call stack -> writes of independently scheduled work.
+        self.other_writes: dict[frozenset[str], _Writes] = {}
         self.written: set[tuple[int, int]] = set()
         self.written_variables: set[int] = set()
         self.written_banks: set[int] = set()
@@ -1167,8 +1168,11 @@ class _Interpreter:
                 if row[2] in _EFFECTS:
                     return True
                 if row[2] == "gosub" and row[3] not in called:
+                    name = f"main:{row[3]}"
+                    if name not in self.program:
+                        raise _Unsupported(f"missing procedure {name}")
                     called.add(row[3])
-                    pending.append(self.program.get(f"main:{row[3]}", []))
+                    pending.append(self.program[name])
         return False
 
     @staticmethod
