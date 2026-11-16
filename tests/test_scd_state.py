@@ -949,3 +949,31 @@ def test_resumes_differing_only_in_task_taint_run_once(monkeypatch):
     later = scd_state.evaluate_later(program, state, entry, frozenset(), frozenset())
     assert later.support is Support.Supported
     assert runs == [False]
+
+
+def test_while_waiting_on_native_state_keeps_its_effects_pending():
+    def program(read: list) -> dict:
+        # The door is replaced in place, then a While loop waits before
+        # restoring it, as room 00-1b does with key flag 9:27.
+        return {
+            "init:0": rows(["end"]),
+            "main:0": rows(
+                ["var", 4, 0, 0],
+                ["door", 6, 0x31],
+                ["reset", 6, 0, 0, -1, -1, -1, -1],
+                ["loop", 60, -1],
+                read,
+                ["loop_end"],
+                ["reset", 6, 1, 0x31, -1, -1, -1, -1],
+                ["end"],
+            ),
+        }
+
+    # A key flag no room script writes: the door stays replaced until it is set.
+    waiting = evaluate(program(["ck", 9, 27, 0])).doors[10]
+    assert (waiting.sat, waiting.replaced) == (0, True)
+    opened = evaluate(program(["ck", 9, 27, 0]), flags={(9, 27): True}).doors[10]
+    assert (opened.sat, opened.replaced) == (0x31, False)
+    # A variable the room's own scripts write ends the wait by itself.
+    counted = evaluate(program(["cmp", 4, 0, 0])).doors[10]
+    assert (counted.sat, counted.replaced) == (0x31, False)

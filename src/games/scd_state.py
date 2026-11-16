@@ -392,6 +392,20 @@ class _Interpreter:
         self.patch_targets = frozenset(
             row[3] for rows in program.values() for row in rows if row[2] == "patch"
         )
+        # Flags and variables any room script writes. A wait that reads only
+        # these ends through the room's own progress; one that reads anything
+        # else waits for native code, such as a pickup or a key use.
+        sets = [row for rows in program.values() for row in rows if row[2] == "set"]
+        self.script_flags = frozenset((row[3], row[4]) for row in sets)
+        self.script_banks = frozenset(
+            row[3] for row in sets if row[0] + 2 in self.patch_targets
+        )
+        self.script_variables = frozenset(
+            row[3]
+            for rows in program.values()
+            for row in rows
+            if row[2] in ("var", "calc", "calc2")
+        )
         self.written: set[tuple[int, int]] = set()
         self.written_variables: set[int] = set()
         self.written_banks: set[int] = set()
@@ -696,6 +710,14 @@ class _Interpreter:
                 if count < LOOP_LIMIT:
                     frame.loops[opener] = (count, opener, end - 1)
                     nxt = start + 1
+                elif rows[start][4] < 0 and self._waits_on_native(
+                    frame.proc, start, frame.index
+                ):
+                    # A While or Do that waits on native state keeps waiting
+                    # until that state changes.
+                    frame.loops.pop(opener, None)
+                    self._suspend(path, start, opener)
+                    continue
                 else:
                     # Forget the count on exit so later joins can merge.
                     frame.loops.pop(opener, None)
@@ -754,53 +776,17 @@ class _Interpreter:
                     count = frame.loops.get(offset, (0,))[0] + 1
                     frame.loops[offset] = (count, target, offset)
                     if count >= LOOP_LIMIT:
-                        # A repeated backward jump is a wait. Continue as if
-                        # the enclosing condition eventually stopped holding.
+                        # A repeated backward jump is a wait. With no enclosing
+                        # condition, or a loop that reads native state, the
+                        # task waits until another task or native code changes
+                        # what it waits on. Otherwise continue as if the
+                        # enclosing condition eventually stopped holding.
                         del frame.loops[offset]
+                        head = self._index(frame.proc, target)
                         if not any(
                             block[0] in ("if", "else", "loop") for block in frame.blocks
-                        ):
-                            # No condition encloses the jump, so the task waits
-                            # until another task changes what it waits on, such
-                            # as a Switch selector. Later analysis resumes it at
-                            # the loop head with every value the room writes
-                            # unread; what ran before the wait does not repeat.
-                            head = self._index(frame.proc, target)
-                            path.suspended.add(
-                                (
-                                    (
-                                        *(
-                                            (
-                                                f.proc,
-                                                f.index,
-                                                tuple(f.blocks),
-                                                f.tainted,
-                                                tuple(sorted(f.loops.items())),
-                                            )
-                                            for f in path.frames[:-1]
-                                        ),
-                                        (
-                                            frame.proc,
-                                            head,
-                                            # Blocks and loops that open inside
-                                            # the wait loop end before its head.
-                                            tuple(
-                                                b for b in frame.blocks if b[2] < head
-                                            ),
-                                            frame.tainted,
-                                            tuple(
-                                                sorted(
-                                                    (key, loop)
-                                                    for key, loop in frame.loops.items()
-                                                    if loop[1] <= target <= loop[2]
-                                                )
-                                            ),
-                                        ),
-                                    ),
-                                    frame.index,
-                                )
-                            )
-                            path.frames.clear()
+                        ) or self._waits_on_native(frame.proc, head, frame.index):
+                            self._suspend(path, head, target)
                             continue
                         self._fail(path, False)
                         continue
@@ -958,6 +944,58 @@ class _Interpreter:
             for offset, _, op, *args in rows[first:]
             if offset < end
         )
+
+    def _waits_on_native(self, proc: str, head: int, last: int) -> bool:
+        """Whether a wait loop reads state no room script writes."""
+        flags, variables = _wait_reads(self.program, proc, head, last)
+        return (
+            any(
+                flag not in self.script_flags and flag[0] not in self.script_banks
+                for flag in flags
+            )
+            or not variables <= self.script_variables
+        )
+
+    def _suspend(self, path: _Path, head: int, target: int) -> None:
+        """End the task at a wait whose loop runs from row ``head``.
+
+        Later analysis resumes it there with its call stack, so what ran before
+        the wait does not repeat.
+        """
+        frame = path.frames[-1]
+        path.suspended.add(
+            (
+                (
+                    *(
+                        (
+                            f.proc,
+                            f.index,
+                            tuple(f.blocks),
+                            f.tainted,
+                            tuple(sorted(f.loops.items())),
+                        )
+                        for f in path.frames[:-1]
+                    ),
+                    (
+                        frame.proc,
+                        head,
+                        # Blocks and loops that open inside the wait loop end
+                        # before its head.
+                        tuple(b for b in frame.blocks if b[2] < head),
+                        frame.tainted,
+                        tuple(
+                            sorted(
+                                (key, loop)
+                                for key, loop in frame.loops.items()
+                                if loop[1] <= target <= loop[2]
+                            )
+                        ),
+                    ),
+                ),
+                frame.index,
+            )
+        )
+        path.frames.clear()
 
     def _diverge(self, taken: _Path, skipped: _Path) -> None:
         """Mark branches whose skipped region could have left early.
