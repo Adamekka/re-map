@@ -62,6 +62,9 @@ RE3_OPCODES = OpcodeSet(
     calc=0x20,
     calc2=0x21,
     items={0x67: 14, 0x68: 22},
+    # The RE3 room catalog binds no direct awards, so no award command is
+    # modeled.
+    awards=frozenset(),
     doors=frozenset({0x61, 0x62}),
     interactions=frozenset({0x63, 0x64}),
     reset=0x65,

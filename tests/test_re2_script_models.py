@@ -78,7 +78,37 @@ def test_every_source_resolves_from_a_fresh_game(profile_id, script_evaluation):
             for creator, verdict in result.doors.items()
             if verdict.sat is None
         )
+        unresolved.extend(
+            (key, "award", offset)
+            for offset, present in result.award_presence.items()
+            if present is None
+        )
     assert unresolved == []
+
+
+@pytest.mark.parametrize(
+    ("profile_id", "offset", "present"),
+    [
+        # Entry starts the award's event while bank 1 bit 1 and bank 4 bit 7
+        # are clear; Claire B's second-scenario bit is bank 1 bit 1.
+        ("re2_leon_a_slus00748", 8944, True),
+        ("re2_claire_b_slus00756", 9066, False),
+    ],
+)
+def test_fresh_game_award_follows_its_event_conditions(
+    profile_id, offset, present, script_evaluation
+):
+    profile = Re2Profile.load(ROOT / "profiles" / f"{profile_id}.json")
+    evaluation = profile.script_evaluation
+    room = profile.rooms["01-02"]
+    assert [award["offset"] for award in room["event_awards"]] == [offset]
+    result = room_script_state(
+        evaluation.models["01-02"],
+        fresh_game(profile, room, PROFILES[profile_id][1]),
+        evaluation.entry.tasks,
+        {gid: (8, gid) for gid in evaluation.item_ids["01-02"]},
+    )
+    assert result.award_presence == {offset: present}
 
 
 @pytest.mark.parametrize("profile_id", sorted(PROFILES))
@@ -100,3 +130,22 @@ def test_committed_models_match_the_owned_disc(profile_id, tmp_path):
     )
     committed = json.loads(profile_path.read_text())["script_evaluation"]["models_path"]
     assert output.read_bytes() == (profile_path.parent / committed).read_bytes()
+
+
+def test_loading_rejects_a_catalog_award_without_a_model_row():
+    from games.re2.script_model import script_evaluation
+
+    path = ROOT / "profiles" / "re2_claire_b_slus00756.json"
+    rooms = Re2Profile.load(path).rooms
+    [award] = rooms["01-02"]["event_awards"]
+    moved = {
+        **rooms,
+        "01-02": {
+            **rooms["01-02"],
+            "event_awards": [{**award, "offset": award["next"]}],
+        },
+    }
+    raw = json.loads(path.read_text())
+    assert script_evaluation(raw, path, rooms) is not None
+    with pytest.raises(ValueError, match="omit a catalog award"):
+        script_evaluation(raw, path, moved)

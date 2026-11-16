@@ -750,6 +750,21 @@ def poll_re2(
                 )
                 # Acquisition wins after delivery and use. Presence conditions
                 # are sufficient only; a mismatch cannot establish absence.
+                if (
+                    not taken
+                    and not required
+                    and scripted is not None
+                    # Without a bound acquisition flag, a delivered award would
+                    # stay listed.
+                    and collection["kind"] == "flag"
+                ):
+                    # Profile loading binds every catalog award to a model row.
+                    evaluated = scripted.award_presence[award["offset"]]
+                    if evaluated is False:
+                        # No procedure can run it now or after any trigger.
+                        # RE2-EVAL-001.
+                        continue
+                    required = bool(evaluated)
                 details.append(
                     ItemDetail(
                         profile.names["items"].get(

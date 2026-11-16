@@ -58,6 +58,8 @@ RE2_OPCODES = OpcodeSet(
     calc=0x26,
     calc2=0x27,
     items={0x4E: 14, 0x69: 22},
+    # The bound catalog awards (RE2-COLLECT-004).
+    awards=frozenset({0x76}),
     doors=frozenset({0x3B, 0x68}),
     interactions=frozenset({0x2C, 0x67}),
     reset=0x46,
@@ -123,6 +125,13 @@ def script_evaluation(
         raise ValueError("RE2 script models disagree with the room catalog")
     file_type_min = profile["runtime_layout"]["file_type_min"]
     models = {key: row["program"] for key, row in document["sources"].items()}
+    for key, room in rooms.items():
+        awards = {
+            row[0] for rows in models[key].values() for row in rows if row[2] == "award"
+        }
+        # The tracker looks up each catalog award's evaluation by offset.
+        if any(award["offset"] not in awards for award in room["event_awards"]):
+            raise ValueError("RE2 script models omit a catalog award")
     return ScriptEvaluationConfig(
         entry,
         models,

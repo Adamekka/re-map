@@ -58,6 +58,9 @@ class OpcodeSet:
     calc2: int
     # opcode -> offset of the type/amount/ID triple.
     items: dict[int, int]
+    # Commands that hand the player an item directly. Room catalogs name each
+    # one by its source offset.
+    awards: frozenset[int]
     doors: frozenset[int]
     interactions: frozenset[int]
     reset: int
@@ -220,6 +223,8 @@ def compile_procedure(
                 packet[3],
                 *struct.unpack_from("<3H", packet, opcodes.items[opcode]),
             ]
+        elif opcode in opcodes.awards:
+            row = ["award"]
         elif opcode in opcodes.doors:
             row = ["door", packet[1], packet[3]]
         elif opcode in opcodes.interactions:

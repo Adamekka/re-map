@@ -209,6 +209,8 @@ class _Path:
     # (gid, type, amount, tainted) handed over by Aot_on, bypassing
     # activation masks.
     dispatched: set[tuple[int, int, int, bool]]
+    # (source offset, tainted) of every direct award run.
+    awarded: set[tuple[int, bool]]
     # Source offset -> (value, width, tainted) stored by Work_copy.
     patches: dict[int, tuple[int | None, int, bool]]
     # Banks written at a bit no reader can determine.
@@ -238,6 +240,7 @@ class _Path:
             set(self.triggers),
             set(self.created),
             set(self.dispatched),
+            set(self.awarded),
             dict(self.patches),
             set(self.unknown_banks),
             set(self.arrival),
@@ -270,6 +273,7 @@ class _Path:
             frozenset(self.triggers),
             frozenset(self.created),
             frozenset(item if taint else item[:3] for item in self.dispatched),
+            frozenset(award if taint else award[:1] for award in self.awarded),
             values(self.patches),
             frozenset(self.unknown_banks),
             frozenset(self.arrival),
@@ -315,6 +319,7 @@ _STRAIGHT = (
     "calc2",
     "patch",
     "item",
+    "award",
     "door",
     "aot",
     "reset",
@@ -330,6 +335,7 @@ _EFFECTS = (
     "calc2",
     "patch",
     "item",
+    "award",
     "door",
     "aot",
     "reset",
@@ -473,6 +479,7 @@ def _fresh_path(proc: str) -> _Path:
         {},
         [],
         {},
+        set(),
         set(),
         set(),
         set(),
@@ -1058,6 +1065,8 @@ class _Interpreter:
                 slot, sat, item_type, amount, gid = args
                 path.slots[slot] = (Item(offset, sat, item_type, amount, gid), tainted)
                 path.created.add((gid, item_type, amount))
+            elif op == "award":
+                path.awarded.add((offset, tainted))
             elif op == "door":
                 path.slots[args[0]] = (Door(offset, args[1]), tainted)
             elif op == "aot":
@@ -1482,6 +1491,7 @@ class Outcome:
     # Slot descriptors with whether unreadable game state controlled them.
     slots: dict[int, tuple[Descriptor, bool]]
     dispatched: frozenset[tuple[int, int, int, bool]]
+    awarded: frozenset[tuple[int, bool]]
     # Tasks waiting for another task to change what they wait on; they resume
     # with this outcome's interactions.
     suspended: frozenset[Continuation]
@@ -1516,6 +1526,8 @@ class LaterState:
     reason: str
     # (gid, type, amount)
     possible: frozenset[tuple[int, int, int]]
+    # Source offsets of direct awards they can run.
+    awards: frozenset[int]
 
 
 def evaluate_entry(
@@ -1555,7 +1567,12 @@ def evaluate_entry(
         Support.Supported,
         "",
         tuple(
-            Outcome(path.slots, frozenset(path.dispatched), frozenset(path.suspended))
+            Outcome(
+                path.slots,
+                frozenset(path.dispatched),
+                frozenset(path.awarded),
+                frozenset(path.suspended),
+            )
             for path in paths
         ),
         frozenset(
@@ -1627,6 +1644,7 @@ def evaluate_later(
         for task in outcome.suspended
     }
     possible: set[int] = set()
+    awards: set[int] = set()
     spent = 0
     seen: set[tuple] = set()
     queue = ordered(roots)
@@ -1640,7 +1658,10 @@ def evaluate_later(
             name = f"main:{task}"
             if name not in program:
                 return LaterState(
-                    Support.Unsupported, f"missing procedure {name}", frozenset()
+                    Support.Unsupported,
+                    f"missing procedure {name}",
+                    frozenset(),
+                    frozenset(),
                 )
             frames = ((name, 0, (), False, ()),)
         else:
@@ -1652,12 +1673,15 @@ def evaluate_later(
                     program, frames[-1][0], frames[-1][1], last
                 )
             except _Unsupported as error:
-                return LaterState(Support.Unsupported, str(error), frozenset())
+                return LaterState(
+                    Support.Unsupported, str(error), frozenset(), frozenset()
+                )
             if not (flags <= written and variables <= written_variables):
                 written |= flags
                 written_variables |= variables
                 seen.clear()
                 possible.clear()
+                awards.clear()
                 queue = ordered(roots)
                 continue
 
@@ -1701,11 +1725,14 @@ def evaluate_later(
         try:
             outcomes = interpreter.run(starts)
         except _Unsupported as error:
-            return LaterState(Support.Unsupported, str(error), frozenset())
+            return LaterState(Support.Unsupported, str(error), frozenset(), frozenset())
         spent += interpreter.total_steps
         if spent > MAX_LATER_STEPS:
             return LaterState(
-                Support.Unsupported, "later script evaluation step limit", frozenset()
+                Support.Unsupported,
+                "later script evaluation step limit",
+                frozenset(),
+                frozenset(),
             )
         if not (
             interpreter.written <= written
@@ -1718,10 +1745,12 @@ def evaluate_later(
             # New writes can open conditions in procedures already checked.
             seen.clear()
             possible.clear()
+            awards.clear()
             queue = ordered(roots)
             continue
         for path in outcomes:
             possible |= path.created | {item[:3] for item in path.dispatched}
+            awards |= {offset for offset, _ in path.awarded}
             queue.extend(
                 ("start", proc)
                 for proc in path.triggers | {proc for proc, _ in path.pending}
@@ -1729,7 +1758,7 @@ def evaluate_later(
             queue.extend(
                 ordered({resumed(task, path.slots) for task in path.suspended})
             )
-    return LaterState(Support.Supported, "", frozenset(possible))
+    return LaterState(Support.Supported, "", frozenset(possible), frozenset(awards))
 
 
 @dataclass(frozen=True)
@@ -1751,6 +1780,9 @@ class RoomScriptState:
     # Type and amount of each obtainable item where every outcome agrees.
     item_identity: dict[int, tuple[int, int]] = field(default_factory=dict)
     doors: dict[int, DoorVerdict] = field(default_factory=dict)
+    # Award source offset -> True obtainable now or later, False absent, None
+    # unresolved.
+    award_presence: dict[int, bool | None] = field(default_factory=dict)
 
 
 def room_script_state(
@@ -1833,6 +1865,24 @@ def room_script_state(
             # The one item this acquisition can hand over, which also names
             # an item already collected.
             identity[gid] = next(iter(kinds))
+    awards: dict[int, bool | None] = {}
+    for offset in sorted(
+        row[0] for rows in program.values() for row in rows if row[2] == "award"
+    ):
+        ran = [
+            any(award == offset for award, _ in outcome.awarded)
+            for outcome in entry.terminals
+        ]
+        if offset in later.awards or ran and all(ran):
+            # Entering runs it, or a triggered procedure still can, such as a
+            # puzzle reward.
+            awards[offset] = True
+        elif not any(ran):
+            awards[offset] = False
+        else:
+            # An outcome without the award records no reason, so arrival and
+            # unreadable state cannot be told apart.
+            awards[offset] = None
     doors: dict[int, DoorVerdict] = {}
     slots = {slot for outcome in entry.terminals for slot in outcome.slots}
     for slot in slots:
@@ -1870,7 +1920,7 @@ def room_script_state(
             for creator in {row[0] for row in found}:
                 doors[creator] = DoorVerdict(creator, None, False)
     return RoomScriptState(
-        Support.Supported, "", presence, frozenset(later_items), identity, doors
+        Support.Supported, "", presence, frozenset(later_items), identity, doors, awards
     )
 
 

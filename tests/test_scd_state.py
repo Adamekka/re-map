@@ -1435,3 +1435,30 @@ def test_work_copy_before_a_wait_fixes_its_operand():
         ["loop_end"],
     ]
     assert door_state(door_after_wait(wait)) == (0, True)
+
+
+def test_award_follows_the_entry_task_that_runs_it():
+    program = {
+        "main:0": rows(["if", 30], ["ck", 4, 7, 0], ["exec", 3], ["end"]),
+        "main:3": rows(["award"], ["set", 4, 7, 1], ["end"]),
+        "init:0": rows(["end"]),
+    }
+    assert evaluate(program).award_presence == {0: True}
+    assert evaluate(program, flags={(4, 7): True}).award_presence == {0: False}
+
+
+def test_award_in_a_triggered_procedure_stays_obtainable():
+    program = {
+        "init:0": rows(["aot", 2, 5, 0x41, 3], ["end"]),
+        "main:3": rows(["award"], ["end"]),
+    }
+    assert evaluate(program).award_presence == {0: True}
+
+
+def test_award_under_unreadable_state_is_unresolved():
+    program = {
+        "main:0": rows(["if", 30], ["cond", 0], ["exec", 3], ["end"]),
+        "main:3": rows(["award"], ["end"]),
+        "init:0": rows(["end"]),
+    }
+    assert evaluate(program).award_presence == {0: None}

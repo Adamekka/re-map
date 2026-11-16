@@ -164,3 +164,99 @@ def test_inventory_change_during_a_poll_publishes_nothing(leon):
         return result
 
     assert poll_re2(profile, tracker, changing).status is PollStatus.Retry
+
+
+def award_case(leon, presence=None, collection=None, model=None):
+    """Leon's 01-02 award with an optional replaced proof, binding or model."""
+    from dataclasses import replace
+
+    from games.scd_state import ScriptStateCache
+
+    profile, _, put, read = build_snapshot(leon, "00-01")
+    room = "01-02"
+    [award] = profile.rooms[room]["event_awards"]
+    award = {
+        **award,
+        "presence": presence or award["presence"],
+        "collection": collection or award["collection"],
+    }
+    evaluation = profile.script_evaluation
+    profile = replace(
+        profile,
+        rooms={**profile.rooms, room: {**profile.rooms[room], "event_awards": [award]}},
+        script_evaluation=replace(
+            evaluation,
+            models={**evaluation.models, room: model or evaluation.models[room]},
+        ),
+        script_cache=ScriptStateCache(),
+    )
+    name = profile.names["items"][str(award["item_type"])]
+
+    def set_flag(bank, bit, value):
+        word, mask = msb_flag_location(profile.flag_banks[bank][0], bit)
+        current = int.from_bytes(read(word, 4).data, "little")
+        put(word, current | mask if value else current & ~mask, 4)
+
+    def award_rows():
+        tracker = Tracker()
+        tracker.mark_current(RoomId(1, 2))
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        return [
+            (item.label, item.state)
+            for item in tracker.rooms[room].items
+            if item.label in (name, "Event collectible")
+        ]
+
+    # 8:5 is the award's real acquisition flag.
+    for bank, bit in ((1, 1), (4, 7), (8, 5)):
+        set_flag(bank, bit, False)
+    return name, set_flag, award_rows
+
+
+@pytest.mark.parametrize("proven", [False, True])
+def test_award_presence_follows_the_room_scripts(leon, proven):
+    # Claire B binds the same award without a presence proof. With Leon's
+    # proof, a failing condition defers to the evaluation as well.
+    name, set_flag, award_rows = award_case(
+        leon, presence=None if proven else {"kind": "unresolved"}
+    )
+    # Entering starts the award's event.
+    assert award_rows() == [(name, "uncollected")]
+    # No procedure can run it once its event has happened.
+    set_flag(4, 7, True)
+    assert award_rows() == []
+    # Acquisition still wins.
+    set_flag(8, 5, True)
+    assert award_rows() == [(name, "taken")]
+
+
+def test_award_without_a_bound_flag_ignores_the_evaluation(leon):
+    # Without its acquisition flag a delivered award would stay listed, and an
+    # absent one cannot be told from a delivered one.
+    unresolved = {"kind": "unresolved"}
+    _, set_flag, award_rows = award_case(
+        leon, presence=unresolved, collection=unresolved
+    )
+    expected = [("Event collectible", "unknown")]
+    assert award_rows() == expected
+    set_flag(4, 7, True)
+    assert award_rows() == expected
+
+
+def test_award_under_unreadable_state_stays_unknown(leon):
+    model = leon.script_evaluation.models["01-02"]
+    # Entry starts the award's event behind an unreadable condition instead
+    # of the 4:7 check, and the event awards at once. The real event waits
+    # first, so later analysis would resume it and find the award obtainable.
+    main = [
+        row[:2] + ["cond", 0] if row[2:] == ["ck", 4, 7, 0] else row
+        for row in model["main:0"]
+    ]
+    assert main != model["main:0"]
+    event = [[8944, 8947, "award"], [8947, 8949, "end"]]
+    _, _, award_rows = award_case(
+        leon,
+        presence={"kind": "unresolved"},
+        model={**model, "main:0": main, "main:2": event},
+    )
+    assert award_rows() == [("Event collectible", "unknown")]
