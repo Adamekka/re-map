@@ -167,6 +167,8 @@ Only the private test emulator is terminated after validation. The agent does no
 
 Limits: one observed source. Native pickups, quantities, locked-door use, ordinary navigation, reentry, conditional floors, later rooms and campaign-wide clearance remain unvalidated on SLUS-00756. Original-release observations, byte-identical sources, synthetic tests and model advice do not promote those outcomes to Confirmed.
 
+Follow-up, 2026-11-16: [native loads of all 125 Claire B rooms](script-evaluation.md#claire-b-native-room-loads-2026-11-16) compare every room's settled interactions with the script evaluation and run the tracker on each. They are door warps from one early-scenario checkpoint, not ordinary navigation, pickups or locked-door use, so the limits above still apply to those outcomes.
+
 ### Final verification and review
 
 The focused profile/metadata/tracking/position/history/runner suite passes 924 tests in 8.36 seconds. Scoped Ruff formatting and E4/E7/E9/F checks pass, excluding the established module-path setup pattern E402. Local documentation links, JSON identity/schema loading, byte-identical regeneration and whitespace checks pass. The original Disc 1 and original-release profile/data files are unchanged.
