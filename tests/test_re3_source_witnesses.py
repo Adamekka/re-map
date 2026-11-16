@@ -323,7 +323,8 @@ def test_ambiguity_key_cannot_use_an_opaque_word_that_relocates_to_zero(coherent
 
 
 def test_witness_admits_only_native_camera_renaming_and_header_word_14(coherent):
-    source = shared.compile_source_witness(coherent.source)
+    # Room with cameras 0-7.
+    source = replace(shared.compile_source_witness(coherent.source), camera_count=8)
     zones = bytes([0, 0, 3, 7, *range(16)]) + bytes([0, 0, 0xFF, 0xFF, *range(16)])
 
     def renamed(first, second):
@@ -334,8 +335,16 @@ def test_witness_admits_only_native_camera_renaming_and_header_word_14(coherent)
     zone_offset = source.zones_offset
     # Command 0x53 swapped cameras 3 and 7.
     assert source.admits(zone_offset, zones, renamed(7, 3))
-    # Two cameras cannot both become camera 5.
+    # A zone may name a camera the room lacks, as long as it stays unchanged.
+    beyond = bytes([0, 0, 9, 7, *range(16)]) + zones[20:]
+    assert source.admits(
+        zone_offset, beyond, bytes([0, 0, 9, 3, *range(16)]) + zones[20:]
+    )
+    # Two cameras cannot both become one, and a swap never makes a camera the
+    # room lacks or the 0xFF terminator.
     assert not source.admits(zone_offset, zones, renamed(5, 5))
+    assert not source.admits(zone_offset, zones, renamed(7, source.camera_count))
+    assert not source.admits(zone_offset, zones, renamed(0xFF, 3))
     # Bytes outside the camera numbers, and the terminator, stay fixed.
     other = bytearray(zones)
     other[4] ^= 1

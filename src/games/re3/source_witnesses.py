@@ -144,7 +144,12 @@ class SourceWitness:
         for index in renamed:
             if renaming.setdefault(expected[index], packet[index]) != packet[index]:
                 return False
-        return len(set(renaming.values())) == len(renaming)
+        # A swap only exchanges this room's cameras; anything else, such as
+        # the 0xFF terminator, would change the table's structure. Source zones
+        # may name other cameras, which then stay unchanged.
+        return len(set(renaming.values())) == len(renaming) and all(
+            new < self.camera_count for old, new in renaming.items() if new != old
+        )
 
 
 @dataclass(frozen=True)

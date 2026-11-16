@@ -175,6 +175,16 @@ def _door_definitions(rdt: bytes, program: dict[str, list[list]]) -> list[dict]:
                 "four_point": following - offset == 40,
                 "center": list(door.center),
             }
+    walk_through = {
+        door["slot"] for door in doors.values() if door["kind"] == _KIND_WALK_THROUGH
+    }
+    if any(
+        row[2] == "reset" and row[3] in walk_through
+        for rows in program.values()
+        for row in rows
+    ):
+        # The evaluator keeps a reset slot's door identity only for kind 1.
+        raise ValueError("RE3 resets of walk-through exits are not modeled")
     return [doors[offset] for offset in sorted(doors)]
 
 
