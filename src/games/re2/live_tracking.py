@@ -247,14 +247,9 @@ def poll_re2(
                         for proof in (
                             relation["table_proof"],
                             relation["program_proof"],
+                            relation["callback_proof"],
                             *relation["message_proofs"],
                         )
-                    ),
-                    *(
-                        relation["callback_offset"]
-                        + 2
-                        + relation["callback_proof"]["width"]
-                        for relation in room.get("script_item_dispatch_relations", [])
                     ),
                 ]
                 reserved = max(

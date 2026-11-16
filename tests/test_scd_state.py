@@ -1063,3 +1063,91 @@ def test_conditional_goto_waits_only_on_native_state():
     assert door_state(program((9, 27))) == (0, True)
     # Flag 4:1 is set by a running script, so the jump ends by itself.
     assert door_state(program((4, 1))) == (0x31, False)
+
+
+def test_do_with_an_unread_predicate_forks_exit_and_repeat():
+    # Leaving after one pass restores the door; repeating waits on native
+    # flag 4:5, so which happens depends on unread game state.
+    program = door_after_wait(
+        [["loop", 60, -1, "do"], ["set", 9, 3, 7], ["loop_end"], ["ck", 4, 5, 1]]
+    )
+    assert evaluate(program, flags={(4, 5): None}).doors[0].sat is None
+
+
+def test_do_on_an_arrival_variable_gives_alternatives():
+    program = {
+        "init:0": rows(["end"]),
+        "main:0": rows(
+            ["item", 3, 0x31, 20, 15, 77],
+            ["loop", 40, -1, "do"],
+            ["loop_end"],
+            ["cmp", 26, 5, 1],
+            ["reset", 3, 0, 0, -1, -1, -1, -1],
+            ["end"],
+        ),
+    }
+    result = evaluate(
+        program, variables={26: None}, approach=frozenset({26}), gids=[77]
+    )
+    assert result.item_presence == {77: True}
+
+
+def test_else_wait_needs_a_write_that_ends_it():
+    # if flag 9:27 is set: leave; else: jump back. Only a clear is written.
+    wait = [["if", 50], ["ck", 9, 27, 1], ["else", 60], ["goto", 20]]
+    clearing = {"main:1": rows(["set", 9, 27, 0], ["end"])}
+    assert door_state(door_after_wait(wait, clearing)) == (0, True)
+    setting = {"main:1": rows(["set", 9, 27, 1], ["end"])}
+    assert door_state(door_after_wait(wait, setting)) == (0x31, False)
+
+
+def test_value_copied_from_native_state_in_a_called_procedure_waits():
+    wait = [
+        ["loop", 60, -1, "while"],
+        ["gosub", 8],
+        ["cmp", 4, 0, 0],
+        ["loop_end"],
+    ]
+    copied = {"main:8": rows(["var", 4, 1, 7], ["end"])}
+    assert door_state(door_after_wait(wait, copied)) == (0, True)
+
+
+def test_only_a_predicate_inside_the_wait_decides_it():
+    # The outer If on flag 4:1, which a running script sets, opens before the
+    # wait's head; the jump really waits on native flag 9:27.
+    program = door_after_wait(
+        [
+            ["if", 80],
+            ["ck", 4, 1, 0],
+            # Loop head: leave once 9:27 is set, otherwise jump back.
+            ["if", 70],
+            ["ck", 9, 27, 1],
+            ["goto", 80],
+            ["goto", 40],
+        ],
+        {"main:1": rows(["set", 4, 1, 1], ["end"])},
+    )
+    assert door_state(program) == (0, True)
+
+
+def test_wait_inside_a_for_reads_the_whole_loop():
+    program = door_after_wait(
+        [
+            ["loop", 80, 3, "for"],
+            ["if", 60],
+            ["ck", 9, 27, 1],
+            ["break"],
+            ["goto", 20],
+            ["loop_end"],
+        ]
+    )
+    assert door_state(program) == (0, True)
+
+
+def test_patched_predicate_bit_needs_a_releasing_write_in_its_bank():
+    wait = [["if", 60], ["patch", 42, 4, 1], ["ck", 9, 0, 0], ["goto", 20]]
+    # Any bit of bank 9 may be the one tested; only a set can release it.
+    clearing = {"main:1": rows(["set", 9, 5, 0], ["end"])}
+    assert door_state(door_after_wait(wait, clearing)) == (0, True)
+    setting = {"main:1": rows(["set", 9, 5, 1], ["end"])}
+    assert door_state(door_after_wait(wait, setting)) == (0x31, False)
