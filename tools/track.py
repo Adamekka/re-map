@@ -559,7 +559,13 @@ def main() -> int:
     ap.add_argument(
         "--map",
         action="store_true",
-        help="serve the live multi-area map on localhost:8765",
+        help="serve the live multi-area map on localhost (see --map-port)",
+    )
+    ap.add_argument(
+        "--map-port",
+        type=int,
+        default=8765,
+        help="live map HTTP port (1..65535; default: 8765)",
     )
     ap.add_argument(
         "--log-file",
@@ -589,6 +595,8 @@ def main() -> int:
         ap.error("--hz must be finite and between 1 and 30")
     if not 1 <= args.port <= 65535:
         ap.error("--port must be between 1 and 65535")
+    if not 1 <= args.map_port <= 65535:
+        ap.error("--map-port must be between 1 and 65535")
     log_path = args.log_file.expanduser().resolve()
     history_directory = Path(__file__).resolve().parents[1] / ".local"
     re1_history_path = history_directory / "visit-history.json"
@@ -646,13 +654,14 @@ def main() -> int:
     )
     print(f"Log file: {log_path}", flush=True)
     logger.info(
-        "Tracker started: python=%s profile=%s gdb=%s:%s hz=%s map=%s once=%s",
+        "Tracker started: python=%s profile=%s gdb=%s:%s hz=%s map=%s map_port=%s once=%s",
         sys.version.split()[0],
         args.profile,
         args.host,
         args.port,
         args.hz,
         args.map,
+        args.map_port,
         args.once,
     )
     if args.map and args.once:
@@ -786,7 +795,7 @@ def main() -> int:
                 assert profile.map_layout is not None, (
                     "runtime profile requires floor plans"
                 )
-                map_server = MapServer(8765, profile.map_layout.document)
+                map_server = MapServer(args.map_port, profile.map_layout.document)
             except (OSError, ValueError) as exc:
                 logger.exception("Map startup failed")
                 print(f"map unavailable: {exc}", file=sys.stderr)
@@ -806,10 +815,10 @@ def main() -> int:
                 logger.exception("Map thread startup failed")
                 print(f"map unavailable: {exc}", file=sys.stderr)
                 return 1
-            print("Room map: http://127.0.0.1:8765")
-            logger.info("Map listening at http://127.0.0.1:8765")
+            print(f"Room map: http://127.0.0.1:{args.map_port}")
+            logger.info("Map listening at http://127.0.0.1:%s", args.map_port)
         period = 1.0 / args.hz
-        map_line = "\nRoom map: http://127.0.0.1:8765" if map_server is not None else ""
+        map_line = f"\nRoom map: http://127.0.0.1:{args.map_port}" if map_server is not None else ""
         map_line += f"\nLog file: {log_path}"
         last_wait_reason = ""
         last_logged_result = None

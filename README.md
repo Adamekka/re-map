@@ -40,7 +40,7 @@ Turn RetroAchievements off or use Casual/Softcore mode. Hardcore mode blocks the
    python3 tools/track.py --map
    ```
 
-3. Open <http://127.0.0.1:8765/>.
+3. Open <http://127.0.0.1:8765/>. If another program already uses that port, pick a free one with `--map-port` and open that port instead.
 
 Leave the terminal open while you play. Ctrl+C stops the tracker.
 
