@@ -234,3 +234,36 @@ def test_catalog_output_cannot_replace_owned_input_bytes(tmp_path, monkeypatch, 
     assert main() == 2
     assert "must differ" in capsys.readouterr().err
     assert image.read_bytes() == original
+
+
+def test_catalog_short_write_preserves_previous_export(tmp_path, monkeypatch, capsys):
+    image, digest = synthetic_disc(tmp_path, room_bytes=synthetic_ard(synthetic_room()))
+    output = tmp_path / "catalog.json"
+    previous = '{"previous":true}\n'
+    output.write_text(previous)
+    original_write = Path.write_text
+
+    def short_write(path, data):
+        original_write(path, data[:4])
+        raise OSError("simulated catalog write failure")
+
+    monkeypatch.setattr(Path, "write_text", short_write)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "catalog",
+            str(image),
+            str(output),
+            "--executable",
+            "SLUS_009.23",
+            "--expected-executable-sha256",
+            digest,
+        ],
+    )
+    assert main() == 2
+    captured = capsys.readouterr()
+    assert "simulated catalog write failure" in captured.err
+    assert not captured.out
+    assert output.read_text() == previous
+    assert not list(tmp_path.glob(".re-map-export-*"))

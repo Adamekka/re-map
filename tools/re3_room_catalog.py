@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from build_item_table import _read_file
 from list_psx_files import _read_dir, _sector_data
-from output_safety import aliases_input
+from output_safety import DerivedOutput, OutputAliasError
 
 from games.re3 import EXECUTABLE_SHA256
 from games.re3.room_data import (
@@ -185,13 +185,12 @@ def main() -> int:
         print(f"RE3 catalog failed: {result.detail}", file=sys.stderr)
         return 2
     try:
-        # The output is metadata, and must never replace owned input bytes,
-        # including when a symlink or hard link names the same image.
-        if aliases_input(args.image, args.output):
-            print("Catalog output must differ from the input image", file=sys.stderr)
-            return 2
-        args.output.write_text(json.dumps(result, indent=2) + "\n")
-    except OSError as error:
+        output = DerivedOutput(args.output, (args.image,))
+        output.write_text(json.dumps(result, indent=2) + "\n")
+    except OutputAliasError:
+        print("Catalog output must differ from the input image", file=sys.stderr)
+        return 2
+    except (OSError, ValueError) as error:
         print(f"Cannot write RE3 catalog: {error}", file=sys.stderr)
         return 2
     print(f"rooms={len(result['rooms'])} unsupported={len(result['unsupported'])}")
