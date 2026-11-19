@@ -281,11 +281,52 @@ def test_second_writer_is_rejected_until_the_first_closes(
 ):
     path = tmp_path / "visits.json"
     first = VisitHistory(path, identity, region_rooms, False)
+    first.save(Tracker())
     with pytest.raises(HistoryError, match="history is in use"):
         VisitHistory(path, identity, region_rooms, True)
     first.close()
     second = VisitHistory(path, identity, region_rooms, False)
     second.close()
+
+
+@pytest.mark.parametrize("name", ["visits.json.lock", "visits.json.LOCK"])
+def test_history_cannot_replace_another_writers_lock(
+    tmp_path, identity, region_rooms, name
+):
+    path = tmp_path / "visits.json"
+    first = VisitHistory(path, identity, region_rooms, False)
+    lock = path.with_name(path.name + ".lock")
+    inode = lock.stat().st_ino
+    try:
+        chosen_history = tmp_path / name
+        with pytest.raises(HistoryError, match="reserved .lock suffix"):
+            VisitHistory(chosen_history, identity, region_rooms, True).close()
+        assert not chosen_history.with_name(name + ".lock").exists()
+        assert lock.stat().st_ino == inode
+    finally:
+        first.close()
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_history_lock_symlink_cannot_point_to_the_history(
+    tmp_path, identity, region_rooms, existing
+):
+    path = tmp_path / "visits.json"
+    lock = path.with_name(path.name + ".lock")
+    original = b"previous visits"
+    if existing:
+        path.write_bytes(original)
+    lock.symlink_to(path.name)
+    with pytest.raises(
+        HistoryError, match="Cannot open exploration history lock"
+    ) as error:
+        VisitHistory(path, identity, region_rooms, True).close()
+    assert str(lock) in str(error.value)
+    assert lock.readlink() == Path(path.name)
+    if existing:
+        assert path.read_bytes() == original
+    else:
+        assert not path.exists()
 
 
 @pytest.mark.parametrize("gameplay", [True, False])

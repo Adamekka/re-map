@@ -39,6 +39,12 @@ class VisitHistory:
         region_rooms: dict[str, set[str]],
         new_playthrough: bool,
     ) -> None:
+        # Saving a history ending in .lock could replace another writer's lock.
+        if path.name.casefold().endswith(".lock"):
+            raise HistoryError(
+                f"Exploration history path {path} uses the reserved .lock suffix. "
+                "Choose another --history-file."
+            )
         self.path = path
         self.identity = identity
         self.region_rooms = region_rooms
@@ -46,11 +52,22 @@ class VisitHistory:
         self.rooms: tuple[str, ...] = ()
         self.regions: tuple[tuple[str, str], ...] = ()
         self.needs_write = True
+        lock_path = path.with_name(path.name + ".lock")
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            self.lock = path.with_name(path.name + ".lock").open("a")
+            # A symlink can follow an atomically replaced history file and
+            # let the next writer acquire a lock on a different inode.
+            # Keep the lock open until close() so it covers the whole session.
+            self.lock = open(  # noqa: SIM115
+                lock_path,
+                "a",
+                opener=lambda name, flags: os.open(name, flags | os.O_NOFOLLOW, 0o666),
+            )
         except OSError as exc:
-            raise HistoryError(f"Cannot open exploration history: {exc}") from exc
+            raise HistoryError(
+                f"Cannot open exploration history lock {lock_path}: "
+                f"{exc.strerror or exc}. Choose another --history-file."
+            ) from exc
         try:
             # Two trackers must not overwrite each other's exploration. The lock
             # file stays in place; closing this handle releases the OS lock.

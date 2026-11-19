@@ -34,6 +34,10 @@ Run `bun tests/check_map_refresh_browser.mjs <python>` with Playwright available
 
 ## Exploration history save failures
 
+The tracker reserves the `.lock` suffix for its writer locks. If you previously saved exploration to a file with that suffix, stop all trackers, rename the history to a filename ending in `.json`, and use that path with `--history-file`.
+
+If startup rejects a symbolic link at your history's lock path, stop all trackers, move the `.lock` link aside, and restart with your original history path. The tracker creates a new lock and resumes from the saved history.
+
 If writing or replacing the history file fails, the previous saved history remains intact. Losing write access to the history directory can also prevent temporary-file cleanup. The tracker reports a history error with the leftover temporary file's path. Restore directory access before restarting the tracker. Leftover temporary files are never loaded as exploration history.
 
 Run the history regressions with the [test environment](../testing.md#python-test-environment):
