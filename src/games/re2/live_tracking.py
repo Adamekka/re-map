@@ -667,11 +667,6 @@ def poll_re2(
                     # this identity, including after a Reset changed it.
                     item_type = scripted.item_identity[gid][0]
                 label = profile.names["items"].get(str(item_type), "Collectible")
-                if item_type is None:
-                    # Collection belongs to the acquisition ID. Its unresolved
-                    # identity still prevents a complete room verdict, even
-                    # when the fresh flag records collection. RE2-COLLECT-021.
-                    identities_complete = False
                 if taken:
                     state = "taken"
                 elif item_type is None:
@@ -701,11 +696,15 @@ def poll_re2(
                 if state == "unknown" and scripted is not None:
                     presence = scripted.item_presence.get(gid)
                     if presence is False:
-                        # No creator runs for the fresh state, now or after
-                        # any room trigger. RE2-EVAL-001.
+                        # The evaluated state leaves this pickup unobtainable
+                        # after room entry and its triggers. RE2-EVAL-001.
                         continue
                     if presence:
                         state = "uncollected"
+                if item_type is None:
+                    # Only pickups retained after the presence check need an
+                    # identity. A taken pickup still counts. RE2-COLLECT-024.
+                    identities_complete = False
                 amounts = (
                     {live_items[item["origin"]].amount for item in observed_items}
                     if observed_items

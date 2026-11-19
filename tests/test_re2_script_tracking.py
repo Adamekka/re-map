@@ -10,6 +10,7 @@ from test_re2_tracking import ROOT, build_snapshot
 
 from games.bit_flags import msb_flag_location
 from games.game_profile import RoomId
+from games.item_quantity import ItemQuantityState
 from games.re2.live_tracking import poll_re2
 from games.re2.re2_profile import Re2Profile
 from tracker.exploration_state import RoomCompletion, Tracker
@@ -71,6 +72,41 @@ def test_fresh_acquisition_and_rewind_reach_departed_evaluations(leon):
         else:
             assert "uncollected" in states
             assert tracker.rooms[room].completion is RoomCompletion.Incomplete
+
+
+def test_absent_pickup_alternatives_do_not_block_clearance(script_evaluation):
+    # RE2-COLLECT-024: Claire B's room 01-0c has two possible types for ID 207.
+    # The room resets that pickup's slot, leaving only ID 170 required.
+    profile = Re2Profile.load(ROOT / "profiles" / "re2_claire_b_slus00756.json")
+    profile, _, put, read = build_snapshot(profile, "00-04")
+    tracker = Tracker()
+    tracker.mark_current(RoomId(1, 0x0C))
+    bank = profile.flag_banks[profile.runtime_layout["item_bank_early"]][0]
+
+    for collected, ambiguous_taken, completion in (
+        (False, False, RoomCompletion.Incomplete),
+        (True, False, RoomCompletion.Cleared),
+        (True, True, RoomCompletion.Unknown),
+        (True, False, RoomCompletion.Cleared),
+        (False, False, RoomCompletion.Incomplete),
+    ):
+        for gid, taken in ((170, collected), (207, ambiguous_taken)):
+            address, mask = msb_flag_location(bank, gid)
+            word = int.from_bytes(read(address, 4).data, "little")
+            put(address, word | mask if taken else word & ~mask, 4)
+
+        assert poll_re2(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["01-0c"]
+        assert record.completion is completion
+        assert record.list_complete is (not ambiguous_taken)
+        assert record.total_items == 1 + ambiguous_taken
+        assert record.collected_items == collected + ambiguous_taken
+        if ambiguous_taken:
+            [unknown_identity] = [
+                item for item in record.items if item.label == "Collectible"
+            ]
+            assert unknown_identity.state == "taken"
+            assert unknown_identity.quantity is ItemQuantityState.Unreconstructed
 
 
 def test_current_door_slots_follow_the_live_registry(leon):
