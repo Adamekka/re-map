@@ -34,7 +34,7 @@ Under 40 pseudo-random states of every flag, variable and inventory slot, with p
 
 ### Limits
 
-Native room loads came from one early Hard savestate, each covering one entry outcome; three loaded rooms (`05-0b`, `04-0a`, `06-0c`) were not polled by the tracker, and the retained gameplay captures cover one room. Native code outside scripts is not modeled. Stage 6 and 7 rooms may belong to Mercenaries. Unit-count item types and prompt-answer banks are not yet identified, so quantities show as recorded and prompt answers stored in flags count as game state. The pseudo-random stress states are not gameplay states.
+Native room loads came from one early Hard savestate, each covering one entry outcome; three loaded rooms (`05-0b`, `04-0a`, `06-0c`) were not polled by the tracker, and the retained gameplay captures cover one room. Native code outside scripts is not modeled. Stage 6 and 7 rooms may belong to Mercenaries. Prompt-answer banks are not yet identified, so prompt answers stored in flags count as game state. The pseudo-random stress states are not gameplay states. The later [RE3-QUANTITY-001](../item-quantity-display.md#re3-quantity-001-show-counts-for-ammunition-stacks-and-ink-ribbons) identifies which recorded amounts the map can display as counts.
 
 Contribution, 2026-11-16: requested by the human. Claude `claude-opus-5-5` wrote the RE3 opcode set, engine analysis, tracker integration, tests and this record. A `claude-opus-5-5` subagent derived the opcode width table and the floor plans. No external review has been performed yet.
 

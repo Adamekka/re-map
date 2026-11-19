@@ -18,7 +18,7 @@ from pathlib import Path
 from games.bit_flags import msb_flag_location
 from games.door_access_state import door_access
 from games.game_profile import RoomId
-from games.item_quantity import ItemQuantityState
+from games.item_quantity import ItemQuantityState, parse_unit_count_item_types
 from games.player_heading import heading_degrees
 from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re3 import EXECUTABLE_SHA256
@@ -91,6 +91,9 @@ class Re3Profile:
         if not isinstance(catalog, SourceCatalog):
             raise ValueError(f"Owned RE3 disc rejected: {catalog.detail}")
         layout = raw["runtime_layout"]
+        layout["unit_count_item_types"] = parse_unit_count_item_types(
+            layout.get("unit_count_item_types")
+        )
         blocks = [(int(address, 0), width) for address, width in layout["state_blocks"]]
 
         def in_blocks(address: int, width: int) -> bool:

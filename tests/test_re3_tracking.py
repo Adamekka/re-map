@@ -121,7 +121,7 @@ def tracking(live, tmp_path):
             "item_bank_stage_boundary": 2,
             "key_bank": 9,
             "file_type_min": 131,
-            "unit_count_item_types": [20],
+            "unit_count_item_types": frozenset({20}),
             "heading_offset_degrees": 90,
             "heading_direction": 1,
             "inventory_pointer_address_ps1": "0x800D23B4",
@@ -182,6 +182,8 @@ def test_departed_room_follows_fresh_story_flags_and_rewinds(tracking):
             assert [(item.label, item.state) for item in departed.items] == [
                 ("Shotgun shells", "uncollected")
             ]
+            assert departed.items[0].quantity == 7
+            assert not departed.items[0].quantity_is_unit_count
             assert departed.completion is RoomCompletion.Incomplete
             assert [door.state for door in doors] == ["BLOCKED"]
         else:
@@ -200,6 +202,8 @@ def test_current_room_acquisition_flag_wins_and_reverses(tracking):
         assert [item.state for item in record.items] == [
             "taken" if collected else "uncollected"
         ]
+        assert record.items[0].quantity == 15
+        assert record.items[0].quantity_is_unit_count
         assert record.completion is (
             RoomCompletion.Cleared if collected else RoomCompletion.Incomplete
         )
@@ -263,7 +267,7 @@ def test_file_sharing_a_pickup_id_keeps_the_pickup_identity_after_rewind(
         )
 
 
-def test_owned_profile_evaluates_every_room():
+def test_owned_profile_evaluates_every_room(tmp_path):
     import os
     import random
     import re
@@ -283,10 +287,27 @@ def test_owned_profile_evaluates_every_room():
     cue_path = Path(cue)
     track = re.search(r'FILE\s+"([^"]+)"', cue_path.read_text())
     executable, sources = load_owned_sources(cue_path.parent / track[1])
-    profile = Re3Profile.load(
-        root / "profiles/re3_jill_hard_slus00923.json", executable, sources
-    )
+    profile_path = root / "profiles/re3_jill_hard_slus00923.json"
+    profile = Re3Profile.load(profile_path, executable, sources)
     assert len(profile.rooms) == 169
+
+    # RE3-QUANTITY-001: combine native stack categories with plain digits.
+    load_address = struct.unpack_from("<I", executable, 0x18)[0]
+    item_table = 0x800 + 0x800A0514 - load_address
+    native_count_types = frozenset(
+        item_type
+        for item_type in range(profile.layout["file_type_min"])
+        if executable[item_table + 4 * item_type] in (2, 6)
+        and executable[item_table + 4 * item_type + 3] & 3 == 1
+    )
+    assert profile.layout["unit_count_item_types"] == native_count_types
+    # Treating a missing count policy as empty would suppress every multiplier.
+    missing_counts = json.loads(profile_path.read_text())
+    del missing_counts["runtime_layout"]["unit_count_item_types"]
+    invalid_profile = tmp_path / profile_path.name
+    invalid_profile.write_text(json.dumps(missing_counts))
+    with pytest.raises(ValueError, match="unit_count_item_types"):
+        Re3Profile.load(invalid_profile, executable, sources)
 
     def scattered(bank, bit):
         # A fixed pseudo-random flag state. It drives the 03-0b puzzle task
