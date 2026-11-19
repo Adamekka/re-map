@@ -1,4 +1,4 @@
-"""Interpret one extracted RE1 RAM snapshot without connecting to an emulator.
+"""Interpret one extracted PS1 RAM snapshot without connecting to an emulator.
 
 Usage:
   python3 tools/track_offline.py /tmp/ram.bin
@@ -16,8 +16,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from emulator.duckstation_gdb import MemRead
-from games.re1.re1_profile import Re1Profile
-from track import poll_once
+from track import (
+    Re3DiscError,
+    Re3ProfileError,
+    load_tracking_profile,
+    poll_once,
+    resolve_tracking_disc,
+)
 from tracker.exploration_state import Tracker
 from tracker.polling import PollStatus
 
@@ -31,9 +36,9 @@ def main() -> int:
         default=Path(__file__).resolve().parents[1]
         / "profiles/re1_directors_cut_slus00551.json",
     )
+    ap.add_argument("--disc", type=Path, help="owned disc CUE, required for RE3")
     args = ap.parse_args()
 
-    profile = Re1Profile.load(args.profile)
     try:
         ram = args.ram.read_bytes()
     except OSError as error:
@@ -44,6 +49,18 @@ def main() -> int:
             f"RAM image must contain exactly 2097152 bytes; got {len(ram)}.",
             file=sys.stderr,
         )
+        return 2
+
+    try:
+        disc_tracks = ()
+        if args.disc is not None:
+            _, disc_tracks = resolve_tracking_disc(args.disc)
+        profile = load_tracking_profile(args.profile, disc_tracks)
+    except (Re3DiscError, Re3ProfileError) as error:
+        print(str(error), file=sys.stderr)
+        return 2
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        print(f"Cannot load profile {args.profile}: {error}", file=sys.stderr)
         return 2
 
     def read_memory(address: int, length: int) -> MemRead:

@@ -44,7 +44,7 @@ python3 -m pytest -q tests/test_visit_history.py tests/test_track_log_safety.py 
 
 These tests use temporary history files and cover invalid history, writer exclusion, failed writes and replacement, cleanup failure, retry and restored exploration. Logging checks cover aliases, rotation destinations, profile/lock preservation, new histories, default paths and malformed-profile tracebacks.
 
-## Offline RE1 snapshots
+## Offline snapshots
 
 Inspect a retained RE1 savestate without starting DuckStation:
 
@@ -53,9 +53,17 @@ python3 tools/extract_sav_ram.py input.sav /tmp/re1-ram.bin
 python3 tools/track_offline.py /tmp/re1-ram.bin
 ```
 
-The offline tracker uses the same revision, room-source, item and door checks as live tracking, defaulting to SLUS-00551 Jill. It prints the snapshot's current room and leaves exploration history untouched. The input must be an extracted 2 MiB RAM image. Wrong revisions, non-gameplay states and incoherent room snapshots return a diagnostic and a nonzero exit code.
+The offline tracker uses the same revision, room-source, item and door checks as live tracking. It defaults to SLUS-00551 Jill. For RE2 and RE3, pass the exact profile matching the capture. RE3 also needs the owned disc CUE for its room sources.
 
-Room and item metadata come from the profile; the old `--items` argument is no longer accepted. Use the [test environment](../testing.md#python-test-environment) for regressions:
+```sh
+python3 tools/track_offline.py /tmp/re2-ram.bin --profile profiles/re2_leon_a_slus00748.json
+python3 tools/track_offline.py /tmp/re3-ram.bin --profile profiles/re3_jill_hard_slus00923.json \
+  --disc "/path/to/Resident Evil 3 - Nemesis.cue"
+```
+
+The tool reads one extracted 2 MiB RAM image. It prints the current room and each known item's name and collection state using the same terminal view as live tracking. Exploration history stays untouched. Wrong revisions, non-gameplay states and incoherent snapshots return a diagnostic and a nonzero exit code.
+
+Use the [test environment](../testing.md#python-test-environment) for regressions.
 
 ```sh
 python3 -m pytest -q tests/test_track_offline.py tests/test_live_items.py tests/test_rdt_global_id.py

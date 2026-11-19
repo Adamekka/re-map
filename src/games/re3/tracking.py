@@ -80,12 +80,9 @@ class Re3Profile:
         path: Path, executable: bytes, sources: tuple[RoomSource, ...]
     ) -> Re3Profile:
         raw = json.loads(path.read_text())
-        name, digest = raw["executable_identity"].split(" SHA256 ")
-        if (
-            digest != EXECUTABLE_SHA256
-            or name != "SLUS_009.23"
-            or raw["profile_id"] != "re3_jill_hard_slus00923"
-        ):
+        if raw.get("executable_identity") != f"SLUS_009.23 SHA256 {EXECUTABLE_SHA256}":
+            raise ValueError("executable_identity must match the pinned RE3 revision")
+        if raw["profile_id"] != "re3_jill_hard_slus00923":
             raise ValueError("RE3 profile targets another revision")
         catalog = bind_source_catalog(executable, sources)
         if not isinstance(catalog, SourceCatalog):

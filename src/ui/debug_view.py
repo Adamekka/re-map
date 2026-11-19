@@ -40,5 +40,6 @@ def render(
             f"Collected: {collected}",
             f"State: {record.completion.value}",
             f"List complete: {'yes' if record.list_complete else 'no'}",
+            *(f"{item.label}: {item.state}" for item in record.items),
         ]
     )

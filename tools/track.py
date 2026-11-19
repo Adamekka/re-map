@@ -54,6 +54,46 @@ from ui.map_view import MAP_PROFILE_ID, MapServer, map_state
 logger = logging.getLogger(__name__)
 
 
+class Re3DiscError(ValueError):
+    """The RE3 profile needs a readable, matching disc."""
+
+
+class Re3ProfileError(ValueError):
+    """The RE3 profile cannot be loaded with the supplied disc."""
+
+
+def resolve_tracking_disc(cue: Path) -> tuple[Path, tuple[Path, ...]]:
+    try:
+        cue = cue.expanduser()
+        return cue, read_cue_tracks(cue)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise Re3DiscError(f"RE3 disc rejected: {exc}") from exc
+
+
+def load_tracking_profile(
+    path: Path, disc_tracks: tuple[Path, ...]
+) -> Re1Profile | Re2Profile | Re3Profile:
+    raw = json.loads(path.read_text())
+    if not isinstance(raw, dict) or not isinstance(raw.get("profile_id"), str):
+        raise TypeError("profile_id must be a string")
+    profile_id = raw["profile_id"]
+    if profile_id.startswith("re2_"):
+        return Re2Profile.load(path)
+    if profile_id.startswith("re3_"):
+        if not disc_tracks:
+            raise Re3DiscError("RE3 tracking needs --disc with your owned disc CUE")
+        try:
+            # The supported RE3 image has its data on the first track.
+            executable, sources = load_owned_sources(disc_tracks[0])
+        except (OSError, ValueError) as exc:
+            raise Re3DiscError(f"RE3 disc rejected: {exc}") from exc
+        try:
+            return Re3Profile.load(path, executable, sources)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise Re3ProfileError(f"Cannot load profile {path}: {exc}") from exc
+    return Re1Profile.load(path)
+
+
 def poll_once(
     profile: Re1Profile | Re2Profile | Re3Profile,
     tracker: Tracker,
@@ -524,12 +564,11 @@ def poll_once(
         record.doors_complete, record.door_reason = door_coverage[room]
     tracker.doors = tuple(decoded_doors)
     record = tracker.room_state(rid)
-    details = [f"{item.label}: {item.state}" for item in record.items]
-    details.extend(
+    details = [
         f"Door to {door.target}: {door.label}"
         for door in tracker.doors
         if door.source == rid
-    )
+    ]
     details.append("Visited scope: this playthrough")
     if record.door_reason:
         details.append(record.door_reason)
@@ -621,19 +660,20 @@ def main() -> int:
         else [re1_history_path, *re2_history_paths.values(), re3_history_path]
     )
     backup_count = 3
-    disc_paths: tuple[Path, ...] = ()
+    disc_inputs: tuple[Path, ...] = ()
+    disc_tracks: tuple[Path, ...] = ()
     if hasattr(args, "disc"):
-        cue = args.disc.expanduser()
         try:
             # Resolve once so the profile loader reads a guarded path.
-            disc_paths = (cue, *read_cue_tracks(cue))
-        except (OSError, ValueError) as exc:
+            cue, disc_tracks = resolve_tracking_disc(args.disc)
+            disc_inputs = (cue, *disc_tracks)
+        except Re3DiscError as exc:
             # Opening outputs is unsafe until the referenced track is known.
-            print(f"RE3 disc rejected: {exc}", file=sys.stderr)
+            print(str(exc), file=sys.stderr)
             return 2
     try:
         # Check inputs before logging so even startup diagnostics cannot alter them.
-        input_paths = [args.profile, *disc_paths]
+        input_paths = [args.profile, *disc_inputs]
         history_outputs = []
         for path in history_paths:
             path = path.expanduser().resolve()
@@ -704,31 +744,20 @@ def main() -> int:
         print("the live map needs continuous tracking; omit --once", file=sys.stderr)
         return 2
 
-    profile_id = json.loads(args.profile.read_text())["profile_id"]
-    is_re2 = profile_id.startswith("re2_")
-    is_re3 = profile_id.startswith("re3_")
-    if is_re3:
-        if not disc_paths:
-            print("RE3 tracking needs --disc with your owned disc CUE", file=sys.stderr)
-            return 2
-        try:
-            # The supported RE3 image has its data on the first track.
-            executable, sources = load_owned_sources(disc_paths[1])
-            profile = Re3Profile.load(args.profile, executable, sources)
-        except (OSError, ValueError) as exc:
-            logger.error("RE3 disc rejected: %s", exc)
-            print(f"RE3 disc rejected: {exc}", file=sys.stderr)
-            return 2
-    else:
-        profile = (
-            Re2Profile.load(args.profile) if is_re2 else Re1Profile.load(args.profile)
-        )
+    try:
+        profile = load_tracking_profile(args.profile, disc_tracks)
+    except (Re3DiscError, Re3ProfileError) as exc:
+        logger.error("%s", exc)
+        print(str(exc), file=sys.stderr)
+        return 2
+    is_re2 = isinstance(profile, Re2Profile)
+    is_re3 = isinstance(profile, Re3Profile)
     # Preserve existing histories while isolating the new RE2 revision.
     # Explicit --history-file selections still belong to the caller.
     history_path = (
         args.history_file
         if hasattr(args, "history_file")
-        else re2_history_paths[profile_id]
+        else re2_history_paths[profile.profile_id]
         if is_re2
         else re3_history_path
         if is_re3
