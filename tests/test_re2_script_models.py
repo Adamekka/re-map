@@ -134,6 +134,40 @@ def test_committed_models_match_the_owned_disc(profile_id, tmp_path):
     assert output.read_bytes() == (profile_path.parent / committed).read_bytes()
 
 
+@pytest.mark.parametrize("source", ["cue", "track", "profile", "catalog"])
+@pytest.mark.parametrize("alias", ["direct", "hardlink"])
+def test_model_output_preserves_its_inputs(tmp_path, source, alias):
+    cue = tmp_path / "test.cue"
+    track = tmp_path / "data track.bin"
+    profile = tmp_path / "profile.json"
+    catalog = tmp_path / "catalog.json"
+    cue.write_text(f'FILE "{track.name}" BINARY\n')
+    track.write_bytes(b"disposable track")
+    profile.write_text(json.dumps({"room_metadata_path": catalog.name}))
+    catalog.write_text("{}")
+    media = {"cue": cue, "track": track, "profile": profile, "catalog": catalog}[source]
+    before = media.read_bytes()
+    output = media
+    if alias == "hardlink":
+        output = tmp_path / "output.json"
+        output.hardlink_to(media)
+    result = subprocess.run(
+        [
+            sys.executable,
+            ROOT / "tools/build_script_models.py",
+            cue,
+            profile,
+            output,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "Choose another output path" in result.stderr
+    assert media.read_bytes() == before
+
+
 def test_loading_rejects_a_catalog_award_without_a_model_row():
     from games.re2.script_model import script_evaluation
 

@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import struct
 import sys
 from pathlib import Path
@@ -22,8 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from build_item_table import _read_file
+from disc_cue import read_cue_tracks
 from extract_psx_file import _find
 from list_psx_files import _sector_data
+from output_safety import DerivedTextOutput
 
 from games.re2.script_model import compile_room_scripts
 
@@ -34,19 +35,22 @@ def main() -> int:
     parser.add_argument("profile", type=Path)
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
-    profile = json.loads(args.profile.read_text())
-    catalog = json.loads(
-        (args.profile.parent / profile["room_metadata_path"]).read_text()
-    )
+    try:
+        tracks = read_cue_tracks(args.cue)
+        profile = json.loads(args.profile.read_text())
+        catalog_path = args.profile.parent / profile["room_metadata_path"]
+        output = DerivedTextOutput(
+            args.output, (args.cue, *tracks, args.profile, catalog_path)
+        )
+        catalog = json.loads(catalog_path.read_text())
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        print(f"Cannot prepare RE2 script export: {error}", file=sys.stderr)
+        return 1
     if catalog["executable_identity"] != profile["executable_identity"]:
         print("Room catalog belongs to another revision.", file=sys.stderr)
         return 1
-    match = re.search(r'FILE\s+"([^"]+)"', args.cue.read_text())
-    if match is None:
-        print("CUE lacks its data track.", file=sys.stderr)
-        return 1
     sources = {}
-    with (args.cue.parent / match[1]).open("rb") as stream:
+    with tracks[0].open("rb") as stream:
         pvd = _sector_data(stream, 16)
         if pvd[:7] != b"\x01CD001\x01":
             print("Data track lacks an ISO9660 primary volume.", file=sys.stderr)
@@ -76,7 +80,11 @@ def main() -> int:
         "research_ids": ["RE2-EVAL-001"],
         "sources": sources,
     }
-    args.output.write_text(json.dumps(document, separators=(",", ":")) + "\n")
+    try:
+        output.write_text(json.dumps(document, separators=(",", ":")) + "\n")
+    except (OSError, ValueError) as error:
+        print(f"Cannot save RE2 script models: {error}", file=sys.stderr)
+        return 1
     return 0
 
 
