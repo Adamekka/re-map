@@ -102,6 +102,22 @@ def test_cancelled_exchange_closes_the_partially_consumed_stream(
     assert not gdb.connected
 
 
+def test_interrupt_cancellation_before_register_request_closes_stream(
+    monkeypatch, packet_pair
+):
+    gdb, server = packet_pair
+
+    def cancel_request(*args, **kwargs):
+        assert server.recv(1) == b"\x03"
+        server.sendall(_encode_packet(b"S02"))
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(gdb, "_read_register", cancel_request)
+    with pytest.raises(KeyboardInterrupt):
+        gdb.interrupt()
+    assert not gdb.connected
+
+
 class OneByteSocket(socket.socket):
     def recv(self, bufsize: int, flags: int = 0) -> bytes:
         # Force TCP fragmentation, including the two checksum digits.
@@ -149,26 +165,34 @@ def test_multiple_stop_notifications_and_continue_preserve_packets(packet_pair):
     assert result.ok and result.data == bytes.fromhex("aabb")
 
 
-def test_interrupt_consumes_complete_stop_reply(packet_pair):
+def test_interrupt_leaves_the_next_step_its_own_stop_reply(packet_pair):
     gdb, server = packet_pair
-    server.sendall(_encode_packet(b"S02"))
+    # The register reply follows the pause notification, even with an
+    # earlier command acknowledgement still queued.
+    server.sendall(b"+" + _encode_packet(b"S02") + b"+" + _encode_packet(b"245c0280"))
     assert gdb.interrupt() == ""
+    assert gdb.wait_stop(0) == NoStop()
+    server.sendall(b"+" + _encode_packet(b"S05"))
+    assert gdb.single_step() == ""
     server.sendall(_encode_packet(b"1234"))
     result = gdb.read_memory(0x80000000, 2)
     assert result.ok and result.data == bytes.fromhex("1234")
 
 
-def test_interrupt_already_paused_queries_stop_reason(packet_pair):
+def test_interrupt_already_paused_waits_for_register_reply(packet_pair):
     gdb, server = packet_pair
 
     def respond():
         command = bytearray()
-        expected = b"\x03" + _encode_packet(b"?")
+        expected = b"\x03" + _encode_packet(b"p25")
         while len(command) < len(expected):
-            command.extend(server.recv(len(expected) - len(command)))
+            received = server.recv(len(expected) - len(command))
+            if not received:
+                return
+            command.extend(received)
         assert command == expected
-        # A paused server replies only to '?' and emits no new interrupt stop.
-        server.sendall(b"+" + _encode_packet(b"S02"))
+        # An already paused server emits no new interrupt stop.
+        server.sendall(b"+" + _encode_packet(b"245c0280"))
 
     responder = threading.Thread(target=respond, daemon=True)
     responder.start()
@@ -180,13 +204,19 @@ def test_interrupt_already_paused_queries_stop_reason(packet_pair):
     assert result.ok and result.data == bytes.fromhex("1234")
 
 
-def test_interrupt_query_reply_does_not_shift_next_memory_read(packet_pair):
+def test_interrupt_preserves_a_pending_watch_stop_once(packet_pair):
     gdb, server = packet_pair
-    server.sendall(_encode_packet(b"S02") + b"+" + _encode_packet(b"S02"))
+    server.sendall(_encode_packet(b"T05watch:80000000;") + _encode_packet(b"245c0280"))
     assert gdb.interrupt() == ""
-    server.sendall(_encode_packet(b"1234"))
-    result = gdb.read_memory(0x80000000, 2)
-    assert result.ok and result.data == bytes.fromhex("1234")
+    assert gdb.wait_stop(0) == WriteWatchStop(5, 0x80000000)
+    assert gdb.wait_stop(0) == NoStop()
+
+
+def test_interrupt_requires_its_register_reply_after_a_stop(packet_pair):
+    gdb, server = packet_pair
+    server.sendall(_encode_packet(b"S02") + _encode_packet(b"E01"))
+    assert "GDB error" in gdb.interrupt()
+    assert not gdb.connected
 
 
 @pytest.mark.parametrize(

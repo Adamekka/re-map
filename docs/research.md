@@ -31,6 +31,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re1-cheat-003-temporary-health-lock-for-isolated-map-validation"></a>[RE1-CHEAT-003](research/emulator-runtime.md#re1-cheat-003-temporary-health-lock-for-isolated-map-validation) | temporary health lock for isolated map validation |
 | <a id="re1-cheat-004-bundled-invincibility-patch-does-not-match-the-pinned-executable"></a>[RE1-CHEAT-004](research/emulator-runtime.md#re1-cheat-004-bundled-invincibility-patch-does-not-match-the-pinned-executable) | bundled Invincibility patch does not match the pinned executable |
 | <a id="re1-emu-009-gameplay-endurance-and-reconnect-recovery"></a>[RE1-EMU-009](research/emulator-runtime.md#re1-emu-009-gameplay-endurance-and-reconnect-recovery) | gameplay endurance and reconnect recovery |
+| <a id="re1-emu-010-confirming-gdb-interrupts-before-single-stepping"></a>[RE1-EMU-010](research/emulator-runtime.md#re1-emu-010-confirming-gdb-interrupts-before-single-stepping) | Candidate from pinned source and socket replay. A register reply confirms the interrupt before a single-step. |
 
 ## RE1 room sources research
 

@@ -3,7 +3,7 @@
 All reads return an explicit result, never a silent default.
 Address space must be a PS1 virtual address such as 0x80000000.
 See docs/research.md RE1-EMU-001 for access, RE1-EMU-007 for reply handling,
-and RE1-EMU-008 for write watchpoints and single stepping.
+RE1-EMU-008 for write watchpoints and stepping, and RE1-EMU-010 for interrupts.
 """
 
 from __future__ import annotations
@@ -190,23 +190,21 @@ class DuckStationGdb:
         if self._sock is None:
             return "not connected"
         try:
-            # An already paused DuckStation sends no new interrupt notification.
-            # Query its stop reason after the interrupt so both states have a reply.
-            self._sock.sendall(b"\x03" + _encode_packet(b"?"))
-            reply = _read_packet(self._sock, time.monotonic() + 3.0)
-            if not _is_stop_reply(reply):
-                raise ConnectionError(f"unexpected GDB interrupt reply: {reply[:32]!r}")
-            stop = _decode_stop(reply)
-            if isinstance(stop, WriteWatchStop):
-                self._watch_stops.append(stop)
-        except (OSError, ValueError) as exc:
+            self._sock.sendall(b"\x03")
+            # DuckStation processes the pause before the next command. Its PC
+            # reply confirms that boundary without echoing a pending stop reason.
+            result = self._read_register(37, timeout_seconds=3.0)
+            if not result.ok:
+                self.close()
+            return result.error
+        except OSError as exc:
             self.close()
             return str(exc)
         except KeyboardInterrupt:
-            # Cancellation may split a frame; disconnect releases owned watches.
+            # The interrupt alone can leave a stop queued. Disconnect also
+            # releases owned watches when either half of the exchange is cancelled.
             self.close()
             raise
-        return ""
 
     def read_memory(self, address: int, length: int) -> MemRead:
         if self._sock is None:
@@ -261,12 +259,12 @@ class DuckStationGdb:
     def read_u32_le(self, address: int) -> MemRead:
         return self.read_memory(address, 4)
 
-    def _request(self, payload: bytes) -> MemRead:
+    def _request(self, payload: bytes, *, timeout_seconds: float = 2.0) -> MemRead:
         if self._sock is None:
             return MemRead(False, b"", "not connected")
         try:
             self._sock.sendall(_encode_packet(payload))
-            deadline = time.monotonic() + 2.0
+            deadline = time.monotonic() + timeout_seconds
             while True:
                 reply = _read_packet(self._sock, deadline)
                 if not _is_stop_reply(reply):
@@ -304,9 +302,14 @@ class DuckStationGdb:
         return ""
 
     def read_register(self, index: int) -> MemRead:
+        return self._read_register(index, timeout_seconds=2.0)
+
+    def _read_register(self, index: int, *, timeout_seconds: float) -> MemRead:
         if not 0 <= index <= 0xFF:
             return MemRead(False, b"", "register index must fit one byte")
-        result = self._request(f"p{index:x}".encode("ascii"))
+        result = self._request(
+            f"p{index:x}".encode("ascii"), timeout_seconds=timeout_seconds
+        )
         if not result.ok:
             return result
         try:
