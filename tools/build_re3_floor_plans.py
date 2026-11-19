@@ -25,7 +25,7 @@ from build_item_table import _read_file
 from disc_cue import read_cue_tracks
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
-from output_safety import DerivedTextOutput
+from output_safety import DerivedOutput
 from re3_map_geometry import extract_map_contours
 
 from games.re3 import EXECUTABLE_SHA256, MAP_U_SHA256
@@ -678,7 +678,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         tracks = read_cue_tracks(args.cue)
-        output = DerivedTextOutput(args.output, (args.cue, *tracks, args.names))
+        output = DerivedOutput(args.output, (args.cue, *tracks, args.names))
         # Use the checked image path so a second CUE read cannot change it.
         document = build(tracks[0], json.loads(args.names.read_text()))
         output.write_text(json.dumps(document, indent=2) + "\n")

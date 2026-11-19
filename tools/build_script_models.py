@@ -24,7 +24,7 @@ from build_item_table import _read_file
 from disc_cue import read_cue_tracks
 from extract_psx_file import _find
 from list_psx_files import _sector_data
-from output_safety import DerivedTextOutput
+from output_safety import DerivedOutput
 
 from games.re2.script_model import compile_room_scripts
 
@@ -39,7 +39,7 @@ def main() -> int:
         tracks = read_cue_tracks(args.cue)
         profile = json.loads(args.profile.read_text())
         catalog_path = args.profile.parent / profile["room_metadata_path"]
-        output = DerivedTextOutput(
+        output = DerivedOutput(
             args.output, (args.cue, *tracks, args.profile, catalog_path)
         )
         catalog = json.loads(catalog_path.read_text())

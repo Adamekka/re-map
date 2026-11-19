@@ -53,6 +53,8 @@ python3 tools/extract_sav_ram.py input.sav /tmp/re1-ram.bin
 python3 tools/track_offline.py /tmp/re1-ram.bin
 ```
 
+The extractor replaces the RAM image atomically and needs write access to its output directory.
+
 The offline tracker uses the same revision, room-source, item and door checks as live tracking. It defaults to SLUS-00551 Jill. For RE2 and RE3, pass the exact profile matching the capture. RE3 also needs the owned disc CUE for its room sources.
 
 ```sh

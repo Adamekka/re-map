@@ -1,5 +1,6 @@
 """Shared input protection for commands that export derived files."""
 
+from collections.abc import Callable
 from os import W_OK, access, readlink, stat_result
 from os.path import basename, samestat
 from pathlib import Path
@@ -43,7 +44,11 @@ def _resolve_destination(path: Path) -> Path:
         raise ValueError(f"Cannot resolve output {path}: {error}") from error
 
 
-class DerivedTextOutput:
+class OutputAliasError(ValueError):
+    """The destination names one of the inputs."""
+
+
+class DerivedOutput:
     def __init__(self, requested: Path, inputs: tuple[Path, ...]) -> None:
         self.requested = requested.absolute()
         self.destination = _resolve_destination(self.requested)
@@ -55,7 +60,7 @@ class DerivedTextOutput:
             raise ValueError(f"Output path changed: {self.requested}")
         for source in self.inputs:
             if aliases_input(source, self.destination):
-                raise ValueError(
+                raise OutputAliasError(
                     f"Output aliases {source}. Choose another output path."
                 )
         try:
@@ -69,12 +74,24 @@ class DerivedTextOutput:
         return existing
 
     def write_text(self, data: str) -> None:
+        self._publish(lambda pending: pending.write_text(data))
+
+    def write_bytes(self, data: bytes) -> None:
+        self._publish(lambda pending: pending.write_bytes(data))
+
+    def _publish(self, write: Callable[[Path], int]) -> None:
         # Write beside the output so a partial write leaves the old file intact.
-        with TemporaryDirectory(
-            dir=self.destination.parent, prefix=".re-map-export-"
-        ) as folder:
+        try:
+            staging = TemporaryDirectory(
+                dir=self.destination.parent, prefix=".re-map-export-"
+            )
+        except OSError as error:
+            raise OSError(
+                f"Cannot stage output in {self.destination.parent}: {error}"
+            ) from error
+        with staging as folder:
             pending = Path(folder) / "output"
-            pending.write_text(data)
+            write(pending)
             # Generation may outlast changes to the requested link or its target.
             existing = self._check()
             if existing is not None:

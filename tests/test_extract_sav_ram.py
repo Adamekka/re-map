@@ -69,3 +69,40 @@ def test_truncated_savestate_preserves_capture_and_accepts_valid_retry(
     captured = output.read_bytes()
     assert len(captured) == extract_sav_ram.RAM_SIZE
     assert captured != previous
+
+
+def test_output_alias_created_during_extraction_preserves_the_savestate(
+    tmp_path, monkeypatch, capsys
+):
+    original = (REPO / "tests/fixtures/slus00551_green_herb_after.sav").read_bytes()
+    source = tmp_path / "input.sav"
+    source.write_bytes(original)
+    output = tmp_path / "ram.bin"
+    decompress = extract_sav_ram._decompress
+
+    def redirect(frame):
+        output.hardlink_to(source)
+        return decompress(frame)
+
+    monkeypatch.setattr(extract_sav_ram, "_decompress", redirect)
+    monkeypatch.setattr(sys, "argv", ["extract_sav_ram.py", str(source), str(output)])
+    assert extract_sav_ram.main() == 2
+    failure = capsys.readouterr()
+    assert "output must differ from the input savestate" in failure.err
+    assert not failure.out
+    assert output.samefile(source)
+    assert source.read_bytes() == original
+
+
+def test_truncated_save_reports_missing_ram_before_invalid_output(
+    tmp_path, monkeypatch, capsys
+):
+    original = (REPO / "tests/fixtures/slus00551_green_herb_after.sav").read_bytes()
+    source = tmp_path / "truncated.sav"
+    source.write_bytes(original[:-1])
+    output = tmp_path / "missing" / "ram.bin"
+    monkeypatch.setattr(sys, "argv", ["extract_sav_ram.py", str(source), str(output)])
+    assert extract_sav_ram.main() == 1
+    failure = capsys.readouterr()
+    assert "RAM not found in any frame" in failure.err
+    assert not output.parent.exists()

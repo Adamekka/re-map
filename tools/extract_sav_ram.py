@@ -20,7 +20,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from output_safety import aliases_input
+from output_safety import DerivedOutput, OutputAliasError, aliases_input
 
 RAM_SIZE = 0x200000
 ZSTD_MAGIC = bytes.fromhex("28b52ffd")
@@ -86,31 +86,34 @@ def main() -> int:
 
     try:
         if aliases_input(args.input, args.output):
-            print("RAM output must differ from the input savestate", file=sys.stderr)
+            raise OutputAliasError
+        data = args.input.read_bytes()
+        if data[:4] != b"DUCC":
+            print("not a DuckStation savestate (missing DUCC magic)", file=sys.stderr)
             return 2
-    except OSError as exc:
-        print(f"Cannot check RAM output path: {exc}", file=sys.stderr)
+        frames = _find_frames(data)
+        if not frames:
+            print("no zstd frames found", file=sys.stderr)
+            return 2
+        # State payload is the last large frame. Screenshots come first.
+        for off in sorted(frames, reverse=True):
+            blob = _decompress(data[off:])
+            if blob is None or len(blob) < RAM_SIZE:
+                continue
+            base = _find_ram_base(blob)
+            if base is None:
+                continue
+            # Only require a writable destination once a full capture is ready.
+            output = DerivedOutput(args.output, (args.input,))
+            output.write_bytes(blob[base : base + RAM_SIZE])
+            print(f"ram base {base} in decompressed {len(blob)} -> {args.output}")
+            return 0
+    except OutputAliasError:
+        print("RAM output must differ from the input savestate", file=sys.stderr)
         return 2
-
-    data = args.input.read_bytes()
-    if data[:4] != b"DUCC":
-        print("not a DuckStation savestate (missing DUCC magic)", file=sys.stderr)
+    except (OSError, ValueError) as error:
+        print(f"Cannot extract RAM: {error}", file=sys.stderr)
         return 2
-    frames = _find_frames(data)
-    if not frames:
-        print("no zstd frames found", file=sys.stderr)
-        return 2
-    # State payload is the last large frame. Screenshots come first.
-    for off in sorted(frames, reverse=True):
-        blob = _decompress(data[off:])
-        if blob is None or len(blob) < RAM_SIZE:
-            continue
-        base = _find_ram_base(blob)
-        if base is None:
-            continue
-        args.output.write_bytes(blob[base : base + RAM_SIZE])
-        print(f"ram base {base} in decompressed {len(blob)} -> {args.output}")
-        return 0
     print("RAM not found in any frame", file=sys.stderr)
     return 1
 
