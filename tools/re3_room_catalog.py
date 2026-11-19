@@ -150,6 +150,27 @@ def catalog_sources(image: Path, catalog: dict) -> tuple[RoomSource, ...]:
     return tuple(sources)
 
 
+def read_cue_tracks(cue: Path) -> tuple[Path, ...]:
+    # Match directives only. Comments can contain example FILE records.
+    records = re.findall(
+        r"^[ \t]*FILE(.*)$",
+        cue.read_text(encoding="utf-8-sig"),
+        re.IGNORECASE | re.MULTILINE,
+    )
+    if not records:
+        raise ValueError("the CUE names no data track")
+    tracks = []
+    for record in records:
+        match = re.fullmatch(r'[ \t]+(?:"([^"]+)"|([^" \t]+))[ \t]+\w+[ \t]*', record)
+        if match is None:
+            raise ValueError("invalid CUE FILE directive")
+        name = match[1] if match[1] is not None else match[2]
+        if "\0" in name:
+            raise ValueError("embedded null byte in the CUE track name")
+        tracks.append(cue.parent / name)
+    return tuple(tracks)
+
+
 def load_owned_sources(image: Path) -> tuple[bytes, tuple[RoomSource, ...]]:
     """Read the pinned executable and every room source from the owned image."""
     catalog = build_catalog(image, "SLUS_009.23", EXECUTABLE_SHA256)

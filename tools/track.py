@@ -10,7 +10,6 @@ import argparse
 import hashlib
 import json
 import logging
-import re
 import sys
 import time
 from collections.abc import Callable
@@ -20,7 +19,7 @@ from pathlib import Path
 from threading import Thread
 
 from output_safety import aliases_input
-from re3_room_catalog import load_owned_sources
+from re3_room_catalog import load_owned_sources, read_cue_tracks
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -622,28 +621,53 @@ def main() -> int:
         else [re1_history_path, *re2_history_paths.values(), re3_history_path]
     )
     backup_count = 3
+    disc_paths: tuple[Path, ...] = ()
+    if hasattr(args, "disc"):
+        cue = args.disc.expanduser()
+        try:
+            # Resolve once so the profile loader reads a guarded path.
+            disc_paths = (cue, *read_cue_tracks(cue))
+        except (OSError, ValueError) as exc:
+            # Opening outputs is unsafe until the referenced track is known.
+            print(f"RE3 disc rejected: {exc}", file=sys.stderr)
+            return 2
     try:
-        # Protect the profile and every default before loading, so malformed
-        # profiles can still log their traceback without corrupting inputs first.
-        # Profile reads retain literal Path semantics; only histories expand ~.
-        protected_paths = [args.profile.resolve()]
+        # Check inputs before logging so even startup diagnostics cannot alter them.
+        input_paths = [args.profile, *disc_paths]
+        history_outputs = []
         for path in history_paths:
             path = path.expanduser().resolve()
-            protected_paths.extend((path, path.with_name(path.name + ".lock")))
-        for protected in protected_paths:
-            for index in range(backup_count + 1):
-                # Rotation renames backups and can detach a live flock inode.
-                output = log_path if index == 0 else Path(f"{log_path}.{index}")
+            history_outputs.extend((path, path.with_name(path.name + ".lock")))
+        for output in history_outputs:
+            for source in input_paths:
+                if aliases_input(source, output):
+                    print(
+                        "exploration history and its lock must differ from inputs: "
+                        f"{output} aliases {source}; choose another --history-file",
+                        file=sys.stderr,
+                    )
+                    return 2
+        for index in range(backup_count + 1):
+            output = log_path if index == 0 else Path(f"{log_path}.{index}")
+            # Renaming a directory symlink can break a path to an input below it.
+            if output.is_dir():
+                print(
+                    f"cannot open log file {output} because the path is a directory. "
+                    "Choose another --log-file.",
+                    file=sys.stderr,
+                )
+                return 2
+            for protected in (*input_paths, *history_outputs):
                 if aliases_input(protected, output):
                     print(
                         "log output must differ from exploration history, its "
-                        f"lock and the profile: {output} aliases {protected}; "
+                        f"lock, the profile and the owned disc: {output} aliases {protected}; "
                         "choose another --log-file",
                         file=sys.stderr,
                     )
                     return 2
     except OSError as exc:
-        print(f"cannot check log output paths: {exc}", file=sys.stderr)
+        print(f"cannot check log output paths or history paths: {exc}", file=sys.stderr)
         return 2
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -684,15 +708,12 @@ def main() -> int:
     is_re2 = profile_id.startswith("re2_")
     is_re3 = profile_id.startswith("re3_")
     if is_re3:
-        if not hasattr(args, "disc"):
+        if not disc_paths:
             print("RE3 tracking needs --disc with your owned disc CUE", file=sys.stderr)
             return 2
         try:
-            cue = args.disc.expanduser()
-            track = re.search(r'FILE\s+"([^"]+)"', cue.read_text())
-            if track is None:
-                raise ValueError("the CUE names no data track")
-            executable, sources = load_owned_sources(cue.parent / track[1])
+            # The supported RE3 image has its data on the first track.
+            executable, sources = load_owned_sources(disc_paths[1])
             profile = Re3Profile.load(args.profile, executable, sources)
         except (OSError, ValueError) as exc:
             logger.error("RE3 disc rejected: %s", exc)

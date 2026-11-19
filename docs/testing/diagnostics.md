@@ -14,7 +14,9 @@ The log retains startup details, room and item changes, state snapshots, read ad
 
 Small state reads include hex values. Larger reads, including executable signature windows, include SHA256 hashes instead of game code bytes. Logs rotate at 2 MiB, retaining three previous files. The `logs/` directory is excluded from Git.
 
-The log and its three backup paths must differ from the selected profile, exploration history and its writer lock, including symbolic and hard links. Startup rejects conflicts before opening any log output. An explicit `--history-file` protects that history; otherwise startup protects every built-in history path before loading the profile so profile errors can still be logged safely. Choose another `--log-file` when a conflict is reported.
+The log and its three backups must use separate paths from the selected profile, exploration history, writer lock, and the supplied RE3 CUE and its referenced tracks. History and lock paths must also be separate from the profile and disc. Startup checks symbolic and hard links before opening any output. With `--history-file` it checks that history and lock. Otherwise it checks all built-in history and lock paths. If startup reports a conflict, choose a different path for the affected output.
+
+Startup reports an unreadable CUE or a directory in any log rotation slot in the terminal before opening the log.
 
 To choose another path:
 
