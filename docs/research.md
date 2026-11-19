@@ -406,6 +406,7 @@ The [approved target](re3.md) is the supplied SLUS-00923 release in Hard mode. C
 | Claim | Finding |
 | --- | --- |
 | [RE3-EVAL-001](research/re3/script-evaluation.md#re3-eval-001-evaluate-re3-room-scripts-with-fresh-flags-for-a-runnable-tracker) | runnable Hard tracker: shared script evaluation for all 169 rooms, random placement resolved after first visit, guarded reader and floor plans; Candidate |
+| [RE3-DOOR-001](research/re3/script-evaluation.md#re3-door-001-active-exits-outside-the-model-leave-door-coverage-unresolved) | Active exits without a modeled origin make current-room door coverage unresolved. Candidate from retained Hard-mode RAM with a registry overlay and a synthetic regression. |
 | [RE3-ID-001](research/re3/identity.md#re3-id-001-repeatable-static-identity-for-the-supplied-disc) | Exact owned-media and boot-executable identity, bounded ISO inspection and metadata-only helper |
 | [RE3-ROOM-001](research/re3/room-format.md#re3-room-001-ard-object-8-contains-bounded-room-data) | Bounded ARD object 8 across 169 sources; exact-sector alignment counterexample |
 | [RE3-ROOM-002](research/re3/room-format.md#re3-room-002-room-header-and-geometry-boundaries) | Room header, cameras, camera zones and opaque collision records; spatial projection unresolved |

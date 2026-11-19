@@ -214,9 +214,7 @@ def test_active_unmodeled_pickup_blocks_current_room_clearance(tracking):
     profile, put_flag, read, ram = tracking
     put_flag(ITEM_BANK_ADDRESS, 9, True)
     source = profile.catalog.lookup(0, 0)
-    offset = len(source.source.rdt) - 40
-    packet = 0x100000 + offset + 2
-    struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80000000 + packet)
+    size = len(source.source.rdt)
     tracker = Tracker()
 
     for item_type, sat, complete in (
@@ -226,6 +224,10 @@ def test_active_unmodeled_pickup_blocks_current_room_clearance(tracking):
         (20, 0x31, False),
         (20, 0x80, True),
     ):
+        # A rectangular pickup occupies 22 bytes including its opcode and slot.
+        width = 30 if sat & 0x80 else 22
+        packet = 0x100000 + size - width + 2
+        struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80000000 + packet)
         ram[packet : packet + 2] = bytes([2, sat])
         operand = 20 if sat & 0x80 else 12
         struct.pack_into("<3H", ram, packet + operand, item_type, 1, 10)
@@ -440,6 +442,74 @@ def test_walk_through_exit_is_an_unlocked_door():
         0,
     )
     assert live_door(definition, 1, 0x31, bytes(packet))["enabled"] is False
+
+
+def test_active_unmodeled_exit_leaves_current_door_coverage_unresolved(tracking):
+    # RE3-DOOR-001: an extra live origin is missing from the source door list.
+    profile, put_flag, read, ram = tracking
+    put_flag(ITEM_BANK_ADDRESS, 9, True)
+    source = profile.catalog.lookup(0, 0)
+    size = len(source.source.rdt)
+    tracker = Tracker()
+
+    for kind, sat, complete in (
+        (1, 0, True),
+        (1, 0x31, False),
+        (4, 0x31, True),
+        (13, 0x31, False),
+        (1, 0x80, True),
+    ):
+        # Rectangular exits still fit in the last 32 bytes of the source.
+        width = 40 if sat & 0x80 else 32
+        packet = 0x100000 + size - width + 2
+        struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80000000 + packet)
+        ram[packet : packet + 2] = bytes([kind, sat])
+        assert poll_re3(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-00"]
+        assert record.doors_complete is complete
+        assert bool(record.door_reason) is (not complete)
+        assert record.completion is RoomCompletion.Cleared
+        assert record.list_complete
+        assert not tracker.doors
+
+
+@pytest.mark.parametrize(
+    "kind,sat,width", [(1, 0x31, 31), (13, 0xB1, 39), (2, 0x31, 21)]
+)
+def test_truncated_interaction_does_not_publish_room(tracking, kind, sat, width):
+    profile, _, read, ram = tracking
+    size = len(profile.catalog.lookup(0, 0).source.rdt)
+    packet = 0x100000 + size - width + 2
+    struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80000000 + packet)
+    ram[packet : packet + 2] = bytes([kind, sat])
+    tracker = Tracker()
+    result = poll_re3(profile, tracker, read)
+    assert result.status is PollStatus.Retry
+    assert result.text == "Room interaction extends beyond its source"
+    assert not tracker.rooms
+
+
+def test_short_exit_packet_is_rechecked_before_publication(tracking):
+    profile, _, read, ram = tracking
+    size = len(profile.catalog.lookup(0, 0).source.rdt)
+    packet = 0x100000 + size - 30
+    struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80000000 + packet)
+    ram[packet : packet + 2] = bytes([1, 0x31])
+    packet_reads = []
+
+    def changing(address, width):
+        if address == 0x80000000 + packet:
+            packet_reads.append(width)
+            if len(packet_reads) == 2:
+                ram[packet + 1] = 0
+        return read(address, width)
+
+    tracker = Tracker()
+    result = poll_re3(profile, tracker, changing)
+    assert packet_reads == [30, 30]
+    assert result.status is PollStatus.Retry
+    assert result.text == "Room interaction changed during read"
+    assert not tracker.rooms
 
 
 def test_state_change_between_reads_publishes_nothing(tracking):

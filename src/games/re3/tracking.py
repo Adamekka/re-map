@@ -24,7 +24,7 @@ from games.re2.map_layout import Re2MapLayout, Re2MapProjection
 from games.re3 import EXECUTABLE_SHA256
 from games.re3.live_reader import CurrentRoomFailure, read_current_room
 from games.re3.script_doors import parse_door
-from games.re3.script_model import compile_room_scripts
+from games.re3.script_model import WIDTHS, compile_room_scripts
 from games.re3.source_witnesses import RoomSource, SourceCatalog, bind_source_catalog
 from games.runtime_identity import MemoryResult, RuntimeSignature
 from games.scd_entry import EntryConfig, entry_state, parse_entry_config, pickup_ids
@@ -335,19 +335,45 @@ def poll_re3(
     size = len(
         profile.catalog.lookup(first.room_id.stage, first.room_id.room).source.rdt
     )
+    # The registry points after the creator's opcode and slot bytes.
+    largest_packet = WIDTHS[0x62] - 2
     for slot in range(layout["aot_capacity"]):
         pointer = value(registry + 4 * slot, 4)
         offset = pointer - base - 2
-        if not pointer or not 0 <= offset <= size - 40:
+        if not pointer or not 0 <= offset <= size - 4:
             # Native interactions outside the room source, such as enemy or
             # system areas, are not room creators.
             continue
-        # Item and door payloads follow a 12-byte header, or 20 bytes for
-        # four-point geometry; read the largest door payload.
-        result = read_memory(pointer, 38)
-        if not result.ok or len(result.data) != 38:
+        width = min(largest_packet, size - offset - 2)
+        result = read_memory(pointer, width)
+        if not result.ok or len(result.data) != width:
             return PollResult(PollStatus.ReadFailure, "RE3 interaction read failed")
-        live[slot] = (offset, result.data[0], result.data[1], result.data)
+        kind, sat = result.data[:2]
+        if width < largest_packet and kind in (
+            _KIND_DOOR,
+            _KIND_WALK_THROUGH,
+            _KIND_ITEM,
+        ):
+            # Each four-point creator follows its rectangular opcode.
+            rectangle = 0x67 if kind == _KIND_ITEM else 0x61
+            opcode = rectangle + (1 if sat & 0x80 else 0)
+            if width < WIDTHS[opcode] - 2:
+                return PollResult(
+                    PollStatus.Retry, "Room interaction extends beyond its source"
+                )
+        live[slot] = (offset, kind, sat, result.data)
+
+    modeled_door_origins = {
+        (door["slot"], door["offset"]) for door in profile.rooms[key]["doors"]
+    }
+    # An extra live exit has no source-bound door fact to publish. Keep the
+    # current room's door coverage unresolved. RE3-DOOR-001.
+    unmodeled_active_exit = any(
+        kind in (_KIND_DOOR, _KIND_WALK_THROUGH)
+        and sat & 0x7F
+        and (slot, offset) not in modeled_door_origins
+        for slot, (offset, kind, sat, _) in live.items()
+    )
 
     names = profile.names.get("items", {})
     doors: list[DoorDetail] = []
@@ -549,7 +575,8 @@ def poll_re3(
         record.reason = (
             "Item conditions are unresolved." if unknown or not complete else ""
         )
-        record.doors_complete = all(
+        door_origins_complete = source_id != rid or not unmodeled_active_exit
+        record.doors_complete = door_origins_complete and all(
             door.state != "UNCHECKED" for door in doors if door.source == source_id
         )
         record.door_reason = (
