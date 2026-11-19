@@ -17,6 +17,7 @@ from games.scd_state import (  # noqa: E402
 
 TASKS = EngineTasks(("init:0", "main:0", "main:1"), frozenset({1}))
 BANK = 8
+FILE_TYPE_MIN = 131
 
 
 def rows(*body: list) -> list[list]:
@@ -37,7 +38,13 @@ def evaluate(
         lambda item: item in carried,
     )
     program = {"main:0": rows(["end"]), "main:1": rows(["end"]), **program}
-    return room_script_state(program, state, TASKS, {gid: (BANK, gid) for gid in gids})
+    return room_script_state(
+        program,
+        state,
+        TASKS,
+        {gid: (BANK, gid) for gid in gids},
+        file_type_min=FILE_TYPE_MIN,
+    )
 
 
 def test_flag_condition_selects_the_created_item():
@@ -54,6 +61,51 @@ def test_flag_condition_selects_the_created_item():
     present = evaluate(program, flags={(4, 7): True}, gids=[77])
     assert present.item_presence == {77: True}
     assert present.item_identity == {77: (20, 15)}
+
+
+def test_a_file_cannot_establish_presence_for_a_pickup_with_the_same_id():
+    program = {
+        "main:0": rows(
+            ["if", 30],
+            ["ck", 4, 7, 1],
+            ["item", 5, 0x31, 20, 15, 77],
+            ["item", 6, 0x31, FILE_TYPE_MIN, 1, 77],
+            ["aot_on", 6],
+            ["aot", 7, 5, 0x31, 2],
+            ["end"],
+        ),
+        "main:2": rows(
+            ["reset", 6, 2, 0x31, -1, FILE_TYPE_MIN, 1, 77],
+            ["aot_on", 6],
+            ["end"],
+        ),
+    }
+    absent = evaluate(program, gids=[77])
+    assert absent.item_presence == {77: False}
+    assert absent.item_identity == {}
+    assert absent.later_items == frozenset()
+
+    present = evaluate(program, flags={(4, 7): True}, gids=[77])
+    assert present.item_presence == {77: True}
+    assert present.item_identity == {77: (20, 15)}
+
+
+def test_a_file_reset_can_make_a_pickup_unavailable():
+    program = {
+        "main:0": rows(
+            ["item", 5, 0x31, 20, 15, 77],
+            ["if", 40],
+            ["ck", 4, 7, 1],
+            ["reset", 5, 2, 0x31, -1, FILE_TYPE_MIN, 1, 77],
+            ["end"],
+        ),
+    }
+    assert evaluate(program, flags={(4, 7): True}, gids=[77]).item_presence == {
+        77: False
+    }
+    uncertain = evaluate(program, flags={(4, 7): None}, gids=[77])
+    assert uncertain.item_presence == {77: None}
+    assert uncertain.item_identity == {77: (20, 15)}
 
 
 def test_else_branch_and_variable_comparison():
@@ -267,13 +319,13 @@ def test_cache_revalidates_every_value_it_read():
     }
     cache = ScriptStateCache()
     acquisition = {77: (BANK, 77)}
-    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
-        77: False
-    }
+    assert cache.get(
+        "r", program, state, TASKS, acquisition, file_type_min=FILE_TYPE_MIN
+    ).item_presence == {77: False}
     flags[4, 7] = True
-    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
-        77: True
-    }
+    assert cache.get(
+        "r", program, state, TASKS, acquisition, file_type_min=FILE_TYPE_MIN
+    ).item_presence == {77: True}
 
 
 def test_work_copy_patch_selects_the_checked_flag():
@@ -425,13 +477,13 @@ def test_cache_revalidates_the_inventory():
     }
     cache = ScriptStateCache()
     acquisition = {77: (BANK, 77)}
-    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
-        77: False
-    }
+    assert cache.get(
+        "r", program, state, TASKS, acquisition, file_type_min=FILE_TYPE_MIN
+    ).item_presence == {77: False}
     carried.add(54)
-    assert cache.get("r", program, state, TASKS, acquisition).item_presence == {
-        77: True
-    }
+    assert cache.get(
+        "r", program, state, TASKS, acquisition, file_type_min=FILE_TYPE_MIN
+    ).item_presence == {77: True}
 
 
 def test_wait_inside_a_switch_case_ends_the_task():

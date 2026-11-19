@@ -205,6 +205,64 @@ def test_current_room_acquisition_flag_wins_and_reverses(tracking):
         )
 
 
+@pytest.mark.parametrize("current", [False, True], ids=["departed", "current"])
+def test_file_sharing_a_pickup_id_keeps_the_pickup_identity_after_rewind(
+    tracking, current
+):
+    # RE3-COLLECT-003: a file reuses the acquisition bit of a required pickup.
+    profile, put_flag, read, ram = tracking
+    if current:
+        key, gid, item_type, amount = "00-00", 9, 20, 15
+        flag_address = ITEM_BANK_ADDRESS
+    else:
+        key, gid, item_type, amount = "03-0f", 12, 21, 7
+        profile.rooms[key] = {
+            **profile.rooms["00-01"],
+            "id": key,
+            "stage": 3,
+            "room": 0x0F,
+            "doors": [],
+        }
+        flag_address = profile.flag_banks[8] = 0x800D2028
+        # An identical ID is already taken in the other bank.
+        put_flag(ITEM_BANK_ADDRESS, gid, True)
+    room = profile.rooms[key]
+    room["program"]["main:0"] = rows(
+        ["item", 4, 0, item_type, amount, gid],
+        ["item", 5, 0x31, 140, 1, gid],
+        ["aot", 6, 5, 0x31, 2],
+        ["end"],
+    )
+    room["program"]["main:2"] = rows(["aot_on", 4], ["end"])
+    profile.names["items"]["140"] = "File"
+    if current:
+        # Install a live file packet in the mutable source, after its
+        # immutable witnesses. It shares the parked pickup's acquisition ID.
+        source = profile.catalog.lookup(0, 0)
+        offset = len(source.source.rdt) - 40
+        struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80100000 + offset + 2)
+        packet = 0x100000 + offset + 2
+        ram[packet : packet + 2] = bytes([2, 0x31])
+        struct.pack_into("<3H", ram, packet + 12, 140, 1, gid)
+    tracker = Tracker()
+    tracker.mark_current(RoomId(room["stage"], room["room"]))
+
+    for collected in (False, True, False):
+        put_flag(flag_address, gid, collected)
+        assert poll_re3(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms[key]
+        assert [(item.label, item.quantity, item.state) for item in record.items] == [
+            (
+                profile.names["items"][str(item_type)],
+                amount,
+                "taken" if collected else "uncollected",
+            )
+        ]
+        assert record.completion is (
+            RoomCompletion.Cleared if collected else RoomCompletion.Incomplete
+        )
+
+
 def test_owned_profile_evaluates_every_room():
     import os
     import random
@@ -237,25 +295,47 @@ def test_owned_profile_evaluates_every_room():
             return None
         return random.Random(f"1:{bank}:{bit}").random() < 0.5
 
+    def evaluate(room, flag):
+        layout = profile.layout
+        bank = (
+            layout["item_bank_early"]
+            if room["stage"] < layout["item_bank_stage_boundary"]
+            else layout["item_bank_late"]
+        )
+        return room_script_state(
+            room["program"],
+            entry_state(
+                profile.evaluation,
+                flag,
+                lambda address: 0,
+                lambda item: False,
+                room["stage"],
+                room["room"],
+            ),
+            profile.evaluation.tasks,
+            {gid: (bank, gid) for gid in room["item_ids"]},
+            file_type_min=layout["file_type_min"],
+        )
+
     unsupported = []
     for flag in (lambda bank, bit: False, scattered):
         for key, room in profile.rooms.items():
-            result = room_script_state(
-                room["program"],
-                entry_state(
-                    profile.evaluation,
-                    flag,
-                    lambda address: 0,
-                    lambda item: False,
-                    room["stage"],
-                    room["room"],
-                ),
-                profile.evaluation.tasks,
-                {gid: (ITEM_BANK, gid) for gid in room["item_ids"]},
-            )
+            result = evaluate(room, flag)
             if result.support is not Support.Supported:
                 unsupported.append((key, result.reason))
     assert unsupported == []
+
+    # Each pickup and file pair shares one acquisition bit in its stage's bank.
+    cases = (("01-1a", (7, 104), (21, 30)), ("03-0f", (8, 87), (124, 1)))
+    for key, pickup, identity in cases:
+        for collected in (False, True, False):
+
+            def acquisition_flag(bank, bit, *, collected=collected, pickup=pickup):
+                return collected and (bank, bit) == pickup
+
+            result = evaluate(profile.rooms[key], acquisition_flag)
+            assert result.item_presence[pickup[1]] is True
+            assert result.item_identity[pickup[1]] == identity
 
 
 def test_four_point_door_payload_and_geometry_bit():

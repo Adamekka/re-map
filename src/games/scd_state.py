@@ -1790,6 +1790,8 @@ def room_script_state(
     state: GameState,
     tasks: EngineTasks,
     acquisition_flags: dict[int, tuple[int, int]],
+    *,
+    file_type_min: int,
 ) -> RoomScriptState:
     """Evaluate one room. ``acquisition_flags`` maps each pickup ID the room's
     scripts can create to its acquisition flag."""
@@ -1803,18 +1805,26 @@ def room_script_state(
     presence: dict[int, bool | None] = {}
     identity: dict[int, tuple[int, int]] = {}
     later_items = set()
-    later_gids = {row[0] for row in later.possible}
+    # Files still participate in script execution and can share a pickup's
+    # acquisition ID. Exclude them when deciding what the room can hand over.
+    later_pickups: dict[int, set[tuple[int, int]]] = {}
+    for gid, item_type, amount in later.possible:
+        if item_type < file_type_min:
+            later_pickups.setdefault(gid, set()).add((item_type, amount))
+
+    def holds_pickup(descriptor: Descriptor, gid: int) -> bool:
+        if isinstance(descriptor, Interaction):
+            descriptor = descriptor.replaced
+        return (
+            isinstance(descriptor, Item)
+            and descriptor.global_id == gid
+            and descriptor.item_type < file_type_min
+        )
+
     for gid in acquisition_flags:
         # Per outcome: (active, controlled by unreadable state).
         rows = []
-        kinds = {
-            (item_type, amount) for g, item_type, amount in later.possible if g == gid
-        }
-
-        def holds(descriptor: Descriptor) -> bool:
-            if isinstance(descriptor, Interaction):
-                descriptor = descriptor.replaced
-            return isinstance(descriptor, Item) and descriptor.global_id == gid
+        kinds = set(later_pickups.get(gid, ()))
 
         # Any slot that holds this item in some outcome. A write to it under
         # unreadable game state, including one that replaces the item with
@@ -1823,20 +1833,21 @@ def room_script_state(
             slot
             for outcome in entry.terminals
             for slot, (descriptor, _) in outcome.slots.items()
-            if holds(descriptor)
+            if holds_pickup(descriptor, gid)
         }
         for outcome in entry.terminals:
-            handed = {(t, a) for g, t, a, _ in outcome.dispatched if g == gid}
-            kinds |= handed
-            active = bool(handed)
-            dispatch_taint = any(
-                taint for g, _, _, taint in outcome.dispatched if g == gid
-            )
+            active = dispatch_taint = False
+            for dispatched_gid, item_type, amount, taint in outcome.dispatched:
+                if dispatched_gid == gid and item_type < file_type_min:
+                    kinds.add((item_type, amount))
+                    active = True
+                    dispatch_taint |= taint
             for descriptor, _ in outcome.slots.values():
                 # SAT bit 7 selects four-point geometry, not activation.
                 if (
                     isinstance(descriptor, Item)
                     and descriptor.global_id == gid
+                    and descriptor.item_type < file_type_min
                     and descriptor.sat & 0x7F
                 ):
                     active = True
@@ -1847,7 +1858,7 @@ def room_script_state(
             rows.append((active, tainted))
         if rows and all(active for active, _ in rows):
             presence[gid] = True
-        elif gid in later_gids:
+        elif gid in later_pickups:
             # Triggered procedures can still create it, such as a puzzle
             # reward, so it remains obtainable in this room.
             presence[gid] = True
@@ -1933,7 +1944,9 @@ class ScriptStateCache:
     """
 
     def __init__(self) -> None:
-        self._entries: dict[str, tuple[dict[tuple, object], RoomScriptState]] = {}
+        self._entries: dict[
+            tuple[str, int], tuple[dict[tuple, object], RoomScriptState]
+        ] = {}
 
     def get(
         self,
@@ -1942,13 +1955,16 @@ class ScriptStateCache:
         state: GameState,
         tasks: EngineTasks,
         acquisition_flags: dict[int, tuple[int, int]],
+        *,
+        file_type_min: int,
     ) -> RoomScriptState:
         readers = {
             "flag": state.flag,
             "variable": state.variable,
             "inventory": state.inventory,
         }
-        cached = self._entries.get(key)
+        cache_key = (key, file_type_min)
+        cached = self._entries.get(cache_key)
         if cached is not None and all(
             readers[read[0]](*read[1:]) == value for read, value in cached[0].items()
         ):
@@ -1981,6 +1997,7 @@ class ScriptStateCache:
             ),
             tasks,
             acquisition_flags,
+            file_type_min=file_type_min,
         )
-        self._entries[key] = (reads, result)
+        self._entries[cache_key] = (reads, result)
         return result

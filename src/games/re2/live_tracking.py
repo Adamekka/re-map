@@ -331,6 +331,7 @@ def poll_re2(
                     )
                     for gid in evaluation.item_ids[source["id"]]
                 },
+                file_type_min=layout["file_type_min"],
             )
 
         registry = read(

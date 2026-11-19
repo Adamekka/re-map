@@ -64,6 +64,7 @@ def test_every_source_resolves_from_a_fresh_game(profile_id, script_evaluation):
             fresh_game(profile, room, PROFILES[profile_id][1]),
             evaluation.entry.tasks,
             {gid: (bank, gid) for gid in evaluation.item_ids[key]},
+            file_type_min=layout["file_type_min"],
         )
         if result.support is not Support.Supported:
             unresolved.append((key, result.reason))
@@ -107,6 +108,7 @@ def test_fresh_game_award_follows_its_event_conditions(
         fresh_game(profile, room, PROFILES[profile_id][1]),
         evaluation.entry.tasks,
         {gid: (8, gid) for gid in evaluation.item_ids["01-02"]},
+        file_type_min=profile.runtime_layout["file_type_min"],
     )
     assert result.award_presence == {offset: present}
 

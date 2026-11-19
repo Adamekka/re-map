@@ -325,6 +325,7 @@ def poll_re3(
             ),
             evaluation.tasks,
             {gid: (bank, gid) for gid in room["item_ids"]},
+            file_type_min=layout["file_type_min"],
         )
 
     # The current room's live registry shows what exists now.
@@ -366,7 +367,8 @@ def poll_re3(
                 if kind == _KIND_ITEM:
                     operand = 20 if sat & 0x80 else 12
                     item_type, amount, gid = struct.unpack_from("<3H", data, operand)
-                    live_items[gid] = (item_type, amount, bool(sat & 0x7F))
+                    if item_type < layout["file_type_min"]:
+                        live_items[gid] = (item_type, amount, bool(sat & 0x7F))
         for gid in sorted(room["item_ids"]):
             taken = flag(bank, gid)
             if taken is None:

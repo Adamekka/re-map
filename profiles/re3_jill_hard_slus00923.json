@@ -6,7 +6,7 @@
   "revision": "USA; Hard; revision pinned by executable SHA256",
   "executable_identity": "SLUS_009.23 SHA256 2e143418e358b2c99995cdc1a88c387163fb751912c723b755614f38e236bd29",
   "address_space": "PS1 virtual address, little-endian",
-  "research_ids": ["RE3-EVAL-001", "RE3-LIVE-001", "RE3-MAP-004", "RE3-MAP-007"],
+  "research_ids": ["RE3-EVAL-001", "RE3-LIVE-001", "RE3-MAP-004", "RE3-MAP-007", "RE3-COLLECT-003"],
   "runtime_layout": {
     "state_blocks": [["0x800D1F2C", 1696], ["0x800CC830", 1384], ["0x800DBB58", 64]],
     "aot_table_address_ps1": "0x800CC890",
