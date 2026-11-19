@@ -81,9 +81,43 @@ def test_connection_failure_is_written_to_file(tmp_path: Path):
     assert "GDB connection failed: connect failed:" in contents
 
 
-def test_unexpected_profile_error_keeps_traceback(tmp_path: Path):
-    profile = tmp_path / "invalid.json"
-    profile.write_text("{")
+@pytest.mark.parametrize(
+    "contents, detail",
+    [
+        (None, "No such file or directory"),
+        ("{", "line 1 column 2"),
+        ('{"profile_id": 42}', "profile_id must be a string"),
+        ('{"profile_id": "re1_directors_cut_slus00551"}', "unit_count_item_types"),
+        ('{"profile_id": "re2_leon_a_slus00748"}', "unit_count_item_types"),
+        (
+            (
+                '{"profile_id":"re1_directors_cut_slus00551","unit_count_item_types":[],'
+                '"door_state_layout":[]}'
+            ),
+            "door_state_layout must be a JSON object",
+        ),
+        ({"door_state_layout": {}}, "door_state_layout is missing fields"),
+        ({"event_layout": {}}, "event_layout is missing fields"),
+        (
+            (
+                '{"profile_id":"re1_directors_cut_slus00551","unit_count_item_types":[],'
+                '"stage_address_ps1":1e309}'
+            ),
+            "profile number must be an integer",
+        ),
+        (
+            '{"profile_id":"re1_directors_cut_slus00551","unit_count_item_types":[]}',
+            "RE1 profile has no validated room addresses",
+        ),
+    ],
+)
+def test_invalid_profile_reports_startup_failure(tmp_path, contents, detail):
+    profile = tmp_path / "profile.json"
+    if isinstance(contents, dict):
+        supported = REPO / "profiles/re1_directors_cut_slus00551.json"
+        contents = json.dumps({**json.loads(supported.read_text()), **contents})
+    if contents is not None:
+        profile.write_text(contents)
     log = tmp_path / "tracker.log"
     result = subprocess.run(
         [
@@ -94,6 +128,67 @@ def test_unexpected_profile_error_keeps_traceback(tmp_path: Path):
             str(profile),
             "--log-file",
             str(log),
+            "--history-file",
+            str(tmp_path / "history.json"),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert result.stderr.startswith(f"Cannot load profile {profile}:")
+    assert detail in result.stderr
+    assert "Traceback" not in result.stderr
+    logged = log.read_text()
+    assert "ERROR" in logged and result.stderr.strip() in logged
+    assert not (tmp_path / "history.json.lock").exists()
+
+    capture = tmp_path / "snapshot.bin"
+    capture.write_bytes(bytes(0x200000))
+    replay = subprocess.run(
+        [
+            sys.executable,
+            str(REPO / "tools/track_offline.py"),
+            str(capture),
+            "--profile",
+            str(profile),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert replay.returncode == 2
+    assert replay.stderr == result.stderr and not replay.stdout
+
+
+def test_unexpected_profile_error_keeps_traceback(tmp_path: Path):
+    program = """\
+import runpy
+import sys
+from pathlib import Path
+from unittest.mock import patch
+
+entry = Path(sys.argv.pop(1))
+sys.path[:0] = [str(entry.parent), str(entry.parent.parent / "src")]
+with patch(
+    "games.re1.re1_profile.Re1Profile.load", side_effect=TypeError("internal fault")
+):
+    runpy.run_path(str(entry), run_name="__main__")
+"""
+    log = tmp_path / "tracker.log"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            program,
+            str(REPO / "tools/track.py"),
+            "--once",
+            "--log-file",
+            str(log),
+            "--history-file",
+            str(tmp_path / "history.json"),
         ],
         capture_output=True,
         text=True,
@@ -104,7 +199,7 @@ def test_unexpected_profile_error_keeps_traceback(tmp_path: Path):
     contents = log.read_text()
     assert "Tracker failed unexpectedly" in contents
     assert "Traceback" in contents
-    assert "JSONDecodeError" in contents
+    assert "TypeError: internal fault" in contents
 
 
 def test_unwritable_log_path_reports_startup_failure(tmp_path: Path):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
 
@@ -124,18 +124,41 @@ class Re1Profile:
         raw = json.loads(path.read_text())
         unit_counts = parse_unit_count_item_types(raw.get("unit_count_item_types"))
 
-        def _number(v: int | str) -> int:
+        def _number(v: object) -> int:
             if isinstance(v, str):
                 if not v.startswith("0x"):
                     raise ValueError(f"profile number must use 0x prefix: {v!r}")
                 return int(v, 16)
-            return int(v)
+            if type(v) is not int:
+                raise ValueError(
+                    "profile number must be an integer or 0x-prefixed string"
+                )
+            return v
 
         def _addr(key: str) -> int | None:
             v = raw.get(key)
             if v is None:
                 return None
             return _number(v)
+
+        def _layout_values(
+            key: str, layout: type[DoorStateLayout | EventLayout]
+        ) -> dict[str, int]:
+            values = raw[key]
+            # Report malformed JSON as an input error and leave constructor
+            # TypeErrors for the live tracker log.
+            if not isinstance(values, dict):
+                raise ValueError(f"{key} must be a JSON object")  # noqa: TRY004
+            expected = {member.name for member in fields(layout)}
+            if missing := expected - values.keys():
+                raise ValueError(
+                    f"{key} is missing fields {', '.join(sorted(missing))}"
+                )
+            if unexpected := values.keys() - expected:
+                raise ValueError(
+                    f"{key} has unexpected fields {', '.join(sorted(unexpected))}"
+                )
+            return {name: _number(value) for name, value in values.items()}
 
         def _room_number(v: str) -> int:
             if not isinstance(v, str) or not v.startswith("0x"):
@@ -273,11 +296,10 @@ class Re1Profile:
                     <= runtime_layout.ram_base + runtime_layout.ram_size - width
                 ):
                     raise ValueError(f"{key} is outside configured PS1 RAM")
-        door_raw = raw.get("door_state_layout")
         door_layout = None
-        if door_raw is not None:
+        if raw.get("door_state_layout") is not None:
             door_layout = DoorStateLayout(
-                **{key: _number(value) for key, value in door_raw.items()}
+                **_layout_values("door_state_layout", DoorStateLayout)
             )
             if runtime_layout is None:
                 raise ValueError("door layout requires a runtime room layout")
@@ -300,9 +322,7 @@ class Re1Profile:
         rule_layout = None
         event_layout = None
         if runtime_layout is not None:
-            event_layout = EventLayout(
-                **{key: _number(value) for key, value in raw["event_layout"].items()}
-            )
+            event_layout = EventLayout(**_layout_values("event_layout", EventLayout))
             rule_raw = raw["tracking_rule_layout"]
             rule_layout = TrackingRuleLayout(
                 tuple(_number(value) for value in raw["script_flag_bases"]),

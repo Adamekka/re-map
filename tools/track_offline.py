@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from emulator.duckstation_gdb import MemRead
 from track import (
     Re3DiscError,
-    Re3ProfileError,
+    TrackingProfileError,
     load_tracking_profile,
     poll_once,
     resolve_tracking_disc,
@@ -56,11 +56,13 @@ def main() -> int:
         if args.disc is not None:
             _, disc_tracks = resolve_tracking_disc(args.disc)
         profile = load_tracking_profile(args.profile, disc_tracks)
-    except (Re3DiscError, Re3ProfileError) as error:
+    except (Re3DiscError, TrackingProfileError) as error:
         print(str(error), file=sys.stderr)
         return 2
-    except (OSError, ValueError, KeyError, TypeError) as error:
-        print(f"Cannot load profile {args.profile}: {error}", file=sys.stderr)
+    except TypeError as error:
+        # Offline replay has no diagnostic log. Preserve its profile error
+        # for invalid field types reported by the game loaders.
+        print(str(TrackingProfileError(args.profile, error)), file=sys.stderr)
         return 2
 
     def read_memory(address: int, length: int) -> MemRead:

@@ -42,7 +42,7 @@ Run the history regressions with the [test environment](../testing.md#python-tes
 python3 -m pytest -q tests/test_visit_history.py tests/test_track_log_safety.py tests/test_logging.py
 ```
 
-These tests use temporary history files and cover invalid history, writer exclusion, failed writes and replacement, cleanup failure, retry and restored exploration. Logging checks cover aliases, rotation destinations, profile/lock preservation, new histories, default paths and malformed-profile tracebacks.
+These tests use temporary history files and cover invalid history, writer exclusion, failed writes and replacement, cleanup failure, retry and restored exploration. Logging checks cover aliases, rotation destinations, profile and lock preservation, and startup errors. Missing and malformed profiles report the path and cause. Unexpected failures retain a traceback in the log.
 
 ## Offline snapshots
 

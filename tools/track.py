@@ -59,8 +59,11 @@ class Re3DiscError(ValueError):
     """The RE3 profile needs a readable, matching disc."""
 
 
-class Re3ProfileError(ValueError):
-    """The RE3 profile cannot be loaded with the supplied disc."""
+class TrackingProfileError(ValueError):
+    """The selected tracker profile cannot be loaded."""
+
+    def __init__(self, path: Path, detail: str | Exception) -> None:
+        super().__init__(f"Cannot load profile {path}: {detail}")
 
 
 def resolve_tracking_disc(cue: Path) -> tuple[Path, tuple[Path, ...]]:
@@ -74,13 +77,24 @@ def resolve_tracking_disc(cue: Path) -> tuple[Path, tuple[Path, ...]]:
 def load_tracking_profile(
     path: Path, disc_tracks: tuple[Path, ...]
 ) -> Re1Profile | Re2Profile | Re3Profile:
-    raw = json.loads(path.read_text())
-    if not isinstance(raw, dict) or not isinstance(raw.get("profile_id"), str):
-        raise TypeError("profile_id must be a string")
-    profile_id = raw["profile_id"]
-    if profile_id.startswith("re2_"):
-        return Re2Profile.load(path)
-    if profile_id.startswith("re3_"):
+    try:
+        raw = json.loads(path.read_text())
+        if not isinstance(raw, dict) or not isinstance(raw.get("profile_id"), str):
+            raise TrackingProfileError(path, "profile_id must be a string")
+        profile_id = raw["profile_id"]
+        if profile_id.startswith("re2_"):
+            return Re2Profile.load(path)
+        if not profile_id.startswith("re3_"):
+            profile = Re1Profile.load(path)
+            # Research profiles can omit these settings. Tracking requires
+            # them before either command interprets memory.
+            if not profile.has_room_addresses():
+                raise ValueError("RE1 profile has no validated room addresses")
+            if profile.runtime_signature is None:
+                raise ValueError("RE1 profile has no runtime identity check")
+            if profile.runtime_room_layout is None or profile.door_state_layout is None:
+                raise ValueError("RE1 profile has no runtime room and door layouts")
+            return profile
         if not disc_tracks:
             raise Re3DiscError("RE3 tracking needs --disc with your owned disc CUE")
         try:
@@ -90,9 +104,14 @@ def load_tracking_profile(
             raise Re3DiscError(f"RE3 disc rejected: {exc}") from exc
         try:
             return Re3Profile.load(path, executable, sources)
-        except (OSError, ValueError, KeyError, TypeError) as exc:
-            raise Re3ProfileError(f"Cannot load profile {path}: {exc}") from exc
-    return Re1Profile.load(path)
+        except TypeError as exc:
+            # RE3 profile fields can reach typed constructors during validation.
+            raise TrackingProfileError(path, exc) from exc
+    except (Re3DiscError, TrackingProfileError):
+        # These failures already name the input the owner needs to check.
+        raise
+    except (OSError, ValueError, KeyError) as exc:
+        raise TrackingProfileError(path, exc) from exc
 
 
 def poll_once(
@@ -747,7 +766,7 @@ def main() -> int:
 
     try:
         profile = load_tracking_profile(args.profile, disc_tracks)
-    except (Re3DiscError, Re3ProfileError) as exc:
+    except (Re3DiscError, TrackingProfileError) as exc:
         logger.error("%s", exc)
         print(str(exc), file=sys.stderr)
         return 2
@@ -767,33 +786,11 @@ def main() -> int:
     logger.info(
         "Profile loaded: id=%s revision=%s", profile.profile_id, profile.revision
     )
-    if not is_re2 and not is_re3 and not profile.has_room_addresses():
-        logger.error("Profile %s has no validated room addresses", profile.profile_id)
-        print(
-            f"profile {profile.profile_id} has no validated room addresses; refusing to guess"
-        )
-        print("Run room A vs B diffs first, then fill profiles/*.json with evidence.")
-        return 2
-    if profile.runtime_signature is None:
-        logger.error("Profile %s has no runtime identity check", profile.profile_id)
-        print(
-            f"profile {profile.profile_id} has no runtime identity check; refusing live reads"
-        )
-        return 2
-    if (
-        not is_re2
-        and not is_re3
-        and (profile.runtime_room_layout is None or profile.door_state_layout is None)
-    ):
-        print(
-            f"profile {profile.profile_id} has no runtime room/door layout",
-            file=sys.stderr,
-        )
-        return 2
     if args.map and not is_re2 and not is_re3 and profile.profile_id != MAP_PROFILE_ID:
         logger.error("Map unavailable for profile %s", profile.profile_id)
         print(f"map unavailable for profile {profile.profile_id}", file=sys.stderr)
         return 2
+    assert profile.runtime_signature is not None, "tracking profile was validated"
     logger.info(
         "Expected runtime signature SHA256: %s",
         profile.runtime_signature.concatenated_sha256,
