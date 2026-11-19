@@ -601,6 +601,8 @@ class RuleEvaluation:
     unresolved_item_slots: tuple[int, ...]
     unresolved_collection_slots: tuple[int, ...]
     unresolved_door_slots: tuple[int, ...]
+    # AOT slot and encoded destination when only access is unresolved.
+    unresolved_door_targets: tuple[tuple[int, int], ...]
     coverage_complete: bool
 
 
@@ -1720,6 +1722,7 @@ def evaluate_room_program(
                 break
     uncertain_items, uncertain_collection, uncertain_doors = set(), set(), set()
     items, collection_items, doors, disabled_doors = [], [], [], []
+    unresolved_door_targets = []
     labels = dict(item_labels)
 
     def interpret_descriptor(descriptor, *, collection: bool):
@@ -1922,6 +1925,16 @@ def evaluate_room_program(
                 uncertain_items.add(slot)
             if slot in program.door_slots:
                 uncertain_doors.add(slot)
+                if (
+                    reentry
+                    and not invalid
+                    and all(kind in ("door", "disabled-door") for kind, _ in meanings)
+                ):
+                    # A handler can change access without replacing the
+                    # source door. Keep a destination every path proves.
+                    targets = {raw[15] for _, (_, raw) in meanings}
+                    if len(targets) == 1:
+                        unresolved_door_targets.append((slot, targets.pop()))
             continue
         kind, value = meanings.pop()
         if kind == "item":
@@ -1950,5 +1963,6 @@ def evaluate_room_program(
         tuple(sorted(uncertain_items)),
         tuple(sorted(uncertain_collection)),
         tuple(sorted(uncertain_doors)),
+        tuple(unresolved_door_targets),
         bounded and source_complete,
     )

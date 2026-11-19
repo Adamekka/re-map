@@ -78,6 +78,15 @@ def test_only_bounded_entry_bits_are_known(rules):
     ).unresolved_item_slots == (5,)
 
 
+@pytest.mark.parametrize("alternate", [b"", door(5, 0x17, 0)])
+def test_unresolved_door_requires_a_shared_destination(rules, alternate):
+    init = branch(bytes((4, 4, 64, 0)), door(5, 0x15, 0), alternate) + b"\0"
+    program = compile_program(rules, init)
+    result = reenter(program, rules, bytearray(2 * 1024 * 1024))
+    assert result.unresolved_door_slots == (5,)
+    assert result.unresolved_door_targets == ()
+
+
 @pytest.mark.parametrize("writer", ["alias", "camera"])
 def test_alias_and_native_forget_can_enable_a_later_main_event(rules, writer):
     if writer == "alias":

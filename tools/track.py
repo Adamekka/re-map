@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from emulator.duckstation_gdb import DuckStationGdb
 from games.game_profile import RoomId
 from games.re1.acquisition_state import AcquisitionFlag
-from games.re1.door_state import parse_door, stage_remap_flag
+from games.re1.door_state import decode_door_target, parse_door, stage_remap_flag
 from games.re1.event_state import read_event_snapshot
 from games.re1.map_layout import MapLocation, MapUnavailable, decode_player_heading
 from games.re1.re1_profile import MemoryResult, Re1Profile
@@ -278,6 +278,7 @@ def poll_once(
     past_contexts = {}
     raw_sources = {rid: observation.active_doors}
     disabled_sources = {rid: observation.disabled_doors}
+    unchecked_sources = {rid: current_evaluation.unresolved_door_targets}
     for room in sorted(visited_rooms, key=str):
         cached = profile.room_observations.get(room)
         if cached is None:
@@ -295,6 +296,7 @@ def poll_once(
         refreshed[room] = evaluated.items
         raw_sources[room] = evaluated.doors
         disabled_sources[room] = evaluated.disabled_doors
+        unchecked_sources[room] = evaluated.unresolved_door_targets
         door_coverage[room] = evaluated.doors_complete, evaluated.door_reason
     decoded_doors = []
     for source, raw_doors in raw_sources.items():
@@ -334,6 +336,15 @@ def poll_once(
                     else "",
                 )
             )
+        decoded_doors.extend(
+            DoorDetail(
+                source,
+                decode_door_target(target, source.stage, stage_remap),
+                "UNCHECKED",
+                "Door access is unknown",
+            )
+            for _, target in unchecked_sources[source]
+        )
     camera = (
         read_memory(profile.camera_address, 1)
         if profile.camera_address is not None

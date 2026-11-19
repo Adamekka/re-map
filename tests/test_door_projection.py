@@ -22,8 +22,15 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(REPO / "src"), str(REPO / "tools")]
 
 from door_map import collect_doors, collect_event_doors
+from test_herb_fixture import ram_of
+from test_live_items import RamReader
+from track import poll_once
 
+from games.game_profile import RoomId
 from games.re1.door_state import decode_door_target
+from games.re1.re1_profile import Re1Profile
+from tracker.exploration_state import RoomRecord, Tracker
+from tracker.polling import PollStatus
 
 
 def load_projection():
@@ -102,6 +109,34 @@ def test_single_event_only_pair_is_unaffected_by_remap():
     assert (clear.stage, clear.room) == (3, 0x0C)
     assert (remapped.stage, remapped.room) == (3, 0x0C)
     assert (clear.stage, clear.room) in rooms
+
+
+@pytest.mark.parametrize("cached", [False, True], ids=["restored-visit", "room-cache"])
+def test_departed_door_keeps_its_destination_when_access_is_uncertain(cached):
+    # RE1-DOORS-014: verify both the saved history and live departure paths.
+    profile = Re1Profile.load(REPO / "profiles/re1_directors_cut_slus00551.json")
+    source, target = RoomId(0, 9), RoomId(0, 0x15)
+    tracker = Tracker(rooms={str(source): RoomRecord(visited=True)})
+    if cached:
+        herb = ram_of("slus00551_green_herb_before.sav")
+        result = poll_once(profile, tracker, RamReader(bytearray(herb)).read_memory)
+        assert result.status is PollStatus.Display
+        assert tracker.current == source
+        assert source in profile.room_observations
+    early = ram_of("re1/savestates/user/SLUS-00551_resume.sav")
+    late = ram_of("re1/savestates/later-areas/y-mansion-approach.sav")
+    for capture, state in ((early, "OPEN"), (late, "UNCHECKED"), (early, "OPEN")):
+        result = poll_once(profile, tracker, RamReader(bytearray(capture)).read_memory)
+        assert result.status is PollStatus.Display
+        assert [
+            door.state
+            for door in tracker.doors
+            if (door.source, door.target) == (source, target)
+        ] == [state]
+        record = tracker.rooms[str(source)]
+        assert record.doors_complete is (state == "OPEN")
+        assert record.list_complete
+        assert str(target) not in tracker.rooms
 
 
 @pytest.mark.parametrize("affected_only", [False, True])

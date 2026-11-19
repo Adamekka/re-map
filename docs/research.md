@@ -112,6 +112,7 @@ Findings are grouped by game and topic. Each entry retains its own status, revis
 | <a id="re1-doors-011-courtyard-store-room-door-resolves-under-the-remap-rule-with-no-variant-regressions"></a>[RE1-DOORS-011](research/re1/doors.md#re1-doors-011-courtyard-store-room-door-resolves-under-the-remap-rule-with-no-variant-regressions) | Courtyard store-room door resolves under the remap rule with no variant regressions |
 | <a id="re1-doors-012-all-recorded-capture-door-sweep-shows-no-unknown-targets-under-the-remap-rule"></a>[RE1-DOORS-012](research/re1/doors.md#re1-doors-012-all-recorded-capture-door-sweep-shows-no-unknown-targets-under-the-remap-rule) | all-recorded-capture door sweep shows no unknown targets under the remap rule |
 | <a id="re1-doors-013-committed-offline-door-projection-guards-the-remap-rule"></a>[RE1-DOORS-013](research/re1/doors.md#re1-doors-013-committed-offline-door-projection-guards-the-remap-rule) | committed offline door projection guards the remap rule |
+| [RE1-DOORS-014](research/re1/doors.md#re1-doors-014-keep-a-known-destination-when-access-is-uncertain) | Candidate: departed rooms retain destinations that agree across uncertain door-access outcomes |
 
 ## RE1 reconstruction research
 

@@ -32,6 +32,7 @@ class TrackedRoom:
     disabled_doors: tuple[tuple[int, bytes], ...]
     doors_complete: bool
     door_reason: str
+    unresolved_door_targets: tuple[tuple[int, int], ...] = ()
 
 
 def validate_current_room(
@@ -337,6 +338,7 @@ def refresh_visited_room(
         else reconstructed.disabled_doors,
         reuse_doors or reconstructed.doors_complete,
         "" if reuse_doors else reconstructed.door_reason,
+        () if reuse_doors else reconstructed.unresolved_door_targets,
     )
 
 
@@ -435,9 +437,11 @@ def _reconstruct_sources(
     )
     common_doors = set(evaluations[0].doors)
     common_disabled = set(evaluations[0].disabled_doors)
+    common_unresolved = set(evaluations[0].unresolved_door_targets)
     for evaluation in evaluations[1:]:
         common_doors.intersection_update(evaluation.doors)
         common_disabled.intersection_update(evaluation.disabled_doors)
+        common_unresolved.intersection_update(evaluation.unresolved_door_targets)
     doors = tuple(sorted(common_doors))
     disabled_doors = tuple(sorted(common_disabled))
     doors_complete = all(
@@ -454,6 +458,7 @@ def _reconstruct_sources(
         disabled_doors,
         doors_complete,
         "" if doors_complete else "Door access needs another visit.",
+        tuple(sorted(common_unresolved)),
     )
 
 
