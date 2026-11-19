@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from shapely.geometry import LinearRing, Point, Polygon
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tools")]
 
 import build_re3_floor_plans as builder
+from disc_cue import read_cue_tracks
 from map_geometry import trace_floor_cells
 
 PLANS = ROOT / "data" / "floor_plans_slus00923.json"
@@ -180,16 +182,112 @@ def owned_cue():
     return Path(cue)
 
 
-def test_owned_disc_regenerates_the_committed_plans(owned_cue, plans, names):
-    # The committed file holds the JSON form; tuples become lists there.
-    assert json.loads(json.dumps(builder.build(owned_cue, names))) == plans
+def test_owned_disc_regenerates_the_committed_plans(
+    owned_cue, plans, tmp_path, monkeypatch
+):
+    output = tmp_path / "plans.json"
+    monkeypatch.setattr(
+        sys, "argv", ["build_re3_floor_plans.py", str(owned_cue), str(output)]
+    )
+    assert builder.main() == 0
+    assert json.loads(output.read_text()) == plans
 
 
 def test_owned_disc_item_names_match_the_executable_table(owned_cue, names):
-    executable, _, sources = builder.read_disc(owned_cue)
+    executable, _, sources = builder.read_disc(read_cue_tracks(owned_cue)[0])
     assert builder.item_names(executable) == names["items"]
     located = {location["room"] for location in json.loads(PLANS.read_text())["locations"]}
     assert located == set(sources)
+
+
+@pytest.mark.parametrize("source", ["cue", "data", "audio", "names"])
+@pytest.mark.parametrize("alias", ["direct", "symlink", "hardlink"])
+def test_floor_plan_output_preserves_inputs(
+    tmp_path, monkeypatch, capsys, source, alias
+):
+    cue = tmp_path / "test.cue"
+    data = tmp_path / "data track.bin"
+    audio = tmp_path / "audio.bin"
+    names = tmp_path / "names.json"
+    cue.write_text(f'FILE "{data.name}" BINARY\nFILE {audio.name} BINARY\n')
+    data.write_bytes(b"test data track")
+    audio.write_bytes(b"test audio track")
+    names.write_text("{}")
+    media = {"cue": cue, "data": data, "audio": audio, "names": names}[source]
+    before = media.read_bytes()
+    output = tmp_path / "out.json"
+    if alias == "direct":
+        output = media
+    elif alias == "symlink":
+        output.symlink_to(media)
+    else:
+        output.hardlink_to(media)
+    build = Mock()
+    monkeypatch.setattr(builder, "build", build)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["build_re3_floor_plans.py", str(cue), str(output), "--names", str(names)],
+    )
+    assert builder.main() == 2
+    assert "Choose another output path" in capsys.readouterr().err
+    assert media.read_bytes() == before
+    build.assert_not_called()
+
+
+@pytest.mark.parametrize("fault", ["new-alias", "partial-write", "retargeted-symlink"])
+def test_floor_plan_export_checks_again_before_replacing_output(
+    tmp_path, monkeypatch, capsys, fault
+):
+    cue = tmp_path / "test.cue"
+    image = tmp_path / "track.bin"
+    output = tmp_path / "out.json"
+    cue.write_text(f'FILE "{image.name}" BINARY\n')
+    image.write_bytes(b"test data track")
+    output.write_text('{"previous": true}\n')
+    requested = output
+    if fault == "retargeted-symlink":
+        requested = tmp_path / "requested.json"
+        requested.symlink_to(output)
+
+    def build(path, names):
+        assert path == image
+        if fault == "new-alias":
+            output.unlink()
+            output.hardlink_to(image)
+        elif fault == "retargeted-symlink":
+            requested.unlink()
+            requested.symlink_to(image)
+        return {"updated": True}
+
+    original_write = Path.write_text
+
+    def partial_write(path, data):
+        original_write(path, data[:3])
+        raise OSError("simulated short write")
+
+    monkeypatch.setattr(builder, "build", build)
+    if fault == "partial-write":
+        monkeypatch.setattr(Path, "write_text", partial_write)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["build_re3_floor_plans.py", str(cue), str(requested)],
+    )
+    assert builder.main() == 2
+    assert image.read_bytes() == b"test data track"
+    error = capsys.readouterr().err
+    if fault == "new-alias":
+        assert "Choose another output path" in error
+        assert output.samefile(image)
+    else:
+        assert output.read_text() == '{"previous": true}\n'
+        if fault == "retargeted-symlink":
+            assert "Output path changed" in error
+            assert requested.samefile(image)
+        else:
+            assert "simulated short write" in error
+    assert not list(tmp_path.glob(".re-map-export-*"))
 
 
 def test_re2_layout_consumer_accepts_the_geometry_and_native_witnesses(plans, tmp_path):

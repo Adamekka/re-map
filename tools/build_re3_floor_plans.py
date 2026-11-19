@@ -22,9 +22,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from build_item_table import _read_file
+from disc_cue import read_cue_tracks
 from list_psx_files import _read_dir, _sector_data
 from map_geometry import trace_floor_cells
-from output_safety import aliases_input
+from output_safety import DerivedTextOutput
 from re3_map_geometry import extract_map_contours
 
 from games.re3 import EXECUTABLE_SHA256, MAP_U_SHA256
@@ -81,11 +82,8 @@ ITEM_NAME_TABLE = 0x8009C7C0
 ITEM_COUNT = 194
 
 
-def read_disc(cue: Path) -> tuple[bytes, bytes, dict[str, tuple[str, bytes]]]:
-    match = re.search(r'FILE\s+"([^"]+)"', cue.read_text())
-    if match is None:
-        raise ValueError("CUE lacks its data track")
-    with (cue.parent / match[1]).open("rb") as stream:
+def read_disc(image: Path) -> tuple[bytes, bytes, dict[str, tuple[str, bytes]]]:
+    with image.open("rb") as stream:
         pvd = _sector_data(stream, 16)
         if pvd[:7] != b"\x01CD001\x01":
             raise ValueError("data track lacks an ISO9660 primary volume")
@@ -412,8 +410,8 @@ def door_segment(rings: list, point: tuple) -> list | None:
     return segment if axis == 0 else [point[::-1] for point in segment]
 
 
-def build(cue: Path, names: dict) -> dict:
-    executable, map_data, sources = read_disc(cue)
+def build(image: Path, names: dict) -> dict:
+    executable, map_data, sources = read_disc(image)
     contours = extract_map_contours(map_data, executable)
     layout = compile_map_position_layout(map_data, executable)
     for result in (contours, layout):
@@ -678,15 +676,15 @@ def main() -> int:
     parser.add_argument("output", type=Path)
     parser.add_argument("--names", type=Path, default=ROOT / "data" / "re3_names.json")
     args = parser.parse_args()
-    if aliases_input(args.cue, args.output):
-        print("Output must differ from the input disc", file=sys.stderr)
-        return 2
     try:
-        document = build(args.cue, json.loads(args.names.read_text()))
+        tracks = read_cue_tracks(args.cue)
+        output = DerivedTextOutput(args.output, (args.cue, *tracks, args.names))
+        # Use the checked image path so a second CUE read cannot change it.
+        document = build(tracks[0], json.loads(args.names.read_text()))
+        output.write_text(json.dumps(document, indent=2) + "\n")
     except (OSError, ValueError, KeyError) as error:
-        print(f"RE3 floor plans failed: {error!r}", file=sys.stderr)
+        print(f"RE3 floor plans failed: {error}", file=sys.stderr)
         return 2
-    args.output.write_text(json.dumps(document, indent=2) + "\n")
     return 0
 
 
