@@ -209,6 +209,35 @@ def test_current_room_acquisition_flag_wins_and_reverses(tracking):
         )
 
 
+def test_active_unmodeled_pickup_blocks_current_room_clearance(tracking):
+    # RE3-COLLECT-004: the live registry can contradict the script item list.
+    profile, put_flag, read, ram = tracking
+    put_flag(ITEM_BANK_ADDRESS, 9, True)
+    source = profile.catalog.lookup(0, 0)
+    offset = len(source.source.rdt) - 40
+    packet = 0x100000 + offset + 2
+    struct.pack_into("<I", ram, 0xCC890 + 4 * 5, 0x80000000 + packet)
+    tracker = Tracker()
+
+    for item_type, sat, complete in (
+        (20, 0, True),
+        (20, 0x31, False),
+        (140, 0x31, True),
+        (20, 0x31, False),
+        (20, 0x80, True),
+    ):
+        ram[packet : packet + 2] = bytes([2, sat])
+        operand = 20 if sat & 0x80 else 12
+        struct.pack_into("<3H", ram, packet + operand, item_type, 1, 10)
+        assert poll_re3(profile, tracker, read).status is PollStatus.Display
+        record = tracker.rooms["00-00"]
+        assert record.list_complete is complete
+        assert record.completion is (
+            RoomCompletion.Cleared if complete else RoomCompletion.Unknown
+        )
+        assert [item.state for item in record.items] == ["taken"]
+
+
 @pytest.mark.parametrize("current", [False, True], ids=["departed", "current"])
 def test_file_sharing_a_pickup_id_keeps_the_pickup_identity_after_rewind(
     tracking, current

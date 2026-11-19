@@ -360,6 +360,7 @@ def poll_re3(
         details = []
         supported = scripted.support is Support.Supported
         identities_complete = True
+        unmodeled_active_item = False
         current = visited == key
         live_items = {}
         if current:
@@ -367,8 +368,15 @@ def poll_re3(
                 if kind == _KIND_ITEM:
                     operand = 20 if sat & 0x80 else 12
                     item_type, amount, gid = struct.unpack_from("<3H", data, operand)
-                    if item_type < layout["file_type_min"]:
-                        live_items[gid] = (item_type, amount, bool(sat & 0x7F))
+                    if item_type >= layout["file_type_min"]:
+                        continue
+                    active = bool(sat & 0x7F)
+                    if gid not in room["item_ids"]:
+                        # A live pickup outside the model leaves the current
+                        # room's item coverage unresolved. RE3-COLLECT-004.
+                        unmodeled_active_item |= active
+                        continue
+                    live_items[gid] = (item_type, amount, active)
         for gid in sorted(room["item_ids"]):
             taken = flag(bank, gid)
             if taken is None:
@@ -408,7 +416,7 @@ def poll_re3(
                     and identity[0] in layout["unit_count_item_types"],
                 )
             )
-        complete = supported and identities_complete
+        complete = supported and identities_complete and not unmodeled_active_item
         evaluations.append(
             (RoomId(room["stage"], room["room"]), tuple(details), complete)
         )
